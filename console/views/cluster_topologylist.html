@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>集群拓扑列表</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/css/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
+    <link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+    <link href="/static/css/animate.css" rel="stylesheet">
+    <link href="/static/css/custom.min.css" rel="stylesheet">
+    <link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+    <link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+    <script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/easyui.css">
+</head>
+<body class="gray-bg" style="margin-left: 10px;"ng-app="topologyInfo">
+<div class="example-wrap" ng-controller="rangeList" style="margin-top: 10px; overflow:scroll">
+    <input type="text" hidden="true" value="{[{.clusterId}]}" id="clusterId" name="clusterId"/>
+<table class="table table-striped table-bordered space-list-table" id="table">
+    <thead>
+    <tr class="space-list-name">
+        <th class="order" style="text-align: center; vertical-align: middle;width: 3%"></th>
+        <th class="startKey" style="text-align: center; vertical-align: middle;width: 5%">rangeId</th>
+        <th class="startKey" style="text-align: center; vertical-align: middle;width: 25%">startkey</th>
+        <th class="endKey" style="text-align: center; vertical-align: middle;width: 25%">endkey</th>
+        <th class="endKey" style="text-align: center; vertical-align: middle;width: 5%">tableId</th>
+        <th class="opt" style="text-align: center; vertical-align: middle;width: 5%">操作类型</th>
+    </tr>
+    </thead>
+<tbody>
+<tr ng-repeat="rng in rangeList track by $index" >
+<td style="vertical-align:middle; text-align:center;">{{$index + 1}}</td></td>
+<td style="vertical-align:middle; text-align:center;">{{rng.id}}</td>
+<td style="vertical-align:middle; text-align:center;">{{rng.start_key}}</td>
+<td style="vertical-align:middle; text-align:center;">{{rng.end_key}}</td>
+<td style="vertical-align:middle; text-align:center;">{{rng.table_id}}</td>
+<td style="vertical-align:middle; text-align:center;" class="table-btns">
+    <a class="btn btn-primary btn-rounded" ng-click="deleteRange(rng)">删除range</a>
+    <a class="btn btn-primary btn-rounded" ng-click="viewRangeTopo(rng)">查看拓扑</a>
+</td>
+</tbody>
+</table>
+</div>
+<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+<script src="/static/js/plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="/static/js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+<script src="/static/js/angular/angular.min.js"></script>
+<script src="/static/js/jquery.easyui.min.js"></script>
+<script src="/static/js/cluster/topologylist.js"></script>
+<script src="/static/js/jquery.easyui.min.js"></script>
+</body>
+</html>

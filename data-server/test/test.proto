@@ -1,0 +1,6 @@
+syntax = "proto3";
+package tpb;
+
+message TestMsg {
+    string message  = 1;
+}

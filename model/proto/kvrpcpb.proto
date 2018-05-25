@@ -1,0 +1,574 @@
+syntax = "proto3";
+package kvrpcpb;
+
+import "metapb.proto";
+import "errorpb.proto";
+import "timestamp.proto";
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message KvPair {
+    bytes   key   = 1;
+    bytes   value = 2;
+}
+
+message RequestHeader {
+    uint64 cluster_id              = 1;
+    // timestamp specifies time at which read or writes should be
+    // performed. If the timestamp is set to zero value, its value
+    // is initialized to the wall time of the receiving node.
+    timestamp.Timestamp timestamp  = 2;
+    uint64 trace_id                = 3;
+    uint64 range_id                = 4;
+    metapb.RangeEpoch range_epoch  = 5;
+}
+
+message ResponseHeader {
+    uint64 cluster_id              = 1;
+    // timestamp is set only for non-transactional responses and denotes the
+    // highest timestamp at which a command from the batch executed. At the
+    // time of writing, it is used solely for informational purposes and tests.
+    timestamp.Timestamp timestamp  = 2;
+    uint64 trace_id                = 3;
+    // now is the current time at the node sending the response,
+    // which can be used by the receiver to update its local HLC.
+    timestamp.Timestamp now        = 4;
+    errorpb.Error     error        = 5;
+}
+
+message DsKvRawGetRequest {
+    RequestHeader header     = 1;
+    KvRawGetRequest req      = 2;
+}
+
+message DsKvRawGetResponse {
+    ResponseHeader header    = 1;
+    KvRawGetResponse resp    = 2;
+}
+
+message KvRawGetRequest {
+    bytes key            = 1;
+}
+
+message KvRawGetResponse {
+    // 0: success 1: not leader 2: raft busy 3: other error
+    int32  code           = 1;
+    bytes  value          = 2;
+}
+
+message DsKvRawPutRequest {
+    RequestHeader header = 1;
+    KvRawPutRequest req  = 2;
+}
+
+message DsKvRawPutResponse {
+    ResponseHeader header = 1;
+    KvRawPutResponse resp = 2;
+}
+
+message KvRawPutRequest {
+    bytes key            = 1;
+    bytes value          = 2;
+}
+
+message KvRawPutResponse {
+    int32  code           = 1;
+}
+
+message DsKvRawDeleteRequest {
+    RequestHeader header     = 1;
+    KvRawDeleteRequest req   = 2;
+}
+
+message DsKvRawDeleteResponse {
+    ResponseHeader header         = 1;
+    KvRawDeleteResponse resp      = 2;
+}
+
+message KvRawDeleteRequest {
+    bytes key            = 1;
+}
+
+message KvRawDeleteResponse {
+    int32  code           = 1;
+}
+
+enum ExecuteType {
+    ExecInvalid     = 0;
+    ExecPut         = 1;
+    ExecDelete      = 2;
+}
+
+message KvPairRawExecute {
+    ExecuteType do           = 1;
+    KvPair   kv_pair         = 2;
+}
+
+message DsKvRawExecuteRequest {
+    RequestHeader header                 = 1;
+    KvRawExecuteRequest  req             = 2;
+}
+
+message DsKvRawExecuteResponse {
+    ResponseHeader header       = 1;
+    KvRawExecuteResponse resp   = 2;
+}
+
+message KvRawExecuteRequest {
+    // 历史原因，只能是2
+    repeated KvPairRawExecute  execs     = 1;
+}
+
+message KvRawExecuteResponse {
+    int32 code              = 1;
+}
+
+// for SQL
+message Scope {
+    bytes  start     = 1;
+    bytes  limit     = 2;
+}
+
+message SelectField {
+    enum Type {
+        Column = 0;
+        AggreFunction = 1;
+    }
+
+    Type typ                = 1;
+    string aggre_func       = 2;
+    metapb.Column column    = 3; // select column(if typ is Column) or aggregate function parameter(is typ is AggreFunction)
+}
+
+enum MatchType {
+    Invalid       = 0;
+    Equal         = 1;
+    NotEqual      = 2;
+    Less          = 3;
+    LessOrEqual   = 4;
+    Larger        = 5;
+    LargerOrEqual = 6;
+}
+
+message Match {
+    metapb.Column column   = 1;
+    // 匹配对象
+    bytes threshold        = 2;
+    MatchType match_type   = 3;
+}
+
+message Limit {
+    uint64   offset     = 1;
+    uint64   count      = 2;
+}
+
+message DsSelectRequest {
+    RequestHeader header                = 1;
+    SelectRequest req                 = 2;
+}
+
+message SelectRequest {
+    bytes key                           = 1;       // 只查询单行
+    Scope scope                         = 2;       // 查询主键在某个范围的行
+    repeated SelectField field_list     = 3;       // select filed list
+    repeated Match where_filters        = 4;       // where matches
+    repeated metapb.Column group_bys    = 5;       // group by column ids
+    Limit limit                         = 6;       // max range query num, 0 means no limit
+
+    timestamp.Timestamp timestamp       =  7;    // // timestamp
+}
+
+message Row {
+    bytes key                    = 1;              // encoded group by columns(pk if group-by not exist) value 
+    bytes fields                 = 2;              //  encoded fields
+    repeated int64 aggred_counts = 3;              // aggregated row count(for avg)
+}
+
+message DsSelectResponse {
+    ResponseHeader header = 1;
+    SelectResponse resp = 2;
+ }
+
+ message SelectResponse {
+    // 0: success 1: not leader 2: raft busy 3: raft stop 4: read only 5: other error
+    // >= 1000 SQL server error code
+    // >= 2000 SQL client error code
+    int32 code        = 1;
+    repeated Row rows = 2;
+    // for limit, offset in the range
+    uint64 offset     = 3;
+}
+
+message KeyValue {
+    bytes Key       = 1; // 编码后的主键
+    bytes Value     = 2; // 编码后的列值（所有非主键列）
+    int64 ExpireAt  = 3; // 过期时间（绝对时间，纳秒值）
+}
+
+message DsInsertRequest {
+    RequestHeader header = 1;
+    InsertRequest req  = 2;
+}
+
+message DsInsertResponse {
+    ResponseHeader header = 1;
+    InsertResponse resp = 2;
+}
+
+message InsertRequest {
+    repeated KeyValue rows  = 1; // 多行
+    bool  check_duplicate   = 2; // 是否检查对应的主键已经存在
+    timestamp.Timestamp timestamp  = 3;
+}
+
+message InsertResponse {
+    int32 code              = 1;
+    //受影响的KV
+    uint64 affected_keys    = 2;
+    // code != 0有效
+    bytes  duplicate_key    = 3;
+}
+
+message BatchInsertRequest {
+    repeated InsertRequest reqs   = 1;
+}
+
+message BatchInsertResponse {
+    repeated InsertResponse resps = 2;
+}
+
+message DsDeleteRequest {
+    RequestHeader header = 1;
+    DeleteRequest req  = 2;
+}
+
+message DsDeleteResponse {
+    ResponseHeader header = 1;
+    DeleteResponse resp = 2;
+}
+
+message DeleteRequest {
+    bytes key                       = 1; // 只删除单行
+    Scope scope                     = 2; // 删除某个范围
+    repeated Match where_filters    = 3;
+    repeated uint64 indexs          = 4; // 删除操作同时需要删除索引记录，因此提供对应的索引列
+    timestamp.Timestamp timestamp   = 10;
+}
+
+message DeleteResponse {
+    int32 code              = 1;
+    //受影响的KV
+    uint64 affected_keys    = 2;
+}
+
+message Field {                                                                                                                                                                                               
+    uint64 column_id           = 1;
+    // value是gateway server编码后的数据， data server不解析
+    bytes value                = 2;
+}
+
+//
+//++++++++++++++++++++++++for jimdb-proxy protocol begin+++++++++++++++++++++++++++++++++++++
+//
+enum ExistCase {
+    EC_Invalid           = 0;
+    // 当且仅当key不存在
+    EC_NotExists          = 1;
+    // 当且仅当key存在
+    EC_Exists             = 2;
+    // 需要检查key是否存在,无论key是否存在都写入, 并返回affected count
+    EC_AnyCase            = 3;
+    // 不检查key是否存在,直接写入,不返回affected count
+    EC_Force              = 4;
+}
+
+message RedisKeyValue {
+    bytes key             = 1;
+    bytes value           = 2;
+}
+
+enum Operation {
+    OP_Invalid          = 0;
+    OP_Set              = 1;
+    OP_Delete           = 2;
+    OP_Get              = 3;
+}
+
+message RedisDo {
+    bytes key             = 1;
+    bytes value           = 2;
+    Operation op          = 3;
+    ExistCase case        = 4;
+}
+
+message KvSetRequest {
+    RedisKeyValue   kv    = 1;
+    ExistCase case        = 2;
+}
+
+message KvSetResponse {
+    // 0: 成功; other: 失败
+    int32  code             = 1;
+    //受影响的KV
+    uint64 affected_keys    = 2;
+}
+
+message DsKvSetRequest {
+    RequestHeader header     = 1;
+    KvSetRequest req         = 2;
+}
+
+message DsKvSetResponse {
+    ResponseHeader header         = 1;
+    KvSetResponse resp            = 2;
+}
+
+message KvGetRequest {
+    bytes key           = 1;
+}
+
+message KvGetResponse {
+    int32  code           = 1;
+    bytes  value          = 2;
+}
+
+message DsKvGetRequest {
+    RequestHeader header     = 1;
+    KvGetRequest req         = 2;
+}
+
+message DsKvGetResponse {
+    ResponseHeader header         = 1;
+    KvGetResponse resp            = 2;
+}
+
+message KvBatchSetRequest {
+    repeated RedisKeyValue   kvs       = 1;
+    // 如果case 是EC_NotExists
+    // 首先需要检查读,一旦发现有key,则终止执行,并且返回存在重复的key的数量
+    ExistCase case                     = 2;
+}
+
+message KvBatchSetResponse {
+    int32  code                    = 1;
+    //受影响的KV
+    uint64 affected_keys           = 2;
+}
+
+message DsKvBatchSetRequest {
+    RequestHeader header     = 1;
+    KvBatchSetRequest req    = 2;
+}
+
+message DsKvBatchSetResponse {
+    ResponseHeader header         = 1;
+    KvBatchSetResponse resp       = 2;
+}
+
+message KvBatchGetRequest {
+    int32  code                = 1;
+    repeated bytes  keys       = 2;
+}
+
+message KvBatchGetResponse {
+    int32  code                   = 1;
+    repeated RedisKeyValue   kvs  = 2;
+}
+
+message DsKvBatchGetRequest {
+    RequestHeader header     = 1;
+    KvBatchGetRequest req    = 2;
+}
+
+message DsKvBatchGetResponse {
+    ResponseHeader header         = 1;
+    KvBatchGetResponse resp       = 2;
+}
+
+// 迭代一个较大的范围，可以设置一个比较合适的max_count,
+// 根据上次的last key作为下一次请求的start　key即可.
+message KvScanRequest {
+    bytes start              = 1;
+    bytes limit              = 2;
+    bool  count_only         = 3;
+    // count_only与key_only冲突，二选一
+    bool key_only            = 4;
+    // -1 表示不限制
+    int64 max_count         = 5;
+}
+
+message KvScanResponse {
+    int32  code                  = 1;
+    // when count_only  == true
+    int64 count                  = 2;
+    repeated RedisKeyValue   kvs = 3;
+    // 可能扫描返回的数据量很大，需要迭代
+    bytes last_key               = 4;
+}
+
+message DsKvScanRequest {
+    RequestHeader header       = 1;
+    KvScanRequest req          = 2;
+}
+
+message DsKvScanResponse {
+    ResponseHeader header           = 1;
+    KvScanResponse resp             = 2;
+}
+
+message KvDeleteRequest {
+    bytes key           = 1;
+    // 暂时忽略,按照any case处理
+    ExistCase case      = 2;
+}
+
+message KvDeleteResponse {
+    int32  code             = 1;
+    //受影响的KV
+    uint64 affected_keys    = 2;
+}
+
+message DsKvDeleteRequest {
+    RequestHeader header       = 1;
+    KvDeleteRequest req        = 2;
+}
+
+message DsKvDeleteResponse {
+    ResponseHeader header           = 1;
+    KvDeleteResponse resp           = 2;
+}
+
+message KvBatchDeleteRequest {
+    repeated bytes   keys   = 1;
+    // 暂时忽略,按照any case处理
+    ExistCase case          = 2;
+}
+
+message KvBatchDeleteResponse {
+    int32  code            = 1;
+    // 删除key的个数，不包括被忽略的key
+    uint64 affected_keys   = 2;
+}
+
+message DsKvBatchDeleteRequest {
+    RequestHeader header       = 1;
+    KvBatchDeleteRequest req   = 2;
+}
+
+message DsKvBatchDeleteResponse {
+    ResponseHeader header           = 1;
+    KvBatchDeleteResponse resp      = 2;
+}
+
+message KvRangeDeleteRequest {
+    bytes start              = 1;
+    bytes limit              = 2;
+    int64 max_count          = 3;
+    ExistCase case           = 4;
+}
+
+message KvRangeDeleteResponse {
+    int32  code            = 1;
+    // 删除key的个数
+    uint64 affected_keys   = 2;
+    //　最后一个被删除的key
+    bytes last_key         = 3;
+}
+
+message DsKvRangeDeleteRequest {
+    RequestHeader header       = 1;
+    KvRangeDeleteRequest req   = 2;
+}
+
+message DsKvRangeDeleteResponse {
+    ResponseHeader header           = 1;
+    KvRangeDeleteResponse resp      = 2;
+}
+// for jimdb-proxy protocol end
+
+message LockValue {
+    bytes value             = 2;
+    string id               = 3;
+    int64 delete_time       = 4;
+    int64 update_time       = 5;
+    bool delete_flag        = 6;
+}
+
+message LockRequest {
+    bytes key               = 1;
+    LockValue value         = 2;
+    timestamp.Timestamp timestamp  = 10;
+    string by               = 11;
+}
+
+message DsLockRequest {
+    RequestHeader header        = 1;
+    LockRequest req             = 2;
+}
+
+message LockResponse {
+    int64 code      = 1;
+    string error    = 2;
+    bytes value             = 3;
+    int64 update_time       = 4;
+}
+
+message DsLockResponse {
+    ResponseHeader header           = 1;
+    LockResponse resp               = 2;
+}
+
+message LockUpdateRequest {
+    bytes key               = 1;
+    string id               = 3;
+    int64 update_time       = 5;
+    bytes update_value      = 6;
+    timestamp.Timestamp timestamp  = 10;
+}
+
+message DsLockUpdateRequest {
+    RequestHeader header        = 1;
+    LockUpdateRequest req       = 2;
+}
+
+message DsLockUpdateResponse {
+    ResponseHeader header           = 1;
+    LockResponse resp               = 2;
+}
+
+message UnlockRequest {
+    bytes key               = 1;
+    string id               = 3;
+    timestamp.Timestamp timestamp  = 10;
+    string by               = 11;
+}
+
+message DsUnlockRequest {
+    RequestHeader header        = 1;
+    UnlockRequest req           = 2;
+}
+
+message DsUnlockResponse {
+    ResponseHeader header           = 1;
+    LockResponse resp               = 2;
+}
+
+message UnlockForceRequest {
+    bytes key               = 1;
+    timestamp.Timestamp timestamp  = 10;
+    string by               = 11;
+}
+
+message DsUnlockForceRequest {
+    RequestHeader header        = 1;
+    UnlockForceRequest req      = 2;
+}
+
+message DsUnlockForceResponse {
+    ResponseHeader header           = 1;
+    LockResponse resp               = 2;
+}

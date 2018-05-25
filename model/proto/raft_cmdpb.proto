@@ -1,0 +1,123 @@
+syntax = "proto3";
+package raft_cmdpb;
+
+import "metapb.proto";
+import "kvrpcpb.proto";
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message SplitRequest {
+    uint64 leader              = 1;
+    bytes split_key            = 2;
+    metapb.RangeEpoch epoch    = 3;
+    metapb.Range new_range     = 4;
+}
+
+message SplitResponse {
+}
+
+message MergeRequest {
+
+}
+
+message MergeResponse {
+
+}
+
+message LeaderChangeRequest {
+    uint64    range_id      = 1;
+    metapb.RangeEpoch epoch = 2;
+}
+
+message LeaderChangeResponse {
+
+}
+
+message CmdID {
+    uint64 node_id = 1;
+    uint64 seq     = 2;
+}
+
+enum CmdType {
+    Invalid        = 0;
+    RawGet         = 1;
+    RawPut         = 2;
+    RawDelete      = 3;
+    RawExecute     = 4;
+
+    Select         = 7;
+    Insert         = 8;
+    Delete         = 9;
+    Update         = 10;
+    Replace        = 11;
+    BatchInsert    = 12;
+
+    KvSet          = 13;
+    KvGet          = 14;
+    KvBatchSet     = 15;
+    KvBatchGet     = 16;
+    KvScan         = 17;
+    KvDelete       = 18;
+    KvBatchDel     = 19;
+    KvRangeDel     = 20;
+
+    AdminSplit     = 30;
+    AdminMerge     = 31;
+    AdminLeaderChange = 32;
+
+    Lock        = 40;
+    LockUpdate  = 41;
+    Unlock      = 42;
+    UnlockForce = 43;
+}
+
+message Command {
+    CmdID                             cmd_id                 = 1;
+    CmdType                           cmd_type               = 2;
+    metapb.RangeEpoch                 verify_epoch           = 3;
+
+    kvrpcpb.KvRawGetRequest           kv_raw_get_req         = 4;
+    kvrpcpb.KvRawPutRequest           kv_raw_put_req         = 5;
+    kvrpcpb.KvRawDeleteRequest        kv_raw_delete_req      = 6;
+    kvrpcpb.KvRawExecuteRequest       kv_raw_execute_req     = 7;
+
+    kvrpcpb.SelectRequest           select_req               = 8;
+    kvrpcpb.InsertRequest           insert_req               = 9;
+    kvrpcpb.DeleteRequest           delete_req               = 10;
+    kvrpcpb.BatchInsertRequest      batch_insert_req         = 11;
+
+    kvrpcpb.KvSetRequest            kv_set_req               = 12;
+    kvrpcpb.KvGetRequest            kv_get_req               = 13;
+    kvrpcpb.KvBatchSetRequest       kv_batch_set_req         = 14;
+    kvrpcpb.KvBatchGetRequest       kv_batch_get_req         = 15;
+    kvrpcpb.KvScanRequest           kv_scan_req              = 16;
+    kvrpcpb.KvDeleteRequest         kv_delete_req            = 17;
+    kvrpcpb.KvBatchDeleteRequest    kv_batch_del_req         = 18;
+    kvrpcpb.KvRangeDeleteRequest    kv_range_del_req         = 19;
+
+    SplitRequest                      admin_split_req        = 30;
+    MergeRequest                      admin_merge_req        = 31;
+    LeaderChangeRequest               admin_leader_change_req = 32;
+
+    kvrpcpb.LockRequest         lock_req        = 40;
+    kvrpcpb.LockUpdateRequest   lock_update_req = 41;
+    kvrpcpb.UnlockRequest       unlock_req      = 42;
+    kvrpcpb.UnlockForceRequest  unlock_force_req = 43;
+}
+
+message PeerTask {
+    metapb.RangeEpoch  verify_epoch   = 1;
+    metapb.Peer        peer           = 2;
+}
+
+message SnapshotKVPair {
+    bytes key   = 1;
+    bytes value = 2;
+}
+
+message SnapshotContext {
+    metapb.Range meta = 1;
+}

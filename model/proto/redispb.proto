@@ -1,0 +1,25 @@
+syntax = "proto3";
+package redispb;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+enum KeyType {
+    Invalid          = 0;
+    // key　元素 <ttl, type ...>
+    KEY_META         = 1;
+    KEY_STRING       = 2;
+    KEY_HASH         = 3;
+    KEY_HASH_FIELD   = 4;
+    KEY_SET          = 5;
+    KEY_SET_MEMBER   = 6;
+    KEY_LIST         = 7;
+    KEY_LIST_ELEMENT = 8;
+    KEY_ZSET         = 9;
+    KEY_ZSET_SCORE   = 10;
+    // zset member rank
+    KEY_ZSET_SORT    = 11;
+}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DB信息展示</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<link rel="shortcut icon" href="/static/favicon.ico">
+<link href="/static/css/bootstrap.min.css?v=3.3.6"
+	rel="stylesheet">
+<link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+<!-- jqgrid-->
+<link href="/static/css/plugins/jqgrid/ui.jqgrid.css?0820"
+	rel="stylesheet">
+<link href="/static/css/animate.css" rel="stylesheet">
+<link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+<link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+<script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
+<style>
+/* Additional style to fix warning dialog position */
+#alertmod_table_list_2 {
+	top: 900px !important;
+}
+</style>
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content  animated fadeInRight">
+		<input type="text" hidden="true" value="{[{.clusterId}]}" id="clusterId"/>
+		<div class="row">
+			<div class="ibox-content-meta">
+				<div class="jqGrid_wrapper">
+					<table id="db_table_list"></table>
+					<div id="db_pager_list"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 弹出页面显示分片详细信息 start -->
+    <div class="modal fade modaltab" id="sqlCreateTableDetail" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+	  <div class="modal-dialog" >
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">
+	          <span aria-hidden="false">&times;</span><span class="sr-only">Close</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+             <textarea id="sql" name="sql" class="form-control" placeholder="输入sql"></textarea>
+	      </div>
+	      <div class="modal-footer">
+             <button type="button" class="btn btn-white" data-dismiss="modal">关闭</button>
+             <button type="button" class="btn btn-primary" onclick="saveSqlCreateTable()">执行sql</button>
+          </div>
+	    </div><!--modal content-->
+	  </div>
+	</div>
+    <!-- end 模态窗口  -->
+	<!-- 全局js -->
+	<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+	<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+	<!-- Peity -->
+	<script src="/static/js/plugins/peity/jquery.peity.min.js"></script>
+	<!-- jqGrid -->
+	<script
+		src="/static/js/plugins/jqgrid/i18n/grid.locale-cn.js"></script>
+	<script
+		src="/static/js/plugins/jqgrid/jquery.jqGrid.min.js"></script>
+	<!-- 自定义js -->
+	<script src="/static/js/metadatacreatetable.js"></script>
+</body>
+</html>

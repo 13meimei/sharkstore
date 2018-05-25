@@ -1,0 +1,20 @@
+syntax = "proto3";
+package timestamp;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// Timestamp represents a state of the hybrid logical clock.
+message Timestamp {
+  // Holds a wall time, typically a unix epoch time
+  // expressed in nanoseconds.
+  int64 wall_time = 1;
+  // The logical component captures causality for events whose wall
+  // times are equal. It is effectively bounded by (maximum clock
+  // skew)/(minimal ns between events) and nearly impossible to
+  // overflow.
+  int32 logical = 2;
+}

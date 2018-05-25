@@ -1,0 +1,66 @@
+# MS Configuration.
+
+name = "ms"
+# process role is master or metric
+role = "master"
+version = "v1"
+# secret key for master, leaves it empty will ignore http request signature verification
+secret-key = ""
+
+# cluster meta data store path
+data-dir = "/tmp/sharkstore/data"
+
+[cluster]
+cluster-id = 1
+
+[[cluster.peer]]
+id = 1
+host = "127.0.0.1"
+http-port = 8887
+rpc-port = 18887
+raft-ports = [8877,8867]
+
+[raft]
+heartbeat-interval = "500ms"
+retain-logs-count = 100
+
+[log]
+dir = "/tmp/sharkstore/log"
+module = "master"
+# log level debug, info, warn, error
+level = "info"
+
+[metric]
+# metric client push interval, set "0s" to disable metric.
+interval = "15s"
+# metric address, leaves it empty will disable metric.
+address = "127.0.0.1:8887"
+
+[metric.server]
+address = "127.0.0.1:8887"
+queue-num = 100
+# store type: sql, elasticsearch ......
+store-type = "elasticsearch"
+store-url = ["http://192.168.182.11:20001","http://192.168.182.12:20001","http://192.168.182.13:20001"]
+
+[schedule]
+max-snapshot-count = 3
+max-node-down-time = "1h"
+leader-schedule-limit = 64
+region-schedule-limit = 16
+replica-schedule-limit = 24
+max-task-timeout = "300s"
+# 12 times of region heartbeat time
+max-range-down-time = "600s"
+node-range-balance-time = "120s"
+storage-available-threshold = 20
+writeByte-ops-threshold = 31457280
+
+[replication]
+# The number of replicas for each region.
+max-replicas = 3
+# The label keys specified the location of a node.
+# The placement priorities is implied by the order of label keys.
+# For example, ["zone", "rack"] means that we should place replicas to
+# different zones first, then to different racks if we don't have enough zones.
+location-labels = []

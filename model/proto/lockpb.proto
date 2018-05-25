@@ -1,0 +1,58 @@
+syntax = "proto3";
+package lockrpcpb;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+
+
+option java_package = "com.sharkstore.lock.grpc";
+
+service  DLockService{
+    rpc Lock(LockRequest) returns (DLockResponse) {}
+    rpc UnLock(UnLockRequest) returns (DLockResponse) {}
+    rpc ForceUnLock(ForceUnLockRequest) returns (DLockResponse) {}
+    rpc DoHeartbeat(LockHeartbeatRequest) returns (DLockResponse) {}
+    rpc UpdateCondition(UpdateConditionRequest) returns (DLockResponse) {}
+}
+
+message LockRequest {
+    string namespace     	 = 1;
+    string lock_name    	 = 2;
+    bytes conditions         = 3;
+	int64 timeout 			 = 4;
+	string lock_id			 = 5;
+}
+
+message UnLockRequest {
+	string namespace     	 = 1;
+    string lock_name         = 2;
+	string lock_id		     = 3;
+}
+
+message ForceUnLockRequest {
+    string namespace     	 = 1;
+    string lock_name         = 2;
+}
+
+message LockHeartbeatRequest {
+    string namespace     	 = 1;
+    string lock_name     	 = 2;
+	string lock_id			 = 3;
+}
+
+message UpdateConditionRequest {
+    string namespace         = 1;
+    string lock_name         = 2;
+    bytes conditions         = 3;
+}
+
+message DLockResponse {
+    int64 code               = 1;
+    string error             = 2;
+    bytes conditions         = 3;
+    int64 update_time        = 4;
+}

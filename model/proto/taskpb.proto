@@ -1,0 +1,50 @@
+syntax = "proto3";
+package taskpb;
+
+import "metapb.proto";
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+enum TaskType {
+    EmptyTask         = 0;
+    RangeMerge        = 1;
+    RangeDelete       = 2;
+    RangeLeaderTransfer = 3;
+    RangeAddPeer      = 4;
+    RangeDelPeer      = 5;
+}
+
+// TODO range merge
+message TaskRangeMerge {
+
+}
+
+message TaskRangeDelete {
+    uint64 range_id      = 1;
+}
+
+message TaskRangeLeaderTransfer {
+    metapb.Peer exp_leader       = 1;
+}
+
+message TaskRangeAddPeer {
+    metapb.Peer  peer            = 1;
+}
+
+message TaskRangeDelPeer {
+    metapb.Peer  peer            = 1;
+}
+
+message Task {
+    TaskType    type                 = 1;
+
+    TaskRangeMerge range_merge       = 2;
+    TaskRangeDelete range_delete     = 3;
+    TaskRangeLeaderTransfer range_leader_transfer = 4;
+    TaskRangeAddPeer range_add_peer  = 5;
+    TaskRangeDelPeer range_del_peer  = 6;
+}

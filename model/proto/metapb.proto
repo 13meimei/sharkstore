@@ -1,0 +1,234 @@
+syntax = "proto3";
+package metapb;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message Cluster {
+    uint64 id              = 1;
+    // max peer count for a Range.
+    // master server will do the auto-balance if Range peer count mismatches.
+    uint32 max_peer_count  = 2;
+    // more attributes......
+}
+
+// 1. 无论什么条件下，除了已经Logout的节点，新旧ds加入集群后，ms都应该将其初始化为Initial状态，
+// 由ds自检完成后，通过NodeLogin上报正式启动数据读写服务
+// 2. Logout的节点，需要手动Initial
+enum NodeState {
+    N_Invalid   = 0;
+    // 工作状态，可以提供服务
+    N_Login     = 1;
+    // 此状态下节点的range已经全部迁移，必须手动login
+    N_Logout    = 2;
+    // 此状态下节点不分配新的range，不迁移range
+    N_Offline   = 3;
+    // 此状态下节点不分配新的range，开始逐步迁移range
+    N_Tombstone = 4;
+    // 节点升级
+    N_Upgrade   = 5;
+    // 初始状态
+    N_Initial   = 6;
+}
+
+// Case insensitive key/value for replica constraints.
+message NodeLabel {
+    string key         = 1;
+    string value       = 2;
+}
+
+message Node {
+    uint64 id             = 1;
+    // rpc 服务地址
+    string server_addr    = 2;
+    // raft　服务地址
+    string raft_addr      = 3;
+    // http 管理地址
+    string http_addr      = 4;
+
+    NodeState state       = 5;
+    string version        = 6;
+
+    repeated NodeLabel labels  = 7;
+    // more attributes......
+}
+
+enum RangeState {
+    R_Invalid      = 0;
+    R_Init         = 1;
+    R_Normal       = 2;
+    R_Split        = 3;
+    R_Merge        = 4;
+    R_Remove       = 5;
+    R_LoadSnap     = 6;
+    R_Abnormal     = 7;
+    R_Offline      = 8;
+}
+
+enum ReplicaRole {
+    Role_Invalid        = 0;
+    // 同步副本
+    Role_Sync_Replica   = 1;
+    // 异步副本，不参与raft选举
+    Role_Async_Replica  = 2;
+}
+
+message Peer {
+    uint64 id            = 1;
+    uint64 node_id       = 2;
+    ReplicaRole role     = 3;
+    // more attributes......
+}
+
+message Replica {
+    uint64 range_id      = 1;
+    Peer   peer          = 2;
+    bytes  start_key     = 3;
+    bytes  end_key       = 4;
+}
+
+message RangeEpoch {
+    // Conf change version, auto increment when add or remove peer
+    uint64 conf_ver	   = 1;
+    // Range version, auto increment when split or merge
+    uint64 version     = 2;
+}
+
+message Range {
+    uint64 id                  	 = 1;
+    // Range key range [start_key, end_key).
+    // key的组成 prefix + table_id + real key
+    bytes  start_key           	 = 2;
+    bytes  end_key             	 = 3;
+    RangeEpoch range_epoch     	 = 4;
+    repeated Peer peers        	 = 5;
+    uint64 table_id            	 = 6;
+    repeated Column primary_keys = 7; // 主键信息，有序
+}
+
+message Leader {
+    uint64 range_id      = 1;
+    uint64 node_id       = 2;
+    string node_addr     = 3;
+}
+
+message Route {
+    Range range                = 1;
+    Peer leader                = 2;
+}
+
+message DataBase {
+    string name                = 1;
+    uint64 id                  = 2;
+    string properties          = 3;// json
+    uint64 version             = 4;
+    int64 create_time          = 5;
+}
+
+enum DataType {
+    Invalid        = 0;
+    // 8 bit interger
+    Tinyint        = 1;
+    // 16 bit interger
+    Smallint       = 2;
+    // 32 bit interger
+    Int            = 3;
+    // 64 bit interger
+    BigInt         = 4;
+
+    // 32 bit float
+    Float          = 5;
+    // 64 bit float
+    Double         = 6;
+
+    // string UTF-8 max size 64 KB
+    Varchar        = 7;
+
+    // Blob max size 64 KB
+    Binary         = 8;
+
+    // DataTime 从1970年1月1日以来的天数
+    Date           = 9;
+    // DataTime 从1970年1月1日以来的秒数，精确到纳秒
+    TimeStamp      = 10;
+}
+
+message Column {
+    // max size 128 bytes
+    string name                = 1;
+    // 列名映射的ID,客户端不可见
+    uint64 id                  = 2;
+    DataType data_type         = 3;
+
+    // 针对int类型,是否是无符号类型
+    bool unsigned              = 4;
+
+    // 针对float和varchar类型
+    int32 scale                = 5;
+    // 针对float类型
+    int32 precision            = 6;
+    // 是否可以为空
+    bool nullable              = 7;
+    // 是否主键
+    uint64 primary_key         = 8; // 0 means not primary, !0 means primary NO.
+    // 列的顺序
+    int32 ordinal              = 9;
+    // 索引 Binary不支持索引，其他类型列默认均是索引列
+    bool index                 = 10;
+    // 自增 bool auto_increment
+    // 唯一键 bool unique
+
+    bytes default_value        = 11;
+    string properties          = 12;
+}
+
+message Primary {
+    string column_name = 1;
+    Primary next       = 2;
+}
+
+message TableEpoch {
+    // Conf change version, auto increment when add or remove column
+    uint64 conf_ver	   = 1;
+    // Route version, auto increment when split or merge
+    uint64 version     = 2;
+}
+
+enum TableStatus {
+    TableInvalid       = 0;
+    // 初始状态，table刚刚创建，分片还不能提供服务
+    TableInit          = 1;
+    // 准备状态，等待table的初始分片补足三个副本
+    TablePrepare       = 2;
+    // 正常状态，可以提供完全的服务
+    TableRunning       = 3;
+    // 标记删除，元数据都保留，允许分片参与调度,但不能分裂
+    TableDelete        = 4;
+    // 正在删除
+    TableDeleting      = 5;
+}
+
+message Table {
+    string name                 = 1;
+    string db_name              = 2;
+    uint64 db_id                = 3;
+    uint64 id                   = 4;
+    // 必须有主键
+    //repeated string primary_key = 4;
+    string properties           = 5;
+    repeated Column columns     = 6;
+    TableEpoch epoch            = 7;
+    repeated Column regxs       = 8;
+    int64 create_time           = 9;
+    // 默认不检查主键重复
+    bool pk_dup_check           = 10;
+    // table status
+    TableStatus status          = 11;
+    // table expand area
+    // now when status is TableDelete, expand is the delete flag time
+    bytes expand                = 12;
+}
+

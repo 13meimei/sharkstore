@@ -1,0 +1,354 @@
+syntax = "proto3";
+package mspb;
+
+import "metapb.proto";
+import "taskpb.proto";
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+service MsServer {
+    rpc NodeHeartbeat (NodeHeartbeatRequest) returns (NodeHeartbeatResponse) {}
+    rpc RangeHeartbeat (RangeHeartbeatRequest) returns (RangeHeartbeatResponse) {}
+    rpc AskSplit(AskSplitRequest) returns (AskSplitResponse) {}
+    rpc ReportSplit(ReportSplitRequest) returns (ReportSplitResponse) {}
+    rpc NodeLogin(NodeLoginRequest) returns (NodeLoginResponse) {}
+    rpc GetNodeId(GetNodeIdRequest) returns (GetNodeIdResponse) {}
+    rpc GetMSLeader(GetMSLeaderRequest) returns (GetMSLeaderResponse) {}
+
+    rpc GetRoute(GetRouteRequest) returns (GetRouteResponse) {}
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse) {}
+    rpc GetDB(GetDBRequest) returns (GetDBResponse) {}
+    rpc GetTable(GetTableRequest) returns (GetTableResponse) {}
+    rpc GetTableById(GetTableByIdRequest) returns (GetTableByIdResponse) {}
+    rpc GetColumns(GetColumnsRequest) returns (GetColumnsResponse) {}
+    rpc GetColumnByName(GetColumnByNameRequest) returns (GetColumnByNameResponse) {}
+    rpc GetColumnById(GetColumnByIdRequest) returns (GetColumnByIdResponse) {}
+    rpc TruncateTable(TruncateTableRequest) returns (TruncateTableResponse) {}
+    rpc AddColumn(AddColumnRequest) returns (AddColumnResponse) {}
+    rpc CreateDatabase(CreateDatabaseRequest) returns (CreateDatabaseResponse) {}
+    rpc CreateTable(CreateTableRequest) returns (CreateTableResponse) {}
+}
+
+message MSLeader {
+    uint64 id          = 1;
+    string address     = 2;
+}
+
+message GetMSLeaderRequest {
+    RequestHeader header = 1;
+}
+
+message GetMSLeaderResponse {
+    ResponseHeader header           = 1;
+    MSLeader leader                 = 2;
+}
+
+message PeerStats {
+    metapb.Peer peer    = 1;
+    uint64 down_seconds = 2;
+}
+
+message RangeStats {
+    // Bytes read/written during this period.
+    uint64 bytes_written                    = 1;
+    uint64 bytes_read                       = 2;
+    // Keys read/written during this period.
+    uint64 keys_written                     = 3;
+    uint64 keys_read                        = 4;
+
+    // Approximate range size.
+    uint64 approximate_size                 = 5;
+}
+
+message RangeHeartbeatRequest {
+    RequestHeader header                    = 1;
+
+    metapb.Range range                      = 2;
+    // Leader Peer sending the heartbeat.
+    metapb.Peer leader                      = 3;
+    // Leader considers that these peers are down.
+    repeated PeerStats down_peers           = 4;
+    // Pending peers are the peers that the leader can't consider as
+    // working followers.
+    repeated metapb.Peer pending_peers      = 5;
+
+    RangeStats stats                        = 6;
+}
+
+message RangeHeartbeatResponse {
+    ResponseHeader header       = 1;
+    uint64 range_id             = 2;
+    metapb.RangeEpoch epoch     = 3;
+    // target leader for task
+    metapb.Peer target_peer     = 4;
+    taskpb.Task  task           = 5;
+    uint64 commit_id            = 6;
+}
+
+message NodeStats {
+    // Total range count in this node.
+    uint32 range_count                    = 1;
+    // Current range split count.
+    uint32 range_split_count              = 2;
+    // Current sending snapshot count.
+    uint32 sending_snap_count             = 3;
+    // Current receiving snapshot count.
+    uint32 receiving_snap_count           = 4;
+    // Current receiving snapshot count.
+    uint32 applying_snap_count            = 5;
+
+    uint32 range_leader_count             = 6;
+
+    // Capacity for the DS.
+    uint64 capacity                       = 7;
+    // Actually used for the DS.
+    uint64 used_size                      = 8;
+    // Available size for the node.
+    uint64 available                      = 9;
+
+    // Bytes written for the DS.
+    uint64 bytes_written                  = 10;
+    // Keys written for the DS.
+    uint64 keys_written                   = 11;
+    // Bytes read for the DS.
+    uint64 bytes_read                     = 12;
+    // Keys read for the DS.
+    uint64 keys_read                      = 13;
+
+    // If the node is busy
+    bool is_busy                          = 14;
+    // When the node is started (unix timestamp in seconds).
+    uint32 start                          = 15;
+}
+
+message NodeHeartbeatRequest {
+    RequestHeader header                  = 1;
+    uint64 node_id                        = 2;
+
+    NodeStats stats                       = 3;
+    // 孤立的副本列表, 超过一个小时都没有收到leader心跳
+    repeated uint64 isolated_replicas     = 4;
+}
+
+message NodeHeartbeatResponse {
+    ResponseHeader header       = 1;
+    uint64 node_id              = 2;
+    // 需要清理的副本列表
+    repeated uint64 delete_replicas = 3;
+}
+
+message AskSplitRequest {
+    RequestHeader header = 1;
+
+    metapb.Range range   = 2;
+
+    bytes split_key      = 3;
+}
+
+message AskSplitResponse {
+    ResponseHeader header = 1;
+    
+    //set AskSplitRequest::range
+    metapb.Range range   = 2;
+
+    // We split the region into two, first uses the origin
+    // parent region id, and the second uses the new_region_id.
+    // We must guarantee that the new_region_id is global unique.
+    uint64 new_range_id = 3;
+
+    // The peer ids for the new split region.
+    repeated uint64 new_peer_ids = 4;
+
+    bytes split_key      = 5;
+}
+
+message ReportSplitRequest {
+    RequestHeader header = 1;
+
+    metapb.Range left    = 2;
+    metapb.Range right   = 3;
+}
+
+message ReportSplitResponse {
+    ResponseHeader header = 1;
+}
+
+message NodeLoginRequest {
+    RequestHeader header       = 1;
+    uint64       node_id       = 2;
+}
+
+message NodeLoginResponse {
+    ResponseHeader header      = 1;
+}
+
+message GetNodeIdRequest {
+    RequestHeader header       = 1;
+    uint32      server_port    = 2;
+    uint32      raft_port      = 3;
+    uint32      http_port      = 4;
+    string      version        = 5;
+}
+
+message GetNodeIdResponse {
+    ResponseHeader header      = 1;
+    uint64       node_id       = 2;
+    // 是否需要节点清理所有数据
+    bool clearup               = 3;
+}
+
+message GetRouteRequest {
+    RequestHeader header                  = 1;
+    uint64 db_id                          = 2;
+    uint64 table_id                       = 3;
+    bytes key                             = 4;
+}
+
+message GetRouteResponse {
+    ResponseHeader header              = 1;
+    repeated metapb.Route routes       = 2;
+}
+
+message GetNodeRequest {
+    RequestHeader header     = 1;
+    uint64  id               = 2;
+}
+
+message GetNodeResponse {
+    ResponseHeader header     = 1;
+    metapb.Node   node        = 2;
+}
+
+message GetDBRequest {
+    RequestHeader header      = 1;
+    string  name              = 2;
+}
+
+message GetDBResponse {
+    ResponseHeader header    = 1;
+    metapb.DataBase   db     = 2;
+}
+
+message GetTableRequest {
+    RequestHeader header      = 1;
+    string db_name            = 2;
+    string table_name         = 3;
+}
+
+message GetTableByIdRequest {
+    RequestHeader header      = 1;
+    uint64 db_id              = 2;
+    uint64 table_id           = 3;
+}
+
+message GetTableResponse {
+    ResponseHeader header     = 1;
+    metapb.Table table        = 2;
+}
+
+message GetTableByIdResponse {
+    ResponseHeader header     = 1;
+    metapb.Table table        = 2;
+}
+
+message GetColumnsRequest {
+    RequestHeader header      = 1;
+    uint64 db_id              = 2;
+    uint64 table_id           = 3;
+}
+
+message GetColumnsResponse {
+    ResponseHeader header           = 1;
+    repeated metapb.Column columns  = 2;
+}
+
+message GetColumnByNameRequest {
+    RequestHeader header      = 1;
+    uint64 db_id              = 2;
+    uint64 table_id           = 3;
+    string col_name           = 4;
+}
+
+message GetColumnByNameResponse {
+    ResponseHeader header       = 1;
+    metapb.Column column        = 2;
+}
+
+message GetColumnByIdRequest {
+    RequestHeader header     = 1;
+    uint64 db_id             = 2;
+    uint64 table_id          = 3;
+    uint64 col_id            = 4;
+}
+
+message GetColumnByIdResponse {
+    ResponseHeader header       = 1;
+    metapb.Column column        = 2;
+}
+
+message AddColumnRequest {
+    RequestHeader header           = 1;
+    uint64 db_id                   = 2;
+    uint64 table_id                = 3;
+    repeated metapb.Column columns = 4;
+}
+
+message AddColumnResponse {
+    ResponseHeader header           = 1;
+    repeated metapb.Column columns  = 2;
+}
+
+message TruncateTableRequest {
+    RequestHeader header           = 1;
+    uint64 db_id                   = 2;
+    uint64 table_id                = 3;
+}
+
+message TruncateTableResponse {
+    ResponseHeader header           = 1;
+}
+
+message CreateDatabaseRequest {
+    RequestHeader header           = 1;
+    string db_name                 = 2;
+}
+
+message CreateDatabaseResponse {
+    ResponseHeader header           = 1;
+}
+
+message CreateTableRequest {
+    RequestHeader header           = 1;
+    string db_name                 = 2;
+    string table_name              = 3;
+    string properties              = 4;
+}
+
+message CreateTableResponse {
+    ResponseHeader header           = 1;
+}
+
+message RequestHeader {
+    uint64 cluster_id         = 1;
+}
+
+message ResponseHeader {
+    uint64 cluster_id         = 1;
+    Error error               = 2;
+}
+
+message MsLeader {
+    string  ms_leader   = 1;
+}
+
+message NoLeader {
+}
+
+message Error {
+    MsLeader  ms_leader = 2;
+    NoLeader  no_leader = 3;
+}

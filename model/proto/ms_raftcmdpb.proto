@@ -1,0 +1,93 @@
+syntax = "proto3";
+package ms_raftcmdpb;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message RaftKvPair {
+    bytes key         = 1;
+    bytes value       = 2;
+    uint64 timestamp  = 3;
+    uint64 applyIndex = 4;
+}
+
+message KvPair {
+    bytes   key   = 1;
+    bytes   value = 2;
+}
+
+message GetRequest {
+    bytes key            = 1;
+}
+
+message GetResponse {
+    // 0: success 1: not leader 2: raft busy 3: other error
+    int32  code           = 1;
+    bytes  value          = 2;
+}
+
+message PutRequest {
+    bytes key            = 1;
+    bytes value          = 2;
+}
+
+message PutResponse {
+    int32  code           = 1;
+}
+
+message DeleteRequest {
+    bytes key            = 1;
+}
+
+message DeleteResponse {
+    int32  code           = 1;
+}
+
+enum ExecuteType {
+    ExecInvalid     = 0;
+    ExecPut         = 1;
+    ExecDelete      = 2;
+}
+
+message KvPairExecute {
+    ExecuteType do           = 1;
+    KvPair   kv_pair         = 2;
+}
+
+message ExecuteRequest {
+    // 历史原因，只能是2
+    repeated KvPairExecute  execs     = 1;
+}
+
+message ExecuteResponse {
+    int32 code              = 1;
+}
+
+enum CmdType {
+    Invalid     = 0;
+    Get         = 1;
+    Put         = 2;
+    Delete      = 3;
+    Execute     = 4;
+}
+
+message Request {
+    CmdType              cmd_type        = 2;
+
+    GetRequest           get_req         = 3;
+    PutRequest           put_req         = 4;
+    DeleteRequest        delete_req      = 5;
+    ExecuteRequest       execute_req     = 6;
+}
+
+message Response {
+    CmdType               cmd_type         = 1;
+
+    GetResponse           get_resp         = 2;
+    PutResponse           put_resp         = 3;
+    DeleteResponse        delete_resp      = 4;
+    ExecuteResponse       execute_resp     = 5;
+}

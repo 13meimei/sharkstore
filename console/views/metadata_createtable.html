@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建元数据</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="/static/css/plugins/jqgrid/jsgrid.min.css">
+    <link rel="stylesheet" href="/static/css/plugins/jqgrid/jsgrid-theme.min.css">
+
+    <link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+    <script src="/static/js/jquery.min.js?v=2.1.4"></script>
+    <link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+    <script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.core.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.load-indicator.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.load-strategies.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.sort-strategies.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.validation.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.field.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.field.text.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.field.number.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.field.select.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.field.checkbox.js"></script>
+    <script src="/static/js/plugins/jqgrid/validation/jsgrid.field.control.js"></script>
+</head>
+<body>
+<div class="jsgrid-grid-header" style="margin-top: 10px; width:30%">
+    <table class="jsgrid-table">
+        <tbody>
+        <tr class="jsgrid-header-row">
+            <th style="width: 50px;">目标数据库:</th>
+            <th style="width: 80px;">{[{.dbName}]}</th>
+            <input type="hidden" id="dbName" value="{[{.dbName}]}" />
+            <input type="hidden" id="id" value="{[{.dbId}]}"/>
+            <input type="hidden" id="clusterId" value="{[{.clusterId}]}" />
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div class="jsgrid-grid-header" style="margin-top: 10px; width:60%">
+    <table class="jsgrid-table">
+        <tbody>
+        <tr class="jsgrid-header-row">
+            <th style="width: 20%;">表名</th>
+            <th style="width:60%;">预分裂key</th>
+            <th style="width:15%;">读写策略</th>
+        </tr>
+        <tr class="jsgrid-filter-row">
+            <td style="width: 20%;"><input type="text" id="name" value=""></td>
+            <td style="width: 60%;"><input type="text" id="rangeKeys" value="" placeholder="输入预分裂key以逗号(,)分割"></td>
+            <td style="width: 15%;">
+                <select id="policy">
+                    <option value="1">读写分离</option>
+                    <option value="2">混合读</option>
+                    <option value="3">仅master读</option>
+                </select>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div id="jsGrid" style="margin-top: 10px;"></div>
+</body>
+<script src="/static/js/createtables/createtable.js"></script>
+</html>

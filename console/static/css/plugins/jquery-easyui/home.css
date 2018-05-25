@@ -1,0 +1,48 @@
+@CHARSET "UTF-8";
+
+html, body{ width: 100%; height: 100%; margin: 0px;  padding: 0px; border: 0px; overflow: hidden; }
+body{ font: normal 12px verdana,arial,tahoma;}
+
+.fw{color:#fff;}
+.fred{color:#ff0000;}
+.fgreen{color:green;}
+
+.icon-node {background: url('icons/host.gif') no-repeat center center;}
+.icon-db {background: url('icons/db.gif') no-repeat center center;}
+.icon-copy {background: url('icons/copy_tip.png') no-repeat left center;}
+.icon-copy2 {background: url('icons/copy_tip2.png') no-repeat left center;}
+
+.lMenu ul {margin:0px 0px 10px 0px; padding:0px;}
+.lMenu li {list-style:none; padding: 0px 10px; height:20px;}
+.lMenu li a{display:block; color: #08c; text-decoration: none;}
+.lMenu li a:hover{text-decoration: underline;}
+
+#tabPanel {width:100%; height:100%; }
+#tabPanel #qryCond {width:100%; height:200px; overflow:hidden;}
+#tabPanel #qryCond textarea {width:100%; height:150px; border:0px;}
+#tabPanel #qryRet {width:100%; height:100%;}
+
+#tabPanel .panel-header {}
+#tabPanel .panel-header .panel-title {height:24px; line-height:24px;}
+#tabPanel .panel-header .panel-tool {right:inherit; height:24px; line-height:24px; }
+#tabPanel .window-header .panel-tool {right:1px;}
+
+#dbTabs {widh:100%; height:auto; overflow:hidden;}
+iframe{width:100%; }
+
+.table {width:100%; height:auto; border-bottom:10px;}
+.table td {padding:5px; vertical-align:middle;}
+.table input {margin-bottom:0px;}
+
+#dg{}
+
+#dlg,#dlg1 {width:900px; height:300px; padding:5px;}
+#dlg .control-group {margin-bottom:10px;}
+
+.datagrid-row-selected a{color:#FFF;}
+.datagrid-row td a:hover{text-decoration: underline;}
+
+.ddv {}
+.dv-table {width:50%;}
+.dv-table td {padding:3px; text-align:center; }
+.dv-table td.dv-label{	font-weight:bold;	color:#15428B; background-color:#ccc;	}

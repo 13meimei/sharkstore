@@ -1,0 +1,1259 @@
+PUT /hotspot_stats
+{
+  "mappings": {
+    "hotspot_stats": {
+      "properties": {
+        "update_time": {
+           "format": "epoch_second",
+           "type": "date"
+        },
+        "cluster_id": {
+            "type": "long"
+        },
+        "node_id": {
+            "type": "long"
+        },
+		"node_addr": {
+			"type": "string"
+		},
+		"total_written_bytes_as_peer": {
+			"type": "float"
+		},
+		"hot_write_region_as_peer": {
+			"type": "long"
+		},
+		"total_written_bytes_as_leader": {
+			"type": "float"
+		},
+		"hot_write_region_as_leader": {
+			"type": "long"
+		}
+      }
+    }
+  }
+}
+
+PUT /schedule_counter
+{
+  "mappings": {
+    "schedule_counter": {
+      "properties": {
+        "update_time": {
+           "format": "epoch_second",
+           "type": "date"
+        },
+        "cluster_id": {
+            "type": "long"
+        },
+		"name": {
+			"type": "string"
+		},
+		"label": {
+			"type": "string"
+		},
+		"count": {
+			"type": "long"
+		}
+      }
+    }
+  }
+}
+
+PUT /task_stats
+{
+  "mappings": {
+    "task_stats": {
+      "properties": {
+        "update_time": {
+           "format": "epoch_second",
+           "type": "date"
+        },
+        "cluster_id": {
+            "type": "long"
+        },
+        "task_id": {
+          "type": "long"
+        },
+        "range_id": {
+          "type": "long"
+        },
+         "kind": {
+            "type": "string"
+          },
+		 "name": {
+            "type": "string"
+		 },
+        "state": {
+            "type": "string"
+        },
+        "start": {
+            "type": "long"
+        },
+        "end": {
+            "type": "long"
+        },
+        "used_time": {
+            "type": "float"
+        },
+        "describe": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+
+-------------------
+
+PUT /cluster_meta
+
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "cluster_meta": {
+      "properties": {
+        "cluster_id":{
+          "store": true,
+          "type": "long"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "total_capacity": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "used_capacity": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "range_count": {
+          "index": "no",
+          "type": "long"
+        },
+        "db_count": {
+          "index": "no",
+          "type": "long"
+        },
+        "table_count": {
+          "index": "no",
+          "type": "long"
+        },
+        "ds_count": {
+          "index": "no",
+          "type": "long"
+        },
+        "gs_count": {
+          "index": "no",
+          "type": "long"
+        },
+        "fault_list": {
+          "index": "no",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+
+-------------------------
+PUT /cluster_net
+
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "cluster_net": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+       "cluster_id":{
+          "store": true,
+          "type": "long"
+        },
+       "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "tps": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "min_tp": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "max_tp": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "avg_tp": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "tp50": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "tp90": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "tp99": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "tp999": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "total_number": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "err_number": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_in_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_out_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "clients_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "open_clients_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+--------------------
+PUT  /cluster_slowlog
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "cluster_slowlog": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id":{
+          "store": true,
+          "type": "long"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "su": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "type": {
+          "store": true,
+          "index": "no",
+          "type": "string"
+        },
+        "addr": {
+          "store": true,
+          "index": "no",
+          "type": "string"
+        },
+        "lats": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "slowlog": {
+          "store": true,
+          "index": "no",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+
+-----------------------
+PUT /mac_meta
+
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "mac_meta": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+       "cluster_id":{
+          "store": true,
+          "type": "long"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "type": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "ip": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "cpu_rate": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "load1": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "load5": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "load15": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "process_num": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "thread_num": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "handle_num": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+
+------------------------
+PUT /mac_net
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "mac_net": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "type": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "ip": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "net_io_in_byte_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_io_out_byte_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_io_in_package_per_sec": {
+          "index": "no",
+          "type": "long"
+        },
+        "net_io_out_package_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_tcp_connections": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_tcp_active_opens_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_ip_recv_package_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_ip_send_package_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_ip_drop_package_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_tcp_recv_package_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_tcp_send_package_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_tcp_err_package_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "net_tcp_retransfer_package_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+----------------------------------
+PUT /mac_mem
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "mac_mem": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "type": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "ip": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "memory_total": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "memory_used_rss": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "memory_used": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "memory_free": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "memory_used_percent": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "swap_memory_total": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "swap_memory_used": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "swap_memory_free": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "swap_memory_used_percent": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        }
+      }
+    }
+  }
+}
+
+------------------------
+PUT /mac_disk
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "mac_disk": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "type": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "ip": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "disk_path": {
+          "store": true,
+          "index": "no",
+          "type": "string"
+        },
+        "disk_total": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_used": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_free": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_proc_rate": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "disk_read_byte_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_write_byte_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_read_count_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_write_count_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+-------------------------------
+PUT /process_meta
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "process_meta": {
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "type": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "addr": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "cpu_rate": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "thread_num": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "handle_num": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "memory_used": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "memory_total": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "start_time": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+-------------------------
+PUT /process_disk
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "process_disk": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "type": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "addr": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "disk_path": {
+          "store": true,
+          "index": "no",
+          "type": "string"
+        },
+        "disk_total": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_used": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_free": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_proc_rate": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "disk_read_byte_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_write_byte_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_read_count_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "disk_write_count_per_sec": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+
+------------------------
+PUT /process_net
+
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "process_net": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "type": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "addr": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "tps": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "min_tp": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "max_tp": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "avg_tp": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "tp50": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "tp90": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "tp99": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "tp999": {
+          "store": true,
+          "index": "no",
+          "type": "float"
+        },
+        "total_number": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "err_number": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "connect_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+-------------------------
+PUT /process_ds
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "process_ds": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "type": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "addr": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "range_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "range_split_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "sending_snap_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "receiving_snap_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "applying_snap_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "range_leader_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "version": {
+          "store": true,
+          "index": "no",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+
+----------------------------
+PUT /db_meta
+
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "db_meta": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "db_name": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "table_num": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "range_size": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+-------------------------
+PUT  /table_meta
+
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "table_meta": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "db_name": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "table_name": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "range_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "range_size": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+
+-------------------------
+PUT /range_stats
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "range_stats": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "addr": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "range_id": {
+          "store": true,
+          "type": "long"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "bytes_written": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "bytes_read": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "keys_written": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "keys_read": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "approximate_size": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+
+PUT /node_stats
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "16",
+      "number_of_replicas": "2"
+    }
+  },
+  "mappings": {
+    "node_stats": {
+       "_source": {
+         "enabled": false
+       },
+      "properties": {
+        "cluster_id": {
+          "store": true,
+          "type": "long"
+        },
+        "node_id": {
+           "store": true,
+           "type": "long"
+        },
+        "addr": {
+          "store": true,
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "update_time": {
+          "store": true,
+          "format": "epoch_second",
+          "type": "date"
+        },
+        "range_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "range_split_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "sending_snap_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "receiving_snap_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "applying_snap_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "range_leader_count": {
+          "store": true,
+          "index": "no",
+          "type": "long"
+        },
+        "capacity": {
+         "store": true,
+         "index": "no",
+         "type": "long"
+        },
+        "used_size": {
+         "store": true,
+         "index": "no",
+         "type": "long"
+        },
+        "available_size": {
+         "store": true,
+         "index": "no",
+         "type": "long"
+        },
+        "bytes_written": {
+         "store": true,
+         "index": "no",
+         "type": "long"
+        },
+        "keys_written": {
+         "store": true,
+         "index": "no",
+         "type": "long"
+        },
+        "bytes_read": {
+         "store": true,
+         "index": "no",
+         "type": "long"
+        },
+        "keys_read": {
+         "store": true,
+         "index": "no",
+         "type": "long"
+        },
+        "is_busy": {
+         "store": true,
+         "index": "not_analyzed",
+         "type": "string"
+        },
+        "version": {
+          "store": true,
+          "index": "no",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

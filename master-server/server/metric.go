@@ -1,0 +1,369 @@
+package server
+
+import (
+	"time"
+	"fmt"
+	"io/ioutil"
+	"errors"
+	"strings"
+	"sync"
+	"math"
+	"encoding/json"
+	"net/http"
+	"net"
+
+	"util/log"
+	"model/pkg/statspb"
+	"golang.org/x/net/context"
+)
+
+type Metric struct {
+	ctx      context.Context
+	cancel   context.CancelFunc
+	cluster  *Cluster
+	cli      *http.Client
+	addr     string
+	interval time.Duration
+	wg       sync.WaitGroup
+
+	lock            sync.Mutex
+	eventList       []RangeEvent
+	scheduleCounter map[string]map[string]uint64
+}
+
+func NewMetric(cluster *Cluster, addr string, interval time.Duration) *Metric {
+	if addr == "" || interval == 0 {
+		return nil
+	}
+	cli := &http.Client{
+		Transport: &http.Transport{
+			Dial: func(netw, addr string) (net.Conn, error) {
+				deadline := time.Now().Add(time.Second)
+				c, err := net.DialTimeout(netw, addr, time.Second)
+				if err != nil {
+					return nil, err
+				}
+				c.SetDeadline(deadline)
+				return c, nil
+			},
+		},
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	m := &Metric{cli: cli, addr: addr, interval: interval, cluster: cluster,
+		ctx: ctx, cancel: cancel, scheduleCounter: make(map[string]map[string]uint64)}
+	return m
+}
+
+func (m *Metric) run() {
+	defer m.wg.Done()
+	timer := time.NewTimer(m.interval)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-m.ctx.Done():
+			return
+		case <-timer.C:
+			timer.Reset(m.interval)
+			// 上报task
+			if err := m.eventInfoStats(); err != nil {
+				continue
+			}
+			// 上报调度统计
+			if err := m.scheduleCounterStats(); err != nil {
+				continue
+			}
+			// 上报集群统计
+			if err := m.clusterInfoStats(); err != nil {
+				continue
+			}
+			// 上报热点统计
+			//m.hotspotStats()
+		}
+	}
+}
+
+func (m *Metric) Run() {
+	if m == nil {
+		return
+	}
+	m.wg.Add(1)
+	go m.run()
+}
+
+func (m *Metric) Stop() {
+	if m == nil {
+		return
+	}
+	m.cancel()
+	m.wg.Wait()
+}
+
+func (m *Metric) CollectEvent(event RangeEvent) {
+	if m == nil {
+		return
+	}
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	list := m.eventList
+	list = append(list, event)
+	m.eventList = list
+	log.Info("add event success %v", event)
+}
+
+func (m *Metric) CollectScheduleCounter(name, label string) {
+	if m == nil {
+		return
+	}
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	var labels map[string]uint64
+	var count uint64
+	var ok bool
+	if labels, ok = m.scheduleCounter[name]; !ok {
+		labels = make(map[string]uint64)
+		m.scheduleCounter[name] = labels
+	}
+	count = labels[label]
+	count++
+	labels[label] = count
+}
+
+func (m *Metric) eventInfoStats() error {
+	m.lock.Lock()
+	eventList := m.eventList
+	m.eventList = make([]RangeEvent, 0)
+	m.lock.Unlock()
+	for _, event := range eventList {
+		if err := metricEvent(m.cli, m.cluster.GetClusterId(), m.addr, changeEventToMetricTask(event)); err != nil {
+			log.Warn("report task to metric server failed, err %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func changeEventToMetricTask(e RangeEvent) *statspb.TaskInfo{
+	return  &statspb.TaskInfo{
+		TaskId: e.GetId(),
+		RangeId: e.GetRangeID(),
+		Kind: ToEventTypeName(e.GetType()),
+		Describe: e.String(),
+		UsedTime: e.ExecTime().Seconds(),
+		State: ToEventStatusName(e.GetStatus()),
+	}
+}
+
+func (m *Metric) scheduleCounterStats() error {
+	m.lock.Lock()
+	schedulerCounter := m.scheduleCounter
+	m.scheduleCounter = make(map[string]map[string]uint64)
+	m.lock.Unlock()
+	for name, lableValues := range schedulerCounter {
+		for lable, count := range lableValues {
+			stats := &statspb.ScheduleCount{
+				Name:  name,
+				Label: lable,
+				Count: count,
+			}
+			if err := metricScheduleCount(m.cli, m.cluster.GetClusterId(), m.addr, stats); err != nil {
+				log.Warn("report schedule counter to metric server failed, err %v", err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+/**
+func (m *Metric) hotspotStats() error {
+	hotspots := m.cluster.coordinator.collectHotSpotMetrics()
+	for _, hotspot := range hotspots {
+		err := metricHotSpot(m.cli, m.cluster.GetClusterId(), m.addr, hotspot)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+*/
+func (m *Metric) clusterInfoStats() error {
+	stats := &statspb.ClusterStats{}
+	cluster := m.cluster
+	stats.DbNum = uint64(cluster.dbs.Size())
+	var dbStatss []*statspb.DatabaseStats
+	for _, db := range cluster.dbs.GetAllDatabase() {
+		dbStats := &statspb.DatabaseStats{Name: db.Name(), TableNum: uint32(db.tables.Size())}
+		dbStatss = append(dbStatss, dbStats)
+	}
+
+	var tableStatss []*statspb.TableStats
+	for _, table := range cluster.workingTables.GetAllTable() {
+		stats.TableNum++
+		var size, count uint64
+		for _, r := range cluster.GetTableAllRanges(table.GetId()) {
+			size += r.ApproximateSize
+			count++
+		}
+		stats.RangeNum += count
+		tableStats := &statspb.TableStats{
+			DbName:    table.GetDbName(),
+			TableName: table.GetName(),
+			RangeNum:  count, Size_: size}
+		tableStatss = append(tableStatss, tableStats)
+	}
+	storageSize := uint64(0)
+	storageCapacity := uint64(0)
+	minLeaderScore, maxLeaderScore := math.MaxFloat64, float64(0.0)
+	minRegionScore, maxRegionScore := math.MaxFloat64, float64(0.0)
+	for _, node := range cluster.GetAllNode() {
+		if node.isOffline() {
+			stats.NodeOfflineCount++
+		} else if node.isUp() {
+			stats.NodeUpCount++
+		} else if node.isTombstone() {
+			stats.NodeTombstoneCount++
+		} else if node.isDown() {
+			stats.NodeDownCount++
+		}
+		if !node.isUp() {
+			continue
+		}
+
+		// Store stats.
+		storageSize += node.storageSize()
+		storageCapacity += node.stats.GetCapacity()
+
+		// Balance score.
+		minLeaderScore = math.Min(minLeaderScore, node.leaderScore())
+		maxLeaderScore = math.Max(maxLeaderScore, node.leaderScore())
+		minRegionScore = math.Min(minRegionScore, float64(node.GetRangesCount()))
+		maxRegionScore = math.Max(maxRegionScore, float64(node.GetRangesCount()))
+	}
+	stats.SizeUsed = storageSize
+	stats.CapacityTotal = storageCapacity
+	stats.LeaderBalanceRatio = 1 - minLeaderScore/maxLeaderScore
+	stats.RegionBalanceRatio = 1 - minRegionScore/maxRegionScore
+
+	log.Debug("start to schedule metric, and send data to metric service:[%s], data:[%v] ", m.addr, stats)
+
+	err := metricCluster(m.cli, cluster.GetClusterId(), m.addr, stats)
+	if err != nil {
+		log.Warn("metric cluster stats failed, err %v", err)
+		return err
+	}
+	for _, dbStats := range dbStatss {
+		err = metricDb(m.cli, cluster.GetClusterId(), m.addr, dbStats)
+		if err != nil {
+			log.Warn("metric db stats failed, err %v", err)
+		}
+	}
+	for _, tableStats := range tableStatss {
+		err = metricTable(m.cli, cluster.GetClusterId(), m.addr, tableStats)
+		if err != nil {
+			log.Warn("metric table stats failed, err %v", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func metricEvent(cli *http.Client, clusterId uint64, addr string, task *statspb.TaskInfo) error {
+	data, err := json.Marshal(task)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("http://%s/metric/event?clusterId=%d", addr, clusterId)
+	request, err := http.NewRequest("POST", url, strings.NewReader(string(data)))
+	if err != nil {
+		return err
+	}
+	return send(cli, request)
+}
+
+func metricHotSpot(cli *http.Client, clusterId uint64, addr string, spot *statspb.HotSpotStats) error {
+	data, err := json.Marshal(spot)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("http://%s/metric/hotspot?clusterId=%d", addr, clusterId)
+	request, err := http.NewRequest("POST", url, strings.NewReader(string(data)))
+	if err != nil {
+		return err
+	}
+	return send(cli, request)
+}
+
+func metricScheduleCount(cli *http.Client, clusterId uint64, addr string, count *statspb.ScheduleCount) error {
+	data, err := json.Marshal(count)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("http://%s/metric/schedule?clusterId=%d", addr, clusterId)
+	request, err := http.NewRequest("POST", url, strings.NewReader(string(data)))
+	if err != nil {
+		return err
+	}
+	return send(cli, request)
+}
+
+func metricCluster(cli *http.Client, clusterId uint64, addr string, stats *statspb.ClusterStats) error {
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("http://%s/metric/cluster?clusterId=%d", addr, clusterId)
+	request, err := http.NewRequest("POST", url, strings.NewReader(string(data)))
+	if err != nil {
+		return err
+	}
+	return send(cli, request)
+}
+
+func metricDb(cli *http.Client, clusterId uint64, addr string, stats *statspb.DatabaseStats) error {
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("http://%s/metric/db?clusterId=%d&namespace=%s", addr, clusterId, stats.Name)
+	request, err := http.NewRequest("POST", url, strings.NewReader(string(data)))
+	if err != nil {
+		return err
+	}
+	return send(cli, request)
+}
+
+func metricTable(cli *http.Client, clusterId uint64, addr string, stats *statspb.TableStats) error {
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("http://%s/metric/table?clusterId=%d&namespace=%s&subsystem=%s",
+		addr, clusterId, stats.DbName, stats.TableName)
+	request, err := http.NewRequest("POST", url, strings.NewReader(string(data)))
+	if err != nil {
+		return err
+	}
+	return send(cli, request)
+}
+
+func send(cli *http.Client, request *http.Request) error {
+	response, err := cli.Do(request)
+	if err != nil {
+		return err
+	}
+	if response.Body != nil {
+		defer response.Body.Close()
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return err
+		}
+		log.Debug("response ", string(data))
+	}
+	if response.StatusCode != http.StatusOK {
+		return errors.New("request failed, not ok")
+	}
+
+	return nil
+}

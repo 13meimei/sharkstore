@@ -1,0 +1,63 @@
+package: .
+import:
+- package: github.com/BurntSushi/toml
+- package: github.com/boltdb/bolt
+- package: github.com/docopt/docopt-go
+- package: github.com/dustin/go-humanize
+- package: github.com/gin-contrib/sessions
+- package: github.com/gin-gonic/gin
+- package: github.com/go-sql-driver/mysql
+- package: github.com/gogo/protobuf
+  subpackages:
+  - gogoproto
+  - proto
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+- package: github.com/google/btree
+- package: github.com/juju/errors
+- package: github.com/muesli/cache2go
+- package: github.com/olivere/elastic
+- package: github.com/petar/GoLLRB
+  subpackages:
+  - llrb
+- package: github.com/pkg/errors
+- package: github.com/robfig/config
+- package: github.com/shirou/gopsutil
+  subpackages:
+  - cpu
+  - disk
+  - load
+  - mem
+  - net
+- package: github.com/spinlock/jemalloc-go
+- package: github.com/syndtr/goleveldb
+  subpackages:
+  - leveldb
+  - leveldb/iterator
+  - leveldb/util
+- package: golang.org/x/net
+  subpackages:
+  - context
+  - netutil
+- package: google.golang.org/grpc
+  subpackages:
+  - peer
+  - reflection
+- package: github.com/kidstuff/mongostore
+  version: 256d65ac5b0e35e7c5ebb3f175c0bed1e5c2b253
+testImport:
+- package: github.com/CodisLabs/codis
+  subpackages:
+  - pkg/utils/assert
+  - pkg/utils/errors
+- package: github.com/ghemawat/stream
+- package: github.com/lib/pq
+- package: github.com/mohae/customjson
+- package: github.com/smartystreets/goconvey
+  subpackages:
+  - convey
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
+- package: gopkg.in/check.v1

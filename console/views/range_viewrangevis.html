@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>range展示</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<link rel="shortcut icon" href="/static/favicon.ico">
+<link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+<link href="/static/css/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
+<link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+<link href="/static/css/animate.css" rel="stylesheet">
+<link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+<link href="/static/css/custom.min.css" rel="stylesheet">
+<link href="/static/css/xenon-core.min.css" rel="stylesheet">
+<link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+<link href="/static/css/plugins/datapicker/bootstrap-datetimepicker.css" rel="stylesheet">
+</head>
+<body class="gray-bg">
+<dir ng-controller="ParentCtrl" ng-app="rangeTopo">
+	<input type="text" hidden="true" value="{[{.dbName}]}" id="dbName" name="dbName"/>
+	<input type="text" hidden="true" value="{[{.tableName}]}" id="tableName" name="tableName"/>
+	<input type="text" hidden="true" value="{[{.clusterId}]}" id="clusterId" name="clusterId"/>
+    <input type="text" hidden="true" value="{[{.rangeId}]}" id="rangeId" name="rangeId"/>
+    <input type="text" hidden="true" value="{[{.source}]}" id="source" name="source"/>
+	<div class="panel-body panel-body-tab topology" ng-controller="rangeTopoCtrl">
+      <ul id="topology" class="repeatParent">
+        <li ng-repeat="rangeLeaderRoot in rangeTreeArr" on-finish-render>
+          <div class="shardid">分片ID:{{rangeLeaderRoot.range.id}}, 状态：{{rangeLeaderRoot.range.state}}, 上次心跳：{{rangeLeaderRoot.range.last_hb_time}}</div>
+          <p class="topology-ip" ng-class="{'off': rangeLeaderRoot.leader.node.state != 1}" ng-mouseout="checkShardHide(rangeLeaderRoot)" ng-mouseover="checkShard(rangeLeaderRoot)">
+            <strong ng-click="showRangeInfo(rangeLeaderRoot,'leader')">{{rangeLeaderRoot.leader.node.server_addr}}
+            	<input type="text" hidden="true" value="{{rangeLeaderRoot.leader.id}}" id="rangeId" name="rangeId"/>
+            </strong>
+             <span class="topology-btn" ng-show="rangeLeaderRoot.statusBtn">
+              <span class="btn btn-black" ng-click="splitInstance(rangeLeaderRoot)">分裂</span>
+              <span class="btn btn-black" ng-click="moveInstance(rangeLeaderRoot)">删除</span>
+              <span class="btn btn-black" ng-click="addInstance(rangeLeaderRoot)">增加副本</span>
+              <!--<span class="btn btn-black" ng-click="offlineRange(rangeLeaderRoot)">下线</span>-->
+             </span>
+          </p>
+          <ul class="topology-level" ng-if="rangeLeaderRoot.range.peers.length" ng-include="'/static/recursion.jsp'" ng-init="rangeTreeArr=rangeLeaderRoot"></ul>
+        </li>
+      </ul>
+    </div>
+    <!-- 弹出页面显示分片详细信息 start -->
+    <div class="modal fade modaltab" id="subDetail" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" ng-controller="jsplumbmoreCtrl" ng-init="subdetail = true">
+	  <div class="modal-dialog" >
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">
+	          <span aria-hidden="false">&times;</span><span class="sr-only">Close</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	        <div class="panel panel-default panel-tab">
+	          <div class="panel-heading panel-tab-head">
+	            <form class="form-inline panel-tab-form">
+		            <div class="input-group active">
+	                	<button type="button" class="btn btn-info" space-client>详细信息</button>
+	              	</div>
+	              	<div class="input-group">
+	                	<button type="button" class="btn btn-info" space-auth>监控</button>
+	              	</div>
+	            </form>
+	          </div>
+	          <div class="panel-body panel-body-tab subdetail-detail" ng-controller="subdetailCtrl">
+	            <div ng-repeat="key in detailkeys">
+	              <div class="monitor-title">
+	                <span ng-bind="key"></span>
+	              </div>
+	              <table class="table table-striped table-bordered">
+	                <tbody>
+	                  <tr ng-repeat="subkey in detail[key + 'subkeys'] track by $index">
+	                    <td style="width:30%" ng-bind="subkey"></td>
+	                    <td ng-bind="detail[key][subkey]"></td>
+	                  </tr>
+	                </tbody>
+	              </table>
+	            </div>
+	          </div>
+	          <div class="panel-body panel-body-tab monitor" ng-controller="monitorCtrl" style="display:none">
+	            <div class="monitor-title">
+	              <span>分片监控图</span>
+	              <form class="form-inline">
+		        	<label class="font-noraml">范围选择</label>
+                   <div class="input-daterange input-group" id="datepicker">
+                       <input type="text" class="input-sm form-control" id="start" placeholder="开始日期"/>
+                       <span class="input-group-addon">到</span>
+                       <input type="text" class="input-sm form-control" id="end" placeholder="结束日期"/>
+                   </div>
+		            <div class="form-group">
+		                <div class="input-group">
+		                    <button type="button" class="btn btn-info" ng-click="queryFilter()">查询</button>
+		                </div>
+		            </div>
+		        </form>
+	            </div>
+	            <div class="moniter-chart">
+		            <div id="container_ops" style="min-width:400px;height:400px"></div>
+				    <div id="container_size" style="min-width:400px;height:400px"></div>
+				    <div id="container_outper_inper" style="min-width:400px;height:400px"></div>
+                </div>
+	          </div>
+	        </div><!--panel-->
+	      </div>
+	    </div><!--modal content-->
+	  </div>
+	</div>
+	<!-- 弹出页面显示分片详细信息 start -->
+</dir>
+</body>
+	<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+	<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+	<script src="/static/js/plugins/bootstrap-table/bootstrap-table.min.js"></script>
+    <script src="/static/js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+    <script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
+    <script src="/static/js/angular/angular.min.js"></script>
+    <!-- 监控数据js start -->
+    <script src="/static/js/plugins/highcharts/highcharts.js"></script>
+    <script src="/static/js/plugins/highcharts/exporting.js"></script>
+    <script src="/static/js/plugins/highcharts/highcharts-zh_CN.js"></script>
+    <script src="/static/js/plugins/datapicker/bootstrap-datetimepicker.js"></script>
+    <script src="/static/js/plugins/jsplumbtoolkit/jsPlumb-2.0.5.js"></script>
+    <!-- 加载拓扑图 -->
+    <script src="/static/js/cluster/rangetopu.js"></script>
+</html>

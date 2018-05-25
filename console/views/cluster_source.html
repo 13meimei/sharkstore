@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户信息</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+    <link href="/static/css/animate.css" rel="stylesheet">
+    <link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+</head>
+<body>
+<div class="wrapper wrapper-content" ng-app="clusterDeployPolicy" ng-controller="clusterDeployPolicyCtl">
+    <input type="text" hidden="true" value="{[{.clusterId}]}" id="clusterId" name="clusterId"/>
+    <div class="row" style="padding-left: 15px;">
+        <div class="col-sm-4">
+            <div class="row row-sm text-center">
+                <div class="col-xs-4" ng-click="addSource('addsource')">
+                    <div class="panel padder-v item bg-primary">
+                        <div class="h1 text-fff font-thin h1">添加资源</div>
+                    </div>
+                </div>
+                <div class="col-xs-4" ng-click="addSource('createdb')">
+                    <div class="panel padder-v item bg-info">
+                        <div class="h1 text-fff font-thin h1">创建DB</div>
+                    </div>
+                </div>
+                <div class="col-xs-4" ng-click="addSource('createtable')">
+                    <div class="panel padder-v item bg-primary">
+                        <div class="h1 text-fff font-thin h1">创建表</div>
+                    </div>
+                </div>
+                <div class="col-xs-4" ng-click="clusterDeployPolicy()">
+                    <div class="panel padder-v item bg-primary">
+                        <div class="h1 text-fff font-thin h1">部署策略</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 弹出页面显示分片详细信息 start -->
+    <div class="modal fade modaltab" id="subDetail" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" ng-init="subdetail = true">
+        <div class="modal-dialog" >
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="false">&times;</span><span class="sr-only">Close</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table id="one" class="table table-striped table-bordered">
+                        <tbody>
+                        <tr>
+                            <td style="width:30%">数据中心</td>
+                            <td>
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" value="华北" id="zone_name" checked="checked"/>华北
+                                </label>
+                            </td>
+                        </tr>
+                        <tr id="1">
+                            <td style="height: 32px;">
+                                <select class="form-control" style="height:35px;" name="master" id="master" ng-model="clusterdps.master.master.room_name">
+                                    <option value="廊坊" ng-selected="clusterdps.master.master.room_name == '廊坊'">廊坊</option>
+                                    <option value="马驹桥" ng-selected="clusterdps.master.master.room_name == '马驹桥'">马驹桥</option>
+                                    <option value="廊坊润泽" ng-selected="clusterdps.master.master.room_name == '廊坊润泽'">廊坊润泽</option>
+                                    <option value="廊坊联通磐石" ng-selected="clusterdps.master.master.room_name == '廊坊联通磐石'">廊坊联通磐石</option>
+                                </select>
+                            </td>
+                            <td style="width:95%">
+                                <input class="form-control" style="height:35px;" type="number" min="1" id="ds_num" name="ds_num" placeholder="副本数量" ng-model="clusterdps.master.master.ds_num"/>
+                            </td>
+                            <td style="width:10px;border: 0px solid #804040;">
+                                <i class="fa fa-plus ml50" ng-click="slaveAdd()"></i>
+                            </td>
+                        </tr>
+                        <div ng-if="clusterdps.master.slaves != null">
+                            <tr id="{{$index + 2}}" ng-repeat="slave in clusterdps.master.slaves track by $index">
+                                <td style="height: 32px;">
+                                    <select class="form-control" style="height:35px;" id="slave{{$index + 2}}" ng-model="slave.room_name">
+                                        <option value="廊坊" ng-selected="slave.room_name=='廊坊'">廊坊</option>
+                                        <option value="马驹桥" ng-selected="slave.room_name=='马驹桥'">马驹桥</option>
+                                        <option value="廊坊润泽" ng-selected="slave.room_name=='廊坊润泽'">廊坊润泽</option>
+                                        <option value="廊坊联通磐石" ng-selected="slave.room_name=='廊坊联通磐石'">廊坊联通磐石</option>
+                                    </select>
+                                </td>
+                                <td style="width:95%">
+                                    <input class="form-control" style="height:35px;" type="number" min="1" id="slave_ds_num{{$index + 2}}" placeholder="副本数量" ng-model="slave.ds_num"/>
+                                </td>
+                                <td style="width:10px;border: 0px solid #804040;">
+                                    <i class="fa fa-minus ml50" ng-click="slaveDel($index + 2)"></i>
+                                </td>
+                            </tr>
+                        </div>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-white" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" ng-click="saveClusterDeployPolicy()">保存</button>
+                </div>
+            </div><!--modal content-->
+        </div>
+    </div>
+    <!-- 弹出页面显示分片详细信息 start -->
+</div>
+</body>
+<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+<script src="/static/js/angular/angular.min.js"></script>
+<!-- 加载监控数据js -->
+<script src="/static/js/cluster/source.js"></script>
+<!-- 监控数据js end -->
+</html>

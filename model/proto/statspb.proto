@@ -1,0 +1,265 @@
+syntax = "proto3";
+package statspb;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message ClusterStats {
+    uint64 capacity_total                  = 1;
+    uint64 size_used                       = 2;
+    uint64 range_num                       = 3;
+    uint64 db_num                          = 4;
+    uint64 table_num                       = 5;
+    uint64 task_num                        = 6;
+    uint64 node_up_count                   = 7;
+    uint64 node_down_count                 = 8;
+    uint64 node_offline_count              = 9;
+    uint64 node_tombstone_count            = 10;
+    double leader_balance_ratio             = 11;
+    double region_balance_ratio             = 12;
+}
+
+message DatabaseStats {
+    string name                             = 1;
+    uint32 table_num                        = 2;
+}
+
+message TableStats {
+    string db_name                           = 1;
+    string table_name                        = 2;
+    uint64 range_num                         = 3;
+    uint64 size                              = 4;
+}
+
+message TaskInfo {
+    uint64   task_id       = 1;
+    uint64   range_id      = 2;
+    string   kind          = 3;
+    string   name          = 4;
+    // 任务状态
+    string   state         = 5;
+    int64    start         = 6;
+    int64    end           = 7;
+    // 单位s
+    double   used_time     = 8;
+    string   describe      = 9;
+}
+
+message HotSpotStats {
+    uint64 node_id                      = 1;
+    string node_addr                    = 2;
+
+    double total_written_bytes_as_peer   = 3;
+    uint64 hot_write_region_as_peer     = 4;
+    double total_written_bytes_as_leader = 5;
+    uint64 hot_write_region_as_leader   = 6;
+}
+
+message ScheduleCount {
+    string    name   = 1;
+    string    label  = 2;
+    uint64    count  = 3;
+}
+
+message DiskStats {
+    string disk_path                         = 1;
+    uint64 disk_total                        = 2;
+    uint64 disk_used                         = 3;
+    uint64 disk_free                         = 4;
+    double disk_proc_rate                    = 5;
+
+    uint64 disk_read_byte_per_sec            = 6;
+    uint64 disk_write_byte_per_sec           = 7;
+    uint64 disk_read_count_per_sec           = 8;
+    uint64 disk_write_count_per_sec          = 9;
+}
+
+message NetStats {
+    uint64 net_io_in_byte_per_sec            = 1;
+    uint64 net_io_out_byte_per_sec           = 2;
+    uint64 net_io_in_package_per_sec         = 3;
+    uint64 net_io_out_package_per_sec        = 4;
+    uint32 net_tcp_connections               = 5;
+    uint64 net_tcp_active_opens_per_sec      = 6;
+    uint64 net_ip_recv_package_per_sec       = 7;
+    uint64 net_ip_send_package_per_sec       = 8;
+    uint64 net_ip_drop_package_per_sec       = 9;
+    uint64 net_tcp_recv_package_per_sec      = 10;
+    uint64 net_tcp_send_package_per_sec      = 11;
+    uint64 net_tcp_err_package_per_sec       = 12;
+    uint64 net_tcp_retransfer_package_per_sec = 13;
+}
+
+message MemStats {
+    uint64 memory_total                      = 1;
+    uint64 memory_used_rss                   = 2;
+    uint64 memory_used                       = 3;
+    uint64 memory_free                       = 4;
+    double memory_used_percent               = 5;
+    uint64 swap_memory_total                 = 6;
+    uint64 swap_memory_used                  = 7;
+    uint64 swap_memory_free                  = 8;
+    double swap_memory_used_percent          = 9;
+}
+
+message TpStats {
+    uint64 tps                              = 1;
+    // min　latency ms
+    double min                              = 2;
+    // max　latency ms
+    double max                              = 3;
+    // avg　latency ms
+    double avg                              = 4;
+    double tp_50                            = 5;
+    double tp_90                            = 6;
+    double tp_99                            = 7;
+    double tp_999                           = 8;
+    uint64 total_number                     = 9;
+    uint64 err_number                       = 10;
+}
+
+message SlowLog {
+    string slow_log       = 1;
+    double lats           = 2;
+}
+
+message SlowLogStats {
+    repeated SlowLog  slow_logs = 1;
+}
+
+message DsInfo {
+    // Total range count in this store.
+    uint64 range_count                       = 1;
+    // Current range split count.
+    uint32 range_split_count                 = 2;
+    // Current sending snapshot count.
+    uint32 sending_snap_count                = 3;
+    // Current receiving snapshot count.
+    uint32 receiving_snap_count              = 4;
+
+    // How many range is applying snapshot.
+    uint32 applying_snap_count               = 5;
+    uint32 range_leader_count                = 6;
+
+    // ds version for update
+    string version                           = 7;
+}
+
+message ProcessStats {
+    double cpu_proc_rate                     = 1;
+
+    uint64 memory_total                      = 2;
+    uint64 memory_used                       = 3;
+    // 客户端连接数
+    uint64 connect_count                     = 4;
+    // 一般只有DS需要
+    DiskStats disk_stats                     = 8;
+
+    TpStats tp_stats                         = 9;
+    // 只有ds process需要统计这部分信息
+    DsInfo ds_info                           = 10;
+
+    // 线程数 or 协程数
+    uint32 thread_num                        = 11;
+    // 句柄数
+    uint32 handle_num                        = 12;
+
+    // When the data server is started (unix timestamp in seconds).
+    int64 start_time                         = 13;
+}
+
+message MacStats {
+    double cpu_proc_rate                     = 1;
+    uint32 cpu_count                         = 2;
+    double load1                             = 3;
+    double load5                             = 4;
+    double load15                            = 5;
+
+    MemStats mem_stats                       = 6;
+    NetStats net_stats                       = 7;
+    // 多个磁盘的统计情况
+    repeated DiskStats disk_stats            = 8;
+
+    // 进程数
+    uint32 process_num                       = 9;
+    // 线程数
+    uint32 thread_num                        = 10;
+    // 句柄数
+    uint32 handle_num                        = 11;
+}
+
+message RangeStats {
+    uint64 size                = 1;
+    uint64 ops                 = 2;
+    uint64 bytes_in_per_sec    = 3;
+    uint64 bytes_out_per_sec   = 4;
+    uint64 total_commands_processed = 5;
+    uint64 keyspace_misses     = 6;
+}
+
+message ReplicaStatus {
+    uint64 Match                = 1;
+    uint64 Commit               = 2;
+    uint64 Next                 = 3;
+    string State                = 4;
+    bool Snapshoting            = 5;
+    bool Paused                 = 6;
+    bool Active                 = 7;
+    int64 LastActive            = 8;
+    int32 Inflight              = 9;
+    uint64 ID                   = 10;
+}
+
+message RaftStatus {
+    uint64 ID                       = 1;
+    uint64 NodeID                   = 2;
+    uint64 Leader                   = 3;
+    uint64 Term                     = 4;
+    uint64 Index                    = 5;
+    uint64 Commit                   = 6;
+    uint64 Applied                  = 7;
+    uint64 Vote                     = 8;
+    int32 PendQueue                 = 9;
+    int32 RecvQueue                 = 10;
+    int32 AppQueue                  = 11;
+    bool Stopped                    = 12;
+    bool RestoringSnapshot          = 13;
+    string State                    = 14;
+    repeated ReplicaStatus Replicas = 15;
+}
+
+enum TpArgs {
+    invalid = 0;
+    msec_index =        1000;
+    sec_index =         1060;
+    min_index =         1061;
+}
+
+message SqlStats {
+    int64 ops           = 1;
+    int64 delay_avg     = 2;
+    bytes tp            = 3;
+}
+
+message SqlSlowlog {
+    uint32 len                           = 1;
+    int32 than                           = 2;
+    uint32 idx                           = 3;
+    repeated SqlSlow log                 = 4;
+}
+
+message SqlSlow {
+    int64 time_sec                     = 1;
+    string sql                         = 2;
+    int64 total_usec                   = 3;
+    int64 call_usec                    = 4;
+}
+
+message SqlTp {
+    int64 calls                        = 1;
+    repeated int64 tp                  = 2;
+    int64 delay_max                    = 3;
+}

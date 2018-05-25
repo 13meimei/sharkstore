@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>角色管理</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<link rel="shortcut icon" href="/static/favicon.ico">
+<link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+<link href="/static/css/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
+<link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+<link href="/static/css/animate.css" rel="stylesheet">
+<link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+<link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+<link href="/static/css/plugins/datapicker/bootstrap-datetimepicker.css" rel="stylesheet">
+</head>
+<body>
+    <div class="monitor-title">
+      <span>角色管理</span>
+    </div>
+    <!-- Example Events -->
+    <div class="example">
+        <div class="btn-group hidden-xs" id="exampleTableEventsToolbar" role="group">
+            <button type="button" class="btn btn-outline btn-default" onclick="showAddUserModal()">
+                <i class="glyphicon glyphicon-plus" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn btn-outline btn-default" onclick="delRoles()">
+                <i class="glyphicon glyphicon-trash" aria-hidden="true"></i>
+            </button>
+        </div>
+        <table id="exampleTableEvents" data-height="400" data-mobile-responsive="true">
+            <thead>
+                <tr>
+                    <th data-field="state" data-checkbox="true"></th>
+                    <th data-field="role_id">ID</th>
+                    <th data-field="role_name">角色名</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <!-- End Example Events -->
+    <!-- 弹出页面显示分片详细信息 start -->
+    <div class="modal fade modaltab" id="userAddDetail" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+	  <div class="modal-dialog" >
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">
+	          <span aria-hidden="false">&times;</span><span class="sr-only">Close</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+             <div class="form-group">
+                  <label>角色Id</label>
+                  <input id="roleId" name="roleId" placeholder="添加角色Id（数字）" class="form-control">
+              </div>
+              <div class="form-group">
+                  <label>角色名称</label>
+                  <input id="roleName" name="roleName" placeholder="添加角色名称" class="form-control">
+              </div>
+	      </div>
+	      <div class="modal-footer">
+             <button type="button" class="btn btn-white" data-dismiss="modal">关闭</button>
+             <button type="button" class="btn btn-primary" onclick="addRole()">保存</button>
+          </div>
+	    </div><!--modal content-->
+	  </div>
+	</div>
+    <!-- end 模态窗口 start -->
+</body>
+	<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+	<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+	<script src="/static/js/plugins/bootstrap-table/bootstrap-table.min.js"></script>
+	<script src="/static/js/plugins/bootstrap-table/bootstrap-table-editable.js"></script>
+    <script src="/static/js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+    <script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
+    <script src="/static/js/angular/angular.min.js"></script>
+    <script src="/static/js/plugins/datapicker/bootstrap-datetimepicker.js"></script>
+    <script src="/static/js/user/roleinfo.js"></script>
+    <!-- 监控数据js end -->
+</html>

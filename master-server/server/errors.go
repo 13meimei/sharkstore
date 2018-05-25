@@ -1,0 +1,45 @@
+package server
+
+import (
+	"errors"
+)
+
+var (
+	ERR_NO_SELECTED_NODE = errors.New("not selected node")
+	ErrInternalError      = errors.New("internal error")
+	ErrGenID              = errors.New("gen ID failed")
+	ErrDupDatabase        = errors.New("duplicate database")
+	ErrDupTable           = errors.New("duplicate table")
+	ErrNotExistDatabase   = errors.New("database not exist")
+	ErrNotExistTable      = errors.New("table not exist")
+	ErrNotExistNode       = errors.New("node not exist")
+	ErrNotActiveNode      = errors.New("node is not up")
+	ErrNotExistRange      = errors.New("range not exist")
+	ErrExistsRange        = errors.New("range exist")
+	ErrNotExistPeer       = errors.New("range peer not exist")
+	ErrNotEnoughResources = errors.New("not enough resources")
+	ErrInvalidParam       = errors.New("invalid param")
+	ErrInvalidColumn      = errors.New("invalid column")
+	ErrColumnNameTooLong        = errors.New("column name is too long")
+	ErrDupColumnName            = errors.New("duplicate column name")
+	ErrPkMustNotNull            = errors.New("primary key must be not nullable")
+	ErrMissingPk                = errors.New("missing primary key")
+	ErrPkMustNotSetDefaultValue = errors.New("primary key should not set defaultvalue")
+	ErrNodeRejectNewPeer        = errors.New("node reject new peer")
+	ErrNodeBlocked                = errors.New("node is blocked")
+	ErrNodeStateConfused        = errors.New("confused node state")
+	ErrSchedulerExisted         = errors.New("scheduler is existed")
+	ErrSchedulerNotFound        = errors.New("scheduler is not found")
+	ErrWorkerExisted            = errors.New("worker is existed")
+	ErrWorkerNotFound           = errors.New("worker is not found")
+	ErrSqlReservedWord    = errors.New("sql reserved word")
+	ErrSQLSyntaxError     = errors.New("Syntax error")
+	ErrRangeMetaConflict  = errors.New("range meta conflict")
+	ErrNotFound           = errors.New("entity not found")
+	ErrNotAllowSplit      = errors.New("not allow split")
+	ErrNotCancel          = errors.New("not allow cancel")
+	ErrNotAllowDelete     = errors.New("not allow delete")
+
+
+	ErrRangeStatusErr = errors.New("range status is invalid")
+)

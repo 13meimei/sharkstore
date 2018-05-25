@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户权限信息</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<link rel="shortcut icon" href="/static/favicon.ico">
+<link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+<link href="/static/css/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
+<link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+<link href="/static/css/animate.css" rel="stylesheet">
+<link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+<link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+<link href="/static/css/plugins/datapicker/bootstrap-datetimepicker.css" rel="stylesheet">
+</head>
+<body>
+    <div class="monitor-title">
+      <span>用户权限列表</span>
+    </div>
+    <!-- Example Events -->
+    <div class="example">
+        <div class="btn-group hidden-xs" id="exampleTableEventsToolbar" role="group">
+            <button type="button" class="btn btn-outline btn-default" onclick="showUserModal('add')">
+                <i class="glyphicon glyphicon-plus" aria-hidden="true"></i>
+            </button>
+            <button id="btn_edit" type="button" class="btn btn-default" onclick="showUserModal('edit')">
+                <i class="glyphicon glyphicon-pencil" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn btn-outline btn-default" onclick="delPrivileges()">
+                <i class="glyphicon glyphicon-trash" aria-hidden="true"></i>
+            </button>
+        </div>
+        <table id="exampleTableEvents" data-height="400" data-mobile-responsive="true">
+			<thead>
+				<tr>
+					<th data-field="state" data-checkbox="true"></th>
+					<th data-field="user_name">用户</th>
+					<th data-field="cluster_id">集群号</th>
+					<th data-field="privilege">角色名</th>
+				</tr>
+			</thead>
+        </table>
+    </div>
+    <!-- End Example Events -->
+    <!-- 弹出页面显示分片详细信息 start -->
+    <div class="modal fade modaltab" id="userEditDetail" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+	  <div class="modal-dialog" >
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">
+	          <span aria-hidden="false">&times;</span><span class="sr-only">Close</span>
+	        </button>
+	      </div>
+	      <form class="form-horizontal m-t">
+	         <div class="form-group">
+	             <label class="col-sm-3 control-label">ERP：</label>
+	             <div class="col-sm-8">
+	                 <input id="erp" name="erp" class="form-control" type="text" readonly="readonly">
+	             </div>
+	         </div>
+	         <div class="form-group">
+	             <label class="col-sm-3 control-label">角色：</label>
+	             <div class="col-sm-8">
+				    <select id="roleName" name="roleName" class="form-control" change="roleChange()">
+				     <option value="3">普通用户</option> 
+				     <option value="2">集群管理员</option> 
+				     <option value="1">系统管理员</option> 
+				    </select>
+				  </div>
+	         </div>
+	         <div class="form-group">
+	             <label class="col-sm-3 control-label">集群：</label>
+	             <div class="col-sm-8">
+	                 <input id="clusterId" name="clusterId" class="form-control" type="text" class="error">
+	             </div>
+	         </div>
+	     </form>
+	      <div class="modal-footer">
+             <button type="button" class="btn btn-white" data-dismiss="modal">关闭</button>
+             <button type="button" class="btn btn-primary" onclick="saveUserPrivilege()">保存</button>
+          </div>
+	    </div><!--modal content-->
+	  </div>
+	</div>
+    <!-- end 模态窗口  -->
+</body>
+	<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+	<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+	<script src="/static/js/plugins/bootstrap-table/bootstrap-table.min.js"></script>
+	<script src="/static/js/plugins/bootstrap-table/bootstrap-table-editable.js"></script>
+    <script src="/static/js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+    <script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
+    <script src="/static/js/angular/angular.min.js"></script>
+    <script src="/static/js/plugins/datapicker/bootstrap-datetimepicker.js"></script>
+    <script src="/static/js/user/userprivilege.js"></script>
+    <!-- 监控数据js end -->
+</html>

@@ -1,0 +1,45 @@
+syntax = "proto3";
+package funcpb;
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+enum FunctionID {
+  kFuncHeartbeat        = 0;
+  kFuncRawGet           = 1;
+  kFuncRawPut           = 2;
+  kFuncRawDelete        = 3;
+  kFuncRawExecute       = 4;
+
+  kFuncSelect           = 10;
+  kFuncInsert           = 11;
+  kFuncDelete           = 12;
+  kFuncUpdate           = 13;
+  KFuncReplace          = 14;
+
+  kFuncKvSet              = 100;
+  kFuncKvGet              = 101;
+  kFuncKvBatchSet         = 102;
+  kFuncKvBatchGet         = 103;
+  kFuncKvDel              = 104;
+  kFuncKvBatchDel         = 105;
+  kFuncKvRangeDel         = 106;
+  kFuncKvScan             = 107;
+
+  kFuncLock               = 200;
+  kFuncLockUpdate         = 201;
+  kFuncUnlock             = 202;
+  kFuncUnlockForce        = 203;
+
+  kFuncCreateRange          = 1001;
+  kFuncDeleteRange          = 1002;
+  kFuncRangeTransferLeader  = 1003;
+  kFuncUpdateRange          = 1004;
+  kFuncGetPeerInfo          = 1005;
+  kFuncSetNodeLogLevel      = 1006;
+  kFuncOfflineRange         = 1007;
+  kFuncReplaceRange         = 1008;
+}

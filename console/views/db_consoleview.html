@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>控制台-sql查询</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/css/plugins/jquery-easyui/easyui.css">
+    <link rel="stylesheet" href="/static/css/plugins/jquery-easyui/home.css">
+</head>
+<body id="tabPanel" class="easyui-layout" data-options="fit:true">
+<div id="qryCond" data-options="
+             region:'north',
+             title:'&nbsp;',
+             split:true,
+             border:false,
+             tools:'#qryBtn',
+             height:190,
+             onResize:function(width,height){
+             var h = $(this).height() - 4;
+             $('#qrySql').height(h);
+             }
+             ">
+    <form id="qryFrm" name="frm" method="post">
+        <div id="qryBtn">
+                    <span>
+                    <input type="text" id="dbUserName" name="dbUserName" value="test" class="btn btn-white btn-sm" placeholder="请输入用户名"/>
+                	<input type="text" id="dbPassWord" name="dbPassWord" value="123456" class="btn btn-white btn-sm" placeholder="请输入密码"/>
+                    <button type="button" name="btnQuery" class="btnQuery" onclick="btnQuery()">执行查询(支持选中状态)</button>
+                    </span>
+        </div>
+        <div class="content">
+            <input type="text" hidden="true" value="{[{.clusterId}]}" id="clusterId" name="clusterId"/>
+            <input type="text" hidden="true" value="{[{.dbName}]}" id="dbName" name="clusterId"/>
+            <input type="text" hidden="true" value="{[{.dbId}]}" id="dbId" name="clusterId"/>
+            <textarea id="qrySql" name="sql" id="qrySql" class="autoHeight" style="width: 100%" placeholder="输入查询语句"></textarea>
+        </div>
+    </form>
+</div>
+
+<div id="qryRet" data-options="region:'center',title:'结果(系统自动获取固定行数)',border:false">
+    <div id="retTabs" class="easyui-tabs" data-options="fit:true,border:false"></div>
+</div>
+
+<!-- clips menu -->
+<div id="clipMenu" style="display:none;width:100px;">
+    <div iconCls="icon-copy">复制当前行</div>
+    <div iconCls="icon-copy2">复制所有行</div>
+</div>
+</body>
+<script src="/static/js/plugins/jquery-easyui/jquery.js"></script>
+<script src="/static/js/plugins/jquery-easyui/v1.5jquery.easyui.min.js"></script>
+<script src="/static/js/console/panel.js?20140701"></script>
+<script src="/static/js/console/viewconsole.js"></script>
+</html>

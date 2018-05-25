@@ -1,0 +1,97 @@
+syntax = "proto3";
+package schpb;
+
+import "metapb.proto";
+import "errorpb.proto";
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// TODO identity authentication
+message RequestHeader {
+    uint64 cluster_id         = 1;
+}
+
+message ResponseHeader {
+    uint64 cluster_id          = 1;
+    errorpb.Error error        = 2;
+}
+
+message CreateRangeRequest {
+    RequestHeader     header  = 1;
+    metapb.Range      range   = 2;
+}
+
+message CreateRangeResponse {
+    ResponseHeader     header = 1;
+}
+
+message DeleteRangeRequest {
+    RequestHeader     header  = 1;
+    uint64        range_id    = 2;
+}
+
+message DeleteRangeResponse {
+    ResponseHeader     header = 1;
+}
+
+message TransferRangeLeaderRequest {
+    RequestHeader     header  = 1;
+    uint64        range_id    = 2;
+}
+
+message TransferRangeLeaderResponse {
+    ResponseHeader     header = 1;
+}
+
+message GetPeerInfoRequest {
+    RequestHeader     header  = 1;
+    uint64        range_id    = 2;
+}
+
+message GetPeerInfoResponse {
+    ResponseHeader     header = 1;
+    metapb.Replica    replica   = 2;
+    uint64        index       = 3;
+    uint64        term        = 4;
+    uint64        commit      = 5;
+}
+
+message UpdateRangeRequest {
+    RequestHeader     header  = 1;
+    metapb.Range      range   = 2;
+}
+
+message UpdateRangeResponse {
+    ResponseHeader     header = 1;
+}
+
+message ReplaceRangeRequest {
+    RequestHeader     header        = 1;
+    uint64            old_range_id  = 2;
+    metapb.Range      new_range     = 3;
+}
+
+message ReplaceRangeResponse {
+    ResponseHeader     header = 1;
+}
+
+message SetNodeLogLevelRequest {
+    RequestHeader     header  = 1;
+    string            level   = 2;
+}
+
+message SetNodeLogLevelResponse {
+    ResponseHeader     header = 1;
+}
+
+message OfflineRangeRequest {
+    RequestHeader     header  = 1;
+    uint64      rangeId   = 2;
+}
+
+message OfflineRangeResponse {
+    ResponseHeader     header = 1;
+}

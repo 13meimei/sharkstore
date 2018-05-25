@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>创建数据库</title>
+<meta name="keywords" content="">
+<meta name="description" content="">
+<link rel="shortcut icon" href="/static/favicon.ico">
+<link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+<link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+<link href="/static/css/animate.css" rel="stylesheet">
+<link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+
+<link href="/static/css/plugins/webuploader/webuploader.css" rel="stylesheet">
+
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content animated fadeInRight">
+		<div class="row">
+			<div class="ibox float-e-margins">
+				<div class="ibox-title">
+					<h5>创建数据库</h5>
+				</div>
+				<div class="ibox-content">
+					<div class="form-horizontal">
+						<input type="text" hidden="true" value="{[{.clusterId}]}" id="clusterId" name="clusterId"/>
+						<div class="form-group">
+							<label class="col-sm-3 control-label">数据库名：</label>
+							<div class="col-sm-3">
+								<input type="text" id="dbName" placeholder="数据库名" class="form-control required"/>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-3 col-sm-8">
+								<button class="btn btn-sm btn-primary m-t-n-xs" type="button" onclick="createdb()">创建</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 全局js -->
+	<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+	<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+	<script src="/static/js/plugins/validate/jquery.validate.min.js"></script>
+	<script src="/static/js/plugins/validate/messages_zh.min.js"></script>
+	<script src="/static/js/plugins/webuploader/webuploader.js"></script>
+	<script type="text/javascript">
+	function createdb(){
+		var dbName = $("#dbName").val();
+		var clusterId = $("#clusterId").val();
+		//执行ajax提交
+		$.ajax({
+			url:"/metadata/createDb",
+			type:"post",
+			contentType:"application/x-www-form-urlencoded; charset=UTF-8",
+			dataType:"json",
+			data:{
+				"dbName":dbName,
+				"clusterId":clusterId
+			},
+			success: function(data){
+	            alert(data.msg);
+	        },
+	        error: function(res){
+	            alert(res.responseText);
+	        }
+		});
+	}
+	</script>
+</body>
+</html>

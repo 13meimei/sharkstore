@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>peer信息</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/css/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
+    <link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+    <link href="/static/css/animate.css" rel="stylesheet">
+    <link href="/static/css/custom.min.css" rel="stylesheet">
+    <link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+    <link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+    <script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/easyui.css">
+</head>
+<body class="gray-bg" style="margin-left: 10px;"ng-app="peers">
+<div class="example-wrap" ng-controller="mypeers" style="margin-top: 10px;">
+    <input type="text" hidden="true" value="{[{.rangeId}]}" id="rangeId" name="rangeId"/>
+    <input type="text" hidden="true" value="{[{.tableName}]}" id="tableName" name="tableName"/>
+    <input type="text" hidden="true" value="{[{.dbName}]}" id="dbName" name="dbName"/>
+    <input type="text" hidden="true" value="{[{.clusterId}]}" id="clusterId" name="clusterId"/>
+    <table class="table table-striped table-bordered space-list-table" id="table">
+        <thead>
+        <tr class="space-list-name">
+            <th class="spaceName" style="text-align: center; vertical-align: middle;width: 5%">peerId</th>
+            <th class="spaceName" style="text-align: center; vertical-align: middle;width: 15%">index</th>
+            <th class="spaceName" style="text-align: center; vertical-align: middle;width: 15%">term</th>
+            <th class="spaceName" style="text-align: center; vertical-align: middle;width: 15%">commit</th>
+            <th class="spaceName" style="text-align: center; vertical-align: middle;width: 15%">nodeId</th>
+            <th class="spaceName" style="text-align: center; vertical-align: middle;width: 15%">nodeAddress</th>
+            <th class="spaceName" style="text-align: center; vertical-align: middle;width: 15%">nodeState</th>
+            <th class="operate" style="text-align: center; vertical-align: middle;width: 19%">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="peer in peerInfo track by $index" >
+            <td style="vertical-align:middle; text-align:center;">{{peer.id}}</td>
+            <td style="vertical-align:middle; text-align:center;">{{peer.index}}</td>
+            <td style="vertical-align:middle; text-align:center;">{{peer.term}}</td>
+            <td style="vertical-align:middle; text-align:center;">{{peer.commit}}</td>
+            <td style="vertical-align:middle; text-align:center;">{{peer.node_id}}</td>
+            <td style="vertical-align:middle; text-align:center;">{{peer.node_address}}</td>
+            <td style="vertical-align:middle; text-align:center;">{{peer.node_state}}</td>
+            <td style="vertical-align:middle; text-align:center;" class="range-btns">
+                <!--<a class="btn btn-primary btn-rounded" ng-click="updateRange(peer.id)">更新meta(其它GC)</a> -->
+                <a class="btn btn-primary btn-rounded" ng-click="replaceRange(peer.id)">range替换(老rangeGC)</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+<script src="/static/js/plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="/static/js/plugins/bootstrap-table/locale/bootstrap-table-zh-CN.min.js"></script>
+<script src="/static/js/angular/angular.min.js"></script>
+<script src="/static/js/jquery.easyui.min.js"></script>
+<script src="/static/js/range/peerinfo.js"></script>
+<script src="/static/js/jquery.easyui.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+syntax = "proto3";
+package errorpb;
+
+import "metapb.proto";
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message NotLeader {
+    uint64 range_id         = 1;
+    metapb.RangeEpoch epoch = 2;
+    metapb.Peer leader      = 3;
+}
+
+message RangeNotFound {
+    uint64 range_id = 1;
+}
+
+message KeyNotInRange {
+    bytes key              = 1;
+    uint64 range_id        = 2;
+    bytes start_key        = 3;
+    bytes end_key          = 4;
+}
+
+message StaleCommand {
+}
+
+message Timeout {
+
+}
+
+message RaftFail {
+
+}
+
+message StaleEpoch {
+    metapb.Range old_range = 1;
+    metapb.Range new_range = 2;
+}
+
+message StaleRange {
+    metapb.Range range = 1;
+}
+
+message ServerIsBusy {
+    string reason = 1;
+}
+
+message EntryTooLarge {
+    uint64 range_id  = 1;
+    uint64 entry_size = 2;
+}
+
+message Error {
+    string              message                 = 1;
+    NotLeader           not_leader              = 2;
+    StaleCommand        stale_command           = 3;
+    RangeNotFound       range_not_found         = 4;
+    KeyNotInRange       key_not_in_range        = 5;
+    StaleEpoch          stale_epoch             = 6;
+    ServerIsBusy        server_is_busy          = 7;
+    EntryTooLarge       entry_too_large         = 8;
+    Timeout             timeout                 = 9;
+    RaftFail            raft_fail               = 10;
+    StaleRange          stale_range             = 11;
+}
