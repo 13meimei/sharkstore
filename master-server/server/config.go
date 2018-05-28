@@ -71,15 +71,18 @@ address = ""
 [metric.server]
 address = "127.0.0.1:8887"
 queue-num = 100
-db-url = ["http://192.168.182.11:20001","http://192.168.182.12:20001","http://192.168.182.13:20001"]
+store-type = "elasticsearch"
+store-url = ["http://192.168.182.11:20001","http://192.168.182.12:20001","http://192.168.182.13:20001"]
 
 [schedule]
 max-snapshot-count = 3
 max-node-down-time = "1h"
-max-range-down-time = "600s"
 leader-schedule-limit = 64
 region-schedule-limit = 16
 replica-schedule-limit = 24
+max-task-timeout = "300s"
+# 12 times of region heartbeat time
+max-range-down-time = "600s"
 node-range-balance-time = "120s"
 storage-available-threshold = 20
 writeByte-ops-threshold = 31457280
