@@ -65,24 +65,25 @@ We created a table named 'metric' witch 12 columns on 3 data servers with NVMe d
 
 # Features
 
-* SQL syntax compatible and restful api supported
+* SQL syntax compatible and restful api supported<br>
   *Users can access by sql client directly, and also by restful api.*
 
-* Dynamic table scheme
+* Dynamic table scheme<br>
   *Table columns is allowed to be added or renamed dynamically.*
 
-* Pre-sharding
+* Pre-sharding<br>
   *Pre-sharding is supported when creating a new table.*
 
-* Globally sorted data
+* Globally sorted data<br>
   *User can scan tables by primary key globally.*
 
-* Strong consistency.
+* Strong consistency.<br>
   *Strong consistency is guaranteed by the data replication works on raft group.*
 
-* Online scalability | Auto failover |Auto rebalance | Auto schedule 
+* Online scalability | Auto failover |Auto rebalance | Auto schedule<br>
 
-* NVMe+SPDK Supported  *in testing*
+* NVMe+SPDK Supported<br>
+  *in testing*
 
   
 

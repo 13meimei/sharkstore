@@ -13,15 +13,15 @@ sharkstore是一个分布式的持久化K-V存储系统，存储层依赖rocksdb
 目录结构：<br>
 
 ```
-|-- README.md<br>
-|-- console web管理端<br>
-|-- data-server 业务数据存储服务<br>
-|-- glide.yaml<br>
-|-- master-server 元数据管理服务<br>
-|-- model<br>
-|-- pkg-go 公共模块<br>
-|-- proxy<br>
-    |-- gateway-server  sql/http rest代理层<br>
+|-- README.md
+|-- console             web管理端
+|-- data-server         业务数据存储服务
+|-- glide.yaml
+|-- master-server       元数据管理服务
+|-- model
+|-- pkg-go              公共模块
+|-- proxy
+    |-- gateway-server  sql/http rest代理层
 ```
 
 # 架构设计
@@ -50,24 +50,24 @@ sharkstore是一个分布式的持久化K-V存储系统，存储层依赖rocksdb
 
 # 特性
 --------
-* 兼容SQL语法、支持Restful API
+* 兼容SQL语法、支持Restful API<br>
 	用户可以直接使用 SQL 客户端进行访问，或使用 Restful API 的方式进行读写。
 
-* 动态表结构
+* 动态表结构<br>
 	一个表的列可以动态添加或重命名
 
-* 预分片
+* 预分片<br>
 	创建表时可以进行预分片
 
-* 全局数据有序
+* 全局数据有序<br>
 	用户可以使用主键进行扫描
 
-* 强一致
+* 强一致<br>
 	数据通过 raft 组复制，保证强一致性
 
-* 在线伸缩/自动故障恢复/自动平衡/自动调度
+* 在线伸缩/自动故障恢复/自动平衡/自动调度<br>
 
-* NVMe+SPDK 
+* NVMe+SPDK<br>
 	测试中...
 
 
