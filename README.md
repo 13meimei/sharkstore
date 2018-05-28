@@ -1,4 +1,7 @@
 # SHARKSTORE
+
+[English Version](README_EN.md)
+
 sharkstore是一个分布式的持久化K-V存储系统，存储层依赖rocksdb，数据副本之间通过raft协议进行复制<br>
 
 系统主要包括<br>
@@ -8,7 +11,8 @@ sharkstore是一个分布式的持久化K-V存储系统，存储层依赖rocksdb
 管理端：console(golang)<br><br>
 
 目录结构：<br>
-.
+
+```
 |-- README.md<br>
 |-- console web管理端<br>
 |-- data-server 业务数据存储服务<br>
@@ -17,7 +21,8 @@ sharkstore是一个分布式的持久化K-V存储系统，存储层依赖rocksdb
 |-- model<br>
 |-- pkg-go 公共模块<br>
 |-- proxy<br>
-|   |-- gateway-server  sql/http rest代理层<br>
+    |-- gateway-server  sql/http rest代理层<br>
+```
 
 # 架构设计
 详细查看[arch.md](doc/arch.md)<br>
@@ -43,31 +48,29 @@ sharkstore是一个分布式的持久化K-V存储系统，存储层依赖rocksdb
 
 
 
-# features
+# 特性
 --------
-* SQL syntax and rest handle
-	Users can access with sql client directly, and also by sdk
-	with rest method api.
+* 兼容SQL语法、支持Restful API
+	用户可以直接使用 SQL 客户端进行访问，或使用 Restful API 的方式进行读写。
 
-* Dynamic table scheme
-	Table columns which need be added or renamed is allowed.
+* 动态表结构
+	一个表的列可以动态添加或重命名
 
-* Pre-sharding
-	Table can be created pre-sharding.
+* 预分片
+	创建表时可以进行预分片
 
-* Data global sorted
-	User can global scan by primary key.
+* 全局数据有序
+	用户可以使用主键进行扫描
 
-* Strong consistency.
-	Data replicated as raft group.
+* 强一致
+	数据通过 raft 组复制，保证强一致性
 
-* Online scalability, auto failover, auto rebalance.
-	Auto schedule 
+* 在线伸缩/自动故障恢复/自动平衡/自动调度
 
 * NVMe+SPDK 
-	in testing
+	测试中...
 
 
 License
 -------
-under the Apache 2.0 license. See the LICENSE file for details.
+Under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
