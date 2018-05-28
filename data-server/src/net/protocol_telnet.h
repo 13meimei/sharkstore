@@ -8,7 +8,10 @@ namespace net {
 
 class ProtocolTelnet : public Protocol {
 public:
-    ProtocolTelnet();
+    using HandlerType = std::function<void(const std::vector<std::string>& args)>;
+
+public:
+    explicit ProtocolTelnet(const HandlerType& handler);
     ~ProtocolTelnet();
 
     bool Match(const std::array<uint8_t, 4>& preface) override;
