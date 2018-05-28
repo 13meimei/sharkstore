@@ -43,18 +43,11 @@ TEST(Replica, SetGet) {
     ASSERT_EQ(r.committed(), commit);
 
     // active
-    ASSERT_EQ(r.active(), true);
+    ASSERT_EQ(r.inactive_ticks(), 0);
+    r.incr_inactive_tick();
+    ASSERT_EQ(r.inactive_ticks(), 1);
     r.set_active();
-    ASSERT_EQ(r.active(), true);
-    sleep(1);
-    ASSERT_EQ(r.inactive_seconds(), 1);
-
-    // pending
-    ASSERT_EQ(r.pending(), false);
-    r.set_pending(true);
-    ASSERT_EQ(r.pending(), true);
-    r.set_pending(false);
-    ASSERT_EQ(r.pending(), false);
+    ASSERT_EQ(r.inactive_ticks(), 0);
 
     // state
     ASSERT_EQ(r.state(), ReplicaState::kProbe);

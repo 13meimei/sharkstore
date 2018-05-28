@@ -29,14 +29,14 @@ private:
 
 class Replica {
 public:
-    Replica(const Peer& peer, int max_inflight, TimePoint now);
+    explicit Replica(const Peer& peer, int max_inflight = 0);
     ~Replica() = default;
 
     Replica(const Replica&) = delete;
     Replica& operator=(const Replica&) = delete;
 
     const Peer& peer() const { return peer_; }
-    bool isLearner() const { return peer_.type == PeerType::kLearner; }
+    bool is_learner() const { return peer_.type == PeerType::kLearner; }
 
     Inflight& inflight() { return inflight_; }
 

@@ -7,8 +7,6 @@ namespace fbase {
 namespace raft {
 namespace impl {
 
-static const int kInactiveThresholdSecs = 10;
-
 Inflight::Inflight(int max) : capacity_(max), buffer_(max) {}
 
 void Inflight::add(uint64_t index) {
@@ -46,24 +44,8 @@ void Inflight::reset() {
     start_ = 0;
 }
 
-Replica::Replica(const Peer& peer, int max_inflight, TimePoint now)
-    : peer_(peer), inflight_(max_inflight), last_active_(now) {}
-
-void Replica::check_active(TimePoint now) {
-    if (active_ && inactive_seconds(now) > kInactiveThresholdSecs) {
-        active_ = false;
-    }
-}
-
-bool Replica::active(TimePoint now) const {
-    return inactive_seconds(now) < kInactiveThresholdSecs;
-}
-
-void Replica::set_active(TimePoint now) { last_active_ = now; }
-
-int Replica::inactive_seconds(TimePoint now) const {
-    return std::chrono::duration_cast<std::chrono::seconds>(now - last_active_).count();
-}
+Replica::Replica(const Peer& peer, int max_inflight)
+    : peer_(peer), inflight_(max_inflight) {}
 
 void Replica::resetState(ReplicaState state) {
     paused_ = false;
@@ -165,7 +147,7 @@ bool Replica::isPaused() const {
 std::string Replica::ToString() const {
     std::ostringstream ss;
     ss << "next=" << next_ << ", match=" << match_ << ", commit=" << committed_
-       << ", state=" << ReplicateStateName(state_) << ", waiting=" << pending_
+       << ", state=" << ReplicateStateName(state_)
        << ", pendingSnapshot=" << pendingSnap_;
     return ss.str();
 }

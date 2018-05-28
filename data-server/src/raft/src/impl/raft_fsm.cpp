@@ -19,8 +19,7 @@ RaftFsm::RaftFsm(const RaftServerOptions& sops, const RaftOptions& ops)
       rops_(ops),
       node_id_(sops.node_id),
       id_(ops.id),
-      sm_(ops.statemachine),
-      cached_now_(std::chrono::steady_clock::now()) {
+      sm_(ops.statemachine) {
     auto s = start();
     if (!s.ok()) {
         throw RaftException(s);
@@ -220,7 +219,6 @@ bool RaftFsm::Validate(MessagePtr& msg) const {
 bool RaftFsm::stepIngoreTerm(MessagePtr& msg) {
     switch (msg->type()) {
         case pb::LOCAL_MSG_TICK:
-            cached_now_ = std::chrono::steady_clock::now();
             tick_func_();
             return true;
 
@@ -479,7 +477,7 @@ RaftStatus RaftFsm::GetStatus() const {
                 rs.commit = pr.committed();
                 rs.next = pr.next();
                 rs.inactive = std::chrono::duration_cast<std::chrono::seconds>(
-                                  pr.inactive_ticks() * tick_interval)
+                                  pr.inactive_ticks() * sops_.tick_interval)
                                   .count();
                 rs.state = ReplicateStateName(pr.state());
                 rs.pending = pr.state() == ReplicaState::kSnapshot;
@@ -560,8 +558,7 @@ Status RaftFsm::applyConfChange(const EntryPtr& e) {
 
 std::unique_ptr<Replica> RaftFsm::newReplica(const Peer& peer, bool is_leader) const {
     if (is_leader) {
-        auto r = std::unique_ptr<Replica>(
-            new Replica(peer, cached_now_, sops_.max_inflight_msgs));
+        auto r = std::unique_ptr<Replica>(new Replica(peer, sops_.max_inflight_msgs));
         auto lasti = raft_log_->lastIndex();
         r->set_next(lasti + 1);
         if (peer.node_id == node_id_) {
@@ -571,7 +568,7 @@ std::unique_ptr<Replica> RaftFsm::newReplica(const Peer& peer, bool is_leader) c
         return r;
     } else {
         // 如果当前节点非leader，则不需要关心副本复制进度等状态
-        return std::unique_ptr<Replica>(new Replica(peer, cached_now_, 0));
+        return std::unique_ptr<Replica>(new Replica(peer));
     }
 }
 

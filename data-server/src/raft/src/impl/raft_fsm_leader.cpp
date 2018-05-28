@@ -82,11 +82,10 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
     }
 
     Replica& pr = *replica;
+    pr.set_active();
 
     switch (msg->type()) {
         case pb::APPEND_ENTRIES_RESPONSE:
-            pr.set_active(cached_now_);
-
             if (msg->reject()) {
                 LOG_DEBUG("raft[%llu] received msgApp "
                           "rejection(lastindex:%llu) from %llu for index %llu",
@@ -127,19 +126,22 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
             return;
 
         case pb::HEARTBEAT_RESPONSE:
-            pr.set_active(cached_now_);
+            pr.resume();
             if (pr.state() == ReplicaState::kReplicate && pr.inflight().full()) {
                 pr.inflight().freeFirstOne();
             }
             // 进度没跟上，需要复制
-            if (!pr.pending() && (pr.match() < raft_log_->lastIndex() ||
-                                  pr.committed() < raft_log_->committed())) {
+            if (pr.match() < raft_log_->lastIndex() ||
+                pr.committed() < raft_log_->committed()) {
                 sendAppend(msg->from(), pr);
             }
             return;
 
         case pb::SNAPSHOT_ACK:
-            pr.set_active(cached_now_);
+            if (pr.state() != ReplicaState::kSnapshot) {
+                return;
+            }
+
             if (sending_snap_ &&
                 sending_snap_->header->snapshot().uuid() == msg->snapshot().uuid()) {
                 LOG_DEBUG("raft[%lu] recv snapshot[%lu] ack. seq=%ld, reject=%d", id_,
@@ -161,7 +163,6 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
                 pr.snapshotFailure();
                 pr.becomeProbe();
             } else {
-                pr.set_active(cached_now_);
                 pr.becomeProbe();
                 LOG_WARN("raft[%llu] send snapshot to [%llu] succeed, resumed "
                          "replication [%s]",
@@ -235,6 +236,8 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
     }
 
     if (pr.inactive_ticks() > sops_.inactive_tick) {
+        pr.becomeProbe();
+        pr.pause();
         return;
     }
 
