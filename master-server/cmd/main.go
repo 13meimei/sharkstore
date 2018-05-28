@@ -1,18 +1,18 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
-	"flag"
 
-	"util/log"
 	"master-server/raft/logger"
 	"master-server/server"
 	"util/gogc"
+	"util/log"
 )
 
 func initRuntime() {
@@ -73,4 +73,5 @@ func main() {
 		log.Error("master server start failed, err[%v]", err)
 		return
 	}
+	log.Info("master server start ")
 }
