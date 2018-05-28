@@ -1,0 +1,10 @@
+
+.vscode
+.clang-format
+*.sw[op]
+/vendor
+/github.com
+.idea/
+
+### macOS
+.DS_Store
