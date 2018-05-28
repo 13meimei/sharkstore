@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "base/util.h"
-//#include "raft/status.h"
 #include "raft/src/impl/replica.h"
+#include "test_util.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -11,50 +11,18 @@ int main(int argc, char* argv[]) {
 
 namespace {
 
+using fbase::raft::Peer;
 using fbase::randomInt;
 using namespace fbase::raft::impl;
 
-static pb::Peer randPeer() {
-    pb::Peer p;
-    p.set_type(randomInt() % 2 == 0 ? pb::PEER_NORMAL : pb::PEER_LEARNER);
-    p.set_node_id(randomInt());
-    return p;
-}
-
-// TEST(Replica, Status) {
-//    fbase::raft::RaftStatus s;
-//    s.node_id = 1;
-//    s.leader = 2;
-//    s.term = 3;
-//    s.index = 4;
-//    s.commit = 5;
-//    s.applied = 6;
-//    s.state = "leader";
-//    for (int i = 2; i < 4; ++i) {
-//        fbase::raft::ReplicaStatus rs;
-//        rs.peer_id = i * 3;
-//        rs.match = i * 4;
-//        rs.commit = i * 5;
-//        rs.next = i * 6;
-//        rs.inactive = i * 7;
-//        rs.state = "snapshot";
-//        s.replicas.emplace(i, rs);
-//    }
-//    std::cout << s.ToString() << std::endl;
-//}
-
 TEST(Replica, SetGet) {
-    pb::Peer p = randPeer();
+    auto p = testutil::RandomPeer();
     int max_inflight = randomInt() % 100 + 100;
     Replica r(p, max_inflight);
 
     // peer
-    ASSERT_EQ(r.peer().node_id(), p.node_id());
-    ASSERT_EQ(r.peer().type(), p.type());
-    p = randPeer();
-    r.set_peer(p);
-    ASSERT_EQ(r.peer().node_id(), p.node_id());
-    ASSERT_EQ(r.peer().type(), p.type());
+    ASSERT_EQ(r.peer().node_id, p.node_id);
+    ASSERT_EQ(r.peer().type, p.type);
 
     // next
     ASSERT_EQ(r.next(), 0);
@@ -75,7 +43,7 @@ TEST(Replica, SetGet) {
     ASSERT_EQ(r.committed(), commit);
 
     // active
-    ASSERT_EQ(r.active(), false);
+    ASSERT_EQ(r.active(), true);
     r.set_active();
     ASSERT_EQ(r.active(), true);
     sleep(1);
@@ -108,7 +76,7 @@ TEST(Replica, SetGet) {
 }
 
 TEST(Replica, Update) {
-    Replica r(randPeer(), 100);
+    Replica r(testutil::RandomPeer(), 100);
     r.update(100);
     ASSERT_EQ(r.next(), 101);
 
@@ -129,7 +97,7 @@ TEST(Replica, Update) {
 }
 
 TEST(Replica, Inflight) {
-    Replica replica(randPeer(), 100);
+    Replica replica(testutil::RandomPeer(), 100);
     auto& inflight = replica.inflight();
     for (int i = 100; i < 200; ++i) {
         inflight.add(i);

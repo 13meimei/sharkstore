@@ -14,8 +14,8 @@ typedef std::function<void(MessagePtr&)> MessageHandler;
 
 class Connection {
 public:
-    Connection() {}
-    virtual ~Connection() {}
+    Connection() = default;
+    virtual ~Connection() = default;
 
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection&) = delete;
@@ -27,8 +27,8 @@ public:
 
 class Transport {
 public:
-    Transport() {}
-    virtual ~Transport() {}
+    Transport() = default;
+    virtual ~Transport() = default;
 
     Transport(const Transport&) = delete;
     Transport& operator=(const Transport&) = delete;
@@ -40,8 +40,7 @@ public:
     virtual void SendMessage(MessagePtr& msg) = 0;
 
     // 需要单独建立一个连接用来发快照
-    virtual Status GetConnection(uint64_t to,
-                                 std::shared_ptr<Connection>* conn) = 0;
+    virtual Status GetConnection(uint64_t to, std::shared_ptr<Connection>* conn) = 0;
 };
 
 } /* namespace transport */

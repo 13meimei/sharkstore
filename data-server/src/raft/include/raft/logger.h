@@ -5,8 +5,8 @@ namespace raft {
 
 class Logger {
 public:
-    Logger() {}
-    virtual ~Logger() {}
+    Logger() = default;
+    virtual ~Logger() = default;
 
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;

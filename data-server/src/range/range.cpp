@@ -43,8 +43,8 @@ Status Range::Initialize(range_status_t *status, uint64_t leader) {
     options.max_log_files = ds_config.raft_config.max_log_files;
     options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt;
     options.storage_path = JoinFilePath(std::vector<std::string>{
-        std::string(ds_config.raft_config.log_path),
-        std::to_string(meta_.table_id()), std::to_string(meta_.id())});
+        std::string(ds_config.raft_config.log_path), std::to_string(meta_.table_id()),
+        std::to_string(meta_.id())});
     // meta_.peers
     // 有可能有多个，如果该range的副本数量在master上有多个，通过该字段下发已经有的副本
     const auto &peers = meta_.peers();
@@ -107,15 +107,14 @@ bool Range::PushHeartBeatMessage() {
 
     FLOG_DEBUG("range[%" PRIu64 "] heartbeat. epoch[%" PRIu64 " : %" PRIu64
                "], key range[%s - %s]",
-               meta_.id(), meta_.range_epoch().version(),
-               meta_.range_epoch().conf_ver(),
+               meta_.id(), meta_.range_epoch().version(), meta_.range_epoch().conf_ver(),
                EncodeToHexString(meta_.start_key()).c_str(),
                EncodeToHexString(meta_.end_key()).c_str());
 
     metapb::Peer *peer = NewMetaPeer(node_id_);
     if (peer == nullptr) {
-        FLOG_ERROR("range[%" PRIu64 "] heartbeat not found leader: %" PRIu64,
-                   meta_.id(), node_id_);
+        FLOG_ERROR("range[%" PRIu64 "] heartbeat not found leader: %" PRIu64, meta_.id(),
+                   node_id_);
         return false;
     }
 
@@ -142,23 +141,23 @@ bool Range::PushHeartBeatMessage() {
     raft_->GetDownPeers(&down_peers);
     for (auto &dp : down_peers) {
         mspb::PeerStats *ps = hb_req.add_down_peers();
-        metapb::Peer *p = NewMetaPeer(dp.node_id);
+        metapb::Peer *p = NewMetaPeer(dp.peer.node_id);
         if (p != nullptr) {
             ps->set_allocated_peer(p);
             ps->set_down_seconds(dp.down_seconds);
         }
     }
 
-    std::vector<uint64_t> pending_peers;
+    std::vector<raft::Peer> pending_peers;
     raft_->GetPeedingPeers(&pending_peers);
-    for (auto &id : pending_peers) {
+    for (auto &pr : pending_peers) {
         fbase::shared_lock<fbase::shared_mutex> lock(meta_lock_);
-        metapb::Peer *p = FindMetaPeer(id);
+        metapb::Peer *p = FindMetaPeer(pr.node_id);
         if (p != nullptr) {
             metapb::Peer *peer = hb_req.add_pending_peers();
             peer->set_id(p->id());
             peer->set_node_id(p->node_id());
-            peer->set_role(p->role());
+            peer->set_type(p->type());
         }
     }
 
@@ -264,11 +263,10 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 
     auto end = std::chrono::system_clock::now();
     auto elapsed_usec =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     if (elapsed_usec > kTimeTakeWarnThresoldUSec) {
-        FLOG_WARN("range[%lu] apply takes too long(%ld ms), type: %s.",
-                  meta_.id(), elapsed_usec / 1000,
+        FLOG_WARN("range[%lu] apply takes too long(%ld ms), type: %s.", meta_.id(),
+                  elapsed_usec / 1000,
                   raft_cmdpb::CmdType_Name(raft_cmd.cmd_type()).c_str());
     }
 
@@ -289,8 +287,7 @@ Status Range::Submit(const raft_cmdpb::Command &cmd) {
 }
 
 void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
-    FLOG_INFO("Range %" PRIu64 " Leader Change to Node %" PRIu64, meta_.id(),
-              leader);
+    FLOG_INFO("Range %" PRIu64 " Leader Change to Node %" PRIu64, meta_.id(), leader);
 
     if (!valid_) {
         FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
@@ -348,8 +345,7 @@ Status Range::ApplySnapshotStart(const std::string &context) {
 
     raft_cmdpb::SnapshotContext ctx;
     if (!ctx.ParseFromString(context)) {
-        return Status(Status::kCorruption, "parse snapshot context",
-                      "pb return false");
+        return Status(Status::kCorruption, "parse snapshot context", "pb return false");
     }
 
     {
@@ -373,8 +369,7 @@ Status Range::ApplySnapshotData(const std::vector<std::string> &datas) {
 }
 
 Status Range::ApplySnapshotFinish(uint64_t index) {
-    FLOG_INFO("Range %" PRIu64 " finish apply snapshot. index:%lu", meta_.id(),
-              index);
+    FLOG_INFO("Range %" PRIu64 " finish apply snapshot. index:%lu", meta_.id(), index);
 
     if (!valid_) {
         FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
@@ -418,8 +413,8 @@ Status Range::Truncate() {
     }
     s = context_->meta_store->DeleteApplyIndex(meta_.id());
     if (!s.ok()) {
-        FLOG_ERROR("Range %" PRIu64 " truncate delete apply fail: %s",
-                   meta_.id(), s.ToString().c_str());
+        FLOG_ERROR("Range %" PRIu64 " truncate delete apply fail: %s", meta_.id(),
+                   s.ToString().c_str());
     }
     return s;
 }
@@ -430,8 +425,7 @@ void Range::TransferLeader() {
         return;
     }
 
-    FLOG_INFO("range[%" PRIu64 "] receive TransferLeader, try to leader.",
-              meta_.id());
+    FLOG_INFO("range[%" PRIu64 "] receive TransferLeader, try to leader.", meta_.id());
 
     auto s = raft_->TryToLeader();
     if (!s.ok()) {
@@ -440,9 +434,7 @@ void Range::TransferLeader() {
     }
 }
 
-void Range::GetPeerInfo(raft::RaftStatus *raft_status) {
-    raft_->GetStatus(raft_status);
-}
+void Range::GetPeerInfo(raft::RaftStatus *raft_status) { raft_->GetStatus(raft_status); }
 
 void Range::GetReplica(metapb::Replica *rep) {
     rep->set_range_id(meta_.id());
@@ -523,8 +515,7 @@ bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch) {
     return false;
 }
 
-bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch,
-                         errorpb::Error *&err) {
+bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&err) {
     if (!EpochIsEqual(epoch)) {
         err = StaleEpochError(epoch);
         return false;
@@ -682,8 +673,7 @@ errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
 void Range::SendTimeOutError(AsyncContext *context) {
     FLOG_WARN("range[%lu] deal %s timeout. sid=%ld, msgid=%ld", meta_.id(),
               raft_cmdpb::CmdType_Name(context->cmd_type_).c_str(),
-              context->proto_message->session_id,
-              context->proto_message->msg_id);
+              context->proto_message->session_id, context->proto_message->msg_id);
 
     auto err = TimeOutError();
     switch (context->cmd_type_) {

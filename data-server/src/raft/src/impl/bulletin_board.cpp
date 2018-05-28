@@ -8,55 +8,68 @@ using fbase::shared_lock;
 using fbase::shared_mutex;
 using std::unique_lock;
 
-void BulletinBoard::publish(uint64_t leader, uint64_t term) {
+static const int kDownPeerThresholdSecs = 50;
+
+void BulletinBoard::PublishLeaderTerm(uint64_t leader, uint64_t term) {
     unique_lock<shared_mutex> lock(mu_);
+
     leader_ = leader;
     term_ = term;
 }
 
-void BulletinBoard::publish(const std::vector<DownPeer>& downs) {
+void BulletinBoard::PublishPeers(std::vector<Peer>&& peers) {
     unique_lock<shared_mutex> lock(mu_);
-    down_peers_ = downs;
-}
 
-void BulletinBoard::publish(const std::vector<uint64_t>& pendings) {
-    unique_lock<shared_mutex> lock(mu_);
-    pending_peers_ = pendings;
-}
-
-void BulletinBoard::publish(std::vector<Peer> peers) {
-    unique_lock<shared_mutex> lock(mu_);
     peers_ = std::move(peers);
 }
 
-void BulletinBoard::publish(RaftStatus status) {
+void BulletinBoard::PublishStatus(RaftStatus&& status) {
     unique_lock<shared_mutex> lock(mu_);
+
     status_ = std::move(status);
+
+    down_peers_.clear();
+    pending_peers_.clear();
+    for (auto& pr : status_.replicas) {
+        if (pr.second.inactive >= kDownPeerThresholdSecs) {
+            down_peers_.push_back(DownPeer());
+            down_peers_.back().peer = pr.second.peer;
+            down_peers_.back().down_seconds = pr.second.inactive;
+        }
+        if (pr.second.pending) {
+            pending_peers_.push_back(pr.second.peer);
+        }
+    }
 }
 
-void BulletinBoard::leaderTerm(uint64_t* leader, uint64_t* term) const {
+void BulletinBoard::LeaderTerm(uint64_t* leader, uint64_t* term) const {
     shared_lock<shared_mutex> lock(mu_);
+
     *leader = leader_;
     *term = term_;
 }
 
-void BulletinBoard::peers(std::vector<Peer>* peers) const {
+void BulletinBoard::Peers(std::vector<Peer>* peers) const {
     shared_lock<shared_mutex> lock(mu_);
-    peers->assign(peers_.cbegin(), peers_.cend());
+
+    *peers = peers_;
 }
 
-void BulletinBoard::down_peers(std::vector<DownPeer>* downs) const {
+void BulletinBoard::PendingPeers(std::vector<Peer>* pendings) const {
     shared_lock<shared_mutex> lock(mu_);
-    downs->assign(down_peers_.cbegin(), down_peers_.cend());
+
+    *pendings = pending_peers_;
 }
 
-void BulletinBoard::pending_peers(std::vector<uint64_t>* pendings) const {
+void BulletinBoard::DownPeers(std::vector<DownPeer>* downs) const {
     shared_lock<shared_mutex> lock(mu_);
-    pendings->assign(pending_peers_.cbegin(), pending_peers_.cend());
+
+    *downs = down_peers_;
 }
 
-void BulletinBoard::status(RaftStatus* status) const {
+void BulletinBoard::Status(RaftStatus* status) const {
     shared_lock<shared_mutex> lock(mu_);
+
     *status = status_;
 }
 

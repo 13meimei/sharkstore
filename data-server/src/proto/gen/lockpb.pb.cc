@@ -217,7 +217,7 @@ void AddDescriptorsImpl() {
       "kHeartbeatRequest\032\030.lockrpcpb.DLockRespo"
       "nse\"\000\022P\n\017UpdateCondition\022!.lockrpcpb.Upd"
       "ateConditionRequest\032\030.lockrpcpb.DLockRes"
-      "ponse\"\000B\022\n\020com.sharkstore.lock.grpcb\006proto3"
+      "ponse\"\000B\022\n\020com.jd.lock.grpcb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
       descriptor, 915);

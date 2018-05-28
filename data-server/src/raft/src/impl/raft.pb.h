@@ -59,12 +59,6 @@ extern MessageDefaultTypeInternal _Message_default_instance_;
 class Peer;
 class PeerDefaultTypeInternal;
 extern PeerDefaultTypeInternal _Peer_default_instance_;
-class RaftMessageRequest;
-class RaftMessageRequestDefaultTypeInternal;
-extern RaftMessageRequestDefaultTypeInternal _RaftMessageRequest_default_instance_;
-class RaftMessageResponse;
-class RaftMessageResponseDefaultTypeInternal;
-extern RaftMessageResponseDefaultTypeInternal _RaftMessageResponse_default_instance_;
 class Snapshot;
 class SnapshotDefaultTypeInternal;
 extern SnapshotDefaultTypeInternal _Snapshot_default_instance_;
@@ -121,15 +115,15 @@ inline bool PeerType_Parse(
     PeerType_descriptor(), name, value);
 }
 enum ConfChangeType {
-  CONF_ADD_NODE = 0,
-  CONF_REMOVE_NODE = 1,
-  CONF_UPDATE_NODE = 2,
+  CONF_ADD_PEER = 0,
+  CONF_REMOVE_PEER = 1,
+  CONF_PROMOTE_PEER = 2,
   ConfChangeType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   ConfChangeType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ConfChangeType_IsValid(int value);
-const ConfChangeType ConfChangeType_MIN = CONF_ADD_NODE;
-const ConfChangeType ConfChangeType_MAX = CONF_UPDATE_NODE;
+const ConfChangeType ConfChangeType_MIN = CONF_ADD_PEER;
+const ConfChangeType ConfChangeType_MAX = CONF_PROMOTE_PEER;
 const int ConfChangeType_ARRAYSIZE = ConfChangeType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ConfChangeType_descriptor();
@@ -1132,196 +1126,6 @@ class Message : public ::google::protobuf::Message /* @@protoc_insertion_point(c
 };
 // -------------------------------------------------------------------
 
-class RaftMessageRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:fbase.raft.impl.pb.RaftMessageRequest) */ {
- public:
-  RaftMessageRequest();
-  virtual ~RaftMessageRequest();
-
-  RaftMessageRequest(const RaftMessageRequest& from);
-
-  inline RaftMessageRequest& operator=(const RaftMessageRequest& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  RaftMessageRequest(RaftMessageRequest&& from) noexcept
-    : RaftMessageRequest() {
-    *this = ::std::move(from);
-  }
-
-  inline RaftMessageRequest& operator=(RaftMessageRequest&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const RaftMessageRequest& default_instance();
-
-  static inline const RaftMessageRequest* internal_default_instance() {
-    return reinterpret_cast<const RaftMessageRequest*>(
-               &_RaftMessageRequest_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    7;
-
-  void Swap(RaftMessageRequest* other);
-  friend void swap(RaftMessageRequest& a, RaftMessageRequest& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline RaftMessageRequest* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  RaftMessageRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const RaftMessageRequest& from);
-  void MergeFrom(const RaftMessageRequest& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(RaftMessageRequest* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // .fbase.raft.impl.pb.Message msg = 1;
-  bool has_msg() const;
-  void clear_msg();
-  static const int kMsgFieldNumber = 1;
-  const ::fbase::raft::impl::pb::Message& msg() const;
-  ::fbase::raft::impl::pb::Message* mutable_msg();
-  ::fbase::raft::impl::pb::Message* release_msg();
-  void set_allocated_msg(::fbase::raft::impl::pb::Message* msg);
-
-  // @@protoc_insertion_point(class_scope:fbase.raft.impl.pb.RaftMessageRequest)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::fbase::raft::impl::pb::Message* msg_;
-  mutable int _cached_size_;
-  friend struct protobuf_raft_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class RaftMessageResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:fbase.raft.impl.pb.RaftMessageResponse) */ {
- public:
-  RaftMessageResponse();
-  virtual ~RaftMessageResponse();
-
-  RaftMessageResponse(const RaftMessageResponse& from);
-
-  inline RaftMessageResponse& operator=(const RaftMessageResponse& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  RaftMessageResponse(RaftMessageResponse&& from) noexcept
-    : RaftMessageResponse() {
-    *this = ::std::move(from);
-  }
-
-  inline RaftMessageResponse& operator=(RaftMessageResponse&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const RaftMessageResponse& default_instance();
-
-  static inline const RaftMessageResponse* internal_default_instance() {
-    return reinterpret_cast<const RaftMessageResponse*>(
-               &_RaftMessageResponse_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    8;
-
-  void Swap(RaftMessageResponse* other);
-  friend void swap(RaftMessageResponse& a, RaftMessageResponse& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline RaftMessageResponse* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  RaftMessageResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const RaftMessageResponse& from);
-  void MergeFrom(const RaftMessageResponse& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(RaftMessageResponse* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // @@protoc_insertion_point(class_scope:fbase.raft.impl.pb.RaftMessageResponse)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  mutable int _cached_size_;
-  friend struct protobuf_raft_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
 class HardState : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:fbase.raft.impl.pb.HardState) */ {
  public:
   HardState();
@@ -1356,7 +1160,7 @@ class HardState : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_HardState_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    9;
+    7;
 
   void Swap(HardState* other);
   friend void swap(HardState& a, HardState& b) {
@@ -1467,7 +1271,7 @@ class TruncateMeta : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_TruncateMeta_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    10;
+    8;
 
   void Swap(TruncateMeta* other);
   friend void swap(TruncateMeta& a, TruncateMeta& b) {
@@ -1571,7 +1375,7 @@ class IndexItem : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_IndexItem_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    11;
+    9;
 
   void Swap(IndexItem* other);
   friend void swap(IndexItem& a, IndexItem& b) {
@@ -1682,7 +1486,7 @@ class LogIndex : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_LogIndex_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    12;
+    10;
 
   void Swap(LogIndex* other);
   friend void swap(LogIndex& a, LogIndex& b) {
@@ -2573,54 +2377,6 @@ inline void Message::set_allocated_snapshot(::fbase::raft::impl::pb::Snapshot* s
 
 // -------------------------------------------------------------------
 
-// RaftMessageRequest
-
-// .fbase.raft.impl.pb.Message msg = 1;
-inline bool RaftMessageRequest::has_msg() const {
-  return this != internal_default_instance() && msg_ != NULL;
-}
-inline void RaftMessageRequest::clear_msg() {
-  if (GetArenaNoVirtual() == NULL && msg_ != NULL) delete msg_;
-  msg_ = NULL;
-}
-inline const ::fbase::raft::impl::pb::Message& RaftMessageRequest::msg() const {
-  const ::fbase::raft::impl::pb::Message* p = msg_;
-  // @@protoc_insertion_point(field_get:fbase.raft.impl.pb.RaftMessageRequest.msg)
-  return p != NULL ? *p : *reinterpret_cast<const ::fbase::raft::impl::pb::Message*>(
-      &::fbase::raft::impl::pb::_Message_default_instance_);
-}
-inline ::fbase::raft::impl::pb::Message* RaftMessageRequest::mutable_msg() {
-  
-  if (msg_ == NULL) {
-    msg_ = new ::fbase::raft::impl::pb::Message;
-  }
-  // @@protoc_insertion_point(field_mutable:fbase.raft.impl.pb.RaftMessageRequest.msg)
-  return msg_;
-}
-inline ::fbase::raft::impl::pb::Message* RaftMessageRequest::release_msg() {
-  // @@protoc_insertion_point(field_release:fbase.raft.impl.pb.RaftMessageRequest.msg)
-  
-  ::fbase::raft::impl::pb::Message* temp = msg_;
-  msg_ = NULL;
-  return temp;
-}
-inline void RaftMessageRequest::set_allocated_msg(::fbase::raft::impl::pb::Message* msg) {
-  delete msg_;
-  msg_ = msg;
-  if (msg) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:fbase.raft.impl.pb.RaftMessageRequest.msg)
-}
-
-// -------------------------------------------------------------------
-
-// RaftMessageResponse
-
-// -------------------------------------------------------------------
-
 // HardState
 
 // uint64 term = 1;
@@ -2781,10 +2537,6 @@ LogIndex::items() const {
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
-// -------------------------------------------------------------------
-
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

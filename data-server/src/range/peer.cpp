@@ -27,7 +27,7 @@ void Range::AddPeer(const metapb::Peer &peer) {
     auto ap = pt.mutable_peer();
     ap->set_id(peer.id());
     ap->set_node_id(peer.node_id());
-    ap->set_role(peer.role());
+    ap->set_type(peer.type());
 
     auto ep = pt.mutable_verify_epoch();
     ep->set_conf_ver(meta_.range_epoch().conf_ver());
@@ -62,7 +62,7 @@ void Range::DelPeer(const metapb::Peer &peer) {
     auto ap = pt.mutable_peer();
     ap->set_id(peer.id());
     ap->set_node_id(peer.node_id());
-    ap->set_role(peer.role());
+    ap->set_type(peer.type());
 
     auto ep = pt.mutable_verify_epoch();
     ep->set_conf_ver(meta_.range_epoch().conf_ver());
@@ -79,17 +79,17 @@ void Range::DelPeer(const metapb::Peer &peer) {
 Status Range::ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) {
     Status ret;
     switch (cc.type) {
-    case raft::ConfChangeType::kAdd:
-        ret = ApplyAddPeer(cc);
-        break;
-    case raft::ConfChangeType::kRemove:
-        ret = ApplyDelPeer(cc);
-        break;
-    default:
-        ret = Status(Status::kNotSupported, "Apply member change not support type", "");
+        case raft::ConfChangeType::kAdd:
+            ret = ApplyAddPeer(cc);
+            break;
+        case raft::ConfChangeType::kRemove:
+            ret = ApplyDelPeer(cc);
+            break;
+        default:
+            ret =
+                Status(Status::kNotSupported, "Apply member change not support type", "");
     }
-    if (!ret.ok())
-        return ret;
+    if (!ret.ok()) return ret;
 
     apply_index_ = index;
     auto s = context_->meta_store->SaveApplyIndex(meta_.id(), apply_index_);
@@ -207,12 +207,12 @@ Status Range::ApplyDelPeer(const raft::ConfChange &cc) {
         // send Heartbeat message
         PushHeartBeatMessage();
     } else {
-        FLOG_WARN("Range %" PRIu64 " ApplyDelPeer Not Found NodeId: %" PRIu64 ,
-                meta_.id(), cc.peer.node_id);
+        FLOG_WARN("Range %" PRIu64 " ApplyDelPeer Not Found NodeId: %" PRIu64, meta_.id(),
+                  cc.peer.node_id);
     }
 
-    FLOG_INFO("Range %" PRIu64 " ApplyDelPeer NodeId: %" PRIu64
-              " End, version:%" PRIu64 " conf_ver:%" PRIu64,
+    FLOG_INFO("Range %" PRIu64 " ApplyDelPeer NodeId: %" PRIu64 " End, version:%" PRIu64
+              " conf_ver:%" PRIu64,
               meta_.id(), cc.peer.node_id, meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 
@@ -223,7 +223,7 @@ void Range::AddPeer(raft_cmdpb::PeerTask &pt, metapb::Range &meta) {
     auto ap = meta.add_peers();
     ap->set_id(pt.peer().id());
     ap->set_node_id(pt.peer().node_id());
-    ap->set_role(pt.peer().role());
+    ap->set_type(pt.peer().type());
 
     auto ver = pt.verify_epoch().conf_ver() + 1;
     meta.mutable_range_epoch()->set_conf_ver(ver);

@@ -15,15 +15,15 @@ public:
 
     Status Open() override;
 
-    Status InitialState(pb::HardState* hs) override;
+    Status InitialState(pb::HardState* hs) const override;
 
     Status Entries(uint64_t lo, uint64_t hi, uint64_t max_size,
-                   std::vector<EntryPtr>* entries, bool* is_compacted) override;
+                   std::vector<EntryPtr>* entries, bool* is_compacted) const override;
 
-    Status Term(uint64_t index, uint64_t* term, bool* is_compacted) override;
+    Status Term(uint64_t index, uint64_t* term, bool* is_compacted) const override;
 
-    Status FirstIndex(uint64_t* index) override;
-    Status LastIndex(uint64_t* index) override;
+    Status FirstIndex(uint64_t* index) const override;
+    Status LastIndex(uint64_t* index) const override;
 
     Status StoreEntries(const std::vector<EntryPtr>& entries) override;
 

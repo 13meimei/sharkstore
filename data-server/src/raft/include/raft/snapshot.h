@@ -7,8 +7,8 @@ namespace raft {
 
 class Snapshot {
 public:
-    Snapshot() {}
-    virtual ~Snapshot() {}
+    Snapshot() = default;
+    virtual ~Snapshot() = default;
 
     Snapshot(const Snapshot&) = delete;
     Snapshot& operator=(const Snapshot&) = delete;

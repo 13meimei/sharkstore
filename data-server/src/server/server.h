@@ -11,10 +11,10 @@ class DataServer {
 public:
     ~DataServer();
 
-    DataServer(const DataServer&) = delete;
-    DataServer& operator=(const DataServer&) = delete;
+    DataServer(const DataServer &) = delete;
+    DataServer &operator=(const DataServer &) = delete;
 
-    static DataServer& Instance() {
+    static DataServer &Instance() {
         static DataServer instance_;
         return instance_;
     };
@@ -23,15 +23,17 @@ public:
     int Start();
     void Stop();
 
-    ContextServer *context_server() {return context_;}
+    ContextServer *context_server() { return context_; }
 
     void DealTask(common::ProtoMessage *task);
 
 private:
     DataServer();
 
+    bool startRaftServer();
+
 private:
-    ContextServer   *context_    = nullptr;
+    ContextServer *context_ = nullptr;
 };
 
 } /* namespace server */

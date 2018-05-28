@@ -9,20 +9,13 @@
 using namespace fbase;
 using namespace fbase::raft;
 
-class TestNodeResolver : public raft::NodeResolver {
-public:
-    std::string GetNodeAddress(uint64_t node_id) override { return ""; }
-};
-
 int main(int argc, char* argv[]) {
     // TODO:
     RaftServerOptions ops;
     ops.node_id = 1;
-    ops.listen_port = 9999;
     ops.election_tick = 2;
-    ops.use_inprocess_transport = true;
     ops.tick_interval = std::chrono::milliseconds(100);
-    ops.resolver = std::shared_ptr<NodeResolver>(new TestNodeResolver);
+    ops.transport_options.use_inprocess_transport = true;
 
     auto rs = CreateRaftServer(ops);
     assert(rs);

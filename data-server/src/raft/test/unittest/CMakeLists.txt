@@ -20,6 +20,7 @@ set (raft_unit_TESTS
     meta_file_unittest.cpp
     replica_unittest.cpp
     raft_log_unittest.cpp
+    raft_types_unittest.cpp
     log_unstable_unittest.cpp
     snapshot_send_unittest.cpp
 )

@@ -12,8 +12,8 @@ class Raft;
 
 class RaftServer {
 public:
-    RaftServer() {}
-    virtual ~RaftServer() {}
+    RaftServer() = default;
+    virtual ~RaftServer() = default;
 
     RaftServer(const RaftServer&) = delete;
     RaftServer& operator=(const RaftServer&) = delete;
@@ -24,8 +24,7 @@ public:
     virtual const RaftServerOptions& Options() const = 0;
 
     // 创建raft
-    virtual Status CreateRaft(const RaftOptions&,
-                              std::shared_ptr<Raft>* raft) = 0;
+    virtual Status CreateRaft(const RaftOptions&, std::shared_ptr<Raft>* raft) = 0;
 
     // 删除raft，同时会删除所属日志文件
     virtual Status RemoveRaft(uint64_t id, bool backup = false) = 0;

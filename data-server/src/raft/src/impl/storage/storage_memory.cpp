@@ -14,13 +14,13 @@ MemoryStorage::~MemoryStorage() {}
 
 Status MemoryStorage::Open() { return Status::OK(); }
 
-Status MemoryStorage::InitialState(pb::HardState* hs) {
+Status MemoryStorage::InitialState(pb::HardState* hs) const {
     hs->CopyFrom(hardstate_);
     return Status::OK();
 }
 
 Status MemoryStorage::Entries(uint64_t lo, uint64_t hi, uint64_t max_size,
-                              std::vector<EntryPtr>* ents, bool* is_compacted) {
+                              std::vector<EntryPtr>* ents, bool* is_compacted) const {
     if (lo <= trunc_index_) {
         *is_compacted = true;
         return Status::OK();
@@ -56,7 +56,7 @@ Status MemoryStorage::Entries(uint64_t lo, uint64_t hi, uint64_t max_size,
     return Status::OK();
 }
 
-Status MemoryStorage::Term(uint64_t index, uint64_t* term, bool* is_compacted) {
+Status MemoryStorage::Term(uint64_t index, uint64_t* term, bool* is_compacted) const {
     if (index < trunc_index_) {
         *is_compacted = true;
     } else if (index == trunc_index_) {
@@ -72,14 +72,14 @@ Status MemoryStorage::Term(uint64_t index, uint64_t* term, bool* is_compacted) {
     return Status::OK();
 }
 
-Status MemoryStorage::FirstIndex(uint64_t* index) {
+Status MemoryStorage::FirstIndex(uint64_t* index) const {
     *index = trunc_index_ + 1;
     return Status::OK();
 }
 
 uint64_t MemoryStorage::lastIndex() const { return trunc_index_ + entries_.size(); }
 
-Status MemoryStorage::LastIndex(uint64_t* index) {
+Status MemoryStorage::LastIndex(uint64_t* index) const {
     *index = lastIndex();
     return Status::OK();
 }

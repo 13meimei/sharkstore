@@ -28,12 +28,12 @@ public:
     Status SaveTruncMeta(const pb::TruncateMeta& tm);
 
 private:
-    enum { kHardStateSize = 8 * 3 };     // term(8) + commit(8) + vote(8)
-    enum { kTruncateMetaSize = 8 * 2 };  // index(8) + term(8)
+    constexpr static size_t kHardStateSize = 8 * 3;     // term(8) + commit(8) + vote(8)
+    constexpr static size_t kTruncateMetaSize = 8 * 3;  // index(8) + term(8)
 
 private:
     const std::string path_;
-    int fd_{-1};
+    int fd_ = -1;
 };
 
 } /* namespace storage */

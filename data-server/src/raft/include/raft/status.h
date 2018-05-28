@@ -3,6 +3,8 @@ _Pragma("once");
 #include <stdint.h>
 #include <map>
 
+#include "raft/types.h"
+
 namespace fbase {
 namespace raft {
 
@@ -12,11 +14,12 @@ struct ServerStatus {
 };
 
 struct ReplicaStatus {
-    uint64_t peer_id = 0;
+    Peer peer;
     uint64_t match = 0;
     uint64_t commit = 0;
     uint64_t next = 0;
     int inactive = 0;
+    bool pending = false;
     std::string state;
 
     std::string ToString() const;

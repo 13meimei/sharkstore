@@ -10,6 +10,19 @@ namespace testutil {
 using fbase::randomInt;
 using fbase::randomString;
 
+Peer RandomPeer() {
+    Peer p;
+    p.type = (randomInt() % 2 == 0 ? fbase::raft::PeerType::kLearner
+                                   : fbase::raft::PeerType::kNormal);
+    p.node_id = randomInt();
+    p.peer_id = randomInt();
+    return p;
+}
+
+bool EqualPeer(const Peer& p1, const Peer& p2) {
+    return p1.type == p2.type && p1.node_id == p2.node_id && p1.peer_id == p2.peer_id;
+}
+
 Status Equal(const pb::HardState& lh, const pb::HardState& rh) {
     if (lh.term() != rh.term()) {
         return Status(Status::kCorruption, "term",
@@ -38,7 +51,7 @@ Status Equal(const pb::TruncateMeta& lh, const pb::TruncateMeta& rh) {
     return Status::OK();
 }
 
-EntryPtr RandEntry(uint64_t index, int data_size) {
+EntryPtr RandomEntry(uint64_t index, int data_size) {
     EntryPtr e(new fbase::raft::impl::pb::Entry);
     e->set_index(index);
     e->set_term(randomInt());
@@ -48,10 +61,10 @@ EntryPtr RandEntry(uint64_t index, int data_size) {
     return e;
 }
 
-void RandEntries(uint64_t lo, uint64_t hi, int data_size,
-                 std::vector<EntryPtr>* entries) {
+void RandomEntries(uint64_t lo, uint64_t hi, int data_size,
+                   std::vector<EntryPtr>* entries) {
     for (uint64_t i = lo; i < hi; ++i) {
-        entries->push_back(RandEntry(i, data_size));
+        entries->push_back(RandomEntry(i, data_size));
     }
 }
 

@@ -25,8 +25,7 @@ public:
 
     void SendMessage(MessagePtr& msg) override;
 
-    Status GetConnection(uint64_t to,
-                         std::shared_ptr<Connection>* conn) override;
+    Status GetConnection(uint64_t to, std::shared_ptr<Connection>* conn) override;
 
 private:
     void recvRoutine();
@@ -83,7 +82,7 @@ private:
     const uint64_t node_id_;
     MessageHandler handler_;
 
-    std::atomic<bool> running_;
+    std::atomic<bool> running_ = {true};
     std::shared_ptr<MailBox> mail_box_;
     std::unique_ptr<std::thread> pull_thr_;
 };

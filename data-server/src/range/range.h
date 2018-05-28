@@ -51,8 +51,7 @@ enum {
 
 class RangeManager;
 
-class Range : public raft::StateMachine,
-              public std::enable_shared_from_this<Range> {
+class Range : public raft::StateMachine, public std::enable_shared_from_this<Range> {
 public:
     Range(server::ContextServer *context, const metapb::Range &meta);
     ~Range();
@@ -65,11 +64,9 @@ public:
     Status Shutdown();
 
     Status Apply(const std::string &cmd, uint64_t index) override;
-    Status ApplyMemberChange(const raft::ConfChange &cc,
-                             uint64_t index) override;
+    Status ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) override;
 
-    void OnReplicateError(const std::string &cmd,
-                          const Status &status) override{
+    void OnReplicateError(const std::string &cmd, const Status &status) override{
         // TODO
     };
 
@@ -87,17 +84,14 @@ public:
     bool LockExist(const std::string &key);
     kvrpcpb::LockValue *LockGet(const std::string &key);
     void Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req);
-    void LockUpdate(common::ProtoMessage *msg,
-                    kvrpcpb::DsLockUpdateRequest &req);
+    void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
     void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
-    void UnlockForce(common::ProtoMessage *msg,
-                     kvrpcpb::DsUnlockForceRequest &req);
+    void UnlockForce(common::ProtoMessage *msg, kvrpcpb::DsUnlockForceRequest &req);
 
     // KV
     void RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req);
     void RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
-    void RawDelete(common::ProtoMessage *msg,
-                   kvrpcpb::DsKvRawDeleteRequest &req);
+    void RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
 
     void Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req);
     void Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req);
@@ -105,26 +99,20 @@ public:
 
     void KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req);
     void KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req);
-    void KVBatchSet(common::ProtoMessage *msg,
-                    kvrpcpb::DsKvBatchSetRequest &req);
-    void KVBatchGet(common::ProtoMessage *msg,
-                    kvrpcpb::DsKvBatchGetRequest &req);
+    void KVBatchSet(common::ProtoMessage *msg, kvrpcpb::DsKvBatchSetRequest &req);
+    void KVBatchGet(common::ProtoMessage *msg, kvrpcpb::DsKvBatchGetRequest &req);
     void KVDelete(common::ProtoMessage *msg, kvrpcpb::DsKvDeleteRequest &req);
-    void KVBatchDelete(common::ProtoMessage *msg,
-                       kvrpcpb::DsKvBatchDeleteRequest &req);
-    void KVRangeDelete(common::ProtoMessage *msg,
-                       kvrpcpb::DsKvRangeDeleteRequest &req);
+    void KVBatchDelete(common::ProtoMessage *msg, kvrpcpb::DsKvBatchDeleteRequest &req);
+    void KVRangeDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRangeDeleteRequest &req);
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
 
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
     kvrpcpb::SelectResponse *SelectResp(const kvrpcpb::DsSelectRequest &req);
     // RawPutSubmit cannot be called repeatedly
-    bool RawPutSubmit(common::ProtoMessage *msg,
-                      kvrpcpb::DsKvRawPutRequest &req);
+    bool RawPutSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
     // RawDeleteSubmit cannot be called repeatedly
-    bool RawDeleteSubmit(common::ProtoMessage *msg,
-                         kvrpcpb::DsKvRawDeleteRequest &req);
+    bool RawDeleteSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
     // DeleteSubmit cannot be called repeatedly
     bool DeleteSubmit(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
 
@@ -142,8 +130,8 @@ private:
             if (request_header != nullptr) delete request_header;
 
             if (submit_time > 0) {
-                context_server->run_status->PushTime(
-                    monitor::PrintTag::Raft, get_micro_second() - submit_time);
+                context_server->run_status->PushTime(monitor::PrintTag::Raft,
+                                                     get_micro_second() - submit_time);
             }
         }
         common::ProtoMessage *release_proto_message() {
@@ -165,8 +153,7 @@ private:
     };
 
     AsyncContext *AddContext(uint64_t id, raft_cmdpb::CmdType type,
-                             common::ProtoMessage *msg,
-                             kvrpcpb::RequestHeader *req);
+                             common::ProtoMessage *msg, kvrpcpb::RequestHeader *req);
     AsyncContext *ReleaseContext(uint64_t seq_id);
 
     void DelContext(uint64_t seq_id);
@@ -179,8 +166,7 @@ private:
     kvrpcpb::KvRawGetResponse *RawGetTry(const std::string &key);
     kvrpcpb::SelectResponse *SelectTry(const kvrpcpb::DsSelectRequest &req);
     bool RawPutTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
-    bool RawDeleteTry(common::ProtoMessage *msg,
-                      kvrpcpb::DsKvRawDeleteRequest &req);
+    bool RawDeleteTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
     bool DeleteTry(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
 
 private:
@@ -227,14 +213,14 @@ private:
     void SendError(AsyncContext *context, R *resp, errorpb::Error *err) {
         auto header = resp->mutable_header();
 
-        context_->socket_session->SetResponseHeader(*context->request_header,
-                                                    header, err);
+        context_->socket_session->SetResponseHeader(*context->request_header, header,
+                                                    err);
         context_->socket_session->Send(context->release_proto_message(), resp);
     }
 
     template <class R>
-    void SendError(common::ProtoMessage *msg, const kvrpcpb::RequestHeader &req,
-                   R *resp, errorpb::Error *err) {
+    void SendError(common::ProtoMessage *msg, const kvrpcpb::RequestHeader &req, R *resp,
+                   errorpb::Error *err) {
         auto header = resp->mutable_header();
 
         context_->socket_session->SetResponseHeader(req, header, err);
@@ -242,9 +228,8 @@ private:
     }
 
     template <class RequestT>
-    Status SubmitCmd(
-        common::ProtoMessage *msg, RequestT &req,
-        const std::function<void(raft_cmdpb::Command &cmd)> &init) {
+    Status SubmitCmd(common::ProtoMessage *msg, RequestT &req,
+                     const std::function<void(raft_cmdpb::Command &cmd)> &init) {
         raft_cmdpb::Command cmd;
         uint64_t seq_id = std::atomic_fetch_add(&submit_seq_, 1ul);
 
@@ -256,8 +241,7 @@ private:
         auto epoch = new metapb::RangeEpoch(req.header().range_epoch());
         cmd.set_allocated_verify_epoch(epoch);
 
-        auto context =
-            AddContext(seq_id, cmd.cmd_type(), msg, req.release_header());
+        auto context = AddContext(seq_id, cmd.cmd_type(), msg, req.release_header());
         context->submit_time = get_micro_second();
 
         auto ret = Submit(cmd);
@@ -271,34 +255,31 @@ private:
     }
 
     template <class ResponseT>
-    Status SendResponse(ResponseT *response, const raft_cmdpb::Command &cmd,
-                        int code, errorpb::Error *err) {
-        std::unique_ptr<AsyncContext> context(
-            ReleaseContext(cmd.cmd_id().seq()));
+    Status SendResponse(ResponseT *response, const raft_cmdpb::Command &cmd, int code,
+                        errorpb::Error *err) {
+        std::unique_ptr<AsyncContext> context(ReleaseContext(cmd.cmd_id().seq()));
         if (context == nullptr) {
-            FLOG_ERROR("Apply cmd id %" PRIu64 " not found",
-                       cmd.cmd_id().seq());
+            FLOG_ERROR("Apply cmd id %" PRIu64 " not found", cmd.cmd_id().seq());
 
             if (err != nullptr) {
                 delete err;
             }
 
             delete response;
-            return Status(Status::kTimedOut,
-                          CmdType_Name(cmd.cmd_type()) + " time out", "");
+            return Status(Status::kTimedOut, CmdType_Name(cmd.cmd_type()) + " time out",
+                          "");
         }
 
         auto etime = get_micro_second();
         auto take = etime - context->proto_message->begin_time;
         if (take > kTimeTakeWarnThresoldUSec) {
-            FLOG_WARN(
-                "range[%lu] %s takes too long(%ld ms), sid=%ld, msgid=%ld",
-                meta_.id(), funcpb::FunctionID_Name(
-                                static_cast<funcpb::FunctionID>(
-                                    context->proto_message->header.func_id))
-                                .c_str(),
-                take / 1000, context->proto_message->session_id,
-                context->proto_message->header.msg_id);
+            FLOG_WARN("range[%lu] %s takes too long(%ld ms), sid=%ld, msgid=%ld",
+                      meta_.id(),
+                      funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(
+                                                  context->proto_message->header.func_id))
+                          .c_str(),
+                      take / 1000, context->proto_message->session_id,
+                      context->proto_message->header.msg_id);
         }
 
         FLOG_DEBUG("range[%lu] response msgid=%ld.", meta_.id(),
@@ -306,17 +287,16 @@ private:
 
         response->mutable_resp()->set_code(code);
 
-        context_->socket_session->SetResponseHeader(
-            *context->request_header, response->mutable_header(), err);
-        context_->socket_session->Send(context->release_proto_message(),
-                                       response);
+        context_->socket_session->SetResponseHeader(*context->request_header,
+                                                    response->mutable_header(), err);
+        context_->socket_session->Send(context->release_proto_message(), response);
 
         return Status::OK();
     }
 
     template <class ResponseT>
-    Status SendResponse(ResponseT *response, const raft_cmdpb::Command &cmd,
-                        int code, uint64_t rows, errorpb::Error *err) {
+    Status SendResponse(ResponseT *response, const raft_cmdpb::Command &cmd, int code,
+                        uint64_t rows, errorpb::Error *err) {
         response->mutable_resp()->set_affected_keys(rows);
         return SendResponse(response, cmd, code, err);
     }
@@ -359,6 +339,7 @@ private:
     bool SaveMeta(const metapb::Range &meta);
 
     metapb::Peer *NewMetaPeer(uint64_t node_id);
+    // TODO: find use both nodeid and peer_id
     metapb::Peer *FindMetaPeer(uint64_t node_id);
 
     errorpb::Error *TimeOutError();

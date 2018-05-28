@@ -9,10 +9,10 @@ namespace raft {
 namespace impl {
 
 struct RaftContext {
-    WorkThread *consensus_thread{nullptr};
-    WorkThread *apply_thread{nullptr};
-    transport::Transport *msg_sender{nullptr};
-    SnapshotSender *snap_sender{nullptr};
+    WorkThread *consensus_thread = nullptr;
+    WorkThread *apply_thread = nullptr;
+    transport::Transport *msg_sender = nullptr;
+    SnapshotSender *snap_sender = nullptr;
 };
 
 } /* namespace impl */

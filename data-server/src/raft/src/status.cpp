@@ -8,7 +8,7 @@ namespace raft {
 std::string ReplicaStatus::ToString() const {
     std::ostringstream ss;
     ss << "{";
-    ss << "\"peer_id\": " << peer_id << ", ";
+    ss << "\"peer\": " << peer.ToString() << ", ";
     ss << "\"match\": " << match << ", ";
     ss << "\"commit\": " << commit << ", ";
     ss << "\"next\": " << next << ", ";
