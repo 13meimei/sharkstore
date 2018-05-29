@@ -6,7 +6,6 @@ import (
 )
 
 var (
-	//AlarmUrl = "http://alarmgate.jd.local/simplealarm"
 	AlarmUrl = "http://alarmgate.sharkstore.local/alarm"
 	Mail = "test@sharkstore.com"
 	Sms = "12322"
