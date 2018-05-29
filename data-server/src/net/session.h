@@ -1,16 +1,16 @@
 _Pragma("once");
 
 #include <asio/ip/tcp.hpp>
+#include <asio/streambuf.hpp>
 #include <memory>
 
+#include "msg_handler.h"
 #include "options.h"
 #include "rpc_protocol.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace net {
-
-class MsgHandler;
 
 class Session : public std::enable_shared_from_this<Session> {
 public:
@@ -32,28 +32,34 @@ private:
     static std::atomic<uint64_t> total_count_;
 
 private:
+    bool init();
     void doClose();
 
     void readPreface();
+
     void readRPCHead();
     void readRPCBody();
+
     void readCmdLine();
+    void parseCmdLine(std::size_t length);
 
 private:
     const SessionOptions& opt_;
     const MsgHandler& msg_handler_;
 
     asio::ip::tcp::socket socket_;
-    std::string local_addr_;
-    std::string remote_addr_;
+    MsgContext msg_ctx_;
     std::string id_;
 
     std::atomic<bool> closed_ = {false};
 
     std::array<uint8_t, 4> preface_ = {{0, 0, 0, 0}};
+    size_t preface_remained_ = 4;
 
     RPCHead rpc_head_;
     std::vector<char> rpc_body_;
+
+    asio::streambuf cmdline_buffer_;
 };
 
 }  // namespace net

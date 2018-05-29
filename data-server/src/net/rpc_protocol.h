@@ -29,13 +29,10 @@ struct RPCHead {
     uint32_t body_length = 0;
 
     bool Valid() const;
-
     // encode to network byte order
     void Encode();
-
     // decode network byte order to host order
     void Decode();
-
     std::string DebugString() const;
 
 } __attribute__((packed));

@@ -1,5 +1,7 @@
 _Pragma("once");
 
+#include "rpc_protocol.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace net {
@@ -12,9 +14,10 @@ struct MsgContext {
     std::string local_addr;
 };
 
-using RPCHandler = std::function<void(const MsgContext&)>;
+using RPCHandler =
+    std::function<void(const MsgContext&, const RPCHead&, std::vector<char>&&)>;
 
-using TelnetHandler = std::function<void(const MsgContext&, std::string& cmdline)>;
+using TelnetHandler = std::function<void(const MsgContext&, std::string&& cmdline)>;
 
 struct MsgHandler {
     RPCHandler rpc_handler;
