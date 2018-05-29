@@ -54,7 +54,9 @@ func (dispatcher *EventDispatcher) Dispatch(r *Range) *taskpb.Task {
 			}
 			cur = cur.Next()
 		}
-		dispatcher.removeEvent(e)
+		if e.IsClosed() {
+			dispatcher.removeEvent(e)
+		}
 		return nil
 	}
 
