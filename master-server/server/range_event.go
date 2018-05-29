@@ -432,6 +432,7 @@ func (e *DelRangeEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *tas
 			//TODO:可能对堵塞时间比较长
 			err := cluster.cli.DeleteRange(node.GetServerAddr(), r.GetId())
 			if err == nil {
+				log.Debug("delete range %v err, wait for gc, error: %v", err)
 				peerGC(cluster, r.Range, peer)
 			}
 		}

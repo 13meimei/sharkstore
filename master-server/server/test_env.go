@@ -2,6 +2,7 @@ package server
 
 import (
 	"os"
+	"fmt"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
@@ -147,32 +148,40 @@ func (lc *LocalDSClient) Close() error {
 }
 // SendKVReq sends kv request.
 func (lc *LocalDSClient) CreateRange(addr string, r *metapb.Range) error {
+	fmt.Println(fmt.Sprintf("invoke createRange, addr: %v, rangeID: %v", addr, r.GetId()))
 	return nil
 }
 func (lc *LocalDSClient) DeleteRange(addr string, rangeId uint64) error {
+	fmt.Println(fmt.Sprintf("invoke deleteRange, addr: %v, rangeID: %v", addr, rangeId))
 	return nil
 }
 func (lc *LocalDSClient) TransferLeader(addr string, rangeId uint64) error {
+	fmt.Println(fmt.Sprintf("invoke transferLeader, addr: %v, rangeID: %v", addr, rangeId))
 	return nil
 }
 
 func (lc *LocalDSClient) UpdateRange(addr string, r *metapb.Range) error {
+	fmt.Println(fmt.Sprintf("invoke updateRange, addr: %v, rangeID: %v", addr, r.GetId()))
 	return nil
 }
 
 func (lc *LocalDSClient) GetPeerInfo(addr string, rangeId uint64) (*schpb.GetPeerInfoResponse, error){
+	fmt.Println(fmt.Sprintf("invoke getPeerInfo, addr: %v, rangeID: %v", addr, rangeId))
 	return &schpb.GetPeerInfoResponse{}, nil
 }
 
 func (lc *LocalDSClient) SetNodeLogLevel(addr string, level string) error {
+	fmt.Println(fmt.Sprintf("invoke setNodeLogLevel, addr: %v, level: %v", addr, level))
 	return nil
 }
 
 func (lc *LocalDSClient) OffLineRange(addr string, rangeId uint64) error {
+	fmt.Println(fmt.Sprintf("invoke offlineRange, addr: %v, rangeID: %v", addr, rangeId))
 	return nil
 }
 
 func (lc *LocalDSClient) ReplaceRange(addr string, oldRangeId uint64, newRange *metapb.Range) error {
+	fmt.Println(fmt.Sprintf("invoke replaceRange, addr: %v, old rangeID: %v, new rangeID: %v", addr, oldRangeId, newRange.GetId()))
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"fmt"
 	"model/pkg/metapb"
+	"util/deepcopy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,7 +54,7 @@ func TestDispatch(t *testing.T) {
 	assert.Equal(ok, false, "The event of range 10 had existed.")
 
 	event := mockCluster.eventDispatcher.peekEvent(rng.GetId())
-	t.Log(fmt.Sprintf("event detail: %v", event))
+	t.Log(fmt.Sprintf("range event detail: %v", event))
 
 	//mock first range hb
 	task := mockCluster.eventDispatcher.Dispatch(rng)
@@ -61,26 +62,74 @@ func TestDispatch(t *testing.T) {
 		t.Errorf("exectue add peer task logic error, %v", task)
 		return
 	}
-	t.Log("hb ")
 	event = mockCluster.eventDispatcher.peekEvent(rng.GetId())
-	if event.GetStatus() != EVENT_STATUS_DEALING {
+	if event == nil || event.GetStatus() != EVENT_STATUS_DEALING {
 		t.Errorf("exectue add peer task status error")
 		return
 	}
+	t.Log(fmt.Sprintf("hb take add peer task to data-server, task: %v", task))
+
 	//mock second range hb
+	rng = mockCluster.FindRange(rngM.GetId())
+	if rng == nil {
+		t.Errorf("error")
+		return
+	}
+	peers := rng.GetPeers()
+	peers = append(peers, &metapb.Peer{Id: 14, NodeId: 5})
+	rng.Peers = peers
+	t.Log(fmt.Sprintf("range %v, leader: %v", rng, rng.GetLeader().GetId()))
+	task = mockCluster.eventDispatcher.Dispatch(rng)
+	if task != nil {
+		t.Errorf("exectue transfer peer task logic error, task: %v", task)
+		return
+	}
+
+	//mock third range hb
+	rng = mockCluster.FindRange(rngM.GetId())
+	if rng == nil {
+		t.Errorf("error")
+		return
+	}
+	expectedLeader := rng.GetPeer(14)
+	rng.Leader = deepcopy.Iface(expectedLeader).(*metapb.Peer)
 	task = mockCluster.eventDispatcher.Dispatch(rng)
 	if task == nil {
-		t.Errorf("exectue add peer task logic error")
+		t.Errorf("exectue delete peer task logic error")
 		return
 	}
+
+	t.Log(fmt.Sprintf("hb take delete task to data-server, task: %v", task))
+
+	//mock fourth range hb
+	rng = mockCluster.FindRange(rngM.GetId())
+	if rng == nil {
+		t.Errorf("error")
+		return
+	}
+	deletePeer := rng.GetPeer(11)
+	if deletePeer == nil {
+		t.Errorf("error")
+		return
+	}
+	var peersAfterDel []*metapb.Peer
+	for _, p := range rng.GetPeers() {
+		if p.GetId() != deletePeer.GetId() {
+			peersAfterDel = append(peersAfterDel, p)
+		}
+	}
+	rng.Peers = peersAfterDel
+	task = mockCluster.eventDispatcher.Dispatch(rng)
+	if task != nil {
+		t.Errorf("exectue delete peer task  error")
+		return
+	}
+
 	event = mockCluster.eventDispatcher.peekEvent(rng.GetId())
 	if event != nil {
-		t.Errorf("dispach task by hb error")
+		t.Errorf("dispach remove event error, event: %v", event)
 		return
 	}
-
-	/** -------second change event-----------*/
-
 
 }
 
