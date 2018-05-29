@@ -640,16 +640,15 @@ func (service *Server) handleRangeGetRangeTopo(w http.ResponseWriter, r *http.Re
 
 	cluster := service.cluster
 	myRange := cluster.FindRange(rangeId)
-
-	opsDescription := fmt.Sprintf(" \nBytesWritten=[%d], BytesRead=[%d], KeysWritten=[%d], KeysRead=[%d], OpsMax=[%d]",
-		myRange.BytesWritten, myRange.BytesRead, myRange.KeysWritten, myRange.KeysRead, myRange.opsStat.GetMax())
-
 	if myRange == nil {
 		log.Error("http get range[rangeId=%d] info maybe not exists", rangeId)
 		reply.Code = HTTP_ERROR_RANGE_FIND
 		reply.Message = http_error_range_find
 		return
 	}
+
+	opsDescription := fmt.Sprintf(" \nBytesWritten=[%d], BytesRead=[%d], KeysWritten=[%d], KeysRead=[%d], OpsMax=[%d]",
+		myRange.BytesWritten, myRange.BytesRead, myRange.KeysWritten, myRange.KeysRead, myRange.opsStat.GetMax())
 
 	type Peer struct {
 		Id   uint64       `json:"id,omitempty"`
