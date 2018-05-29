@@ -55,6 +55,7 @@ func (dispatcher *EventDispatcher) Dispatch(r *Range) *taskpb.Task {
 			cur = cur.Next()
 		}
 		dispatcher.removeEvent(e)
+		return nil
 	}
 
 	//生成任务时，要满足条件

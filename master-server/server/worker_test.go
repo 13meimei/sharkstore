@@ -219,7 +219,7 @@ func addNodes(cluster *Cluster) {
 	cluster.AddNode(createNode(cluster, "192.168.0.1:6280", 1, 2312))
 	cluster.AddNode(createNode(cluster, "192.168.0.2:6180", 2, 87122))
 	cluster.AddNode(createNode(cluster, "192.168.0.3:6180", 1, 42321))
-	cluster.AddNode(createNode(cluster, "192.168.0.3:6180", 1, 98238))
+	cluster.AddNode(createNode(cluster, "192.168.0.4:6180", 1, 98238))
 	cluster.AddNode(createNode(cluster, "192.168.0.4:6280", 1, 323121))
 	cluster.AddNode(createNode(cluster, "192.168.0.5:6180", 1, 9871))
 }
