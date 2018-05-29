@@ -1,8 +1,9 @@
 #include "server.h"
 
-#include "handler.h"
+// TODO: logger
+#include <iostream>
 #include "io_context_pool.h"
-#include "server_connection.h"
+#include "session.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -16,7 +17,7 @@ Server::Server(const ServerOptions& opt)
 Server::~Server() { Stop(); }
 
 Status Server::ListenAndServe(const std::string& listen_ip, uint16_t listen_port,
-                              Handler* handler) {
+                              const MsgHandler& handler) {
     std::string bind_ip = listen_ip;
     if (bind_ip.empty()) {
         bind_ip = "0.0.0.0";
@@ -31,7 +32,7 @@ Status Server::ListenAndServe(const std::string& listen_ip, uint16_t listen_port
         return Status(Status::kIOError, "listen", e.what());
     }
 
-    handler_ = handler;
+    msg_handler_ = handler;
     context_pool_->Start();
 
     doAccept();
@@ -57,11 +58,20 @@ void Server::Stop() {
 }
 
 void Server::doAccept() {
-    // prepare a new connection for accept
-    auto copt = static_cast<ConnectionOptions>(opt_);
-    auto connection = std::make_shared<ServerConnection>(copt, getContext());
+    acceptor_.async_accept(getContext(), [this](const std::error_code& ec,
+                                                asio::ip::tcp::socket socket) {
+        if (ec) {
+            std::cout << "[Net] accept error: " << ec.message() << std::endl;
+        } else if (Session::TotalCount() > opt_.max_connections) {
+            std::cout << "[Net] accept max connection limit reached: "
+                      << opt_.max_connections << std::endl;
+        } else {
+            std::make_shared<Session>(opt_.session_opt, msg_handler_, std::move(socket))
+                ->Start();
+        }
 
-    // acceptor_.async_accept(connection->GetSocket(), );
+        doAccept();
+    });
 }
 
 asio::io_context& Server::getContext() {

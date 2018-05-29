@@ -1,9 +1,9 @@
 set(net_SOURCES
     io_context_pool.cpp
-    protocol_telnet.cpp
-    protocol_rpc.cpp
+    rpc_client.cpp
+    rpc_protocol.cpp
     server.cpp
-    server_connection.cpp
+    session.cpp
     )
 
 foreach(f IN LISTS net_SOURCES) 

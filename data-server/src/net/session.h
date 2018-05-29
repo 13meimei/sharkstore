@@ -4,33 +4,56 @@ _Pragma("once");
 #include <memory>
 
 #include "options.h"
+#include "rpc_protocol.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace net {
 
-class ServerConnection : public std::enable_shared_from_this<ServerConnection> {
-public:
-    ServerConnection(const ConnectionOptions& ops, asio::io_context& context);
-    ~ServerConnection();
+class MsgHandler;
 
-    ServerConnection(const ServerConnection&) = delete;
-    ServerConnection& operator=(const ServerConnection&) = delete;
+class Session : public std::enable_shared_from_this<Session> {
+public:
+    Session(const SessionOptions& opt, const MsgHandler& msg_handler,
+            asio::ip::tcp::socket socket);
+    ~Session();
+
+    void Start();
+
+    Session(const Session&) = delete;
+    Session& operator=(const Session&) = delete;
 
     asio::ip::tcp::socket& GetSocket() { return socket_; }
 
-    static uint64_t GetTotalCount() { return total_count_; }
+    static uint64_t TotalCount() { return total_count_; }
 
 private:
-    // all server's connections count
+    // all server's sessions count
     static std::atomic<uint64_t> total_count_;
 
 private:
-    const ConnectionOptions opt_;
-    asio::io_context& io_context_;
+    void doClose();
+
+    void readPreface();
+    void readRPCHead();
+    void readRPCBody();
+    void readCmdLine();
+
+private:
+    const SessionOptions& opt_;
+    const MsgHandler& msg_handler_;
 
     asio::ip::tcp::socket socket_;
-    std::array<uint8_t, 4096> buffer_;
+    std::string local_addr_;
+    std::string remote_addr_;
+    std::string id_;
+
+    std::atomic<bool> closed_ = {false};
+
+    std::array<uint8_t, 4> preface_ = {{0, 0, 0, 0}};
+
+    RPCHead rpc_head_;
+    std::vector<char> rpc_body_;
 };
 
 }  // namespace net

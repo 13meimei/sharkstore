@@ -4,13 +4,9 @@ namespace sharkstore {
 namespace dataserver {
 namespace net {
 
-class Handler {
+class RPCClient {
 public:
-    Handler() {}
-    virtual ~Handler() {}
-
-    virtual bool HandleRPC() = 0;
-    virtual bool HandleTelnet(const std::vector<std::string>& args) = 0;
+    // TODO:
 };
 
 }  // namespace net

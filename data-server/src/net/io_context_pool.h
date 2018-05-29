@@ -24,15 +24,14 @@ public:
 
     size_t Size() const { return pool_size_; }
 
-    // should check Size()>0 before
+    // must check Size()>0 before
     asio::io_context& GetIOContext();
 
 private:
     void runLoop(const std::shared_ptr<asio::io_context>& ctx, int i);
 
 private:
-    using WorkGuard =
-        asio::executor_work_guard<asio::io_context::executor_type>;
+    using WorkGuard = asio::executor_work_guard<asio::io_context::executor_type>;
 
     const size_t pool_size_ = 0;
 

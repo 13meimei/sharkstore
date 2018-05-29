@@ -1,5 +1,4 @@
-#ifndef __FBASE_RANGE_H__
-#define __FBASE_RANGE_H__
+_Pragma("once");
 
 #include <rocksdb/db.h>
 #include <stdint.h>
@@ -389,5 +388,3 @@ private:
 }  // namespace range
 }  // namespace dataserver
 }  // namespace sharkstore
-
-#endif  // __FBASE_RANGE_H__
