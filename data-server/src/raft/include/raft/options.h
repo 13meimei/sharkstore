@@ -7,7 +7,7 @@ _Pragma("once");
 #include "raft/node_resolver.h"
 #include "raft/statemachine.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 struct TransportOptions {
@@ -131,4 +131,4 @@ struct RaftOptions {
 };
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

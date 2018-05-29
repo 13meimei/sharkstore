@@ -11,7 +11,7 @@ _Pragma("once");
 #include "connection.h"
 #include "task_handler.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace master {
 
@@ -100,4 +100,4 @@ private:
 
 }  // namespace master
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

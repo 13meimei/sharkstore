@@ -4,7 +4,7 @@ _Pragma("once");
 #include <string>
 #include <vector>
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 enum class PeerType : char { kNormal, kLearner };
@@ -39,4 +39,4 @@ struct ConfChange {
 };
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

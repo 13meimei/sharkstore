@@ -10,7 +10,7 @@
 #include "proto/gen/redispb.pb.h"
 #include "row_fetcher.h"
 
-namespace fbase {
+namespace sharkstore {
 
 namespace dataserver {
 namespace storage {
@@ -508,4 +508,4 @@ void Store::addMetricWrite(uint64_t keys, uint64_t bytes) {
 
 } /* namespace storage */
 } /* namespace dataserver */
-} /* namespace fbase */
+} /* namespace sharkstore */

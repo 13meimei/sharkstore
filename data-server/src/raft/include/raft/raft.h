@@ -3,7 +3,7 @@ _Pragma("once");
 #include "options.h"
 #include "status.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 class Raft {
@@ -34,4 +34,4 @@ public:
 };
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

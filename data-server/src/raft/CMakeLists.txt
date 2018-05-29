@@ -40,14 +40,14 @@ foreach(f IN LISTS raft_SOURCES)
         COMPILE_DEFINITIONS "__FNAME__=\"raft/${fname}\"") 
 endforeach() 
 
-add_library(fbase-raft STATIC ${raft_SOURCES})
+add_library(sharkstore-raft STATIC ${raft_SOURCES})
 
 set (raft_test_Deps
-        fbase-raft
-        fbase-common
-        fbase-frame
-        fbase-base
-        fbase-lkqueue
+        sharkstore-raft
+        sharkstore-common
+        sharkstore-frame
+        sharkstore-base
+        sharkstore-lkqueue
         fastcommon
         ${PROTOBUF_LIBRARY}
         pthread

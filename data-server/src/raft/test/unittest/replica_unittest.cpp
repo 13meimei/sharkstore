@@ -11,9 +11,9 @@ int main(int argc, char* argv[]) {
 
 namespace {
 
-using fbase::raft::Peer;
-using fbase::randomInt;
-using namespace fbase::raft::impl;
+using sharkstore::raft::Peer;
+using sharkstore::randomInt;
+using namespace sharkstore::raft::impl;
 
 TEST(Replica, SetGet) {
     auto p = testutil::RandomPeer();

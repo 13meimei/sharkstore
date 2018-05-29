@@ -4,7 +4,7 @@
 #include "fast_connection.h"
 #include "fast_server.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace transport {
@@ -82,4 +82,4 @@ Status FastTransport::GetConnection(uint64_t to,
 } /* namespace transport */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

@@ -3,7 +3,7 @@ _Pragma("once");
 #include <stdint.h>
 #include <string>
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 // NodeResolver 用于raft模块获取某个dataserver的ip地址
@@ -16,4 +16,4 @@ public:
 };
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

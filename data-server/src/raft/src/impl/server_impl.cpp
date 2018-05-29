@@ -9,7 +9,7 @@
 #include "transport/fast_transport.h"
 #include "transport/inprocess_transport.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -115,7 +115,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 
     uint64_t counter = 0;
     {
-        std::unique_lock<fbase::shared_mutex> lock(mu_);
+        std::unique_lock<sharkstore::shared_mutex> lock(mu_);
         auto it = rafts_.find(ops.id);
         if (it != rafts_.end()) {
             return Status(Status::kDuplicate, "create raft", std::to_string(ops.id));
@@ -142,7 +142,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
         r = std::make_shared<RaftImpl>(ops_, ops, ctx);
     } catch (RaftException& e) {
         {
-            std::unique_lock<fbase::shared_mutex> lock(mu_);
+            std::unique_lock<sharkstore::shared_mutex> lock(mu_);
             creatings_.erase(ops.id);
         }
         return Status(Status::kUnknown, "create raft", e.what());
@@ -150,7 +150,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 
     assert(r != nullptr);
     {
-        std::unique_lock<fbase::shared_mutex> lock(mu_);
+        std::unique_lock<sharkstore::shared_mutex> lock(mu_);
         rafts_.emplace(ops.id, r);
         creatings_.erase(ops.id);
     }
@@ -162,7 +162,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
     std::shared_ptr<RaftImpl> r;
     {
-        std::unique_lock<fbase::shared_mutex> lock(mu_);
+        std::unique_lock<sharkstore::shared_mutex> lock(mu_);
         auto it = rafts_.find(id);
         if (it != rafts_.end()) {
             r = it->second;
@@ -191,7 +191,7 @@ Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
 }
 
 std::shared_ptr<RaftImpl> RaftServerImpl::findRaft(uint64_t id) const {
-    fbase::shared_lock<fbase::shared_mutex> lock(mu_);
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(mu_);
 
     auto it = rafts_.find(id);
     if (it != rafts_.cend()) {
@@ -312,7 +312,7 @@ void RaftServerImpl::tickRoutine() {
 
         RaftMap rafts;
         {
-            std::lock_guard<fbase::shared_mutex> lock(mu_);
+            std::lock_guard<sharkstore::shared_mutex> lock(mu_);
             rafts = rafts_;
         }
         sendHeartbeat(rafts);
@@ -355,4 +355,4 @@ void RaftServerImpl::printMetrics() {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

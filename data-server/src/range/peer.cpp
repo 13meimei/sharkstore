@@ -2,7 +2,7 @@
 
 #include "storage/meta_store.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace range {
 
@@ -132,7 +132,7 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc) {
 
     bool is_modify = false;
     do {
-        std::unique_lock<fbase::shared_mutex> lock(meta_lock_);
+        std::unique_lock<sharkstore::shared_mutex> lock(meta_lock_);
 
         auto fp = FindMetaPeer(cc.peer.node_id);
         if (fp != nullptr) {
@@ -193,7 +193,7 @@ Status Range::ApplyDelPeer(const raft::ConfChange &cc) {
 
     bool is_modify = false;
     do {
-        std::unique_lock<fbase::shared_mutex> lock(meta_lock_);
+        std::unique_lock<sharkstore::shared_mutex> lock(meta_lock_);
 
         metapb::Range meta = meta_;
         if (DelPeer(pt, meta)) {
@@ -247,4 +247,4 @@ bool Range::DelPeer(raft_cmdpb::PeerTask &pt, metapb::Range &meta) {
 
 }  // namespace range
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

@@ -1,6 +1,6 @@
 _Pragma("once");
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -18,6 +18,11 @@ struct RPCHeader {
 
 static constexpr int kRPCHanlderSize = sizeof(RPCHeader);
 
+struct RPCMessage {
+    RPCHeader header;
+    std::vector<char> body_data;
+};
+
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

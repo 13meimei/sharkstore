@@ -9,7 +9,7 @@
 #include "base/byte_order.h"
 #include "base/util.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace storage {
@@ -119,4 +119,4 @@ Status MetaFile::SaveTruncMeta(const pb::TruncateMeta& tm) {
 } /* namespace storage */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

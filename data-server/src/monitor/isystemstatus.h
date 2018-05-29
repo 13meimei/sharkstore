@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 
-namespace fbase {
+namespace sharkstore {
 namespace monitor {
 
 class LinuxStatus;

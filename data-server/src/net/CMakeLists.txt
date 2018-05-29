@@ -11,4 +11,4 @@ foreach(f IN LISTS net_SOURCES)
         COMPILE_DEFINITIONS "__FNAME__=\"net/${f}\"") 
 endforeach() 
 
-add_library(fbase-net STATIC ${net_SOURCES})
+add_library(sharkstore-net STATIC ${net_SOURCES})

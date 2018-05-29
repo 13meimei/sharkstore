@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 std::string ReplicaStatus::ToString() const {
@@ -58,4 +58,4 @@ std::string RaftStatus::ToString() const {
 }
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

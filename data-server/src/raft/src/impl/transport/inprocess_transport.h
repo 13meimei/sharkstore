@@ -9,7 +9,7 @@ _Pragma("once");
 #include "base/shared_mutex.h"
 #include "transport.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace transport {
@@ -72,7 +72,7 @@ private:
 
     private:
         std::map<uint64_t, std::shared_ptr<MailBox>> mail_boxes_;
-        mutable fbase::shared_mutex mu_;
+        mutable sharkstore::shared_mutex mu_;
     };
 
 private:
@@ -90,4 +90,4 @@ private:
 } /* namespace transport */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

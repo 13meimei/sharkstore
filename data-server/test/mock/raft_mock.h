@@ -3,8 +3,8 @@
 
 #include "raft/raft.h"
 
-using namespace fbase;
-using namespace fbase::raft;
+using namespace sharkstore;
+using namespace sharkstore::raft;
 
 class RaftMock : public Raft {
 public:

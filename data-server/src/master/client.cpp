@@ -5,7 +5,7 @@
 #include "frame/sf_logger.h"
 #include "rpc_types.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace master {
 
@@ -404,4 +404,4 @@ bool Client::checkResponseError(const std::string& from,
 
 }  // namespace master
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

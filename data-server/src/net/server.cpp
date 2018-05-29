@@ -4,7 +4,7 @@
 #include "io_context_pool.h"
 #include "server_connection.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -15,19 +15,18 @@ Server::Server(const ServerOptions& opt)
 
 Server::~Server() { Stop(); }
 
-Status Server::ListenAndServe(const std::string& listen_ip,
-                              uint16_t listen_port, Handler* handler) {
+Status Server::ListenAndServe(const std::string& listen_ip, uint16_t listen_port,
+                              Handler* handler) {
     std::string bind_ip = listen_ip;
     if (bind_ip.empty()) {
         bind_ip = "0.0.0.0";
     }
     try {
-        asio::ip::tcp::endpoint endpoint(asio::ip::make_address(bind_ip),
-                                         listen_port);
+        asio::ip::tcp::endpoint endpoint(asio::ip::make_address(bind_ip), listen_port);
         acceptor_.open(endpoint.protocol());
         acceptor_.set_option(asio::ip::tcp::acceptor::reuse_address(true));
         acceptor_.bind(endpoint);
-        acceptor_.listen();
+        acceptor_.listen(asio::socket_base::max_listen_connections);
     } catch (std::exception& e) {
         return Status(Status::kIOError, "listen", e.what());
     }
@@ -75,4 +74,4 @@ asio::io_context& Server::getContext() {
 
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

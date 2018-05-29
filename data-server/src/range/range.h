@@ -34,7 +34,7 @@
 #include "server/context_server.h"
 #include "server/run_status.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace range {
 
@@ -388,6 +388,6 @@ private:
 
 }  // namespace range
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore
 
 #endif  // __FBASE_RANGE_H__

@@ -7,7 +7,7 @@
 #include "base/util.h"
 #include "common/ds_encoding.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
@@ -158,4 +158,4 @@ Status MetaStore::DeleteApplyIndex(uint64_t range_id) {
 
 }  // namespace storage
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

@@ -12,7 +12,7 @@
 #include "base/util.h"
 #include "log_file.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace storage {
@@ -84,7 +84,7 @@ Status DiskStorage::checkLogsValidate(const std::map<uint64_t, uint64_t>& logs) 
 
 Status DiskStorage::initDir() {
     assert(!path_.empty());
-    int ret = fbase::MakeDirAll(path_, 0755);
+    int ret = sharkstore::MakeDirAll(path_, 0755);
     if (ret < 0) {
         return Status(Status::kIOError, "init directory " + path_, strErrno(errno));
     }
@@ -583,4 +583,4 @@ Status DiskStorage::CheckCorrupt() {
 } /* namespace storage */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

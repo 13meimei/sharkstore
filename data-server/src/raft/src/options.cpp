@@ -1,6 +1,6 @@
 #include "raft/options.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 Status TransportOptions::Validate() const {
@@ -152,4 +152,4 @@ Status RaftOptions::Validate() const {
 }
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

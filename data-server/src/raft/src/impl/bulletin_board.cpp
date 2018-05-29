@@ -1,11 +1,11 @@
 #include "bulletin_board.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
-using fbase::shared_lock;
-using fbase::shared_mutex;
+using sharkstore::shared_lock;
+using sharkstore::shared_mutex;
 using std::unique_lock;
 
 static const int kDownPeerThresholdSecs = 50;
@@ -75,4 +75,4 @@ void BulletinBoard::Status(RaftStatus* status) const {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

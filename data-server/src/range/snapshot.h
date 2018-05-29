@@ -5,7 +5,7 @@
 #include "raft/snapshot.h"
 #include "storage/iterator.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace range {
 
@@ -28,6 +28,6 @@ private:
 
 } /* namespace range */
 } /* namespace dataserver */
-} /* namespace fbase */
+} /* namespace sharkstore */
 
 #endif /* end of include guard: FBASE_DATASERVER_RANGE_SNAPSHOT_H_ */

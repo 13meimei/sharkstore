@@ -2,7 +2,7 @@
 #include "logger.h"
 #include "storage/storage.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -309,4 +309,4 @@ Status RaftFsm::restore(const pb::SnapshotMeta& meta) {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

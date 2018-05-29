@@ -8,7 +8,7 @@ _Pragma("once");
 #include "../raft_types.h"
 #include "log_index.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace storage {
@@ -79,4 +79,4 @@ private:
 } /* namespace storage */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

@@ -7,8 +7,8 @@
 #include "raft/raft.h"
 #include "raft/server.h"
 
-using namespace fbase;
-using namespace fbase::raft;
+using namespace sharkstore;
+using namespace sharkstore::raft;
 
 static const size_t kNodeNum = 5;
 

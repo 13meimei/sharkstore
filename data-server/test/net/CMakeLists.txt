@@ -5,5 +5,5 @@ set(net_TESTS
 foreach(testfile ${net_TESTS})
     get_filename_component(exename ${testfile} NAME_WE)
     add_executable(${exename} ${testfile})
-     target_link_libraries(${exename} fbase-net fbase-base pthread)
+     target_link_libraries(${exename} sharkstore-net sharkstore-base pthread)
 endforeach(testfile ${net_TESTS})

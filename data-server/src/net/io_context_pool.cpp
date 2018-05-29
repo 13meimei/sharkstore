@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -63,4 +63,4 @@ void IOContextPool::runLoop(const std::shared_ptr<asio::io_context>& ctx,
 
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

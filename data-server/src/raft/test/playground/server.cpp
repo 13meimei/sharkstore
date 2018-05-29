@@ -10,7 +10,7 @@
 #include "raft/src/impl/raft_snapshot.h"
 #include "raft/src/impl/raft_fsm.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace playground {
 
@@ -288,4 +288,4 @@ std::string Server::handleTest(const std::vector<std::string>& args) {
 
 } /* namespace playground  */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

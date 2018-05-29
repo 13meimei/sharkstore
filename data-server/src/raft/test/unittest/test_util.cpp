@@ -2,18 +2,18 @@
 
 #include "base/util.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace testutil {
 
-using fbase::randomInt;
-using fbase::randomString;
+using sharkstore::randomInt;
+using sharkstore::randomString;
 
 Peer RandomPeer() {
     Peer p;
-    p.type = (randomInt() % 2 == 0 ? fbase::raft::PeerType::kLearner
-                                   : fbase::raft::PeerType::kNormal);
+    p.type = (randomInt() % 2 == 0 ? sharkstore::raft::PeerType::kLearner
+                                   : sharkstore::raft::PeerType::kNormal);
     p.node_id = randomInt();
     p.peer_id = randomInt();
     return p;
@@ -52,11 +52,11 @@ Status Equal(const pb::TruncateMeta& lh, const pb::TruncateMeta& rh) {
 }
 
 EntryPtr RandomEntry(uint64_t index, int data_size) {
-    EntryPtr e(new fbase::raft::impl::pb::Entry);
+    EntryPtr e(new sharkstore::raft::impl::pb::Entry);
     e->set_index(index);
     e->set_term(randomInt());
-    e->set_type((randomInt() % 2 == 0) ? fbase::raft::impl::pb::ENTRY_NORMAL
-                                       : fbase::raft::impl::pb::ENTRY_CONF_CHANGE);
+    e->set_type((randomInt() % 2 == 0) ? sharkstore::raft::impl::pb::ENTRY_NORMAL
+                                       : sharkstore::raft::impl::pb::ENTRY_CONF_CHANGE);
     e->set_data(randomString(data_size));
     return e;
 }
@@ -108,4 +108,4 @@ Status Equal(const std::vector<EntryPtr>& lh, const std::vector<EntryPtr>& rh) {
 } /* namespace testutil */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

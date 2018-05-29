@@ -10,7 +10,7 @@
 #include "storage/storage_disk.h"
 #include "storage/storage_memory.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -754,4 +754,4 @@ bool RaftFsm::electable() const {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

@@ -8,7 +8,7 @@ _Pragma("once");
 #include "raft/status.h"
 #include "raft/types.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -45,9 +45,9 @@ private:
 
     RaftStatus status_;
 
-    mutable fbase::shared_mutex mu_;
+    mutable sharkstore::shared_mutex mu_;
 };
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

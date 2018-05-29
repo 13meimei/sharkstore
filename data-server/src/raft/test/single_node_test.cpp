@@ -6,8 +6,8 @@
 #include "raft/raft.h"
 #include "raft/server.h"
 
-using namespace fbase;
-using namespace fbase::raft;
+using namespace sharkstore;
+using namespace sharkstore::raft;
 
 int main(int argc, char* argv[]) {
     // TODO:

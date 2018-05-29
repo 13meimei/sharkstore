@@ -2,7 +2,7 @@ _Pragma("once");
 
 #include "protocol.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -20,4 +20,4 @@ public:
 
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

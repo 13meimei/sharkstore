@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(fbase-ds C CXX)
+project(sharkstore-ds C CXX)
 
 set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_CXX_STANDARD 11)
@@ -116,19 +116,19 @@ add_subdirectory(src/proto)
 add_subdirectory(src/raft)
 add_subdirectory(src/tool)
 
-OPTION (BUILD_NET "build fbase net" OFF)
+OPTION (BUILD_NET "build sharkstore net" OFF)
 MESSAGE(STATUS BUILD_NET=${BUILD_NET})
 if (BUILD_NET)
     add_subdirectory(src/net)
 endif()
 
 set (depend_LIBRARYS
-    fbase-base
-    fbase-proto 
-    fbase-raft
-    fbase-common
-    fbase-frame
-    fbase-lkqueue
+    sharkstore-base
+    sharkstore-proto 
+    sharkstore-raft
+    sharkstore-common
+    sharkstore-frame
+    sharkstore-lkqueue
     ${PROTOBUF_LIBRARY}
     grpc
     grpc++
@@ -152,12 +152,12 @@ endforeach()
 add_executable(data-server ${SOURCES})
 target_link_libraries(data-server ${depend_LIBRARYS})
 
-OPTION (BUILD_TEST "build fbase tests" OFF)
+OPTION (BUILD_TEST "build sharkstore tests" OFF)
 MESSAGE(STATUS BUILD_TEST=${BUILD_TEST})
 if (BUILD_TEST)
     enable_testing()
     find_package(GTest REQUIRED)
     include_directories(${GTEST_INCLUDE_DIRS})
-    add_library(fbase-ds-shared SHARED ${SOURCES})
+    add_library(sharkstore-ds-shared SHARED ${SOURCES})
     add_subdirectory(test)
 endif()

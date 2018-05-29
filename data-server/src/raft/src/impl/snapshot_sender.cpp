@@ -8,7 +8,7 @@
 #include "base/util.h"
 #include "common/ds_proto.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -200,4 +200,4 @@ void SnapshotSender::do_send(SnapshotRequest &snap, SnapshotStatus *status) {
 
 } /* namespace impl */
 }  // namespace raft
-}  // namespace fbase
+}  // namespace sharkstore

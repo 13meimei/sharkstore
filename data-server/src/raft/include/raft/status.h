@@ -5,7 +5,7 @@ _Pragma("once");
 
 #include "raft/types.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 struct ServerStatus {
@@ -45,4 +45,4 @@ struct RaftStatus {
 };
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

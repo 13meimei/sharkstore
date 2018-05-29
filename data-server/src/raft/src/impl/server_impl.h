@@ -8,7 +8,7 @@ _Pragma("once");
 #include "raft/server.h"
 #include "transport/transport.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -59,7 +59,7 @@ private:
     RaftMap rafts_;
     std::unordered_set<uint64_t> creatings_;  // 正在被创建的
     uint64_t create_count_ = 0;
-    mutable fbase::shared_mutex mu_;
+    mutable sharkstore::shared_mutex mu_;
 
     std::vector<WorkThread*> consensus_threads_;
     std::vector<WorkThread*> apply_threads_;
@@ -70,4 +70,4 @@ private:
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

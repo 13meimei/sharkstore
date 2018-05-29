@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package fbase.raft.impl.pb;
+package sharkstore.raft.impl.pb;
 
 enum PeerType {
   PEER_NORMAL       = 0;

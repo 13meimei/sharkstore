@@ -17,9 +17,9 @@ int main(int argc, char* argv[]) {
 
 namespace {
 
-using namespace fbase;
-using namespace fbase::raft;
-using namespace fbase::raft::impl;
+using namespace sharkstore;
+using namespace sharkstore::raft;
+using namespace sharkstore::raft::impl;
 
 static const uint64_t kTestDstNodeID = 9;
 static const uint16_t kTestDstPort = 9999;

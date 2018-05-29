@@ -5,7 +5,7 @@
 #include "logger.h"
 #include "raft_exception.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -426,4 +426,4 @@ void RaftFsm::checkCaughtUp() {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

@@ -99,7 +99,7 @@ max_size = 2048MB
 port = 18887
 
 \#raft log path
-log_path = /home/straw/source/fbase/data-server/build/raft
+log_path = /home/straw/source/sharkstore/data-server/build/raft
 
 
 [metric]

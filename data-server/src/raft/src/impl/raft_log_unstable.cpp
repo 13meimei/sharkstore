@@ -3,7 +3,7 @@
 #include <sstream>
 #include "raft_exception.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -99,4 +99,4 @@ void UnstableLog::mustCheckOutOfBounds(uint64_t lo, uint64_t hi) const {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

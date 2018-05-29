@@ -21,7 +21,7 @@
 
 #include "context_server.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace server {
 
@@ -142,6 +142,6 @@ private:
 
 }  // namespace server
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore
 
 #endif  //__RANGE_MANAGER_H__

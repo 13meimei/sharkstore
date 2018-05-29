@@ -6,7 +6,7 @@
 #include "common/socket_session.h"
 #include "raft/server.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 
 namespace storage {
@@ -46,6 +46,6 @@ struct ContextServer {
 
 }  // namespace server
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore
 
 #endif  // __CONTEXT_SERVER_H__

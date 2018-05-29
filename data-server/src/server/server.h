@@ -3,7 +3,7 @@
 
 #include "context_server.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace server {
 
@@ -38,6 +38,6 @@ private:
 
 } /* namespace server */
 } /* namespace dataserver  */
-} /* namespace fbase */
+} /* namespace sharkstore */
 
 #endif /* end of include guard: FBASE_DATASERVER_SERVER_DS_SERVER_H_ */

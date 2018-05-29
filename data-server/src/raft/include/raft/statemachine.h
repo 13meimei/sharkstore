@@ -6,7 +6,7 @@ _Pragma("once");
 #include "raft/snapshot.h"
 #include "raft/types.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 class StateMachine {
@@ -33,4 +33,4 @@ public:
 };
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

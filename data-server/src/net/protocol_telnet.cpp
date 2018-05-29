@@ -1,6 +1,6 @@
 #include "protocol_telnet.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -15,4 +15,4 @@ void ProtocolTelnet::OnDataArrived(const uint8_t* buf, size_t len) {
 
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

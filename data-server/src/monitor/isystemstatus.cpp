@@ -13,7 +13,7 @@
 #include "encodedata.h"
 #include "rangedata.h"
 
-namespace fbase
+namespace sharkstore
 {
     namespace monitor
     {

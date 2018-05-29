@@ -1,6 +1,6 @@
-#include "server_connection.h"
+#include "session.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -16,4 +16,4 @@ ServerConnection::~ServerConnection() { --total_count_; }
 
 } /* net */
 } /* dataserver  */
-} /* fbase  */
+} /* sharkstore  */

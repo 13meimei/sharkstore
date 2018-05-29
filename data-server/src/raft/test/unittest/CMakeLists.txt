@@ -1,13 +1,13 @@
-add_library(fbase-raft-testutil STATIC test_util.cpp)
+add_library(sharkstore-raft-testutil STATIC test_util.cpp)
 
 set(raft_unit_DEPS
-    fbase-raft-testutil
-    fbase-raft
-    fbase-common
-    fbase-frame
-    fbase-base
-    fbase-lkqueue
-    fbase-proto
+    sharkstore-raft-testutil
+    sharkstore-raft
+    sharkstore-common
+    sharkstore-frame
+    sharkstore-base
+    sharkstore-lkqueue
+    sharkstore-proto
     fastcommon
     gtest
     ${PROTOBUF_LIBRARY}

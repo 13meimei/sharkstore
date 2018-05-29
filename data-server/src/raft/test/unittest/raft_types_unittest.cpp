@@ -11,10 +11,10 @@ int main(int argc, char* argv[]) {
 
 namespace {
 
-using namespace fbase;
-using namespace fbase::raft;
-using namespace fbase::raft::impl;
-using namespace fbase::raft::impl::testutil;
+using namespace sharkstore;
+using namespace sharkstore::raft;
+using namespace sharkstore::raft::impl;
+using namespace sharkstore::raft::impl::testutil;
 
 TEST(RaftTypes, PeerCoding) {
     for (int i = 0; i < 30; ++i) {

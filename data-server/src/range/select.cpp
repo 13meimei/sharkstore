@@ -3,7 +3,7 @@
 #include "frame/sf_logger.h"
 #include "server/range_server.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace range {
 
@@ -127,4 +127,4 @@ void Range::Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req) {
 
 }  // namespace range
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

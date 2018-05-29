@@ -5,7 +5,7 @@ _Pragma("once");
 
 #include "options.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -30,9 +30,9 @@ private:
     asio::io_context& io_context_;
 
     asio::ip::tcp::socket socket_;
-    std::array<uint8_t, 8192> buffer_;
+    std::array<uint8_t, 4096> buffer_;
 };
 
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

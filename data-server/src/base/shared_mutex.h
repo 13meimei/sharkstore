@@ -1,11 +1,10 @@
-#ifndef FBASE_BASE_SHARED_MUTEX_H_
-#define FBASE_BASE_SHARED_MUTEX_H_
+_Pragma("once");
 
 #include <errno.h>
 #include <pthread.h>
 #include <utility>
 
-namespace fbase {
+namespace sharkstore {
 
 class __shared_mutex_pthread {
     pthread_rwlock_t m_rwlock_ = PTHREAD_RWLOCK_INITIALIZER;
@@ -57,9 +56,7 @@ public:
 
     shared_lock() noexcept : m_pm_(nullptr) {}
 
-    explicit shared_lock(mutex_type& m) : m_pm_(std::__addressof(m)) {
-        m.lock_shared();
-    }
+    explicit shared_lock(mutex_type& m) : m_pm_(std::__addressof(m)) { m.lock_shared(); }
 
     ~shared_lock() { m_pm_->unlock_shared(); }
 
@@ -74,6 +71,4 @@ private:
     mutex_type* m_pm_;
 };
 
-}  // namespace fbase
-
-#endif /* end of include guard: FBASE_BASE_SHARED_MUTEX_H_ */
+}  // namespace sharkstore

@@ -3,7 +3,7 @@ _Pragma("once");
 #include "base/status.h"
 #include "raft/src/impl/raft_types.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace testutil {
@@ -24,4 +24,4 @@ Status Equal(const std::vector<EntryPtr>& lh, const std::vector<EntryPtr>& rh);
 } /* namespace testutil */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

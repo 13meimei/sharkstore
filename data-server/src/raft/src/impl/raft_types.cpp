@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -160,4 +160,4 @@ bool IsResponseMsg(MessagePtr& msg) {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

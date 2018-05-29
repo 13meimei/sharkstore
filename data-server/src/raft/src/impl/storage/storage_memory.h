@@ -3,7 +3,7 @@ _Pragma("once");
 #include <deque>
 #include "storage.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace storage {
@@ -61,4 +61,4 @@ private:
 } /* namespace storage */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

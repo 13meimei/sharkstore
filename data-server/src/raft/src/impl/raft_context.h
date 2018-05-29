@@ -4,7 +4,7 @@ _Pragma("once");
 #include "transport/transport.h"
 #include "work_thread.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -17,4 +17,4 @@ struct RaftContext {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

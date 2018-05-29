@@ -6,7 +6,7 @@
 #include "address.h"
 #include "config.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace bench {
 
@@ -52,4 +52,4 @@ std::shared_ptr<Range> Node::GetRange(uint64_t i) {
 
 } /* namespace bench */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

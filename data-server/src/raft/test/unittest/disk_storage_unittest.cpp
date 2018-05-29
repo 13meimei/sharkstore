@@ -12,14 +12,14 @@ int main(int argc, char* argv[]) {
 
 namespace {
 
-using namespace fbase::raft::impl;
-using namespace fbase::raft::impl::storage;
-using namespace fbase::raft::impl::testutil;
+using namespace sharkstore::raft::impl;
+using namespace sharkstore::raft::impl::storage;
+using namespace sharkstore::raft::impl::testutil;
 
 class StorageTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        char path[] = "/tmp/fbase_raft_storage_test_XXXXXX";
+        char path[] = "/tmp/sharkstore_raft_storage_test_XXXXXX";
         char* tmp = mkdtemp(path);
         ASSERT_TRUE(tmp != NULL);
         tmp_dir_ = tmp;
@@ -203,8 +203,8 @@ TEST_F(StorageTest, Snapshot) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     pb::SnapshotMeta meta;
-    meta.set_index(fbase::randomInt() + 100);
-    meta.set_term(fbase::randomInt());
+    meta.set_index(sharkstore::randomInt() + 100);
+    meta.set_term(sharkstore::randomInt());
     s = storage_->ApplySnapshot(meta);
     ASSERT_TRUE(s.ok()) << s.ToString();
 

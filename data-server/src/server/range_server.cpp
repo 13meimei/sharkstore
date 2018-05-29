@@ -22,7 +22,7 @@
 
 #include "server.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace server {
 
@@ -369,7 +369,7 @@ void RangeServer::CreateRange(common::ProtoMessage *msg) {
     errorpb::Error *err = nullptr;
     auto resp = new schpb::CreateRangeResponse;
     do {
-        std::unique_lock<fbase::shared_mutex> lock(rw_lock_);
+        std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
         auto it = ranges_.find(req.range().id());
         if (it != ranges_.end()) {
@@ -484,7 +484,7 @@ void RangeServer::DeleteRange(common::ProtoMessage *msg) {
 int RangeServer::DeleteRange(uint64_t range_id) {
     std::shared_ptr<range::Range> rng;
     do {
-        std::unique_lock<fbase::shared_mutex> lock(rw_lock_);
+        std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
         meta_store_->DelRange(range_id);
 
@@ -537,7 +537,7 @@ int RangeServer::OfflineRange(uint64_t range_id) {
 
     std::shared_ptr<range::Range> rng;
     do {
-        std::unique_lock<fbase::shared_mutex> lock(rw_lock_);
+        std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
         auto it = ranges_.find(range_id);
         if (it == ranges_.end()) {
@@ -563,7 +563,7 @@ int RangeServer::OfflineRange(uint64_t range_id) {
 int RangeServer::CloseRange(uint64_t range_id) {
     std::shared_ptr<range::Range> rng;
     do {
-        std::unique_lock<fbase::shared_mutex> lock(rw_lock_);
+        std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
         meta_store_->DelRange(range_id);
 
@@ -718,7 +718,7 @@ void RangeServer::SetLogLevel(common::ProtoMessage *msg) {
 }
 
 std::shared_ptr<range::Range> RangeServer::find(uint64_t range_id) {
-    fbase::shared_lock<fbase::shared_mutex> lock(rw_lock_);
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
     auto it = ranges_.find(range_id);
     if (it == ranges_.end()) {
@@ -963,7 +963,7 @@ Status RangeServer::ApplySplit(uint64_t old_range_id,
 
     bool is_exist = false;
     do {
-        std::unique_lock<fbase::shared_mutex> lock(rw_lock_);
+        std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
         auto ret = CreateRange(req.new_range(), req.leader());
         if (ret.code() == Status::kDuplicate) {
             is_exist = true;
@@ -1225,4 +1225,4 @@ void RangeServer::CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) {
 
 }  // namespace server
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

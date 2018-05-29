@@ -2,7 +2,7 @@
 
 #include "server/range_server.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace range {
 
@@ -96,4 +96,4 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
 
 }  // namespace range
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

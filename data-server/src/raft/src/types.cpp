@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 std::string PeerTypeName(PeerType type) {
@@ -62,4 +62,4 @@ std::string ConfChange::ToString() const {
 }
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

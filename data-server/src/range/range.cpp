@@ -10,7 +10,7 @@
 
 #include "snapshot.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace range {
 
@@ -133,7 +133,7 @@ bool Range::PushHeartBeatMessage() {
     stats->set_bytes_written(store_stat.bytes_write_per_sec);
 
     do {
-        fbase::shared_lock<fbase::shared_mutex> lock(meta_lock_);
+        sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
         hb_req.set_allocated_range(new metapb::Range(meta_));
     } while (false);
 
@@ -151,7 +151,7 @@ bool Range::PushHeartBeatMessage() {
     std::vector<raft::Peer> pending_peers;
     raft_->GetPeedingPeers(&pending_peers);
     for (auto &pr : pending_peers) {
-        fbase::shared_lock<fbase::shared_mutex> lock(meta_lock_);
+        sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
         metapb::Peer *p = FindMetaPeer(pr.node_id);
         if (p != nullptr) {
             metapb::Peer *peer = hb_req.add_pending_peers();
@@ -167,7 +167,7 @@ bool Range::PushHeartBeatMessage() {
 }
 
 metapb::Peer *Range::NewMetaPeer(uint64_t node_id) {
-    fbase::shared_lock<fbase::shared_mutex> lock(meta_lock_);
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
     metapb::Peer *p = FindMetaPeer(node_id);
     if (p != nullptr) {
         return new metapb::Peer(*p);
@@ -322,7 +322,7 @@ std::shared_ptr<raft::Snapshot> Range::GetSnapshot() {
     raft_cmdpb::SnapshotContext ctx;
     auto meta = ctx.mutable_meta();
     {
-        fbase::shared_lock<fbase::shared_mutex> lock(meta_lock_);
+        sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
         meta->CopyFrom(meta_);
     }
 
@@ -349,7 +349,7 @@ Status Range::ApplySnapshotStart(const std::string &context) {
     }
 
     {
-        std::unique_lock<fbase::shared_mutex> lock(meta_lock_);
+        std::unique_lock<sharkstore::shared_mutex> lock(meta_lock_);
         meta_ = ctx.meta();
     }
 
@@ -485,7 +485,7 @@ bool Range::KeyInRange(const std::string &key) {
         return false;
     }
 
-    fbase::shared_lock<fbase::shared_mutex> lock(meta_lock_);
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
     if (key >= meta_.end_key()) {
         FLOG_WARN("key: %s greater than end_key:%s, out of range %" PRIu64,
                   EncodeToHexString(key).c_str(),
@@ -506,7 +506,7 @@ bool Range::KeyInRange(const std::string &key, errorpb::Error *&err) {
 }
 
 bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch) {
-    fbase::shared_lock<fbase::shared_mutex> lock(meta_lock_);
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
 
     if (meta_.range_epoch().version() == epoch.version()) {
         return true;
@@ -629,7 +629,7 @@ errorpb::Error *Range::KeyNotInRange(const std::string &key) {
     err->mutable_key_not_in_range()->set_start_key(meta_.start_key());
 
     // end_key change at range split time
-    fbase::shared_lock<fbase::shared_mutex> lock(meta_lock_);
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
     err->mutable_key_not_in_range()->set_end_key(meta_.end_key());
 
     return err;
@@ -701,4 +701,4 @@ void Range::SendTimeOutError(AsyncContext *context) {
 
 }  // namespace range
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

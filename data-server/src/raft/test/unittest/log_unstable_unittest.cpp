@@ -10,8 +10,8 @@ int main(int argc, char* argv[]) {
 
 namespace {
 
-using namespace fbase::raft::impl;
-using namespace fbase::raft::impl::testutil;
+using namespace sharkstore::raft::impl;
+using namespace sharkstore::raft::impl::testutil;
 
 TEST(Unstable, All) {
     UnstableLog log(100);

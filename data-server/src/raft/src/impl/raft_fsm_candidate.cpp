@@ -4,7 +4,7 @@
 #include "logger.h"
 #include "raft_exception.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -141,4 +141,4 @@ int RaftFsm::poll(bool pre, uint64_t node_id, bool vote) {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

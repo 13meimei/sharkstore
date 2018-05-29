@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace playground {
 
@@ -77,4 +77,4 @@ Status PGStateMachine::ApplySnapshotFinish() {
 
 } /* namespace playground */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

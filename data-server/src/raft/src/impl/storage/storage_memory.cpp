@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 namespace storage {
@@ -158,4 +158,4 @@ Status MemoryStorage::Backup() { return Status::OK(); }
 } /* namespace storage */
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

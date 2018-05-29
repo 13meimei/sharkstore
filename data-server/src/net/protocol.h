@@ -3,7 +3,7 @@ _Pragma("once");
 #include <array>
 #include <cstdint>
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -21,4 +21,4 @@ public:
 
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

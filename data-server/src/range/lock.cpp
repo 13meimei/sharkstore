@@ -1,7 +1,7 @@
 #include "range.h"
 #include "server/range_server.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace range {
 

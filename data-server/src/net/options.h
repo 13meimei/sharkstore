@@ -1,6 +1,6 @@
 _Pragma("once");
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -31,4 +31,4 @@ struct ServerOptions : public ConnectionOptions {
 
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

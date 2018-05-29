@@ -1,6 +1,6 @@
 #include "raft_snapshot.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 namespace impl {
 
@@ -53,4 +53,4 @@ Status SnapshotRequest::WaitAck(int64_t seq, int wait_secs) {
 
 } /* namespace impl */
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

@@ -2,7 +2,7 @@ _Pragma("once");
 
 #include "base/status.h"
 
-namespace fbase {
+namespace sharkstore {
 namespace raft {
 
 class Snapshot {
@@ -26,4 +26,4 @@ public:
 };
 
 } /* namespace raft */
-} /* namespace fbase */
+} /* namespace sharkstore */

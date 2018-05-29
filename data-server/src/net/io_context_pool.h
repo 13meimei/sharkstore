@@ -7,7 +7,7 @@ _Pragma("once");
 #include <asio/executor_work_guard.hpp>
 #include <asio/io_context.hpp>
 
-namespace fbase {
+namespace sharkstore {
 namespace dataserver {
 namespace net {
 
@@ -46,4 +46,4 @@ private:
 
 }  // namespace net
 }  // namespace dataserver
-}  // namespace fbase
+}  // namespace sharkstore

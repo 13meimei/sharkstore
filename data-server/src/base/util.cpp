@@ -8,7 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 
-namespace fbase {
+namespace sharkstore {
 
 static thread_local unsigned seed = time(nullptr);
 
@@ -32,8 +32,7 @@ std::string strErrno(int errno_copy) {
     return std::string(ret);
 }
 
-std::string SliceSeparate(const std::string &l, const std::string &r,
-                          size_t max_len) {
+std::string SliceSeparate(const std::string &l, const std::string &r, size_t max_len) {
     if (l.empty() || r.empty()) {
         return std::string();
     }
@@ -188,4 +187,4 @@ void AnnotateThread(pthread_t handle, const char *name) {
 #endif
 }
 
-} /* namespace fbase */
+} /* namespace sharkstore */
