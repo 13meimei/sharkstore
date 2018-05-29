@@ -131,32 +131,12 @@ func (c *Cluster) getFollowerNodes(r *Range) []*Node {
 }
 
 func (c *Cluster) updateStatus(region *Range, stats *mspb.RangeStats) {
-	//var ReadBytesPerSec, ReadKeysPerSec uint64
-	//v, isExist := c.writeStatistics.peek(region.GetId())
-	//if isExist {
-	//	interval := time.Now().Sub(v.(*RegionStat).LastUpdateTime).Seconds()
-	//	if interval < minHotRegionReportInterval {
-	//		return
-	//	}
-		//WrittenBytesPerSec = uint64(float64(stats.BytesWritten) / interval)
-		//ReadBytesPerSec = uint64(float64(stats.BytesRead) / interval)
-		//WrittenKeysPerSec = uint64(float64(stats.KeysWritten) / interval)
-		//ReadKeysPerSec = uint64(float64(stats.KeysRead) / interval)
-	//} else {
-		//WrittenBytesPerSec = uint64(float64(stats.BytesWritten) / float64(regionHeartBeatReportInterval))
-		//WrittenBytesPerSec = uint64(float64(stats.BytesWritten) / float64(regionHeartBeatReportInterval))
-		//ReadBytesPerSec = uint64(float64(stats.BytesRead) / float64(regionHeartBeatReportInterval))
-		//WrittenKeysPerSec = uint64(float64(stats.KeysWritten) / float64(regionHeartBeatReportInterval))
-		//ReadKeysPerSec = uint64(float64(stats.KeysRead) / float64(regionHeartBeatReportInterval))
-	//}
 	region.BytesWritten = stats.BytesWritten
 	region.BytesRead = stats.BytesRead
 	region.KeysWritten = stats.KeysWritten
 	region.KeysRead = stats.KeysRead
 	region.ApproximateSize = stats.GetApproximateSize()
-
 	region.opsStat.Hit(region.BytesWritten)
-
 }
 
 

@@ -47,7 +47,7 @@
                 <td style="vertical-align:middle; text-align:center;">{{space.master_url}}</td>
                 <td style="vertical-align:middle; text-align:center;">{{space.gateway_http}}</td>
                 <td style="vertical-align:middle; text-align:center;">{{space.gateway_sql}}</td>
-                <td style="vertical-align:middle; text-align:center;">{{space.create_time}} | date:'yyyy-MM-dd HH:mm:ss'</td>
+                <td style="vertical-align:middle; text-align:center;">{{space.create_time * 1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td>
                 <td style="vertical-align:middle; text-align:center;">
                     <div class="switchbtn" ng-class="{'switchbtn-on':!space.auto_sharding}" ng-click="toggleAutoMigrate(space, 'auto_sharding')">
                         <div class="switchbtn-inside"></div>
