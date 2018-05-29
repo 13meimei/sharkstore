@@ -3,7 +3,7 @@
 
 [中文版本](README_CN.md)
 
-SharkStore is a distributed, persistent key-value store, whose database layer is based on the `rocksdb` and the replication works on `raft`.
+SharkStore is a distributed, persistent key-value store, whose database layer is based on the `rocksdb` and the replication works are based on `raft`.
 
 **Modules**
 
@@ -19,9 +19,9 @@ SharkStore is a distributed, persistent key-value store, whose database layer is
 ```
 |-- README.md
 |-- console                 web administration tool
-|-- data-server             where data is stored
+|-- data-server             business data storage service, where data is stored
 |-- glide.yaml
-|-- master-server           where you get metadata
+|-- master-server           metadata service, where you get metadata
 |-- model
 |-- pkg-go                  common module
 |-- proxy
@@ -83,7 +83,7 @@ We created a table named 'metric' witch 12 columns on 3 data servers with NVMe d
 * Online scalability | Auto failover | Auto rebalance | Auto schedule<br>
 
 * NVMe+SPDK Supported<br>
-  *in testing...*
+  *Under testing...*
 
   
 
