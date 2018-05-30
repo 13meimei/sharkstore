@@ -1,7 +1,7 @@
 #include "server.h"
 
-// TODO: logger
-#include <iostream>
+#include "frame/sf_logger.h"
+
 #include "io_context_pool.h"
 #include "session.h"
 
@@ -61,10 +61,10 @@ void Server::doAccept() {
     acceptor_.async_accept(getContext(), [this](const std::error_code& ec,
                                                 asio::ip::tcp::socket socket) {
         if (ec) {
-            std::cout << "[Net] accept error: " << ec.message() << std::endl;
+            FLOG_ERROR("[Net] accept error: %s", ec.message().c_str());
         } else if (Session::TotalCount() > opt_.max_connections) {
-            std::cout << "[Net] accept max connection limit reached: "
-                      << opt_.max_connections << std::endl;
+            FLOG_WARN("[Net] accept max connection limit reached: %lu",
+                      opt_.max_connections);
         } else {
             std::make_shared<Session>(opt_.session_opt, msg_handler_, std::move(socket))
                 ->Start();

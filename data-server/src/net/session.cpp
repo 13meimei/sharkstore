@@ -1,9 +1,10 @@
 #include "session.h"
 
-// TODO: log
 #include <asio/read.hpp>
 #include <asio/read_until.hpp>
-#include <iostream>
+
+#include "frame/sf_logger.h"
+
 #include "msg_handler.h"
 
 namespace sharkstore {
@@ -22,18 +23,30 @@ Session::~Session() {
     doClose();
 
     --total_count_;
+
+    FLOG_DEBUG("%s destroyed.", id_.c_str());
 }
 
 bool Session::init() {
     try {
-        msg_ctx_.local_addr = socket_.local_endpoint().address().to_string();
-        msg_ctx_.remote_addr = socket_.remote_endpoint().address().to_string();
+        auto local_ep = socket_.local_endpoint();
+        msg_ctx_.local_addr =
+            local_ep.address().to_string() + ":" + std::to_string(local_ep.port());
+
+        auto remote_ep = socket_.remote_endpoint();
+        msg_ctx_.remote_addr =
+            remote_ep.address().to_string() + ":" + std::to_string(remote_ep.port());
     } catch (std::exception& e) {
-        std::cerr << "[S] get socket addr error: " << e.what() << std::endl;
+        FLOG_ERROR("[S] get socket addr error: %s", e.what());
         return false;
     }
+
     msg_ctx_.session = shared_from_this();
-    id_ = std::string("[S:") + msg_ctx_.remote_addr + "]";
+    id_ = std::string("S[") + msg_ctx_.remote_addr + "]";
+
+    FLOG_INFO("%s establised %s->%s", id_.c_str(), msg_ctx_.remote_addr.c_str(),
+              msg_ctx_.local_addr.c_str());
+
     return true;
 }
 
@@ -54,6 +67,8 @@ void Session::doClose() {
     asio::error_code ec;
     socket_.close(ec);
     (void)ec;
+
+    FLOG_INFO("%s closed. ", id_.c_str());
 }
 
 void Session::readPreface() {
@@ -68,8 +83,8 @@ void Session::readPreface() {
                                  readCmdLine();
                              }
                          } else {
-                             std::cerr << id_ << " read  perface error:" << ec.message()
-                                       << std::endl;
+                             FLOG_ERROR("%s read perface error: %s", id_.c_str(),
+                                        ec.message().c_str());
                          }
                      });
 }
@@ -83,36 +98,37 @@ void Session::readRPCHead() {
         preface_remained_ = 0;
     }
     auto self(shared_from_this());
-    asio::async_read(
-        socket_, asio::buffer(buf, buf_size),
-        [this, self](std::error_code ec, std::size_t) {
-            if (!ec) {
-                rpc_head_.Decode();
-                if (rpc_head_.Valid()) {
-                    readRPCBody();
-                } else {
-                    std::cerr << id_ << " invalid rpc head: " << rpc_head_.DebugString()
-                              << std::endl;
-                }
-            } else {
-                std::cerr << id_ << " read rpc head error:" << ec.message() << std::endl;
-            }
-        });
+    asio::async_read(socket_, asio::buffer(buf, buf_size),
+                     [this, self](std::error_code ec, std::size_t) {
+                         if (!ec) {
+                             rpc_head_.Decode();
+                             if (rpc_head_.Valid()) {
+                                 readRPCBody();
+                             } else {
+                                 FLOG_ERROR("%s invalid rpc head: %s", id_.c_str(),
+                                            rpc_head_.DebugString().c_str());
+                             }
+                         } else {
+                             FLOG_ERROR("%s read rpc head error: %s", id_.c_str(),
+                                        ec.message().c_str());
+                         }
+                     });
 }
 
 void Session::readRPCBody() {
     rpc_body_.resize(rpc_head_.body_length);
     auto self(shared_from_this());
-    asio::async_read(
-        socket_, asio::buffer(rpc_body_.data(), rpc_body_.size()),
-        [this, self](std::error_code ec, std::size_t) {
-            if (!ec) {
-                msg_handler_.rpc_handler(msg_ctx_, rpc_head_, std::move(rpc_body_));
-                readRPCHead();
-            } else {
-                std::cerr << id_ << " read rpc body error:" << ec.message() << std::endl;
-            }
-        });
+    asio::async_read(socket_, asio::buffer(rpc_body_.data(), rpc_body_.size()),
+                     [this, self](std::error_code ec, std::size_t) {
+                         if (!ec) {
+                             msg_handler_.rpc_handler(msg_ctx_, rpc_head_,
+                                                      std::move(rpc_body_));
+                             readRPCHead();
+                         } else {
+                             FLOG_ERROR("%s read rpc body error: %s", id_.c_str(),
+                                        ec.message().c_str());
+                         }
+                     });
 }
 
 void Session::parseCmdLine(std::size_t length) {
@@ -141,16 +157,16 @@ void Session::parseCmdLine(std::size_t length) {
 
 void Session::readCmdLine() {
     auto self(shared_from_this());
-    asio::async_read_until(
-        socket_, cmdline_buffer_, '\n',
-        [this, self](std::error_code ec, std::size_t length) {
-            if (!ec) {
-                readCmdLine();
-                parseCmdLine(length);
-            } else {
-                std::cerr << id_ << " read cmdline error:" << ec.message() << std::endl;
-            }
-        });
+    asio::async_read_until(socket_, cmdline_buffer_, '\n',
+                           [this, self](std::error_code ec, std::size_t length) {
+                               if (!ec) {
+                                   parseCmdLine(length);
+                                   readCmdLine();
+                               } else {
+                                   FLOG_ERROR("%s read cmdline error: %s", id_.c_str(),
+                                              ec.message().c_str());
+                               }
+                           });
 }
 
 } /* net */
