@@ -114,7 +114,12 @@ func selectChangeLeader(cluster *Cluster, workerName string) (*Range, *metapb.Pe
 		log.Debug("%v: mostLeaderNum  %v, leastLeaderNum %v, avg leader num :%v", workerName, mostLeaderNum, leastLeaderNum, avgLeaderNum)
 	}
 
-	if (mostLeaderNum - avgLeaderNum) > float64(Min_leader_balance_num) {
+	balanceThreshold := avgLeaderNum / 10
+	if balanceThreshold <  float64(Min_leader_balance_num) {
+		balanceThreshold = float64(Min_leader_balance_num)
+	}
+
+	if (mostLeaderNum - avgLeaderNum) > balanceThreshold {
 		// 在Node上选择一个leader
 		for _, r := range mostLeaderNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() == mostLeaderNode.GetId() && r.require(cluster) {
@@ -127,7 +132,7 @@ func selectChangeLeader(cluster *Cluster, workerName string) (*Range, *metapb.Pe
 		}
 	}
 
-	if (avgLeaderNum - leastLeaderNum) > float64(Min_leader_balance_num) {
+	if (avgLeaderNum - leastLeaderNum) > balanceThreshold {
 		// 在Node上选择一个不是leader的
 		for _, r := range leastLeaderNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() != leastLeaderNode.GetId() && r.require(cluster) {
