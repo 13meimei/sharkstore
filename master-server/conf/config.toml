@@ -1,6 +1,7 @@
 # MS Configuration.
 
 name = "ms"
+node-id = 1
 # process role is master or metric
 role = "master"
 version = "v1"

@@ -97,7 +97,8 @@ func SelectMostAndLeastRangeNode(opt *scheduleOption, nodes []*Node, selectors [
 
 		if !force || most == nil {
 			if node.availableRatio()*100 < float64(opt.GetStorageAvailableThreshold()) {
-				log.Debug("node %v available ratio under threshold", node.GetId())
+				//maybe caused by master server restart, ignore
+				log.Debug("node %v available ratio under threshold",  node.GetId())
 				force = true
 				most = node
 			} else if most == nil || most.GetRangesCount() < node.GetRangesCount() {
