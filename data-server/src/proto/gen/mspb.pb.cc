@@ -238,11 +238,6 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<ResponseHeader>
      _instance;
 } _ResponseHeader_default_instance_;
-class MsLeaderDefaultTypeInternal {
-public:
- ::google::protobuf::internal::ExplicitlyConstructed<MsLeader>
-     _instance;
-} _MsLeader_default_instance_;
 class NoLeaderDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<NoLeader>
@@ -259,7 +254,7 @@ namespace protobuf_mspb_2eproto {
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[47];
+::google::protobuf::Metadata file_level_metadata[46];
 
 }  // namespace
 
@@ -320,7 +315,6 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
-  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
 };
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
@@ -331,6 +325,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(MSLeader, id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(MSLeader, address_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(MSLeader, term_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetMSLeaderRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -676,12 +671,6 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ResponseHeader, cluster_id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ResponseHeader, error_),
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(MsLeader, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(MsLeader, ms_leader_),
-  ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NoLeader, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -691,57 +680,56 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, ms_leader_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, new_leader_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, no_leader_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(MSLeader)},
-  { 7, -1, sizeof(GetMSLeaderRequest)},
-  { 13, -1, sizeof(GetMSLeaderResponse)},
-  { 20, -1, sizeof(PeerStats)},
-  { 27, -1, sizeof(RangeStats)},
-  { 37, -1, sizeof(RangeHeartbeatRequest)},
-  { 48, -1, sizeof(RangeHeartbeatResponse)},
-  { 59, -1, sizeof(NodeStats)},
-  { 79, -1, sizeof(NodeHeartbeatRequest)},
-  { 88, -1, sizeof(NodeHeartbeatResponse)},
-  { 96, -1, sizeof(AskSplitRequest)},
-  { 104, -1, sizeof(AskSplitResponse)},
-  { 114, -1, sizeof(ReportSplitRequest)},
-  { 122, -1, sizeof(ReportSplitResponse)},
-  { 128, -1, sizeof(NodeLoginRequest)},
-  { 135, -1, sizeof(NodeLoginResponse)},
-  { 141, -1, sizeof(GetNodeIdRequest)},
-  { 151, -1, sizeof(GetNodeIdResponse)},
-  { 159, -1, sizeof(GetRouteRequest)},
-  { 168, -1, sizeof(GetRouteResponse)},
-  { 175, -1, sizeof(GetNodeRequest)},
-  { 182, -1, sizeof(GetNodeResponse)},
-  { 189, -1, sizeof(GetDBRequest)},
-  { 196, -1, sizeof(GetDBResponse)},
-  { 203, -1, sizeof(GetTableRequest)},
-  { 211, -1, sizeof(GetTableByIdRequest)},
-  { 219, -1, sizeof(GetTableResponse)},
-  { 226, -1, sizeof(GetTableByIdResponse)},
-  { 233, -1, sizeof(GetColumnsRequest)},
-  { 241, -1, sizeof(GetColumnsResponse)},
-  { 248, -1, sizeof(GetColumnByNameRequest)},
-  { 257, -1, sizeof(GetColumnByNameResponse)},
-  { 264, -1, sizeof(GetColumnByIdRequest)},
-  { 273, -1, sizeof(GetColumnByIdResponse)},
-  { 280, -1, sizeof(AddColumnRequest)},
-  { 289, -1, sizeof(AddColumnResponse)},
-  { 296, -1, sizeof(TruncateTableRequest)},
-  { 304, -1, sizeof(TruncateTableResponse)},
-  { 310, -1, sizeof(CreateDatabaseRequest)},
-  { 317, -1, sizeof(CreateDatabaseResponse)},
-  { 323, -1, sizeof(CreateTableRequest)},
-  { 332, -1, sizeof(CreateTableResponse)},
-  { 338, -1, sizeof(RequestHeader)},
-  { 344, -1, sizeof(ResponseHeader)},
-  { 351, -1, sizeof(MsLeader)},
-  { 357, -1, sizeof(NoLeader)},
-  { 362, -1, sizeof(Error)},
+  { 8, -1, sizeof(GetMSLeaderRequest)},
+  { 14, -1, sizeof(GetMSLeaderResponse)},
+  { 21, -1, sizeof(PeerStats)},
+  { 28, -1, sizeof(RangeStats)},
+  { 38, -1, sizeof(RangeHeartbeatRequest)},
+  { 49, -1, sizeof(RangeHeartbeatResponse)},
+  { 60, -1, sizeof(NodeStats)},
+  { 80, -1, sizeof(NodeHeartbeatRequest)},
+  { 89, -1, sizeof(NodeHeartbeatResponse)},
+  { 97, -1, sizeof(AskSplitRequest)},
+  { 105, -1, sizeof(AskSplitResponse)},
+  { 115, -1, sizeof(ReportSplitRequest)},
+  { 123, -1, sizeof(ReportSplitResponse)},
+  { 129, -1, sizeof(NodeLoginRequest)},
+  { 136, -1, sizeof(NodeLoginResponse)},
+  { 142, -1, sizeof(GetNodeIdRequest)},
+  { 152, -1, sizeof(GetNodeIdResponse)},
+  { 160, -1, sizeof(GetRouteRequest)},
+  { 169, -1, sizeof(GetRouteResponse)},
+  { 176, -1, sizeof(GetNodeRequest)},
+  { 183, -1, sizeof(GetNodeResponse)},
+  { 190, -1, sizeof(GetDBRequest)},
+  { 197, -1, sizeof(GetDBResponse)},
+  { 204, -1, sizeof(GetTableRequest)},
+  { 212, -1, sizeof(GetTableByIdRequest)},
+  { 220, -1, sizeof(GetTableResponse)},
+  { 227, -1, sizeof(GetTableByIdResponse)},
+  { 234, -1, sizeof(GetColumnsRequest)},
+  { 242, -1, sizeof(GetColumnsResponse)},
+  { 249, -1, sizeof(GetColumnByNameRequest)},
+  { 258, -1, sizeof(GetColumnByNameResponse)},
+  { 265, -1, sizeof(GetColumnByIdRequest)},
+  { 274, -1, sizeof(GetColumnByIdResponse)},
+  { 281, -1, sizeof(AddColumnRequest)},
+  { 290, -1, sizeof(AddColumnResponse)},
+  { 297, -1, sizeof(TruncateTableRequest)},
+  { 305, -1, sizeof(TruncateTableResponse)},
+  { 311, -1, sizeof(CreateDatabaseRequest)},
+  { 318, -1, sizeof(CreateDatabaseResponse)},
+  { 324, -1, sizeof(CreateTableRequest)},
+  { 333, -1, sizeof(CreateTableResponse)},
+  { 339, -1, sizeof(RequestHeader)},
+  { 345, -1, sizeof(ResponseHeader)},
+  { 352, -1, sizeof(NoLeader)},
+  { 357, -1, sizeof(Error)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -789,7 +777,6 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_CreateTableResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_RequestHeader_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_ResponseHeader_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&_MsLeader_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_NoLeader_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_Error_default_instance_),
 };
@@ -812,7 +799,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 47);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 46);
 }
 
 }  // namespace
@@ -910,9 +897,7 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_RequestHeader_default_instance_);_ResponseHeader_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_ResponseHeader_default_instance_);_MsLeader_default_instance_._instance.DefaultConstruct();
-  ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_MsLeader_default_instance_);_NoLeader_default_instance_._instance.DefaultConstruct();
+      &_ResponseHeader_default_instance_);_NoLeader_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_NoLeader_default_instance_);_Error_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -1032,8 +1017,8 @@ void TableStruct::InitDefaultsImpl() {
       ::mspb::ResponseHeader::internal_default_instance());
   _ResponseHeader_default_instance_._instance.get_mutable()->error_ = const_cast< ::mspb::Error*>(
       ::mspb::Error::internal_default_instance());
-  _Error_default_instance_._instance.get_mutable()->ms_leader_ = const_cast< ::mspb::MsLeader*>(
-      ::mspb::MsLeader::internal_default_instance());
+  _Error_default_instance_._instance.get_mutable()->new_leader_ = const_cast< ::mspb::MSLeader*>(
+      ::mspb::MSLeader::internal_default_instance());
   _Error_default_instance_._instance.get_mutable()->no_leader_ = const_cast< ::mspb::NoLeader*>(
       ::mspb::NoLeader::internal_default_instance());
 }
@@ -1047,157 +1032,157 @@ void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\nmspb.proto\022\004mspb\032\014metapb.proto\032\014taskpb"
-      ".proto\"\'\n\010MSLeader\022\n\n\002id\030\001 \001(\004\022\017\n\007addres"
-      "s\030\002 \001(\t\"9\n\022GetMSLeaderRequest\022#\n\006header\030"
-      "\001 \001(\0132\023.mspb.RequestHeader\"[\n\023GetMSLeade"
-      "rResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respons"
-      "eHeader\022\036\n\006leader\030\002 \001(\0132\016.mspb.MSLeader\""
-      "=\n\tPeerStats\022\032\n\004peer\030\001 \001(\0132\014.metapb.Peer"
-      "\022\024\n\014down_seconds\030\002 \001(\004\"z\n\nRangeStats\022\025\n\r"
-      "bytes_written\030\001 \001(\004\022\022\n\nbytes_read\030\002 \001(\004\022"
-      "\024\n\014keys_written\030\003 \001(\004\022\021\n\tkeys_read\030\004 \001(\004"
-      "\022\030\n\020approximate_size\030\005 \001(\004\"\343\001\n\025RangeHear"
-      "tbeatRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Requ"
-      "estHeader\022\034\n\005range\030\002 \001(\0132\r.metapb.Range\022"
-      "\034\n\006leader\030\003 \001(\0132\014.metapb.Peer\022#\n\ndown_pe"
-      "ers\030\004 \003(\0132\017.mspb.PeerStats\022#\n\rpending_pe"
-      "ers\030\005 \003(\0132\014.metapb.Peer\022\037\n\005stats\030\006 \001(\0132\020"
-      ".mspb.RangeStats\"\305\001\n\026RangeHeartbeatRespo"
-      "nse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeade"
-      "r\022\020\n\010range_id\030\002 \001(\004\022!\n\005epoch\030\003 \001(\0132\022.met"
-      "apb.RangeEpoch\022!\n\013target_peer\030\004 \001(\0132\014.me"
-      "tapb.Peer\022\032\n\004task\030\005 \001(\0132\014.taskpb.Task\022\021\n"
-      "\tcommit_id\030\006 \001(\004\"\332\002\n\tNodeStats\022\023\n\013range_"
-      "count\030\001 \001(\r\022\031\n\021range_split_count\030\002 \001(\r\022\032"
-      "\n\022sending_snap_count\030\003 \001(\r\022\034\n\024receiving_"
-      "snap_count\030\004 \001(\r\022\033\n\023applying_snap_count\030"
-      "\005 \001(\r\022\032\n\022range_leader_count\030\006 \001(\r\022\020\n\010cap"
-      "acity\030\007 \001(\004\022\021\n\tused_size\030\010 \001(\004\022\021\n\tavaila"
-      "ble\030\t \001(\004\022\025\n\rbytes_written\030\n \001(\004\022\024\n\014keys"
-      "_written\030\013 \001(\004\022\022\n\nbytes_read\030\014 \001(\004\022\021\n\tke"
-      "ys_read\030\r \001(\004\022\017\n\007is_busy\030\016 \001(\010\022\r\n\005start\030"
-      "\017 \001(\r\"\207\001\n\024NodeHeartbeatRequest\022#\n\006header"
-      "\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007node_id\030\002"
-      " \001(\004\022\036\n\005stats\030\003 \001(\0132\017.mspb.NodeStats\022\031\n\021"
-      "isolated_replicas\030\004 \003(\004\"g\n\025NodeHeartbeat"
-      "Response\022$\n\006header\030\001 \001(\0132\024.mspb.Response"
-      "Header\022\017\n\007node_id\030\002 \001(\004\022\027\n\017delete_replic"
-      "as\030\003 \003(\004\"g\n\017AskSplitRequest\022#\n\006header\030\001 "
-      "\001(\0132\023.mspb.RequestHeader\022\034\n\005range\030\002 \001(\0132"
-      "\r.metapb.Range\022\021\n\tsplit_key\030\003 \001(\014\"\225\001\n\020As"
-      "kSplitResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Re"
-      "sponseHeader\022\034\n\005range\030\002 \001(\0132\r.metapb.Ran"
-      "ge\022\024\n\014new_range_id\030\003 \001(\004\022\024\n\014new_peer_ids"
-      "\030\004 \003(\004\022\021\n\tsplit_key\030\005 \001(\014\"t\n\022ReportSplit"
-      "Request\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHe"
-      "ader\022\033\n\004left\030\002 \001(\0132\r.metapb.Range\022\034\n\005rig"
-      "ht\030\003 \001(\0132\r.metapb.Range\";\n\023ReportSplitRe"
-      "sponse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHe"
-      "ader\"H\n\020NodeLoginRequest\022#\n\006header\030\001 \001(\013"
-      "2\023.mspb.RequestHeader\022\017\n\007node_id\030\002 \001(\004\"9"
-      "\n\021NodeLoginResponse\022$\n\006header\030\001 \001(\0132\024.ms"
-      "pb.ResponseHeader\"\203\001\n\020GetNodeIdRequest\022#"
-      "\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\023\n\013s"
-      "erver_port\030\002 \001(\r\022\021\n\traft_port\030\003 \001(\r\022\021\n\th"
-      "ttp_port\030\004 \001(\r\022\017\n\007version\030\005 \001(\t\"[\n\021GetNo"
-      "deIdResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Resp"
-      "onseHeader\022\017\n\007node_id\030\002 \001(\004\022\017\n\007clearup\030\003"
-      " \001(\010\"d\n\017GetRouteRequest\022#\n\006header\030\001 \001(\0132"
-      "\023.mspb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010t"
-      "able_id\030\003 \001(\004\022\013\n\003key\030\004 \001(\014\"W\n\020GetRouteRe"
-      "sponse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHe"
-      "ader\022\035\n\006routes\030\002 \003(\0132\r.metapb.Route\"A\n\016G"
-      "etNodeRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Req"
-      "uestHeader\022\n\n\002id\030\002 \001(\004\"S\n\017GetNodeRespons"
-      "e\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\022"
-      "\032\n\004node\030\002 \001(\0132\014.metapb.Node\"A\n\014GetDBRequ"
+      ".proto\"5\n\010MSLeader\022\n\n\002id\030\001 \001(\004\022\017\n\007addres"
+      "s\030\002 \001(\t\022\014\n\004term\030\003 \001(\004\"9\n\022GetMSLeaderRequ"
       "est\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader"
-      "\022\014\n\004name\030\002 \001(\t\"S\n\rGetDBResponse\022$\n\006heade"
-      "r\030\001 \001(\0132\024.mspb.ResponseHeader\022\034\n\002db\030\002 \001("
-      "\0132\020.metapb.DataBase\"[\n\017GetTableRequest\022#"
-      "\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007d"
-      "b_name\030\002 \001(\t\022\022\n\ntable_name\030\003 \001(\t\"[\n\023GetT"
-      "ableByIdRequest\022#\n\006header\030\001 \001(\0132\023.mspb.R"
-      "equestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030"
-      "\003 \001(\004\"V\n\020GetTableResponse\022$\n\006header\030\001 \001("
-      "\0132\024.mspb.ResponseHeader\022\034\n\005table\030\002 \001(\0132\r"
-      ".metapb.Table\"Z\n\024GetTableByIdResponse\022$\n"
-      "\006header\030\001 \001(\0132\024.mspb.ResponseHeader\022\034\n\005t"
-      "able\030\002 \001(\0132\r.metapb.Table\"Y\n\021GetColumnsR"
-      "equest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHea"
-      "der\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\"[\n\022"
-      "GetColumnsResponse\022$\n\006header\030\001 \001(\0132\024.msp"
-      "b.ResponseHeader\022\037\n\007columns\030\002 \003(\0132\016.meta"
-      "pb.Column\"p\n\026GetColumnByNameRequest\022#\n\006h"
-      "eader\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_i"
-      "d\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\020\n\010col_name\030\004 "
-      "\001(\t\"_\n\027GetColumnByNameResponse\022$\n\006header"
-      "\030\001 \001(\0132\024.mspb.ResponseHeader\022\036\n\006column\030\002"
-      " \001(\0132\016.metapb.Column\"l\n\024GetColumnByIdReq"
+      "\"[\n\023GetMSLeaderResponse\022$\n\006header\030\001 \001(\0132"
+      "\024.mspb.ResponseHeader\022\036\n\006leader\030\002 \001(\0132\016."
+      "mspb.MSLeader\"=\n\tPeerStats\022\032\n\004peer\030\001 \001(\013"
+      "2\014.metapb.Peer\022\024\n\014down_seconds\030\002 \001(\004\"z\n\n"
+      "RangeStats\022\025\n\rbytes_written\030\001 \001(\004\022\022\n\nbyt"
+      "es_read\030\002 \001(\004\022\024\n\014keys_written\030\003 \001(\004\022\021\n\tk"
+      "eys_read\030\004 \001(\004\022\030\n\020approximate_size\030\005 \001(\004"
+      "\"\343\001\n\025RangeHeartbeatRequest\022#\n\006header\030\001 \001"
+      "(\0132\023.mspb.RequestHeader\022\034\n\005range\030\002 \001(\0132\r"
+      ".metapb.Range\022\034\n\006leader\030\003 \001(\0132\014.metapb.P"
+      "eer\022#\n\ndown_peers\030\004 \003(\0132\017.mspb.PeerStats"
+      "\022#\n\rpending_peers\030\005 \003(\0132\014.metapb.Peer\022\037\n"
+      "\005stats\030\006 \001(\0132\020.mspb.RangeStats\"\305\001\n\026Range"
+      "HeartbeatResponse\022$\n\006header\030\001 \001(\0132\024.mspb"
+      ".ResponseHeader\022\020\n\010range_id\030\002 \001(\004\022!\n\005epo"
+      "ch\030\003 \001(\0132\022.metapb.RangeEpoch\022!\n\013target_p"
+      "eer\030\004 \001(\0132\014.metapb.Peer\022\032\n\004task\030\005 \001(\0132\014."
+      "taskpb.Task\022\021\n\tcommit_id\030\006 \001(\004\"\332\002\n\tNodeS"
+      "tats\022\023\n\013range_count\030\001 \001(\r\022\031\n\021range_split"
+      "_count\030\002 \001(\r\022\032\n\022sending_snap_count\030\003 \001(\r"
+      "\022\034\n\024receiving_snap_count\030\004 \001(\r\022\033\n\023applyi"
+      "ng_snap_count\030\005 \001(\r\022\032\n\022range_leader_coun"
+      "t\030\006 \001(\r\022\020\n\010capacity\030\007 \001(\004\022\021\n\tused_size\030\010"
+      " \001(\004\022\021\n\tavailable\030\t \001(\004\022\025\n\rbytes_written"
+      "\030\n \001(\004\022\024\n\014keys_written\030\013 \001(\004\022\022\n\nbytes_re"
+      "ad\030\014 \001(\004\022\021\n\tkeys_read\030\r \001(\004\022\017\n\007is_busy\030\016"
+      " \001(\010\022\r\n\005start\030\017 \001(\r\"\207\001\n\024NodeHeartbeatReq"
       "uest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeade"
-      "r\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\016\n\006co"
-      "l_id\030\004 \001(\004\"]\n\025GetColumnByIdResponse\022$\n\006h"
-      "eader\030\001 \001(\0132\024.mspb.ResponseHeader\022\036\n\006col"
-      "umn\030\002 \001(\0132\016.metapb.Column\"y\n\020AddColumnRe"
-      "quest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHead"
-      "er\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\037\n\007c"
-      "olumns\030\004 \003(\0132\016.metapb.Column\"Z\n\021AddColum"
-      "nResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respons"
-      "eHeader\022\037\n\007columns\030\002 \003(\0132\016.metapb.Column"
-      "\"\\\n\024TruncateTableRequest\022#\n\006header\030\001 \001(\013"
-      "2\023.mspb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010"
-      "table_id\030\003 \001(\004\"=\n\025TruncateTableResponse\022"
-      "$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\"M\n"
-      "\025CreateDatabaseRequest\022#\n\006header\030\001 \001(\0132\023"
-      ".mspb.RequestHeader\022\017\n\007db_name\030\002 \001(\t\">\n\026"
-      "CreateDatabaseResponse\022$\n\006header\030\001 \001(\0132\024"
-      ".mspb.ResponseHeader\"r\n\022CreateTableReque"
-      "st\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022"
-      "\017\n\007db_name\030\002 \001(\t\022\022\n\ntable_name\030\003 \001(\t\022\022\n\n"
-      "properties\030\004 \001(\t\";\n\023CreateTableResponse\022"
-      "$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\"#\n"
-      "\rRequestHeader\022\022\n\ncluster_id\030\001 \001(\004\"@\n\016Re"
-      "sponseHeader\022\022\n\ncluster_id\030\001 \001(\004\022\032\n\005erro"
-      "r\030\002 \001(\0132\013.mspb.Error\"\035\n\010MsLeader\022\021\n\tms_l"
-      "eader\030\001 \001(\t\"\n\n\010NoLeader\"M\n\005Error\022!\n\tms_l"
-      "eader\030\002 \001(\0132\016.mspb.MsLeader\022!\n\tno_leader"
-      "\030\003 \001(\0132\016.mspb.NoLeader2\241\n\n\010MsServer\022J\n\rN"
-      "odeHeartbeat\022\032.mspb.NodeHeartbeatRequest"
-      "\032\033.mspb.NodeHeartbeatResponse\"\000\022M\n\016Range"
-      "Heartbeat\022\033.mspb.RangeHeartbeatRequest\032\034"
-      ".mspb.RangeHeartbeatResponse\"\000\022;\n\010AskSpl"
-      "it\022\025.mspb.AskSplitRequest\032\026.mspb.AskSpli"
-      "tResponse\"\000\022D\n\013ReportSplit\022\030.mspb.Report"
-      "SplitRequest\032\031.mspb.ReportSplitResponse\""
-      "\000\022>\n\tNodeLogin\022\026.mspb.NodeLoginRequest\032\027"
-      ".mspb.NodeLoginResponse\"\000\022>\n\tGetNodeId\022\026"
-      ".mspb.GetNodeIdRequest\032\027.mspb.GetNodeIdR"
-      "esponse\"\000\022D\n\013GetMSLeader\022\030.mspb.GetMSLea"
-      "derRequest\032\031.mspb.GetMSLeaderResponse\"\000\022"
-      ";\n\010GetRoute\022\025.mspb.GetRouteRequest\032\026.msp"
-      "b.GetRouteResponse\"\000\0228\n\007GetNode\022\024.mspb.G"
-      "etNodeRequest\032\025.mspb.GetNodeResponse\"\000\0222"
-      "\n\005GetDB\022\022.mspb.GetDBRequest\032\023.mspb.GetDB"
-      "Response\"\000\022;\n\010GetTable\022\025.mspb.GetTableRe"
-      "quest\032\026.mspb.GetTableResponse\"\000\022G\n\014GetTa"
-      "bleById\022\031.mspb.GetTableByIdRequest\032\032.msp"
-      "b.GetTableByIdResponse\"\000\022A\n\nGetColumns\022\027"
-      ".mspb.GetColumnsRequest\032\030.mspb.GetColumn"
-      "sResponse\"\000\022P\n\017GetColumnByName\022\034.mspb.Ge"
-      "tColumnByNameRequest\032\035.mspb.GetColumnByN"
-      "ameResponse\"\000\022J\n\rGetColumnById\022\032.mspb.Ge"
-      "tColumnByIdRequest\032\033.mspb.GetColumnByIdR"
-      "esponse\"\000\022J\n\rTruncateTable\022\032.mspb.Trunca"
-      "teTableRequest\032\033.mspb.TruncateTableRespo"
-      "nse\"\000\022>\n\tAddColumn\022\026.mspb.AddColumnReque"
-      "st\032\027.mspb.AddColumnResponse\"\000\022M\n\016CreateD"
-      "atabase\022\033.mspb.CreateDatabaseRequest\032\034.m"
-      "spb.CreateDatabaseResponse\"\000\022D\n\013CreateTa"
-      "ble\022\030.mspb.CreateTableRequest\032\031.mspb.Cre"
-      "ateTableResponse\"\000b\006proto3"
+      "r\022\017\n\007node_id\030\002 \001(\004\022\036\n\005stats\030\003 \001(\0132\017.mspb"
+      ".NodeStats\022\031\n\021isolated_replicas\030\004 \003(\004\"g\n"
+      "\025NodeHeartbeatResponse\022$\n\006header\030\001 \001(\0132\024"
+      ".mspb.ResponseHeader\022\017\n\007node_id\030\002 \001(\004\022\027\n"
+      "\017delete_replicas\030\003 \003(\004\"g\n\017AskSplitReques"
+      "t\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\034"
+      "\n\005range\030\002 \001(\0132\r.metapb.Range\022\021\n\tsplit_ke"
+      "y\030\003 \001(\014\"\225\001\n\020AskSplitResponse\022$\n\006header\030\001"
+      " \001(\0132\024.mspb.ResponseHeader\022\034\n\005range\030\002 \001("
+      "\0132\r.metapb.Range\022\024\n\014new_range_id\030\003 \001(\004\022\024"
+      "\n\014new_peer_ids\030\004 \003(\004\022\021\n\tsplit_key\030\005 \001(\014\""
+      "t\n\022ReportSplitRequest\022#\n\006header\030\001 \001(\0132\023."
+      "mspb.RequestHeader\022\033\n\004left\030\002 \001(\0132\r.metap"
+      "b.Range\022\034\n\005right\030\003 \001(\0132\r.metapb.Range\";\n"
+      "\023ReportSplitResponse\022$\n\006header\030\001 \001(\0132\024.m"
+      "spb.ResponseHeader\"H\n\020NodeLoginRequest\022#"
+      "\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007n"
+      "ode_id\030\002 \001(\004\"9\n\021NodeLoginResponse\022$\n\006hea"
+      "der\030\001 \001(\0132\024.mspb.ResponseHeader\"\203\001\n\020GetN"
+      "odeIdRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Requ"
+      "estHeader\022\023\n\013server_port\030\002 \001(\r\022\021\n\traft_p"
+      "ort\030\003 \001(\r\022\021\n\thttp_port\030\004 \001(\r\022\017\n\007version\030"
+      "\005 \001(\t\"[\n\021GetNodeIdResponse\022$\n\006header\030\001 \001"
+      "(\0132\024.mspb.ResponseHeader\022\017\n\007node_id\030\002 \001("
+      "\004\022\017\n\007clearup\030\003 \001(\010\"d\n\017GetRouteRequest\022#\n"
+      "\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db"
+      "_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\013\n\003key\030\004 \001(\014"
+      "\"W\n\020GetRouteResponse\022$\n\006header\030\001 \001(\0132\024.m"
+      "spb.ResponseHeader\022\035\n\006routes\030\002 \003(\0132\r.met"
+      "apb.Route\"A\n\016GetNodeRequest\022#\n\006header\030\001 "
+      "\001(\0132\023.mspb.RequestHeader\022\n\n\002id\030\002 \001(\004\"S\n\017"
+      "GetNodeResponse\022$\n\006header\030\001 \001(\0132\024.mspb.R"
+      "esponseHeader\022\032\n\004node\030\002 \001(\0132\014.metapb.Nod"
+      "e\"A\n\014GetDBRequest\022#\n\006header\030\001 \001(\0132\023.mspb"
+      ".RequestHeader\022\014\n\004name\030\002 \001(\t\"S\n\rGetDBRes"
+      "ponse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHea"
+      "der\022\034\n\002db\030\002 \001(\0132\020.metapb.DataBase\"[\n\017Get"
+      "TableRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Requ"
+      "estHeader\022\017\n\007db_name\030\002 \001(\t\022\022\n\ntable_name"
+      "\030\003 \001(\t\"[\n\023GetTableByIdRequest\022#\n\006header\030"
+      "\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_id\030\002 \001("
+      "\004\022\020\n\010table_id\030\003 \001(\004\"V\n\020GetTableResponse\022"
+      "$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\022\034\n"
+      "\005table\030\002 \001(\0132\r.metapb.Table\"Z\n\024GetTableB"
+      "yIdResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respo"
+      "nseHeader\022\034\n\005table\030\002 \001(\0132\r.metapb.Table\""
+      "Y\n\021GetColumnsRequest\022#\n\006header\030\001 \001(\0132\023.m"
+      "spb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010tabl"
+      "e_id\030\003 \001(\004\"[\n\022GetColumnsResponse\022$\n\006head"
+      "er\030\001 \001(\0132\024.mspb.ResponseHeader\022\037\n\007column"
+      "s\030\002 \003(\0132\016.metapb.Column\"p\n\026GetColumnByNa"
+      "meRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Request"
+      "Header\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022"
+      "\020\n\010col_name\030\004 \001(\t\"_\n\027GetColumnByNameResp"
+      "onse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHead"
+      "er\022\036\n\006column\030\002 \001(\0132\016.metapb.Column\"l\n\024Ge"
+      "tColumnByIdRequest\022#\n\006header\030\001 \001(\0132\023.msp"
+      "b.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_"
+      "id\030\003 \001(\004\022\016\n\006col_id\030\004 \001(\004\"]\n\025GetColumnByI"
+      "dResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respons"
+      "eHeader\022\036\n\006column\030\002 \001(\0132\016.metapb.Column\""
+      "y\n\020AddColumnRequest\022#\n\006header\030\001 \001(\0132\023.ms"
+      "pb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table"
+      "_id\030\003 \001(\004\022\037\n\007columns\030\004 \003(\0132\016.metapb.Colu"
+      "mn\"Z\n\021AddColumnResponse\022$\n\006header\030\001 \001(\0132"
+      "\024.mspb.ResponseHeader\022\037\n\007columns\030\002 \003(\0132\016"
+      ".metapb.Column\"\\\n\024TruncateTableRequest\022#"
+      "\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005d"
+      "b_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\"=\n\025Truncate"
+      "TableResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Res"
+      "ponseHeader\"M\n\025CreateDatabaseRequest\022#\n\006"
+      "header\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007db_"
+      "name\030\002 \001(\t\">\n\026CreateDatabaseResponse\022$\n\006"
+      "header\030\001 \001(\0132\024.mspb.ResponseHeader\"r\n\022Cr"
+      "eateTableRequest\022#\n\006header\030\001 \001(\0132\023.mspb."
+      "RequestHeader\022\017\n\007db_name\030\002 \001(\t\022\022\n\ntable_"
+      "name\030\003 \001(\t\022\022\n\nproperties\030\004 \001(\t\";\n\023Create"
+      "TableResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Res"
+      "ponseHeader\"#\n\rRequestHeader\022\022\n\ncluster_"
+      "id\030\001 \001(\004\"@\n\016ResponseHeader\022\022\n\ncluster_id"
+      "\030\001 \001(\004\022\032\n\005error\030\002 \001(\0132\013.mspb.Error\"\n\n\010No"
+      "Leader\"N\n\005Error\022\"\n\nnew_leader\030\002 \001(\0132\016.ms"
+      "pb.MSLeader\022!\n\tno_leader\030\003 \001(\0132\016.mspb.No"
+      "Leader2\241\n\n\010MsServer\022J\n\rNodeHeartbeat\022\032.m"
+      "spb.NodeHeartbeatRequest\032\033.mspb.NodeHear"
+      "tbeatResponse\"\000\022M\n\016RangeHeartbeat\022\033.mspb"
+      ".RangeHeartbeatRequest\032\034.mspb.RangeHeart"
+      "beatResponse\"\000\022;\n\010AskSplit\022\025.mspb.AskSpl"
+      "itRequest\032\026.mspb.AskSplitResponse\"\000\022D\n\013R"
+      "eportSplit\022\030.mspb.ReportSplitRequest\032\031.m"
+      "spb.ReportSplitResponse\"\000\022>\n\tNodeLogin\022\026"
+      ".mspb.NodeLoginRequest\032\027.mspb.NodeLoginR"
+      "esponse\"\000\022>\n\tGetNodeId\022\026.mspb.GetNodeIdR"
+      "equest\032\027.mspb.GetNodeIdResponse\"\000\022D\n\013Get"
+      "MSLeader\022\030.mspb.GetMSLeaderRequest\032\031.msp"
+      "b.GetMSLeaderResponse\"\000\022;\n\010GetRoute\022\025.ms"
+      "pb.GetRouteRequest\032\026.mspb.GetRouteRespon"
+      "se\"\000\0228\n\007GetNode\022\024.mspb.GetNodeRequest\032\025."
+      "mspb.GetNodeResponse\"\000\0222\n\005GetDB\022\022.mspb.G"
+      "etDBRequest\032\023.mspb.GetDBResponse\"\000\022;\n\010Ge"
+      "tTable\022\025.mspb.GetTableRequest\032\026.mspb.Get"
+      "TableResponse\"\000\022G\n\014GetTableById\022\031.mspb.G"
+      "etTableByIdRequest\032\032.mspb.GetTableByIdRe"
+      "sponse\"\000\022A\n\nGetColumns\022\027.mspb.GetColumns"
+      "Request\032\030.mspb.GetColumnsResponse\"\000\022P\n\017G"
+      "etColumnByName\022\034.mspb.GetColumnByNameReq"
+      "uest\032\035.mspb.GetColumnByNameResponse\"\000\022J\n"
+      "\rGetColumnById\022\032.mspb.GetColumnByIdReque"
+      "st\032\033.mspb.GetColumnByIdResponse\"\000\022J\n\rTru"
+      "ncateTable\022\032.mspb.TruncateTableRequest\032\033"
+      ".mspb.TruncateTableResponse\"\000\022>\n\tAddColu"
+      "mn\022\026.mspb.AddColumnRequest\032\027.mspb.AddCol"
+      "umnResponse\"\000\022M\n\016CreateDatabase\022\033.mspb.C"
+      "reateDatabaseRequest\032\034.mspb.CreateDataba"
+      "seResponse\"\000\022D\n\013CreateTable\022\030.mspb.Creat"
+      "eTableRequest\032\031.mspb.CreateTableResponse"
+      "\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 5946);
+      descriptor, 5930);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "mspb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -1224,6 +1209,7 @@ struct StaticDescriptorInitializer {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int MSLeader::kIdFieldNumber;
 const int MSLeader::kAddressFieldNumber;
+const int MSLeader::kTermFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 MSLeader::MSLeader()
@@ -1243,13 +1229,17 @@ MSLeader::MSLeader(const MSLeader& from)
   if (from.address().size() > 0) {
     address_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.address_);
   }
-  id_ = from.id_;
+  ::memcpy(&id_, &from.id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&term_) -
+    reinterpret_cast<char*>(&id_)) + sizeof(term_));
   // @@protoc_insertion_point(copy_constructor:mspb.MSLeader)
 }
 
 void MSLeader::SharedCtor() {
   address_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  id_ = GOOGLE_ULONGLONG(0);
+  ::memset(&id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&term_) -
+      reinterpret_cast<char*>(&id_)) + sizeof(term_));
   _cached_size_ = 0;
 }
 
@@ -1292,7 +1282,9 @@ void MSLeader::Clear() {
   (void) cached_has_bits;
 
   address_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  id_ = GOOGLE_ULONGLONG(0);
+  ::memset(&id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&term_) -
+      reinterpret_cast<char*>(&id_)) + sizeof(term_));
   _internal_metadata_.Clear();
 }
 
@@ -1330,6 +1322,20 @@ bool MSLeader::MergePartialFromCodedStream(
             this->address().data(), static_cast<int>(this->address().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
             "mspb.MSLeader.address"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 term = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &term_)));
         } else {
           goto handle_unusual;
         }
@@ -1377,6 +1383,11 @@ void MSLeader::SerializeWithCachedSizes(
       2, this->address(), output);
   }
 
+  // uint64 term = 3;
+  if (this->term() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->term(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -1405,6 +1416,11 @@ void MSLeader::SerializeWithCachedSizes(
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         2, this->address(), target);
+  }
+
+  // uint64 term = 3;
+  if (this->term() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->term(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1436,6 +1452,13 @@ size_t MSLeader::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->id());
+  }
+
+  // uint64 term = 3;
+  if (this->term() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->term());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -1474,6 +1497,9 @@ void MSLeader::MergeFrom(const MSLeader& from) {
   if (from.id() != 0) {
     set_id(from.id());
   }
+  if (from.term() != 0) {
+    set_term(from.term());
+  }
 }
 
 void MSLeader::CopyFrom(const ::google::protobuf::Message& from) {
@@ -1502,6 +1528,7 @@ void MSLeader::InternalSwap(MSLeader* other) {
   using std::swap;
   address_.Swap(&other->address_);
   swap(id_, other->id_);
+  swap(term_, other->term_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -1579,6 +1606,20 @@ void MSLeader::set_allocated_address(::std::string* address) {
   }
   address_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), address);
   // @@protoc_insertion_point(field_set_allocated:mspb.MSLeader.address)
+}
+
+// uint64 term = 3;
+void MSLeader::clear_term() {
+  term_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 MSLeader::term() const {
+  // @@protoc_insertion_point(field_get:mspb.MSLeader.term)
+  return term_;
+}
+void MSLeader::set_term(::google::protobuf::uint64 value) {
+  
+  term_ = value;
+  // @@protoc_insertion_point(field_set:mspb.MSLeader.term)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -19964,317 +20005,6 @@ void ResponseHeader::set_allocated_error(::mspb::Error* error) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int MsLeader::kMsLeaderFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
-
-MsLeader::MsLeader()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
-    protobuf_mspb_2eproto::InitDefaults();
-  }
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:mspb.MsLeader)
-}
-MsLeader::MsLeader(const MsLeader& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      _cached_size_(0) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ms_leader_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.ms_leader().size() > 0) {
-    ms_leader_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ms_leader_);
-  }
-  // @@protoc_insertion_point(copy_constructor:mspb.MsLeader)
-}
-
-void MsLeader::SharedCtor() {
-  ms_leader_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  _cached_size_ = 0;
-}
-
-MsLeader::~MsLeader() {
-  // @@protoc_insertion_point(destructor:mspb.MsLeader)
-  SharedDtor();
-}
-
-void MsLeader::SharedDtor() {
-  ms_leader_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-
-void MsLeader::SetCachedSize(int size) const {
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-}
-const ::google::protobuf::Descriptor* MsLeader::descriptor() {
-  protobuf_mspb_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_mspb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const MsLeader& MsLeader::default_instance() {
-  protobuf_mspb_2eproto::InitDefaults();
-  return *internal_default_instance();
-}
-
-MsLeader* MsLeader::New(::google::protobuf::Arena* arena) const {
-  MsLeader* n = new MsLeader;
-  if (arena != NULL) {
-    arena->Own(n);
-  }
-  return n;
-}
-
-void MsLeader::Clear() {
-// @@protoc_insertion_point(message_clear_start:mspb.MsLeader)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  ms_leader_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  _internal_metadata_.Clear();
-}
-
-bool MsLeader::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:mspb.MsLeader)
-  for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string ms_leader = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_ms_leader()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->ms_leader().data(), static_cast<int>(this->ms_leader().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "mspb.MsLeader.ms_leader"));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:mspb.MsLeader)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:mspb.MsLeader)
-  return false;
-#undef DO_
-}
-
-void MsLeader::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:mspb.MsLeader)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // string ms_leader = 1;
-  if (this->ms_leader().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->ms_leader().data(), static_cast<int>(this->ms_leader().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "mspb.MsLeader.ms_leader");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->ms_leader(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:mspb.MsLeader)
-}
-
-::google::protobuf::uint8* MsLeader::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:mspb.MsLeader)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // string ms_leader = 1;
-  if (this->ms_leader().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->ms_leader().data(), static_cast<int>(this->ms_leader().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "mspb.MsLeader.ms_leader");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->ms_leader(), target);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:mspb.MsLeader)
-  return target;
-}
-
-size_t MsLeader::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:mspb.MsLeader)
-  size_t total_size = 0;
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
-  // string ms_leader = 1;
-  if (this->ms_leader().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->ms_leader());
-  }
-
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-  _cached_size_ = cached_size;
-  GOOGLE_SAFE_CONCURRENT_WRITES_END();
-  return total_size;
-}
-
-void MsLeader::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:mspb.MsLeader)
-  GOOGLE_DCHECK_NE(&from, this);
-  const MsLeader* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const MsLeader>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:mspb.MsLeader)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:mspb.MsLeader)
-    MergeFrom(*source);
-  }
-}
-
-void MsLeader::MergeFrom(const MsLeader& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:mspb.MsLeader)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  if (from.ms_leader().size() > 0) {
-
-    ms_leader_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ms_leader_);
-  }
-}
-
-void MsLeader::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:mspb.MsLeader)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void MsLeader::CopyFrom(const MsLeader& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:mspb.MsLeader)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool MsLeader::IsInitialized() const {
-  return true;
-}
-
-void MsLeader::Swap(MsLeader* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
-void MsLeader::InternalSwap(MsLeader* other) {
-  using std::swap;
-  ms_leader_.Swap(&other->ms_leader_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-  swap(_cached_size_, other->_cached_size_);
-}
-
-::google::protobuf::Metadata MsLeader::GetMetadata() const {
-  protobuf_mspb_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_mspb_2eproto::file_level_metadata[kIndexInFileMessages];
-}
-
-#if PROTOBUF_INLINE_NOT_IN_HEADERS
-// MsLeader
-
-// string ms_leader = 1;
-void MsLeader::clear_ms_leader() {
-  ms_leader_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-const ::std::string& MsLeader::ms_leader() const {
-  // @@protoc_insertion_point(field_get:mspb.MsLeader.ms_leader)
-  return ms_leader_.GetNoArena();
-}
-void MsLeader::set_ms_leader(const ::std::string& value) {
-  
-  ms_leader_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:mspb.MsLeader.ms_leader)
-}
-#if LANG_CXX11
-void MsLeader::set_ms_leader(::std::string&& value) {
-  
-  ms_leader_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:mspb.MsLeader.ms_leader)
-}
-#endif
-void MsLeader::set_ms_leader(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  ms_leader_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:mspb.MsLeader.ms_leader)
-}
-void MsLeader::set_ms_leader(const char* value, size_t size) {
-  
-  ms_leader_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:mspb.MsLeader.ms_leader)
-}
-::std::string* MsLeader::mutable_ms_leader() {
-  
-  // @@protoc_insertion_point(field_mutable:mspb.MsLeader.ms_leader)
-  return ms_leader_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-::std::string* MsLeader::release_ms_leader() {
-  // @@protoc_insertion_point(field_release:mspb.MsLeader.ms_leader)
-  
-  return ms_leader_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-void MsLeader::set_allocated_ms_leader(::std::string* ms_leader) {
-  if (ms_leader != NULL) {
-    
-  } else {
-    
-  }
-  ms_leader_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ms_leader);
-  // @@protoc_insertion_point(field_set_allocated:mspb.MsLeader.ms_leader)
-}
-
-#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
-
-// ===================================================================
-
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 NoLeader::NoLeader()
@@ -20471,7 +20201,7 @@ void NoLeader::InternalSwap(NoLeader* other) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Error::kMsLeaderFieldNumber;
+const int Error::kNewLeaderFieldNumber;
 const int Error::kNoLeaderFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -20488,10 +20218,10 @@ Error::Error(const Error& from)
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  if (from.has_ms_leader()) {
-    ms_leader_ = new ::mspb::MsLeader(*from.ms_leader_);
+  if (from.has_new_leader()) {
+    new_leader_ = new ::mspb::MSLeader(*from.new_leader_);
   } else {
-    ms_leader_ = NULL;
+    new_leader_ = NULL;
   }
   if (from.has_no_leader()) {
     no_leader_ = new ::mspb::NoLeader(*from.no_leader_);
@@ -20502,9 +20232,9 @@ Error::Error(const Error& from)
 }
 
 void Error::SharedCtor() {
-  ::memset(&ms_leader_, 0, static_cast<size_t>(
+  ::memset(&new_leader_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&no_leader_) -
-      reinterpret_cast<char*>(&ms_leader_)) + sizeof(no_leader_));
+      reinterpret_cast<char*>(&new_leader_)) + sizeof(no_leader_));
   _cached_size_ = 0;
 }
 
@@ -20514,7 +20244,7 @@ Error::~Error() {
 }
 
 void Error::SharedDtor() {
-  if (this != internal_default_instance()) delete ms_leader_;
+  if (this != internal_default_instance()) delete new_leader_;
   if (this != internal_default_instance()) delete no_leader_;
 }
 
@@ -20547,10 +20277,10 @@ void Error::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaNoVirtual() == NULL && ms_leader_ != NULL) {
-    delete ms_leader_;
+  if (GetArenaNoVirtual() == NULL && new_leader_ != NULL) {
+    delete new_leader_;
   }
-  ms_leader_ = NULL;
+  new_leader_ = NULL;
   if (GetArenaNoVirtual() == NULL && no_leader_ != NULL) {
     delete no_leader_;
   }
@@ -20568,12 +20298,12 @@ bool Error::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .mspb.MsLeader ms_leader = 2;
+      // .mspb.MSLeader new_leader = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_ms_leader()));
+               input, mutable_new_leader()));
         } else {
           goto handle_unusual;
         }
@@ -20618,10 +20348,10 @@ void Error::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .mspb.MsLeader ms_leader = 2;
-  if (this->has_ms_leader()) {
+  // .mspb.MSLeader new_leader = 2;
+  if (this->has_new_leader()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, *this->ms_leader_, output);
+      2, *this->new_leader_, output);
   }
 
   // .mspb.NoLeader no_leader = 3;
@@ -20644,11 +20374,11 @@ void Error::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .mspb.MsLeader ms_leader = 2;
-  if (this->has_ms_leader()) {
+  // .mspb.MSLeader new_leader = 2;
+  if (this->has_new_leader()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        2, *this->ms_leader_, deterministic, target);
+        2, *this->new_leader_, deterministic, target);
   }
 
   // .mspb.NoLeader no_leader = 3;
@@ -20675,11 +20405,11 @@ size_t Error::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .mspb.MsLeader ms_leader = 2;
-  if (this->has_ms_leader()) {
+  // .mspb.MSLeader new_leader = 2;
+  if (this->has_new_leader()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        *this->ms_leader_);
+        *this->new_leader_);
   }
 
   // .mspb.NoLeader no_leader = 3;
@@ -20718,8 +20448,8 @@ void Error::MergeFrom(const Error& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.has_ms_leader()) {
-    mutable_ms_leader()->::mspb::MsLeader::MergeFrom(from.ms_leader());
+  if (from.has_new_leader()) {
+    mutable_new_leader()->::mspb::MSLeader::MergeFrom(from.new_leader());
   }
   if (from.has_no_leader()) {
     mutable_no_leader()->::mspb::NoLeader::MergeFrom(from.no_leader());
@@ -20750,7 +20480,7 @@ void Error::Swap(Error* other) {
 }
 void Error::InternalSwap(Error* other) {
   using std::swap;
-  swap(ms_leader_, other->ms_leader_);
+  swap(new_leader_, other->new_leader_);
   swap(no_leader_, other->no_leader_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
@@ -20764,44 +20494,44 @@ void Error::InternalSwap(Error* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // Error
 
-// .mspb.MsLeader ms_leader = 2;
-bool Error::has_ms_leader() const {
-  return this != internal_default_instance() && ms_leader_ != NULL;
+// .mspb.MSLeader new_leader = 2;
+bool Error::has_new_leader() const {
+  return this != internal_default_instance() && new_leader_ != NULL;
 }
-void Error::clear_ms_leader() {
-  if (GetArenaNoVirtual() == NULL && ms_leader_ != NULL) delete ms_leader_;
-  ms_leader_ = NULL;
+void Error::clear_new_leader() {
+  if (GetArenaNoVirtual() == NULL && new_leader_ != NULL) delete new_leader_;
+  new_leader_ = NULL;
 }
-const ::mspb::MsLeader& Error::ms_leader() const {
-  const ::mspb::MsLeader* p = ms_leader_;
-  // @@protoc_insertion_point(field_get:mspb.Error.ms_leader)
-  return p != NULL ? *p : *reinterpret_cast<const ::mspb::MsLeader*>(
-      &::mspb::_MsLeader_default_instance_);
+const ::mspb::MSLeader& Error::new_leader() const {
+  const ::mspb::MSLeader* p = new_leader_;
+  // @@protoc_insertion_point(field_get:mspb.Error.new_leader)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::MSLeader*>(
+      &::mspb::_MSLeader_default_instance_);
 }
-::mspb::MsLeader* Error::mutable_ms_leader() {
+::mspb::MSLeader* Error::mutable_new_leader() {
   
-  if (ms_leader_ == NULL) {
-    ms_leader_ = new ::mspb::MsLeader;
+  if (new_leader_ == NULL) {
+    new_leader_ = new ::mspb::MSLeader;
   }
-  // @@protoc_insertion_point(field_mutable:mspb.Error.ms_leader)
-  return ms_leader_;
+  // @@protoc_insertion_point(field_mutable:mspb.Error.new_leader)
+  return new_leader_;
 }
-::mspb::MsLeader* Error::release_ms_leader() {
-  // @@protoc_insertion_point(field_release:mspb.Error.ms_leader)
+::mspb::MSLeader* Error::release_new_leader() {
+  // @@protoc_insertion_point(field_release:mspb.Error.new_leader)
   
-  ::mspb::MsLeader* temp = ms_leader_;
-  ms_leader_ = NULL;
+  ::mspb::MSLeader* temp = new_leader_;
+  new_leader_ = NULL;
   return temp;
 }
-void Error::set_allocated_ms_leader(::mspb::MsLeader* ms_leader) {
-  delete ms_leader_;
-  ms_leader_ = ms_leader;
-  if (ms_leader) {
+void Error::set_allocated_new_leader(::mspb::MSLeader* new_leader) {
+  delete new_leader_;
+  new_leader_ = new_leader;
+  if (new_leader) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:mspb.Error.ms_leader)
+  // @@protoc_insertion_point(field_set_allocated:mspb.Error.new_leader)
 }
 
 // .mspb.NoLeader no_leader = 3;

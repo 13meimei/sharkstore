@@ -123,9 +123,6 @@ extern GetTableResponseDefaultTypeInternal _GetTableResponse_default_instance_;
 class MSLeader;
 class MSLeaderDefaultTypeInternal;
 extern MSLeaderDefaultTypeInternal _MSLeader_default_instance_;
-class MsLeader;
-class MsLeaderDefaultTypeInternal;
-extern MsLeaderDefaultTypeInternal _MsLeader_default_instance_;
 class NoLeader;
 class NoLeaderDefaultTypeInternal;
 extern NoLeaderDefaultTypeInternal _NoLeader_default_instance_;
@@ -296,12 +293,19 @@ class MSLeader : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::uint64 id() const;
   void set_id(::google::protobuf::uint64 value);
 
+  // uint64 term = 3;
+  void clear_term();
+  static const int kTermFieldNumber = 3;
+  ::google::protobuf::uint64 term() const;
+  void set_term(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:mspb.MSLeader)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr address_;
   ::google::protobuf::uint64 id_;
+  ::google::protobuf::uint64 term_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2eproto::TableStruct;
 };
@@ -5407,111 +5411,6 @@ class ResponseHeader : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
-class MsLeader : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.MsLeader) */ {
- public:
-  MsLeader();
-  virtual ~MsLeader();
-
-  MsLeader(const MsLeader& from);
-
-  inline MsLeader& operator=(const MsLeader& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  MsLeader(MsLeader&& from) noexcept
-    : MsLeader() {
-    *this = ::std::move(from);
-  }
-
-  inline MsLeader& operator=(MsLeader&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const MsLeader& default_instance();
-
-  static inline const MsLeader* internal_default_instance() {
-    return reinterpret_cast<const MsLeader*>(
-               &_MsLeader_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    44;
-
-  void Swap(MsLeader* other);
-  friend void swap(MsLeader& a, MsLeader& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline MsLeader* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  MsLeader* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const MsLeader& from);
-  void MergeFrom(const MsLeader& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(MsLeader* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // string ms_leader = 1;
-  void clear_ms_leader();
-  static const int kMsLeaderFieldNumber = 1;
-  const ::std::string& ms_leader() const;
-  void set_ms_leader(const ::std::string& value);
-  #if LANG_CXX11
-  void set_ms_leader(::std::string&& value);
-  #endif
-  void set_ms_leader(const char* value);
-  void set_ms_leader(const char* value, size_t size);
-  ::std::string* mutable_ms_leader();
-  ::std::string* release_ms_leader();
-  void set_allocated_ms_leader(::std::string* ms_leader);
-
-  // @@protoc_insertion_point(class_scope:mspb.MsLeader)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr ms_leader_;
-  mutable int _cached_size_;
-  friend struct protobuf_mspb_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
 class NoLeader : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.NoLeader) */ {
  public:
   NoLeader();
@@ -5546,7 +5445,7 @@ class NoLeader : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_NoLeader_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    45;
+    44;
 
   void Swap(NoLeader* other);
   friend void swap(NoLeader& a, NoLeader& b) {
@@ -5636,7 +5535,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Error_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    46;
+    45;
 
   void Swap(Error* other);
   friend void swap(Error& a, Error& b) {
@@ -5683,14 +5582,14 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
 
   // accessors -------------------------------------------------------
 
-  // .mspb.MsLeader ms_leader = 2;
-  bool has_ms_leader() const;
-  void clear_ms_leader();
-  static const int kMsLeaderFieldNumber = 2;
-  const ::mspb::MsLeader& ms_leader() const;
-  ::mspb::MsLeader* mutable_ms_leader();
-  ::mspb::MsLeader* release_ms_leader();
-  void set_allocated_ms_leader(::mspb::MsLeader* ms_leader);
+  // .mspb.MSLeader new_leader = 2;
+  bool has_new_leader() const;
+  void clear_new_leader();
+  static const int kNewLeaderFieldNumber = 2;
+  const ::mspb::MSLeader& new_leader() const;
+  ::mspb::MSLeader* mutable_new_leader();
+  ::mspb::MSLeader* release_new_leader();
+  void set_allocated_new_leader(::mspb::MSLeader* new_leader);
 
   // .mspb.NoLeader no_leader = 3;
   bool has_no_leader() const;
@@ -5705,7 +5604,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::mspb::MsLeader* ms_leader_;
+  ::mspb::MSLeader* new_leader_;
   ::mspb::NoLeader* no_leader_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2eproto::TableStruct;
@@ -5787,6 +5686,20 @@ inline void MSLeader::set_allocated_address(::std::string* address) {
   }
   address_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), address);
   // @@protoc_insertion_point(field_set_allocated:mspb.MSLeader.address)
+}
+
+// uint64 term = 3;
+inline void MSLeader::clear_term() {
+  term_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 MSLeader::term() const {
+  // @@protoc_insertion_point(field_get:mspb.MSLeader.term)
+  return term_;
+}
+inline void MSLeader::set_term(::google::protobuf::uint64 value) {
+  
+  term_ = value;
+  // @@protoc_insertion_point(field_set:mspb.MSLeader.term)
 }
 
 // -------------------------------------------------------------------
@@ -9889,107 +9802,50 @@ inline void ResponseHeader::set_allocated_error(::mspb::Error* error) {
 
 // -------------------------------------------------------------------
 
-// MsLeader
-
-// string ms_leader = 1;
-inline void MsLeader::clear_ms_leader() {
-  ms_leader_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& MsLeader::ms_leader() const {
-  // @@protoc_insertion_point(field_get:mspb.MsLeader.ms_leader)
-  return ms_leader_.GetNoArena();
-}
-inline void MsLeader::set_ms_leader(const ::std::string& value) {
-  
-  ms_leader_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:mspb.MsLeader.ms_leader)
-}
-#if LANG_CXX11
-inline void MsLeader::set_ms_leader(::std::string&& value) {
-  
-  ms_leader_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:mspb.MsLeader.ms_leader)
-}
-#endif
-inline void MsLeader::set_ms_leader(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  ms_leader_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:mspb.MsLeader.ms_leader)
-}
-inline void MsLeader::set_ms_leader(const char* value, size_t size) {
-  
-  ms_leader_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:mspb.MsLeader.ms_leader)
-}
-inline ::std::string* MsLeader::mutable_ms_leader() {
-  
-  // @@protoc_insertion_point(field_mutable:mspb.MsLeader.ms_leader)
-  return ms_leader_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* MsLeader::release_ms_leader() {
-  // @@protoc_insertion_point(field_release:mspb.MsLeader.ms_leader)
-  
-  return ms_leader_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void MsLeader::set_allocated_ms_leader(::std::string* ms_leader) {
-  if (ms_leader != NULL) {
-    
-  } else {
-    
-  }
-  ms_leader_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ms_leader);
-  // @@protoc_insertion_point(field_set_allocated:mspb.MsLeader.ms_leader)
-}
-
-// -------------------------------------------------------------------
-
 // NoLeader
 
 // -------------------------------------------------------------------
 
 // Error
 
-// .mspb.MsLeader ms_leader = 2;
-inline bool Error::has_ms_leader() const {
-  return this != internal_default_instance() && ms_leader_ != NULL;
+// .mspb.MSLeader new_leader = 2;
+inline bool Error::has_new_leader() const {
+  return this != internal_default_instance() && new_leader_ != NULL;
 }
-inline void Error::clear_ms_leader() {
-  if (GetArenaNoVirtual() == NULL && ms_leader_ != NULL) delete ms_leader_;
-  ms_leader_ = NULL;
+inline void Error::clear_new_leader() {
+  if (GetArenaNoVirtual() == NULL && new_leader_ != NULL) delete new_leader_;
+  new_leader_ = NULL;
 }
-inline const ::mspb::MsLeader& Error::ms_leader() const {
-  const ::mspb::MsLeader* p = ms_leader_;
-  // @@protoc_insertion_point(field_get:mspb.Error.ms_leader)
-  return p != NULL ? *p : *reinterpret_cast<const ::mspb::MsLeader*>(
-      &::mspb::_MsLeader_default_instance_);
+inline const ::mspb::MSLeader& Error::new_leader() const {
+  const ::mspb::MSLeader* p = new_leader_;
+  // @@protoc_insertion_point(field_get:mspb.Error.new_leader)
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::MSLeader*>(
+      &::mspb::_MSLeader_default_instance_);
 }
-inline ::mspb::MsLeader* Error::mutable_ms_leader() {
+inline ::mspb::MSLeader* Error::mutable_new_leader() {
   
-  if (ms_leader_ == NULL) {
-    ms_leader_ = new ::mspb::MsLeader;
+  if (new_leader_ == NULL) {
+    new_leader_ = new ::mspb::MSLeader;
   }
-  // @@protoc_insertion_point(field_mutable:mspb.Error.ms_leader)
-  return ms_leader_;
+  // @@protoc_insertion_point(field_mutable:mspb.Error.new_leader)
+  return new_leader_;
 }
-inline ::mspb::MsLeader* Error::release_ms_leader() {
-  // @@protoc_insertion_point(field_release:mspb.Error.ms_leader)
+inline ::mspb::MSLeader* Error::release_new_leader() {
+  // @@protoc_insertion_point(field_release:mspb.Error.new_leader)
   
-  ::mspb::MsLeader* temp = ms_leader_;
-  ms_leader_ = NULL;
+  ::mspb::MSLeader* temp = new_leader_;
+  new_leader_ = NULL;
   return temp;
 }
-inline void Error::set_allocated_ms_leader(::mspb::MsLeader* ms_leader) {
-  delete ms_leader_;
-  ms_leader_ = ms_leader;
-  if (ms_leader) {
+inline void Error::set_allocated_new_leader(::mspb::MSLeader* new_leader) {
+  delete new_leader_;
+  new_leader_ = new_leader;
+  if (new_leader) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:mspb.Error.ms_leader)
+  // @@protoc_insertion_point(field_set_allocated:mspb.Error.new_leader)
 }
 
 // .mspb.NoLeader no_leader = 3;
@@ -10036,8 +9892,6 @@ inline void Error::set_allocated_no_leader(::mspb::NoLeader* no_leader) {
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

@@ -14,7 +14,9 @@ std::atomic<uint64_t> Session::total_count_ = {0};
 
 Session::Session(const SessionOptions& opt, const MsgHandler& msg_handler,
                  asio::ip::tcp::socket socket)
-    : opt_(opt), msg_handler_(msg_handler), socket_(std::move(socket)) {}
+    : opt_(opt), msg_handler_(msg_handler), socket_(std::move(socket)) {
+    ++total_count_;
+}
 
 Session::~Session() {
     doClose();
@@ -115,34 +117,36 @@ void Session::readRPCBody() {
 
 void Session::parseCmdLine(std::size_t length) {
     std::string cmdline;
+    // consume preface
     if (preface_remained_ > 0) {
+        assert(preface_remained_ <= 4);
         uint8_t ch = static_cast<uint8_t>('\n');
         for (int i = 4 - preface_remained_; i < 4; ++i) {
             if (preface_[i] == ch) {
                 preface_remained_ -= (cmdline.size() + 1);
-                msg_handler_.telnet_handler(msg_ctx_, cmdline);
+                msg_handler_.telnet_handler(msg_ctx_, std::move(cmdline));
                 cmdline.clear();
             } else {
-                cmdline.push_back(static_cast<char>(*it));
+                cmdline.push_back(static_cast<char>(preface_[i]));
             }
         }
     }
     if (length > 0) {
         preface_remained_ = 0;
         cmdline.append(asio::buffer_cast<const char*>(cmdline_buffer_.data()), length);
-        msg_handler_.telnet_handler(msg_ctx_, cmdline);
+        msg_handler_.telnet_handler(msg_ctx_, std::move(cmdline));
         cmdline_buffer_.consume(length);
     }
 }
 
 void Session::readCmdLine() {
     auto self(shared_from_this());
-    asio::async_read_util(
+    asio::async_read_until(
         socket_, cmdline_buffer_, '\n',
         [this, self](std::error_code ec, std::size_t length) {
             if (!ec) {
                 readCmdLine();
-                parseCmdLine(len);
+                parseCmdLine(length);
             } else {
                 std::cerr << id_ << " read cmdline error:" << ec.message() << std::endl;
             }

@@ -37,10 +37,11 @@ private:
 
     std::vector<std::shared_ptr<asio::io_context>> io_contexts_;
     std::vector<WorkGuard> work_guards_;
-    std::vector<std::thread> threads_;
     bool stopped_ = false;
 
     std::atomic<uint64_t> round_robin_counter_ = {0};
+
+    std::vector<std::thread> threads_;
 };
 
 }  // namespace net

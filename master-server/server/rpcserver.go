@@ -14,8 +14,9 @@ func (service *Server) checkClusterValid() *mspb.Error {
 				NoLeader: &mspb.NoLeader{},
 			}
 		} else {
+			// TODO: add leader's id & term
 			err = &mspb.Error{
-				MsLeader: &mspb.MsLeader{MsLeader: point.RpcServerAddr},
+				NewLeader: &mspb.MSLeader{Address: point.RpcServerAddr},
 			}
 		}
 		return err
@@ -139,7 +140,7 @@ func (service *Server) GetMSLeader(ctx context.Context, req *mspb.GetMSLeaderReq
 }
 
 func (service *Server) TruncateTable(context.Context, *mspb.TruncateTableRequest) (*mspb.TruncateTableResponse, error) {
-    return &mspb.TruncateTableResponse{}, nil
+	return &mspb.TruncateTableResponse{}, nil
 }
 
 func (service *Server) AddColumn(ctx context.Context, req *mspb.AddColumnRequest) (*mspb.AddColumnResponse, error) {
