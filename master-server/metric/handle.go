@@ -255,8 +255,8 @@ func (m *Metric) doNodeMetric(ctx *Context, data []byte) error {
 }
 
 func (m *Metric) doRangeMetric(ctx *Context, data []byte) error {
-	rangeStats := make([]*statspb.RangeInfo, 0)
-	err := json.Unmarshal(data, rangeStats)
+	var rangeStats []*statspb.RangeInfo
+	err := json.Unmarshal(data, &rangeStats)
 	if err != nil {
 		log.Warn("range metric: encode range stats[%s] failed, err[%v]", string(data), err)
 		return err
