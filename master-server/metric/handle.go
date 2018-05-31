@@ -255,24 +255,19 @@ func (m *Metric) doNodeMetric(ctx *Context, data []byte) error {
 }
 
 func (m *Metric) doRangeMetric(ctx *Context, data []byte) error {
-	rangeId, err := strconv.ParseUint(ctx.namespace, 10, 64)
+	rangeStats := make([]*statspb.RangeInfo, 0)
+	err := json.Unmarshal(data, rangeStats)
 	if err != nil {
-		log.Warn("invalid param rangeId, err[%v]", err)
-		return err
-	}
-	rangeStats := new(mspb.RangeStats)
-	err = json.Unmarshal(data, rangeStats)
-	if err != nil {
-		log.Warn("encode cluster stats[%s] failed, err[%v]", string(data), err)
+		log.Warn("range metric: encode range stats[%s] failed, err[%v]", string(data), err)
 		return err
 	}
 
 	cluster := m.getCluster(ctx.clusterId)
 	if cluster == nil {
-		log.Warn("invalid cluster")
+		log.Warn("range metric: invalid cluster")
 		return nil
 	}
-	m.pushRangeStats(ctx.clusterId, rangeId, ctx.subsystem, rangeStats)
+	m.pushRangeStats(ctx.clusterId, rangeStats)
 	return nil
 }
 
@@ -624,8 +619,6 @@ func (m *Metric) handleRangeMetric(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Debug("recv cluster[%d] range metric", clusterId)
-	namespace := r.FormValue("namespace")
-	subsystem := r.FormValue("subsystem")
 	bufferLen := int(r.ContentLength)
 	if bufferLen <= 0 || bufferLen > 1024*1024*10 {
 		bufferLen = 512
@@ -640,8 +633,6 @@ func (m *Metric) handleRangeMetric(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := &Context{
 		clusterId: clusterId,
-		namespace: namespace,
-		subsystem: subsystem,
 	}
 	err = m.doRangeMetric(ctx, buffer.Bytes())
 	if err != nil {

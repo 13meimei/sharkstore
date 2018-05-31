@@ -155,14 +155,14 @@ func (m *Metric) eventInfoStats() error {
 	return nil
 }
 
-func changeEventToMetricTask(e RangeEvent) *statspb.TaskInfo{
-	return  &statspb.TaskInfo{
-		TaskId: e.GetId(),
-		RangeId: e.GetRangeID(),
-		Kind: ToEventTypeName(e.GetType()),
+func changeEventToMetricTask(e RangeEvent) *statspb.TaskInfo {
+	return &statspb.TaskInfo{
+		TaskId:   e.GetId(),
+		RangeId:  e.GetRangeID(),
+		Kind:     ToEventTypeName(e.GetType()),
 		Describe: e.String(),
 		UsedTime: e.ExecTime().Seconds(),
-		State: ToEventStatusName(e.GetStatus()),
+		State:    ToEventStatusName(e.GetStatus()),
 	}
 }
 
@@ -203,7 +203,7 @@ func (m *Metric) clusterNodeStats() error {
 	cluster := m.cluster
 	nodeStatss := make(map[uint64]*mspb.NodeStats)
 	for _, node := range cluster.GetAllNode() {
-		nodeStats :=  deepcopy.Iface(node.stats).(*mspb.NodeStats)
+		nodeStats := deepcopy.Iface(node.stats).(*mspb.NodeStats)
 		nodeStatss[node.GetId()] = nodeStats
 	}
 
@@ -223,21 +223,10 @@ func (m *Metric) clusterNodeStats() error {
 
 func (m *Metric) clusterRangeStats() error {
 	cluster := m.cluster
-	rngStatss := make(map[uint64]*mspb.RangeStats)
+	rngInfos := make([]*statspb.RangeInfo, 0)
 	for _, rng := range cluster.GetAllRanges() {
-		rngStats := &mspb.RangeStats{
-			BytesWritten: rng.BytesWritten,
-			BytesRead: rng.BytesRead,
-			KeysWritten: rng.KeysWritten,
-			KeysRead: rng.KeysRead,
-			ApproximateSize: rng.ApproximateSize,
-		}
-		rngStatss[rng.GetId()] = rngStats
-	}
-
-	for rngId, rngStats := range rngStatss {
-		rng := cluster.FindRange(rngId)
-		if rng == nil || rng.GetLeader() == nil {
+		if rng.GetLeader() == nil {
+			log.Warn("range hb metric: range %v no leader", rng.GetId())
 			continue
 		}
 		nodeId := rng.GetLeader().GetNodeId()
@@ -245,12 +234,44 @@ func (m *Metric) clusterRangeStats() error {
 		if node == nil {
 			continue
 		}
-		err := metricRange(m.cli, cluster.GetClusterId(), rngId, m.addr, node.GetServerAddr(), rngStats)
-		if err != nil {
-			log.Warn("metric range hb stats failed, err %v", err)
-			return err
+		rngInfo := &statspb.RangeInfo{
+			RangeId:   rng.GetId(),
+			LeaderId:  rng.GetLeader().GetId(),
+			NodeAdder: node.GetServerAddr(),
+			Stats: &mspb.RangeStats{
+				BytesWritten:    rng.BytesWritten,
+				BytesRead:       rng.BytesRead,
+				KeysWritten:     rng.KeysWritten,
+				KeysRead:        rng.KeysRead,
+				ApproximateSize: rng.ApproximateSize,
+			},
+		}
+		rngInfos = append(rngInfos, rngInfo)
+	}
+
+	threadNum := 50
+	sendSize := 20
+	loop := len(rngInfos)/sendSize/threadNum + 1
+	for i := 0; i < loop; i++ {
+		for j := 0; j < threadNum; j++ {
+			start := j*sendSize + i*threadNum*sendSize
+			end := start + sendSize
+			if start > len(rngInfos) {
+				goto stop
+			}
+			if end > len(rngInfos) {
+				end = len(rngInfos)
+			}
+			go func() {
+				err := metricRanges(m.cli, cluster.GetClusterId(), m.addr, rngInfos[start:end])
+				if err != nil {
+					log.Warn("metric range hb stats failed, err %v", err)
+				}
+			}()
 		}
 	}
+stop:
+	log.Info("push range metric size: %v", len(rngInfos))
 	return nil
 }
 
@@ -388,12 +409,12 @@ func metricNode(cli *http.Client, clusterId, nodeId uint64, addr, nodeAddr strin
 	return send(cli, request)
 }
 
-func metricRange(cli *http.Client, clusterId, rangeId uint64, addr, nodeAddr string, stats *mspb.RangeStats) error {
+func metricRanges(cli *http.Client, clusterId uint64, addr string, stats []*statspb.RangeInfo) error {
 	data, err := json.Marshal(stats)
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("http://%s/metric/range?clusterId=%d&namespace=%v&subsystem=%s", addr, clusterId, rangeId, nodeAddr)
+	url := fmt.Sprintf("http://%s/metric/range?clusterId=%d", addr, clusterId)
 	request, err := http.NewRequest("POST", url, strings.NewReader(string(data)))
 	if err != nil {
 		return err
