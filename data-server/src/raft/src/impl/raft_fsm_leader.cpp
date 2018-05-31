@@ -112,6 +112,7 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
                                 LOG_INFO("raft[%llu] snapshot aborted, resumed "
                                          "sending replication to %llu",
                                          id_, msg->from());
+                                resetSnapshotSend();
                                 pr.becomeProbe();
                             }
                             break;
@@ -150,6 +151,7 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
             }
             return;
 
+        // 确保每次快照发送都有结果回来
         case pb::SNAPSHOT_RESPONSE:
             if (pr.state() != ReplicaState::kSnapshot) {
                 return;

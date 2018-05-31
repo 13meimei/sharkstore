@@ -11,15 +11,8 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
-struct SnapshotStatus {
-    Status s;                 // 发送结果
-    size_t blocks_count = 0;  // 总共发送了多少数据块
-    size_t send_bytes = 0;    // 总共发送了多少字节数
-};
-
 // 快照发送结果报告
-typedef std::function<void(const MessagePtr&, const SnapshotStatus&)>
-    SnapStatusReporter;
+typedef std::function<void(const MessagePtr&, const SnapshotStatus&)> SnapStatusReporter;
 
 struct SnapshotRequest {
 public:

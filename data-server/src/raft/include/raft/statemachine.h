@@ -25,6 +25,7 @@ public:
 
     virtual void OnLeaderChange(uint64_t leader, uint64_t term) = 0;
 
+    // TODO: use unique_ptr?
     virtual std::shared_ptr<Snapshot> GetSnapshot() = 0;
 
     virtual Status ApplySnapshotStart(const std::string& context) = 0;

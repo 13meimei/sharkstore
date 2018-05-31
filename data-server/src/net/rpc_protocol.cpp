@@ -1,5 +1,7 @@
 #include "rpc_protocol.h"
 
+#include <iomanip>
+#include <sstream>
 #include "base/byte_order.h"
 
 namespace sharkstore {
@@ -10,6 +12,9 @@ bool RPCHead::Valid() const {
     bool valid_magic = std::equal(magic, magic + 4, kRPCMagicV1.cbegin()) ||
                        std::equal(magic, magic + 4, kRPCMagicV2.cbegin());
     if (!valid_magic) {
+        return false;
+    }
+    if (msg_type != kRPCRequestType && msg_type != kRPCResponseType) {
         return false;
     }
     if (body_length > kMaxRPCBodyLength) {
@@ -37,8 +42,21 @@ void RPCHead::Decode() {
 }
 
 std::string RPCHead::DebugString() const {
-    // TODO:
-    return "";
+    std::ostringstream ss;
+    ss << "{";
+    ss << "\"magic\": \"0x";
+    for (auto c : magic) {
+        ss << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(c);
+    }
+    ss << "\", ";
+    ss << "\"vesrion\": " << version << ", ";
+    ss << "\"msg_type\": " << msg_type << ", ";
+    ss << "\"func_id\": " << func_id << ", ";
+    ss << "\"msg_id\": " << msg_id << ", ";
+    ss << "\"body_len\":" << body_length;
+    ss << "}";
+
+    return ss.str();
 }
 
 }  // namespace net

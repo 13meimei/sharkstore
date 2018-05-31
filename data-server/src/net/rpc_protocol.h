@@ -6,14 +6,15 @@ namespace sharkstore {
 namespace dataserver {
 namespace net {
 
-using RPCMagicType = std::array<uint8_t, 4>;
-
 // TODO: remove v1
-static const RPCMagicType kRPCMagicV1 = {0x23, 0x23, 0x23, 0x23};
+static const std::array<uint8_t, 4> kRPCMagicV1 = {0x23, 0x23, 0x23, 0x23};
 // echo sharkstore | sha1sum | cut -c1-8 | awk '{print toupper($0)}'
-static const RPCMagicType kRPCMagicV2 = {0xA1, 0xEA, 0xD4, 0xC6};
+static const std::array<uint8_t, 4> kRPCMagicV2 = {0xA1, 0xEA, 0xD4, 0xC6};
 
 static const uint16_t kCurrentRPCVersion = 1;
+
+static const uint16_t kRPCRequestType = 0x02;
+static const uint16_t kRPCResponseType = 0x12;
 
 static const uint32_t kMaxRPCBodyLength = 20 * 1024 * 1024;  // 20Mb
 
@@ -28,18 +29,19 @@ struct RPCHead {
     uint32_t timeout = 0;
     uint32_t body_length = 0;
 
-    bool Valid() const;
     // encode to network byte order
     void Encode();
     // decode network byte order to host order
     void Decode();
+
+    bool Valid() const;
     std::string DebugString() const;
 
 } __attribute__((packed));
 
 static constexpr int kRPCHeadSize = sizeof(RPCHead);
 
-inline bool ValidRPCMagic(const RPCMagicType& magic) {
+inline bool ValidRPCMagic(const std::array<uint8_t, 4>& magic) {
     return magic == kRPCMagicV1 || magic == kRPCMagicV2;
 }
 

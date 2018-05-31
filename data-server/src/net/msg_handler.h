@@ -15,7 +15,7 @@ struct MsgContext {
 };
 
 using RPCHandler =
-    std::function<void(const MsgContext&, const RPCHead&, std::vector<char>&&)>;
+    std::function<void(const MsgContext&, const RPCHead&, std::vector<uint8_t>&&)>;
 
 using TelnetHandler = std::function<void(const MsgContext&, std::string&& cmdline)>;
 

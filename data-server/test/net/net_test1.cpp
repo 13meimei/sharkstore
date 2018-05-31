@@ -7,7 +7,7 @@
 
 using namespace sharkstore::dataserver::net;
 
-void onRPC(const MsgContext &, const RPCHead &, std::vector<char> &&) {
+void onRPC(const MsgContext &, const RPCHead &, std::vector<uint8_t> &&) {
     FLOG_INFO("recv rpc request");
 }
 void onTelnet(const MsgContext &, std::string &&cmdline) {
@@ -18,6 +18,9 @@ int main(int argc, char *argv[]) {
     log_set_prefix(".", "net_test1");
     log_init2();
     g_log_context.log_level = LOG_DEBUG;
+
+    RPCHead head;
+    FLOG_INFO("head: %s", head.DebugString().c_str());
 
     Server server{ServerOptions()};
 

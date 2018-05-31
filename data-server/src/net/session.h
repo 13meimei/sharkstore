@@ -57,7 +57,7 @@ private:
     size_t preface_remained_ = 4;
 
     RPCHead rpc_head_;
-    std::vector<char> rpc_body_;
+    std::vector<uint8_t> rpc_body_;
 
     asio::streambuf cmdline_buffer_;
 };
