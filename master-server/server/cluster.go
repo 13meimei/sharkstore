@@ -557,11 +557,11 @@ func (c *Cluster) AddBalanceLeaderWorker() {
 }
 
 func (c *Cluster) AddBalanceRangeWorker() {
-	c.workerManger.addWorker(NewBalanceNodeRangeWorker(c.workerManger, 5 * defaultWorkerInterval))
+	c.workerManger.addWorker(NewBalanceNodeRangeWorker(c.workerManger, 2 * defaultWorkerInterval))
 }
 
 func (c *Cluster) AddBalanceNodeOpsWorker() {
-	c.workerManger.addWorker(NewBalanceNodeOpsWorker(c.workerManger, 5 * defaultWorkerInterval))
+	c.workerManger.addWorker(NewBalanceNodeOpsWorker(c.workerManger, defaultWorkerInterval))
 }
 
 func (c *Cluster) RemoveWorker(name string) error {

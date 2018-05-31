@@ -659,24 +659,28 @@ func (m *Metric) pushNodeStats(clusterId, nodeId uint64, nodeAddr string, nodeSt
 	})
 }
 
-func (m *Metric) pushRangeStats(clusterId, rangeId uint64, nodeAddr string, rangeStats *mspb.RangeStats) {
-	meta := make(map[string]interface{})
-	meta["cluster_id"] = clusterId
-	meta["range_id"] = rangeId
-	meta["addr"] = nodeAddr
-	meta["bytes_written"] = rangeStats.GetBytesWritten()
-	meta["bytes_read"] = rangeStats.GetBytesRead()
-	meta["keys_written"] = rangeStats.GetKeysWritten()
-	meta["keys_read"] = rangeStats.GetKeysRead()
-	meta["approximate_size"] = rangeStats.GetApproximateSize()
-	meta["update_time"] = time.Now().Unix()
-
-	m.store.Put(&Message{
-		ClusterId: clusterId,
-		Namespace: NAMESPACE_HOTSPOT,
-		Subsystem: METRIC_RANGE_STATS,
-		Items: meta,
-	})
+func (m *Metric) pushRangeStats(clusterId uint64, rangeStats []*statspb.RangeInfo) {
+	for _, rngStat := range rangeStats {
+		if rngStat.GetStats() == nil {
+			continue
+		}
+		meta := make(map[string]interface{})
+		meta["cluster_id"] = clusterId
+		meta["range_id"] = rngStat.GetRangeId()
+		meta["addr"] = rngStat.GetNodeAdder()
+		meta["bytes_written"] = rngStat.GetStats().GetBytesWritten()
+		meta["bytes_read"] = rngStat.GetStats().GetBytesRead()
+		meta["keys_written"] = rngStat.GetStats().GetKeysWritten()
+		meta["keys_read"] = rngStat.GetStats().GetKeysRead()
+		meta["approximate_size"] = rngStat.GetStats().GetApproximateSize()
+		meta["update_time"] = time.Now().Unix()
+		m.store.Put(&Message{
+			ClusterId: clusterId,
+			Namespace: NAMESPACE_HOTSPOT,
+			Subsystem: METRIC_RANGE_STATS,
+			Items: meta,
+		})
+	}
 }
 
 func (m *Metric) push(queue chan *Message) {
