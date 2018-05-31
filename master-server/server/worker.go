@@ -105,11 +105,9 @@ func (wm *WorkerManager) runWorker(w Worker) {
 	defer timer.Stop()
 
 	for {
-		wm.lock.Lock()
-		if _, ok := wm.workers[w.GetName()]; !ok {
+		if !wm.isExistWorker(w.GetName()) {
 			return
 		}
-		wm.lock.Unlock()
 
 		select {
 		case <-wm.ctx.Done():
@@ -125,6 +123,15 @@ func (wm *WorkerManager) runWorker(w Worker) {
 		}
 	}
 }
+
+func (wm *WorkerManager) isExistWorker(name string) bool {
+	wm.lock.RLock()
+	defer wm.lock.RUnlock()
+
+	_, ok := wm.workers[name]
+	return ok
+}
+
 
 func (wm *WorkerManager) removeWorker(name string) error {
 	wm.lock.Lock()
