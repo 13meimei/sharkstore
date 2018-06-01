@@ -5,9 +5,10 @@
 #include "logger.h"
 #include "raft_exception.h"
 #include "raft_impl.h"
-#include "snapshot_sender.h"
+#include "snapshot/manager.h"
 #include "transport/fast_transport.h"
 #include "transport/inprocess_transport.h"
+#include "transport/transport.h"
 
 namespace sharkstore {
 namespace raft {
@@ -18,17 +19,7 @@ RaftServerImpl::RaftServerImpl(const RaftServerOptions& ops) : ops_(ops) {
     tick_msg_->set_type(pb::LOCAL_MSG_TICK);
 }
 
-RaftServerImpl::~RaftServerImpl() {
-    Stop();
-    delete transport_;
-    delete snapshot_sender_;
-    for (auto t : consensus_threads_) {
-        delete t;
-    }
-    for (auto t : apply_threads_) {
-        delete t;
-    }
-}
+RaftServerImpl::~RaftServerImpl() { Stop(); }
 
 Status RaftServerImpl::Start() {
     auto status = ops_.Validate();
@@ -36,6 +27,7 @@ Status RaftServerImpl::Start() {
         return status;
     }
 
+    // 初始化raft工作线程池
     for (int i = 0; i < ops_.consensus_threads_num; ++i) {
         auto t = new WorkThread(this, ops_.consensus_queue_capacity,
                                 std::string("raft-worker:") + std::to_string(i));
@@ -44,6 +36,7 @@ Status RaftServerImpl::Start() {
     LOG_INFO("raft[server] %d consensus threads start. queue capacity=%d",
              ops_.consensus_threads_num, ops_.consensus_queue_capacity);
 
+    // 初始化apply工作线程池
     for (int i = 0; i < ops_.apply_threads_num; ++i) {
         auto t = new WorkThread(this, ops_.apply_queue_capacity,
                                 std::string("raft-apply:") + std::to_string(i));
@@ -68,15 +61,12 @@ Status RaftServerImpl::Start() {
     }
 
     // start snapshot sender
-    snapshot_sender_ =
-        new SnapshotSender(transport_, ops_.snapshot_options.max_send_concurrency);
-    status = snapshot_sender_->Start();
-    if (!status.ok()) {
-        return status;
-    }
+    assert(snapshot_manager_ == nullptr);
+    snapshot_manager_.reset(new snapshot::Manager(ops_.snapshot_options));
 
     running_ = true;
-    tick_thr_.reset(new std::thread(std::bind(&RaftServerImpl::tickRoutine, this)));
+    tick_thr_.reset(new std::thread([this]() {
+        tickRoutine(); });
 
     return Status::OK();
 }
@@ -88,16 +78,16 @@ Status RaftServerImpl::Stop() {
 
     if (tick_thr_ && tick_thr_->joinable()) tick_thr_->join();
 
-    for (auto t : consensus_threads_) {
+    for (auto& t : consensus_threads_) {
         t->shutdown();
     }
 
-    for (auto t : apply_threads_) {
+    for (auto& t : apply_threads_) {
         t->shutdown();
     }
 
-    if (snapshot_sender_ != nullptr) {
-        snapshot_sender_->ShutDown();
+    if (snapshot_manager_ != nullptr) {
+        snapshot_manager_.reset(nullptr);
     }
 
     if (transport_ != nullptr) {
@@ -115,44 +105,42 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 
     uint64_t counter = 0;
     {
-        std::unique_lock<sharkstore::shared_mutex> lock(mu_);
-        auto it = rafts_.find(ops.id);
-        if (it != rafts_.end()) {
+        std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);
+        auto it = all_rafts_.find(ops.id);
+        if (it != all_rafts_.end()) {
             return Status(Status::kDuplicate, "create raft", std::to_string(ops.id));
         }
-        auto ret = creatings_.insert(ops.id);
+        auto ret = creating_rafts_.insert(ops.id);
         if (!ret.second) {
             return Status(Status::kDuplicate, "raft is creating", std::to_string(ops.id));
         }
         counter = create_count_++;
     }
 
-    assert(!consensus_threads_.empty());
-    assert(!apply_threads_.empty());
     RaftContext ctx;
-    ctx.msg_sender = transport_;
+    ctx.msg_sender = transport_.get();
+    ctx.snap_sender = snapshot_manager_.get();
     ctx.consensus_thread = consensus_threads_[counter % consensus_threads_.size()];
     if (!ops_.apply_in_place) {
         ctx.apply_thread = apply_threads_[counter % apply_threads_.size()];
     }
-    ctx.snap_sender = snapshot_sender_;
 
     std::shared_ptr<RaftImpl> r;
     try {
         r = std::make_shared<RaftImpl>(ops_, ops, ctx);
     } catch (RaftException& e) {
         {
-            std::unique_lock<sharkstore::shared_mutex> lock(mu_);
-            creatings_.erase(ops.id);
+            std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);
+            creating_rafts_.erase(ops.id);
         }
         return Status(Status::kUnknown, "create raft", e.what());
     }
 
     assert(r != nullptr);
     {
-        std::unique_lock<sharkstore::shared_mutex> lock(mu_);
-        rafts_.emplace(ops.id, r);
-        creatings_.erase(ops.id);
+        std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);
+        all_rafts_.emplace(ops.id, r);
+        creating_rafts_.erase(ops.id);
     }
     *raft = std::static_pointer_cast<Raft>(r);
 
@@ -162,12 +150,12 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
     std::shared_ptr<RaftImpl> r;
     {
-        std::unique_lock<sharkstore::shared_mutex> lock(mu_);
-        auto it = rafts_.find(id);
-        if (it != rafts_.end()) {
+        std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);
+        auto it = all_rafts_.find(id);
+        if (it != all_rafts_.end()) {
             r = it->second;
             r->Stop();
-            rafts_.erase(it);
+            all_rafts_.erase(it);
         } else {
             return Status(Status::kNotFound, "remove raft", std::to_string(id));
         }
@@ -191,10 +179,10 @@ Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
 }
 
 std::shared_ptr<RaftImpl> RaftServerImpl::findRaft(uint64_t id) const {
-    sharkstore::shared_lock<sharkstore::shared_mutex> lock(mu_);
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rafts_mu_);
 
-    auto it = rafts_.find(id);
-    if (it != rafts_.cend()) {
+    auto it = all_rafts_.find(id);
+    if (it != all_rafts_.cend()) {
         return it->second;
     } else {
         return nullptr;
@@ -270,7 +258,7 @@ void RaftServerImpl::onHeartbeatResp(MessagePtr& msg) {
     }
 }
 
-void RaftServerImpl::sendHeartbeat(const RaftMap& rafts) {
+void RaftServerImpl::sendHeartbeat(const RaftMapType& rafts) {
     std::map<uint64_t, std::set<uint64_t>> ctxs;
 
     for (auto& kv : rafts) {
@@ -299,7 +287,7 @@ void RaftServerImpl::sendHeartbeat(const RaftMap& rafts) {
     }
 }
 
-void RaftServerImpl::stepTick(const RaftMap& rafts) {
+void RaftServerImpl::stepTick(const RaftMapType& rafts) {
     assert(tick_msg_->type() == pb::LOCAL_MSG_TICK);
     for (auto& r : rafts) {
         r.second->RecvMsg(tick_msg_);
@@ -310,10 +298,10 @@ void RaftServerImpl::tickRoutine() {
     while (running_) {
         std::this_thread::sleep_for(ops_.tick_interval);
 
-        RaftMap rafts;
+        RaftMapType rafts;
         {
-            std::lock_guard<sharkstore::shared_mutex> lock(mu_);
-            rafts = rafts_;
+            std::lock_guard<sharkstore::shared_mutex> lock(rafts_mu_);
+            rafts = all_rafts_;
         }
         sendHeartbeat(rafts);
         stepTick(rafts);

@@ -411,10 +411,18 @@ void RaftFsm::GetReady(Ready* rd) {
 
     rd->msgs = std::move(sending_msgs_);
 
-    if (sending_snap_ && !sending_snap_->sending) {
-        rd->snapshot = sending_snap_;
+    if (sending_snap_ && !sending_snap_->IsDispatched()) {
+        rd->send_snap = sending_snap_;
+        sending_snap_->MarkAsDispatched();
     } else {
-        rd->snapshot = nullptr;
+        rd->send_snap = nullptr;
+    }
+
+    if (applying_snap_ && !applying_snap->IsDispatched()) {
+        rd->apply_snap = applying_snap;
+        applying_snap_->MarkAsDispatched();
+    } else {
+        rd->apply_snap = nullptr;
     }
 }
 
@@ -708,7 +716,9 @@ void RaftFsm::reset(uint64_t term, bool is_leader) {
     heartbeat_elapsed_ = 0;
     votes_.clear();
     pending_conf_ = false;
-    resetSnapshotSend();
+
+    void abortSendSnap();
+    void abortApplySnap();
 
     // reset non-learner replicas
     auto old_replicas = std::move(replicas_);
@@ -740,10 +750,17 @@ bool RaftFsm::pastElectionTimeout() const {
     return election_elapsed_ >= rand_election_tick_;
 }
 
-void RaftFsm::resetSnapshotSend() {
+void RaftFsm::abortSendSnap() {
     if (sending_snap_) {
         sending_snap_->Cancel();
         sending_snap_.reset();
+    }
+}
+
+void RaftFsm::abortApplySnap() {
+    if (applying_snap_) {
+        applying_snap_->Cancel();
+        applying_snap_.reset();
     }
 }
 

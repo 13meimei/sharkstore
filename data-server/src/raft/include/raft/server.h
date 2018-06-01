@@ -21,8 +21,6 @@ public:
     virtual Status Start() = 0;
     virtual Status Stop() = 0;
 
-    virtual const RaftServerOptions& Options() const = 0;
-
     // 创建raft
     virtual Status CreateRaft(const RaftOptions&, std::shared_ptr<Raft>* raft) = 0;
 
@@ -31,7 +29,7 @@ public:
 
     virtual std::shared_ptr<Raft> FindRaft(uint64_t id) const = 0;
 
-    virtual void GetStatus(ServerStatus* status) = 0;
+    virtual void GetStatus(ServerStatus* status) const = 0;
 };
 
 std::unique_ptr<RaftServer> CreateRaftServer(const RaftServerOptions& ops);

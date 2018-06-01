@@ -139,29 +139,30 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
             return;
 
         case pb::SNAPSHOT_ACK:
-            if (pr.state() != ReplicaState::kSnapshot) {
-                return;
-            }
-
-            if (sending_snap_ &&
-                sending_snap_->header->snapshot().uuid() == msg->snapshot().uuid()) {
+            if (sending_snap_ && sending_snap_->UUID() == msg->snapshot().uuid()) {
                 LOG_DEBUG("raft[%lu] recv snapshot[%lu] ack. seq=%ld, reject=%d", id_,
                           msg->snapshot().uuid(), msg->snapshot().seq(), msg->reject());
-                sending_snap_->Ack(msg->snapshot().seq(), msg->reject());
+
+                auto s = sending_snap_->Ack(msg);
+                if (!s.ok()) {
+                    LOG_WARN("raft[%lu] ack[seq:%ld, reject:%d, from:%lu] snapshot[%lu] "
+                             "failed: %s ",
+                             id_, msg->snapshot().seq(), msg->reject(), msg->from(),
+                             msg->snapshot().uuid(), s.ToString().c_str());
+                }
             }
+
             return;
 
-        // 确保每次快照发送都有结果回来
-        case pb::SNAPSHOT_RESPONSE:
+        case pb::LOCAL_SNAPSHOT_STATUS:
+            sending_snap_.reset();
+
             if (pr.state() != ReplicaState::kSnapshot) {
                 return;
             }
 
-            resetSnapshotSend();
-
             if (msg->reject()) {
-                LOG_WARN("raft[%llu] send snapshot to [%llu] failed(rejected).", id_,
-                         msg->from());
+                LOG_WARN("raft[%llu] send snapshot to [%llu] failed.", id_, msg->from());
                 pr.snapshotFailure();
                 pr.becomeProbe();
             } else {
@@ -194,9 +195,6 @@ void RaftFsm::tickHeartbeat() {
 
     if (heartbeat_elapsed_ >= sops_.heartbeat_tick) {
         heartbeat_elapsed_ = 0;
-
-        // 检查释放可能已cancel的正在发送的快照
-        checkSnapSend();
 
         // 检查是否需要提升learner
         if (sops_.auto_promote_learner && !learners_.empty() && !pending_conf_) {
@@ -262,20 +260,11 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
         if (sending_snap_) {
             LOG_WARN("raft[%llu] sendAppend could not send snapshot to %llu(other "
                      "snapshot[%lu] is sending)",
-                     id_, to, sending_snap_->header->snapshot().uuid());
+                     id_, to, sending_snap_->UUID());
             return;
         }
 
-        sending_snap_.reset(new SnapshotRequest);
-        createSnapshot(to, sending_snap_.get());
-        auto snap_index = sending_snap_->header->snapshot().meta().index();
-        auto snap_term = sending_snap_->header->snapshot().meta().term();
-        pr.becomeSnapshot(snap_index);
-
-        LOG_DEBUG("raft[%llu] sendAppend [firstindex: %llu, commit: %llu] sent "
-                  "snapshot[index: %llu, term: %llu] to [%llu][%s]",
-                  id_, raft_log_->firstIndex(), raft_log_->committed(), snap_index,
-                  snap_term, to, pr.ToString().c_str());
+        sending_snap_ = newSnapSendTask(to);
     } else {
         MessagePtr msg(new pb::Message);
         msg->set_type(pb::APPEND_ENTRIES_REQUEST);
@@ -316,75 +305,72 @@ void RaftFsm::appendEntry(const std::vector<EntryPtr>& ents) {
     maybeCommit();
 }
 
-void RaftFsm::createSnapshot(uint64_t to, SnapshotRequest* snap) {
-    auto snapshot = sm_->GetSnapshot();
-    if (snapshot == nullptr) {
-        throw RaftException("raft->sendAppend failed to send snapshot, because "
-                            "snapshot is unavailable");
-    } else if (snapshot->ApplyIndex() < raft_log_->firstIndex() - 1) {
-        std::ostringstream ss;
-        ss << "raft->sendAppend[" << id_
-           << "]failed to send snapshot, because snapshot is invalid(apply="
-           << snapshot->ApplyIndex() << ", first=" << raft_log_->firstIndex() << ").";
-        throw RaftException(ss.str());
-    }
-
-    MessagePtr msg(new pb::Message);
-    msg->set_type(pb::SNAPSHOT_REQUEST);
-    msg->set_id(id_);
-    msg->set_from(node_id_);
-    msg->set_to(to);
-    msg->set_term(term_);
-
-    snap->header = msg;
-    snap->snapshot = snapshot;
-
-    // set snapshot uuid
+static uint64_t unixNano() {
     auto now = std::chrono::system_clock::now();
-    auto uuid = std::chrono::time_point_cast<std::chrono::nanoseconds>(now)
-                    .time_since_epoch()
-                    .count();
-    msg->mutable_snapshot()->set_uuid(uuid);
+    return std::chrono::time_point_cast<std::chrono::nanoseconds>(now)
+        .time_since_epoch()
+        .count();
+}
 
-    auto meta = msg->mutable_snapshot()->mutable_meta();
+std::shared<snapshot::SendTask> RaftFsm::newSnapSendTask(uint64_t to) {
+    snapshot::SnapContext snap_ctx;
+    snap_ctx.id = id_;
+    snap_ctx.to = to;
+    snap_ctx.from = node_id_;
+    snap_ctx.term = term_;
+    snap_ctx.uuid = unixNano();
 
-    // set meta index
-    meta->set_index(snapshot->ApplyIndex());
-
-    // set meta term
-    uint64_t snap_term = 0;
-    auto status = raft_log_->term(snapshot->ApplyIndex(), &snap_term);
-    if (!status.ok()) {
-        std::ostringstream ss;
-        ss << "[raft->sendAppend][" << id_ << "] failed to send snapshot to " << to
-           << " because snapshot is unavailable, error is: " << status.ToString();
-        throw RaftException(ss.str());
-    } else {
-        meta->set_term(snap_term);
-    }
-
-    traverseReplicas([=](uint64_t node, const Replica& pr) {
-        auto p = meta->add_peers();
+    pb::SnapshotMeta snap_meta;
+    // 添加成员信息
+    traverseReplicas([this, &snap_meta](uint64_t node, const Replica& pr) {
+        auto p = snap_meta.add_peers();
         auto s = EncodePeer(pr.peer(), p);
         if (!s.ok()) {
             throw RaftException(std::string("create snapshot failed: ") + s.ToString());
         }
     });
 
-    // set use context
+    auto snap_data = sm_->GetSnapshot();
+    if (snap_data == nullptr) {
+        throw RaftException("raft->sendAppend failed to send snapshot, because "
+                            "snapshot is unavailable");
+    } else if (snap_data->ApplyIndex() < raft_log_->firstIndex() - 1) {
+        std::ostringstream ss;
+        ss << "raft->sendAppend[" << id_
+           << "]failed to send snapshot, because snapshot is invalid(apply="
+           << snap_data->ApplyIndex() << ", first=" << raft_log_->firstIndex() << ").";
+        throw RaftException(ss.str());
+    }
+
+    // set meta index
+    meta->set_index(snap_data->ApplyIndex());
+    // set meta term
+    uint64_t snap_term = 0;
+    auto status = raft_log_->term(snap_data->ApplyIndex(), &snap_term);
+    if (!status.ok()) {
+        std::ostringstream ss;
+        ss << "[raft->sendAppend][" << id_ << "] failed to send snapshot to " << to
+           << " because snapshot is unavailable, error is: " << status.ToString();
+        throw RaftException(ss.str());
+    }
+    meta->set_term(snap_term);
+
+    // set user context
     std::string context;
-    auto s = snapshot->Context(&context);
+    auto s = snap_data->Context(&context);
     if (!s.ok()) {
         throw RaftException(std::string("get snapshot user context failed: ") +
                             s.ToString());
     }
     meta->set_context(std::move(context));
-}
 
-void RaftFsm::checkSnapSend() {
-    if (sending_snap_ && sending_snap_->Canceled()) {
-        sending_snap_.reset();
-    }
+    LOG_DEBUG("raft[%llu] sendAppend [firstindex: %llu, commit: %llu] sent "
+              "snapshot[index: %llu, term: %llu] to [%llu]",
+              id_, raft_log_->firstIndex(), raft_log_->committed(),
+              snap_data->ApplyIndex(), snap_term, to)
+
+    return std::make_shared<snapshot::SendTask>(sops_.snapshot_options, snap_ctx,
+                                                snap_meta, snap_data);
 }
 
 void RaftFsm::checkCaughtUp() {

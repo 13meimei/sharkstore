@@ -1,5 +1,7 @@
 #include "worker.h"
 
+#include "base/util.h"
+
 #include "task.h"
 #include "worker_pool.h"
 
@@ -8,8 +10,9 @@ namespace raft {
 namespace impl {
 namespace snapshot {
 
-Worker::Worker(WorkerPool* pool) : pool_(pool) {
+Worker::Worker(WorkerPool* pool, const std::string& name) : pool_(pool) {
     thr_ = std::thread([this] { runTask(); });
+    AnnotateThread(thr_.native_handle(), name.c_str());
 }
 
 Worker::~Worker() {
@@ -24,7 +27,7 @@ Worker::~Worker() {
     thr_.join();
 }
 
-void Worker::post(const std::shared_ptr<Task>& task) {
+void Worker::post(const std::shared_ptr<SnapTask>& task) {
     {
         std::lock_guard<std::mutex> lock(mu_);
         assert(task_ == nullptr);
@@ -34,7 +37,7 @@ void Worker::post(const std::shared_ptr<Task>& task) {
 }
 
 void Worker::runTask() {
-    std::shared_ptr<Task> task;
+    std::shared_ptr<SnapTask> task;
     {
         std::unique_lock<std::mutex> lock(mu_);
         while (task_ == nullptr && running_) {

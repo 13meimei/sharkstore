@@ -7,9 +7,9 @@ namespace raft {
 namespace impl {
 namespace snapshot {
 
-WorkerPool::WorkerPool(size_t size) {
+WorkerPool::WorkerPool(const std::string& name, size_t size) {
     for (size_t i = 0; i < size; ++i) {
-        auto w = new Worker(this);
+        auto w = new Worker(this, name);
         workers_.push_back(w);
         free_list_.push_back(w);
     }
@@ -21,7 +21,7 @@ WorkerPool::~WorkPool() {
     }
 }
 
-bool WorkerPool::post(const std::shared_ptr<Task>& task) {
+bool WorkerPool::Post(const std::shared_ptr<SnapTask>& task) {
     Worker* w = nullptr;
 
     {
@@ -40,8 +40,14 @@ bool WorkerPool::post(const std::shared_ptr<Task>& task) {
     }
 }
 
+int Runnings() const {
+    std::lock_guard<std::mutex> lock(mu_);
+
+    return workers_.size() - free_list_.size();
+}
+
 void WorkerPool::addToFreeList(Worker* w) {
-    std::unique_lock<std::mutex> lock(mu_);
+    std::lock_guard<std::mutex> lock(mu_);
 
     free_list_.push_back(w);
 }

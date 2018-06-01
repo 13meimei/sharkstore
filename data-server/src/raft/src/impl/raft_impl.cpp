@@ -148,12 +148,12 @@ void RaftImpl::send() {
             ctx_.msg_sender->SendMessage(m);
         }
     }
-    if (ready_.snapshot) {
-        auto snap = ready_.snapshot;
-        snap->reporter = std::bind(&RaftImpl::ReportSnapshotStatus, shared_from_this(),
-                                   std::placeholders::_1, std::placeholders::_2);
-        snap->sending = true;
-        ctx_.snap_sender->Send(snap);
+    if (ready_.send_snap) {
+        auto task = ready_.send_snap;
+        task->SetTransport(ctx_.transport);
+        task->SetReporter(std::bind(&RaftImpl::ReportSnapshotStatus, shared_from_this(),
+                                    std::placeholders::_1, std::placeholders::_2));
+        ctx_->snapshot_manager.Post(task);
     }
 }
 

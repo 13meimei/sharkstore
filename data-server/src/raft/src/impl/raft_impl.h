@@ -14,6 +14,11 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
+namespace shapshot {
+class SnapContext;
+class SnapResult;
+}
+
 class RaftFsm;
 
 class RaftImpl : public Raft, public std::enable_shared_from_this<RaftImpl> {
@@ -67,7 +72,11 @@ public:
     void RecvMsg(MessagePtr& msg);
     void Step(MessagePtr& msg);
 
-    void ReportSnapshotStatus(const MessagePtr& header, const SnapshotStatus& s);
+    void ReportSnapSendResult(const snapshot::SnapContext& ctx,
+                              const snapshot::SnapResult& result);
+
+    void ReportSnapApplyResult(const snapshot::SnapContext& ctx,
+                               const snapshot::SnapResult& result);
 
 private:
     void post(const std::function<void()>& f);

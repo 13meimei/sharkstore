@@ -6,19 +6,18 @@ namespace impl {
 namespace snapshot {
 
 class Worker;
-class Task;
+class SnapTask;
 
 class WorkerPool final {
 public:
-    explicit WorkerPool(size_t size);
+    explicit WorkerPool(const std::string& name, size_t size);
     ~WorkPool();
 
     WorkerPool(const WorkerPool&) = delete;
     WorkerPool& operator=(const WorkerPool&) = delete;
 
-    bool Post(const std::shared_ptr<Task>& task);
-
-    int Runnings();
+    bool Post(const std::shared_ptr<SnapTask>& task);
+    int Runnings() const;
 
 private:
     friend class Worker;

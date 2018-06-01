@@ -3,13 +3,13 @@ _Pragma("once");
 namespace sharkstore {
 namespace raft {
 namespace impl {
-namespace snapshot {
 
 class ApplyTask {
 public:
+    ApplyTask();
+    ~ApplyTask();
 };
 
-} /* snapshot  */
 } /* namespace impl */
 } /* namespace raft */
 } /* namespace sharkstore */

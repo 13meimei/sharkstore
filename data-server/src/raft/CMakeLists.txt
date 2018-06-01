@@ -9,11 +9,14 @@ set(raft_SOURCES
     src/impl/raft_log.cpp
     src/impl/raft_log_unstable.cpp
     src/impl/raft.pb.cc
-    src/impl/raft_snapshot.cpp
     src/impl/raft_types.cpp
     src/impl/replica.cpp
     src/impl/server_impl.cpp
-    src/impl/snapshot_sender.cpp
+    src/impl/snapshot/apply_task.cpp
+    src/impl/snapshot/manager.cpp
+    src/impl/snapshot/send_task.cpp
+    src/impl/snapshot/worker.cpp
+    src/impl/snapshot/worker_pool.cpp
     src/impl/storage/log_file.cpp
     src/impl/storage/log_format.cpp
     src/impl/storage/log_index.cpp

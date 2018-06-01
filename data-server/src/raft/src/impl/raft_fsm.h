@@ -5,7 +5,6 @@ _Pragma("once");
 #include "raft/status.h"
 
 #include "raft_log.h"
-#include "raft_snapshot.h"
 #include "raft_types.h"
 #include "replica.h"
 
@@ -74,11 +73,11 @@ private:
     void resetRandomizedElectionTimeout();
     bool pastElectionTimeout() const;
 
-    void resetSnapshotSend();
+    void abortSendSnap();
+    void abortApplySnap();
 
     // 是否有资格选举为leader
     bool electable() const;
-    // 过滤非法消息
 
 private:
     void becomeLeader();
@@ -88,8 +87,7 @@ private:
     void bcastAppend();
     void sendAppend(uint64_t to, Replica& pr);
     void appendEntry(const std::vector<EntryPtr>& ents);
-    void createSnapshot(uint64_t to, SnapshotRequest* snap);
-    void checkSnapSend();
+    std::shared_ptr<snapshot::SendTask> newSnapSendTask();
     void checkCaughtUp();
 
 private:
@@ -142,8 +140,8 @@ private:
     std::function<void()> tick_func_;
 
     std::vector<MessagePtr> sending_msgs_;
-    std::shared_ptr<SnapshotRequest> sending_snap_;
-    std::unique_ptr<SnapshotApplyContext> applying_snap_;
+    std::shared_ptr<snapshot::SendTask> sending_snap_;
+    std::unique_ptr<snapshot::ApplyTask> applying_snap_;
 };
 
 } /* namespace impl */

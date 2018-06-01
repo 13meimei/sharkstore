@@ -1,6 +1,8 @@
 _Pragma("once");
 
 #include "raft_types.h"
+#include "snapshot/apply_task.h"
+#include "snapshot/send_task.h"
 
 namespace sharkstore {
 namespace raft {
@@ -12,7 +14,12 @@ struct Ready {
 
     // msgs to send
     std::vector<MessagePtr> msgs;
-    std::shared_ptr<SnapshotRequest> snapshot;
+
+    // snapshot to send
+    std::shared_ptr<snapshot::SendTask> send_snap;
+
+    // snapshot to apply
+    std::shared_ptr<snapshot::ApplyTask> apply_snap;
 
     /* // change list about peers */
     /* std::vector<Peer> pendings_peers; */

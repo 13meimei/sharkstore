@@ -42,6 +42,8 @@ struct SnapshotOptions {
     // 一次发送多大数据块
     size_t max_size_per_msg = 64 * 1024;
 
+    size_t ack_timeout_seconds = 10;
+
     // TODO: rate limit
 
     Status Validate() const;
