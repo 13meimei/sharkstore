@@ -108,6 +108,18 @@ func (c *Cluster) GetTableAllRanges(tableId uint64) []*Range {
 	return c.ranges.GetTableAllRanges(tableId)
 }
 
+func (c *Cluster) GetNodeRangeStatByTable(tableId uint64) map[uint64]int  {
+	rngStat := make(map[uint64]int, 0)
+	tRanges := c.GetTableAllRanges(tableId)
+	for _, r := range tRanges {
+		rPeers := r.GetPeers()
+		for _, p := range rPeers {
+			rngStat[p.GetNodeId()] = rngStat[p.GetNodeId()] + 1
+		}
+	}
+	return rngStat
+}
+
 func (c *Cluster) getLeaderNode(r *Range) *Node {
 	return c.FindNodeById(r.GetLeader().GetNodeId())
 }

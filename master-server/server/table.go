@@ -397,6 +397,18 @@ func (t *CreateTable) GetAllRanges() []*Range {
 	return ranges
 }
 
+func (t *CreateTable) GetNodeRangeStat() map[uint64]int  {
+	rngStat := make(map[uint64]int, 0)
+	tRanges := t.GetAllRanges()
+	for _, r := range tRanges {
+		rPeers := r.GetPeers()
+		for _, p := range rPeers {
+			rngStat[p.GetNodeId()] = rngStat[p.GetNodeId()] + 1
+		}
+	}
+	return rngStat
+}
+
 type CreateTableCache struct {
 	lock    sync.RWMutex
 	tableIs map[uint64]*CreateTable
@@ -705,7 +717,7 @@ func (dt *CreateTableWorker) createRange(c *Cluster, table *CreateTable) error {
 				return err
 			}
 			region := NewRange(r, nil)
-			newPeer, err := c.allocPeerAndSelectNode(region)
+			newPeer, err := c.allocPrePeerAndSelectNode(region, table)
 			if err != nil {
 				return err
 			}
