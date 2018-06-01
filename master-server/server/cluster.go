@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"sync/atomic"
 
 	"model/pkg/metapb"
 	"pkg-go/ds_client"
@@ -1092,8 +1093,26 @@ func (c *Cluster) allocPeer(nodeId uint64) (*metapb.Peer, error) {
 	}
 	return &metapb.Peer{Id: peerId, NodeId: nodeId}, nil
 }
+
+func (c *Cluster) allocPrePeerAndSelectNode(rng *Range, t *CreateTable) (*metapb.Peer, error) {
+	node := c.selectNodeForPreAddPeer(rng, t)
+	if node == nil {
+		return nil, ERR_NO_SELECTED_NODE
+	}
+	newPeer, err := c.allocPeer(node.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	if node != nil {
+		node.stats.RangeCount++
+	}
+	return newPeer, nil
+}
+
 /**
-选择节点需要排除已有peer相同的IP
+	选择节点需要排除已有peer相同的IP
+	优先table的range分布少的node
  */
 func (c *Cluster) allocPeerAndSelectNode(rng *Range) (*metapb.Peer, error) {
 	node := c.selectNodeForAddPeer(rng)
@@ -1106,7 +1125,7 @@ func (c *Cluster) allocPeerAndSelectNode(rng *Range) (*metapb.Peer, error) {
 	}
 
 	if node != nil {
-		node.stats.RangeCount++
+		node.stats.RangeCount = atomic.AddUint32(&node.stats.RangeCount, 1)
 	}
 	return newPeer, nil
 }
@@ -1162,8 +1181,72 @@ func initWorkerPool() map[string]bool {
 	return pool
 }
 
-func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {
+func (c *Cluster) selectNodeForPreAddPeer(rng *Range, t *CreateTable) *Node  {
+	candidateNodes := c.selectBestNodesForAddPeer(rng)
+	if len(candidateNodes) == 0 {
+		return nil
+	}
+	if len(candidateNodes) == 1 {
+		return candidateNodes[0]
+	}
+	rngStat := t.GetNodeRangeStat()
+	return c.selectBestNodeST(candidateNodes, rng, rngStat)
+}
 
+func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {
+	candidateNodes := c.selectBestNodesForAddPeer(rng)
+	if len(candidateNodes) == 0 {
+		return nil
+	}
+	if len(candidateNodes) == 1 {
+		return candidateNodes[0]
+	}
+	tableId := rng.GetTableId()
+	rngStat := c.GetNodeRangeStatByTable(tableId)
+	return c.selectBestNodeST(candidateNodes, rng, rngStat)
+}
+
+/**
+	TODO：选择一个最好的节点，目前通过整体的range分布 + 表的range分布 来判断
+	strategy for change best node form candidate nodes :
+		range count of node at global level
+		range count of node at table level
+ */
+func (c *Cluster) selectBestNodeST(candidateNodes []*Node, rng *Range, rngStat map[uint64]int) *Node {
+	var tRangeDist, nRangeDist Distributions
+	for _, node := range candidateNodes {
+		tNum := rngStat[node.GetId()]
+		nNum := int(node.GetRangesCount())
+		if tNum == 0 && nNum == 0 {
+			return node
+		}
+		tRangeDist = append(tRangeDist, Distribution{nodeId: node.GetId(), count: tNum})
+		nRangeDist = append(nRangeDist, Distribution{nodeId: node.GetId(), count: nNum})
+	}
+	sort.Sort(tRangeDist)
+	sort.Sort(nRangeDist)
+
+	log.Debug("table range %v, node range %v", tRangeDist, nRangeDist)
+
+	nodeOrder := make(map[uint64]int, 0)
+	for i, tDist := range tRangeDist {
+		nodeOrder[tDist.nodeId] = nodeOrder[tDist.nodeId] + i
+	}
+	for i, nDist := range nRangeDist {
+		nodeOrder[nDist.nodeId] = nodeOrder[nDist.nodeId] + i
+	}
+
+	var nodeScope Distributions
+	for k, v := range nodeOrder {
+		nodeScope = append(nodeScope, Distribution{nodeId: k, count: v})
+	}
+	sort.Sort(nodeScope)
+
+	log.Debug("best node %v", nodeScope[0].nodeId)
+	return c.FindNodeById(nodeScope[0].nodeId)
+}
+
+func (c *Cluster) selectBestNodesForAddPeer(rng *Range) []*Node {
 	newSelectors := []NodeSelector{
 		NewNodeLoginSelector(c.opt),
 		NewDifferIPSelector(rng.GetNodes(c)),
@@ -1177,7 +1260,7 @@ func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {
 		flag := true
 		for _, selector := range newSelectors {
 			if !selector.CanSelect(node) {
-				log.Debug("addPeer: node %v cannot select, because of %v", node.GetId(), selector.Name())
+				log.Debug("addPeer: range [%v] cannot select node %v, because of %v", rng.GetId(), node.GetId(), selector.Name())
 				flag = false
 				break
 			}
@@ -1187,15 +1270,7 @@ func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {
 		}
 	}
 	log.Debug("selected node size:%d",len(nodes))
-	//TODO：选择一个最好的节点，目前只通过range数来判断
-	var bestNode *Node
-	for _, node := range nodes {
-		if bestNode == nil || node.GetRangesCount() < bestNode.GetRangesCount() {
-			bestNode = node
-		}
-	}
-	log.Debug("best node %v", bestNode)
-	return bestNode
+	return nodes
 
 }
 
