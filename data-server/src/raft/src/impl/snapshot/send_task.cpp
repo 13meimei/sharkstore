@@ -3,18 +3,18 @@
 namespace sharkstore {
 namespace raft {
 namespace impl {
-namespace snapshot {
 
-SendTask::SendTask(const SnapshotOptions& opt, const SnapContext& ctx,
-                   pb::SnapshotMeta& snap_meta,
-                   const std::shared_ptr<Snapshot>& snap_data)
-    : Task(opt, ctx), snap_meta_(), snap_data_(snap_data) {
-    snap_meta_.Swap(&snap_metat);
+SendSnapTask::SendSnapTask(const SnapContext& context,
+             pb::SnapshotMeta& meta,
+             const std::shared_ptr<Snapshot>& data) :
+        context_(context) ,
+        data_(data) {
+    meta_.Swap(&meta);
 }
 
-SendTask::~SendTask() {}
+SendSnapTask::~SendSnapTask() {}
 
-Status SendTask::RecvAck(MessagePtr& msg) {
+Status SendSnapTask::RecvAck(MessagePtr& msg) {
     assert(msg->type() == pb::SNAPSHOT_ACK);
     assert(msg->id() == context_.id);
 
@@ -43,9 +43,18 @@ Status SendTask::RecvAck(MessagePtr& msg) {
     return Status::OK();
 }
 
-void SendTask::Run(SnapResult* result) {
+void SendSnapTask::Run() {
     assert(transport_ != nullptr);
+    assert(reporter_);
+    assert(opt_.max_size_per_msg != 0);
+    assert(opt_.wait_ack_timeout_secs != 0);
 
+    SnapResult result;
+    run(&result);
+    reporter_(context_, result);
+}
+
+void SendSnapTask::run(SnapResult* result) {
     if (IsCanceled()) {
         result->status = Status(Status::kAborted);
         return;
@@ -53,8 +62,8 @@ void SendTask::Run(SnapResult* result) {
 
     // 建立链接
     std::shared_ptr<transport::Connection> conn;
-    status->s = transport_->GetConnection(snap.header->to(), &conn);
-    if (!status->s.ok()) {
+    result->status = transport_->GetConnection(context_->to, &conn);
+    if (!result->status.ok()) {
         return;
     }
 
@@ -70,7 +79,7 @@ void SendTask::Run(SnapResult* result) {
 
         // 准备本次数据块
         MessagePtr msg(new pb::Message);
-        result->status = nextMsg(seq, msg, over);
+        result->status = nextMsg(seq, msg, &over);
         if (!result->status.ok()) {
             return;
         }
@@ -84,7 +93,7 @@ void SendTask::Run(SnapResult* result) {
         result->bytes_count += msg->ByteSizeLong();
 
         // 等待ack
-        result->status = waitAck(seq, opt_.ack_timeout_seconds);
+        result->status = waitAck(seq, opt_.wait_ack_timeout_secs);
         if (!result->status.ok()) {
             return;
         }
@@ -92,7 +101,7 @@ void SendTask::Run(SnapResult* result) {
     return;
 }
 
-Status SendTask::waitAck(int64_t seq, int timeout_secs) {
+Status SendSnapTask::waitAck(int64_t seq, int timeout_secs) {
     std::unique_lock<std::mutex> lock(mu_);
     if (cv_.wait_for(lock, std::chrono::seconds(timeout_secs),
                      [seq, this] { return ack_seq_ >= seq || canceled_ })) {
@@ -108,7 +117,7 @@ Status SendTask::waitAck(int64_t seq, int timeout_secs) {
     }
 }
 
-Status SendTask::nextMsg(int64_t seq, MessagePtr& msg, bool* over) {
+Status SendSnapTask::nextMsg(int64_t seq, MessagePtr& msg, bool* over) {
     msg->set_type(pb::SNAPSHOT_REQUEST);
     msg->set_id(context_.id);
     msg->set_to(context_.to);
@@ -121,7 +130,7 @@ Status SendTask::nextMsg(int64_t seq, MessagePtr& msg, bool* over) {
 
     // 第一个数据块，header
     if (seq == 1) {
-        snapshot->mutable_meta()->Swap(&snap_meta_);
+        snapshot->mutable_meta()->Swap(&meta_);
         *over = false;
         return Status::OK();
     }
@@ -134,7 +143,7 @@ Status SendTask::nextMsg(int64_t seq, MessagePtr& msg, bool* over) {
 
         // 拿快照数据
         std::string data;
-        auto s = snap_data_->Next(&data, over);
+        auto s = data_->Next(&data, over);
         if (!s.ok()) return s;
         if (data.empty()) continue;
 
@@ -149,7 +158,7 @@ Status SendTask::nextMsg(int64_t seq, MessagePtr& msg, bool* over) {
     return Status::OK();
 }
 
-void SendTask::Cancel() {
+void SendSnapTask::Cancel() {
     {
         std::lock_guard<std::mutex> lock(mu_);
         canceled_ = true;
@@ -157,7 +166,6 @@ void SendTask::Cancel() {
     cv_.notify_one();
 }
 
-} /* snapshot */
 } /* namespace impl */
 } /* namespace raft */
 } /* namespace sharkstore */

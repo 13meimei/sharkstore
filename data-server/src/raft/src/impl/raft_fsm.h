@@ -13,6 +13,8 @@ namespace raft {
 namespace impl {
 
 class Ready;
+class SendSnapTask;
+class ApplySnapTask;
 
 class RaftFsm {
 public:
@@ -87,7 +89,7 @@ private:
     void bcastAppend();
     void sendAppend(uint64_t to, Replica& pr);
     void appendEntry(const std::vector<EntryPtr>& ents);
-    std::shared_ptr<snapshot::SendTask> newSnapSendTask();
+    std::shared_ptr<SendSnapTask> newSnapSendTask();
     void checkCaughtUp();
 
 private:
@@ -140,8 +142,8 @@ private:
     std::function<void()> tick_func_;
 
     std::vector<MessagePtr> sending_msgs_;
-    std::shared_ptr<snapshot::SendTask> sending_snap_;
-    std::unique_ptr<snapshot::ApplyTask> applying_snap_;
+    std::shared_ptr<SendSnapTask> sending_snap_;
+    std::unique_ptr<ApplySnapTask> applying_snap_;
 };
 
 } /* namespace impl */

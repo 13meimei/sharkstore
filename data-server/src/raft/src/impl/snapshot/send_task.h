@@ -2,14 +2,17 @@ _Pragma("once");
 
 #include <condition_variable>
 #include <mutex>
+#include <atomic>
+
+#include "raft/include/raft/snapshot.h"
 
 #include "../transport/transport.h"
 #include "task.h"
+#include "types.h"
 
 namespace sharkstore {
 namespace raft {
 namespace impl {
-namespace snapshot {
 
 /**
  * 一次快照的发送拆分成连续多条Message来发送
@@ -24,25 +27,38 @@ namespace snapshot {
  *   .
  * Message [ seq-n snapshot datat block ]
  */
-class SendTask : public Task {
+
+class SendSnapTask : public SnapTask {
 public:
-    SendTask(const SnapContext& SnapContext, const std::shared_ptr<Snapshot>& snap_data);
-    ~SendTask();
+    struct Options {
+        size_t max_size_per_msg = 0;
+        size_t wait_ack_timeout_secs = 0;
+    };
 
-    uint64_t UUID() const { return context_.uuid; }
+    SendSnapTask(const SnapContext& context,
+                 pb::SnapshotMeta& meta,
+                 const std::shared_ptr<Snapshot>& data);
+    ~SendSnapTask();
 
-    // 设置发送时需要的传输层接口，Run前先设置
+    SnapContext& GetContext() const { return context_; }
+
+    // 设置发送时需要的传输层接口，Dispatch前先设置
     void SetTransport(transport::Transport* trans) { transport_ = trans; }
+    // 设置发送结果汇报回调
+    void SetReporter(const SnapReporter& reporter) { reporter_ = reporter; }
+    // 设置发送选项
+    void SetOptions(const Options& opt) { opt_ = opt };
 
     // 收到副本的ack
     Status RecvAck(MessagePtr& msg);
 
-    void Run(SnapResult* result) override;
-
+    void Run() override;
     void Cancel() override;
-    void IsCanceled() const { return canceled_; }
+    bool IsCanceled() const { return canceled_; }
 
 private:
+    void run(SnapResult* result);
+
     // 等待副本的ack
     Status waitAck(int64_t seq, int timeout_secs);
 
@@ -50,9 +66,13 @@ private:
     Status nextMsg(int64_t seq, MessagePtr& msg, bool* over);
 
 private:
-    std::shared_ptr<Snapshot> snap_data_;
+    SnapContext context_;
+    pb::SnapshotMeta meta_; // 使用一次后即失效（被Swap）
+    std::shared_ptr<Snapshot> data_;
 
     transport::Transport* transport_ = nullptr;
+    SnapReporter  reporter_;
+    Options opt_;
 
     int64_t ack_seq_ = 0;
     bool rejected_ = false;
@@ -61,7 +81,6 @@ private:
     std::condition_variable cv_;
 };
 
-} /* snapshot */
 } /* namespace impl */
 } /* namespace raft */
 } /* namespace sharkstore */

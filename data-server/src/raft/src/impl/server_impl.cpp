@@ -62,7 +62,7 @@ Status RaftServerImpl::Start() {
 
     // start snapshot sender
     assert(snapshot_manager_ == nullptr);
-    snapshot_manager_.reset(new snapshot::Manager(ops_.snapshot_options));
+    snapshot_manager_.reset(new SnapshotManager(ops_.snapshot_options));
 
     running_ = true;
     tick_thr_.reset(new std::thread([this]() {
@@ -119,10 +119,10 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 
     RaftContext ctx;
     ctx.msg_sender = transport_.get();
-    ctx.snap_sender = snapshot_manager_.get();
-    ctx.consensus_thread = consensus_threads_[counter % consensus_threads_.size()];
+    ctx.snapshot_manager = snapshot_manager_.get();
+    ctx.consensus_thread = consensus_threads_[counter % consensus_threads_.size()].get();
     if (!ops_.apply_in_place) {
-        ctx.apply_thread = apply_threads_[counter % apply_threads_.size()];
+        ctx.apply_thread = apply_threads_[counter % apply_threads_.size()].get();
     }
 
     std::shared_ptr<RaftImpl> r;
@@ -193,9 +193,9 @@ std::shared_ptr<Raft> RaftServerImpl::FindRaft(uint64_t id) const {
     return std::static_pointer_cast<Raft>(findRaft(id));
 }
 
-void RaftServerImpl::GetStatus(ServerStatus* status) {
-    status->total_snap_sending = snapshot_sender_->GetConcurrency();
-    status->total_snap_applying = SnapshotApplyContext::total_applying.load();
+void RaftServerImpl::GetStatus(ServerStatus* status) const {
+    status->total_snap_sending = snapshot_manager_->SendingCount();
+    status->total_snap_applying = snapshot_manager_->ApplyingCount();
 }
 
 void RaftServerImpl::onMessage(MessagePtr& msg) {

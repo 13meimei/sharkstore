@@ -1,37 +1,40 @@
 _Pragma("once");
 
+#include <memory>
+#include <vector>
+#include <list>
+#include <mutex>
+
 namespace sharkstore {
 namespace raft {
 namespace impl {
-namespace snapshot {
 
-class Worker;
+class SnapWorker;
 class SnapTask;
 
-class WorkerPool final {
+class SnapWorkerPool final {
 public:
-    explicit WorkerPool(const std::string& name, size_t size);
+    explicit SnapWorkerPool(const std::string& name, size_t size);
     ~WorkPool();
 
-    WorkerPool(const WorkerPool&) = delete;
-    WorkerPool& operator=(const WorkerPool&) = delete;
+    SnapWorkerPool(const SnapWorkerPool&) = delete;
+    SnapWorkerPool& operator=(const SnapWorkerPool&) = delete;
 
     bool Post(const std::shared_ptr<SnapTask>& task);
-    int Runnings() const;
+    size_t Runnings() const;
 
 private:
-    friend class Worker;
+    friend class SnapWorker;
 
-    void addToFreeList(Worker* w);
+    void addToFreeList(SnapWorker* w);
 
 private:
-    std::vector<Worker*> workers_;
+    std::vector<SnapWorker*> workers_;
 
-    std::list<Worker*> free_list_;
+    std::list<SnapWorker*> free_list_;
     mutable std::mutex mu_;
-}
+};
 
-} /* snapshot */
 } /* namespace impl */
 } /* namespace raft */
 } /* namespace sharkstore */

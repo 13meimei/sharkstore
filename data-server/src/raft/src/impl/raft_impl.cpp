@@ -6,12 +6,13 @@
 #include "raft_fsm.h"
 #include "raft_types.h"
 #include "storage/storage.h"
+#include "snapshot/send_task.h"
+#include "snapshot/apply_task.h"
 
 namespace sharkstore {
 namespace raft {
 namespace impl {
 
-static const uint64_t kMaxSnapSizePerMsg = 1024 * 1024 * 1;
 static const time_t kFetchStatusIntervalSec = 3;
 
 RaftImpl::RaftImpl(const RaftServerOptions& sops, const RaftOptions& ops,
@@ -106,15 +107,10 @@ void RaftImpl::RecvMsg(MessagePtr& msg) {
 #endif
     if (stopped_) return;
 
-    // TODO: remove this
-    if (msg->type() == pb::SNAPSHOT_RESPONSE) {  // 快照结果不丢弃
-        post(std::bind(&RaftImpl::Step, shared_from_this(), msg));
-    } else {
-        if (!tryPost(std::bind(&RaftImpl::Step, shared_from_this(), msg))) {
-            LOG_DEBUG("raft[%llu] discard a msg. type: %s from %llu, term: %llu", ops_.id,
-                      pb::MessageType_Name(msg->type()).c_str(), msg->from(),
-                      msg->term());
-        }
+    if (!tryPost(std::bind(&RaftImpl::Step, shared_from_this(), msg))) {
+        LOG_DEBUG("raft[%llu] discard a msg. type: %s from %llu, term: %llu", ops_.id,
+                  pb::MessageType_Name(msg->type()).c_str(), msg->from(),
+                  msg->term());
     }
 }
 
@@ -129,8 +125,14 @@ void RaftImpl::Step(MessagePtr& msg) {
     fsm_->Step(msg);
     fsm_->GetReady(&ready_);
 
-    // 发送
-    send();
+    // 发送消息
+    if (!ready_.msgs.empty()) sendMessages();
+
+    // 发送快照
+    if (ready_.send_snap) sendSnapshot();
+
+    // 应用快照
+    if (ready_.apply_snap) applySnapshot();
 
     // 应用
     apply();
@@ -142,19 +144,38 @@ void RaftImpl::Step(MessagePtr& msg) {
     persist();
 }
 
-void RaftImpl::send() {
-    if (!ready_.msgs.empty()) {
-        for (auto m : ready_.msgs) {
-            ctx_.msg_sender->SendMessage(m);
-        }
+void RaftImpl::sendMessages() {
+    for (auto m : ready_.msgs) {
+        ctx_.msg_sender->SendMessage(m);
     }
-    if (ready_.send_snap) {
-        auto task = ready_.send_snap;
-        task->SetTransport(ctx_.transport);
-        task->SetReporter(std::bind(&RaftImpl::ReportSnapshotStatus, shared_from_this(),
-                                    std::placeholders::_1, std::placeholders::_2));
-        ctx_->snapshot_manager.Post(task);
+}
+
+void RaftImpl::sendSnapshot() {
+    auto task = ready_.send_snap;
+    assert(task != nullptr);
+
+    task->SetTransport(ctx_.msg_sender);
+    task->SetReporter(std::bind(&RaftImpl::ReportSnapSendResult, shared_from_this(),
+                                std::placeholders::_1, std::placeholders::_2));
+
+    SendSnapTask::Options send_opt;
+    send_opt.max_size_per_msg = sops_.snapshot_options.max_size_per_msg;
+    send_opt.wait_ack_timeout_secs = sops_.snapshot_options.ack_timeout_seconds;
+    task->SetOptions(send_opt);
+
+    auto s = ctx_.snapshot_manager->Dispatch(task);
+    if (!s.ok()) {
+        SnapResult result;
+        result.status = s;
+        ReportSnapSendResult(task->GetContext(), result);
+        task->Cancel();
     }
+}
+
+void RaftImpl::applySnapshot() {
+    auto task = ready_.apply_snap;
+    assert(task != nullptr);
+    // TODO:
 }
 
 // 应用
@@ -222,28 +243,29 @@ void RaftImpl::publish() {
     }
 }
 
-void RaftImpl::ReportSnapshotStatus(const MessagePtr& header, const SnapshotStatus& ss) {
-    if (ss.s.ok()) {
+void RaftImpl::ReportSnapSendResult(const SnapContext& ctx,
+                          const SnapResult& result) {
+    if (result.status.ok()) {
         LOG_INFO("raft[%llu] send snapshot[uuid: %lu] to %lu finished. total "
                  "blocks: %d, bytes: %d",
-                 ops_.id, header->snapshot().uuid(), header->to(), ss.blocks_count,
-                 ss.send_bytes);
+                 ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
     } else {
         LOG_ERROR("raft[%llu] send snapshot[uuid: %llu] to %lu failed(%s). "
                   "sent blocks: %d, bytes: %d",
-                  ops_.id, header->snapshot().uuid(), header->to(),
-                  ss.s.ToString().c_str(), ss.blocks_count, ss.send_bytes);
+                  ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(),
+                  result.blocks_count, result.bytes_count);
     }
 
     // 通知本地leader
     MessagePtr resp(new pb::Message);
-    resp->set_type(pb::SNAPSHOT_RESPONSE);
-    resp->set_to(header->from());
-    resp->set_from(header->to());
-    resp->set_term(header->term());
-    resp->set_reject(!ss.s.ok());
-    resp->mutable_snapshot()->set_uuid(header->snapshot().uuid());
-    RecvMsg(resp);
+    resp->set_type(pb::LOCAL_SNAPSHOT_STATUS);
+    resp->set_to(ctx.from);
+    resp->set_from(ctx.to);
+    resp->set_term(ctx.term);
+    resp->set_reject(!result.status.ok());
+    resp->mutable_snapshot()->set_uuid(ctx.uuid);
+
+    post(std::bind(&RaftImpl::Step, shared_from_this(), resp));
 }
 
 void RaftImpl::smApply(const EntryPtr& e) {

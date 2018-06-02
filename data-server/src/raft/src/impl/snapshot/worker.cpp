@@ -1,5 +1,6 @@
 #include "worker.h"
 
+#include <cassert>
 #include "base/util.h"
 
 #include "task.h"
@@ -8,14 +9,13 @@
 namespace sharkstore {
 namespace raft {
 namespace impl {
-namespace snapshot {
 
-Worker::Worker(WorkerPool* pool, const std::string& name) : pool_(pool) {
+SnapWorker::SnapWorker(SnapWorkerPool* pool, const std::string& name) : pool_(pool) {
     thr_ = std::thread([this] { runTask(); });
     AnnotateThread(thr_.native_handle(), name.c_str());
 }
 
-Worker::~Worker() {
+SnapWorker::~SnapWorker() {
     {
         std::lock_guard<std::mutex> lock(mu_);
         running_ = false;
@@ -27,7 +27,7 @@ Worker::~Worker() {
     thr_.join();
 }
 
-void Worker::post(const std::shared_ptr<SnapTask>& task) {
+void SnapWorker::post(const std::shared_ptr<SnapTask>& task) {
     {
         std::lock_guard<std::mutex> lock(mu_);
         assert(task_ == nullptr);
@@ -36,7 +36,7 @@ void Worker::post(const std::shared_ptr<SnapTask>& task) {
     cv_.notify_one();
 }
 
-void Worker::runTask() {
+void SnapWorker::runTask() {
     std::shared_ptr<SnapTask> task;
     {
         std::unique_lock<std::mutex> lock(mu_);
@@ -47,14 +47,11 @@ void Worker::runTask() {
         task = std::move(task_);
     }
 
-    SnapResult result;
-    task->Run(&result);
-    task->Report(result);
+    task->Run();
 
     pool_->addToFreeList(this);
 }
 
-} /* snapshot */
 } /* namespace impl */
 } /* namespace raft */
 } /* namespace sharkstore */

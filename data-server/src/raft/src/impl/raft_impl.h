@@ -6,7 +6,6 @@ _Pragma("once");
 
 #include "bulletin_board.h"
 #include "raft_context.h"
-#include "raft_snapshot.h"
 #include "raft_types.h"
 #include "ready.h"
 
@@ -14,11 +13,8 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
-namespace shapshot {
 class SnapContext;
 class SnapResult;
-}
-
 class RaftFsm;
 
 class RaftImpl : public Raft, public std::enable_shared_from_this<RaftImpl> {
@@ -72,11 +68,8 @@ public:
     void RecvMsg(MessagePtr& msg);
     void Step(MessagePtr& msg);
 
-    void ReportSnapSendResult(const snapshot::SnapContext& ctx,
-                              const snapshot::SnapResult& result);
-
-    void ReportSnapApplyResult(const snapshot::SnapContext& ctx,
-                               const snapshot::SnapResult& result);
+    void ReportSnapSendResult(const SnapContext& ctx,
+                              const SnapResult& result);
 
 private:
     void post(const std::function<void()>& f);
@@ -84,7 +77,11 @@ private:
 
     void apply(bool* conf_changed);
     void smApply(const EntryPtr& e);
-    void send();
+
+    void sendMessages();
+    void sendSnapshot();
+    void applySnapshot();
+
     void persist();
     void apply();
     void publish();

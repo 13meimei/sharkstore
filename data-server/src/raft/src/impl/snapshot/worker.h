@@ -1,20 +1,24 @@
 _Pragma("once");
 
+#include <string>
+#include <memory>
+#include <condition_variable>
+#include <thread>
+
 namespace sharkstore {
 namespace raft {
 namespace impl {
-namespace snapshot {
 
 class SnapTask;
-class WorkerPool;
+class SnapWorkerPool;
 
-class Worker final {
+class SnapWorker final {
 public:
-    explicit Worker(WorkerPool* pool, const std::string& thread_name);
-    ~Worker();
+    explicit SnapWorker(SnapWorkerPool* pool, const std::string& thread_name);
+    ~SnapWorker();
 
-    Worker(const Worker&) = delete;
-    Worker& operator=(const Worker&) = delete;
+    SnapWorker(const SnapWorker&) = delete;
+    SnapWorker& operator=(const SnapWorker&) = delete;
 
     void post(const std::shared_ptr<SnapTask>& task);
 
@@ -22,7 +26,7 @@ private:
     void runTask();
 
 private:
-    WorkerPool* pool_ = nullptr;
+    SnapWorkerPool* pool_ = nullptr;
 
     bool running_ = true;
 
@@ -32,7 +36,6 @@ private:
     std::thread thr_;
 };
 
-} /* snapshot */
 } /* namespace impl */
 } /* namespace raft */
 } /* namespace sharkstore */

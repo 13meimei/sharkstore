@@ -4,6 +4,7 @@
 #include <sstream>
 #include "logger.h"
 #include "raft_exception.h"
+#include "snapshot/send_task.h"
 
 namespace sharkstore {
 namespace raft {
@@ -139,11 +140,11 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
             return;
 
         case pb::SNAPSHOT_ACK:
-            if (sending_snap_ && sending_snap_->UUID() == msg->snapshot().uuid()) {
+            if (sending_snap_ && sending_snap_->GetContext().uuid == msg->snapshot().uuid()) {
                 LOG_DEBUG("raft[%lu] recv snapshot[%lu] ack. seq=%ld, reject=%d", id_,
                           msg->snapshot().uuid(), msg->snapshot().seq(), msg->reject());
 
-                auto s = sending_snap_->Ack(msg);
+                auto s = sending_snap_->RecvAck(msg);
                 if (!s.ok()) {
                     LOG_WARN("raft[%lu] ack[seq:%ld, reject:%d, from:%lu] snapshot[%lu] "
                              "failed: %s ",
@@ -260,7 +261,7 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
         if (sending_snap_) {
             LOG_WARN("raft[%llu] sendAppend could not send snapshot to %llu(other "
                      "snapshot[%lu] is sending)",
-                     id_, to, sending_snap_->UUID());
+                     id_, to, sending_snap_->GetContext().uuid);
             return;
         }
 
@@ -312,8 +313,8 @@ static uint64_t unixNano() {
         .count();
 }
 
-std::shared<snapshot::SendTask> RaftFsm::newSnapSendTask(uint64_t to) {
-    snapshot::SnapContext snap_ctx;
+std::shared_ptr<SendSnapTask> RaftFsm::newSnapSendTask(uint64_t to) {
+    SnapContext snap_ctx;
     snap_ctx.id = id_;
     snap_ctx.to = to;
     snap_ctx.from = node_id_;
@@ -343,7 +344,7 @@ std::shared<snapshot::SendTask> RaftFsm::newSnapSendTask(uint64_t to) {
     }
 
     // set meta index
-    meta->set_index(snap_data->ApplyIndex());
+    snap_meta->set_index(snap_data->ApplyIndex());
     // set meta term
     uint64_t snap_term = 0;
     auto status = raft_log_->term(snap_data->ApplyIndex(), &snap_term);
@@ -353,7 +354,7 @@ std::shared<snapshot::SendTask> RaftFsm::newSnapSendTask(uint64_t to) {
            << " because snapshot is unavailable, error is: " << status.ToString();
         throw RaftException(ss.str());
     }
-    meta->set_term(snap_term);
+    snap_meta->set_term(snap_term);
 
     // set user context
     std::string context;
@@ -362,15 +363,14 @@ std::shared<snapshot::SendTask> RaftFsm::newSnapSendTask(uint64_t to) {
         throw RaftException(std::string("get snapshot user context failed: ") +
                             s.ToString());
     }
-    meta->set_context(std::move(context));
+    snap_meta->set_context(std::move(context));
 
     LOG_DEBUG("raft[%llu] sendAppend [firstindex: %llu, commit: %llu] sent "
               "snapshot[index: %llu, term: %llu] to [%llu]",
               id_, raft_log_->firstIndex(), raft_log_->committed(),
               snap_data->ApplyIndex(), snap_term, to)
 
-    return std::make_shared<snapshot::SendTask>(sops_.snapshot_options, snap_ctx,
-                                                snap_meta, snap_data);
+    return std::make_shared<SendSnapTask>(snap_ctx, snap_meta, snap_data);
 }
 
 void RaftFsm::checkCaughtUp() {

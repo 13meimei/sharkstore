@@ -11,8 +11,8 @@ namespace impl {
 struct RaftContext {
     WorkThread *consensus_thread = nullptr;
     WorkThread *apply_thread = nullptr;
+    SnapshotManager *snapshot_manager = nullptr;
     transport::Transport *msg_sender = nullptr;
-    snapshot::Manager *snapshot_manager = nullptr;
 };
 
 } /* namespace impl */

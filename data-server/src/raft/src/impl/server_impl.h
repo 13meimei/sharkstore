@@ -5,7 +5,9 @@ _Pragma("once");
 #include <unordered_map>
 #include <unordered_set>
 #include "base/shared_mutex.h"
+
 #include "raft/server.h"
+#include "raft_types.h"
 
 namespace sharkstore {
 namespace raft {
@@ -13,12 +15,10 @@ namespace impl {
 
 class RaftImpl;
 class WorkThread;
+class SnapshotManager;
 
 namespace transport {
 class Transport;
-}
-namespace snapshot {
-class Snapshot;
 }
 
 class RaftServerImpl : public RaftServer {
@@ -41,19 +41,20 @@ public:
     void GetStatus(ServerStatus* status) const override;
 
 private:
+    using RaftMapType = std::unordered_map<uint64_t, std::shared_ptr<RaftImpl>>;
+
     std::shared_ptr<RaftImpl> findRaft(uint64_t id) const;
 
-    void sendHeartbeat(const RaftMap& rafts);
+    void sendHeartbeat(const RaftMapType& rafts);
     void onMessage(MessagePtr& msg);
     void onHeartbeatReq(MessagePtr& msg);
     void onHeartbeatResp(MessagePtr& msg);
 
-    void stepTick(const RaftMap& rafts);
+    void stepTick(const RaftMapType& rafts);
     void printMetrics();
     void tickRoutine();
 
 private:
-    using RaftMapType = std::unordered_map<uint64_t, std::shared_ptr<RaftImpl>>;
 
     const RaftServerOptions ops_;
     std::atomic<bool> running_ = {false};
@@ -64,7 +65,7 @@ private:
     mutable sharkstore::shared_mutex rafts_mu_;
 
     std::unique_ptr<transport::Transport> transport_;
-    std::unique_ptr<snapshot::Manager> snapshot_manager_;
+    std::unique_ptr<SnapshotManager> snapshot_manager_;
 
     std::vector<std::unique_ptr<WorkThread>> consensus_threads_;
     std::vector<std::unique_ptr<WorkThread>> apply_threads_;

@@ -247,6 +247,12 @@ bool RaftFsm::stepIngoreTerm(MessagePtr& msg) {
             step_func_(msg);
             return true;
 
+        case pb::LOCAL_SNAPSHOT_STATUS:
+            if (state_ == FsmState::kLeader) {
+                step_func_(msg);
+            }
+            return true;
+
         case pb::HEARTBEAT_REQUEST:
             // 只接受来自leader的心跳
             if (msg->from() == leader_ && msg->from() != node_id_) {
@@ -256,7 +262,7 @@ bool RaftFsm::stepIngoreTerm(MessagePtr& msg) {
 
         case pb::HEARTBEAT_RESPONSE:
             // 只有leader才需要处理心跳回应
-            if (leader_ == node_id_ && msg->from() != node_id_) {
+            if (state_ == FsmState ::kLeader && msg->from() != node_id_) {
                 step_func_(msg);
             }
             return true;
@@ -418,8 +424,8 @@ void RaftFsm::GetReady(Ready* rd) {
         rd->send_snap = nullptr;
     }
 
-    if (applying_snap_ && !applying_snap->IsDispatched()) {
-        rd->apply_snap = applying_snap;
+    if (applying_snap_ && !applying_snap_->IsDispatched()) {
+        rd->apply_snap = applying_snap_;
         applying_snap_->MarkAsDispatched();
     } else {
         rd->apply_snap = nullptr;
