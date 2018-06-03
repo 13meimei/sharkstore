@@ -19,7 +19,16 @@ RaftServerImpl::RaftServerImpl(const RaftServerOptions& ops) : ops_(ops) {
     tick_msg_->set_type(pb::LOCAL_MSG_TICK);
 }
 
-RaftServerImpl::~RaftServerImpl() { Stop(); }
+RaftServerImpl::~RaftServerImpl() {
+    Stop();
+
+    for (auto t: consensus_threads_) {
+        delete t;
+    }
+    for (auto t : apply_threads_) {
+        delete t;
+    }
+}
 
 Status RaftServerImpl::Start() {
     auto status = ops_.Validate();
@@ -47,11 +56,11 @@ Status RaftServerImpl::Start() {
 
     // start transport
     if (ops_.transport_options.use_inprocess_transport) {
-        transport_ = new transport::InProcessTransport(ops_.node_id);
+        transport_.reset(new transport::InProcessTransport(ops_.node_id));
     } else {
-        transport_ = new transport::FastTransport(ops_.transport_options.resolver,
+        transport_.reset(new transport::FastTransport(ops_.transport_options.resolver,
                                                   ops_.transport_options.send_io_threads,
-                                                  ops_.transport_options.recv_io_threads);
+                                                  ops_.transport_options.recv_io_threads));
     }
     status = transport_->Start(
         ops_.transport_options.listen_ip, ops_.transport_options.listen_port,
@@ -66,7 +75,7 @@ Status RaftServerImpl::Start() {
 
     running_ = true;
     tick_thr_.reset(new std::thread([this]() {
-        tickRoutine(); });
+        tickRoutine(); }));
 
     return Status::OK();
 }
@@ -120,9 +129,9 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
     RaftContext ctx;
     ctx.msg_sender = transport_.get();
     ctx.snapshot_manager = snapshot_manager_.get();
-    ctx.consensus_thread = consensus_threads_[counter % consensus_threads_.size()].get();
+    ctx.consensus_thread = consensus_threads_[counter % consensus_threads_.size()];
     if (!ops_.apply_in_place) {
-        ctx.apply_thread = apply_threads_[counter % apply_threads_.size()].get();
+        ctx.apply_thread = apply_threads_[counter % apply_threads_.size()];
     }
 
     std::shared_ptr<RaftImpl> r;

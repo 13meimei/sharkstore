@@ -89,7 +89,7 @@ private:
     void bcastAppend();
     void sendAppend(uint64_t to, Replica& pr);
     void appendEntry(const std::vector<EntryPtr>& ents);
-    std::shared_ptr<SendSnapTask> newSnapSendTask();
+    std::shared_ptr<SendSnapTask> newSendSnapTask(uint64_t to);
     void checkCaughtUp();
 
 private:
@@ -105,7 +105,7 @@ private:
     void tickElection();
     void handleAppendEntries(MessagePtr& msg);
     void handleSnapshot(MessagePtr& msg);
-    Status applySnapshot(MessagePtr& msg, bool* over);
+    Status applySnapshot(MessagePtr& msg);
     bool checkSnapshot(const pb::SnapshotMeta& meta);
     // 从快照中恢复
     Status restore(const pb::SnapshotMeta& meta);
@@ -143,7 +143,9 @@ private:
 
     std::vector<MessagePtr> sending_msgs_;
     std::shared_ptr<SendSnapTask> sending_snap_;
-    std::unique_ptr<ApplySnapTask> applying_snap_;
+
+    std::shared_ptr<ApplySnapTask> applying_snap_;
+    pb::SnapshotMeta applying_meta_;
 };
 
 } /* namespace impl */

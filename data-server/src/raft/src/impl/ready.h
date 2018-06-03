@@ -16,10 +16,10 @@ struct Ready {
     std::vector<MessagePtr> msgs;
 
     // snapshot to send
-    std::shared_ptr<snapshot::SendTask> send_snap;
+    std::shared_ptr<SendSnapTask> send_snap;
 
     // snapshot to apply
-    std::shared_ptr<snapshot::ApplyTask> apply_snap;
+    std::shared_ptr<ApplySnapTask> apply_snap;
 
     /* // change list about peers */
     /* std::vector<Peer> pendings_peers; */

@@ -71,11 +71,13 @@ public:
     void ReportSnapSendResult(const SnapContext& ctx,
                               const SnapResult& result);
 
+    void ReportSnapApplyResult(const SnapContext& ctx,
+                              const SnapResult& result);
+
 private:
     void post(const std::function<void()>& f);
     bool tryPost(const std::function<void()>& f);
 
-    void apply(bool* conf_changed);
     void smApply(const EntryPtr& e);
 
     void sendMessages();

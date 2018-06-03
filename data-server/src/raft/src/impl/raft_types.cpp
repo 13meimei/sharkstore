@@ -149,7 +149,6 @@ bool IsResponseMsg(MessagePtr& msg) {
         case pb::APPEND_ENTRIES_RESPONSE:
         case pb::VOTE_RESPONSE:
         case pb::HEARTBEAT_RESPONSE:
-        case pb::SNAPSHOT_RESPONSE:
         case pb::SNAPSHOT_ACK:
         case pb::PRE_VOTE_RESPONSE:
             return true;

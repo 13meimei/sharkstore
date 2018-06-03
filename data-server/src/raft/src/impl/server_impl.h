@@ -67,8 +67,8 @@ private:
     std::unique_ptr<transport::Transport> transport_;
     std::unique_ptr<SnapshotManager> snapshot_manager_;
 
-    std::vector<std::unique_ptr<WorkThread>> consensus_threads_;
-    std::vector<std::unique_ptr<WorkThread>> apply_threads_;
+    std::vector<WorkThread*> consensus_threads_;
+    std::vector<WorkThread*> apply_threads_;
 
     MessagePtr tick_msg_;
     // TODO: more tick threads or put ticks into consensus_threads

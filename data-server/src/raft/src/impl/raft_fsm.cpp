@@ -15,11 +15,7 @@ namespace raft {
 namespace impl {
 
 RaftFsm::RaftFsm(const RaftServerOptions& sops, const RaftOptions& ops)
-    : sops_(sops),
-      rops_(ops),
-      node_id_(sops.node_id),
-      id_(ops.id),
-      sm_(ops.statemachine) {
+    : sops_(sops), rops_(ops), node_id_(sops.node_id), id_(ops.id), sm_(ops.statemachine) {
     auto s = start();
     if (!s.ok()) {
         throw RaftException(s);
@@ -59,8 +55,7 @@ Status RaftFsm::loadState(const pb::HardState& state) {
         return Status::OK();
     }
 
-    if (state.commit() < raft_log_->committed() ||
-        state.commit() > raft_log_->lastIndex()) {
+    if (state.commit() < raft_log_->committed() || state.commit() > raft_log_->lastIndex()) {
         std::stringstream ss;
         ss << "loadState: state.commit " << state.commit() << " is out of range ["
            << raft_log_->committed() << ", " << raft_log_->lastIndex() << "]";
@@ -98,8 +93,8 @@ Status RaftFsm::recoverCommit() {
 
 Status RaftFsm::start() {
     // 初始化随机函数(选举超时)
-    int seed = static_cast<unsigned>(
-        std::chrono::system_clock::now().time_since_epoch().count() * node_id_);
+    int seed = static_cast<unsigned>(std::chrono::system_clock::now().time_since_epoch().count() *
+                                     node_id_);
     std::default_random_engine engine(seed);
     std::uniform_int_distribution<unsigned> distribution(sops_.election_tick,
                                                          sops_.election_tick * 2);
@@ -107,8 +102,7 @@ Status RaftFsm::start() {
 
     // 初始化raft日志
     if (rops_.use_memory_storage) {
-        storage_ =
-            std::shared_ptr<storage::Storage>(new storage::MemoryStorage(id_, 40960));
+        storage_ = std::shared_ptr<storage::Storage>(new storage::MemoryStorage(id_, 40960));
         LOG_WARN("raft[%llu] use raft logger memory storage!", id_);
     } else {
         storage::DiskStorage::Options ops;
@@ -151,14 +145,14 @@ Status RaftFsm::start() {
         }
     }
     if (!local_found) {
-        return Status(Status::kInvalidArgument, "start raft",
-                      "could not find local node in peers");
+        return Status(Status::kInvalidArgument, "start raft", "could not find local node in peers");
     }
 
-    LOG_INFO("newRaft[%llu]%s commit: %llu, applied: %llu, lastindex: %llu, "
-             "peers: %s",
-             id_, (is_learner_ ? " [learner]" : ""), raft_log_->committed(),
-             rops_.applied, raft_log_->lastIndex(), PeersToString(rops_.peers));
+    LOG_INFO(
+        "newRaft[%llu]%s commit: %llu, applied: %llu, lastindex: %llu, "
+        "peers: %s",
+        id_, (is_learner_ ? " [learner]" : ""), raft_log_->committed(), rops_.applied,
+        raft_log_->lastIndex(), PeersToString(rops_.peers));
 
     if (rops_.applied > 0) {
         uint64_t lasti = raft_log_->lastIndex();
@@ -225,13 +219,12 @@ bool RaftFsm::stepIngoreTerm(MessagePtr& msg) {
         case pb::LOCAL_MSG_HUP: {
             if (state_ != FsmState::kLeader && electable()) {
                 std::vector<EntryPtr> ents;
-                Status s = raft_log_->slice(raft_log_->applied() + 1,
-                                            raft_log_->committed() + 1, kNoLimit, &ents);
+                Status s = raft_log_->slice(raft_log_->applied() + 1, raft_log_->committed() + 1,
+                                            kNoLimit, &ents);
                 if (!s.ok()) {
-                    throw RaftException(
-                        std::string("[Step] unexpected error when getting "
-                                    "unapplied entries:") +
-                        s.ToString());
+                    throw RaftException(std::string("[Step] unexpected error when getting "
+                                                    "unapplied entries:") +
+                                        s.ToString());
                 }
 
                 if (numOfPendingConf(ents) != 0) {
@@ -247,12 +240,6 @@ bool RaftFsm::stepIngoreTerm(MessagePtr& msg) {
             step_func_(msg);
             return true;
 
-        case pb::LOCAL_SNAPSHOT_STATUS:
-            if (state_ == FsmState::kLeader) {
-                step_func_(msg);
-            }
-            return true;
-
         case pb::HEARTBEAT_REQUEST:
             // 只接受来自leader的心跳
             if (msg->from() == leader_ && msg->from() != node_id_) {
@@ -262,7 +249,7 @@ bool RaftFsm::stepIngoreTerm(MessagePtr& msg) {
 
         case pb::HEARTBEAT_RESPONSE:
             // 只有leader才需要处理心跳回应
-            if (state_ == FsmState ::kLeader && msg->from() != node_id_) {
+            if (state_ == FsmState::kLeader && msg->from() != node_id_) {
                 step_func_(msg);
             }
             return true;
@@ -274,12 +261,13 @@ bool RaftFsm::stepIngoreTerm(MessagePtr& msg) {
 
 void RaftFsm::stepLowTerm(MessagePtr& msg) {
     if (msg->type() == pb::PRE_VOTE_REQUEST) {
-        LOG_INFO("raft[%lu] [logterm: %lu, index: %lu, vote: %lu] "
-                 "rejected low term %s from %lu [logterm: %lu, "
-                 "index: %lu] at term %lu.",
-                 id_, raft_log_->lastTerm(), raft_log_->lastIndex(), vote_for_,
-                 MessageType_Name(msg->type()).c_str(), msg->from(), msg->log_term(),
-                 msg->log_index(), term_);
+        LOG_INFO(
+            "raft[%lu] [logterm: %lu, index: %lu, vote: %lu] "
+            "rejected low term %s from %lu [logterm: %lu, "
+            "index: %lu] at term %lu.",
+            id_, raft_log_->lastTerm(), raft_log_->lastIndex(), vote_for_,
+            MessageType_Name(msg->type()).c_str(), msg->from(), msg->log_term(), msg->log_index(),
+            term_);
 
         // 本节点有可能未启用PreVote，日志不新但是term很大
         // 如果丢弃该消息，就导致来源节点term升不上去，可能永远无法选举成功,
@@ -297,32 +285,32 @@ void RaftFsm::stepLowTerm(MessagePtr& msg) {
         // 如果它是一个被网络延迟的消息，我们的回复里log_term和commit都是0
         // 也不会干扰正常leader的复制，让leader错误以为前面发起的某次复制是成功的
 
-        LOG_INFO("raft[%llu] ignore a [%s] message from low term leader [%llu "
-                 "term: %llu] at term %llu",
-                 id_, MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(),
-                 term_);
+        LOG_INFO(
+            "raft[%llu] ignore a [%s] message from low term leader [%llu "
+            "term: %llu] at term %llu",
+            id_, MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(), term_);
 
         MessagePtr resp(new pb::Message);
         resp->set_type(pb::APPEND_ENTRIES_RESPONSE);
         resp->set_to(msg->from());
         send(resp);
     } else {
-        LOG_INFO("raft[%llu] ignore a [%s] message with lower term "
-                 "from [%llu term: %llu] at term %llu",
-                 id_, MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(),
-                 term_);
+        LOG_INFO(
+            "raft[%llu] ignore a [%s] message with lower term "
+            "from [%llu term: %llu] at term %llu",
+            id_, MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(), term_);
     }
 }
 
 void RaftFsm::stepVote(MessagePtr& msg, bool pre_vote) {
     // learner不参与投票
     if (is_learner_) {
-        LOG_INFO("raft[%lu] [logterm:%lu, index:%lu, vote:%lu] ignore %s from "
-                 "%lu[logterm:%lu, index:%lu] at term %lu: learner can not "
-                 "vote.",
-                 id_, raft_log_->lastTerm(), raft_log_->lastIndex(), vote_for_,
-                 (pre_vote ? "pre-vote" : "vote"), msg->from(), msg->log_term(),
-                 msg->log_term(), term_);
+        LOG_INFO(
+            "raft[%lu] [logterm:%lu, index:%lu, vote:%lu] ignore %s from "
+            "%lu[logterm:%lu, index:%lu] at term %lu: learner can not "
+            "vote.",
+            id_, raft_log_->lastTerm(), raft_log_->lastIndex(), vote_for_,
+            (pre_vote ? "pre-vote" : "vote"), msg->from(), msg->log_term(), msg->log_term(), term_);
         return;
     }
 
@@ -341,11 +329,12 @@ void RaftFsm::stepVote(MessagePtr& msg, bool pre_vote) {
 
     // 比较日志新旧
     if (can_vote && raft_log_->isUpdateToDate(msg->log_index(), msg->log_term())) {
-        LOG_INFO("raft[%llu] [logterm:%llu, index:%llu, vote:%llu] %s for "
-                 "%llu[logterm:%llu, index:%llu] at term %llu",
-                 id_, raft_log_->lastTerm(), raft_log_->lastIndex(), vote_for_,
-                 (pre_vote ? "pre-vote" : "vote"), msg->from(), msg->log_term(),
-                 msg->log_index(), term_);
+        LOG_INFO(
+            "raft[%llu] [logterm:%llu, index:%llu, vote:%llu] %s for "
+            "%llu[logterm:%llu, index:%llu] at term %llu",
+            id_, raft_log_->lastTerm(), raft_log_->lastIndex(), vote_for_,
+            (pre_vote ? "pre-vote" : "vote"), msg->from(), msg->log_term(), msg->log_index(),
+            term_);
 
         resp->set_term(msg->term());
         resp->set_reject(false);
@@ -356,11 +345,12 @@ void RaftFsm::stepVote(MessagePtr& msg, bool pre_vote) {
             election_elapsed_ = 0;
         }
     } else {
-        LOG_INFO("raft[%llu] [logterm:%llu, index:%llu, vote:%llu] %s for "
-                 "%llu[logterm:%llu, index:%llu] at term %llu",
-                 id_, raft_log_->lastTerm(), raft_log_->lastIndex(), vote_for_,
-                 (pre_vote ? "reject vote(pre)" : "reject vote"), msg->from(),
-                 msg->log_term(), msg->log_index(), term_);
+        LOG_INFO(
+            "raft[%llu] [logterm:%llu, index:%llu, vote:%llu] %s for "
+            "%llu[logterm:%llu, index:%llu] at term %llu",
+            id_, raft_log_->lastTerm(), raft_log_->lastIndex(), vote_for_,
+            (pre_vote ? "reject vote(pre)" : "reject vote"), msg->from(), msg->log_term(),
+            msg->log_index(), term_);
 
         resp->set_term(term_);
         resp->set_reject(true);
@@ -388,13 +378,12 @@ void RaftFsm::Step(MessagePtr& msg) {
             // 2) 如果是prevote回应是成功，回应的term是请求时的term（即+1后的）
             //    我们是收到大多数prevote成功后才会增加term，不应该此时加
         } else {
-            LOG_INFO("raft[%llu] received a [%s] message with higher term "
-                     "from [%llu term: %llu] at term %llu, become follower",
-                     id_, MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(),
-                     term_);
+            LOG_INFO(
+                "raft[%llu] received a [%s] message with higher term "
+                "from [%llu term: %llu] at term %llu, become follower",
+                id_, MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(), term_);
 
-            if (msg->type() == pb::APPEND_ENTRIES_REQUEST ||
-                msg->type() == pb::SNAPSHOT_REQUEST) {
+            if (msg->type() == pb::APPEND_ENTRIES_REQUEST || msg->type() == pb::SNAPSHOT_REQUEST) {
                 becomeFollower(msg->term(), msg->from());
             } else {
                 becomeFollower(msg->term(), 0);
@@ -490,8 +479,8 @@ RaftStatus RaftFsm::GetStatus() const {
                 rs.match = pr.match();
                 rs.commit = pr.committed();
                 rs.next = pr.next();
-                rs.inactive = std::chrono::duration_cast<std::chrono::seconds>(
-                                  pr.inactive_ticks() * sops_.tick_interval)
+                rs.inactive = std::chrono::duration_cast<std::chrono::seconds>(pr.inactive_ticks() *
+                                                                               sops_.tick_interval)
                                   .count();
                 rs.state = ReplicateStateName(pr.state());
                 rs.pending = pr.state() == ReplicaState::kSnapshot;
@@ -539,8 +528,7 @@ Status RaftFsm::smApply(const EntryPtr& entry) {
 Status RaftFsm::applyConfChange(const EntryPtr& e) {
     assert(e->type() == pb::ENTRY_CONF_CHANGE);
 
-    LOG_INFO("raft[%llu] apply confchange at index %lu, term %lu", id_, e->index(),
-             term_);
+    LOG_INFO("raft[%llu] apply confchange at index %lu, term %lu", id_, e->index(), term_);
 
     pending_conf_ = false;
 
@@ -596,8 +584,7 @@ void RaftFsm::traverseReplicas(const std::function<void(uint64_t, Replica&)>& f)
 }
 
 bool RaftFsm::hasReplica(uint64_t node) const {
-    return replicas_.find(node) != replicas_.cend() ||
-           learners_.find(node) != learners_.cend();
+    return replicas_.find(node) != replicas_.cend() || learners_.find(node) != learners_.cend();
 }
 
 Replica* RaftFsm::getReplica(uint64_t node) const {
@@ -617,8 +604,7 @@ void RaftFsm::addPeer(const Peer& peer) {
 
     auto old = getReplica(peer.node_id);
     if (old != nullptr) {
-        LOG_WARN("raft[%llu] add peer already exist: %s", id_,
-                 old->peer().ToString().c_str());
+        LOG_WARN("raft[%llu] add peer already exist: %s", id_, old->peer().ToString().c_str());
         return;
     }
 
@@ -632,22 +618,28 @@ void RaftFsm::addPeer(const Peer& peer) {
 }
 
 void RaftFsm::removePeer(const Peer& peer) {
-    LOG_INFO("raft[%llu] remove peer: %s at term %lu", id_, peer.ToString().c_str(),
-             term_);
+    LOG_INFO("raft[%llu] remove peer: %s at term %lu", id_, peer.ToString().c_str(), term_);
 
     auto replica = getReplica(peer.node_id);
     if (replica == nullptr) {
-        LOG_WARN("raft[%llu] remove peer doesn't exist: %s, ignore", id_,
-                 peer.ToString().c_str());
+        LOG_WARN("raft[%llu] remove peer doesn't exist: %s, ignore", id_, peer.ToString().c_str());
         return;
     }
 
     // peer id不一致，不删除，防止旧日志重放时误删除
     if (replica->peer().peer_id != peer.peer_id) {
-        LOG_INFO("raft[%llu] ignore remove peer(inconsistent peer id), old: %s, to "
-                 "remove: %s",
-                 id_, replica->peer().ToString().c_str(), peer.ToString().c_str());
+        LOG_INFO(
+            "raft[%llu] ignore remove peer(inconsistent peer id), old: %s, to "
+            "remove: %s",
+            id_, replica->peer().ToString().c_str(), peer.ToString().c_str());
         return;
+    }
+
+    // 取消可能正在进行的快照发送
+    if (state_ == FsmState::kLeader && sending_snap_ &&
+        sending_snap_->GetContext().to == peer.node_id) {
+        sending_snap_->Cancel();
+        sending_snap_.reset();
     }
 
     learners_.erase(peer.node_id);
@@ -655,8 +647,7 @@ void RaftFsm::removePeer(const Peer& peer) {
     if (peer.node_id == node_id_) {
         // 删除本节点，退位为follower
         becomeFollower(term_, 0);
-    } else if (state_ == FsmState::kLeader &&
-               (!replicas_.empty() || !learners_.empty())) {
+    } else if (state_ == FsmState::kLeader && (!replicas_.empty() || !learners_.empty())) {
         // 集群成员少了，qurum有可能变了，计算commit的方式也可能变了
         // 原本没有commit的日志现在可能已经可以算作commit了
         if (maybeCommit()) {
@@ -666,8 +657,7 @@ void RaftFsm::removePeer(const Peer& peer) {
 }
 
 void RaftFsm::promotePeer(const Peer& peer) {
-    LOG_INFO("raft[%llu] promote peer: %s at term %lu", id_, peer.ToString().c_str(),
-             term_);
+    LOG_INFO("raft[%llu] promote peer: %s at term %lu", id_, peer.ToString().c_str(), term_);
 
     if (peer.type == PeerType::kLearner) {
         LOG_WARN("raft[%lu] can't promote learner to a learner: %s, ignore", id_,
@@ -685,9 +675,10 @@ void RaftFsm::promotePeer(const Peer& peer) {
     auto old_peer = it->second->peer();
     // peer id不一致，不提升，防止旧日志重放
     if (old_peer.peer_id != peer.peer_id) {
-        LOG_INFO("raft[%lu] ignore promote learner(inconsistent peer id), old: %s, "
-                 "to promote: %s",
-                 id_, old_peer.ToString().c_str(), peer.ToString().c_str());
+        LOG_INFO(
+            "raft[%lu] ignore promote learner(inconsistent peer id), old: %s, "
+            "to promote: %s",
+            id_, old_peer.ToString().c_str(), peer.ToString().c_str());
         return;
     }
 
@@ -752,9 +743,7 @@ void RaftFsm::resetRandomizedElectionTimeout() {
     LOG_DEBUG("raft[%llu] election tick reset to %d", id_, rand_election_tick_);
 }
 
-bool RaftFsm::pastElectionTimeout() const {
-    return election_elapsed_ >= rand_election_tick_;
-}
+bool RaftFsm::pastElectionTimeout() const { return election_elapsed_ >= rand_election_tick_; }
 
 void RaftFsm::abortSendSnap() {
     if (sending_snap_) {

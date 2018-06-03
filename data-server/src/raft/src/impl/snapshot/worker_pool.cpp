@@ -15,7 +15,7 @@ SnapWorkerPool::SnapWorkerPool(const std::string& name, size_t size) {
     }
 }
 
-SnapWorkerPool::~WorkPool() {
+SnapWorkerPool::~SnapWorkerPool() {
     for (auto w : workers_) {
         delete w;
     }

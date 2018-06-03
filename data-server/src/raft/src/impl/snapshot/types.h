@@ -1,5 +1,7 @@
 _Pragma("once");
 
+#include "base/status.h"
+
 namespace sharkstore {
 namespace raft {
 namespace impl {

@@ -14,8 +14,8 @@ class SnapTask;
 
 class SnapWorkerPool final {
 public:
-    explicit SnapWorkerPool(const std::string& name, size_t size);
-    ~WorkPool();
+    SnapWorkerPool(const std::string& name, size_t size);
+    ~SnapWorkerPool();
 
     SnapWorkerPool(const SnapWorkerPool&) = delete;
     SnapWorkerPool& operator=(const SnapWorkerPool&) = delete;

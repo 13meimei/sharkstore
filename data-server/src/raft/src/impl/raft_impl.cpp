@@ -1,13 +1,15 @@
 #include "raft_impl.h"
 
 #include <sstream>
+
 #include "logger.h"
 #include "raft_exception.h"
 #include "raft_fsm.h"
 #include "raft_types.h"
-#include "storage/storage.h"
-#include "snapshot/send_task.h"
+
 #include "snapshot/apply_task.h"
+#include "snapshot/send_task.h"
+#include "storage/storage.h"
 
 namespace sharkstore {
 namespace raft {
@@ -15,16 +17,14 @@ namespace impl {
 
 static const time_t kFetchStatusIntervalSec = 3;
 
-RaftImpl::RaftImpl(const RaftServerOptions& sops, const RaftOptions& ops,
-                   const RaftContext& ctx)
+RaftImpl::RaftImpl(const RaftServerOptions& sops, const RaftOptions& ops, const RaftContext& ctx)
     : sops_(sops), ops_(ops), ctx_(ctx), fsm_(new RaftFsm(sops, ops)) {}
 
 RaftImpl::~RaftImpl() { Stop(); }
 
 Status RaftImpl::TryToLeader() {
     if (stopped_) {
-        return Status(Status::kShutdownInProgress, "raft is removed",
-                      std::to_string(ops_.id));
+        return Status(Status::kShutdownInProgress, "raft is removed", std::to_string(ops_.id));
     }
     // 发送选举消息
     MessagePtr msg(new pb::Message);
@@ -52,8 +52,7 @@ bool RaftImpl::tryPost(const std::function<void()>& f) {
 
 Status RaftImpl::Submit(std::string& cmd) {
     if (stopped_) {
-        return Status(Status::kShutdownInProgress, "raft is removed",
-                      std::to_string(ops_.id));
+        return Status(Status::kShutdownInProgress, "raft is removed", std::to_string(ops_.id));
     }
 
     if (ctx_.consensus_thread->submit(
@@ -67,8 +66,7 @@ Status RaftImpl::Submit(std::string& cmd) {
 
 Status RaftImpl::ChangeMemeber(const ConfChange& conf) {
     if (stopped_) {
-        return Status(Status::kShutdownInProgress, "raft is removed",
-                      std::to_string(ops_.id));
+        return Status(Status::kShutdownInProgress, "raft is removed", std::to_string(ops_.id));
     }
 
     std::string str;
@@ -98,27 +96,24 @@ void RaftImpl::RecvMsg(MessagePtr& msg) {
 #ifdef FBASE_RAFT_TRACE_MSG
     if (msg->type() != pb::LOCAL_TICK) {
         LOG_DEBUG("recv msg type: %s from %llu, term: %llu at term: %llu",
-                  pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(),
-                  fsm_->term_);
+                  pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(), fsm_->term_);
     } else {
-        LOG_DEBUG("recv msg type: LOCAL_TICK messages term: %llu at term: %llu",
-                  msg->term(), fsm_->term_);
+        LOG_DEBUG("recv msg type: LOCAL_TICK messages term: %llu at term: %llu", msg->term(),
+                  fsm_->term_);
     }
 #endif
     if (stopped_) return;
 
     if (!tryPost(std::bind(&RaftImpl::Step, shared_from_this(), msg))) {
         LOG_DEBUG("raft[%llu] discard a msg. type: %s from %llu, term: %llu", ops_.id,
-                  pb::MessageType_Name(msg->type()).c_str(), msg->from(),
-                  msg->term());
+                  pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term());
     }
 }
 
 void RaftImpl::Step(MessagePtr& msg) {
     if (!fsm_->Validate(msg)) {
-        LOG_DEBUG("raft[%lu] ignore invalidate msg type: %s from %llu, term: %llu",
-                  ops_.id, pb::MessageType_Name(msg->type()).c_str(), msg->from(),
-                  msg->term());
+        LOG_DEBUG("raft[%lu] ignore invalidate msg type: %s from %llu, term: %llu", ops_.id,
+                  pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term());
         return;
     }
 
@@ -154,9 +149,9 @@ void RaftImpl::sendSnapshot() {
     auto task = ready_.send_snap;
     assert(task != nullptr);
 
-    task->SetTransport(ctx_.msg_sender);
     task->SetReporter(std::bind(&RaftImpl::ReportSnapSendResult, shared_from_this(),
                                 std::placeholders::_1, std::placeholders::_2));
+    task->SetTransport(ctx_.msg_sender);
 
     SendSnapTask::Options send_opt;
     send_opt.max_size_per_msg = sops_.snapshot_options.max_size_per_msg;
@@ -168,14 +163,29 @@ void RaftImpl::sendSnapshot() {
         SnapResult result;
         result.status = s;
         ReportSnapSendResult(task->GetContext(), result);
-        task->Cancel();
     }
 }
 
 void RaftImpl::applySnapshot() {
     auto task = ready_.apply_snap;
     assert(task != nullptr);
-    // TODO:
+
+
+    task->SetReporter(std::bind(&RaftImpl::ReportSnapApplyResult, shared_from_this(),
+                                std::placeholders::_1, std::placeholders::_2));
+    task->SetTransport(ctx_.msg_sender);
+
+    ApplySnapTask::Options apply_opt;
+    // TODO: use a config
+    apply_opt.wait_data_timeout_secs = 10;
+    task->SetOptions(apply_opt);
+
+    auto s = ctx_.snapshot_manager->Dispatch(task);
+    if (!s.ok()) {
+        SnapResult result;
+        result.status = s;
+        ReportSnapApplyResult(task->GetContext(), result);
+    }
 }
 
 // 应用
@@ -185,9 +195,8 @@ void RaftImpl::apply() {
         if (e->type() == pb::ENTRY_CONF_CHANGE) {
             auto s = fsm_->applyConfChange(e);
             if (!s.ok()) {
-                throw RaftException(std::string("apply confchange[") +
-                                    std::to_string(e->index()) + "] error: " +
-                                    s.ToString());
+                throw RaftException(std::string("apply confchange[") + std::to_string(e->index()) +
+                                    "] error: " + s.ToString());
             }
             conf_changed_ = true;
         }
@@ -243,17 +252,18 @@ void RaftImpl::publish() {
     }
 }
 
-void RaftImpl::ReportSnapSendResult(const SnapContext& ctx,
-                          const SnapResult& result) {
+void RaftImpl::ReportSnapSendResult(const SnapContext& ctx, const SnapResult& result) {
     if (result.status.ok()) {
-        LOG_INFO("raft[%llu] send snapshot[uuid: %lu] to %lu finished. total "
-                 "blocks: %d, bytes: %d",
-                 ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
+        LOG_INFO(
+            "raft[%llu] send snapshot[uuid: %lu] to %lu finished. total "
+            "blocks: %d, bytes: %d",
+            ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
     } else {
-        LOG_ERROR("raft[%llu] send snapshot[uuid: %llu] to %lu failed(%s). "
-                  "sent blocks: %d, bytes: %d",
-                  ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(),
-                  result.blocks_count, result.bytes_count);
+        LOG_ERROR(
+            "raft[%llu] send snapshot[uuid: %llu] to %lu failed(%s). "
+            "sent blocks: %d, bytes: %d",
+            ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(), result.blocks_count,
+            result.bytes_count);
     }
 
     // 通知本地leader
@@ -268,11 +278,37 @@ void RaftImpl::ReportSnapSendResult(const SnapContext& ctx,
     post(std::bind(&RaftImpl::Step, shared_from_this(), resp));
 }
 
+void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result) {
+    if (result.status.ok()) {
+        LOG_INFO(
+                "raft[%llu] apply snapshot[uuid: %lu] to %lu finished. total "
+                "blocks: %d, bytes: %d",
+                ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
+    } else {
+        LOG_ERROR(
+                "raft[%llu] apply snapshot[uuid: %llu] to %lu failed(%s). "
+                "sent blocks: %d, bytes: %d",
+                ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(), result.blocks_count,
+                result.bytes_count);
+    }
+
+    // 通知本地leader
+    MessagePtr resp(new pb::Message);
+    resp->set_type(pb::LOCAL_SNAPSHOT_STATUS);
+    resp->set_to(sops_.node_id);
+    resp->set_from(ctx.from);
+    resp->set_term(ctx.term);
+    resp->set_reject(!result.status.ok());
+    resp->mutable_snapshot()->set_uuid(ctx.uuid);
+
+    post(std::bind(&RaftImpl::Step, shared_from_this(), resp));
+}
+
 void RaftImpl::smApply(const EntryPtr& e) {
     auto s = fsm_->smApply(e);
     if (!s.ok()) {
-        throw RaftException(std::string("statemachine apply entry[") +
-                            std::to_string(e->index()) + "] error: " + s.ToString());
+        throw RaftException(std::string("statemachine apply entry[") + std::to_string(e->index()) +
+                            "] error: " + s.ToString());
     }
 }
 

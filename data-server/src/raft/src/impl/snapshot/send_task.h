@@ -1,14 +1,13 @@
 _Pragma("once");
 
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <atomic>
 
 #include "raft/include/raft/snapshot.h"
 
 #include "../transport/transport.h"
 #include "task.h"
-#include "types.h"
 
 namespace sharkstore {
 namespace raft {
@@ -35,43 +34,35 @@ public:
         size_t wait_ack_timeout_secs = 0;
     };
 
-    SendSnapTask(const SnapContext& context,
-                 pb::SnapshotMeta& meta,
+    SendSnapTask(const SnapContext& context, pb::SnapshotMeta&& meta,
                  const std::shared_ptr<Snapshot>& data);
     ~SendSnapTask();
 
-    SnapContext& GetContext() const { return context_; }
-
     // 设置发送时需要的传输层接口，Dispatch前先设置
     void SetTransport(transport::Transport* trans) { transport_ = trans; }
-    // 设置发送结果汇报回调
-    void SetReporter(const SnapReporter& reporter) { reporter_ = reporter; }
     // 设置发送选项
-    void SetOptions(const Options& opt) { opt_ = opt };
+    void SetOptions(const Options& opt) { opt_ = opt; }
 
     // 收到副本的ack
     Status RecvAck(MessagePtr& msg);
 
-    void Run() override;
     void Cancel() override;
     bool IsCanceled() const { return canceled_; }
 
 private:
-    void run(SnapResult* result);
+    void run(SnapResult* result) override;
 
     // 等待副本的ack
-    Status waitAck(int64_t seq, int timeout_secs);
+    Status waitAck(int64_t seq, size_t timeout_secs);
 
     // 准备下一个数据块, msg预先分配好内存，函数内赋值
-    Status nextMsg(int64_t seq, MessagePtr& msg, bool* over);
+    Status nextMsg(int64_t seq, MessagePtr& msg, bool& over);
 
 private:
-    SnapContext context_;
-    pb::SnapshotMeta meta_; // 使用一次后即失效（被Swap）
+    pb::SnapshotMeta meta_;  // 发送完header后即失效（被Swap）
     std::shared_ptr<Snapshot> data_;
 
     transport::Transport* transport_ = nullptr;
-    SnapReporter  reporter_;
     Options opt_;
 
     int64_t ack_seq_ = 0;

@@ -1,12 +1,15 @@
 _Pragma("once");
 
+#include <atomic>
+#include "types.h"
+
 namespace sharkstore {
 namespace raft {
 namespace impl {
 
 class SnapTask {
 public:
-    SnapTask() = default;
+    explicit SnapTask(const SnapContext& ctx) : context_(ctx) {}
     virtual ~SnapTask() = default;
 
     SnapTask(const SnapTask&) = delete;
@@ -16,11 +19,28 @@ public:
     bool IsDispatched() const { return dispatched_; }
     void MarkAsDispatched() { dispatched_ = true; }
 
-    virtual void Run() = 0;
+    const SnapContext& GetContext() const { return context_; }
+
+    // 设置结果报告回调，Run之前设置
+    void SetReporter(const SnapReporter& reporter) { reporter_ = reporter; }
+
+    void Run() {
+        assert(reporter_);
+
+        SnapResult result;
+        this->run(&result);
+        reporter_(context_, result);
+    }
+
     virtual void Cancel() = 0;
 
+protected:
+    virtual void run(SnapResult *result) = 0;
+
 private:
-    bool dispatched_ = false;
+    const SnapContext context_;
+    std::atomic<bool> dispatched_ = {false};
+    SnapReporter reporter_;
 };
 
 } /* namespace impl */
