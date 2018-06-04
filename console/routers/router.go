@@ -674,6 +674,12 @@ func (r *Router)StartRouter() *gin.Engine {
 	router.POST(controllers.RANGE_BATCH_RECOVER_RANGE, func(c *gin.Context) {
 		handleAction(c, controllers.NewRangeBatchRecover())
 	})
+	router.POST(controllers.RANGE_TRANSFER, func(c *gin.Context) {
+		handleAction(c, controllers.NewRangeTransfer())
+	})
+	router.POST(controllers.RANGE_CHANGE_LEADER, func(c *gin.Context) {
+		handleAction(c, controllers.NewRangeLeaderChange())
+	})
 	router.POST(controllers.TASK_GET_PRESENT, func(c *gin.Context) {
 		handleAction(c, controllers.NewTaskPresent())
 	})

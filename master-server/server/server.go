@@ -94,7 +94,7 @@ func (service *Server) initHttpHandler() (){
 	s.Handle("/manage/range/getRangeTopo", NewHandler(service.validRequest, service.handleRangeGetRangeTopo))
 	s.Handle("/manage/range/add/peer", NewHandler(service.validRequest, service.handleRangeAddPeer))
 	s.Handle("/manage/range/del/peer", NewHandler(service.validRequest, service.handleRangeDelPeer))
-	s.Handle("/manage/range/leader/transfer", NewHandler(service.validRequest, service.handleRangeLeaderTransfer))
+	s.Handle("/manage/range/leader/change", NewHandler(service.validRequest, service.handleRangeLeaderChange))
 	s.Handle("/manage/range/task/query", NewHandler(service.validRequest, service.handleRangeTaskQuery))
 	s.Handle("/manage/range/unhealthy/recover", NewHandler(service.validRequest, service.handleUnhealthyRangeRecover))
 	s.Handle("/manage/range/rebuildRange", NewHandler(service.validRequest, service.handleRangeRecreate))
@@ -104,6 +104,8 @@ func (service *Server) initHttpHandler() (){
 	s.Handle("/manage/range/updateRange", NewHandler(service.validRequest, service.handleUnhealthyRangeUpdate))
 	s.Handle("/manage/range/updateEpoch", NewHandler(service.validRequest, service.handleUpdateRangeEpoch))
 	s.Handle("/manage/range/offlineRange", NewHandler(service.validRequest, service.handleRangeOffline))
+	s.Handle("/manage/range/transfer", NewHandler(service.validRequest, service.handleRangeTransfer))
+
 	s.Handle("/manage/task/getall", NewHandler(service.validRequest, service.handleGetAllTask))
 	s.Handle("/manage/task/delete", NewHandler(service.validRequest, service.handleDeleteTask))
 

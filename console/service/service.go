@@ -28,7 +28,7 @@ import (
 
 const (
 	//DB_NAME = "fbase_mock_console"
-	DB_NAME = "fbase"
+	DB_NAME     = "fbase"
 	LOCK_DBNAME = "lock"
 	LOCK_COLUMN = "lock_col"
 
@@ -36,14 +36,14 @@ const (
 	TABLE_NAME_CLUSTER   = "fbase_cluster"
 	TABLE_NAME_ROLE      = "fbase_role"
 	TABLE_NAME_PRIVILEGE = "fbase_privilege"
-	TABLE_NAME_LOCK_NSP = "fbase_lock_nsp"
+	TABLE_NAME_LOCK_NSP  = "fbase_lock_nsp"
 )
 
 var serviceInstance *Service = nil
 
 type Service struct {
-	config *config.Config
-	db     *sql.DB
+	config     *config.Config
+	db         *sql.DB
 	adminCache *ttlcache.TTLCache
 }
 
@@ -843,8 +843,8 @@ func (s *Service) GetRangeTopoByNodeId(clusterId, nodeId int) (interface{}, erro
 	reqParams["nodeId"] = nodeId
 
 	var getRangeTopoOfNodeResp = struct {
-		Code int    `json:"code"`
-		Msg  string `json:"message"`
+		Code int             `json:"code"`
+		Msg  string          `json:"message"`
 		Data []*models.Route `json:"data"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/node/getRangeTopo", reqParams, &getRangeTopoOfNodeResp); err != nil {
@@ -1025,8 +1025,8 @@ func (s *Service) GetTableTopologyMissing(clusterId int, dbName, tableName strin
 	reqParams["tableName"] = tableName
 
 	var topologyMResp = struct {
-		Code int    `json:"code"`
-		Msg  string `json:"message"`
+		Code int         `json:"code"`
+		Msg  string      `json:"message"`
 		Data interface{} `json:"data"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/table/topology/missing", reqParams, &topologyMResp); err != nil {
@@ -1127,8 +1127,8 @@ func (s *Service) GetRangeDuplicate(clusterId int, dbName, tableName string) (in
 	reqParams["tableName"] = tableName
 
 	var getDuplicateResp = struct {
-		Code int    `json:"code"`
-		Msg  string `json:"message"`
+		Code int         `json:"code"`
+		Msg  string      `json:"message"`
 		Data interface{} `json:"data"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/table/range/duplicate", reqParams, &getDuplicateResp); err != nil {
@@ -1159,8 +1159,8 @@ func (s *Service) GetClusterTopology(clusterId int) (interface{}, error) {
 	reqParams["s"] = sign
 
 	var getTopologyResp = struct {
-		Code int    `json:"code"`
-		Msg  string `json:"message"`
+		Code int         `json:"code"`
+		Msg  string      `json:"message"`
 		Data interface{} `json:"data"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/topology/query", reqParams, &getTopologyResp); err != nil {
@@ -1240,7 +1240,7 @@ func (s *Service) OperateDb(clusterId int, paramMap map[string]string) (int64, e
 	return rowsAffected, nil
 }
 
-func (s *Service) GetUnhealthyRanges(clusterId int, dbName, tableName string,rangeId string) (interface{}, error) {
+func (s *Service) GetUnhealthyRanges(clusterId int, dbName, tableName string, rangeId string) (interface{}, error) {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return nil, err
@@ -1493,8 +1493,8 @@ func (s *Service) GetRangeTopoByRangeId(clusterId int, rangeId int) (interface{}
 	reqParams["rangeId"] = rangeId
 
 	var getRangeTopoResp = struct {
-		Code int    `json:"code"`
-		Msg  string `json:"message"`
+		Code int           `json:"code"`
+		Msg  string        `json:"message"`
 		Data *models.Route `json:"data"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/range/getRangeTopo", reqParams, &getRangeTopoResp); err != nil {
@@ -1535,6 +1535,72 @@ func (s *Service) BatchRecoverRange(clusterId int, dbName, tableName string) err
 	if recoverRangeResp.Code != 0 {
 		log.Error("batch recover  cluster[%d] ranges failed. err:[%v]", clusterId, recoverRangeResp)
 		return fmt.Errorf(recoverRangeResp.Msg)
+	}
+	return nil
+}
+
+//迁移
+func (s *Service) TransferRange(clusterId int, rangeId int, peerId int) error {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return err
+	}
+	if info == nil {
+		return common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["rangeId"] = rangeId
+	reqParams["peerId"] = peerId
+
+	var transferRangeResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/range/transfer", reqParams, &transferRangeResp); err != nil {
+		return err
+	}
+	if transferRangeResp.Code != 0 {
+		log.Error("transfer range[%s] peer[%v] of cluster %v failed. err:[%v]", rangeId, peerId, clusterId, transferRangeResp)
+		return fmt.Errorf(transferRangeResp.Msg)
+	}
+	return nil
+}
+
+//切换主
+func (s *Service) ChangeRangeLeader(clusterId int, rangeId int, peerId int) error {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return err
+	}
+	if info == nil {
+		return common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["rangeId"] = rangeId
+	reqParams["peerId"] = peerId
+
+	var changeLeaderResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/range/leader/change", reqParams, &changeLeaderResp); err != nil {
+		return err
+	}
+	if changeLeaderResp.Code != 0 {
+		log.Error("change range[%s] leader of cluster %v to %v failed. err:[%v]", rangeId, clusterId, peerId, changeLeaderResp)
+		return fmt.Errorf(changeLeaderResp.Msg)
 	}
 	return nil
 }
@@ -1698,7 +1764,6 @@ func (s *Service) IsAdmin(userName string) (bool, error) {
 	return exist, nil
 }
 
-
 //=============lock start==============
 func (s *Service) GetAllNamespace(userName string, isAdmin bool) ([]*models.NamespaceApply, error) {
 	var sql string
@@ -1737,7 +1802,7 @@ func (s *Service) ApplyLockNamespace(cId int, namespace, applyer string, cTime i
 	}
 
 	var columns []*models.Column
-	lockColumn := &models.Column{Name: LOCK_COLUMN, DataType:1, PrimaryKey: 1, Index:true}
+	lockColumn := &models.Column{Name: LOCK_COLUMN, DataType: 1, PrimaryKey: 1, Index: true}
 	columns = append(columns, lockColumn)
 	err = s.CreateTable(cId, LOCK_DBNAME, namespace, "", "", columns, nil)
 	if err != nil {
@@ -1768,7 +1833,6 @@ func (s *Service) UpdateLockNsp(cId int, namespace, applyer string, cTime int64)
 	log.Debug("update applyer %s success of namespace %d and clusterId %d", namespace, cId, applyer)
 	return nil
 }
-
 
 func (s *Service) GetLockCluster() (*models.ClusterInfo, error) {
 	clusterId := s.config.LockClusterId
@@ -2169,8 +2233,8 @@ func InitService(c *config.Config) {
 		panic("Fail to initialize mysql")
 	}
 	serviceInstance = &Service{
-		config: c,
-		db:     db,
+		config:     c,
+		db:         db,
 		adminCache: ttlcache.NewTTLCache(2 * time.Minute),
 	}
 }
