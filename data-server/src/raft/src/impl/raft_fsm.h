@@ -89,7 +89,7 @@ private:
     void bcastAppend();
     void sendAppend(uint64_t to, Replica& pr);
     void appendEntry(const std::vector<EntryPtr>& ents);
-    std::shared_ptr<SendSnapTask> newSendSnapTask(uint64_t to);
+    std::shared_ptr<SendSnapTask> newSendSnapTask(uint64_t to, uint64_t* snap_index);
     void checkCaughtUp();
 
 private:
