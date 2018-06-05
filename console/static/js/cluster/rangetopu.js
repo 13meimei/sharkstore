@@ -293,7 +293,7 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                     dataType: "json",
                     data: {
                         "clusterId": clusterId,
-                        "rangeId": rangeLeaderRoot.leader.id,
+                        "rangeId": rangeLeaderRoot.range.id,
                     },
                     success: function (data) {
                         if (data.code === 0) {
@@ -375,11 +375,10 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                     },
                     success: function (data) {
                         if (data.code === 0) {
-                            swal("切换成功!", data.attach.message, "success");
+                            swal("切换成功!", "切换成功", "success");
                         } else {
-                            swal("切换失败", data.attach.message, "error");
+                            swal("切换失败", data.message, "error");
                         }
-
                     },
                     error: function (res) {
                         swal("切换失败", res, "error");
@@ -449,9 +448,9 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                     },
                     success: function (data) {
                         if (data.code === 0) {
-                            swal("迁移成功!", data.attach.message, "success");
+                            swal("迁移成功!", "迁移成功", "success");
                         } else {
-                            swal("迁移失败", data.attach.message, "error");
+                            swal("迁移失败", data.message, "error");
                         }
                     },
                     error: function (res) {
