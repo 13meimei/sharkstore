@@ -10,8 +10,9 @@ import (
 
 const (
 	RANGE_PEERDEL              = "/range/peerDel"
+	RANGE_PEERADD              = "/range/peerAdd"
 	RANGE_GET_UNHEALTHY_RANGES = "/range/getUnhealthyRanges"
-	RANGE_GET_UNSTABLE_RANGES = "/range/getUnstableRanges"
+	RANGE_GET_UNSTABLE_RANGES  = "/range/getUnstableRanges"
 	RANGE_GET_PEER_INFO        = "/range/getPeerInfo"
 	RANGE_GET_RANGE_INFO_BY_ID = "/range/getRangeInfoById"
 	RANGE_UPDATE_RANGE         = "/range/updateRange"
@@ -39,29 +40,45 @@ func NewPeerDelete() *PeerDelete {
 }
 
 func (ctrl *PeerDelete) Execute(c *gin.Context) (interface{}, error) {
-	//	"clusterId":clusterId,
-	//	"rangeId":rangeLeaderRoot.range.id,
-	//	"peerId": rangeLeaderRoot.leader.id,
-	//	"dbName":dbName,
-	//	"tableName":tableName,
 	clusterId := c.PostForm("clusterId")
 	rangeId := c.PostForm("rangeId")
 	peerId := c.PostForm("peerId")
-	dbName := c.PostForm("dbName")
-	tableName := c.PostForm("tableName")
-	if "" == clusterId || "" == rangeId || "" == peerId || "" == dbName || "" == tableName {
+	if "" == clusterId || "" == rangeId || "" == peerId {
 		return nil, common.PARSE_PARAM_ERROR
 	}
 
-	log.Debug("peer delete exec: clusterId: %v, rangeId: %v, peerId: %v, dbName: %v, tableName: %v",
-		clusterId, rangeId, peerId, dbName, tableName)
+	log.Debug("peer delete exec: clusterId: %v, rangeId: %v, peerId: %v", clusterId, rangeId, peerId)
 
 	clusterId_, _ := strconv.ParseUint(clusterId, 10, 64)
-	resp, err := service.NewService().DeletePeer(int(clusterId_), rangeId, peerId, dbName, tableName)
+	resp, err := service.NewService().DeletePeer(int(clusterId_), rangeId, peerId)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
+}
+
+type PeerAdd struct {
+}
+
+func NewPeerAdd() *PeerAdd {
+	return &PeerAdd{}
+}
+
+func (ctrl *PeerAdd) Execute(c *gin.Context) (interface{}, error) {
+	clusterId := c.PostForm("clusterId")
+	rangeId := c.PostForm("rangeId")
+	if "" == clusterId || "" == rangeId {
+		return nil, common.PARSE_PARAM_ERROR
+	}
+
+	log.Debug("peer add exec: clusterId: %v, rangeId: %v", clusterId, rangeId)
+
+	clusterId_, _ := strconv.ParseUint(clusterId, 10, 64)
+	err := service.NewService().AddPeer(int(clusterId_), rangeId)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 type RangeInfoView struct {

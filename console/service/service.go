@@ -756,7 +756,7 @@ func (s *Service) GetPresentTask(clusterId int) (interface{}, error) {
 	return resp.Data, nil
 }
 
-func (s *Service) DeletePeer(clusterId int, rangeId, peerId, dbName, tableName string) (interface{}, error) {
+func (s *Service) DeletePeer(clusterId int, rangeId, peerId string) (interface{}, error) {
 	if s == nil {
 		return nil, errors.New("service is nil")
 	}
@@ -776,8 +776,6 @@ func (s *Service) DeletePeer(clusterId int, rangeId, peerId, dbName, tableName s
 	reqParams["s"] = sign
 	reqParams["rangeId"] = rangeId
 	reqParams["peerId"] = peerId
-	reqParams["dbName"] = dbName
-	reqParams["tableName"] = tableName
 
 	var peerDeleteResp = struct {
 		Code int         `json:"code"`
@@ -792,6 +790,40 @@ func (s *Service) DeletePeer(clusterId int, rangeId, peerId, dbName, tableName s
 		return nil, fmt.Errorf(peerDeleteResp.Msg)
 	}
 	return peerDeleteResp.Data, nil
+}
+
+func (s *Service) AddPeer(clusterId int, rangeId string) error {
+	if s == nil {
+		return errors.New("service is nil")
+	}
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return err
+	}
+	if info == nil {
+		return common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["rangeId"] = rangeId
+
+	var peerAddResp = struct {
+		Code int         `json:"code"`
+		Msg  string      `json:"message"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/range/add/peer", reqParams, &peerAddResp); err != nil {
+		return err
+	}
+	if peerAddResp.Code != 0 {
+		log.Error("add peer failed. err:[%v]", peerAddResp)
+		return fmt.Errorf(peerAddResp.Msg)
+	}
+	return nil
 }
 
 func (s *Service) DeleteNodes(clusterId int, nodeIds string) error {

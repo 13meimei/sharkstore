@@ -966,8 +966,6 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 	}
 	event := NewAddPeerEvent(id, rng.GetId(), newPeer, "console")
 	cluster.eventDispatcher.pushEvent(event)
-	//task := newPriorityAddPeer(taskID, region, newPeer,"consle")
-	//cluster.AddTask(task)
 	log.Info("add range<%v> peer create task success", rangeId)
 }
 

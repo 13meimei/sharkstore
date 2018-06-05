@@ -683,6 +683,9 @@ func (r *Router)StartRouter() *gin.Engine {
 	router.POST(controllers.RANGE_PEERDEL, func(c *gin.Context) {
 		handleAction(c, controllers.NewPeerDelete())
 	})
+	router.POST(controllers.RANGE_PEERADD, func(c *gin.Context) {
+		handleAction(c, controllers.NewPeerAdd())
+	})
 	router.GET(controllers.RANGE_GET_UNHEALTHY_RANGES, func(c *gin.Context) {
 		handleAction(c, controllers.NewGetUnhealthyRanges())
 	})

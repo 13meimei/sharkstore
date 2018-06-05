@@ -124,7 +124,6 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
         }
     }
 
-    //---
     var dbName = $("#dbName").val();
     var tableName = $("#tableName").val();
     var clusterId = $("#clusterId").val();
@@ -142,8 +141,12 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                 rangeTree = data.data;
                 //给拓扑图view使用
                 $rootScope.rangeTreeArr = [];
-                for (var i = 0; i < rangeTree.length; i++) {
-                    $rootScope.rangeTreeArr.push(rangeTree[i]);
+                if (Array.isArray(rangeTree)) {
+                    for (var i = 0; i < rangeTree.length; i++) {
+                        $rootScope.rangeTreeArr.push(rangeTree[i]);
+                    }
+                }else {
+                    $rootScope.rangeTreeArr.push(rangeTree);
                 }
             }
         });
@@ -236,8 +239,6 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
     //leader删除分片实例
     $scope.moveInstance = function (rangeLeaderRoot) {
         var clusterId = $('#clusterId').val();
-        var dbName = $("#dbName").val();
-        var tableName = $("#tableName").val();
         swal({
                 title: "删除分片?",
                 type: "warning",
@@ -256,9 +257,7 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                     data: {
                         "clusterId": clusterId,
                         "rangeId": rangeLeaderRoot.range.id,
-                        "peerId": rangeLeaderRoot.leader.id,
-                        "dbName": dbName,
-                        "tableName": tableName,
+                        "peerId": rangeLeaderRoot.leader.id
                     },
                     success: function (data) {
                         if (data.code === 0) {
@@ -277,8 +276,6 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
     //添加副本
     $scope.addInstance = function (rangeLeaderRoot) {
         var clusterId = $('#clusterId').val();
-        var dbName = $("#dbName").val();
-        var tableName = $("#tableName").val();
         swal({
                 title: "添加副本?",
                 type: "warning",
@@ -296,16 +293,14 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                     dataType: "json",
                     data: {
                         "clusterId": clusterId,
-                        "dbName": dbName,
-                        "tableName": tableName,
                         "rangeId": rangeLeaderRoot.leader.id,
-                        "nodeId": rangeLeaderRoot.leader.node.id
                     },
                     success: function (data) {
-                        if (data.attach.code === 0) {
-                            swal("添加成功!", data.attach.message, "success");
+                        if (data.code === 0) {
+                            swal("添加成功!", "添加成功", "success");
+                            window.location.reload();
                         } else {
-                            swal("添加失败", data.attach.message, "error");
+                            swal("添加失败", data.message, "error");
                         }
                     },
                     error: function (res) {
@@ -395,8 +390,6 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
     //删除副本 moveReplicateInstance(rangeReplicate)
     $scope.moveReplicateInstance = function (rangeLeaderRoot, rangeId) {
         var clusterId = $('#clusterId').val();
-        var dbName = $("#dbName").val();
-        var tableName = $("#tableName").val();
         swal({
                 title: "删除副本?",
                 type: "warning",
@@ -415,10 +408,7 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                     data: {
                         "clusterId": clusterId,
                         "rangeId": rangeId,
-                        // "nodeId":rangeLeaderRoot.node.id,
-                        "peerId": rangeLeaderRoot.id,
-                        "dbName": dbName,
-                        "tableName": tableName,
+                        "peerId": rangeLeaderRoot.id
                     },
                     success: function (data) {
                         if (data.code === 0) {
