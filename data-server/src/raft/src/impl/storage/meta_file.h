@@ -29,7 +29,7 @@ public:
 
 private:
     constexpr static size_t kHardStateSize = 8 * 3;     // term(8) + commit(8) + vote(8)
-    constexpr static size_t kTruncateMetaSize = 8 * 3;  // index(8) + term(8)
+    constexpr static size_t kTruncateMetaSize = 8 * 2;  // index(8) + term(8)
 
 private:
     const std::string path_;

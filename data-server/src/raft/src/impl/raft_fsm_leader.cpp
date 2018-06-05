@@ -37,9 +37,7 @@ void RaftFsm::becomeLeader() {
         pending_conf_ = true;
     }
 
-    // 添加一条空日志
-    // 1) 像其他follower通知新leader
-    // 2) 尝试提交前任leader未提交的日志
+    // 添加一条空日志 尝试提交前任leader未提交的日志
     EntryPtr entry(new pb::Entry);
     entry->set_type(pb::ENTRY_NORMAL);
     entry->set_term(term_);
