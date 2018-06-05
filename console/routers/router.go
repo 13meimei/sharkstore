@@ -475,11 +475,6 @@ func (r *Router)StartRouter() *gin.Engine {
 				return
 			}
 			rId := c.Query("rangeId")
-			if rId == "" {
-				html404(c)
-				return
-			}
-
 		c.HTML(http.StatusOK, "range_unhealthy.html", gin.H{
 			"basePath" : r.staticRootDir,
 			"clusterId" : cid,

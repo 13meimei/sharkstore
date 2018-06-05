@@ -82,7 +82,7 @@ app.controller('mytables', function($rootScope, $scope, $http, $timeout) {
     };
     $scope.getAbnormalRangeView = function (table) {
         swal({
-                title: "异常range",
+                title: "异常range or 查询单个range",
                 text: "请输入一个rangeId来查询",
                 type: "input",
                 showCancelButton: true,
@@ -92,16 +92,7 @@ app.controller('mytables', function($rootScope, $scope, $http, $timeout) {
             },
             function (inputValue) {
                 if (inputValue === false) return;
-                if (inputValue === "") {
-                    swal.showInputError("你需要输入rangeId");
-                    return
-                }
-
                 var rangeId = inputValue;
-                if (rangeId == "" || rangeId == null) {
-                    swal("请输入rangeId");
-                    return
-                }
                 window.location.href = "/page/range/unhealthy?dbName=" + table.db_name + "&tableName=" + table.name + "&clusterId=" + clusterId + "&rangeId=" + rangeId;
             }
         );

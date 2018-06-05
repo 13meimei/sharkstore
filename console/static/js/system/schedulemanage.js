@@ -50,7 +50,7 @@ app.controller('myFbaseClusterInfo', function($rootScope, $scope, $http, $timeou
 
     $scope.viewRangeOpsTopN = function (space) {
         swal({
-                title: "输入查看的条数，默认top10",
+                title: "输入查看的条数，不填默认top10",
                 text: "请输入查看的条数",
                 type: "input",
                 showCancelButton: true,
