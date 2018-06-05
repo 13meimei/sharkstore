@@ -1,23 +1,23 @@
 package server
 
 import (
-	"time"
 	"fmt"
 	"sync"
+	"time"
 
-	"model/pkg/taskpb"
 	"model/pkg/metapb"
-	"util/log"
+	"model/pkg/taskpb"
 	"util/deepcopy"
+	"util/log"
 
-	"pkg-go/ds_client"
 	"errors"
+	"pkg-go/ds_client"
 )
 
 type EventType int
 
 const (
-	EVENT_TYPE_INIT          = iota //永远不要被用到
+	EVENT_TYPE_INIT = iota //永远不要被用到
 	EVENT_TYPE_ADD_PEER
 	EVENT_TYPE_DEL_PEER
 	EVENT_TYPE_CHANGE_LEADER
@@ -44,7 +44,7 @@ func ToEventTypeName(eventType EventType) string {
 type EventStatus int
 
 const (
-	EVENT_STATUS_INIT    EventStatus = iota //永远不要被用到
+	EVENT_STATUS_INIT EventStatus = iota //永远不要被用到
 	EVENT_STATUS_CREATE
 	EVENT_STATUS_DEALING
 	EVENT_STATUS_FINISH
@@ -87,7 +87,7 @@ type RangeEvent interface {
 
 	事件的执行时间需要快速完成，否则会阻塞心跳，事件执行时间过长会导致别的事件无法执行
 
- 	*/
+	*/
 	Execute(cluster *Cluster, r *Range) (ExecNextEvent, *taskpb.Task, error)
 	GetStatus() EventStatus
 	IsClosed() bool
@@ -203,13 +203,13 @@ func NewAddPeerEvent(id, rangeId uint64, p *metapb.Peer, creator string) *AddPee
 		},
 	}
 
-	return &AddPeerEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_CHANGE_LEADER, DefaultAddPeerTimeout, creator, t)}
+	return &AddPeerEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_ADD_PEER, DefaultAddPeerTimeout, creator, t)}
 }
 
 func (e *AddPeerEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *taskpb.Task, error) {
 	/**
 	不在锁里嵌套
-	 */
+	*/
 	if e.GetStatus() == EVENT_STATUS_FINISH {
 		if next := e.Next(); next != nil {
 			return next.Execute(cluster, r)
@@ -230,22 +230,22 @@ func (e *AddPeerEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *task
 	e.end = time.Now()
 	switch e.GetStatus() {
 	case EVENT_STATUS_CREATE:
-		//创建副本
-		err := prepareAddPeer(cluster, r, e.task.GetRangeAddPeer().GetPeer())
-		if err != nil {
-			log.Warn("range remote create peer failed, err[%v]", err)
-			e.status = EVENT_STATUS_FAILURE
-			return false, nil, err
-		}
-		e.status = EVENT_STATUS_DEALING
-		//把添加peer的任务下发给leader 等待心跳上报，peer是否添加成功
-		return false, e.task, nil
-	case EVENT_STATUS_DEALING:
 		//添加成员还没有成功，再下发一次给leader,可能重复下发，DS需要防止重复
 		if r.GetPeer(e.task.GetRangeAddPeer().GetPeer().GetId()) == nil {
 			e.retryTimes += 1
 			return false, e.task, nil
 		}
+		//创建副本
+		err := prepareAddPeer(cluster, r, e.task.GetRangeAddPeer().GetPeer())
+		if err != nil {
+			log.Warn("range remote create peer failed, err[%v]", err)
+			e.status = EVENT_STATUS_FAILURE
+			return true, nil, err
+		}
+		e.status = EVENT_STATUS_DEALING
+		//把添加peer的任务下发给leader 等待心跳上报，peer是否添加成功
+		return false, nil, nil
+	case EVENT_STATUS_DEALING:
 		//还在同步数据，就再等等
 		if r.GetPendingPeer(e.task.GetRangeAddPeer().GetPeer().GetId()) != nil {
 			return false, nil, errors.New(fmt.Sprintf("wating for pending"))
@@ -256,7 +256,6 @@ func (e *AddPeerEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *task
 		log.Warn("AddPeerEvent: unknown status %v, ", ToEventStatusName(e.GetStatus()))
 		return false, nil, errors.New(fmt.Sprintf("AddPeerEvent err status %s", ToEventStatusName(e.GetStatus())))
 	}
-
 }
 
 type DelPeerEvent struct {
@@ -272,13 +271,13 @@ func NewDelPeerEvent(id, rangeId uint64, p *metapb.Peer, creator string) *DelPee
 			Peer: p,
 		},
 	}
-	return &DelPeerEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_DEL_PEER, DefaultDelPeerTimeout, creator, t),}
+	return &DelPeerEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_DEL_PEER, DefaultDelPeerTimeout, creator, t)}
 }
 
 func (e *DelPeerEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *taskpb.Task, error) {
 	/**
 	不在锁里嵌套
-	 */
+	*/
 	if e.GetStatus() == EVENT_STATUS_FINISH {
 		if next := e.Next(); next != nil {
 			return next.Execute(cluster, r)
@@ -336,13 +335,13 @@ func NewTryChangeLeaderEvent(id, rangeId uint64, preLeader, expLeader *metapb.Pe
 		},
 	}
 	return &TryChangeLeaderEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_CHANGE_LEADER, DefaultChangeLeaderTimeout, creator, t),
-		preLeader: preLeader, expLeader: expLeader,}
+		preLeader: preLeader, expLeader: expLeader}
 }
 
 func (e *TryChangeLeaderEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *taskpb.Task, error) {
 	/**
 	不在锁里嵌套
-	 */
+	*/
 	if e.GetStatus() == EVENT_STATUS_FINISH {
 		if next := e.Next(); next != nil {
 			return next.Execute(cluster, r)
@@ -403,7 +402,7 @@ type DelRangeEvent struct {
 func (e *DelRangeEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *taskpb.Task, error) {
 	/**
 	不在锁里嵌套
-	 */
+	*/
 	if e.GetStatus() == EVENT_STATUS_FINISH {
 		if next := e.Next(); next != nil {
 			return next.Execute(cluster, r)
@@ -457,7 +456,7 @@ func (e *DelRangeEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *tas
 }
 
 func NewDelRangeEvent(id, rangeId uint64, creator string) *DelRangeEvent {
-	return &DelRangeEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_DEL_RANGE, DefaultDelPeerTimeout, creator, nil),}
+	return &DelRangeEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_DEL_RANGE, DefaultDelPeerTimeout, creator, nil)}
 }
 
 func prepareAddPeer(cluster *Cluster, r *Range, peer *metapb.Peer) error {
