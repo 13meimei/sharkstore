@@ -1605,6 +1605,38 @@ func (s *Service) ChangeRangeLeader(clusterId int, rangeId int, peerId int) erro
 	return nil
 }
 
+func (s *Service) GetRangeOpsTopN(clusterId int, topN int) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["topN"] = topN
+
+	var getTopNResp = struct {
+		Code int         `json:"code"`
+		Msg  string      `json:"message"`
+		Data interface{} `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/range/getOpsTopN", reqParams, &getTopNResp); err != nil {
+		return nil, err
+	}
+	if getTopNResp.Code != 0 {
+		log.Error("get cluster %d range ops topN %v failed. err:[%v]", clusterId, topN, getTopNResp)
+		return nil, fmt.Errorf(getTopNResp.Msg)
+	}
+	return getTopNResp.Data, nil
+}
+
 func (s *Service) GetPrivilegeInfo(offset, limit int, order string) ([]*models.UserPrivilege, error) {
 	result := make([]*models.UserPrivilege, offset, limit)
 	rows, err := s.db.Query(fmt.Sprintf(`SELECT * FROM %s order by user_name %s limit %d,%d  `, TABLE_NAME_PRIVILEGE, order, offset, limit))

@@ -22,6 +22,7 @@ const (
 	RANGE_BATCH_RECOVER_RANGE  = "/range/batchRecoverRange"
 	RANGE_TRANSFER             = "/range/transfer"
 	RANGE_CHANGE_LEADER        = "/range/changeLeader"
+	RANGE_OPS_TOPN             = "/range/getOpsTopN"
 
 	RANGE_DUPLICATE_GET = "/table/duplicateRange"
 
@@ -548,4 +549,35 @@ func (ctrl *RangeLeaderChange) Execute(c *gin.Context) (interface{}, error) {
 		return nil, err
 	}
 	return nil, nil
+}
+
+//range opt topN
+type RangeOpsTopN struct {
+}
+
+func NewRangeOpsTopN() *RangeOpsTopN {
+	return &RangeOpsTopN{}
+}
+
+func (ctrl *RangeOpsTopN) Execute(c *gin.Context) (interface{}, error) {
+	clusterId := c.Query("clusterId")
+	topN := c.Query("topN")
+
+	if "" == clusterId || "" == topN {
+		return nil, common.PARSE_PARAM_ERROR
+	}
+
+	log.Debug("query cluster range topN: clusterId %v, topN %v", clusterId, topN)
+
+	cId, err := strconv.Atoi(clusterId)
+	if err != nil {
+		return nil, common.PARAM_FORMAT_ERROR
+	}
+
+	tN, err := strconv.Atoi(topN)
+	if err != nil {
+		return nil, common.PARAM_FORMAT_ERROR
+	}
+
+	return service.NewService().GetRangeOpsTopN(cId, tN)
 }

@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"encoding/base64"
 	"sync"
+	"container/heap"
 )
 
 var (
@@ -1923,7 +1924,7 @@ func (service *Server) handleRangeTransfer(w http.ResponseWriter, r *http.Reques
 		reply.Message = http_error_range_find
 		return
 	}
-	oldPeer:= rng.GetPeer(peerId)
+	oldPeer := rng.GetPeer(peerId)
 	if oldPeer == nil {
 		log.Error("http range peer transfer: peer [%d] is not the region[%v] replica", peerId, rng.GetId())
 		reply.Code = -1
@@ -1968,6 +1969,59 @@ func (service *Server) handleRangeTransfer(w http.ResponseWriter, r *http.Reques
 	}
 	cluster.eventDispatcher.pushEvent(NewChangePeerEvent(taskID, rng, oldPeer, newPeer, "console range transfer"))
 	log.Info("to transfer range[%s] peer success", rng.SString())
+	return
+}
+
+func (service *Server) handleRangeTopNQuery(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+	topN, err := strconv.Atoi(r.FormValue("topN"))
+	if err != nil || topN == 0 {
+		log.Error("http range topn query: %s", http_error_parameter_not_enough)
+		reply.Code = HTTP_ERROR_PARAMETER_NOT_ENOUGH
+		reply.Message = http_error_parameter_not_enough
+		return
+	}
+	cluster := service.cluster
+	h := &http_reply.RangeStatHeap{}
+	for _, r := range cluster.GetAllRanges() {
+		if r.opsStat.GetMax() == 0 {
+			continue
+		}
+
+		leader := r.GetLeader()
+		if leader == nil {
+			continue
+		}
+		var nodeAddr string
+		node := cluster.FindNodeById(leader.GetNodeId())
+		if node != nil {
+			nodeAddr = node.GetServerAddr()
+		}
+		statInfo := http_reply.RangeStatsInfo{
+			RangeId:      r.GetId(),
+			LeaderId:     leader.GetId(),
+			NodeAddr:     nodeAddr,
+			TableId:	  r.GetTableId(),
+			BytesWritten: r.BytesWritten,
+			BytesRead:    r.BytesRead,
+			KeysWritten:  r.KeysWritten,
+			KeysRead:     r.KeysRead,
+			WriteOps:     r.opsStat.GetMax(),
+		}
+		heap.Push(h, statInfo)
+	}
+
+	if topN > h.Len() {
+		topN = h.Len()
+	}
+
+	var result []http_reply.RangeStatsInfo
+	for i := 0; i < topN; i++ {
+		result = append(result, heap.Pop(h).(http_reply.RangeStatsInfo))
+	}
+	reply.Data = result
+	log.Debug("query cluster range topN %v success", topN)
 	return
 }
 

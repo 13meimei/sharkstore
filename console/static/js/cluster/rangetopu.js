@@ -379,7 +379,7 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                         "peerId": rangeLeaderRoot.id
                     },
                     success: function (data) {
-                        if (data.attach.code === 0) {
+                        if (data.code === 0) {
                             swal("切换成功!", data.attach.message, "success");
                         } else {
                             swal("切换失败", data.attach.message, "error");
@@ -458,7 +458,7 @@ app.controller('rangeTopoCtrl', ['$rootScope', '$scope', '$http', '$timeout', fu
                         "peerId": rangeLeaderRoot.id
                     },
                     success: function (data) {
-                        if (data.attach.code === 0) {
+                        if (data.code === 0) {
                             swal("迁移成功!", data.attach.message, "success");
                         } else {
                             swal("迁移失败", data.attach.message, "error");
