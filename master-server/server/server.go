@@ -100,6 +100,7 @@ func (service *Server) initHttpHandler() (){
 	s.Handle("/manage/range/rebuildRange", NewHandler(service.validRequest, service.handleRangeRecreate))
 	s.Handle("/manage/range/replaceRange", NewHandler(service.validRequest, service.handleRangeRecreate))
 	s.Handle("/manage/range/unhealthy/query", NewHandler(service.validRequest, service.handleUnhealthyRangeQuery))
+	s.Handle("/manage/range/unstable/query", NewHandler(service.validRequest, service.handleUnstableRangeQuery))
 	s.Handle("/manage/range/getPeerInfo", NewHandler(service.validRequest, service.handlePeerInfoQuery))
 	s.Handle("/manage/range/updateRange", NewHandler(service.validRequest, service.handleUnhealthyRangeUpdate))
 	s.Handle("/manage/range/updateEpoch", NewHandler(service.validRequest, service.handleUpdateRangeEpoch))

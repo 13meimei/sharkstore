@@ -157,7 +157,7 @@ type PeerBrief struct {
 	EndKey      string `json:"end_key,omitempty"`
 	NodeId      uint64 `json:"node_id,omitempty"`
 	NodeAddress string `json:"node_address,omitempty"`
-	nodeState   int32  `json:"node_state,omitempty"`
+	NodeState   int32  `json:"node_state,omitempty"`
 }
 
 type PeerBriefReply struct {

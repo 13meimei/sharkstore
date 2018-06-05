@@ -1,30 +1,30 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"strings"
 	"crypto/md5"
 	"time"
 	"bytes"
+	"sync"
+	"sort"
+	"io/ioutil"
+	"encoding/base64"
+	"encoding/json"
+	"container/heap"
 
-	"model/pkg/metapb"
 	"util/log"
 	"util/server"
 	"util/deepcopy"
 	"util"
+	"model/pkg/metapb"
 	"model/pkg/taskpb"
 	"master-server/http_reply"
-	"sort"
-	"net/http/httptest"
-	"io/ioutil"
-	"net/url"
-	"encoding/base64"
-	"sync"
-	"container/heap"
 )
 
 var (
@@ -2294,23 +2294,12 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 		return
 	}
 
-	type RangeBrief struct {
-		Id         uint64   `json:"id,omitempty"`
-		StartKey   string   `json:"start_key,omitempty"`
-		EndKey     string   `json:"end_key,omitempty"`
-		State      int32    `json:"state,omitempty"`
-		LastHbTime string   `json:"last_hb_time,omitempty"`
-		DownPeers  []uint64 `json:"down_peers,omitempty"`
-		Peers      []uint64 `json:"peers,omitempty"`
-		Leader     uint64   `json:"leader,omitempty"`
-	}
-
-	var result []*RangeBrief
+	var result []*http_reply.RangeBrief
 	for _, r := range cluster.GetAllUnhealthyRanges() {
 		if r.GetTableId() == table.GetId() && r.State == metapb.RangeState_R_Abnormal {
 			rCopy := deepcopy.Iface(r.Range).(*metapb.Range)
 
-			rng := &RangeBrief{
+			rng := &http_reply.RangeBrief{
 				Id:         rCopy.GetId(),
 				StartKey:   fmt.Sprintf("%v", rCopy.StartKey),
 				EndKey:     fmt.Sprintf("%v", rCopy.EndKey),
@@ -2348,7 +2337,7 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 		if r != nil && r.GetTableId() == table.GetId() {
 			rCopy := deepcopy.Iface(r.Range).(*metapb.Range)
 
-			rng := &RangeBrief{
+			rng := &http_reply.RangeBrief{
 				Id:         rCopy.GetId(),
 				StartKey:   fmt.Sprintf("%v", rCopy.StartKey),
 				EndKey:     fmt.Sprintf("%v", rCopy.EndKey),
@@ -2381,6 +2370,70 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 
 	}
 
+	reply.Data = result
+	return
+}
+
+func (service *Server) handleUnstableRangeQuery(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+	dbName := r.FormValue(HTTP_DB_NAME)
+	tName := r.FormValue(HTTP_TABLE_NAME)
+
+	log.Info("handleUnstableRangeQuery: dbname[%v] tablename[%v] ", dbName, tName)
+	cluster := service.cluster
+	db, find := cluster.FindDatabase(dbName)
+	if !find {
+		reply.Code = HTTP_ERROR
+		reply.Message = ErrNotExistTable.Error()
+		return
+	}
+	table, find := db.FindTable(tName)
+	if !find {
+		reply.Code = HTTP_ERROR
+		reply.Message = ErrNotExistTable.Error()
+		return
+	}
+	if table.Status != metapb.TableStatus_TableRunning {
+		reply.Code = HTTP_ERROR
+		reply.Message = fmt.Sprintf("table <%v> is not running", table.GetName())
+		return
+	}
+
+	var result []*http_reply.RangeBrief
+	for _, r := range cluster.GetAllUnstableRanges() {
+		if r.GetTableId() == table.GetId() {
+			rCopy := deepcopy.Iface(r.Range).(*metapb.Range)
+
+			rng := &http_reply.RangeBrief{
+				Id:         rCopy.GetId(),
+				StartKey:   fmt.Sprintf("%v", rCopy.StartKey),
+				EndKey:     fmt.Sprintf("%v", rCopy.EndKey),
+				State:      int32(r.State),
+				LastHbTime: r.LastHbTimeTS.Format("2006-01-02 15:04:05"),
+			}
+
+			var peers []uint64
+			for _, peer := range r.GetPeers() {
+				peers = append(peers, peer.GetId())
+			}
+			rng.Peers = peers
+
+			if len(r.GetDownPeers()) != 0 {
+				var downPeers []uint64
+				for _, downPeer := range r.GetDownPeers() {
+					downPeers = append(downPeers, downPeer.GetId())
+				}
+				rng.DownPeers = downPeers
+			}
+
+			if r.Leader != nil {
+				rng.Leader = r.Leader.GetId()
+			}
+
+			result = append(result, rng)
+		}
+	}
 	reply.Data = result
 	return
 }

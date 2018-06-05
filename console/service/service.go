@@ -1274,6 +1274,40 @@ func (s *Service) GetUnhealthyRanges(clusterId int, dbName, tableName string, ra
 	return getAbnormalRangesResp.Data, nil
 }
 
+func (s *Service) GetUnstableRanges(clusterId int, dbName, tableName string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["dbName"] = dbName
+	reqParams["tableName"] = tableName
+
+	var getUnstableRangesResp = struct {
+		Code int                  `json:"code"`
+		Msg  string               `json:"message"`
+		Data []*models.RangeBrief `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/range/unstable/query", reqParams, &getUnstableRangesResp); err != nil {
+		return nil, err
+	}
+	if getUnstableRangesResp.Code != 0 {
+		log.Error("get cluster[%d] db[%s] table[%s] unstable ranges failed. err:[%v]", clusterId, dbName, tableName, getUnstableRangesResp)
+		return nil, fmt.Errorf(getUnstableRangesResp.Msg)
+	}
+	return getUnstableRangesResp.Data, nil
+}
+
+
 func (s *Service) GetPeerInfo(clusterId int, dbName, tableName string, rangeId int) (interface{}, error) {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 const (
 	RANGE_PEERDEL              = "/range/peerDel"
 	RANGE_GET_UNHEALTHY_RANGES = "/range/getUnhealthyRanges"
+	RANGE_GET_UNSTABLE_RANGES = "/range/getUnstableRanges"
 	RANGE_GET_PEER_INFO        = "/range/getPeerInfo"
 	RANGE_GET_RANGE_INFO_BY_ID = "/range/getRangeInfoById"
 	RANGE_UPDATE_RANGE         = "/range/updateRange"
@@ -150,6 +151,35 @@ func (ctrl *GetUnhealthyRanges) Execute(c *gin.Context) (interface{}, error) {
 	}
 
 	resp, err := service.NewService().GetUnhealthyRanges(cId, dbName, tableName, rangeId)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+type GetUnstableRanges struct {
+}
+
+func NewGetUnstableRanges() *GetUnstableRanges {
+	return &GetUnstableRanges{}
+}
+
+func (ctrl *GetUnstableRanges) Execute(c *gin.Context) (interface{}, error) {
+	clusterId := c.Query("clusterId")
+	dbName := c.Query("dbName")
+	tableName := c.Query("tableName")
+	if "" == clusterId || "" == dbName || "" == tableName {
+		return nil, common.PARSE_PARAM_ERROR
+	}
+
+	log.Debug("query unstable ranges: clusterId: %v, dbName: %v, tableName: %v", clusterId, dbName, tableName)
+
+	cId, err := strconv.Atoi(clusterId)
+	if err != nil {
+		return nil, common.PARAM_FORMAT_ERROR
+	}
+
+	resp, err := service.NewService().GetUnstableRanges(cId, dbName, tableName)
 	if err != nil {
 		return nil, err
 	}

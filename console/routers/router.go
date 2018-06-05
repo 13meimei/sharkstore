@@ -484,6 +484,30 @@ func (r *Router)StartRouter() *gin.Engine {
 		})
 	})
 
+	group.GET("/page/range/unstable", func(c *gin.Context) {
+		cid := c.Query("clusterId")
+		if cid == "" {
+			html404(c)
+			return
+		}
+		dbName := c.Query("dbName")
+		if dbName == "" {
+			html404(c)
+			return
+		}
+		tableName := c.Query("tableName")
+		if tableName == "" {
+			html404(c)
+			return
+		}
+		c.HTML(http.StatusOK, "range_unstable.html", gin.H{
+			"basePath" : r.staticRootDir,
+			"clusterId" : cid,
+			"tableName" : tableName,
+			"dbName" : dbName,
+		})
+	})
+
 	group.GET("/page/range/peerinfo", func(c *gin.Context) {
 		cid := c.Query("clusterId")
 		if cid == "" {
@@ -505,13 +529,14 @@ func (r *Router)StartRouter() *gin.Engine {
 			html404(c)
 			return
 		}
-
+		flag := c.Query("flag")
 		c.HTML(http.StatusOK, "range_peerinfo.html", gin.H{
 			"basePath" : r.staticRootDir,
 			"clusterId" : cid,
 			"tableName" : tableName,
 			"dbName" : dbName,
 			"rangeId" : rangeId,
+			"flag" : flag,
 		})
 	})
 
@@ -660,6 +685,9 @@ func (r *Router)StartRouter() *gin.Engine {
 	})
 	router.GET(controllers.RANGE_GET_UNHEALTHY_RANGES, func(c *gin.Context) {
 		handleAction(c, controllers.NewGetUnhealthyRanges())
+	})
+	router.GET(controllers.RANGE_GET_UNSTABLE_RANGES, func(c *gin.Context) {
+		handleAction(c, controllers.NewGetUnstableRanges())
 	})
 	router.GET(controllers.RANGE_GET_RANGE_INFO_BY_ID, func(c *gin.Context) {
 		handleAction(c, controllers.NewRangeInfoView())

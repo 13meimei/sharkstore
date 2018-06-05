@@ -57,6 +57,8 @@ type Cluster struct {
 
 	//心跳不健康的range记录[不是实时的，不落盘]
 	unhealthyRanges *ttlcache.TTLCache
+	//副本数不满足要求的range记录[不是实时的，不落盘]
+	unstableRanges *ttlcache.TTLCache
 
 	//落盘，切换leader时，load
 	preGCRanges *GlobalPreGCRange
@@ -98,6 +100,7 @@ func NewCluster(clusterId, nodeId uint64, store Store, opt *scheduleOption) *Clu
 		workingTables:   NewGlobalTableCache(),
 		deletingTables:  NewGlobalTableCache(),
 		unhealthyRanges: ttlcache.NewTTLCache(2 * time.Second * 60),
+		unstableRanges:  ttlcache.NewTTLCache(2 * time.Second * 60),
 		preGCRanges:     NewGlobalPreGCRange(),
 		deletedRanges:   NewGlobalDeletedRange(),
 		idGener:         NewClusterIDGenerator(store),
@@ -247,6 +250,14 @@ func (c *Cluster) FindDeleteTableById(tableId uint64) (*Table, bool) {
 func (c *Cluster) GetAllUnhealthyRanges() []*Range {
 	var ranges []*Range
 	for _, r := range c.unhealthyRanges.GetAll() {
+		ranges = append(ranges, r.(*Range))
+	}
+	return ranges
+}
+
+func (c *Cluster) GetAllUnstableRanges() []*Range {
+	var ranges []*Range
+	for _, r := range c.unstableRanges.GetAll() {
 		ranges = append(ranges, r.(*Range))
 	}
 	return ranges
