@@ -1007,7 +1007,7 @@ func (service *Server) handleRangeDelPeer(w http.ResponseWriter, r *http.Request
 		reply.Message = err.Error()
 		return
 	}
-	event := cluster.hbManager.createDelPeerEvent(id, rng, peer, "console")
+	event := cluster.hbManager.createDelPeerEvent(id,rng,peer,"console")
 	cluster.eventDispatcher.pushEvent(event)
 	log.Info("del range<%v> peer<%v> create task success", rangeId, peerId)
 }
