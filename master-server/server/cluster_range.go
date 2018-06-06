@@ -1,11 +1,12 @@
 package server
 
 import (
+	"fmt"
 	"util/log"
+	"util/deepcopy"
 	"model/pkg/metapb"
 	"model/pkg/mspb"
-	"fmt"
-	"util/deepcopy"
+	"master-server/http_reply"
 )
 
 func (c *Cluster) createRangeRemote(r *metapb.Range) error {
@@ -108,6 +109,18 @@ func (c *Cluster) GetTableAllRanges(tableId uint64) []*Range {
 	return c.ranges.GetTableAllRanges(tableId)
 }
 
+func (c *Cluster) GetNodeRangeStatByTable(tableId uint64) map[uint64]int  {
+	rngStat := make(map[uint64]int, 0)
+	tRanges := c.GetTableAllRanges(tableId)
+	for _, r := range tRanges {
+		rPeers := r.GetPeers()
+		for _, p := range rPeers {
+			rngStat[p.GetNodeId()] = rngStat[p.GetNodeId()] + 1
+		}
+	}
+	return rngStat
+}
+
 func (c *Cluster) getLeaderNode(r *Range) *Node {
 	return c.FindNodeById(r.GetLeader().GetNodeId())
 }
@@ -142,23 +155,12 @@ func (c *Cluster) updateStatus(region *Range, stats *mspb.RangeStats) {
 
 
 func (c *Cluster) queryPeerRemote(r *metapb.Range) interface{} {
-	type PeerBrief struct {
-		Id 		   uint64 		`json:"id,omitempty"`
-		Index      uint64  		`json:"index,omitempty"`
-		Term 	   uint64  		`json:"term,omitempty"`
-		Commit     uint64       `json:"commit,omitempty"`
-		StartKey   string       `json:"start_key,omitempty"`
-		EndKey     string       `json:"end_key,omitempty"`
-		NodeId      uint64      `json:"node_id,omitempty"`
-		NodeAddress     string  `json:"node_address,omitempty"`
-		nodeState     int32     `json:"node_state,omitempty"`
-	}
-	var result []*PeerBrief
+	var result []*http_reply.PeerBrief
 	peerLen := len(r.GetPeers())
-	resultChannel := make(chan *PeerBrief, peerLen)
+	resultChannel := make(chan *http_reply.PeerBrief, peerLen)
 	for _, p := range r.GetPeers() {
 		go func(p *metapb.Peer) {
-			peerInfo := &PeerBrief{Id: p.GetId()}
+			peerInfo := &http_reply.PeerBrief{Id: p.GetId()}
 			node := c.FindNodeById(p.GetNodeId())
 			if node == nil {
 				resultChannel <- peerInfo
@@ -166,7 +168,7 @@ func (c *Cluster) queryPeerRemote(r *metapb.Range) interface{} {
 			}
 			peerInfo.NodeId = node.GetId()
 			peerInfo.NodeAddress = node.GetServerAddr()
-			peerInfo.nodeState = int32(node.GetState())
+			peerInfo.NodeState = int32(node.GetState())
 			var i int
 			for i = 0; i < 3; i++ {
 				resp, err := c.cli.GetPeerInfo(node.GetServerAddr(), r.GetId())

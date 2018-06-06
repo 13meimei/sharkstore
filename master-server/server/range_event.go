@@ -203,7 +203,7 @@ func NewAddPeerEvent(id, rangeId uint64, p *metapb.Peer, creator string) *AddPee
 		},
 	}
 
-	return &AddPeerEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_CHANGE_LEADER, DefaultAddPeerTimeout, creator, t)}
+	return &AddPeerEvent{RangeEventMeta: NewRangeEvent(id, rangeId, EVENT_TYPE_ADD_PEER, DefaultAddPeerTimeout, creator, t)}
 }
 
 func (e *AddPeerEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *taskpb.Task, error) {
