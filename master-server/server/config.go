@@ -115,6 +115,8 @@ type Config struct {
 	Metric   MetricConfig `toml:"metric,omitempty" json:"metric"`
 	Schedule ScheduleConfig `toml:"schedule,omitempty" json:"schedule"`
 	Replication ReplicationConfig `toml:"replication,omitempty" json:"replication"`
+
+	AlarmConfig AlarmConfig`toml:"alarm,omitempty" json:"alarm"`
 }
 
 func NewDefaultConfig() *Config {
@@ -205,6 +207,18 @@ type ClusterPeer struct {
 type ClusterConfig struct {
 	ClusterID     uint64     `toml:"cluster-id,omitempty" json:"cluster-id"`
 	Peers         []*ClusterPeer `toml:"peer,omitempty" json:"peer"`
+}
+
+type AlarmReceiver struct {
+	Mail string	`toml:"mail,omitempty" json:"mail"`
+	Sms string 	`toml:"sms,omitempty" json:"sms"`
+}
+
+type AlarmConfig struct {
+	ServerAddress string  			`toml:"server-address" json:"server-address"`
+	ServerPort int   				`toml:"server-port,omitempty" json:"port"`
+	MessageGatewayAddress string	`toml:"message-gateway-address,omitempty" json:"message-gateway-address"`
+	Receivers []*AlarmReceiver		`toml:"receivers,omitempty" json:"receivers"`
 }
 
 func (c *ClusterConfig) adjust() error {
