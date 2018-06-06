@@ -73,9 +73,9 @@ func (wm *WorkerManager) Run() {
 	wm.addWorker(NewCreateTableWorker(wm, time.Second))
 	wm.addWorker(NewRangeHbCheckWorker(wm, 2 * time.Minute))
 
-	wm.addWorker(NewBalanceNodeLeaderWorker(wm, 10 * defaultWorkerInterval))
-	wm.addWorker(NewBalanceNodeRangeWorker(wm, 10 * defaultWorkerInterval))
-	wm.addWorker(NewBalanceNodeOpsWorker(wm, 30 * defaultWorkerInterval))
+	wm.addWorker(NewBalanceNodeLeaderWorker(wm, 5 * defaultWorkerInterval))
+	wm.addWorker(NewBalanceNodeRangeWorker(wm, 2 * defaultWorkerInterval))
+	wm.addWorker(NewBalanceNodeOpsWorker(wm, defaultWorkerInterval))
 }
 
 func (wm *WorkerManager) Stop() {
@@ -105,10 +105,15 @@ func (wm *WorkerManager) runWorker(w Worker) {
 	defer timer.Stop()
 
 	for {
+		if !wm.isExistWorker(w.GetName()) {
+			return
+		}
+
 		select {
 		case <-wm.ctx.Done():
 			return
 		case <-timer.C:
+			log.Debug("add worker %s", w.GetName())
 			timer.Reset(w.GetInterval())
 		    if !w.AllowWork(wm.cluster) {
 		    	log.Debug("worker cannot exec, %v", w.GetName())
@@ -118,6 +123,15 @@ func (wm *WorkerManager) runWorker(w Worker) {
 		}
 	}
 }
+
+func (wm *WorkerManager) isExistWorker(name string) bool {
+	wm.lock.RLock()
+	defer wm.lock.RUnlock()
+
+	_, ok := wm.workers[name]
+	return ok
+}
+
 
 func (wm *WorkerManager) removeWorker(name string) error {
 	wm.lock.Lock()

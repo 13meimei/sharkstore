@@ -25,7 +25,7 @@ type hb_range_manager struct {
 }
 
 func NewHBRangeManager(cluster *Cluster) *hb_range_manager {
-	dealIngNodes := newIDCache(time.Second*3, 3*time.Second)
+	dealIngNodes := newIDCache(time.Second, 10 * time.Second)
 	return &hb_range_manager{cluster: cluster, dealIngNodes: dealIngNodes,}
 }
 
