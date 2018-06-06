@@ -717,7 +717,7 @@ func (r *Router)StartRouter() *gin.Engine {
 	router.POST(controllers.RANGE_CHANGE_LEADER, func(c *gin.Context) {
 		handleAction(c, controllers.NewRangeLeaderChange())
 	})
-	router.POST(controllers.RANGE_OPS_TOPN, func(c *gin.Context) {
+	router.GET(controllers.RANGE_OPS_TOPN, func(c *gin.Context) {
 		handleAction(c, controllers.NewRangeOpsTopN())
 	})
 	router.POST(controllers.TASK_GET_PRESENT, func(c *gin.Context) {
