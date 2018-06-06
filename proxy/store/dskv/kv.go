@@ -381,6 +381,8 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 		if notLeader.GetLeader() == nil {
 			err = bo.Backoff(boRangeMiss, fmt.Errorf("no leader: %v, range: %d", notLeader, ctx.VID.Id))
 			if err != nil {
+				//可能gateway没有拿到最新的拓扑
+				p.RangeCache.DropRegion(ctx.VID)
 				return false, err
 			}
 		} else {
