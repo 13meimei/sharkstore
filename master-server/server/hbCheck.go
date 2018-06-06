@@ -93,6 +93,10 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 						table.GetId(), r.GetId(), leaderNodeID, r.GetDownPeers())
 
 					//TODO: alarm
+				} else {
+					if len(r.Peers) != cluster.opt.GetMaxReplicas() || len(r.DownPeers) > 0 {
+						cluster.unstableRanges.Put(r.GetId(), r)
+					}
 				}
 			}
 		}
@@ -129,19 +133,4 @@ func retrieveNode(cluster *Cluster, r *Range) []uint64 {
 		}
 	}
 	return nodeIds
-}
-
-func compPeerAva(cluster *Cluster, r *Range) ([]*metapb.Peer, []*metapb.Peer) {
-	var peerAble []*metapb.Peer
-	var peerUnAble []*metapb.Peer
-	for _, p := range r.GetPeers() {
-		node := cluster.FindNodeById(p.GetNodeId())
-		//检查peer的状态
-		if node == nil || !node.IsLogin() {
-			peerUnAble = append(peerUnAble, p)
-		} else {
-			peerAble = append(peerAble, p)
-		}
-	}
-	return peerAble, peerUnAble
 }
