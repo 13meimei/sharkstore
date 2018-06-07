@@ -360,86 +360,131 @@ func (r *Router)StartRouter() *gin.Engine {
 			return
 		}
 
-		c.HTML(http.StatusOK, "db_consoleview.html", gin.H{
-			"basePath" : r.staticRootDir,
-			"clusterId" : cid,
-			"dbName" : dbName,
-			"dbId" : dbId,
+			c.HTML(http.StatusOK, "db_consoleview.html", gin.H{
+				"basePath":  r.staticRootDir,
+				"clusterId": cid,
+				"dbName":    dbName,
+				"dbId":      dbId,
+			})
 		})
-	})
 
-	group.GET("/range/viewRangeInfo", func(c *gin.Context) {
-		cid := c.Query("clusterId")
-		if cid == "" {
-			html404(c)
-			return
-		}
-		tableName := c.Query("name")
-		if tableName == "" {
-			html404(c)
-			return
-		}
-		dbName := c.Query("db_name")
-		if dbName == "" {
-			html404(c)
-			return
-		}
+		group.GET("/range/viewRangeInfo", func(c *gin.Context) {
+			cid := c.Query("clusterId")
+			if cid == "" {
+				html404(c)
+				return
+			}
+			tableName := c.Query("name")
+			if tableName == "" {
+				html404(c)
+				return
+			}
+			dbName := c.Query("db_name")
+			if dbName == "" {
+				html404(c)
+				return
+			}
 
-		c.HTML(http.StatusOK, "range_viewrangevis.html", gin.H{
+			c.HTML(http.StatusOK, "range_viewrangevis.html", gin.H{
+				"basePath":  r.staticRootDir,
+				"clusterId": cid,
+				"rangeId":   "",
+				"tableName": tableName,
+				"dbName":    dbName,
+				"source":    "table",
+			})
+		})
+
+		group.GET("/range/getRangeTopo", func(c *gin.Context) {
+			cid := c.Query("clusterId")
+			if cid == "" {
+				html404(c)
+				return
+			}
+			rangeId := c.Query("rangeId")
+			if rangeId == "" {
+				html404(c)
+				return
+			}
+
+			c.HTML(http.StatusOK, "range_viewrangevis.html", gin.H{
+				"basePath":  r.staticRootDir,
+				"clusterId": cid,
+				"rangeId":   rangeId,
+				"tableName": "",
+				"dbName":    "",
+				"source":    "range",
+			})
+		})
+
+		group.GET("/node/getRangeTopo", func(c *gin.Context) {
+			cid := c.Query("clusterId")
+			if cid == "" {
+				html404(c)
+				return
+			}
+			nodeId := c.Query("nodeId")
+			if nodeId == "" {
+				html404(c)
+				return
+			}
+
+			c.HTML(http.StatusOK, "range_viewrangevis.html", gin.H{
+				"basePath":  r.staticRootDir,
+				"clusterId": cid,
+				"rangeId":   nodeId,
+				"tableName": "",
+				"dbName":    "",
+				"source":    "node",
+			})
+		})
+
+		group.GET("/page/cluster/viewRangeOpsTopN", func(c *gin.Context) {
+			cid := c.Query("clusterId")
+			if cid == "" {
+				html404(c)
+				return
+			}
+			topN := c.Query("topN")
+			if topN == "" {
+				html404(c)
+				return
+			}
+
+			c.HTML(http.StatusOK, "range_viewopstopn.html", gin.H{
+				"basePath":  r.staticRootDir,
+				"clusterId": cid,
+				"topN":      topN,
+			})
+		})
+
+		group.GET("/page/range/unhealthy", func(c *gin.Context) {
+			cid := c.Query("clusterId")
+			if cid == "" {
+				html404(c)
+				return
+			}
+			dbName := c.Query("dbName")
+			if dbName == "" {
+				html404(c)
+				return
+			}
+			tableName := c.Query("tableName")
+			if tableName == "" {
+				html404(c)
+				return
+			}
+			rId := c.Query("rangeId")
+		c.HTML(http.StatusOK, "range_unhealthy.html", gin.H{
 			"basePath" : r.staticRootDir,
 			"clusterId" : cid,
-			"rangeId" : "",
 			"tableName" : tableName,
 			"dbName" : dbName,
-			"source": "table",
+			"rangeId": rId,
 		})
 	})
 
-	group.GET("/range/getRangeTopo", func(c *gin.Context) {
-		cid := c.Query("clusterId")
-		if cid == "" {
-			html404(c)
-			return
-		}
-		rangeId := c.Query("rangeId")
-		if rangeId == "" {
-			html404(c)
-			return
-		}
-
-		c.HTML(http.StatusOK, "range_viewrangevis.html", gin.H{
-			"basePath":  r.staticRootDir,
-			"clusterId": cid,
-			"rangeId":   rangeId,
-			"tableName": "",
-			"dbName":    "",
-			"source":    "range",
-		})
-	})
-
-	group.GET("/node/getRangeTopo", func(c *gin.Context) {
-		cid := c.Query("clusterId")
-		if cid == "" {
-			html404(c)
-			return
-		}
-		nodeId := c.Query("nodeId")
-		if nodeId == "" {
-			html404(c)
-			return
-		}
-
-		c.HTML(http.StatusOK, "range_viewrangevis.html", gin.H{
-			"basePath":  r.staticRootDir,
-			"clusterId": cid,
-			"rangeId":   nodeId,
-			"tableName": "",
-			"dbName":    "",
-			"source":    "node",
-		})
-	})
-
-	group.GET("/page/range/unhealthy", func(c *gin.Context) {
+	group.GET("/page/range/unstable", func(c *gin.Context) {
 		cid := c.Query("clusterId")
 		if cid == "" {
 			html404(c)
@@ -455,18 +500,11 @@ func (r *Router)StartRouter() *gin.Engine {
 			html404(c)
 			return
 		}
-		rId := c.Query("rangeId")
-		if rId == "" {
-			html404(c)
-			return
-		}
-
-		c.HTML(http.StatusOK, "range_unhealthy.html", gin.H{
+		c.HTML(http.StatusOK, "range_unstable.html", gin.H{
 			"basePath" : r.staticRootDir,
 			"clusterId" : cid,
 			"tableName" : tableName,
 			"dbName" : dbName,
-			"rangeId": rId,
 		})
 	})
 
@@ -491,13 +529,14 @@ func (r *Router)StartRouter() *gin.Engine {
 			html404(c)
 			return
 		}
-
+		flag := c.Query("flag")
 		c.HTML(http.StatusOK, "range_peerinfo.html", gin.H{
 			"basePath" : r.staticRootDir,
 			"clusterId" : cid,
 			"tableName" : tableName,
 			"dbName" : dbName,
 			"rangeId" : rangeId,
+			"flag" : flag,
 		})
 	})
 
@@ -644,8 +683,14 @@ func (r *Router)StartRouter() *gin.Engine {
 	router.POST(controllers.RANGE_PEERDEL, func(c *gin.Context) {
 		handleAction(c, controllers.NewPeerDelete())
 	})
+	router.POST(controllers.RANGE_PEERADD, func(c *gin.Context) {
+		handleAction(c, controllers.NewPeerAdd())
+	})
 	router.GET(controllers.RANGE_GET_UNHEALTHY_RANGES, func(c *gin.Context) {
 		handleAction(c, controllers.NewGetUnhealthyRanges())
+	})
+	router.GET(controllers.RANGE_GET_UNSTABLE_RANGES, func(c *gin.Context) {
+		handleAction(c, controllers.NewGetUnstableRanges())
 	})
 	router.GET(controllers.RANGE_GET_RANGE_INFO_BY_ID, func(c *gin.Context) {
 		handleAction(c, controllers.NewRangeInfoView())
@@ -673,6 +718,15 @@ func (r *Router)StartRouter() *gin.Engine {
 	})
 	router.POST(controllers.RANGE_BATCH_RECOVER_RANGE, func(c *gin.Context) {
 		handleAction(c, controllers.NewRangeBatchRecover())
+	})
+	router.POST(controllers.RANGE_TRANSFER, func(c *gin.Context) {
+		handleAction(c, controllers.NewRangeTransfer())
+	})
+	router.POST(controllers.RANGE_CHANGE_LEADER, func(c *gin.Context) {
+		handleAction(c, controllers.NewRangeLeaderChange())
+	})
+	router.POST(controllers.RANGE_OPS_TOPN, func(c *gin.Context) {
+		handleAction(c, controllers.NewRangeOpsTopN())
 	})
 	router.POST(controllers.TASK_GET_PRESENT, func(c *gin.Context) {
 		handleAction(c, controllers.NewTaskPresent())
@@ -708,46 +762,46 @@ func (r *Router)StartRouter() *gin.Engine {
 		handleAction(c, controllers.NewStoreDataQuery())
 	})
 
-	// user
-	router.GET(controllers.REQURI_USER_ADMIN, func(c *gin.Context) {
-		handleAction(c, controllers.NewUserAdminAction())
-	})
-	router.POST(controllers.REQURI_USER_GETUSERLIST,func(c *gin.Context) {
-		handleAction(c, controllers.NewStoreDataQuery())
-	})
-	router.GET(controllers.REQURI_USER_GETPRIVILEGELIST,func(c *gin.Context) {
-		handleAction(c, controllers.NewPrivilegeInfoAction())
-	})
-	router.POST(controllers.REQURI_USER_UPDATEPRIVILEG,func(c *gin.Context) {
-		handleAction(c, controllers.NewPrivilegeUpdateAction())
-	})
-	router.POST(controllers.REQURI_USER_DELRIVILEGS,func(c *gin.Context) {
-		handleAction(c, controllers.NewPrivilegeDelAction())
-	})
-	router.GET(controllers.REQURI_USER_GETROLELIST,func(c *gin.Context) {
-		handleAction(c, controllers.NewRoleInfoAction())
-	})
-	router.POST(controllers.REQURI_USER_ADDROLE,func(c *gin.Context) {
-		handleAction(c, controllers.NewRoleAddAction())
-	})
-	router.POST(controllers.REQURI_USER_DELROLE,func(c *gin.Context) {
-		handleAction(c, controllers.NewRoleDelAction())
-	})
+		// user
+		router.GET(controllers.REQURI_USER_ADMIN, func(c *gin.Context) {
+			handleAction(c, controllers.NewUserAdminAction())
+		})
+		router.POST(controllers.REQURI_USER_GETUSERLIST, func(c *gin.Context) {
+			handleAction(c, controllers.NewStoreDataQuery())
+		})
+		router.GET(controllers.REQURI_USER_GETPRIVILEGELIST, func(c *gin.Context) {
+			handleAction(c, controllers.NewPrivilegeInfoAction())
+		})
+		router.POST(controllers.REQURI_USER_UPDATEPRIVILEG, func(c *gin.Context) {
+			handleAction(c, controllers.NewPrivilegeUpdateAction())
+		})
+		router.POST(controllers.REQURI_USER_DELRIVILEGS, func(c *gin.Context) {
+			handleAction(c, controllers.NewPrivilegeDelAction())
+		})
+		router.GET(controllers.REQURI_USER_GETROLELIST, func(c *gin.Context) {
+			handleAction(c, controllers.NewRoleInfoAction())
+		})
+		router.POST(controllers.REQURI_USER_ADDROLE, func(c *gin.Context) {
+			handleAction(c, controllers.NewRoleAddAction())
+		})
+		router.POST(controllers.REQURI_USER_DELROLE, func(c *gin.Context) {
+			handleAction(c, controllers.NewRoleDelAction())
+		})
 	}
 	//lock
-	router.GET(controllers.REQURI_LOCK_NAMESPACE_GETALL,func(c *gin.Context) {
+	router.GET(controllers.REQURI_LOCK_NAMESPACE_GETALL, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockGetAllNspAction())
 	})
-	router.POST(controllers.REQURI_LOCK_NAMESPACE_APPLY,func(c *gin.Context) {
+	router.POST(controllers.REQURI_LOCK_NAMESPACE_APPLY, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockNspApplyAction())
 	})
-	router.POST(controllers.REQURI_LOCK_NAMESPACE_UPDATE,func(c *gin.Context) {
+	router.POST(controllers.REQURI_LOCK_NAMESPACE_UPDATE, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockNspUpdateAction())
 	})
-	router.GET(controllers.REQURI_LOCK_CLUSTER_INFO,func(c *gin.Context) {
+	router.GET(controllers.REQURI_LOCK_CLUSTER_INFO, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockClusterGetAction())
 	})
-	router.Run(":"+fmt.Sprint(r.config.ReqListenPort))
+	router.Run(":" + fmt.Sprint(r.config.ReqListenPort))
 
 	return router
 }
@@ -768,17 +822,17 @@ func handleAction(c *gin.Context, act controllers.Action) {
 	if data, err := act.Execute(c); err != nil {
 		if fErr, ok := err.(*common.FbaseError); ok == true {
 			c.JSON(http.StatusOK, &controllers.Response{
-				Code:	fErr.Code,
-				Msg:	fErr.Error(),
-				Data:   "",
+				Code: fErr.Code,
+				Msg:  fErr.Error(),
+				Data: "",
 			})
-		}else if mErr, ok := err.(*mysql.MySQLError); ok == true{
+		} else if mErr, ok := err.(*mysql.MySQLError); ok == true {
 			c.JSON(http.StatusOK, &controllers.Response{
-				Code:	common.INTERNAL_ERROR.Code,
-				Msg:	mErr.Message,
-				Data:   "",
+				Code: common.INTERNAL_ERROR.Code,
+				Msg:  mErr.Message,
+				Data: "",
 			})
-		}else {
+		} else {
 			log.Warn("Cannot transfer to fbaseError instance from err:%#v", err)
 			c.JSON(http.StatusOK, &controllers.Response{
 				Code: common.INTERNAL_ERROR.Code,
@@ -788,10 +842,9 @@ func handleAction(c *gin.Context, act controllers.Action) {
 		}
 	} else {
 		c.JSON(http.StatusOK, &controllers.Response{
-			Code:	common.OK.Code,
-			Msg:	common.OK.Msg,
-			Data:   data,
+			Code: common.OK.Code,
+			Msg:  common.OK.Msg,
+			Data: data,
 		})
 	}
 }
-

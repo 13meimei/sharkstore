@@ -4,9 +4,13 @@ import (
 	"time"
 
 	"model/pkg/metapb"
+	"model/pkg/alarmpb"
 	"util/log"
 
 	"golang.org/x/net/context"
+	"fmt"
+	"util/deepcopy"
+
 )
 
 type RegionHbCheckWorker struct {
@@ -43,12 +47,26 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 
 			//12个周期leader无心跳
 			if time.Since(r.LastHbTimeTS) > cluster.opt.GetMaxRangeDownTime() {
+				var desc string
 				if leader == nil {
 					log.Error("must bug !!!  range[%d:%d] no leader, no heartbeat, lastHeartbeat :[%v]",
+						table.GetId(), r.GetId(), r.LastHbTimeTS)
+
+					desc = fmt.Sprintf("range[%d:%d] no leader, no heartbeat, lastHeartbeat :[%v]",
 						table.GetId(), r.GetId(), r.LastHbTimeTS)
 				} else {
 					log.Error("range[%d:%d] no heartbeat, leader is [%d], lastHeartbeat:[%v]",
 						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
+
+					desc = fmt.Sprintf("range[%d:%d] no heartbeat, leader is [%d], lastheartbeat:[%v]",
+						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
+				}
+
+				if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
+					Range: deepcopy.Iface(r.Range).(*metapb.Range),
+					LastHeartbeatTime: r.LastHbTimeTS.String(),
+				}, desc); err != nil {
+					log.Error("range no leader alarm failed: %v", err)
 				}
 
 				r.State = metapb.RangeState_R_Abnormal
@@ -75,6 +93,10 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 						table.GetId(), r.GetId(), leaderNodeID, r.GetDownPeers())
 
 					//TODO: alarm
+				} else {
+					if len(r.Peers) != cluster.opt.GetMaxReplicas() || len(r.DownPeers) > 0 {
+						cluster.unstableRanges.Put(r.GetId(), r)
+					}
 				}
 			}
 		}
@@ -111,19 +133,4 @@ func retrieveNode(cluster *Cluster, r *Range) []uint64 {
 		}
 	}
 	return nodeIds
-}
-
-func compPeerAva(cluster *Cluster, r *Range) ([]*metapb.Peer, []*metapb.Peer) {
-	var peerAble []*metapb.Peer
-	var peerUnAble []*metapb.Peer
-	for _, p := range r.GetPeers() {
-		node := cluster.FindNodeById(p.GetNodeId())
-		//检查peer的状态
-		if node == nil || !node.IsLogin() {
-			peerUnAble = append(peerUnAble, p)
-		} else {
-			peerAble = append(peerAble, p)
-		}
-	}
-	return peerAble, peerUnAble
 }
