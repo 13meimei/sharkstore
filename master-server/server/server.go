@@ -15,6 +15,7 @@ import (
 	"master-server/raft"
 	"golang.org/x/net/context"
 	"master-server/metric"
+		"util/alarm"
 )
 
 type Server struct {
@@ -29,6 +30,8 @@ type Server struct {
 	rpcServer   *grpc.Server
 
 	metricServer *metric.Metric
+	alarmServer *alarm.Server
+	alarmClient *alarm.Client
 
 	leaderChangeNotify chan uint64
 	wg     sync.WaitGroup
@@ -94,16 +97,20 @@ func (service *Server) initHttpHandler() (){
 	s.Handle("/manage/range/getRangeTopo", NewHandler(service.validRequest, service.handleRangeGetRangeTopo))
 	s.Handle("/manage/range/add/peer", NewHandler(service.validRequest, service.handleRangeAddPeer))
 	s.Handle("/manage/range/del/peer", NewHandler(service.validRequest, service.handleRangeDelPeer))
-	s.Handle("/manage/range/leader/transfer", NewHandler(service.validRequest, service.handleRangeLeaderTransfer))
+	s.Handle("/manage/range/leader/change", NewHandler(service.validRequest, service.handleRangeLeaderChange))
 	s.Handle("/manage/range/task/query", NewHandler(service.validRequest, service.handleRangeTaskQuery))
 	s.Handle("/manage/range/unhealthy/recover", NewHandler(service.validRequest, service.handleUnhealthyRangeRecover))
 	s.Handle("/manage/range/rebuildRange", NewHandler(service.validRequest, service.handleRangeRecreate))
 	s.Handle("/manage/range/replaceRange", NewHandler(service.validRequest, service.handleRangeRecreate))
 	s.Handle("/manage/range/unhealthy/query", NewHandler(service.validRequest, service.handleUnhealthyRangeQuery))
+	s.Handle("/manage/range/unstable/query", NewHandler(service.validRequest, service.handleUnstableRangeQuery))
 	s.Handle("/manage/range/getPeerInfo", NewHandler(service.validRequest, service.handlePeerInfoQuery))
 	s.Handle("/manage/range/updateRange", NewHandler(service.validRequest, service.handleUnhealthyRangeUpdate))
 	s.Handle("/manage/range/updateEpoch", NewHandler(service.validRequest, service.handleUpdateRangeEpoch))
 	s.Handle("/manage/range/offlineRange", NewHandler(service.validRequest, service.handleRangeOffline))
+	s.Handle("/manage/range/transfer", NewHandler(service.validRequest, service.handleRangeTransfer))
+	s.Handle("/manage/range/getOpsTopN", NewHandler(service.validRequest, service.handleRangeTopNQuery))
+
 	s.Handle("/manage/task/getall", NewHandler(service.validRequest, service.handleGetAllTask))
 	s.Handle("/manage/task/delete", NewHandler(service.validRequest, service.handleDeleteTask))
 
@@ -172,7 +179,25 @@ func (service *Server) InitMasterServer(conf *Config) {
 	}
 
 	service.initHttpHandler()
+	service.alarmClient, err = alarm.NewAlarmClient(conf.AlarmConfig.ServerAddress)
+	if err != nil {
+		log.Fatal("create alarm client failed, err[%v]", err)
+	}
+	service.cluster.alarmCli = service.alarmClient
 }
+
+func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
+	var alarmReceivers []*alarm.User
+	for _, r := range conf.Receivers {
+		alarmReceivers = append(alarmReceivers, &alarm.User{
+			Mail: r.Mail,
+			Sms: r.Sms,
+		})
+	}
+	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort, conf.MessageGatewayAddress, alarm.NewSimpleReceiver(alarmReceivers))
+	return err
+}
+
 
 func (service *Server) InitMetricServer(conf *Config) {
 	if service.server == nil {
@@ -205,6 +230,7 @@ func (service *Server) InitServer(conf *Config) {
 		service.InitMasterServer(conf)
 	case "metric":
 		service.InitMetricServer(conf)
+		service.InitAlarmServer(conf.AlarmConfig)
 	}
 }
 

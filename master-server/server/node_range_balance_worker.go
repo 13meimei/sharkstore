@@ -138,7 +138,7 @@ func selectRemovePeer(cluster *Cluster, workerName string) (*Range, *metapb.Peer
 		log.Debug("%v: select leader range that exclude leastRangeNode %v is nil ", workerName, leastRangeNode)
 		for _, r := range mostRangeNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() != mostRangeNode.GetId() && r.require(cluster) {
-				leastRangeNode = cluster.selectNodeForAddPeer(rng)
+				leastRangeNode = cluster.selectNodeForAddPeer(r)
 				if leastRangeNode != nil {
 					rng = r
 					break
@@ -151,7 +151,7 @@ func selectRemovePeer(cluster *Cluster, workerName string) (*Range, *metapb.Peer
 		log.Debug("%v: select follow range to best node is nil  %v", workerName, leastRangeNode)
 		for _, r := range mostRangeNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() == mostRangeNode.GetId() && r.require(cluster)  {
-				leastRangeNode = cluster.selectNodeForAddPeer(rng)
+				leastRangeNode = cluster.selectNodeForAddPeer(r)
 				if leastRangeNode != nil {
 					rng = r
 					break

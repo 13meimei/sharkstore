@@ -5,6 +5,7 @@ import (
 	"model/pkg/metapb"
 	"encoding/json"
 	"util/deepcopy"
+	"time"
 )
 
 var (
@@ -393,3 +394,74 @@ func TestTableColumnEdit(t *testing.T) {
 	t.Log("test success!!! ", table.GetColumns())
 }
 
+func TestAllocPrePeerAndSelectNode(t *testing.T)  {
+	cluster := MockCluster(t)
+	defer closeLocalCluster(cluster)
+	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
+		t.Fatalf("create db error: %v", err)
+	}
+
+	var err error
+	var sliceKeys [][]byte
+	rangeKeys := `1,2,3,4,5,6,7,8,9`
+	if sliceKeys, err = rangeKeysSplit(rangeKeys, ","); err != nil {
+		t.Fatalf("create table error: %v", err)
+	}
+
+	table, err := cluster.CreateTable(DB_NAME, TABLE_NAME, TABLE_PK_VARCHAR, nil, false, sliceKeys)
+	if err != nil {
+		t.Fatalf("create table error: %v", err)
+	}
+	t.Log("table: ", *table)
+
+	cluster.workerManger = NewWorkerManager(cluster, nil)
+	cluster.AddCreateTableWorker()
+
+	time.Sleep(30*time.Second)
+
+	for _, table := range cluster.creatingTables.GetAllTable() {
+		rngStat := table.GetNodeRangeStat()
+		t.Logf("distribution: %v", rngStat)
+	}
+
+	ranges := cluster.GetTableAllRanges(table.GetId())
+	t.Logf("total range size : %v", len(ranges))
+
+	for _, rng := range ranges {
+		go func(rng *Range) {
+			newPeer, err := cluster.allocPeerAndSelectNode(rng)
+			if err != nil {
+				t.Errorf("alloc rangeId:%d, %s", rng.GetId(), err.Error())
+				return
+			}
+			peers := rng.GetPeers()
+			peers = append(peers, newPeer)
+			rng.Peers = peers
+			cluster.AddRange(rng)
+		}(rng)
+	}
+	time.Sleep(30 * time.Second)
+
+	rngStat := cluster.GetNodeRangeStatByTable(table.GetId())
+	t.Logf("worker table : distribution: %v", rngStat)
+
+
+	for _, rng := range ranges {
+		go func(rng *Range) {
+			newPeer, err := cluster.allocPeerAndSelectNode(rng)
+			if err != nil {
+				t.Errorf("alloc rangeId:%d, %s", rng.GetId(), err.Error())
+				return
+			}
+			peers := rng.GetPeers()
+			peers = append(peers, newPeer)
+			rng.Peers = peers
+			cluster.AddRange(rng)
+		}(rng)
+	}
+
+	time.Sleep(30 * time.Second)
+	rngStat = cluster.GetNodeRangeStatByTable(table.GetId())
+	t.Logf("worker table : distribution: %v", rngStat)
+
+}
