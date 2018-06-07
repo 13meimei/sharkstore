@@ -427,33 +427,36 @@ func (e *DelRangeEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *tas
 	switch e.GetStatus() {
 	case EVENT_STATUS_CREATE:
 		e.status = EVENT_STATUS_DEALING
-		for _, peer := range r.Peers {
-			node := cluster.FindNodeById(peer.GetNodeId())
-			//TODO:可能对堵塞时间比较长
-			err := cluster.cli.DeleteRange(node.GetServerAddr(), r.GetId())
-			if err == nil {
-				log.Debug("delete range %v err, wait for gc, error: %v", r.GetId(), err)
-				peerGC(cluster, r.Range, peer)
-			}
-		}
-		return false, nil, errors.New("Waiting for deleteRange")
+		return e.processDeleteRange(cluster, r)
 	case EVENT_STATUS_DEALING:
 		e.retryTimes += 1
-		for _, peer := range r.Peers {
-			node := cluster.FindNodeById(peer.GetNodeId())
-			//TODO:可能对堵塞时间比较长
-			err := cluster.cli.DeleteRange(node.GetServerAddr(), r.GetId())
-			if err == nil {
-				peerGC(cluster, r.Range, peer)
-			}
-		}
-		// 已经过了一个心跳周期，就强制做后续的任务，不需要做重试,认为成功
-		e.status = EVENT_STATUS_FINISH
-		return true, nil, nil
+		return e.processDeleteRange(cluster, r)
 	default:
 		return false, nil, errors.New(fmt.Sprintf("DelRangeEvent err status %s", ToEventStatusName(e.GetStatus())))
-
 	}
+}
+
+func (e *DelRangeEvent) processDeleteRange(cluster *Cluster, r *Range ) (ExecNextEvent, *taskpb.Task, error) {
+	failed := 0
+	for _, peer := range r.Peers {
+		node := cluster.FindNodeById(peer.GetNodeId())
+		err := cluster.cli.DeleteRange(node.GetServerAddr(), r.GetId())
+		if err != nil {
+			log.Debug("delete range %v err, wait for gc, error: %v", r.GetId(), err)
+			peerGC(cluster, r.Range, peer)
+			failed++
+		}
+	}
+	if failed == len(r.Peers) {
+		//删除peer没有成功过
+		return false, nil, errors.New("Waiting for deleteRange")
+	}
+	//删除元数据
+	err := cluster.deleteRange(r.GetId())
+	log.Error("delete range meta %d failed, err: %v", r.GetId(), err)
+	cluster.DeleteRange(r.GetId())
+	e.status = EVENT_STATUS_FINISH
+	return true, nil, nil
 }
 
 func NewDelRangeEvent(id, rangeId uint64, creator string) *DelRangeEvent {
