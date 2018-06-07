@@ -1,4 +1,4 @@
-package task
+package server
 
 type DeletePeerTask struct {
 	BaseTask
