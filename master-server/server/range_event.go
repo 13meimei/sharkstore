@@ -451,7 +451,6 @@ func (e *DelRangeEvent) Execute(cluster *Cluster, r *Range) (ExecNextEvent, *tas
 		return true, nil, nil
 	default:
 		return false, nil, errors.New(fmt.Sprintf("DelRangeEvent err status %s", ToEventStatusName(e.GetStatus())))
-
 	}
 }
 

@@ -38,11 +38,6 @@ func (t *ChangeLeaderTask) String() string {
 
 // Step step
 func (t *ChangeLeaderTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task, err error) {
-	if !t.markAsStepping() {
-		return
-	}
-	defer t.unmarkStepping()
-
 	// task is over
 	if t.CheckOver() {
 		return true, nil, nil
@@ -50,7 +45,7 @@ func (t *ChangeLeaderTask) Step(cluster *Cluster, r *Range) (over bool, task *ta
 
 	if r == nil {
 		log.Warn("% invalid input range: <nil>", t.loggingID)
-		return false, nil, nil
+		return false, nil, fmt.Errorf("invalid step input: range is nil")
 	}
 
 	switch t.GetState() {

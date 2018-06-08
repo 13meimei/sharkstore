@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	"model/pkg/taskpb"
@@ -126,29 +125,25 @@ type Task interface {
 
 // BaseTask include task's common attrs
 type BaseTask struct {
-	id         uint64
-	rangeID    uint64
-	typ        TaskType
-	state      TaskState
-	begin      time.Time
-	lastUpdate time.Time
-	timeout    time.Duration
-	stepping   uint64
-	loggingID  string
+	id        uint64
+	rangeID   uint64
+	typ       TaskType
+	state     TaskState
+	begin     time.Time
+	timeout   time.Duration
+	loggingID string
 }
 
 // newBaseTask new base task
 func newBaseTask(id uint64, rangeID uint64, typ TaskType, timeout time.Duration) *BaseTask {
 	return &BaseTask{
-		id:         id,
-		rangeID:    rangeID,
-		typ:        typ,
-		state:      TaskStateStart,
-		begin:      time.Now(),
-		lastUpdate: time.Now(),
-		timeout:    timeout,
-		stepping:   0,
-		loggingID:  fmt.Sprintf("task[%d] type=%s range=%d", id, typ.String(), rangeID),
+		id:        id,
+		rangeID:   rangeID,
+		typ:       typ,
+		state:     TaskStateStart,
+		begin:     time.Now(),
+		timeout:   timeout,
+		loggingID: fmt.Sprintf("task[%d] type=%s range=%d", id, typ.String(), rangeID),
 	}
 }
 
@@ -205,18 +200,6 @@ func (t *BaseTask) Elapsed() time.Duration {
 
 func (t *BaseTask) String() string {
 	return fmt.Sprintf("\"id\": %d, \"range\": %d, \"type\": \"%s\", "+
-		"\"state\": \"%s\", \"begin\": \"%s\", \"update\": \"%s\"",
-		t.id, t.rangeID, t.typ.String(), t.state.String(), t.begin.String(), t.lastUpdate.String())
-}
-
-func (t *BaseTask) markAsStepping() bool {
-	if atomic.CompareAndSwapUint64(&t.stepping, 0, 1) {
-		t.lastUpdate = time.Now()
-		return true
-	}
-	return false
-}
-
-func (t *BaseTask) unmarkStepping() {
-	atomic.StoreUint64(&t.stepping, 0)
+		"\"state\": \"%s\", \"begin\": \"%s\"",
+		t.id, t.rangeID, t.typ.String(), t.state.String(), t.begin.String())
 }

@@ -36,11 +36,6 @@ func (t *DeletePeerTask) String() string {
 
 // Step step
 func (t *DeletePeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task, err error) {
-	if !t.markAsStepping() {
-		return
-	}
-	defer t.unmarkStepping()
-
 	// task is over
 	if t.CheckOver() {
 		return true, nil, nil
@@ -48,7 +43,7 @@ func (t *DeletePeerTask) Step(cluster *Cluster, r *Range) (over bool, task *task
 
 	if r == nil {
 		log.Warn("% invalid input range: <nil>", t.loggingID)
-		return false, nil, nil
+		return false, nil, fmt.Errorf("invalid step input: range is nil")
 	}
 
 	switch t.GetState() {
