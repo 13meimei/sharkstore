@@ -107,14 +107,16 @@ type Task interface {
 	// GetRangeID return the range's id which the task belong to
 	GetRangeID() uint64
 
+	// SetBeginTime set begin time
+	SetBeginTime()
+
 	// Step next step
+	// if err != nil means not over, and will retry next time
+	// if timeout no error return and over is true
 	Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task, err error)
 
 	// GetState return current state
 	GetState() TaskState
-
-	// CheckOver return true if task is over
-	CheckOver() bool
 
 	// Elapsed time elapsed since task start
 	Elapsed() time.Duration
@@ -167,6 +169,11 @@ func (t *BaseTask) GetState() TaskState {
 	return t.state
 }
 
+// SetBeginTime set begin time
+func (t *BaseTask) SetBeginTime() {
+	t.begin = time.Now()
+}
+
 // checkTimeout return true if task is run timeout
 func (t *BaseTask) checkTimeout() bool {
 	if t.state == TaskStateTimeout {
@@ -191,11 +198,6 @@ func (t *BaseTask) CheckOver() bool {
 	default:
 		return t.checkTimeout()
 	}
-}
-
-// Elapsed time elapsed since task start
-func (t *BaseTask) Elapsed() time.Duration {
-	return time.Since(t.begin)
 }
 
 func (t *BaseTask) String() string {
