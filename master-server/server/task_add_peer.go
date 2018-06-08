@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
 	"util/log"
@@ -39,6 +40,11 @@ func (t *AddPeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.
 		return true, nil, nil
 	}
 
+	if r == nil {
+		log.Warn("% invalid input range: <nil>", t.loggingID)
+		return false, nil, nil
+	}
+
 	switch t.GetState() {
 	case TaskStateStart:
 		over = false
@@ -56,10 +62,19 @@ func (t *AddPeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.
 		over = t.stepWaitSync(r)
 		return
 	default:
-		err = fmt.Errorf("unexpceted add task state: %s", t.state.String())
+		err = fmt.Errorf("unexpceted add peer task state: %s", t.state.String())
 		over = true
 	}
 	return
+}
+
+func (t *AddPeerTask) issueTask() *taskpb.Task {
+	return &taskpb.Task{
+		Type: taskpb.TaskType_RangeAddPeer,
+		RangeAddPeer: &taskpb.TaskRangeAddPeer{
+			Peer: t.peer,
+		},
+	}
 }
 
 func (t *AddPeerTask) stepStart(cluster *Cluster, r *Range) (task *taskpb.Task, err error) {
@@ -75,24 +90,14 @@ func (t *AddPeerTask) stepStart(cluster *Cluster, r *Range) (task *taskpb.Task, 
 	t.state = WaitRaftConfChanged
 
 	// return a task to add this peer into raft member
-	return &taskpb.Task{
-		Type: taskpb.TaskType_RangeAddPeer,
-		RangeAddPeer: &taskpb.TaskRangeAddPeer{
-			Peer: t.peer,
-		},
-	}, nil
+	return t.issueTask(), nil
 }
 
 func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Task, err error) {
 	if r.GetPeer(t.peer.GetId()) == nil {
 		t.confRetries++
 
-		return &taskpb.Task{
-			Type: taskpb.TaskType_RangeAddPeer,
-			RangeAddPeer: &taskpb.TaskRangeAddPeer{
-				Peer: t.peer,
-			},
-		}, nil
+		return t.issueTask(), nil
 	}
 
 	t.state = WaitRangeCreated

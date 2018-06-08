@@ -62,6 +62,8 @@ const (
 	WaitRangeCreated
 	// WaitDataSynced  wait data synced
 	WaitDataSynced
+	// WaitRangeDeleted wait range deleted
+	WaitRangeDeleted
 )
 
 // String to string name
@@ -84,6 +86,8 @@ func (ts TaskState) String() string {
 		return "wait range created"
 	case WaitDataSynced:
 		return "wait data synced"
+	case WaitRangeDeleted:
+		return "wait range deleted"
 	default:
 		return "unknown"
 	}
