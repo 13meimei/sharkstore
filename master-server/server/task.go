@@ -56,14 +56,16 @@ const (
 )
 
 const (
-	// WaitRaftConfChanged  wait raft conf changed
-	WaitRaftConfChanged TaskState = iota + 100
+	// WaitRaftConfReady   wait raft conf ready
+	WaitRaftConfReady TaskState = iota + 100
 	// WaitRangeCreated wait range created
 	WaitRangeCreated
 	// WaitDataSynced  wait data synced
 	WaitDataSynced
 	// WaitRangeDeleted wait range deleted
 	WaitRangeDeleted
+	// WaitLeaderChanged wait leader moved
+	WaitLeaderChanged
 )
 
 // String to string name
@@ -80,7 +82,7 @@ func (ts TaskState) String() string {
 		return "canceled"
 	case TaskStateTimeout:
 		return "timeout"
-	case WaitRaftConfChanged:
+	case WaitRaftConfReady:
 		return "wait raft conf ready"
 	case WaitRangeCreated:
 		return "wait range created"
@@ -88,6 +90,8 @@ func (ts TaskState) String() string {
 		return "wait data synced"
 	case WaitRangeDeleted:
 		return "wait range deleted"
+	case WaitLeaderChanged:
+		return "wait leader changed"
 	default:
 		return "unknown"
 	}
@@ -122,29 +126,29 @@ type Task interface {
 
 // BaseTask include task's common attrs
 type BaseTask struct {
-	id        uint64
-	rangeID   uint64
-	typ       TaskType
-	state     TaskState
-	begin     time.Time
-	update    time.Time
-	timeout   time.Duration
-	stepping  uint64
-	loggingID string
+	id         uint64
+	rangeID    uint64
+	typ        TaskType
+	state      TaskState
+	begin      time.Time
+	lastUpdate time.Time
+	timeout    time.Duration
+	stepping   uint64
+	loggingID  string
 }
 
 // newBaseTask new base task
 func newBaseTask(id uint64, rangeID uint64, typ TaskType, timeout time.Duration) *BaseTask {
 	return &BaseTask{
-		id:        id,
-		rangeID:   rangeID,
-		typ:       typ,
-		state:     TaskStateStart,
-		begin:     time.Now(),
-		update:    time.Now(),
-		timeout:   timeout,
-		stepping:  0,
-		loggingID: fmt.Sprintf("task[%d] type=%s range=%d", id, typ.String(), rangeID),
+		id:         id,
+		rangeID:    rangeID,
+		typ:        typ,
+		state:      TaskStateStart,
+		begin:      time.Now(),
+		lastUpdate: time.Now(),
+		timeout:    timeout,
+		stepping:   0,
+		loggingID:  fmt.Sprintf("task[%d] type=%s range=%d", id, typ.String(), rangeID),
 	}
 }
 
@@ -200,13 +204,17 @@ func (t *BaseTask) Elapsed() time.Duration {
 }
 
 func (t *BaseTask) String() string {
-	return fmt.Sprintf("\"id\": %d, \"range_id\": %d, \"type\": \"%s\", "+
+	return fmt.Sprintf("\"id\": %d, \"range\": %d, \"type\": \"%s\", "+
 		"\"state\": \"%s\", \"begin\": \"%s\", \"update\": \"%s\"",
-		t.id, t.rangeID, t.typ.String(), t.state.String(), t.begin.String(), t.update.String())
+		t.id, t.rangeID, t.typ.String(), t.state.String(), t.begin.String(), t.lastUpdate.String())
 }
 
 func (t *BaseTask) markAsStepping() bool {
-	return atomic.CompareAndSwapUint64(&t.stepping, 0, 1)
+	if atomic.CompareAndSwapUint64(&t.stepping, 0, 1) {
+		t.lastUpdate = time.Now()
+		return true
+	}
+	return false
 }
 
 func (t *BaseTask) unmarkStepping() {

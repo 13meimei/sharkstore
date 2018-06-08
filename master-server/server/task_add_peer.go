@@ -2,16 +2,21 @@ package server
 
 import (
 	"fmt"
+	"time"
 
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
 	"util/log"
 )
 
+const (
+	defaultAddPeerTaskTimeout = time.Second * time.Duration(300)
+)
+
 // AddPeerTask add peer task
 type AddPeerTask struct {
 	*BaseTask
-	peer *metapb.Peer
+	peer *metapb.Peer // peer to add
 
 	confRetries   int
 	createRetries int
@@ -20,7 +25,7 @@ type AddPeerTask struct {
 // NewAddPeerTask new add peer task
 func NewAddPeerTask(id uint64, rangeID uint64) *AddPeerTask {
 	return &AddPeerTask{
-		BaseTask: newBaseTask(id, rangeID, TaskTypeAddPeer, DefaultAddPeerTimeout),
+		BaseTask: newBaseTask(id, rangeID, TaskTypeAddPeer, defaultAddPeerTaskTimeout),
 	}
 }
 
@@ -50,7 +55,7 @@ func (t *AddPeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.
 		over = false
 		task, err = t.stepStart(cluster, r)
 		return
-	case WaitRaftConfChanged:
+	case WaitRaftConfReady:
 		over = false
 		task, err = t.stepWaitConf(cluster, r)
 		return
@@ -63,7 +68,6 @@ func (t *AddPeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.
 		return
 	default:
 		err = fmt.Errorf("unexpceted add peer task state: %s", t.state.String())
-		over = true
 	}
 	return
 }
@@ -87,7 +91,7 @@ func (t *AddPeerTask) stepStart(cluster *Cluster, r *Range) (task *taskpb.Task, 
 		}
 	}
 
-	t.state = WaitRaftConfChanged
+	t.state = WaitRaftConfReady
 
 	// return a task to add this peer into raft member
 	return t.issueTask(), nil
@@ -100,8 +104,9 @@ func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Tas
 		return t.issueTask(), nil
 	}
 
-	t.state = WaitRangeCreated
+	log.Info("%s add raft member finsihed, peer: %v.", t.loggingID, t.peer)
 
+	t.state = WaitRangeCreated
 	err = t.stepCreateRange(cluster, r)
 	return nil, err
 }
@@ -109,10 +114,12 @@ func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Tas
 func (t *AddPeerTask) stepCreateRange(cluster *Cluster, r *Range) error {
 	err := prepareAddPeer(cluster, r, t.peer)
 	if err != nil {
-		log.Error("%s create new range failed: %s, retries: %d", t.loggingID, err.Error(), t.createRetries)
+		log.Error("%s create new range failed: %s, peer: %v, retries: %d", t.loggingID, err.Error(), t.peer, t.createRetries)
 		t.createRetries++
 		return err
 	}
+
+	log.Info("%s create range finshed to node(%d)", t.loggingID, t.peer.GetNodeId())
 
 	t.state = WaitDataSynced
 	return nil
@@ -131,6 +138,8 @@ func (t *AddPeerTask) stepWaitSync(r *Range) bool {
 	if peer.Type == metapb.PeerType_PeerType_Learner {
 		return false
 	}
+
+	log.Info("%s data sync finished, peer: %v", t.loggingID, t.peer)
 
 	t.state = TaskStateFinished
 	return true

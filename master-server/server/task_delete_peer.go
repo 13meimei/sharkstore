@@ -2,16 +2,21 @@ package server
 
 import (
 	"fmt"
+	"time"
 	"util/log"
 
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
 )
 
+const (
+	defaultDelPeerTaskTimeout = time.Second * time.Duration(30)
+)
+
 // DeletePeerTask  delete peer task
 type DeletePeerTask struct {
 	*BaseTask
-	peer *metapb.Peer
+	peer *metapb.Peer // peer to delete
 
 	confRetries   int
 	deleteRetries int
@@ -20,7 +25,7 @@ type DeletePeerTask struct {
 // NewDeletePeerTask new delete peer task
 func NewDeletePeerTask(id uint64, rangeID uint64, peer *metapb.Peer) *DeletePeerTask {
 	return &DeletePeerTask{
-		BaseTask: newBaseTask(id, rangeID, TaskTypeDeletePeer, DefaultDelPeerTimeout),
+		BaseTask: newBaseTask(id, rangeID, TaskTypeDeletePeer, defaultDelPeerTaskTimeout),
 		peer:     peer,
 	}
 }
@@ -41,22 +46,25 @@ func (t *DeletePeerTask) Step(cluster *Cluster, r *Range) (over bool, task *task
 		return true, nil, nil
 	}
 
+	if r == nil {
+		log.Warn("% invalid input range: <nil>", t.loggingID)
+		return false, nil, nil
+	}
+
 	switch t.GetState() {
 	case TaskStateStart:
 		over = false
 		task = t.stepStart(r)
 		return
-	case WaitRaftConfChanged:
+	case WaitRaftConfReady:
 		return t.stepWaitConf(cluster, r)
 	case WaitRangeDeleted:
 		over, err = t.stepDeleteRange(cluster)
 		return
 	default:
 		err = fmt.Errorf("unexpceted delete peer task state: %s", t.state.String())
-		over = true
 	}
 	return
-
 }
 
 func (t *DeletePeerTask) issueTask() *taskpb.Task {
@@ -69,7 +77,7 @@ func (t *DeletePeerTask) issueTask() *taskpb.Task {
 }
 
 func (t *DeletePeerTask) stepStart(r *Range) *taskpb.Task {
-	t.state = WaitRaftConfChanged
+	t.state = WaitRaftConfReady
 	return t.issueTask()
 }
 
@@ -78,6 +86,9 @@ func (t *DeletePeerTask) stepWaitConf(cluster *Cluster, r *Range) (over bool, ta
 		t.confRetries++
 		return false, t.issueTask(), nil
 	}
+
+	log.Info("%s delete raft member finished, peer: %v", t.loggingID, t.peer)
+
 	over, err = t.stepDeleteRange(cluster)
 	return
 }
@@ -92,10 +103,12 @@ func (t *DeletePeerTask) stepDeleteRange(cluster *Cluster) (over bool, err error
 
 	err = cluster.cli.DeleteRange(node.GetServerAddr(), t.rangeID)
 	if err == nil {
-		log.Error("%s delete range failed, target node: %d.", t.loggingID, t.peer.GetNodeId())
+		log.Error("%s delete range failed, target node: %d, retries: %d", t.loggingID, t.peer.GetNodeId(), t.deleteRetries)
 		t.deleteRetries++
 		return false, err
 	}
+
+	log.Info("%s delete range finished, peer: %v", t.loggingID, t.peer)
 
 	t.state = TaskStateFinished
 	return true, nil
