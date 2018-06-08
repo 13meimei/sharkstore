@@ -40,6 +40,12 @@ func (rng *Range) require(cluster *Cluster) bool {
 		log.Debug("range state is abnormal, cannot be scheduled")
 		return false
 	}
+	//避免ms切换/重启的时候，心跳未上来就被调度 todo 心跳
+
+	//没有table，就不调度
+	if _, ok := cluster.FindTableById(rng.GetTableId()); !ok {
+		return false
+	}
 	if len(rng.GetPeers()) != cluster.opt.GetMaxReplicas() {
 		log.Debug("range peer is abnormal, cannot be scheduled")
 		return false
