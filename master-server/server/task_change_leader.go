@@ -24,9 +24,9 @@ type ChangeLeaderTask struct {
 }
 
 // NewChangeLeaderTask new change leader task
-func NewChangeLeaderTask(id uint64, rangeID uint64, from, to uint64) *ChangeLeaderTask {
+func NewChangeLeaderTask(from, to uint64) *ChangeLeaderTask {
 	return &ChangeLeaderTask{
-		BaseTask:   newBaseTask(id, rangeID, TaskTypeChangeLeader, defaultChangeLeaderTaskTimeout),
+		BaseTask:   newBaseTask(TaskTypeChangeLeader, defaultChangeLeaderTaskTimeout),
 		fromNodeID: from,
 		toNodeID:   to,
 	}
@@ -46,13 +46,13 @@ func (t *ChangeLeaderTask) Step(cluster *Cluster, r *Range) (over bool, task *ta
 
 	case WaitLeaderChanged:
 		if t.isChanged(r) {
-			log.Info("%s change finished. final leader: %d", t.loggingID, r.Leader.GetNodeId())
+			log.Info("%s change finished. final leader: %d", t.logID, r.Leader.GetNodeId())
 			t.state = TaskStateFinished
 			return true, nil
 		}
 
 		if t.retries >= defaultMaxChangeLeaderRetryTimes {
-			log.Info("%s change canceled(max retry reached). final leader: %d", t.loggingID, r.Leader.GetNodeId())
+			log.Info("%s change canceled(max retry reached). final leader: %d", t.logID, r.Leader.GetNodeId())
 			t.state = TaskStateCanceled
 			return true, nil
 		}
@@ -61,7 +61,7 @@ func (t *ChangeLeaderTask) Step(cluster *Cluster, r *Range) (over bool, task *ta
 		return false, nil
 
 	default:
-		log.Error("%s unexpceted add peer task state: %s", t.loggingID, t.state.String())
+		log.Error("%s unexpceted add peer task state: %s", t.logID, t.state.String())
 	}
 	return
 }
@@ -99,17 +99,17 @@ func (t *ChangeLeaderTask) tryToChangeLeader(cluster *Cluster, r *Range) {
 
 	changeTo := t.selectChangeTo(r)
 	if changeTo == 0 {
-		log.Warn("%s invalid target node(0), current peers: %v", t.loggingID, r.GetPeers())
+		log.Warn("%s invalid target node(0), current peers: %v", t.logID, r.GetPeers())
 		return
 	}
 
 	node := cluster.FindNodeById(changeTo)
 	if node == nil {
-		log.Warn("%s could not find target node(%d)", t.loggingID, changeTo)
+		log.Warn("%s could not find target node(%d)", t.logID, changeTo)
 		return
 	}
 
-	log.Info("%s try to change leader to %d, current: %d", t.loggingID, changeTo, r.Leader.GetNodeId())
+	log.Info("%s try to change leader to %d, current: %d", t.logID, changeTo, r.Leader.GetNodeId())
 
 	//TODO:可能对堵塞时间比较长
 	cluster.cli.TransferLeader(node.GetServerAddr(), r.GetId())

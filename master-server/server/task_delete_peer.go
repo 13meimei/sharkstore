@@ -23,9 +23,9 @@ type DeletePeerTask struct {
 }
 
 // NewDeletePeerTask new delete peer task
-func NewDeletePeerTask(id uint64, rangeID uint64, peer *metapb.Peer) *DeletePeerTask {
+func NewDeletePeerTask(peer *metapb.Peer) *DeletePeerTask {
 	return &DeletePeerTask{
-		BaseTask: newBaseTask(id, rangeID, TaskTypeDeletePeer, defaultDelPeerTaskTimeout),
+		BaseTask: newBaseTask(TaskTypeDeletePeer, defaultDelPeerTaskTimeout),
 		peer:     peer,
 	}
 }
@@ -42,9 +42,9 @@ func (t *DeletePeerTask) Step(cluster *Cluster, r *Range) (over bool, task *task
 	case WaitRaftConfReady:
 		return t.stepWaitConf(cluster, r)
 	case WaitRangeDeleted:
-		return t.stepDeleteRange(cluster), nil
+		return t.stepDeleteRange(cluster, r), nil
 	default:
-		log.Error("%s unexpceted add peer task state: %s", t.loggingID, t.state.String())
+		log.Error("%s unexpceted add peer task state: %s", t.logID, t.state.String())
 	}
 	return
 }
@@ -69,28 +69,28 @@ func (t *DeletePeerTask) stepWaitConf(cluster *Cluster, r *Range) (over bool, ta
 		return false, t.issueTask()
 	}
 
-	log.Info("%s delete raft member finished, peer: %v", t.loggingID, t.peer)
+	log.Info("%s delete raft member finished, peer: %v", t.logID, t.peer)
 
-	over = t.stepDeleteRange(cluster)
+	over = t.stepDeleteRange(cluster, r)
 	return
 }
 
-func (t *DeletePeerTask) stepDeleteRange(cluster *Cluster) (over bool) {
+func (t *DeletePeerTask) stepDeleteRange(cluster *Cluster, r *Range) (over bool) {
 	node := cluster.FindNodeById(t.peer.GetNodeId())
 	if node == nil {
-		log.Warn("%s target node(%d) doesn't exist", t.loggingID, t.peer.GetNodeId())
+		log.Warn("%s target node(%d) doesn't exist", t.logID, t.peer.GetNodeId())
 		t.state = TaskStateCanceled
 		return true
 	}
 
-	err := cluster.cli.DeleteRange(node.GetServerAddr(), t.rangeID)
+	err := cluster.cli.DeleteRange(node.GetServerAddr(), r.GetId())
 	if err == nil {
-		log.Error("%s delete range failed, target node: %d, retries: %d", t.loggingID, t.peer.GetNodeId(), t.deleteRetries)
+		log.Error("%s delete range failed, target node: %d, retries: %d", t.logID, t.peer.GetNodeId(), t.deleteRetries)
 		t.deleteRetries++
 		return false
 	}
 
-	log.Info("%s delete range finished, peer: %v", t.loggingID, t.peer)
+	log.Info("%s delete range finished, peer: %v", t.logID, t.peer)
 
 	t.state = TaskStateFinished
 	return true

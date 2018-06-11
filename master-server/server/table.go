@@ -397,7 +397,7 @@ func (t *CreateTable) GetAllRanges() []*Range {
 	return ranges
 }
 
-func (t *CreateTable) GetNodeRangeStat() map[uint64]int  {
+func (t *CreateTable) GetNodeRangeStat() map[uint64]int {
 	rngStat := make(map[uint64]int, 0)
 	tRanges := t.GetAllRanges()
 	for _, r := range tRanges {
@@ -712,7 +712,7 @@ func (dt *CreateTableWorker) createRange(c *Cluster, table *CreateTable) error {
 				return ErrInternalError
 			}
 
-			r, err:= c.allocRange(create.startKey, create.endKey, table.Table)
+			r, err := c.allocRange(create.startKey, create.endKey, table.Table)
 			if err != nil {
 				return err
 			}
@@ -721,6 +721,7 @@ func (dt *CreateTableWorker) createRange(c *Cluster, table *CreateTable) error {
 			if err != nil {
 				return err
 			}
+			newPeer.Type = metapb.PeerType_PeerType_Normal
 			var peers []*metapb.Peer
 			peers = append(peers, newPeer)
 			region.Peers = peers

@@ -98,21 +98,16 @@ func (ts TaskState) String() string {
 
 // Task range task interface
 type Task interface {
-	// GetID return task id
-	GetID() uint64
+	// SetBeginTime set begin time
+	SetBegin()
+
+	// SetLogID set a identifer to print log
+	SetLogID(id string)
 
 	// GetType return task type
 	GetType() TaskType
 
-	// GetRangeID return the range's id which the task belong to
-	GetRangeID() uint64
-
-	// SetBeginTime set begin time
-	SetBeginTime()
-
 	// Step next step
-	// if err != nil means not over, and will retry next time
-	// if timeout no error return and over is true
 	Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task)
 
 	// CheckOver return true if check is over
@@ -133,42 +128,37 @@ type Task interface {
 
 // BaseTask include task's common attrs
 type BaseTask struct {
-	id        uint64
-	rangeID   uint64
 	typ       TaskType
 	state     TaskState
 	allowFail bool
 	begin     time.Time
 	timeout   time.Duration
-	loggingID string
+	logID     string
 }
 
 // newBaseTask new base task
-func newBaseTask(id uint64, rangeID uint64, typ TaskType, timeout time.Duration) *BaseTask {
+func newBaseTask(typ TaskType, timeout time.Duration) *BaseTask {
 	return &BaseTask{
-		id:        id,
-		rangeID:   rangeID,
-		typ:       typ,
-		state:     TaskStateStart,
-		begin:     time.Now(),
-		timeout:   timeout,
-		loggingID: fmt.Sprintf("task[%d] type=%s range=%d", id, typ.String(), rangeID),
+		typ:     typ,
+		state:   TaskStateStart,
+		begin:   time.Now(),
+		timeout: timeout,
 	}
 }
 
-// GetID return id
-func (t *BaseTask) GetID() uint64 {
-	return t.id
+// SetBegin set begin time
+func (t *BaseTask) SetBegin() {
+	t.begin = time.Now()
+}
+
+// SetLogID set logging id
+func (t *BaseTask) SetLogID(id string) {
+	t.logID = id
 }
 
 // GetType return task type
 func (t *BaseTask) GetType() TaskType {
 	return t.typ
-}
-
-// GetRangeID return range id
-func (t *BaseTask) GetRangeID() uint64 {
-	return t.rangeID
 }
 
 // GetState return current state
@@ -184,11 +174,6 @@ func (t *BaseTask) AllowFail() bool {
 // SetAllowFail set allow to fail
 func (t *BaseTask) SetAllowFail() {
 	t.allowFail = true
-}
-
-// SetBeginTime set begin time
-func (t *BaseTask) SetBeginTime() {
-	t.begin = time.Now()
 }
 
 // Elapsed eplased from start
@@ -223,7 +208,6 @@ func (t *BaseTask) CheckOver() bool {
 }
 
 func (t *BaseTask) String() string {
-	return fmt.Sprintf("\"id\": %d, \"range\": %d, \"type\": \"%s\", "+
-		"\"state\": \"%s\", \"begin\": \"%s\"",
-		t.id, t.rangeID, t.typ.String(), t.state.String(), t.begin.String())
+	return fmt.Sprintf("\"type\": \"%s\", \"state\": \"%s\", \"begin\": \"%s\"",
+		t.typ.String(), t.state.String(), t.begin.String())
 }

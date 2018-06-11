@@ -23,9 +23,9 @@ type AddPeerTask struct {
 }
 
 // NewAddPeerTask new add peer task
-func NewAddPeerTask(id uint64, rangeID uint64) *AddPeerTask {
+func NewAddPeerTask() *AddPeerTask {
 	return &AddPeerTask{
-		BaseTask: newBaseTask(id, rangeID, TaskTypeAddPeer, defaultAddPeerTaskTimeout),
+		BaseTask: newBaseTask(TaskTypeAddPeer, defaultAddPeerTaskTimeout),
 	}
 }
 
@@ -48,7 +48,7 @@ func (t *AddPeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.
 	case WaitDataSynced:
 		return t.stepWaitSync(r), nil
 	default:
-		log.Error("%s unexpceted add peer task state: %s", t.loggingID, t.state.String())
+		log.Error("%s unexpceted add peer task state: %s", t.logID, t.state.String())
 	}
 	return
 }
@@ -68,9 +68,10 @@ func (t *AddPeerTask) stepStart(cluster *Cluster, r *Range) (task *taskpb.Task) 
 		var err error
 		t.peer, err = cluster.allocPeerAndSelectNode(r)
 		if err != nil {
-			log.Error("%s alloc peer failed: %s", t.loggingID, err.Error())
+			log.Error("%s alloc peer failed: %s", t.logID, err.Error())
 			return nil
 		}
+		t.peer.Type = metapb.PeerType_PeerType_Learner
 	}
 
 	t.state = WaitRaftConfReady
@@ -86,7 +87,7 @@ func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Tas
 		return t.issueTask()
 	}
 
-	log.Info("%s add raft member finsihed, peer: %v.", t.loggingID, t.peer)
+	log.Info("%s add raft member finsihed, peer: %v.", t.logID, t.peer)
 
 	t.state = WaitRangeCreated
 
@@ -97,32 +98,34 @@ func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Tas
 func (t *AddPeerTask) stepCreateRange(cluster *Cluster, r *Range) {
 	err := prepareAddPeer(cluster, r, t.peer)
 	if err != nil {
-		log.Error("%s create new range failed: %s, peer: %v, retries: %d", t.loggingID, err.Error(), t.peer, t.createRetries)
+		log.Error("%s create new range failed: %s, peer: %v, retries: %d", t.logID, err.Error(), t.peer, t.createRetries)
 		t.createRetries++
 		return
 	}
 
-	log.Info("%s create range finshed to node(%d)", t.loggingID, t.peer.GetNodeId())
+	log.Info("%s create range finshed to node(%d)", t.logID, t.peer.GetNodeId())
 
 	t.state = WaitDataSynced
 	return
 }
 
 func (t *AddPeerTask) stepWaitSync(r *Range) bool {
-	if r.GetPendingPeer(t.peer.GetId()) != nil {
-		return false
-	}
+
+	log.Debug("step range: %v", r.GetPeers())
 
 	peer := r.GetPeer(t.peer.GetId())
 	if peer == nil {
-		log.Error("%s could not find target peer(%v) when check data sync", t.loggingID, t.peer)
+		log.Error("%s could not find target peer(%v) when check data sync", t.logID, t.peer)
 		return false
 	}
+
+	log.Info("%s added peer[id:%d, node:%d] current type: %v", t.logID, t.peer.GetId(), t.peer.GetNodeId(), peer.Type)
+
 	if peer.Type == metapb.PeerType_PeerType_Learner {
 		return false
 	}
 
-	log.Info("%s data sync finished, peer: %v", t.loggingID, t.peer)
+	log.Info("%s data sync finished, peer: %v", t.logID, t.peer)
 
 	t.state = TaskStateFinished
 	return true

@@ -129,7 +129,8 @@ func (service *Server) handleNodeHeartbeat(ctx context.Context, req *mspb.NodeHe
 
 func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.RangeHeartbeatRequest) (resp *mspb.RangeHeartbeatResponse) {
 	r := req.GetRange()
-	log.Debug("[HB] range[%d:%d] heartbeat, from ip[%s] DownPeers:%v", r.GetTableId(), r.GetId(), util.GetIpFromContext(ctx), req.GetDownPeers())
+	log.Debug("[HB] range[%d:%d] heartbeat, from ip[%s] Peers:%v DownPeers:%v", r.GetTableId(), r.GetId(), util.GetIpFromContext(ctx),
+		req.GetRange().GetPeers(), req.GetDownPeers())
 
 	cluster := service.cluster
 	resp = new(mspb.RangeHeartbeatResponse)
@@ -215,6 +216,14 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 	}
 	if len(rng.GetDownPeers()) > 0 || len(rng.GetPendingPeers()) > 0 {
 		saveCache = true
+	}
+	// 有learner提升
+	for _, peer := range r.GetPeers() {
+		oldPeer := rng.GetPeer(peer.GetId())
+		if oldPeer == nil || oldPeer.Type != peer.Type {
+			saveCache = true
+			saveStore = true
+		}
 	}
 
 	if saveStore {

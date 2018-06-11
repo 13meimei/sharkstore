@@ -148,7 +148,7 @@ func (manager *hb_range_manager) checkDownPeer(cluster *Cluster, rng *Range) *Ta
 		if err != nil {
 			return nil
 		}
-		return NewTaskChain(rng.GetId(), "hb-down-peer", NewDeletePeerTask(id, rng.GetId(), peer))
+		return NewTaskChain(id, rng.GetId(), "hb-down-peer", NewDeletePeerTask(peer))
 	}
 	return nil
 }
@@ -173,19 +173,15 @@ func (manager *hb_range_manager) createDelPeerTask(cluster *Cluster, r *Range, p
 	if err != nil {
 		return nil
 	}
-	delPeerTask := NewDeletePeerTask(id, r.GetId(), peer)
+	delPeerTask := NewDeletePeerTask(peer)
 
 	if r.GetLeader() != nil && r.GetLeader().GetId() == peer.GetId() {
-		id2, err := cluster.GenId()
-		if err != nil {
-			return nil
-		}
-		changeLeaderTask := NewChangeLeaderTask(id2, r.GetId(), r.GetLeader().GetNodeId(), 0)
+		changeLeaderTask := NewChangeLeaderTask(r.GetLeader().GetNodeId(), 0)
 		changeLeaderTask.SetAllowFail()
-		return NewTaskChain(r.GetId(), creator, changeLeaderTask, delPeerTask)
+		return NewTaskChain(id, r.GetId(), creator, changeLeaderTask, delPeerTask)
 	}
 
-	return NewTaskChain(r.GetId(), creator, delPeerTask)
+	return NewTaskChain(id, r.GetId(), creator, delPeerTask)
 }
 
 func (manager *hb_range_manager) Check(cluster *Cluster, r *Range) *TaskChain {
@@ -196,7 +192,7 @@ func (manager *hb_range_manager) Check(cluster *Cluster, r *Range) *TaskChain {
 		if err != nil {
 			return nil
 		}
-		return NewTaskChain(r.GetId(), "hb-range-remove", NewDeleteRangeTask(id, r.GetId()))
+		return NewTaskChain(id, r.GetId(), "hb-range-remove", NewDeleteRangeTask())
 	}
 
 	// range failover
@@ -215,7 +211,7 @@ func (manager *hb_range_manager) Check(cluster *Cluster, r *Range) *TaskChain {
 			log.Error("rangeId:%d,%s", r.GetId(), err.Error())
 			return nil
 		}
-		return NewTaskChain(r.GetId(), "hb-lack-peer", NewAddPeerTask(id, r.GetId()))
+		return NewTaskChain(id, r.GetId(), "hb-lack-peer", NewAddPeerTask())
 	}
 
 	// too many peers
@@ -243,7 +239,7 @@ func (manager *hb_range_manager) Check(cluster *Cluster, r *Range) *TaskChain {
 			log.Error("rangeId:%d,%s", r.GetId(), err.Error())
 			return nil
 		}
-		return NewTaskChain(r.GetId(), "hb-same-ip", NewAddPeerTask(id, r.GetId()))
+		return NewTaskChain(id, r.GetId(), "hb-same-ip", NewAddPeerTask())
 	}
 
 	return nil
