@@ -18,7 +18,8 @@ void Range::AddPeer(const metapb::Peer &peer) {
 
     cch.type = raft::ConfChangeType::kAdd;
 
-    cch.peer.type = raft::PeerType::kNormal;
+    cch.peer.type = peer.type() == metapb::PeerType_Learner ? raft::PeerType::kLearner
+                                                            : raft::PeerType::kNormal;
     cch.peer.node_id = peer.node_id();
     cch.peer.peer_id = peer.id();
 
@@ -54,7 +55,8 @@ void Range::DelPeer(const metapb::Peer &peer) {
 
     cch.type = raft::ConfChangeType::kRemove;
 
-    cch.peer.type = raft::PeerType::kNormal;
+    cch.peer.type = peer.type() == metapb::PeerType_Learner ? raft::PeerType::kLearner
+                                                            : raft::PeerType::kNormal;
     cch.peer.node_id = peer.node_id();
     cch.peer.peer_id = peer.id();
     raft_cmdpb::PeerTask pt;
@@ -84,6 +86,9 @@ Status Range::ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) {
             break;
         case raft::ConfChangeType::kRemove:
             ret = ApplyDelPeer(cc);
+            break;
+        case raft::ConfChangeType::kPromote:
+            ret = ApplyPromotePeer(cc);
             break;
         default:
             ret =
@@ -216,6 +221,44 @@ Status Range::ApplyDelPeer(const raft::ConfChange &cc) {
               meta_.id(), cc.peer.node_id, meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 
+    return Status::OK();
+}
+
+static bool promotePeer(const raft::Peer &peer, metapb::Range &meta) {
+    for (int i = 0; i < meta.peers_size(); ++i) {
+        auto mp = meta.mutable_peers(i);
+        if (mp->id() == peer.peer_id && mp->node_id() == peer.node_id &&
+            mp->type() == metapb::PeerType_Learner) {
+            mp->set_type(metapb::PeerType_Normal);
+            return true;
+        }
+    }
+    return false;
+}
+
+Status Range::ApplyPromotePeer(const raft::ConfChange &cc) {
+    FLOG_INFO("Range %" PRIu64 " ApplyPromotePeer NodeId:%" PRIu64
+              " Begin, version:%" PRIu64 " conf_ver:%" PRIu64,
+              meta_.id(), cc.peer.node_id, meta_.range_epoch().version(),
+              meta_.range_epoch().conf_ver());
+
+    bool is_modify = false;
+    {
+        std::unique_lock<sharkstore::shared_mutex> lock(meta_lock_);
+
+        if (promotePeer(cc.peer, meta_)) {
+            if (SaveMeta(meta_)) {
+                is_modify = true;
+            }
+        }
+    }
+
+    if (is_modify) {
+        FLOG_INFO("Range %" PRIu64 " ApplyPromotePeer NodeId:%" PRIu64 " Successfully.",
+                  meta_.id(), cc.peer.node_id);
+
+        PushHeartBeatMessage();
+    }
     return Status::OK();
 }
 

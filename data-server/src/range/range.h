@@ -182,6 +182,7 @@ private:
 
     Status ApplyAddPeer(const raft::ConfChange &cc);
     Status ApplyDelPeer(const raft::ConfChange &cc);
+    Status ApplyPromotePeer(const raft::ConfChange &cc);
 
     Status ApplyKVSet(const raft_cmdpb::Command &cmd);
     Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd);
