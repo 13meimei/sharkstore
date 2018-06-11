@@ -256,7 +256,7 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 	if table != nil && table.Status == metapb.TableStatus_TableInit {
 		return
 	}
-	task := cluster.eventDispatcher.Dispatch(rng)
+	task := cluster.Dispatch(rng)
 	if task != nil {
 		if rng.Trace || log.IsEnableInfo() {
 			log.Info("[HB] range[%s] dispatch task[%v]", rng.SString(), task)

@@ -118,6 +118,9 @@ type Task interface {
 	// CheckOver return true if check is over
 	CheckOver() bool
 
+	// AllowFail allow to fail and continue next task
+	AllowFail() bool
+
 	// GetState return current state
 	GetState() TaskState
 
@@ -134,6 +137,7 @@ type BaseTask struct {
 	rangeID   uint64
 	typ       TaskType
 	state     TaskState
+	allowFail bool
 	begin     time.Time
 	timeout   time.Duration
 	loggingID string
@@ -172,9 +176,24 @@ func (t *BaseTask) GetState() TaskState {
 	return t.state
 }
 
+// AllowFail return true if is allowed to fail
+func (t *BaseTask) AllowFail() bool {
+	return t.allowFail
+}
+
+// SetAllowFail set allow to fail
+func (t *BaseTask) SetAllowFail() {
+	t.allowFail = true
+}
+
 // SetBeginTime set begin time
 func (t *BaseTask) SetBeginTime() {
 	t.begin = time.Now()
+}
+
+// Elapsed eplased from start
+func (t *BaseTask) Elapsed() time.Duration {
+	return time.Since(t.begin)
 }
 
 // checkTimeout return true if task is run timeout

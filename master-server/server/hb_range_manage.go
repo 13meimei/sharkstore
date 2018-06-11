@@ -131,7 +131,7 @@ func (manager *hb_range_manager) CheckRange(cluster *Cluster, rng *Range) RangeE
 	return nil
 }
 
-func (manager *hb_range_manager) checkDownPeer(cluster *Cluster, rng *Range) RangeEvent {
+func (manager *hb_range_manager) checkDownPeer(cluster *Cluster, rng *Range) *TaskChain {
 	if manager.isMorePeerDown(rng) {
 		log.Warn("range %v more down peers ", rng)
 	}
@@ -148,7 +148,7 @@ func (manager *hb_range_manager) checkDownPeer(cluster *Cluster, rng *Range) Ran
 		if err != nil {
 			return nil
 		}
-		return manager.createDelPeerEvent(id, rng, peer, "hb down peer")
+		return NewTaskChain(rng.GetId(), "hb-down-peer", NewDeletePeerTask(id, rng.GetId(), peer))
 	}
 	return nil
 }
@@ -168,6 +168,83 @@ func (manager *hb_range_manager) createDelPeerEvent(id uint64, rng *Range, peer 
 	return delPeerEvent
 }
 
+func (manager *hb_range_manager) createDelPeerTask(cluster *Cluster, r *Range, peer *metapb.Peer, creator string) *TaskChain {
+	id, err := cluster.GenId()
+	if err != nil {
+		return nil
+	}
+	delPeerTask := NewDeletePeerTask(id, r.GetId(), peer)
+
+	if r.GetLeader() != nil && r.GetLeader().GetId() == peer.GetId() {
+		id2, err := cluster.GenId()
+		if err != nil {
+			return nil
+		}
+		changeLeaderTask := NewChangeLeaderTask(id2, r.GetId(), r.GetLeader().GetNodeId(), 0)
+		changeLeaderTask.SetAllowFail()
+		return NewTaskChain(r.GetId(), creator, changeLeaderTask, delPeerTask)
+	}
+
+	return NewTaskChain(r.GetId(), creator, delPeerTask)
+}
+
 func (manager *hb_range_manager) Check(cluster *Cluster, r *Range) *TaskChain {
+	// 处理分片回收
+	// TODO: 直接调用DS接口删除range 然后回收
+	if r.State == metapb.RangeState_R_Remove {
+		id, err := cluster.GenId()
+		if err != nil {
+			return nil
+		}
+		return NewTaskChain(r.GetId(), "hb-range-remove", NewDeleteRangeTask(id, r.GetId()))
+	}
+
+	// range failover
+	if !cluster.autoFailoverUnable {
+		tc := manager.checkDownPeer(cluster, r)
+		if tc != nil {
+			return tc
+		}
+	}
+
+	// lack of peer
+	if len(r.GetPeers()) < cluster.opt.GetMaxReplicas() {
+		log.Info("range %d peer %d less than %d", r.GetId(), len(r.GetPeers()), cluster.opt.GetMaxReplicas())
+		id, err := cluster.GenId()
+		if err != nil {
+			log.Error("rangeId:%d,%s", r.GetId(), err.Error())
+			return nil
+		}
+		return NewTaskChain(r.GetId(), "hb-lack-peer", NewAddPeerTask(id, r.GetId()))
+	}
+
+	// too many peers
+	if len(r.GetPeers()) > cluster.opt.GetMaxReplicas() {
+		log.Info("range %d peer %d more than %d", r.GetId(), len(r.GetPeers()), cluster.opt.GetMaxReplicas())
+
+		if len(r.GetPendingPeers()) != 0 {
+			log.Info("range %v peer number %v / pending peer number %v: ", r.GetId(), len(r.GetPeers()), len(r.GetPendingPeers()))
+			return nil
+		}
+		// 优先下掉ip相同的副本
+		oldPeer := cluster.selectWorstPeer(r)
+		if oldPeer == nil {
+			return nil
+		}
+		return manager.createDelPeerTask(cluster, r, oldPeer, "hb-overmuch-peer")
+	}
+
+	// 检查是否有ip相同的副本
+	if ip, ok := cluster.checkSameIpNode(r.GetNodes(cluster)); ok {
+		//先添加，后面再自动删除
+		log.Info("range %d exist same ip %v", r.GetId(), ip)
+		id, err := cluster.GenId()
+		if err != nil {
+			log.Error("rangeId:%d,%s", r.GetId(), err.Error())
+			return nil
+		}
+		return NewTaskChain(r.GetId(), "hb-same-ip", NewAddPeerTask(id, r.GetId()))
+	}
+
 	return nil
 }

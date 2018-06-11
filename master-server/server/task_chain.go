@@ -22,11 +22,11 @@ type TaskChain struct {
 }
 
 // NewTaskChain new taskchain
-func NewTaskChain(rangeID uint64, name string, tasks []Task) *TaskChain {
+func NewTaskChain(rangeID uint64, name string, tasks ...Task) *TaskChain {
 	c := &TaskChain{
 		rangeID:    rangeID,
 		name:       name,
-		tasks:      tasks,
+		tasks:      append([]Task(nil), tasks...),
 		curIdx:     0,
 		begin:      time.Now(),
 		lastUpdate: time.Now(),
@@ -75,9 +75,13 @@ func (c *TaskChain) Next(cluster *Cluster, r *Range) (over bool, task *taskpb.Ta
 
 		// current task is over but it doesn't finished successfully. so failed at this point
 		if t.GetState() != TaskStateFinished {
-			log.Error("%s failed. last %s task failed at %s, detail: %s",
+			if !t.AllowFail() {
+				log.Error("%s failed. last %s task failed at %s, detail: %s",
+					c.loggingID, t.GetType().String(), t.GetState().String(), t.String())
+				return true, nil
+			}
+			log.Warn("%s skip failed %s task and continue. failed at %s, detail: %s",
 				c.loggingID, t.GetType().String(), t.GetState().String(), t.String())
-			return true, nil
 		}
 
 		// current task finished successfully and current is the last one
@@ -90,7 +94,7 @@ func (c *TaskChain) Next(cluster *Cluster, r *Range) (over bool, task *taskpb.Ta
 		c.curIdx++
 		// reset next task's begin time
 		c.tasks[c.curIdx].SetBeginTime()
-		log.Info("%s start next task: %s", c.loggingID, c.tasks[c.curIdx].String())
+		log.Info("%s %s task finsished. start next task: %s", c.loggingID, t.GetType().String(), c.tasks[c.curIdx].String())
 	}
 }
 
