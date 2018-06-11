@@ -1,11 +1,12 @@
 package server
 
 import (
-	"util/log"
-	"time"
-	"model/pkg/metapb"
-	"github.com/gogo/protobuf/proto"
 	"fmt"
+	"model/pkg/metapb"
+	"time"
+	"util/log"
+
+	"github.com/gogo/protobuf/proto"
 )
 
 var (
@@ -25,8 +26,8 @@ type hb_range_manager struct {
 }
 
 func NewHBRangeManager(cluster *Cluster) *hb_range_manager {
-	dealIngNodes := newIDCache(time.Second, 10 * time.Second)
-	return &hb_range_manager{cluster: cluster, dealIngNodes: dealIngNodes,}
+	dealIngNodes := newIDCache(time.Second, 10*time.Second)
+	return &hb_range_manager{cluster: cluster, dealIngNodes: dealIngNodes}
 }
 
 type RunMode int
@@ -165,4 +166,8 @@ func (manager *hb_range_manager) createDelPeerEvent(id uint64, rng *Range, peer 
 		return nil
 	}
 	return delPeerEvent
+}
+
+func (manager *hb_range_manager) Check(cluster *Cluster, r *Range) *TaskChain {
+	return nil
 }

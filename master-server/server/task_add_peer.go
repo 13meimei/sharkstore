@@ -34,35 +34,21 @@ func (t *AddPeerTask) String() string {
 }
 
 // Step step
-func (t *AddPeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task, err error) {
-	// task is over
-	if t.CheckOver() {
-		return true, nil, nil
-	}
-
-	if r == nil {
-		log.Warn("% invalid input range: <nil>", t.loggingID)
-		return false, nil, fmt.Errorf("invalid step input: range is nil")
-	}
-
+func (t *AddPeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task) {
 	switch t.GetState() {
 	case TaskStateStart:
-		over = false
-		task, err = t.stepStart(cluster, r)
-		return
+		task = t.stepStart(cluster, r)
+		return false, task
 	case WaitRaftConfReady:
-		over = false
-		task, err = t.stepWaitConf(cluster, r)
-		return
+		task = t.stepWaitConf(cluster, r)
+		return false, task
 	case WaitRangeCreated:
-		over = false
-		err = t.stepCreateRange(cluster, r)
-		return
+		t.stepCreateRange(cluster, r)
+		return false, nil
 	case WaitDataSynced:
-		over = t.stepWaitSync(r)
-		return
+		return t.stepWaitSync(r), nil
 	default:
-		err = fmt.Errorf("unexpceted add peer task state: %s", t.state.String())
+		log.Error("%s unexpceted add peer task state: %s", t.loggingID, t.state.String())
 	}
 	return
 }
@@ -76,48 +62,50 @@ func (t *AddPeerTask) issueTask() *taskpb.Task {
 	}
 }
 
-func (t *AddPeerTask) stepStart(cluster *Cluster, r *Range) (task *taskpb.Task, err error) {
+func (t *AddPeerTask) stepStart(cluster *Cluster, r *Range) (task *taskpb.Task) {
 	// not alloc new peer yet
 	if t.peer == nil {
+		var err error
 		t.peer, err = cluster.allocPeerAndSelectNode(r)
 		if err != nil {
 			log.Error("%s alloc peer failed: %s", t.loggingID, err.Error())
-			return nil, err
+			return nil
 		}
 	}
 
 	t.state = WaitRaftConfReady
 
 	// return a task to add this peer into raft member
-	return t.issueTask(), nil
+	return t.issueTask()
 }
 
-func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Task, err error) {
+func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Task) {
 	if r.GetPeer(t.peer.GetId()) == nil {
 		t.confRetries++
 
-		return t.issueTask(), nil
+		return t.issueTask()
 	}
 
 	log.Info("%s add raft member finsihed, peer: %v.", t.loggingID, t.peer)
 
 	t.state = WaitRangeCreated
-	err = t.stepCreateRange(cluster, r)
-	return nil, err
+
+	t.stepCreateRange(cluster, r)
+	return nil
 }
 
-func (t *AddPeerTask) stepCreateRange(cluster *Cluster, r *Range) error {
+func (t *AddPeerTask) stepCreateRange(cluster *Cluster, r *Range) {
 	err := prepareAddPeer(cluster, r, t.peer)
 	if err != nil {
 		log.Error("%s create new range failed: %s, peer: %v, retries: %d", t.loggingID, err.Error(), t.peer, t.createRetries)
 		t.createRetries++
-		return err
+		return
 	}
 
 	log.Info("%s create range finshed to node(%d)", t.loggingID, t.peer.GetNodeId())
 
 	t.state = WaitDataSynced
-	return nil
+	return
 }
 
 func (t *AddPeerTask) stepWaitSync(r *Range) bool {

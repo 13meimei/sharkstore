@@ -6,10 +6,11 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 	"sync/atomic"
+	"time"
 
 	"model/pkg/metapb"
+	"model/pkg/taskpb"
 	"pkg-go/ds_client"
 	"util"
 	"util/deepcopy"
@@ -19,8 +20,9 @@ import (
 	"encoding/binary"
 	sErr "master-server/engine/errors"
 
-	"github.com/gogo/protobuf/proto"
 	"util/alarm"
+
+	"github.com/gogo/protobuf/proto"
 )
 
 // NOTE: prefix's first char must not be '\xff'
@@ -74,6 +76,7 @@ type Cluster struct {
 	hbManager       *hb_range_manager
 	workerManger    *WorkerManager
 	eventDispatcher *EventDispatcher
+	taskManager     *TaskManager
 	metric          *Metric
 
 	close bool
@@ -114,6 +117,7 @@ func NewCluster(clusterId, nodeId uint64, store Store, opt *scheduleOption) *Clu
 	cluster.workerManger = NewWorkerManager(cluster, opt)
 	cluster.hbManager = NewHBRangeManager(cluster)
 	cluster.eventDispatcher = NewEventDispatcher(cluster, opt)
+	cluster.taskManager = NewTaskManager()
 	return cluster
 }
 
@@ -568,11 +572,11 @@ func (c *Cluster) AddRangeHbCheckWorker() {
 }
 
 func (c *Cluster) AddBalanceLeaderWorker() {
-	c.workerManger.addWorker(NewBalanceNodeLeaderWorker(c.workerManger, 5 * defaultWorkerInterval))
+	c.workerManger.addWorker(NewBalanceNodeLeaderWorker(c.workerManger, 5*defaultWorkerInterval))
 }
 
 func (c *Cluster) AddBalanceRangeWorker() {
-	c.workerManger.addWorker(NewBalanceNodeRangeWorker(c.workerManger, 2 * defaultWorkerInterval))
+	c.workerManger.addWorker(NewBalanceNodeRangeWorker(c.workerManger, 2*defaultWorkerInterval))
 }
 
 func (c *Cluster) AddBalanceNodeOpsWorker() {
@@ -1125,9 +1129,9 @@ func (c *Cluster) allocPrePeerAndSelectNode(rng *Range, t *CreateTable) (*metapb
 }
 
 /**
-	选择节点需要排除已有peer相同的IP
-	优先table的range分布少的node
- */
+选择节点需要排除已有peer相同的IP
+优先table的range分布少的node
+*/
 func (c *Cluster) allocPeerAndSelectNode(rng *Range) (*metapb.Peer, error) {
 	node := c.selectNodeForAddPeer(rng)
 	if node == nil {
@@ -1195,7 +1199,7 @@ func initWorkerPool() map[string]bool {
 	return pool
 }
 
-func (c *Cluster) selectNodeForPreAddPeer(rng *Range, t *CreateTable) *Node  {
+func (c *Cluster) selectNodeForPreAddPeer(rng *Range, t *CreateTable) *Node {
 	candidateNodes := c.selectBestNodesForAddPeer(rng)
 	if len(candidateNodes) == 0 {
 		return nil
@@ -1221,11 +1225,11 @@ func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {
 }
 
 /**
-	TODO：选择一个最好的节点，目前通过整体的range分布 + 表的range分布 来判断
-	strategy for change best node form candidate nodes :
-		range count of node at global level
-		range count of node at table level
- */
+TODO：选择一个最好的节点，目前通过整体的range分布 + 表的range分布 来判断
+strategy for change best node form candidate nodes :
+	range count of node at global level
+	range count of node at table level
+*/
 func (c *Cluster) selectBestNodeST(candidateNodes []*Node, rng *Range, rngStat map[uint64]int) *Node {
 	var tRangeDist, nRangeDist Distributions
 	for _, node := range candidateNodes {
@@ -1268,7 +1272,7 @@ func (c *Cluster) selectBestNodesForAddPeer(rng *Range) []*Node {
 		NewStorageThresholdSelector(c.opt),
 	}
 
-	log.Debug("select node for add Peer node size:%d",len(c.GetAllNode()))
+	log.Debug("select node for add Peer node size:%d", len(c.GetAllNode()))
 	nodes := make([]*Node, 0)
 	for _, node := range c.GetAllNode() {
 		flag := true
@@ -1283,7 +1287,7 @@ func (c *Cluster) selectBestNodesForAddPeer(rng *Range) []*Node {
 			nodes = append(nodes, node)
 		}
 	}
-	log.Debug("selected node size:%d",len(nodes))
+	log.Debug("selected node size:%d", len(nodes))
 	return nodes
 
 }
@@ -1346,6 +1350,31 @@ func (c *Cluster) selectWorstPeer(rng *Range) *metapb.Peer {
 	for _, peer := range rng.Peers {
 		if peer.NodeId == worstNode.GetId() {
 			return peer
+		}
+	}
+	return nil
+}
+
+// Dispatch dispatch range heartbeat
+func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
+	// get taskchain
+	tc := c.taskManager.Find(r.GetId())
+	if tc == nil {
+		tc = c.hbManager.Check(c, r)
+		if tc != nil {
+			if !c.taskManager.Add(tc) {
+				log.Warn("add tasks for range(%d) failed. maybe other tasks is running.", r.GetId())
+				tc = nil
+			}
+		}
+	}
+
+	if tc != nil {
+		over, task := tc.Next(c, r)
+		if !over {
+			return task
+		} else {
+			c.taskManager.Remove(r.GetId())
 		}
 	}
 	return nil

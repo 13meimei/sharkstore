@@ -55,7 +55,6 @@ private:
     void tickRoutine();
 
 private:
-
     const RaftServerOptions ops_;
     std::atomic<bool> running_ = {false};
 

@@ -37,41 +37,31 @@ func (t *ChangeLeaderTask) String() string {
 }
 
 // Step step
-func (t *ChangeLeaderTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task, err error) {
-	// task is over
-	if t.CheckOver() {
-		return true, nil, nil
-	}
-
-	if r == nil {
-		log.Warn("% invalid input range: <nil>", t.loggingID)
-		return false, nil, fmt.Errorf("invalid step input: range is nil")
-	}
-
+func (t *ChangeLeaderTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task) {
 	switch t.GetState() {
 	case TaskStateStart:
 		t.tryToChangeLeader(cluster, r)
 		t.state = WaitLeaderChanged
-		return false, nil, nil
+		return false, nil
 
 	case WaitLeaderChanged:
 		if t.isChanged(r) {
 			log.Info("%s change finished. final leader: %d", t.loggingID, r.Leader.GetNodeId())
 			t.state = TaskStateFinished
-			return true, nil, nil
+			return true, nil
 		}
 
 		if t.retries >= defaultMaxChangeLeaderRetryTimes {
 			log.Info("%s change canceled(max retry reached). final leader: %d", t.loggingID, r.Leader.GetNodeId())
 			t.state = TaskStateCanceled
-			return true, nil, nil
+			return true, nil
 		}
 
 		t.tryToChangeLeader(cluster, r)
-		return false, nil, nil
+		return false, nil
 
 	default:
-		err = fmt.Errorf("unexpceted change leader task state: %s", t.state.String())
+		log.Error("%s unexpceted add peer task state: %s", t.loggingID, t.state.String())
 	}
 	return
 }

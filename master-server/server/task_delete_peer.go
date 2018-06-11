@@ -35,29 +35,16 @@ func (t *DeletePeerTask) String() string {
 }
 
 // Step step
-func (t *DeletePeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task, err error) {
-	// task is over
-	if t.CheckOver() {
-		return true, nil, nil
-	}
-
-	if r == nil {
-		log.Warn("% invalid input range: <nil>", t.loggingID)
-		return false, nil, fmt.Errorf("invalid step input: range is nil")
-	}
-
+func (t *DeletePeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task) {
 	switch t.GetState() {
 	case TaskStateStart:
-		over = false
-		task = t.stepStart(r)
-		return
+		return false, t.stepStart(r)
 	case WaitRaftConfReady:
 		return t.stepWaitConf(cluster, r)
 	case WaitRangeDeleted:
-		over, err = t.stepDeleteRange(cluster)
-		return
+		return t.stepDeleteRange(cluster), nil
 	default:
-		err = fmt.Errorf("unexpceted delete peer task state: %s", t.state.String())
+		log.Error("%s unexpceted add peer task state: %s", t.loggingID, t.state.String())
 	}
 	return
 }
@@ -76,35 +63,35 @@ func (t *DeletePeerTask) stepStart(r *Range) *taskpb.Task {
 	return t.issueTask()
 }
 
-func (t *DeletePeerTask) stepWaitConf(cluster *Cluster, r *Range) (over bool, task *taskpb.Task, err error) {
+func (t *DeletePeerTask) stepWaitConf(cluster *Cluster, r *Range) (over bool, task *taskpb.Task) {
 	if r.GetPeer(t.peer.GetId()) != nil {
 		t.confRetries++
-		return false, t.issueTask(), nil
+		return false, t.issueTask()
 	}
 
 	log.Info("%s delete raft member finished, peer: %v", t.loggingID, t.peer)
 
-	over, err = t.stepDeleteRange(cluster)
+	over = t.stepDeleteRange(cluster)
 	return
 }
 
-func (t *DeletePeerTask) stepDeleteRange(cluster *Cluster) (over bool, err error) {
+func (t *DeletePeerTask) stepDeleteRange(cluster *Cluster) (over bool) {
 	node := cluster.FindNodeById(t.peer.GetNodeId())
 	if node == nil {
 		log.Warn("%s target node(%d) doesn't exist", t.loggingID, t.peer.GetNodeId())
 		t.state = TaskStateCanceled
-		return true, nil
+		return true
 	}
 
-	err = cluster.cli.DeleteRange(node.GetServerAddr(), t.rangeID)
+	err := cluster.cli.DeleteRange(node.GetServerAddr(), t.rangeID)
 	if err == nil {
 		log.Error("%s delete range failed, target node: %d, retries: %d", t.loggingID, t.peer.GetNodeId(), t.deleteRetries)
 		t.deleteRetries++
-		return false, err
+		return false
 	}
 
 	log.Info("%s delete range finished, peer: %v", t.loggingID, t.peer)
 
 	t.state = TaskStateFinished
-	return true, nil
+	return true
 }

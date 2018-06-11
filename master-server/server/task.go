@@ -40,7 +40,7 @@ func (t TaskType) String() string {
 // TaskState task running state
 type TaskState int
 
-// common states, don't greater than 100
+// common states, keep less than 100
 const (
 	// TaskStateStart start
 	TaskStateStart TaskState = iota + 1
@@ -113,7 +113,10 @@ type Task interface {
 	// Step next step
 	// if err != nil means not over, and will retry next time
 	// if timeout no error return and over is true
-	Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task, err error)
+	Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task)
+
+	// CheckOver return true if check is over
+	CheckOver() bool
 
 	// GetState return current state
 	GetState() TaskState
