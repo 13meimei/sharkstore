@@ -391,7 +391,7 @@ void RaftFsm::checkCaughtUp() {
     uint64_t max_match = 0;
     for (const auto& p : learners_) {
         const auto& pr = *p.second;
-        if (pr.match() > max_match) {
+        if (pr.match() >= max_match) {
             max_match = pr.match();
             max_peer = pr.peer();
         }

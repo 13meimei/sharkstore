@@ -50,7 +50,8 @@ Status Range::Initialize(range_status_t *status, uint64_t leader) {
     const auto &peers = meta_.peers();
     for (auto it = peers.begin(); it != peers.end(); ++it) {
         raft::Peer p;
-        p.type = raft::PeerType::kNormal;
+        p.type = it->type() == metapb::PeerType_Learner ? raft::PeerType::kLearner
+                                                        : raft::PeerType::kNormal;
         p.node_id = it->node_id();
         p.peer_id = it->id();
         options.peers.push_back(p);
