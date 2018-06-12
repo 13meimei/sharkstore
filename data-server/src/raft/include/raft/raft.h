@@ -24,10 +24,6 @@ public:
     virtual Status Submit(std::string& cmd) = 0;
     virtual Status ChangeMemeber(const ConfChange& conf) = 0;
 
-    virtual void GetPeers(std::vector<Peer>* peers) const = 0;
-    virtual void GetDownPeers(std::vector<DownPeer>* peers) const = 0;
-    virtual void GetPeedingPeers(std::vector<Peer>* peers) const = 0;
-
     virtual void GetStatus(RaftStatus* status) const = 0;
 
     virtual void Truncate(uint64_t index) = 0;

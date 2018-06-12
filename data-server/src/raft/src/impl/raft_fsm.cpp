@@ -484,11 +484,11 @@ RaftStatus RaftFsm::GetStatus() const {
                 rs.match = pr.match();
                 rs.commit = pr.committed();
                 rs.next = pr.next();
-                rs.inactive = std::chrono::duration_cast<std::chrono::seconds>(
-                                  pr.inactive_ticks() * sops_.tick_interval)
-                                  .count();
+                rs.inactive_seconds = std::chrono::duration_cast<std::chrono::seconds>(
+                                          pr.inactive_ticks() * sops_.tick_interval)
+                                          .count();
                 rs.state = ReplicateStateName(pr.state());
-                rs.pending = pr.state() == ReplicaState::kSnapshot;
+                rs.snapshotting = pr.state() == ReplicaState::kSnapshot;
                 s.replicas.emplace(node, rs);
             }
         });

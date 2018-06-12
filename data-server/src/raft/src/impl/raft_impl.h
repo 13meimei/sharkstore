@@ -40,19 +40,9 @@ public:
         bulletin_board_.LeaderTerm(leader, term);
     }
 
-    void GetPeers(std::vector<Peer>* peers) const override {
-        bulletin_board_.Peers(peers);
-    }
-
-    void GetDownPeers(std::vector<DownPeer>* peers) const override {
-        bulletin_board_.DownPeers(peers);
-    }
-
-    void GetPeedingPeers(std::vector<Peer>* peers) const override {
-        bulletin_board_.PendingPeers(peers);
-    }
-
     void GetStatus(RaftStatus* status) const override { bulletin_board_.Status(status); }
+
+    void GetPeers(std::vector<Peer>* peers) const { bulletin_board_.Peers(peers); }
 
     void Truncate(uint64_t index) override;
 
@@ -68,11 +58,9 @@ public:
     void RecvMsg(MessagePtr& msg);
     void Step(MessagePtr& msg);
 
-    void ReportSnapSendResult(const SnapContext& ctx,
-                              const SnapResult& result);
+    void ReportSnapSendResult(const SnapContext& ctx, const SnapResult& result);
 
-    void ReportSnapApplyResult(const SnapContext& ctx,
-                              const SnapResult& result);
+    void ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result);
 
 private:
     void post(const std::function<void()>& f);
@@ -103,11 +91,8 @@ private:
 
     Ready ready_;
     pb::HardState prev_hard_state_;
-    bool conf_changed_ = false;
+    bool conf_changed_ = true;  // init peers for bulletin board
     time_t last_fetch_status_ = 0;
-
-    // TODO: manager storage_
-    // TODO: manager statemachine
 };
 
 } /* namespace impl */

@@ -12,7 +12,7 @@ std::string ReplicaStatus::ToString() const {
     ss << "\"match\": " << match << ", ";
     ss << "\"commit\": " << commit << ", ";
     ss << "\"next\": " << next << ", ";
-    ss << "\"inactive\": " << inactive << ", ";
+    ss << "\"inactive\": " << inactive_seconds << ", ";
     ss << "\"state\": \"" << state << "\"";
     ss << "}";
     return ss.str();

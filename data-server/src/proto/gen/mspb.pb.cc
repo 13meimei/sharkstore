@@ -33,11 +33,16 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<GetMSLeaderResponse>
      _instance;
 } _GetMSLeaderResponse_default_instance_;
-class PeerStatsDefaultTypeInternal {
+class DownPeerDefaultTypeInternal {
 public:
- ::google::protobuf::internal::ExplicitlyConstructed<PeerStats>
+ ::google::protobuf::internal::ExplicitlyConstructed<DownPeer>
      _instance;
-} _PeerStats_default_instance_;
+} _DownPeer_default_instance_;
+class ReplicateProgressDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<ReplicateProgress>
+     _instance;
+} _ReplicateProgress_default_instance_;
 class RangeStatsDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<RangeStats>
@@ -254,7 +259,7 @@ namespace protobuf_mspb_2eproto {
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[46];
+::google::protobuf::Metadata file_level_metadata[47];
 
 }  // namespace
 
@@ -269,6 +274,7 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::AuxillaryParseTableField
 };
 PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
     TableStruct::schema[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
@@ -340,12 +346,21 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetMSLeaderResponse, header_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetMSLeaderResponse, leader_),
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PeerStats, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DownPeer, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PeerStats, peer_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PeerStats, down_seconds_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DownPeer, peer_id_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DownPeer, down_seconds_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ReplicateProgress, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ReplicateProgress, peer_id_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ReplicateProgress, index_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ReplicateProgress, commit_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ReplicateProgress, snapshotting_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeStats, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -364,8 +379,9 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, header_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, range_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, leader_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, term_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, down_peers_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, pending_peers_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, progresses_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, stats_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatResponse, _internal_metadata_),
@@ -377,7 +393,6 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatResponse, epoch_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatResponse, target_peer_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatResponse, task_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatResponse, commit_id_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeStats, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -687,56 +702,58 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 0, -1, sizeof(MSLeader)},
   { 8, -1, sizeof(GetMSLeaderRequest)},
   { 14, -1, sizeof(GetMSLeaderResponse)},
-  { 21, -1, sizeof(PeerStats)},
-  { 28, -1, sizeof(RangeStats)},
-  { 38, -1, sizeof(RangeHeartbeatRequest)},
-  { 49, -1, sizeof(RangeHeartbeatResponse)},
-  { 60, -1, sizeof(NodeStats)},
-  { 80, -1, sizeof(NodeHeartbeatRequest)},
-  { 89, -1, sizeof(NodeHeartbeatResponse)},
-  { 97, -1, sizeof(AskSplitRequest)},
-  { 105, -1, sizeof(AskSplitResponse)},
-  { 115, -1, sizeof(ReportSplitRequest)},
-  { 123, -1, sizeof(ReportSplitResponse)},
-  { 129, -1, sizeof(NodeLoginRequest)},
-  { 136, -1, sizeof(NodeLoginResponse)},
-  { 142, -1, sizeof(GetNodeIdRequest)},
-  { 152, -1, sizeof(GetNodeIdResponse)},
-  { 160, -1, sizeof(GetRouteRequest)},
-  { 169, -1, sizeof(GetRouteResponse)},
-  { 176, -1, sizeof(GetNodeRequest)},
-  { 183, -1, sizeof(GetNodeResponse)},
-  { 190, -1, sizeof(GetDBRequest)},
-  { 197, -1, sizeof(GetDBResponse)},
-  { 204, -1, sizeof(GetTableRequest)},
-  { 212, -1, sizeof(GetTableByIdRequest)},
-  { 220, -1, sizeof(GetTableResponse)},
-  { 227, -1, sizeof(GetTableByIdResponse)},
-  { 234, -1, sizeof(GetColumnsRequest)},
-  { 242, -1, sizeof(GetColumnsResponse)},
-  { 249, -1, sizeof(GetColumnByNameRequest)},
-  { 258, -1, sizeof(GetColumnByNameResponse)},
-  { 265, -1, sizeof(GetColumnByIdRequest)},
-  { 274, -1, sizeof(GetColumnByIdResponse)},
-  { 281, -1, sizeof(AddColumnRequest)},
-  { 290, -1, sizeof(AddColumnResponse)},
-  { 297, -1, sizeof(TruncateTableRequest)},
-  { 305, -1, sizeof(TruncateTableResponse)},
-  { 311, -1, sizeof(CreateDatabaseRequest)},
-  { 318, -1, sizeof(CreateDatabaseResponse)},
-  { 324, -1, sizeof(CreateTableRequest)},
-  { 333, -1, sizeof(CreateTableResponse)},
-  { 339, -1, sizeof(RequestHeader)},
-  { 345, -1, sizeof(ResponseHeader)},
-  { 352, -1, sizeof(NoLeader)},
-  { 357, -1, sizeof(Error)},
+  { 21, -1, sizeof(DownPeer)},
+  { 28, -1, sizeof(ReplicateProgress)},
+  { 37, -1, sizeof(RangeStats)},
+  { 47, -1, sizeof(RangeHeartbeatRequest)},
+  { 59, -1, sizeof(RangeHeartbeatResponse)},
+  { 69, -1, sizeof(NodeStats)},
+  { 89, -1, sizeof(NodeHeartbeatRequest)},
+  { 98, -1, sizeof(NodeHeartbeatResponse)},
+  { 106, -1, sizeof(AskSplitRequest)},
+  { 114, -1, sizeof(AskSplitResponse)},
+  { 124, -1, sizeof(ReportSplitRequest)},
+  { 132, -1, sizeof(ReportSplitResponse)},
+  { 138, -1, sizeof(NodeLoginRequest)},
+  { 145, -1, sizeof(NodeLoginResponse)},
+  { 151, -1, sizeof(GetNodeIdRequest)},
+  { 161, -1, sizeof(GetNodeIdResponse)},
+  { 169, -1, sizeof(GetRouteRequest)},
+  { 178, -1, sizeof(GetRouteResponse)},
+  { 185, -1, sizeof(GetNodeRequest)},
+  { 192, -1, sizeof(GetNodeResponse)},
+  { 199, -1, sizeof(GetDBRequest)},
+  { 206, -1, sizeof(GetDBResponse)},
+  { 213, -1, sizeof(GetTableRequest)},
+  { 221, -1, sizeof(GetTableByIdRequest)},
+  { 229, -1, sizeof(GetTableResponse)},
+  { 236, -1, sizeof(GetTableByIdResponse)},
+  { 243, -1, sizeof(GetColumnsRequest)},
+  { 251, -1, sizeof(GetColumnsResponse)},
+  { 258, -1, sizeof(GetColumnByNameRequest)},
+  { 267, -1, sizeof(GetColumnByNameResponse)},
+  { 274, -1, sizeof(GetColumnByIdRequest)},
+  { 283, -1, sizeof(GetColumnByIdResponse)},
+  { 290, -1, sizeof(AddColumnRequest)},
+  { 299, -1, sizeof(AddColumnResponse)},
+  { 306, -1, sizeof(TruncateTableRequest)},
+  { 314, -1, sizeof(TruncateTableResponse)},
+  { 320, -1, sizeof(CreateDatabaseRequest)},
+  { 327, -1, sizeof(CreateDatabaseResponse)},
+  { 333, -1, sizeof(CreateTableRequest)},
+  { 342, -1, sizeof(CreateTableResponse)},
+  { 348, -1, sizeof(RequestHeader)},
+  { 354, -1, sizeof(ResponseHeader)},
+  { 361, -1, sizeof(NoLeader)},
+  { 366, -1, sizeof(Error)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_MSLeader_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_GetMSLeaderRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_GetMSLeaderResponse_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&_PeerStats_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_DownPeer_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_ReplicateProgress_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_RangeStats_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_RangeHeartbeatRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_RangeHeartbeatResponse_default_instance_),
@@ -799,7 +816,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 46);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 47);
 }
 
 }  // namespace
@@ -815,9 +832,11 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_GetMSLeaderRequest_default_instance_);_GetMSLeaderResponse_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_GetMSLeaderResponse_default_instance_);_PeerStats_default_instance_._instance.DefaultConstruct();
+      &_GetMSLeaderResponse_default_instance_);_DownPeer_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_PeerStats_default_instance_);_RangeStats_default_instance_._instance.DefaultConstruct();
+      &_DownPeer_default_instance_);_ReplicateProgress_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_ReplicateProgress_default_instance_);_RangeStats_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_RangeStats_default_instance_);_RangeHeartbeatRequest_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -907,14 +926,10 @@ void TableStruct::InitDefaultsImpl() {
       ::mspb::ResponseHeader::internal_default_instance());
   _GetMSLeaderResponse_default_instance_._instance.get_mutable()->leader_ = const_cast< ::mspb::MSLeader*>(
       ::mspb::MSLeader::internal_default_instance());
-  _PeerStats_default_instance_._instance.get_mutable()->peer_ = const_cast< ::metapb::Peer*>(
-      ::metapb::Peer::internal_default_instance());
   _RangeHeartbeatRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::mspb::RequestHeader*>(
       ::mspb::RequestHeader::internal_default_instance());
   _RangeHeartbeatRequest_default_instance_._instance.get_mutable()->range_ = const_cast< ::metapb::Range*>(
       ::metapb::Range::internal_default_instance());
-  _RangeHeartbeatRequest_default_instance_._instance.get_mutable()->leader_ = const_cast< ::metapb::Peer*>(
-      ::metapb::Peer::internal_default_instance());
   _RangeHeartbeatRequest_default_instance_._instance.get_mutable()->stats_ = const_cast< ::mspb::RangeStats*>(
       ::mspb::RangeStats::internal_default_instance());
   _RangeHeartbeatResponse_default_instance_._instance.get_mutable()->header_ = const_cast< ::mspb::ResponseHeader*>(
@@ -1037,152 +1052,153 @@ void AddDescriptorsImpl() {
       "est\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader"
       "\"[\n\023GetMSLeaderResponse\022$\n\006header\030\001 \001(\0132"
       "\024.mspb.ResponseHeader\022\036\n\006leader\030\002 \001(\0132\016."
-      "mspb.MSLeader\"=\n\tPeerStats\022\032\n\004peer\030\001 \001(\013"
-      "2\014.metapb.Peer\022\024\n\014down_seconds\030\002 \001(\004\"z\n\n"
-      "RangeStats\022\025\n\rbytes_written\030\001 \001(\004\022\022\n\nbyt"
-      "es_read\030\002 \001(\004\022\024\n\014keys_written\030\003 \001(\004\022\021\n\tk"
-      "eys_read\030\004 \001(\004\022\030\n\020approximate_size\030\005 \001(\004"
-      "\"\343\001\n\025RangeHeartbeatRequest\022#\n\006header\030\001 \001"
-      "(\0132\023.mspb.RequestHeader\022\034\n\005range\030\002 \001(\0132\r"
-      ".metapb.Range\022\034\n\006leader\030\003 \001(\0132\014.metapb.P"
-      "eer\022#\n\ndown_peers\030\004 \003(\0132\017.mspb.PeerStats"
-      "\022#\n\rpending_peers\030\005 \003(\0132\014.metapb.Peer\022\037\n"
-      "\005stats\030\006 \001(\0132\020.mspb.RangeStats\"\305\001\n\026Range"
-      "HeartbeatResponse\022$\n\006header\030\001 \001(\0132\024.mspb"
-      ".ResponseHeader\022\020\n\010range_id\030\002 \001(\004\022!\n\005epo"
-      "ch\030\003 \001(\0132\022.metapb.RangeEpoch\022!\n\013target_p"
-      "eer\030\004 \001(\0132\014.metapb.Peer\022\032\n\004task\030\005 \001(\0132\014."
-      "taskpb.Task\022\021\n\tcommit_id\030\006 \001(\004\"\332\002\n\tNodeS"
-      "tats\022\023\n\013range_count\030\001 \001(\r\022\031\n\021range_split"
-      "_count\030\002 \001(\r\022\032\n\022sending_snap_count\030\003 \001(\r"
-      "\022\034\n\024receiving_snap_count\030\004 \001(\r\022\033\n\023applyi"
-      "ng_snap_count\030\005 \001(\r\022\032\n\022range_leader_coun"
-      "t\030\006 \001(\r\022\020\n\010capacity\030\007 \001(\004\022\021\n\tused_size\030\010"
-      " \001(\004\022\021\n\tavailable\030\t \001(\004\022\025\n\rbytes_written"
-      "\030\n \001(\004\022\024\n\014keys_written\030\013 \001(\004\022\022\n\nbytes_re"
-      "ad\030\014 \001(\004\022\021\n\tkeys_read\030\r \001(\004\022\017\n\007is_busy\030\016"
-      " \001(\010\022\r\n\005start\030\017 \001(\r\"\207\001\n\024NodeHeartbeatReq"
+      "mspb.MSLeader\"1\n\010DownPeer\022\017\n\007peer_id\030\001 \001"
+      "(\004\022\024\n\014down_seconds\030\002 \001(\004\"Y\n\021ReplicatePro"
+      "gress\022\017\n\007peer_id\030\001 \001(\004\022\r\n\005index\030\002 \001(\004\022\016\n"
+      "\006commit\030\003 \001(\004\022\024\n\014snapshotting\030\004 \001(\010\"z\n\nR"
+      "angeStats\022\025\n\rbytes_written\030\001 \001(\004\022\022\n\nbyte"
+      "s_read\030\002 \001(\004\022\024\n\014keys_written\030\003 \001(\004\022\021\n\tke"
+      "ys_read\030\004 \001(\004\022\030\n\020approximate_size\030\005 \001(\004\""
+      "\352\001\n\025RangeHeartbeatRequest\022#\n\006header\030\001 \001("
+      "\0132\023.mspb.RequestHeader\022\034\n\005range\030\002 \001(\0132\r."
+      "metapb.Range\022\016\n\006leader\030\003 \001(\004\022\014\n\004term\030\004 \001"
+      "(\004\022\"\n\ndown_peers\030\005 \003(\0132\016.mspb.DownPeer\022+"
+      "\n\nprogresses\030\006 \003(\0132\027.mspb.ReplicateProgr"
+      "ess\022\037\n\005stats\030\007 \001(\0132\020.mspb.RangeStats\"\262\001\n"
+      "\026RangeHeartbeatResponse\022$\n\006header\030\001 \001(\0132"
+      "\024.mspb.ResponseHeader\022\020\n\010range_id\030\002 \001(\004\022"
+      "!\n\005epoch\030\003 \001(\0132\022.metapb.RangeEpoch\022!\n\013ta"
+      "rget_peer\030\004 \001(\0132\014.metapb.Peer\022\032\n\004task\030\005 "
+      "\001(\0132\014.taskpb.Task\"\332\002\n\tNodeStats\022\023\n\013range"
+      "_count\030\001 \001(\r\022\031\n\021range_split_count\030\002 \001(\r\022"
+      "\032\n\022sending_snap_count\030\003 \001(\r\022\034\n\024receiving"
+      "_snap_count\030\004 \001(\r\022\033\n\023applying_snap_count"
+      "\030\005 \001(\r\022\032\n\022range_leader_count\030\006 \001(\r\022\020\n\010ca"
+      "pacity\030\007 \001(\004\022\021\n\tused_size\030\010 \001(\004\022\021\n\tavail"
+      "able\030\t \001(\004\022\025\n\rbytes_written\030\n \001(\004\022\024\n\014key"
+      "s_written\030\013 \001(\004\022\022\n\nbytes_read\030\014 \001(\004\022\021\n\tk"
+      "eys_read\030\r \001(\004\022\017\n\007is_busy\030\016 \001(\010\022\r\n\005start"
+      "\030\017 \001(\r\"\207\001\n\024NodeHeartbeatRequest\022#\n\006heade"
+      "r\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007node_id\030"
+      "\002 \001(\004\022\036\n\005stats\030\003 \001(\0132\017.mspb.NodeStats\022\031\n"
+      "\021isolated_replicas\030\004 \003(\004\"g\n\025NodeHeartbea"
+      "tResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respons"
+      "eHeader\022\017\n\007node_id\030\002 \001(\004\022\027\n\017delete_repli"
+      "cas\030\003 \003(\004\"g\n\017AskSplitRequest\022#\n\006header\030\001"
+      " \001(\0132\023.mspb.RequestHeader\022\034\n\005range\030\002 \001(\013"
+      "2\r.metapb.Range\022\021\n\tsplit_key\030\003 \001(\014\"\225\001\n\020A"
+      "skSplitResponse\022$\n\006header\030\001 \001(\0132\024.mspb.R"
+      "esponseHeader\022\034\n\005range\030\002 \001(\0132\r.metapb.Ra"
+      "nge\022\024\n\014new_range_id\030\003 \001(\004\022\024\n\014new_peer_id"
+      "s\030\004 \003(\004\022\021\n\tsplit_key\030\005 \001(\014\"t\n\022ReportSpli"
+      "tRequest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestH"
+      "eader\022\033\n\004left\030\002 \001(\0132\r.metapb.Range\022\034\n\005ri"
+      "ght\030\003 \001(\0132\r.metapb.Range\";\n\023ReportSplitR"
+      "esponse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseH"
+      "eader\"H\n\020NodeLoginRequest\022#\n\006header\030\001 \001("
+      "\0132\023.mspb.RequestHeader\022\017\n\007node_id\030\002 \001(\004\""
+      "9\n\021NodeLoginResponse\022$\n\006header\030\001 \001(\0132\024.m"
+      "spb.ResponseHeader\"\203\001\n\020GetNodeIdRequest\022"
+      "#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\023\n\013"
+      "server_port\030\002 \001(\r\022\021\n\traft_port\030\003 \001(\r\022\021\n\t"
+      "http_port\030\004 \001(\r\022\017\n\007version\030\005 \001(\t\"[\n\021GetN"
+      "odeIdResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Res"
+      "ponseHeader\022\017\n\007node_id\030\002 \001(\004\022\017\n\007clearup\030"
+      "\003 \001(\010\"d\n\017GetRouteRequest\022#\n\006header\030\001 \001(\013"
+      "2\023.mspb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010"
+      "table_id\030\003 \001(\004\022\013\n\003key\030\004 \001(\014\"W\n\020GetRouteR"
+      "esponse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseH"
+      "eader\022\035\n\006routes\030\002 \003(\0132\r.metapb.Route\"A\n\016"
+      "GetNodeRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Re"
+      "questHeader\022\n\n\002id\030\002 \001(\004\"S\n\017GetNodeRespon"
+      "se\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader"
+      "\022\032\n\004node\030\002 \001(\0132\014.metapb.Node\"A\n\014GetDBReq"
       "uest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeade"
-      "r\022\017\n\007node_id\030\002 \001(\004\022\036\n\005stats\030\003 \001(\0132\017.mspb"
-      ".NodeStats\022\031\n\021isolated_replicas\030\004 \003(\004\"g\n"
-      "\025NodeHeartbeatResponse\022$\n\006header\030\001 \001(\0132\024"
-      ".mspb.ResponseHeader\022\017\n\007node_id\030\002 \001(\004\022\027\n"
-      "\017delete_replicas\030\003 \003(\004\"g\n\017AskSplitReques"
-      "t\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\034"
-      "\n\005range\030\002 \001(\0132\r.metapb.Range\022\021\n\tsplit_ke"
-      "y\030\003 \001(\014\"\225\001\n\020AskSplitResponse\022$\n\006header\030\001"
-      " \001(\0132\024.mspb.ResponseHeader\022\034\n\005range\030\002 \001("
-      "\0132\r.metapb.Range\022\024\n\014new_range_id\030\003 \001(\004\022\024"
-      "\n\014new_peer_ids\030\004 \003(\004\022\021\n\tsplit_key\030\005 \001(\014\""
-      "t\n\022ReportSplitRequest\022#\n\006header\030\001 \001(\0132\023."
-      "mspb.RequestHeader\022\033\n\004left\030\002 \001(\0132\r.metap"
-      "b.Range\022\034\n\005right\030\003 \001(\0132\r.metapb.Range\";\n"
-      "\023ReportSplitResponse\022$\n\006header\030\001 \001(\0132\024.m"
-      "spb.ResponseHeader\"H\n\020NodeLoginRequest\022#"
-      "\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007n"
-      "ode_id\030\002 \001(\004\"9\n\021NodeLoginResponse\022$\n\006hea"
-      "der\030\001 \001(\0132\024.mspb.ResponseHeader\"\203\001\n\020GetN"
-      "odeIdRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Requ"
-      "estHeader\022\023\n\013server_port\030\002 \001(\r\022\021\n\traft_p"
-      "ort\030\003 \001(\r\022\021\n\thttp_port\030\004 \001(\r\022\017\n\007version\030"
-      "\005 \001(\t\"[\n\021GetNodeIdResponse\022$\n\006header\030\001 \001"
-      "(\0132\024.mspb.ResponseHeader\022\017\n\007node_id\030\002 \001("
-      "\004\022\017\n\007clearup\030\003 \001(\010\"d\n\017GetRouteRequest\022#\n"
-      "\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db"
-      "_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\013\n\003key\030\004 \001(\014"
-      "\"W\n\020GetRouteResponse\022$\n\006header\030\001 \001(\0132\024.m"
-      "spb.ResponseHeader\022\035\n\006routes\030\002 \003(\0132\r.met"
-      "apb.Route\"A\n\016GetNodeRequest\022#\n\006header\030\001 "
-      "\001(\0132\023.mspb.RequestHeader\022\n\n\002id\030\002 \001(\004\"S\n\017"
-      "GetNodeResponse\022$\n\006header\030\001 \001(\0132\024.mspb.R"
-      "esponseHeader\022\032\n\004node\030\002 \001(\0132\014.metapb.Nod"
-      "e\"A\n\014GetDBRequest\022#\n\006header\030\001 \001(\0132\023.mspb"
-      ".RequestHeader\022\014\n\004name\030\002 \001(\t\"S\n\rGetDBRes"
-      "ponse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHea"
-      "der\022\034\n\002db\030\002 \001(\0132\020.metapb.DataBase\"[\n\017Get"
-      "TableRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Requ"
-      "estHeader\022\017\n\007db_name\030\002 \001(\t\022\022\n\ntable_name"
-      "\030\003 \001(\t\"[\n\023GetTableByIdRequest\022#\n\006header\030"
-      "\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_id\030\002 \001("
-      "\004\022\020\n\010table_id\030\003 \001(\004\"V\n\020GetTableResponse\022"
-      "$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\022\034\n"
-      "\005table\030\002 \001(\0132\r.metapb.Table\"Z\n\024GetTableB"
-      "yIdResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respo"
-      "nseHeader\022\034\n\005table\030\002 \001(\0132\r.metapb.Table\""
-      "Y\n\021GetColumnsRequest\022#\n\006header\030\001 \001(\0132\023.m"
-      "spb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010tabl"
-      "e_id\030\003 \001(\004\"[\n\022GetColumnsResponse\022$\n\006head"
-      "er\030\001 \001(\0132\024.mspb.ResponseHeader\022\037\n\007column"
-      "s\030\002 \003(\0132\016.metapb.Column\"p\n\026GetColumnByNa"
-      "meRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Request"
-      "Header\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022"
-      "\020\n\010col_name\030\004 \001(\t\"_\n\027GetColumnByNameResp"
-      "onse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHead"
-      "er\022\036\n\006column\030\002 \001(\0132\016.metapb.Column\"l\n\024Ge"
-      "tColumnByIdRequest\022#\n\006header\030\001 \001(\0132\023.msp"
-      "b.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_"
-      "id\030\003 \001(\004\022\016\n\006col_id\030\004 \001(\004\"]\n\025GetColumnByI"
-      "dResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respons"
-      "eHeader\022\036\n\006column\030\002 \001(\0132\016.metapb.Column\""
-      "y\n\020AddColumnRequest\022#\n\006header\030\001 \001(\0132\023.ms"
-      "pb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table"
-      "_id\030\003 \001(\004\022\037\n\007columns\030\004 \003(\0132\016.metapb.Colu"
-      "mn\"Z\n\021AddColumnResponse\022$\n\006header\030\001 \001(\0132"
-      "\024.mspb.ResponseHeader\022\037\n\007columns\030\002 \003(\0132\016"
-      ".metapb.Column\"\\\n\024TruncateTableRequest\022#"
-      "\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005d"
-      "b_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\"=\n\025Truncate"
-      "TableResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Res"
-      "ponseHeader\"M\n\025CreateDatabaseRequest\022#\n\006"
-      "header\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007db_"
-      "name\030\002 \001(\t\">\n\026CreateDatabaseResponse\022$\n\006"
-      "header\030\001 \001(\0132\024.mspb.ResponseHeader\"r\n\022Cr"
-      "eateTableRequest\022#\n\006header\030\001 \001(\0132\023.mspb."
-      "RequestHeader\022\017\n\007db_name\030\002 \001(\t\022\022\n\ntable_"
-      "name\030\003 \001(\t\022\022\n\nproperties\030\004 \001(\t\";\n\023Create"
-      "TableResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Res"
-      "ponseHeader\"#\n\rRequestHeader\022\022\n\ncluster_"
-      "id\030\001 \001(\004\"@\n\016ResponseHeader\022\022\n\ncluster_id"
-      "\030\001 \001(\004\022\032\n\005error\030\002 \001(\0132\013.mspb.Error\"\n\n\010No"
-      "Leader\"N\n\005Error\022\"\n\nnew_leader\030\002 \001(\0132\016.ms"
-      "pb.MSLeader\022!\n\tno_leader\030\003 \001(\0132\016.mspb.No"
-      "Leader2\241\n\n\010MsServer\022J\n\rNodeHeartbeat\022\032.m"
-      "spb.NodeHeartbeatRequest\032\033.mspb.NodeHear"
-      "tbeatResponse\"\000\022M\n\016RangeHeartbeat\022\033.mspb"
-      ".RangeHeartbeatRequest\032\034.mspb.RangeHeart"
-      "beatResponse\"\000\022;\n\010AskSplit\022\025.mspb.AskSpl"
-      "itRequest\032\026.mspb.AskSplitResponse\"\000\022D\n\013R"
-      "eportSplit\022\030.mspb.ReportSplitRequest\032\031.m"
-      "spb.ReportSplitResponse\"\000\022>\n\tNodeLogin\022\026"
-      ".mspb.NodeLoginRequest\032\027.mspb.NodeLoginR"
-      "esponse\"\000\022>\n\tGetNodeId\022\026.mspb.GetNodeIdR"
-      "equest\032\027.mspb.GetNodeIdResponse\"\000\022D\n\013Get"
-      "MSLeader\022\030.mspb.GetMSLeaderRequest\032\031.msp"
-      "b.GetMSLeaderResponse\"\000\022;\n\010GetRoute\022\025.ms"
-      "pb.GetRouteRequest\032\026.mspb.GetRouteRespon"
-      "se\"\000\0228\n\007GetNode\022\024.mspb.GetNodeRequest\032\025."
-      "mspb.GetNodeResponse\"\000\0222\n\005GetDB\022\022.mspb.G"
-      "etDBRequest\032\023.mspb.GetDBResponse\"\000\022;\n\010Ge"
-      "tTable\022\025.mspb.GetTableRequest\032\026.mspb.Get"
-      "TableResponse\"\000\022G\n\014GetTableById\022\031.mspb.G"
-      "etTableByIdRequest\032\032.mspb.GetTableByIdRe"
-      "sponse\"\000\022A\n\nGetColumns\022\027.mspb.GetColumns"
-      "Request\032\030.mspb.GetColumnsResponse\"\000\022P\n\017G"
-      "etColumnByName\022\034.mspb.GetColumnByNameReq"
-      "uest\032\035.mspb.GetColumnByNameResponse\"\000\022J\n"
-      "\rGetColumnById\022\032.mspb.GetColumnByIdReque"
-      "st\032\033.mspb.GetColumnByIdResponse\"\000\022J\n\rTru"
-      "ncateTable\022\032.mspb.TruncateTableRequest\032\033"
-      ".mspb.TruncateTableResponse\"\000\022>\n\tAddColu"
-      "mn\022\026.mspb.AddColumnRequest\032\027.mspb.AddCol"
-      "umnResponse\"\000\022M\n\016CreateDatabase\022\033.mspb.C"
-      "reateDatabaseRequest\032\034.mspb.CreateDataba"
-      "seResponse\"\000\022D\n\013CreateTable\022\030.mspb.Creat"
-      "eTableRequest\032\031.mspb.CreateTableResponse"
-      "\"\000b\006proto3"
+      "r\022\014\n\004name\030\002 \001(\t\"S\n\rGetDBResponse\022$\n\006head"
+      "er\030\001 \001(\0132\024.mspb.ResponseHeader\022\034\n\002db\030\002 \001"
+      "(\0132\020.metapb.DataBase\"[\n\017GetTableRequest\022"
+      "#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007"
+      "db_name\030\002 \001(\t\022\022\n\ntable_name\030\003 \001(\t\"[\n\023Get"
+      "TableByIdRequest\022#\n\006header\030\001 \001(\0132\023.mspb."
+      "RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id"
+      "\030\003 \001(\004\"V\n\020GetTableResponse\022$\n\006header\030\001 \001"
+      "(\0132\024.mspb.ResponseHeader\022\034\n\005table\030\002 \001(\0132"
+      "\r.metapb.Table\"Z\n\024GetTableByIdResponse\022$"
+      "\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\022\034\n\005"
+      "table\030\002 \001(\0132\r.metapb.Table\"Y\n\021GetColumns"
+      "Request\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHe"
+      "ader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\"[\n"
+      "\022GetColumnsResponse\022$\n\006header\030\001 \001(\0132\024.ms"
+      "pb.ResponseHeader\022\037\n\007columns\030\002 \003(\0132\016.met"
+      "apb.Column\"p\n\026GetColumnByNameRequest\022#\n\006"
+      "header\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_"
+      "id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\020\n\010col_name\030\004"
+      " \001(\t\"_\n\027GetColumnByNameResponse\022$\n\006heade"
+      "r\030\001 \001(\0132\024.mspb.ResponseHeader\022\036\n\006column\030"
+      "\002 \001(\0132\016.metapb.Column\"l\n\024GetColumnByIdRe"
+      "quest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHead"
+      "er\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\016\n\006c"
+      "ol_id\030\004 \001(\004\"]\n\025GetColumnByIdResponse\022$\n\006"
+      "header\030\001 \001(\0132\024.mspb.ResponseHeader\022\036\n\006co"
+      "lumn\030\002 \001(\0132\016.metapb.Column\"y\n\020AddColumnR"
+      "equest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHea"
+      "der\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\037\n\007"
+      "columns\030\004 \003(\0132\016.metapb.Column\"Z\n\021AddColu"
+      "mnResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respon"
+      "seHeader\022\037\n\007columns\030\002 \003(\0132\016.metapb.Colum"
+      "n\"\\\n\024TruncateTableRequest\022#\n\006header\030\001 \001("
+      "\0132\023.mspb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n"
+      "\010table_id\030\003 \001(\004\"=\n\025TruncateTableResponse"
+      "\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\"M"
+      "\n\025CreateDatabaseRequest\022#\n\006header\030\001 \001(\0132"
+      "\023.mspb.RequestHeader\022\017\n\007db_name\030\002 \001(\t\">\n"
+      "\026CreateDatabaseResponse\022$\n\006header\030\001 \001(\0132"
+      "\024.mspb.ResponseHeader\"r\n\022CreateTableRequ"
+      "est\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader"
+      "\022\017\n\007db_name\030\002 \001(\t\022\022\n\ntable_name\030\003 \001(\t\022\022\n"
+      "\nproperties\030\004 \001(\t\";\n\023CreateTableResponse"
+      "\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\"#"
+      "\n\rRequestHeader\022\022\n\ncluster_id\030\001 \001(\004\"@\n\016R"
+      "esponseHeader\022\022\n\ncluster_id\030\001 \001(\004\022\032\n\005err"
+      "or\030\002 \001(\0132\013.mspb.Error\"\n\n\010NoLeader\"N\n\005Err"
+      "or\022\"\n\nnew_leader\030\002 \001(\0132\016.mspb.MSLeader\022!"
+      "\n\tno_leader\030\003 \001(\0132\016.mspb.NoLeader2\241\n\n\010Ms"
+      "Server\022J\n\rNodeHeartbeat\022\032.mspb.NodeHeart"
+      "beatRequest\032\033.mspb.NodeHeartbeatResponse"
+      "\"\000\022M\n\016RangeHeartbeat\022\033.mspb.RangeHeartbe"
+      "atRequest\032\034.mspb.RangeHeartbeatResponse\""
+      "\000\022;\n\010AskSplit\022\025.mspb.AskSplitRequest\032\026.m"
+      "spb.AskSplitResponse\"\000\022D\n\013ReportSplit\022\030."
+      "mspb.ReportSplitRequest\032\031.mspb.ReportSpl"
+      "itResponse\"\000\022>\n\tNodeLogin\022\026.mspb.NodeLog"
+      "inRequest\032\027.mspb.NodeLoginResponse\"\000\022>\n\t"
+      "GetNodeId\022\026.mspb.GetNodeIdRequest\032\027.mspb"
+      ".GetNodeIdResponse\"\000\022D\n\013GetMSLeader\022\030.ms"
+      "pb.GetMSLeaderRequest\032\031.mspb.GetMSLeader"
+      "Response\"\000\022;\n\010GetRoute\022\025.mspb.GetRouteRe"
+      "quest\032\026.mspb.GetRouteResponse\"\000\0228\n\007GetNo"
+      "de\022\024.mspb.GetNodeRequest\032\025.mspb.GetNodeR"
+      "esponse\"\000\0222\n\005GetDB\022\022.mspb.GetDBRequest\032\023"
+      ".mspb.GetDBResponse\"\000\022;\n\010GetTable\022\025.mspb"
+      ".GetTableRequest\032\026.mspb.GetTableResponse"
+      "\"\000\022G\n\014GetTableById\022\031.mspb.GetTableByIdRe"
+      "quest\032\032.mspb.GetTableByIdResponse\"\000\022A\n\nG"
+      "etColumns\022\027.mspb.GetColumnsRequest\032\030.msp"
+      "b.GetColumnsResponse\"\000\022P\n\017GetColumnByNam"
+      "e\022\034.mspb.GetColumnByNameRequest\032\035.mspb.G"
+      "etColumnByNameResponse\"\000\022J\n\rGetColumnByI"
+      "d\022\032.mspb.GetColumnByIdRequest\032\033.mspb.Get"
+      "ColumnByIdResponse\"\000\022J\n\rTruncateTable\022\032."
+      "mspb.TruncateTableRequest\032\033.mspb.Truncat"
+      "eTableResponse\"\000\022>\n\tAddColumn\022\026.mspb.Add"
+      "ColumnRequest\032\027.mspb.AddColumnResponse\"\000"
+      "\022M\n\016CreateDatabase\022\033.mspb.CreateDatabase"
+      "Request\032\034.mspb.CreateDatabaseResponse\"\000\022"
+      "D\n\013CreateTable\022\030.mspb.CreateTableRequest"
+      "\032\031.mspb.CreateTableResponse\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 5930);
+      descriptor, 5997);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "mspb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -2294,101 +2310,97 @@ void GetMSLeaderResponse::set_allocated_leader(::mspb::MSLeader* leader) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int PeerStats::kPeerFieldNumber;
-const int PeerStats::kDownSecondsFieldNumber;
+const int DownPeer::kPeerIdFieldNumber;
+const int DownPeer::kDownSecondsFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-PeerStats::PeerStats()
+DownPeer::DownPeer()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
     protobuf_mspb_2eproto::InitDefaults();
   }
   SharedCtor();
-  // @@protoc_insertion_point(constructor:mspb.PeerStats)
+  // @@protoc_insertion_point(constructor:mspb.DownPeer)
 }
-PeerStats::PeerStats(const PeerStats& from)
+DownPeer::DownPeer(const DownPeer& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  if (from.has_peer()) {
-    peer_ = new ::metapb::Peer(*from.peer_);
-  } else {
-    peer_ = NULL;
-  }
-  down_seconds_ = from.down_seconds_;
-  // @@protoc_insertion_point(copy_constructor:mspb.PeerStats)
+  ::memcpy(&peer_id_, &from.peer_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&down_seconds_) -
+    reinterpret_cast<char*>(&peer_id_)) + sizeof(down_seconds_));
+  // @@protoc_insertion_point(copy_constructor:mspb.DownPeer)
 }
 
-void PeerStats::SharedCtor() {
-  ::memset(&peer_, 0, static_cast<size_t>(
+void DownPeer::SharedCtor() {
+  ::memset(&peer_id_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&down_seconds_) -
-      reinterpret_cast<char*>(&peer_)) + sizeof(down_seconds_));
+      reinterpret_cast<char*>(&peer_id_)) + sizeof(down_seconds_));
   _cached_size_ = 0;
 }
 
-PeerStats::~PeerStats() {
-  // @@protoc_insertion_point(destructor:mspb.PeerStats)
+DownPeer::~DownPeer() {
+  // @@protoc_insertion_point(destructor:mspb.DownPeer)
   SharedDtor();
 }
 
-void PeerStats::SharedDtor() {
-  if (this != internal_default_instance()) delete peer_;
+void DownPeer::SharedDtor() {
 }
 
-void PeerStats::SetCachedSize(int size) const {
+void DownPeer::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* PeerStats::descriptor() {
+const ::google::protobuf::Descriptor* DownPeer::descriptor() {
   protobuf_mspb_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_mspb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
 }
 
-const PeerStats& PeerStats::default_instance() {
+const DownPeer& DownPeer::default_instance() {
   protobuf_mspb_2eproto::InitDefaults();
   return *internal_default_instance();
 }
 
-PeerStats* PeerStats::New(::google::protobuf::Arena* arena) const {
-  PeerStats* n = new PeerStats;
+DownPeer* DownPeer::New(::google::protobuf::Arena* arena) const {
+  DownPeer* n = new DownPeer;
   if (arena != NULL) {
     arena->Own(n);
   }
   return n;
 }
 
-void PeerStats::Clear() {
-// @@protoc_insertion_point(message_clear_start:mspb.PeerStats)
+void DownPeer::Clear() {
+// @@protoc_insertion_point(message_clear_start:mspb.DownPeer)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaNoVirtual() == NULL && peer_ != NULL) {
-    delete peer_;
-  }
-  peer_ = NULL;
-  down_seconds_ = GOOGLE_ULONGLONG(0);
+  ::memset(&peer_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&down_seconds_) -
+      reinterpret_cast<char*>(&peer_id_)) + sizeof(down_seconds_));
   _internal_metadata_.Clear();
 }
 
-bool PeerStats::MergePartialFromCodedStream(
+bool DownPeer::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:mspb.PeerStats)
+  // @@protoc_insertion_point(parse_start:mspb.DownPeer)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .metapb.Peer peer = 1;
+      // uint64 peer_id = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_peer()));
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &peer_id_)));
         } else {
           goto handle_unusual;
         }
@@ -2421,24 +2433,23 @@ bool PeerStats::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:mspb.PeerStats)
+  // @@protoc_insertion_point(parse_success:mspb.DownPeer)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:mspb.PeerStats)
+  // @@protoc_insertion_point(parse_failure:mspb.DownPeer)
   return false;
 #undef DO_
 }
 
-void PeerStats::SerializeWithCachedSizes(
+void DownPeer::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:mspb.PeerStats)
+  // @@protoc_insertion_point(serialize_start:mspb.DownPeer)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .metapb.Peer peer = 1;
-  if (this->has_peer()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, *this->peer_, output);
+  // uint64 peer_id = 1;
+  if (this->peer_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->peer_id(), output);
   }
 
   // uint64 down_seconds = 2;
@@ -2450,21 +2461,19 @@ void PeerStats::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:mspb.PeerStats)
+  // @@protoc_insertion_point(serialize_end:mspb.DownPeer)
 }
 
-::google::protobuf::uint8* PeerStats::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* DownPeer::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:mspb.PeerStats)
+  // @@protoc_insertion_point(serialize_to_array_start:mspb.DownPeer)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .metapb.Peer peer = 1;
-  if (this->has_peer()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageNoVirtualToArray(
-        1, *this->peer_, deterministic, target);
+  // uint64 peer_id = 1;
+  if (this->peer_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->peer_id(), target);
   }
 
   // uint64 down_seconds = 2;
@@ -2476,12 +2485,12 @@ void PeerStats::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:mspb.PeerStats)
+  // @@protoc_insertion_point(serialize_to_array_end:mspb.DownPeer)
   return target;
 }
 
-size_t PeerStats::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:mspb.PeerStats)
+size_t DownPeer::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:mspb.DownPeer)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -2489,11 +2498,11 @@ size_t PeerStats::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .metapb.Peer peer = 1;
-  if (this->has_peer()) {
+  // uint64 peer_id = 1;
+  if (this->peer_id() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        *this->peer_);
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->peer_id());
   }
 
   // uint64 down_seconds = 2;
@@ -2510,126 +2519,508 @@ size_t PeerStats::ByteSizeLong() const {
   return total_size;
 }
 
-void PeerStats::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:mspb.PeerStats)
+void DownPeer::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:mspb.DownPeer)
   GOOGLE_DCHECK_NE(&from, this);
-  const PeerStats* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const PeerStats>(
+  const DownPeer* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const DownPeer>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:mspb.PeerStats)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:mspb.DownPeer)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:mspb.PeerStats)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:mspb.DownPeer)
     MergeFrom(*source);
   }
 }
 
-void PeerStats::MergeFrom(const PeerStats& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:mspb.PeerStats)
+void DownPeer::MergeFrom(const DownPeer& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:mspb.DownPeer)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.has_peer()) {
-    mutable_peer()->::metapb::Peer::MergeFrom(from.peer());
+  if (from.peer_id() != 0) {
+    set_peer_id(from.peer_id());
   }
   if (from.down_seconds() != 0) {
     set_down_seconds(from.down_seconds());
   }
 }
 
-void PeerStats::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:mspb.PeerStats)
+void DownPeer::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:mspb.DownPeer)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void PeerStats::CopyFrom(const PeerStats& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:mspb.PeerStats)
+void DownPeer::CopyFrom(const DownPeer& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:mspb.DownPeer)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool PeerStats::IsInitialized() const {
+bool DownPeer::IsInitialized() const {
   return true;
 }
 
-void PeerStats::Swap(PeerStats* other) {
+void DownPeer::Swap(DownPeer* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void PeerStats::InternalSwap(PeerStats* other) {
+void DownPeer::InternalSwap(DownPeer* other) {
   using std::swap;
-  swap(peer_, other->peer_);
+  swap(peer_id_, other->peer_id_);
   swap(down_seconds_, other->down_seconds_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
 
-::google::protobuf::Metadata PeerStats::GetMetadata() const {
+::google::protobuf::Metadata DownPeer::GetMetadata() const {
   protobuf_mspb_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_mspb_2eproto::file_level_metadata[kIndexInFileMessages];
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
-// PeerStats
+// DownPeer
 
-// .metapb.Peer peer = 1;
-bool PeerStats::has_peer() const {
-  return this != internal_default_instance() && peer_ != NULL;
+// uint64 peer_id = 1;
+void DownPeer::clear_peer_id() {
+  peer_id_ = GOOGLE_ULONGLONG(0);
 }
-void PeerStats::clear_peer() {
-  if (GetArenaNoVirtual() == NULL && peer_ != NULL) delete peer_;
-  peer_ = NULL;
+::google::protobuf::uint64 DownPeer::peer_id() const {
+  // @@protoc_insertion_point(field_get:mspb.DownPeer.peer_id)
+  return peer_id_;
 }
-const ::metapb::Peer& PeerStats::peer() const {
-  const ::metapb::Peer* p = peer_;
-  // @@protoc_insertion_point(field_get:mspb.PeerStats.peer)
-  return p != NULL ? *p : *reinterpret_cast<const ::metapb::Peer*>(
-      &::metapb::_Peer_default_instance_);
-}
-::metapb::Peer* PeerStats::mutable_peer() {
+void DownPeer::set_peer_id(::google::protobuf::uint64 value) {
   
-  if (peer_ == NULL) {
-    peer_ = new ::metapb::Peer;
-  }
-  // @@protoc_insertion_point(field_mutable:mspb.PeerStats.peer)
-  return peer_;
-}
-::metapb::Peer* PeerStats::release_peer() {
-  // @@protoc_insertion_point(field_release:mspb.PeerStats.peer)
-  
-  ::metapb::Peer* temp = peer_;
-  peer_ = NULL;
-  return temp;
-}
-void PeerStats::set_allocated_peer(::metapb::Peer* peer) {
-  delete peer_;
-  peer_ = peer;
-  if (peer) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:mspb.PeerStats.peer)
+  peer_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.DownPeer.peer_id)
 }
 
 // uint64 down_seconds = 2;
-void PeerStats::clear_down_seconds() {
+void DownPeer::clear_down_seconds() {
   down_seconds_ = GOOGLE_ULONGLONG(0);
 }
-::google::protobuf::uint64 PeerStats::down_seconds() const {
-  // @@protoc_insertion_point(field_get:mspb.PeerStats.down_seconds)
+::google::protobuf::uint64 DownPeer::down_seconds() const {
+  // @@protoc_insertion_point(field_get:mspb.DownPeer.down_seconds)
   return down_seconds_;
 }
-void PeerStats::set_down_seconds(::google::protobuf::uint64 value) {
+void DownPeer::set_down_seconds(::google::protobuf::uint64 value) {
   
   down_seconds_ = value;
-  // @@protoc_insertion_point(field_set:mspb.PeerStats.down_seconds)
+  // @@protoc_insertion_point(field_set:mspb.DownPeer.down_seconds)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int ReplicateProgress::kPeerIdFieldNumber;
+const int ReplicateProgress::kIndexFieldNumber;
+const int ReplicateProgress::kCommitFieldNumber;
+const int ReplicateProgress::kSnapshottingFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+ReplicateProgress::ReplicateProgress()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_mspb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:mspb.ReplicateProgress)
+}
+ReplicateProgress::ReplicateProgress(const ReplicateProgress& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::memcpy(&peer_id_, &from.peer_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&snapshotting_) -
+    reinterpret_cast<char*>(&peer_id_)) + sizeof(snapshotting_));
+  // @@protoc_insertion_point(copy_constructor:mspb.ReplicateProgress)
+}
+
+void ReplicateProgress::SharedCtor() {
+  ::memset(&peer_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&snapshotting_) -
+      reinterpret_cast<char*>(&peer_id_)) + sizeof(snapshotting_));
+  _cached_size_ = 0;
+}
+
+ReplicateProgress::~ReplicateProgress() {
+  // @@protoc_insertion_point(destructor:mspb.ReplicateProgress)
+  SharedDtor();
+}
+
+void ReplicateProgress::SharedDtor() {
+}
+
+void ReplicateProgress::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* ReplicateProgress::descriptor() {
+  protobuf_mspb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_mspb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const ReplicateProgress& ReplicateProgress::default_instance() {
+  protobuf_mspb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+ReplicateProgress* ReplicateProgress::New(::google::protobuf::Arena* arena) const {
+  ReplicateProgress* n = new ReplicateProgress;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void ReplicateProgress::Clear() {
+// @@protoc_insertion_point(message_clear_start:mspb.ReplicateProgress)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&peer_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&snapshotting_) -
+      reinterpret_cast<char*>(&peer_id_)) + sizeof(snapshotting_));
+  _internal_metadata_.Clear();
+}
+
+bool ReplicateProgress::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:mspb.ReplicateProgress)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // uint64 peer_id = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &peer_id_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 index = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &index_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 commit = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &commit_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // bool snapshotting = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &snapshotting_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:mspb.ReplicateProgress)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:mspb.ReplicateProgress)
+  return false;
+#undef DO_
+}
+
+void ReplicateProgress::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:mspb.ReplicateProgress)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint64 peer_id = 1;
+  if (this->peer_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->peer_id(), output);
+  }
+
+  // uint64 index = 2;
+  if (this->index() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(2, this->index(), output);
+  }
+
+  // uint64 commit = 3;
+  if (this->commit() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->commit(), output);
+  }
+
+  // bool snapshotting = 4;
+  if (this->snapshotting() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(4, this->snapshotting(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:mspb.ReplicateProgress)
+}
+
+::google::protobuf::uint8* ReplicateProgress::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:mspb.ReplicateProgress)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint64 peer_id = 1;
+  if (this->peer_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->peer_id(), target);
+  }
+
+  // uint64 index = 2;
+  if (this->index() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(2, this->index(), target);
+  }
+
+  // uint64 commit = 3;
+  if (this->commit() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->commit(), target);
+  }
+
+  // bool snapshotting = 4;
+  if (this->snapshotting() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(4, this->snapshotting(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:mspb.ReplicateProgress)
+  return target;
+}
+
+size_t ReplicateProgress::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:mspb.ReplicateProgress)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // uint64 peer_id = 1;
+  if (this->peer_id() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->peer_id());
+  }
+
+  // uint64 index = 2;
+  if (this->index() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->index());
+  }
+
+  // uint64 commit = 3;
+  if (this->commit() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->commit());
+  }
+
+  // bool snapshotting = 4;
+  if (this->snapshotting() != 0) {
+    total_size += 1 + 1;
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void ReplicateProgress::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:mspb.ReplicateProgress)
+  GOOGLE_DCHECK_NE(&from, this);
+  const ReplicateProgress* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const ReplicateProgress>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:mspb.ReplicateProgress)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:mspb.ReplicateProgress)
+    MergeFrom(*source);
+  }
+}
+
+void ReplicateProgress::MergeFrom(const ReplicateProgress& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:mspb.ReplicateProgress)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.peer_id() != 0) {
+    set_peer_id(from.peer_id());
+  }
+  if (from.index() != 0) {
+    set_index(from.index());
+  }
+  if (from.commit() != 0) {
+    set_commit(from.commit());
+  }
+  if (from.snapshotting() != 0) {
+    set_snapshotting(from.snapshotting());
+  }
+}
+
+void ReplicateProgress::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:mspb.ReplicateProgress)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void ReplicateProgress::CopyFrom(const ReplicateProgress& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:mspb.ReplicateProgress)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool ReplicateProgress::IsInitialized() const {
+  return true;
+}
+
+void ReplicateProgress::Swap(ReplicateProgress* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void ReplicateProgress::InternalSwap(ReplicateProgress* other) {
+  using std::swap;
+  swap(peer_id_, other->peer_id_);
+  swap(index_, other->index_);
+  swap(commit_, other->commit_);
+  swap(snapshotting_, other->snapshotting_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata ReplicateProgress::GetMetadata() const {
+  protobuf_mspb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_mspb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// ReplicateProgress
+
+// uint64 peer_id = 1;
+void ReplicateProgress::clear_peer_id() {
+  peer_id_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 ReplicateProgress::peer_id() const {
+  // @@protoc_insertion_point(field_get:mspb.ReplicateProgress.peer_id)
+  return peer_id_;
+}
+void ReplicateProgress::set_peer_id(::google::protobuf::uint64 value) {
+  
+  peer_id_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ReplicateProgress.peer_id)
+}
+
+// uint64 index = 2;
+void ReplicateProgress::clear_index() {
+  index_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 ReplicateProgress::index() const {
+  // @@protoc_insertion_point(field_get:mspb.ReplicateProgress.index)
+  return index_;
+}
+void ReplicateProgress::set_index(::google::protobuf::uint64 value) {
+  
+  index_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ReplicateProgress.index)
+}
+
+// uint64 commit = 3;
+void ReplicateProgress::clear_commit() {
+  commit_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 ReplicateProgress::commit() const {
+  // @@protoc_insertion_point(field_get:mspb.ReplicateProgress.commit)
+  return commit_;
+}
+void ReplicateProgress::set_commit(::google::protobuf::uint64 value) {
+  
+  commit_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ReplicateProgress.commit)
+}
+
+// bool snapshotting = 4;
+void ReplicateProgress::clear_snapshotting() {
+  snapshotting_ = false;
+}
+bool ReplicateProgress::snapshotting() const {
+  // @@protoc_insertion_point(field_get:mspb.ReplicateProgress.snapshotting)
+  return snapshotting_;
+}
+void ReplicateProgress::set_snapshotting(bool value) {
+  
+  snapshotting_ = value;
+  // @@protoc_insertion_point(field_set:mspb.ReplicateProgress.snapshotting)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -3100,8 +3491,9 @@ void RangeStats::set_approximate_size(::google::protobuf::uint64 value) {
 const int RangeHeartbeatRequest::kHeaderFieldNumber;
 const int RangeHeartbeatRequest::kRangeFieldNumber;
 const int RangeHeartbeatRequest::kLeaderFieldNumber;
+const int RangeHeartbeatRequest::kTermFieldNumber;
 const int RangeHeartbeatRequest::kDownPeersFieldNumber;
-const int RangeHeartbeatRequest::kPendingPeersFieldNumber;
+const int RangeHeartbeatRequest::kProgressesFieldNumber;
 const int RangeHeartbeatRequest::kStatsFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -3117,7 +3509,7 @@ RangeHeartbeatRequest::RangeHeartbeatRequest(const RangeHeartbeatRequest& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
       down_peers_(from.down_peers_),
-      pending_peers_(from.pending_peers_),
+      progresses_(from.progresses_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_header()) {
@@ -3130,23 +3522,21 @@ RangeHeartbeatRequest::RangeHeartbeatRequest(const RangeHeartbeatRequest& from)
   } else {
     range_ = NULL;
   }
-  if (from.has_leader()) {
-    leader_ = new ::metapb::Peer(*from.leader_);
-  } else {
-    leader_ = NULL;
-  }
   if (from.has_stats()) {
     stats_ = new ::mspb::RangeStats(*from.stats_);
   } else {
     stats_ = NULL;
   }
+  ::memcpy(&leader_, &from.leader_,
+    static_cast<size_t>(reinterpret_cast<char*>(&term_) -
+    reinterpret_cast<char*>(&leader_)) + sizeof(term_));
   // @@protoc_insertion_point(copy_constructor:mspb.RangeHeartbeatRequest)
 }
 
 void RangeHeartbeatRequest::SharedCtor() {
   ::memset(&header_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&stats_) -
-      reinterpret_cast<char*>(&header_)) + sizeof(stats_));
+      reinterpret_cast<char*>(&term_) -
+      reinterpret_cast<char*>(&header_)) + sizeof(term_));
   _cached_size_ = 0;
 }
 
@@ -3158,7 +3548,6 @@ RangeHeartbeatRequest::~RangeHeartbeatRequest() {
 void RangeHeartbeatRequest::SharedDtor() {
   if (this != internal_default_instance()) delete header_;
   if (this != internal_default_instance()) delete range_;
-  if (this != internal_default_instance()) delete leader_;
   if (this != internal_default_instance()) delete stats_;
 }
 
@@ -3192,7 +3581,7 @@ void RangeHeartbeatRequest::Clear() {
   (void) cached_has_bits;
 
   down_peers_.Clear();
-  pending_peers_.Clear();
+  progresses_.Clear();
   if (GetArenaNoVirtual() == NULL && header_ != NULL) {
     delete header_;
   }
@@ -3201,14 +3590,13 @@ void RangeHeartbeatRequest::Clear() {
     delete range_;
   }
   range_ = NULL;
-  if (GetArenaNoVirtual() == NULL && leader_ != NULL) {
-    delete leader_;
-  }
-  leader_ = NULL;
   if (GetArenaNoVirtual() == NULL && stats_ != NULL) {
     delete stats_;
   }
   stats_ = NULL;
+  ::memset(&leader_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&term_) -
+      reinterpret_cast<char*>(&leader_)) + sizeof(term_));
   _internal_metadata_.Clear();
 }
 
@@ -3246,22 +3634,38 @@ bool RangeHeartbeatRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .metapb.Peer leader = 3;
+      // uint64 leader = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_leader()));
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &leader_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // repeated .mspb.PeerStats down_peers = 4;
+      // uint64 term = 4;
       case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &term_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .mspb.DownPeer down_peers = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                 input, add_down_peers()));
         } else {
@@ -3270,22 +3674,22 @@ bool RangeHeartbeatRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .metapb.Peer pending_peers = 5;
-      case 5: {
+      // repeated .mspb.ReplicateProgress progresses = 6;
+      case 6: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_pending_peers()));
+                input, add_progresses()));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // .mspb.RangeStats stats = 6;
-      case 6: {
+      // .mspb.RangeStats stats = 7;
+      case 7: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(58u /* 58 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_stats()));
         } else {
@@ -3332,30 +3736,34 @@ void RangeHeartbeatRequest::SerializeWithCachedSizes(
       2, *this->range_, output);
   }
 
-  // .metapb.Peer leader = 3;
-  if (this->has_leader()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, *this->leader_, output);
+  // uint64 leader = 3;
+  if (this->leader() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->leader(), output);
   }
 
-  // repeated .mspb.PeerStats down_peers = 4;
+  // uint64 term = 4;
+  if (this->term() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(4, this->term(), output);
+  }
+
+  // repeated .mspb.DownPeer down_peers = 5;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->down_peers_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      4, this->down_peers(static_cast<int>(i)), output);
+      5, this->down_peers(static_cast<int>(i)), output);
   }
 
-  // repeated .metapb.Peer pending_peers = 5;
+  // repeated .mspb.ReplicateProgress progresses = 6;
   for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->pending_peers_size()); i < n; i++) {
+      n = static_cast<unsigned int>(this->progresses_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      5, this->pending_peers(static_cast<int>(i)), output);
+      6, this->progresses(static_cast<int>(i)), output);
   }
 
-  // .mspb.RangeStats stats = 6;
+  // .mspb.RangeStats stats = 7;
   if (this->has_stats()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      6, *this->stats_, output);
+      7, *this->stats_, output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -3386,34 +3794,37 @@ void RangeHeartbeatRequest::SerializeWithCachedSizes(
         2, *this->range_, deterministic, target);
   }
 
-  // .metapb.Peer leader = 3;
-  if (this->has_leader()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageNoVirtualToArray(
-        3, *this->leader_, deterministic, target);
+  // uint64 leader = 3;
+  if (this->leader() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->leader(), target);
   }
 
-  // repeated .mspb.PeerStats down_peers = 4;
+  // uint64 term = 4;
+  if (this->term() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(4, this->term(), target);
+  }
+
+  // repeated .mspb.DownPeer down_peers = 5;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->down_peers_size()); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        4, this->down_peers(static_cast<int>(i)), deterministic, target);
+        5, this->down_peers(static_cast<int>(i)), deterministic, target);
   }
 
-  // repeated .metapb.Peer pending_peers = 5;
+  // repeated .mspb.ReplicateProgress progresses = 6;
   for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->pending_peers_size()); i < n; i++) {
+      n = static_cast<unsigned int>(this->progresses_size()); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        5, this->pending_peers(static_cast<int>(i)), deterministic, target);
+        6, this->progresses(static_cast<int>(i)), deterministic, target);
   }
 
-  // .mspb.RangeStats stats = 6;
+  // .mspb.RangeStats stats = 7;
   if (this->has_stats()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        6, *this->stats_, deterministic, target);
+        7, *this->stats_, deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -3433,7 +3844,7 @@ size_t RangeHeartbeatRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // repeated .mspb.PeerStats down_peers = 4;
+  // repeated .mspb.DownPeer down_peers = 5;
   {
     unsigned int count = static_cast<unsigned int>(this->down_peers_size());
     total_size += 1UL * count;
@@ -3444,14 +3855,14 @@ size_t RangeHeartbeatRequest::ByteSizeLong() const {
     }
   }
 
-  // repeated .metapb.Peer pending_peers = 5;
+  // repeated .mspb.ReplicateProgress progresses = 6;
   {
-    unsigned int count = static_cast<unsigned int>(this->pending_peers_size());
+    unsigned int count = static_cast<unsigned int>(this->progresses_size());
     total_size += 1UL * count;
     for (unsigned int i = 0; i < count; i++) {
       total_size +=
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          this->pending_peers(static_cast<int>(i)));
+          this->progresses(static_cast<int>(i)));
     }
   }
 
@@ -3469,18 +3880,25 @@ size_t RangeHeartbeatRequest::ByteSizeLong() const {
         *this->range_);
   }
 
-  // .metapb.Peer leader = 3;
-  if (this->has_leader()) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        *this->leader_);
-  }
-
-  // .mspb.RangeStats stats = 6;
+  // .mspb.RangeStats stats = 7;
   if (this->has_stats()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->stats_);
+  }
+
+  // uint64 leader = 3;
+  if (this->leader() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->leader());
+  }
+
+  // uint64 term = 4;
+  if (this->term() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->term());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -3513,18 +3931,21 @@ void RangeHeartbeatRequest::MergeFrom(const RangeHeartbeatRequest& from) {
   (void) cached_has_bits;
 
   down_peers_.MergeFrom(from.down_peers_);
-  pending_peers_.MergeFrom(from.pending_peers_);
+  progresses_.MergeFrom(from.progresses_);
   if (from.has_header()) {
     mutable_header()->::mspb::RequestHeader::MergeFrom(from.header());
   }
   if (from.has_range()) {
     mutable_range()->::metapb::Range::MergeFrom(from.range());
   }
-  if (from.has_leader()) {
-    mutable_leader()->::metapb::Peer::MergeFrom(from.leader());
-  }
   if (from.has_stats()) {
     mutable_stats()->::mspb::RangeStats::MergeFrom(from.stats());
+  }
+  if (from.leader() != 0) {
+    set_leader(from.leader());
+  }
+  if (from.term() != 0) {
+    set_term(from.term());
   }
 }
 
@@ -3553,11 +3974,12 @@ void RangeHeartbeatRequest::Swap(RangeHeartbeatRequest* other) {
 void RangeHeartbeatRequest::InternalSwap(RangeHeartbeatRequest* other) {
   using std::swap;
   down_peers_.InternalSwap(&other->down_peers_);
-  pending_peers_.InternalSwap(&other->pending_peers_);
+  progresses_.InternalSwap(&other->progresses_);
   swap(header_, other->header_);
   swap(range_, other->range_);
-  swap(leader_, other->leader_);
   swap(stats_, other->stats_);
+  swap(leader_, other->leader_);
+  swap(term_, other->term_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -3650,107 +4072,95 @@ void RangeHeartbeatRequest::set_allocated_range(::metapb::Range* range) {
   // @@protoc_insertion_point(field_set_allocated:mspb.RangeHeartbeatRequest.range)
 }
 
-// .metapb.Peer leader = 3;
-bool RangeHeartbeatRequest::has_leader() const {
-  return this != internal_default_instance() && leader_ != NULL;
-}
+// uint64 leader = 3;
 void RangeHeartbeatRequest::clear_leader() {
-  if (GetArenaNoVirtual() == NULL && leader_ != NULL) delete leader_;
-  leader_ = NULL;
+  leader_ = GOOGLE_ULONGLONG(0);
 }
-const ::metapb::Peer& RangeHeartbeatRequest::leader() const {
-  const ::metapb::Peer* p = leader_;
+::google::protobuf::uint64 RangeHeartbeatRequest::leader() const {
   // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.leader)
-  return p != NULL ? *p : *reinterpret_cast<const ::metapb::Peer*>(
-      &::metapb::_Peer_default_instance_);
-}
-::metapb::Peer* RangeHeartbeatRequest::mutable_leader() {
-  
-  if (leader_ == NULL) {
-    leader_ = new ::metapb::Peer;
-  }
-  // @@protoc_insertion_point(field_mutable:mspb.RangeHeartbeatRequest.leader)
   return leader_;
 }
-::metapb::Peer* RangeHeartbeatRequest::release_leader() {
-  // @@protoc_insertion_point(field_release:mspb.RangeHeartbeatRequest.leader)
+void RangeHeartbeatRequest::set_leader(::google::protobuf::uint64 value) {
   
-  ::metapb::Peer* temp = leader_;
-  leader_ = NULL;
-  return temp;
-}
-void RangeHeartbeatRequest::set_allocated_leader(::metapb::Peer* leader) {
-  delete leader_;
-  leader_ = leader;
-  if (leader) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:mspb.RangeHeartbeatRequest.leader)
+  leader_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RangeHeartbeatRequest.leader)
 }
 
-// repeated .mspb.PeerStats down_peers = 4;
+// uint64 term = 4;
+void RangeHeartbeatRequest::clear_term() {
+  term_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 RangeHeartbeatRequest::term() const {
+  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.term)
+  return term_;
+}
+void RangeHeartbeatRequest::set_term(::google::protobuf::uint64 value) {
+  
+  term_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RangeHeartbeatRequest.term)
+}
+
+// repeated .mspb.DownPeer down_peers = 5;
 int RangeHeartbeatRequest::down_peers_size() const {
   return down_peers_.size();
 }
 void RangeHeartbeatRequest::clear_down_peers() {
   down_peers_.Clear();
 }
-const ::mspb::PeerStats& RangeHeartbeatRequest::down_peers(int index) const {
+const ::mspb::DownPeer& RangeHeartbeatRequest::down_peers(int index) const {
   // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.down_peers)
   return down_peers_.Get(index);
 }
-::mspb::PeerStats* RangeHeartbeatRequest::mutable_down_peers(int index) {
+::mspb::DownPeer* RangeHeartbeatRequest::mutable_down_peers(int index) {
   // @@protoc_insertion_point(field_mutable:mspb.RangeHeartbeatRequest.down_peers)
   return down_peers_.Mutable(index);
 }
-::mspb::PeerStats* RangeHeartbeatRequest::add_down_peers() {
+::mspb::DownPeer* RangeHeartbeatRequest::add_down_peers() {
   // @@protoc_insertion_point(field_add:mspb.RangeHeartbeatRequest.down_peers)
   return down_peers_.Add();
 }
-::google::protobuf::RepeatedPtrField< ::mspb::PeerStats >*
+::google::protobuf::RepeatedPtrField< ::mspb::DownPeer >*
 RangeHeartbeatRequest::mutable_down_peers() {
   // @@protoc_insertion_point(field_mutable_list:mspb.RangeHeartbeatRequest.down_peers)
   return &down_peers_;
 }
-const ::google::protobuf::RepeatedPtrField< ::mspb::PeerStats >&
+const ::google::protobuf::RepeatedPtrField< ::mspb::DownPeer >&
 RangeHeartbeatRequest::down_peers() const {
   // @@protoc_insertion_point(field_list:mspb.RangeHeartbeatRequest.down_peers)
   return down_peers_;
 }
 
-// repeated .metapb.Peer pending_peers = 5;
-int RangeHeartbeatRequest::pending_peers_size() const {
-  return pending_peers_.size();
+// repeated .mspb.ReplicateProgress progresses = 6;
+int RangeHeartbeatRequest::progresses_size() const {
+  return progresses_.size();
 }
-void RangeHeartbeatRequest::clear_pending_peers() {
-  pending_peers_.Clear();
+void RangeHeartbeatRequest::clear_progresses() {
+  progresses_.Clear();
 }
-const ::metapb::Peer& RangeHeartbeatRequest::pending_peers(int index) const {
-  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.pending_peers)
-  return pending_peers_.Get(index);
+const ::mspb::ReplicateProgress& RangeHeartbeatRequest::progresses(int index) const {
+  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.progresses)
+  return progresses_.Get(index);
 }
-::metapb::Peer* RangeHeartbeatRequest::mutable_pending_peers(int index) {
-  // @@protoc_insertion_point(field_mutable:mspb.RangeHeartbeatRequest.pending_peers)
-  return pending_peers_.Mutable(index);
+::mspb::ReplicateProgress* RangeHeartbeatRequest::mutable_progresses(int index) {
+  // @@protoc_insertion_point(field_mutable:mspb.RangeHeartbeatRequest.progresses)
+  return progresses_.Mutable(index);
 }
-::metapb::Peer* RangeHeartbeatRequest::add_pending_peers() {
-  // @@protoc_insertion_point(field_add:mspb.RangeHeartbeatRequest.pending_peers)
-  return pending_peers_.Add();
+::mspb::ReplicateProgress* RangeHeartbeatRequest::add_progresses() {
+  // @@protoc_insertion_point(field_add:mspb.RangeHeartbeatRequest.progresses)
+  return progresses_.Add();
 }
-::google::protobuf::RepeatedPtrField< ::metapb::Peer >*
-RangeHeartbeatRequest::mutable_pending_peers() {
-  // @@protoc_insertion_point(field_mutable_list:mspb.RangeHeartbeatRequest.pending_peers)
-  return &pending_peers_;
+::google::protobuf::RepeatedPtrField< ::mspb::ReplicateProgress >*
+RangeHeartbeatRequest::mutable_progresses() {
+  // @@protoc_insertion_point(field_mutable_list:mspb.RangeHeartbeatRequest.progresses)
+  return &progresses_;
 }
-const ::google::protobuf::RepeatedPtrField< ::metapb::Peer >&
-RangeHeartbeatRequest::pending_peers() const {
-  // @@protoc_insertion_point(field_list:mspb.RangeHeartbeatRequest.pending_peers)
-  return pending_peers_;
+const ::google::protobuf::RepeatedPtrField< ::mspb::ReplicateProgress >&
+RangeHeartbeatRequest::progresses() const {
+  // @@protoc_insertion_point(field_list:mspb.RangeHeartbeatRequest.progresses)
+  return progresses_;
 }
 
-// .mspb.RangeStats stats = 6;
+// .mspb.RangeStats stats = 7;
 bool RangeHeartbeatRequest::has_stats() const {
   return this != internal_default_instance() && stats_ != NULL;
 }
@@ -3800,7 +4210,6 @@ const int RangeHeartbeatResponse::kRangeIdFieldNumber;
 const int RangeHeartbeatResponse::kEpochFieldNumber;
 const int RangeHeartbeatResponse::kTargetPeerFieldNumber;
 const int RangeHeartbeatResponse::kTaskFieldNumber;
-const int RangeHeartbeatResponse::kCommitIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 RangeHeartbeatResponse::RangeHeartbeatResponse()
@@ -3836,16 +4245,14 @@ RangeHeartbeatResponse::RangeHeartbeatResponse(const RangeHeartbeatResponse& fro
   } else {
     task_ = NULL;
   }
-  ::memcpy(&range_id_, &from.range_id_,
-    static_cast<size_t>(reinterpret_cast<char*>(&commit_id_) -
-    reinterpret_cast<char*>(&range_id_)) + sizeof(commit_id_));
+  range_id_ = from.range_id_;
   // @@protoc_insertion_point(copy_constructor:mspb.RangeHeartbeatResponse)
 }
 
 void RangeHeartbeatResponse::SharedCtor() {
   ::memset(&header_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&commit_id_) -
-      reinterpret_cast<char*>(&header_)) + sizeof(commit_id_));
+      reinterpret_cast<char*>(&range_id_) -
+      reinterpret_cast<char*>(&header_)) + sizeof(range_id_));
   _cached_size_ = 0;
 }
 
@@ -3906,9 +4313,7 @@ void RangeHeartbeatResponse::Clear() {
     delete task_;
   }
   task_ = NULL;
-  ::memset(&range_id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&commit_id_) -
-      reinterpret_cast<char*>(&range_id_)) + sizeof(commit_id_));
+  range_id_ = GOOGLE_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -3984,20 +4389,6 @@ bool RangeHeartbeatResponse::MergePartialFromCodedStream(
         break;
       }
 
-      // uint64 commit_id = 6;
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &commit_id_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -4053,11 +4444,6 @@ void RangeHeartbeatResponse::SerializeWithCachedSizes(
       5, *this->task_, output);
   }
 
-  // uint64 commit_id = 6;
-  if (this->commit_id() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(6, this->commit_id(), output);
-  }
-
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -4103,11 +4489,6 @@ void RangeHeartbeatResponse::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         5, *this->task_, deterministic, target);
-  }
-
-  // uint64 commit_id = 6;
-  if (this->commit_id() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(6, this->commit_id(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4162,13 +4543,6 @@ size_t RangeHeartbeatResponse::ByteSizeLong() const {
         this->range_id());
   }
 
-  // uint64 commit_id = 6;
-  if (this->commit_id() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::UInt64Size(
-        this->commit_id());
-  }
-
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -4213,9 +4587,6 @@ void RangeHeartbeatResponse::MergeFrom(const RangeHeartbeatResponse& from) {
   if (from.range_id() != 0) {
     set_range_id(from.range_id());
   }
-  if (from.commit_id() != 0) {
-    set_commit_id(from.commit_id());
-  }
 }
 
 void RangeHeartbeatResponse::CopyFrom(const ::google::protobuf::Message& from) {
@@ -4247,7 +4618,6 @@ void RangeHeartbeatResponse::InternalSwap(RangeHeartbeatResponse* other) {
   swap(target_peer_, other->target_peer_);
   swap(task_, other->task_);
   swap(range_id_, other->range_id_);
-  swap(commit_id_, other->commit_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -4432,20 +4802,6 @@ void RangeHeartbeatResponse::set_allocated_task(::taskpb::Task* task) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:mspb.RangeHeartbeatResponse.task)
-}
-
-// uint64 commit_id = 6;
-void RangeHeartbeatResponse::clear_commit_id() {
-  commit_id_ = GOOGLE_ULONGLONG(0);
-}
-::google::protobuf::uint64 RangeHeartbeatResponse::commit_id() const {
-  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatResponse.commit_id)
-  return commit_id_;
-}
-void RangeHeartbeatResponse::set_commit_id(::google::protobuf::uint64 value) {
-  
-  commit_id_ = value;
-  // @@protoc_insertion_point(field_set:mspb.RangeHeartbeatResponse.commit_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

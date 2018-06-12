@@ -30,21 +30,14 @@ public:
     void LeaderTerm(uint64_t* leader, uint64_t* term) const;
 
     void Peers(std::vector<Peer>* peers) const;
-    void DownPeers(std::vector<DownPeer>* downs) const;
-    void PendingPeers(std::vector<Peer>* pendings) const;
 
     void Status(RaftStatus* status) const;
 
 private:
     std::atomic<uint64_t> leader_ = {0};
     std::atomic<uint64_t> term_ = {0};
-
     std::vector<Peer> peers_;
-    std::vector<Peer> pending_peers_;
-    std::vector<DownPeer> down_peers_;
-
     RaftStatus status_;
-
     mutable sharkstore::shared_mutex mu_;
 };
 

@@ -17,14 +17,16 @@ namespace impl {
 
 static const time_t kFetchStatusIntervalSec = 3;
 
-RaftImpl::RaftImpl(const RaftServerOptions& sops, const RaftOptions& ops, const RaftContext& ctx)
+RaftImpl::RaftImpl(const RaftServerOptions& sops, const RaftOptions& ops,
+                   const RaftContext& ctx)
     : sops_(sops), ops_(ops), ctx_(ctx), fsm_(new RaftFsm(sops, ops)) {}
 
 RaftImpl::~RaftImpl() { Stop(); }
 
 Status RaftImpl::TryToLeader() {
     if (stopped_) {
-        return Status(Status::kShutdownInProgress, "raft is removed", std::to_string(ops_.id));
+        return Status(Status::kShutdownInProgress, "raft is removed",
+                      std::to_string(ops_.id));
     }
     // 发送选举消息
     MessagePtr msg(new pb::Message);
@@ -52,7 +54,8 @@ bool RaftImpl::tryPost(const std::function<void()>& f) {
 
 Status RaftImpl::Submit(std::string& cmd) {
     if (stopped_) {
-        return Status(Status::kShutdownInProgress, "raft is removed", std::to_string(ops_.id));
+        return Status(Status::kShutdownInProgress, "raft is removed",
+                      std::to_string(ops_.id));
     }
 
     if (ctx_.consensus_thread->submit(
@@ -66,7 +69,8 @@ Status RaftImpl::Submit(std::string& cmd) {
 
 Status RaftImpl::ChangeMemeber(const ConfChange& conf) {
     if (stopped_) {
-        return Status(Status::kShutdownInProgress, "raft is removed", std::to_string(ops_.id));
+        return Status(Status::kShutdownInProgress, "raft is removed",
+                      std::to_string(ops_.id));
     }
 
     std::string str;
@@ -96,10 +100,11 @@ void RaftImpl::RecvMsg(MessagePtr& msg) {
 #ifdef FBASE_RAFT_TRACE_MSG
     if (msg->type() != pb::LOCAL_TICK) {
         LOG_DEBUG("recv msg type: %s from %llu, term: %llu at term: %llu",
-                  pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(), fsm_->term_);
-    } else {
-        LOG_DEBUG("recv msg type: LOCAL_TICK messages term: %llu at term: %llu", msg->term(),
+                  pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(),
                   fsm_->term_);
+    } else {
+        LOG_DEBUG("recv msg type: LOCAL_TICK messages term: %llu at term: %llu",
+                  msg->term(), fsm_->term_);
     }
 #endif
     if (stopped_) return;
@@ -112,8 +117,9 @@ void RaftImpl::RecvMsg(MessagePtr& msg) {
 
 void RaftImpl::Step(MessagePtr& msg) {
     if (!fsm_->Validate(msg)) {
-        LOG_DEBUG("raft[%lu] ignore invalidate msg type: %s from %llu, term: %llu", ops_.id,
-                  pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term());
+        LOG_DEBUG("raft[%lu] ignore invalidate msg type: %s from %llu, term: %llu",
+                  ops_.id, pb::MessageType_Name(msg->type()).c_str(), msg->from(),
+                  msg->term());
         return;
     }
 
@@ -170,7 +176,6 @@ void RaftImpl::applySnapshot() {
     auto task = ready_.apply_snap;
     assert(task != nullptr);
 
-
     task->SetReporter(std::bind(&RaftImpl::ReportSnapApplyResult, shared_from_this(),
                                 std::placeholders::_1, std::placeholders::_2));
     task->SetTransport(ctx_.msg_sender);
@@ -195,8 +200,9 @@ void RaftImpl::apply() {
         if (e->type() == pb::ENTRY_CONF_CHANGE) {
             auto s = fsm_->applyConfChange(e);
             if (!s.ok()) {
-                throw RaftException(std::string("apply confchange[") + std::to_string(e->index()) +
-                                    "] error: " + s.ToString());
+                throw RaftException(std::string("apply confchange[") +
+                                    std::to_string(e->index()) + "] error: " +
+                                    s.ToString());
             }
             conf_changed_ = true;
         }
@@ -232,38 +238,45 @@ void RaftImpl::persist() {
 }
 
 void RaftImpl::publish() {
+    bool leader_changed = false;
+
+    // leader或term有变化，更新leader和term
     uint64_t leader = 0, term = 0;
     std::tie(leader, term) = fsm_->GetLeaderTerm();
     if (leader != bulletin_board_.Leader() || term != bulletin_board_.Term()) {
         bulletin_board_.PublishLeaderTerm(leader, term);
-        ops_.statemachine->OnLeaderChange(leader, term);
+        leader_changed = true;
     }
 
+    // 更新peers
     if (conf_changed_) {
-        conf_changed_ = false;
         bulletin_board_.PublishPeers(fsm_->GetPeers());
     }
 
-    // 定时更新status
-    time_t now = time(NULL);
-    if (now > last_fetch_status_ && now - last_fetch_status_ > kFetchStatusIntervalSec) {
-        last_fetch_status_ = now;
+    // 有条件地更新RaftStatus
+    if (conf_changed_ || leader_changed ||
+        time(NULL) - last_fetch_status_ >= kFetchStatusIntervalSec) {
+        last_fetch_status_ = time(NULL);
         bulletin_board_.PublishStatus(fsm_->GetStatus());
+    }
+    conf_changed_ = false;
+
+    // 更新完状态最后通知外部
+    if (leader_changed) {
+        ops_.statemachine->OnLeaderChange(leader, term);
     }
 }
 
 void RaftImpl::ReportSnapSendResult(const SnapContext& ctx, const SnapResult& result) {
     if (result.status.ok()) {
-        LOG_INFO(
-            "raft[%llu] send snapshot[uuid: %lu] to %lu finished. total "
-            "blocks: %d, bytes: %d",
-            ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
+        LOG_INFO("raft[%llu] send snapshot[uuid: %lu] to %lu finished. total "
+                 "blocks: %d, bytes: %d",
+                 ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
     } else {
-        LOG_ERROR(
-            "raft[%llu] send snapshot[uuid: %llu] to %lu failed(%s). "
-            "sent blocks: %d, bytes: %d",
-            ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(), result.blocks_count,
-            result.bytes_count);
+        LOG_ERROR("raft[%llu] send snapshot[uuid: %llu] to %lu failed(%s). "
+                  "sent blocks: %d, bytes: %d",
+                  ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(),
+                  result.blocks_count, result.bytes_count);
     }
 
     // 通知本地leader
@@ -280,16 +293,14 @@ void RaftImpl::ReportSnapSendResult(const SnapContext& ctx, const SnapResult& re
 
 void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result) {
     if (result.status.ok()) {
-        LOG_INFO(
-                "raft[%llu] apply snapshot[uuid: %lu] to %lu finished. total "
-                "blocks: %d, bytes: %d",
-                ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
+        LOG_INFO("raft[%llu] apply snapshot[uuid: %lu] to %lu finished. total "
+                 "blocks: %d, bytes: %d",
+                 ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
     } else {
-        LOG_ERROR(
-                "raft[%llu] apply snapshot[uuid: %llu] to %lu failed(%s). "
-                "sent blocks: %d, bytes: %d",
-                ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(), result.blocks_count,
-                result.bytes_count);
+        LOG_ERROR("raft[%llu] apply snapshot[uuid: %llu] to %lu failed(%s). "
+                  "sent blocks: %d, bytes: %d",
+                  ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(),
+                  result.blocks_count, result.bytes_count);
     }
 
     // 通知本地leader
@@ -307,8 +318,8 @@ void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& r
 void RaftImpl::smApply(const EntryPtr& e) {
     auto s = fsm_->smApply(e);
     if (!s.ok()) {
-        throw RaftException(std::string("statemachine apply entry[") + std::to_string(e->index()) +
-                            "] error: " + s.ToString());
+        throw RaftException(std::string("statemachine apply entry[") +
+                            std::to_string(e->index()) + "] error: " + s.ToString());
     }
 }
 

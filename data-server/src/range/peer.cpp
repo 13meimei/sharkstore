@@ -6,18 +6,29 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+bool Range::FindPeerByNodeID(uint64_t node_id, metapb::Peer *out_peer) {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
+
+    for (int i = 0; i < meta_.peers_size(); i++) {
+        const auto &peer = meta_.peers(i);
+        if (peer.node_id() == node_id) {
+            if (out_peer) out_peer->CopyFrom(peer);
+            return true;
+        }
+    }
+    return false;
+}
+
 void Range::AddPeer(const metapb::Peer &peer) {
     raft::ConfChange cch;
 
-    auto fp = FindMetaPeer(peer.node_id());
-    if (fp != nullptr) {
+    if (FindPeerByNodeID(peer.node_id())) {
         FLOG_WARN("Range %" PRIu64 " AddPeer NodeId: %" PRIu64 " existed", meta_.id(),
                   peer.node_id());
         return;
     }
 
     cch.type = raft::ConfChangeType::kAdd;
-
     cch.peer.type = peer.type() == metapb::PeerType_Learner ? raft::PeerType::kLearner
                                                             : raft::PeerType::kNormal;
     cch.peer.node_id = peer.node_id();
@@ -45,8 +56,8 @@ void Range::AddPeer(const metapb::Peer &peer) {
 void Range::DelPeer(const metapb::Peer &peer) {
     raft::ConfChange cch;
 
-    auto fp = FindMetaPeer(peer.node_id());
-    if (fp == nullptr || fp->id() != peer.id()) {
+    metapb::Peer old_peer;
+    if (!FindPeerByNodeID(peer.node_id()) || old_peer.id() != peer.id()) {
         FLOG_WARN("Range %" PRIu64 " DelPeer NodeId: %" PRIu64 " peer:%" PRIu64
                   " info mismatch!",
                   meta_.id(), peer.node_id(), peer.id());
@@ -139,8 +150,7 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc) {
     do {
         std::unique_lock<sharkstore::shared_mutex> lock(meta_lock_);
 
-        auto fp = FindMetaPeer(cc.peer.node_id);
-        if (fp != nullptr) {
+        if (FindPeerByNodeID(cc.peer.node_id)) {
             FLOG_WARN("Range %" PRIu64 " ApplyAddPeer NodeId: %" PRIu64 " is existed",
                       meta_.id(), cc.peer.node_id);
             return Status::OK();
@@ -247,8 +257,9 @@ Status Range::ApplyPromotePeer(const raft::ConfChange &cc) {
         std::unique_lock<sharkstore::shared_mutex> lock(meta_lock_);
 
         if (promotePeer(cc.peer, meta_)) {
-            if (SaveMeta(meta_)) {
-                is_modify = true;
+            is_modify = true;
+            if (!SaveMeta(meta_)) {
+                return Status(Status::kIOError, "save meta", "");
             }
         }
     }
@@ -258,6 +269,10 @@ Status Range::ApplyPromotePeer(const raft::ConfChange &cc) {
                   meta_.id(), cc.peer.node_id);
 
         PushHeartBeatMessage();
+    } else {
+        FLOG_WARN("Range %" PRIu64 " ApplyPromotePeer NodeId:%" PRIu64
+                  " failed(maybe already promoted or doesn't exist)",
+                  meta_.id(), cc.peer.node_id);
     }
     return Status::OK();
 }

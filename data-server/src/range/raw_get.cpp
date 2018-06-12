@@ -7,7 +7,7 @@ namespace dataserver {
 namespace range {
 
 kvrpcpb::KvRawGetResponse *Range::RawGetResp(const std::string &key) {
-    if (is_leader && KeyInRange(key)) {
+    if (is_leader_ && KeyInRange(key)) {
         auto resp = new kvrpcpb::KvRawGetResponse;
         auto ret = store_->Get(key, resp->mutable_value());
         if (ret.ok()) {
@@ -34,8 +34,7 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
-                                   btime - msg->begin_time);
+    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
     auto ds_resp = new kvrpcpb::DsKvRawGetResponse;
     auto header = ds_resp->mutable_header();

@@ -57,6 +57,7 @@ message ReplicateProgress {
     uint64 peer_id    = 1;
     uint64 index      = 2;
     uint64 commit     = 3;
+    bool snapshotting = 4;
 }
 
 message RangeStats {

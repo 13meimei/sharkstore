@@ -338,14 +338,13 @@ private:
     bool DelPeer(raft_cmdpb::PeerTask &pt, metapb::Range &meta);
     bool SaveMeta(const metapb::Range &meta);
 
-    metapb::Peer *NewMetaPeer(uint64_t node_id);
-    // TODO: find use both nodeid and peer_id
-    metapb::Peer *FindMetaPeer(uint64_t node_id);
+    // return true if found
+    bool FindPeerByNodeID(uint64_t node_id, metapb::Peer *peer = nullptr);
 
     errorpb::Error *TimeOutError();
     errorpb::Error *RaftFailError();
     errorpb::Error *NoLeaderError();
-    errorpb::Error *NotLeaderError(metapb::Peer *peer);
+    errorpb::Error *NotLeaderError(metapb::Peer &&peer);
     errorpb::Error *KeyNotInRange(const std::string &key);
     errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
 
@@ -361,7 +360,7 @@ private:
     uint64_t apply_index_ = 0;
     uint64_t split_range_id_ = 0;
 
-    volatile bool is_leader = false;
+    std::atomic<bool> is_leader_ = {false};
     volatile bool valid_ = true;
 
     uint64_t real_size_ = 0;

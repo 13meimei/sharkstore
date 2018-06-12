@@ -21,11 +21,6 @@ struct Peer {
 
 std::string PeersToString(const std::vector<Peer>& peers);
 
-struct DownPeer {
-    Peer peer;
-    unsigned down_seconds = 0;
-};
-
 enum class ConfChangeType : char { kAdd, kRemove, kPromote };
 
 std::string ConfChangeTypeName(ConfChangeType type);

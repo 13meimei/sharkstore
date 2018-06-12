@@ -14,6 +14,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+static const int kDownPeerThresholdSecs = 50;
 // 磁盘使用率大于百分之92停写
 static const uint64_t kStopWriteFsUsagePercent = 92;
 
@@ -69,7 +70,7 @@ Status Range::Initialize(range_status_t *status, uint64_t leader) {
     }
 
     if (leader == node_id_) {
-        is_leader = true;
+        is_leader_ = true;
     }
 
     return Status::OK();
@@ -102,7 +103,7 @@ void Range::Heartbeat() {
 }
 
 bool Range::PushHeartBeatMessage() {
-    if (!is_leader || !valid_ || raft_ == nullptr || raft_->IsStopped()) {
+    if (!is_leader_ || !valid_ || raft_ == nullptr || raft_->IsStopped()) {
         return false;
     }
 
@@ -112,18 +113,55 @@ bool Range::PushHeartBeatMessage() {
                EncodeToHexString(meta_.start_key()).c_str(),
                EncodeToHexString(meta_.end_key()).c_str());
 
-    metapb::Peer *peer = NewMetaPeer(node_id_);
-    if (peer == nullptr) {
+    mspb::RangeHeartbeatRequest req;
+
+    // 设置meta
+    {
+        sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
+        req.set_allocated_range(new metapb::Range(meta_));
+    }
+
+    // 设置leader
+    metapb::Peer leader_peer;
+    if (!FindPeerByNodeID(node_id_, &leader_peer)) {
         FLOG_ERROR("range[%" PRIu64 "] heartbeat not found leader: %" PRIu64, meta_.id(),
                    node_id_);
         return false;
     }
+    req.set_leader(leader_peer.id());
 
-    mspb::RangeHeartbeatRequest hb_req;
-    auto stats = hb_req.mutable_stats();
+    raft::RaftStatus rs;
+    raft_->GetStatus(&rs);
+    if (rs.leader != node_id_) {
+        FLOG_ERROR("range[%" PRIu64 "] heartbeat raft say not leader, leader=: %" PRIu64,
+                   meta_.id(), rs.leader);
+        return false;
+    }
+    // 设置leader term
+    req.set_term(rs.term);
 
-    hb_req.set_allocated_leader(peer);
+    for (const auto &pr : rs.replicas) {
+        metapb::Peer peer;
+        if (!FindPeerByNodeID(pr.first, &peer)) {
+            FLOG_ERROR("range[%" PRIu64 "] heartbeat not found peer: %" PRIu64,
+                       meta_.id(), pr.first);
+            continue;
+        }
+        // 检查down peers
+        if (pr.second.inactive_seconds > kDownPeerThresholdSecs) {
+            auto down_peer = req.add_down_peers();
+            down_peer->set_peer_id(peer.id());
+            down_peer->set_down_seconds(pr.second.inactive_seconds);
+        }
+        // 上报副本进度
+        auto progress = req.add_progresses();
+        progress->set_peer_id(peer.id());
+        progress->set_index(pr.second.match);
+        progress->set_snapshotting(pr.second.snapshotting);
+    }
 
+    // metric stats
+    auto stats = req.mutable_stats();
     stats->set_approximate_size(real_size_);
 
     storage::MetricStat store_stat;
@@ -133,59 +171,9 @@ bool Range::PushHeartBeatMessage() {
     stats->set_keys_written(store_stat.keys_write_per_sec);
     stats->set_bytes_written(store_stat.bytes_write_per_sec);
 
-    do {
-        sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
-        hb_req.set_allocated_range(new metapb::Range(meta_));
-    } while (false);
-
-    std::vector<raft::DownPeer> down_peers;
-    raft_->GetDownPeers(&down_peers);
-    for (auto &dp : down_peers) {
-        mspb::PeerStats *ps = hb_req.add_down_peers();
-        metapb::Peer *p = NewMetaPeer(dp.peer.node_id);
-        if (p != nullptr) {
-            ps->set_allocated_peer(p);
-            ps->set_down_seconds(dp.down_seconds);
-        }
-    }
-
-    std::vector<raft::Peer> pending_peers;
-    raft_->GetPeedingPeers(&pending_peers);
-    for (auto &pr : pending_peers) {
-        sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
-        metapb::Peer *p = FindMetaPeer(pr.node_id);
-        if (p != nullptr) {
-            metapb::Peer *peer = hb_req.add_pending_peers();
-            peer->set_id(p->id());
-            peer->set_node_id(p->node_id());
-            peer->set_type(p->type());
-        }
-    }
-
-    context_->master_worker->AsyncRangeHeartbeat(hb_req);
+    context_->master_worker->AsyncRangeHeartbeat(req);
 
     return true;
-}
-
-metapb::Peer *Range::NewMetaPeer(uint64_t node_id) {
-    sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
-    metapb::Peer *p = FindMetaPeer(node_id);
-    if (p != nullptr) {
-        return new metapb::Peer(*p);
-    }
-
-    return nullptr;
-}
-
-metapb::Peer *Range::FindMetaPeer(uint64_t node_id) {
-    metapb::Peer *peer = nullptr;
-    for (int i = 0; i < meta_.peers_size(); i++) {
-        peer = meta_.mutable_peers(i);
-        if (node_id == peer->node_id()) {
-            return peer;
-        }
-    }
-    return nullptr;
 }
 
 Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
@@ -275,7 +263,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 }
 
 Status Range::Submit(const raft_cmdpb::Command &cmd) {
-    if (is_leader) {
+    if (is_leader_) {
         std::string str_cmd = std::move(cmd.SerializeAsString());
         if (str_cmd.empty()) {
             return Status(Status::kCorruption, "protobuf serialize failed", "");
@@ -296,8 +284,8 @@ void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
     }
 
     if (leader == node_id_) {
-        if (!is_leader) {  // check leader to leader
-            is_leader = true;
+        if (!is_leader_) {  // check leader to leader
+            is_leader_ = true;
 
             store_->ResetMetric();
 
@@ -309,8 +297,8 @@ void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
         }
 
     } else {
-        if (is_leader) {
-            is_leader = false;
+        if (is_leader_) {
+            is_leader_ = false;
             range_status_->range_leader_count--;
 
             context_->run_status->PushRange(monitor::RangeTag::LeaderCount,
@@ -441,29 +429,25 @@ void Range::GetReplica(metapb::Replica *rep) {
     rep->set_range_id(meta_.id());
     rep->set_start_key(meta_.start_key());
     rep->set_end_key(meta_.end_key());
-    rep->set_allocated_peer(NewMetaPeer(node_id_));
+    auto peer = new metapb::Peer;
+    FindPeerByNodeID(node_id_, peer);
+    rep->set_allocated_peer(peer);
 }
 
 bool Range::VerifyLeader(errorpb::Error *&err) {
     uint64_t leader, term;
     raft_->GetLeaderTerm(&leader, &term);
 
-    if (leader == 0) {
+    // we are leader
+    if (leader == node_id_) return true;
+
+    metapb::Peer peer;
+    if (leader == 0 || !FindPeerByNodeID(leader, &peer)) {
         err = NoLeaderError();
-        return false;
+    } else {
+        err = NotLeaderError(std::move(peer));
     }
-
-    if (leader != node_id_) {
-        metapb::Peer *peer = NewMetaPeer(leader);
-        if (peer != nullptr) {
-            err = NotLeaderError(peer);
-        } else {
-            err = NoLeaderError();
-        }
-        return false;
-    }
-
-    return true;
+    return false;
 }
 
 bool Range::CheckWriteable() {
@@ -592,7 +576,7 @@ void Range::ClearExpiredContext() {
 
         } while (seq_id > 0);
 
-        if (empty || is_leader) {
+        if (empty || is_leader_) {
             break;
         }
     }
@@ -609,14 +593,14 @@ errorpb::Error *Range::NoLeaderError() {
     return err;
 }
 
-errorpb::Error *Range::NotLeaderError(metapb::Peer *peer) {
+errorpb::Error *Range::NotLeaderError(metapb::Peer &&peer) {
     errorpb::Error *err = new errorpb::Error;
 
     err->set_message("not leader");
     err->mutable_not_leader()->set_range_id(meta_.id());
     err->mutable_not_leader()->set_allocated_epoch(
         new metapb::RangeEpoch(meta_.range_epoch()));
-    err->mutable_not_leader()->set_allocated_leader(peer);
+    err->mutable_not_leader()->set_allocated_leader(new metapb::Peer(std::move(peer)));
 
     return err;
 }
