@@ -10,12 +10,13 @@ import (
 )
 
 type AlarmClient interface {
-	TaskTimeoutAlarm(timeoutAlarm *alarmpb.TaskTimeout)
-	TaskLongTimeRunningAlarm(longTimeRunningAlarm *alarmpb.TaskLongTimeRunning)
-	RangeNoHeartbeatAlarm(rangeNoHbAlarm *alarmpb.RangeNoHeartbeatAlarm)
-	NodeNoHeartbeatAlarm(nodeNoHbAlarm *alarmpb.NodeNoHeartbeatAlarm)
-	NodeDiskSizeAlarm(nodeDiskSizeAlarm *alarmpb.NodeDiskSizeAlarm)
-	NodeLeaderCountAlarm(nodeLeaderCountAlarm *alarmpb.NodeLeaderCountAlarm)
+	TaskTimeoutAlarm(clusterId int64, timeoutAlarm *alarmpb.TaskTimeout, task *taskpb.Task, desc string) error
+	TaskLongTimeRunningAlarm(clusterId int64, longTimeRunningAlarm *alarmpb.TaskLongTimeRunning, task *taskpb.Task, desc string) error
+	RangeNoHeartbeatAlarm(clusterId int64, rangeNoHbAlarm *alarmpb.RangeNoHeartbeatAlarm, desc string) error
+	NodeNoHeartbeatAlarm(clusterId int64, nodeNoHbAlarm *alarmpb.NodeNoHeartbeatAlarm, desc string) error
+	NodeDiskSizeAlarm(clusterId int64, nodeDiskSizeAlarm *alarmpb.NodeDiskSizeAlarm, desc string) error
+	NodeLeaderCountAlarm(clusterId int64, nodeLeaderCountAlarm *alarmpb.NodeLeaderCountAlarm, desc string) error
+	SimpleAlarm(clusterId int64, message string) error
 	Close()
 }
 
@@ -33,10 +34,16 @@ func NewAlarmClient(addr string) (*Client, error) {
 }
 
 func (c *Client) Close() {
+	if c == nil {
+		return
+	}
 	c.conn.Close()
 }
 
 func (c *Client) TaskTimeoutAlarm(clusterId int64, timeoutAlarm *alarmpb.TaskTimeout, task *taskpb.Task, desc string) error {
+	if c == nil {
+		return nil
+	}
 	cli := alarmpb.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -51,6 +58,9 @@ func (c *Client) TaskTimeoutAlarm(clusterId int64, timeoutAlarm *alarmpb.TaskTim
 }
 
 func (c *Client) TaskLongTimeRunningAlarm(clusterId int64, longTimeRunningAlarm *alarmpb.TaskLongTimeRunning, task *taskpb.Task, desc string) error {
+	if c == nil {
+		return nil
+	}
 	cli := alarmpb.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -65,6 +75,9 @@ func (c *Client) TaskLongTimeRunningAlarm(clusterId int64, longTimeRunningAlarm 
 }
 
 func (c *Client) RangeNoHeartbeatAlarm(clusterId int64, rangeNoHbAlarm *alarmpb.RangeNoHeartbeatAlarm, desc string) error {
+	if c == nil {
+		return nil
+	}
 	cli := alarmpb.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -78,6 +91,9 @@ func (c *Client) RangeNoHeartbeatAlarm(clusterId int64, rangeNoHbAlarm *alarmpb.
 }
 
 func (c *Client) NodeNoHeartbeatAlarm(clusterId int64, nodeNoHbAlarm *alarmpb.NodeNoHeartbeatAlarm, desc string) error {
+	if c == nil {
+		return nil
+	}
 	cli := alarmpb.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -91,6 +107,9 @@ func (c *Client) NodeNoHeartbeatAlarm(clusterId int64, nodeNoHbAlarm *alarmpb.No
 }
 
 func (c *Client) NodeDiskSizeAlarm(clusterId int64, nodeDiskSizeAlarm *alarmpb.NodeDiskSizeAlarm, desc string) error {
+	if c == nil {
+		return nil
+	}
 	cli := alarmpb.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -104,6 +123,9 @@ func (c *Client) NodeDiskSizeAlarm(clusterId int64, nodeDiskSizeAlarm *alarmpb.N
 }
 
 func (c *Client) NodeLeaderCountAlarm(clusterId int64, nodeLeaderCountAlarm *alarmpb.NodeLeaderCountAlarm, desc string) error {
+	if c == nil {
+		return nil
+	}
 	cli := alarmpb.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -117,6 +139,9 @@ func (c *Client) NodeLeaderCountAlarm(clusterId int64, nodeLeaderCountAlarm *ala
 }
 
 func (c *Client) AliveAlarm() error {
+	if c == nil {
+		return nil
+	}
 	cli := alarmpb.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -125,3 +150,18 @@ func (c *Client) AliveAlarm() error {
 	})
 	return err
 }
+
+func (c *Client) SimpleAlarm(clusterId uint64, message string) error {
+	if c == nil {
+		return nil
+	}
+	cli := alarmpb.NewAlarmClient(c.conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	_, err := cli.SimpleAlarm(ctx, &alarmpb.SimpleRequest{
+		Head: &alarmpb.RequestHeader{ClusterId: int64(clusterId)},
+		Message: message,
+	})
+	return err
+}
+

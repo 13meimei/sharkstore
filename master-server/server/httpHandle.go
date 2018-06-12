@@ -2726,6 +2726,15 @@ func (ri routeInfoByStartKey) Less(i, j int) bool {
 	return true
 }
 
+func (service *Server) handleTestAlarm(w http.ResponseWriter, r *http.Request) {
+	err := service.cluster.alarmCli.RangeNoHeartbeatAlarm(int64(service.cluster.GetClusterId()), nil, "test alarm")
+	if err != nil {
+		w.Write([]byte(err.Error()))
+	} else {
+		w.Write([]byte("ok"))
+	}
+}
+
 func (service *Server) handleRangeLocate(w http.ResponseWriter, r *http.Request) {
 	reply := &http_reply.Reply{}
 	defer http_reply.SendReply(w, reply)

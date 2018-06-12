@@ -16,6 +16,7 @@ type AlarmServer interface {
 	TaskAlarm(context.Context, *alarmpb.TaskAlarmRequest) (*alarmpb.TaskAlarmResponse, error)
 	NodeRangeAlarm(context.Context, *alarmpb.NodeRangeAlarmRequest) (*alarmpb.NodeRangeAlarmResponse, error)
 	AliveAlarm(context.Context, *alarmpb.AliveRequest) (*alarmpb.AliveResponse, error)
+	SimpleAlarm(ctx context.Context, req *alarmpb.SimpleRequest) (*alarmpb.SimpleResponse, error)
 }
 
 type Server struct {
@@ -102,4 +103,19 @@ func (s *Server) AliveAlarm(ctx context.Context, req *alarmpb.AliveRequest) (*al
 	return resp, err
 }
 
+func (s *Server) SimpleAlarm(ctx context.Context, req *alarmpb.SimpleRequest) (*alarmpb.SimpleResponse, error) {
+	var err error
+	resp := new(alarmpb.SimpleResponse)
 
+	clusterId := req.GetHead().GetClusterId()
+
+	if err := s.gateway.notify(Message{
+		ClusterId: clusterId,
+		Title: "simple alarm",
+		Content: req.GetMessage(),
+	}, time.Second); err != nil {
+		log.Error("simple alarm notify timeout")
+	}
+
+	return resp, err
+}
