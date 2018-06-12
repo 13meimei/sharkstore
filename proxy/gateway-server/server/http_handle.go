@@ -18,6 +18,7 @@ import (
 	"util/log"
 	"master-server/server"
 	"proxy/metric"
+	"util"
 )
 
 type Response struct {
@@ -173,26 +174,26 @@ func (s *Server) handleKVCommand(w http.ResponseWriter, r *http.Request) {
 	}
 
 	start := time.Now()
-    	var slowLogThreshold int
+	var slowLogThreshold util.Duration
 	query.commandFieldNameToLower()
 	commandType = query.Command.Type
 	switch query.Command.Type {
 	case "get":
-		slowLogThreshold = s.proxy.config.SelectSlowLog
+		slowLogThreshold = s.proxy.config.Performance.SelectSlowLog
 		reply, err = query.getCommand(s.proxy, t)
 		if err != nil {
 			log.Error("getcommand error: %v", err)
 			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
 		}
 	case "set":
-		slowLogThreshold = s.proxy.config.InsertSlowLog
+		slowLogThreshold = s.proxy.config.Performance.InsertSlowLog
 		reply, err = query.setCommand(s.proxy, t)
 		if err != nil {
 			log.Error("setcommand error: %v", err)
 			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
 		}
 	case "del":
-		slowLogThreshold = s.proxy.config.SelectSlowLog
+		slowLogThreshold = s.proxy.config.Performance.SelectSlowLog
 		reply, err = query.delCommand(s.proxy, t)
 		if err != nil {
 			log.Error("delcommand error: %v", err)
@@ -209,7 +210,7 @@ func (s *Server) handleKVCommand(w http.ResponseWriter, r *http.Request) {
 	} else {
 		metric.GsMetric.ProxyApiMetric(query.Command.Type, false, delay)
 	}
-	if delay > time.Duration(slowLogThreshold) * time.Millisecond {
+	if delay > slowLogThreshold.Duration {
 		cmd, _ := json.Marshal(query)
 		metric.GsMetric.SlowLogMetric(string(cmd), delay)
 		log.Debug("[kvcommand slow log %v %v ", delay.String(), string(cmd))
