@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	defaultAddPeerTaskTimeout = time.Second * time.Duration(300)
+	defaultAddPeerTaskTimeout  = time.Second * time.Duration(300)
+	addPeerMaxCreateRetryTimes = 8 // 8 heartbeats =  8 * 10 seconds
 )
 
 // AddPeerTask add peer task
@@ -18,8 +19,8 @@ type AddPeerTask struct {
 	*BaseTask
 	peer *metapb.Peer // peer to add
 
-	confRetries   int
-	createRetries int
+	confRetries   int // TODO: limit max retry
+	createRetries int // TODO: limit max retry
 }
 
 // NewAddPeerTask new add peer task
@@ -43,8 +44,7 @@ func (t *AddPeerTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.
 		task = t.stepWaitConf(cluster, r)
 		return false, task
 	case WaitRangeCreated:
-		t.stepCreateRange(cluster, r)
-		return false, nil
+		return t.stepCreateRange(cluster, r), nil
 	case WaitDataSynced:
 		return t.stepWaitSync(r), nil
 	default:
@@ -95,18 +95,27 @@ func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Tas
 	return nil
 }
 
-func (t *AddPeerTask) stepCreateRange(cluster *Cluster, r *Range) {
+// return true if task is over
+func (t *AddPeerTask) stepCreateRange(cluster *Cluster, r *Range) bool {
 	err := prepareAddPeer(cluster, r, t.peer)
 	if err != nil {
-		log.Error("%s create new range failed: %s, peer: %v, retries: %d", t.logID, err.Error(), t.peer, t.createRetries)
+		log.Error("%s create new range failed, peer[id:%d, node:%d], retries: %d, err: %v",
+			t.logID, t.peer.GetId(), t.peer.GetNodeId(), t.createRetries, err.Error())
+
 		t.createRetries++
-		return
+		if t.createRetries >= addPeerMaxCreateRetryTimes {
+			log.Error("%s create new range max retry limited. task abort, peer[id:%d, node:%d]",
+				t.logID, t.peer.GetId(), t.peer.GetNodeId())
+			t.state = TaskStateFailed
+			return true
+		}
+		return false
 	}
 
-	log.Info("%s create range finshed to node(%d)", t.logID, t.peer.GetNodeId())
+	log.Info("%s create range finshed to node[%d]", t.logID, t.peer.GetNodeId())
 
 	t.state = WaitDataSynced
-	return
+	return false
 }
 
 func (t *AddPeerTask) stepWaitSync(r *Range) bool {

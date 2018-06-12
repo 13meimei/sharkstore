@@ -85,12 +85,12 @@ func (t *DeletePeerTask) stepDeleteRange(cluster *Cluster, r *Range) (over bool)
 
 	err := cluster.cli.DeleteRange(node.GetServerAddr(), r.GetId())
 	if err == nil {
-		log.Error("%s delete range failed, target node: %d, retries: %d", t.logID, t.peer.GetNodeId(), t.deleteRetries)
+		log.Error("%s delete range failed, target node: %d, retries: %d, err: %v", t.logID, t.peer.GetNodeId(), t.deleteRetries, err)
 		t.deleteRetries++
 		return false
 	}
 
-	log.Info("%s delete range finished, peer: %v", t.logID, t.peer)
+	log.Info("%s delete range finished, peer[id:%d, node:%d]", t.logID, t.peer.GetId(), t.peer.GetNodeId())
 
 	t.state = TaskStateFinished
 	return true

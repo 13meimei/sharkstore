@@ -43,6 +43,8 @@ func NewTaskChain(id uint64, rangeID uint64, name string, tasks ...Task) *TaskCh
 		t.SetLogID(c.logID)
 	}
 
+	log.Info("%s created.", c.logID)
+
 	return c
 }
 
@@ -101,7 +103,7 @@ func (c *TaskChain) Next(cluster *Cluster, r *Range) (over bool, task *taskpb.Ta
 
 		// current task finished successfully and current is the last one
 		if c.curIdx == len(c.tasks)-1 {
-			log.Info("%s finished. last task: %s", c.logID, t)
+			log.Info("%s finished. used: %v, last task: %s", c.logID, c.Elapsed(), t.String())
 			return true, nil
 		}
 
