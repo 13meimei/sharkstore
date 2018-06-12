@@ -72,6 +72,11 @@ func (manager *hb_range_manager) CheckRange(cluster *Cluster, rng *Range) RangeE
 		return NewDelRangeEvent(id, rng.GetId(), "hb range remove")
 	}
 
+	//down peer 处理
+	if event := manager.checkDownPeer(cluster, rng); event != nil {
+		return event
+	}
+
 	if len(rng.GetPeers()) < cluster.opt.GetMaxReplicas() {
 		log.Info("range %d peer %d less than %d", rng.GetId(), len(rng.GetPeers()), cluster.opt.GetMaxReplicas())
 		newPeer, err := cluster.allocPeerAndSelectNode(rng)
