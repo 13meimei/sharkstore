@@ -10,7 +10,7 @@ import (
 
 var (
 	DefaultMaxNodeDownTimeInterval time.Duration = 60 * time.Second
-	DefaultMaxPeerDownTimeInterval time.Duration = 5 * 60 * time.Second
+	DefaultMaxPeerDownTimeInterval time.Duration = 2 * 60 * time.Second
 
 	// 大于一个调度周期+一个心跳周期，预留冗余
 	DefaultChangeLeaderTimeout time.Duration = time.Second * time.Duration(30)
