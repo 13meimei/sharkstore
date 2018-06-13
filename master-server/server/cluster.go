@@ -899,8 +899,7 @@ func (c *Cluster) loadRanges() error {
 		if err != nil {
 			return err
 		}
-		leader := deepcopy.Iface(r.GetPeers()[0]).(*metapb.Peer)
-		rr := NewRange(r, leader)
+		rr := NewRange(r)
 		c.AddRange(rr)
 	}
 	// 删除垃圾分片(无归属分片)
@@ -1168,7 +1167,7 @@ func (c *Cluster) createRangeByScope(startKey, endKey []byte, table *Table) erro
 	if err != nil {
 		return err
 	}
-	region := NewRange(rng, nil)
+	region := NewRange(rng)
 	newPeer, err := c.allocPeerAndSelectNode(region)
 	if err != nil {
 		return err
@@ -1219,7 +1218,7 @@ func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {
 	if len(candidateNodes) == 1 {
 		return candidateNodes[0]
 	}
-	tableId := rng.GetTableId()
+	tableId := rng.GetTableID()
 	rngStat := c.GetNodeRangeStatByTable(tableId)
 	return c.selectBestNodeST(candidateNodes, rng, rngStat)
 }
@@ -1358,7 +1357,7 @@ func (c *Cluster) selectWorstPeer(rng *Range) *metapb.Peer {
 // Dispatch dispatch range heartbeat
 func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
 	// get taskchain
-	tc := c.taskManager.Find(r.GetId())
+	tc := c.taskManager.Find(r.GetID())
 	if tc == nil {
 		tc = c.hbManager.Check(c, r)
 		if tc != nil {

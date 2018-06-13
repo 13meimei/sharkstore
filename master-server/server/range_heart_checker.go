@@ -37,13 +37,19 @@ func (c *RangeHeartChecker) validate(r *Range) bool {
 }
 
 func (c *RangeHeartChecker) needToStore(r *Range) bool {
+	return true
 }
 
 // Check check range heartbeat
 func (c *RangeHeartChecker) Check(ctx context.Context, req *mspb.RangeHeartbeatRequest) *taskpb.Task {
+	from := util.GetIpFromContext(ctx)
 	r := req.GetRange()
-	log.Debug("[HB] range[%d:%d] heartbeat from ip[%s] Peers:%v DownPeers:%v", r.GetTableId(), r.GetId(),
-		util.GetIpFromContext(ctx), req.GetRange().GetPeers(), req.GetDownPeers())
+	if r == nil {
+		log.Warn("[HB] invalid range: <nil> from %s".from)
+		return nil
+	}
 
+	log.Debug("[HB] range[%d:%d] heartbeat from ip[%s] Peers:%v DownPeers:%v", r.GetTableId(), r.GetId(),
+		from, req.GetRange().GetPeers(), req.GetDownPeers())
 	return nil
 }

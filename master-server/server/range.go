@@ -3,156 +3,157 @@ package server
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"model/pkg/metapb"
 	"model/pkg/mspb"
-	"util/deepcopy"
-	"sync/atomic"
 )
 
+// Range range's data and states
 type Range struct {
-	lock sync.RWMutex
-	*metapb.Range
-	Leader        *metapb.Peer
-	DownPeers     []*mspb.PeerStats
-	PendingPeers  []*metapb.Peer
+	sync.RWMutex
+
+	id      uint64 // const range id
+	tableID uint64 // const table id
+
+	meta       *metapb.Range // keep not nil
+	leader     *metapb.Peer  // leader peer id
+	term       uint64        // newest term
+	downPeers  []*mspb.DownPeer
+	progresses []*mspb.ReplicateProgress
 
 	BytesWritten uint64
 	BytesRead    uint64
 
 	KeysWritten uint64
 	KeysRead    uint64
-	opsStat RangeOpsStat
+	opsStat     RangeOpsStat
 	// Approximate range size.
 	ApproximateSize uint64
 
-	State         metapb.RangeState
+	state metapb.RangeState
 	Trace bool
 
-	LastHbTimeTS    time.Time
+	lastHbTimeTS time.Time
 }
 
-type RangeOpsStat struct {
-	writeOps [CacheSize]uint64
-	hit uint64
+// NewRange create a new range
+func NewRange(meta *metapb.Range) *Range {
+	return &Range{
+		id:      meta.GetId(),
+		tableID: meta.GetTableId(),
+		meta:    meta,
+	}
 }
 
-func (opsStat *RangeOpsStat) Hit(v uint64){
-	hit := atomic.AddUint64(&(opsStat.hit),1)
-	opsStat.writeOps[hit%CacheSize] = v
+// GetTableID return range's talbe id
+func (r *Range) GetTableID() uint64 {
+	return r.tableID
 }
 
-func (opsStat *RangeOpsStat) GetMax() uint64{
-	var max uint64 = 0
-	for i:=0 ; i<CacheSize ;i++ {
-		v := opsStat.writeOps[i]
-		if  v > max {
-			max = v
+// GetID return range id
+func (r *Range) GetID() uint64 {
+	return r.ID
+}
+
+func (r *Range) setTerm(term uint64) {
+	atomic.StoreUint64(&r.term, term)
+}
+
+// GetTerm return range's term
+func (r *Range) GetTerm() (term uint64) {
+	atomic.LoadUint64(r.term)
+}
+
+// GetLeader return current leader
+func (r *Range) GetLeader() (leader *metapb.Peer) {
+	r.RLock()
+	leader = r.leader
+	r.RUnlock()
+}
+
+// GetVersion return range version
+func (r *Range) GetVersion() (ver uint64) {
+	r.RLock()
+	ver = r.meta.GetRangeEpoch().GetVersion()
+	r.RUnlock()
+}
+
+// GetConfVer return conf verion
+func (r *Range) GetConfVer() (ver uint64) {
+	r.RLock()
+	ver = r.meta.GetRangeEpoch().GetConfVer()
+	r.RUnlock()
+}
+
+// GetMeta return range meta
+func (r *Range) GetMeta() (meta *metapb.Range) {
+	r.RLock()
+	meta = r.meta
+	r.RUnlock()
+}
+
+// SString to printable string
+func (r *Range) SString() string {
+	return fmt.Sprintf("%d:%d", r.tableID, r.ID)
+}
+
+func (r *Range) getPeerUnlock(peerID uint64) *metapb.Peer {
+	for _, peer := range r.meta.GetPeers() {
+		if peer.GetId() == peerID {
+			return peer
 		}
 	}
-	return max
-}
-
-func (opsStat *RangeOpsStat) Clear() uint64{
-	var max uint64 = 0
-	for i:=0 ; i<CacheSize ;i++ {
-		opsStat.writeOps[i] = 0
-	}
-	return max
-}
-
-func NewRange(r *metapb.Range, leader *metapb.Peer) *Range {
-	if leader == nil && r.GetPeers() != nil {
-		leader = deepcopy.Iface(r.GetPeers()[0]).(*metapb.Peer)
-	}
-	region := &Range{
-		Range:  r,
-		Leader: leader,
-		LastHbTimeTS: time.Now(),
-	}
-	return region
-}
-
-func (r *Range) SString() string {
-	if r == nil {
-		return ""
-	}
-	return fmt.Sprintf("%d:%d", r.GetTableId(), r.GetId())
-}
-
-func (r *Range) ID() uint64 {
-	if r == nil {
-		return 0
-	}
-	return r.GetId()
-}
-
-func (r *Range) GetLeader() *metapb.Peer {
-	if r == nil {
-		return nil
-	}
-	if r.Leader == nil {
-		return nil
-	}
-	return r.Leader
+	return nil
 }
 
 // GetPeer return the peer with specified peer id
 func (r *Range) GetPeer(peerID uint64) *metapb.Peer {
-	if r == nil {
-		return nil
-	}
-	for _, peer := range r.GetPeers() {
-		if peer.GetId() == peerID {
-			return peer
-		}
-	}
-	return nil
+	r.RLock()
+	defer r.RUnlock()
+
+	return r.getPeerUnlock(peerID)
+}
+
+// GetPeers return peers
+func (r *Range) GetPeers() []*metapb.Peer {
+	r.RLock()
+	defer r.RUnlock()
+
+	return r.meta.GetPeers()
 }
 
 // GetDownPeer return the down peers with specified peer id
 func (r *Range) GetDownPeer(peerID uint64) *metapb.Peer {
-	if r == nil {
-		return nil
-	}
+	r.RLock()
+	defer r.RUnlock()
+
 	for _, down := range r.DownPeers {
 		if down.GetPeer().GetId() == peerID {
-			return down.GetPeer()
+			return r.getPeerUnlock(peerID)
 		}
 	}
 	return nil
 }
 
-func (r *Range) GetDownPeers() []*metapb.Peer {
-	if r == nil {
-		return nil
-	}
-	var peers []*metapb.Peer
-	for _, down := range r.DownPeers {
-		peers = append(peers, down.GetPeer())
-	}
-	return peers
-}
-
-// GetPendingPeer return the pending peer with specified peer id
-func (r *Range) GetPendingPeer(peerID uint64) *metapb.Peer {
-	if r == nil {
-		return nil
-	}
-	for _, peer := range r.PendingPeers {
-		if peer.GetId() == peerID {
-			return peer
+// GetDownPeers return down peers
+func (r *Range) GetDownPeers() (peers []*metapb.Peer) {
+	r.RLock()
+	for _, down := range r.downPeers {
+		peer := r.getPeerUnlock(down.GetPeerId())
+		if peer != nil {
+			peers = append(peers, peer)
 		}
 	}
-	return nil
+	r.RUnlock()
 }
 
 // GetNodePeer return the peer in specified Node
 func (r *Range) GetNodePeer(nodeID uint64) *metapb.Peer {
-	if r == nil {
-		return nil
-	}
+	r.RLock()
+	defer r.RUnlock()
+
 	for _, peer := range r.GetPeers() {
 		if peer.GetNodeId() == nodeID {
 			return peer
@@ -161,27 +162,10 @@ func (r *Range) GetNodePeer(nodeID uint64) *metapb.Peer {
 	return nil
 }
 
-// RemoveNodePeer remove the peer in specified Node
-func (r *Range) RemoveNodePeer(NodeID uint64) {
-	if r == nil {
-		return
-	}
-	var peers []*metapb.Peer
-	for _, peer := range r.GetPeers() {
-		if peer.GetNodeId() != NodeID {
-			peers = append(peers, peer)
-		}
-	}
-	r.Peers = peers
-}
-
+// GetNodes return nodes
 func (r *Range) GetNodes(cluster *Cluster) (nodes []*Node) {
-	if r == nil {
-		return nil
-	}
-
-	peers := r.GetPeers()
-	for _, peer := range peers {
+	nodeIDs := r.GetNodeIDs()
+	for nodeID := range nodeIDs {
 		node := cluster.FindNodeById(peer.GetNodeId())
 		if node == nil {
 			continue
@@ -191,14 +175,14 @@ func (r *Range) GetNodes(cluster *Cluster) (nodes []*Node) {
 	return
 }
 
-// GetNodeIds return a map indicate the region distributed
-func (r *Range) GetNodeIds() map[uint64]struct{} {
-	if r == nil {
-		return make(map[uint64]struct{})
-	}
-	peers := r.GetPeers()
-	nodes := make(map[uint64]struct{}, len(peers))
-	for _, peer := range peers {
+// GetNodeIDs return a map indicate the region distributed
+func (r *Range) GetNodeIDs() map[uint64]struct{} {
+	nodes := make(map[uint64]struct{})
+
+	r.RLock()
+	defer r.RUnlock()
+
+	for _, peer := range r.meta.Peers {
 		nodes[peer.GetNodeId()] = struct{}{}
 	}
 	return nodes
@@ -206,77 +190,42 @@ func (r *Range) GetNodeIds() map[uint64]struct{} {
 
 // GetFollowers return a map indicate the follow peers distributed
 func (r *Range) GetFollowers() map[uint64]*metapb.Peer {
-	if r == nil {
-		return nil
-	}
-	peers := r.GetPeers()
-	followers := make(map[uint64]*metapb.Peer, len(peers))
-	for _, peer := range peers {
-		if r.Leader == nil || r.Leader.GetId() != peer.GetId() {
-			followers[peer.GetNodeId()] = peer
+	followers := make(map[uint64]*metapb.Peer)
+
+	r.RLock()
+	defer r.RUnlock()
+
+	for _, peer := range r.meta.Peers {
+		if r.leader != nil && r.leader.GetId() == peer.GetId() {
+			continue
 		}
+		followers[peer.GetNodeId()] = peer
 	}
 	return followers
 }
 
-func (r *Range) GetRandomFollower() *metapb.Peer {
-	if r == nil {
-		return nil
-	}
-	for _, peer := range r.GetPeers() {
-		if r.Leader == nil || r.Leader.GetId() != peer.GetId() {
-			return peer
-		}
-	}
-	return nil
+// LastHeartbeat return last heartbeat time
+func (r *Range) LastHeartbeat() (t *time.Time) {
+	r.RLock()
+	t = r.lastHbTimeTS
+	r.RUnlock()
 }
 
-
-func (r *Range) GetPendingPeers() []*metapb.Peer {
-	if r == nil {
-		return nil
-	}
-	return r.PendingPeers
+// GetState return state
+func (r *Range) GetState() metapb.RangeState {
+	return atomic.LoadInt32(&r.state)
 }
 
+// SetState set state
+func (r *Range) SetState(state metapb.RangeState) {
+	atomic.StoreInt32(&r.state, state)
+}
+
+// IsHealthy return true if range is healthy
 func (r *Range) IsHealthy() bool {
-	if r == nil {
-		return false
-	}
-	if len(r.GetDownPeers()) > 0 {
-		return false
-	}
-	if len(r.GetPendingPeers()) > 0 {
-		return false
-	}
-	// 分片需要删除，无需补充副本
-	if r.State == metapb.RangeState_R_Remove {
-		return false
-	}
-	return true
-}
+	r.RLock()
+	defer r.RUnlock()
 
-func (r *Range) clone() *Range {
-	if r == nil {
-		return nil
-	}
-	return &Range{
-		Range:  deepcopy.Iface(r.Range).(*metapb.Range),
-		Leader:        r.Leader,
-		DownPeers:     r.DownPeers,
-		PendingPeers:  r.PendingPeers,
-
-		BytesWritten: r.BytesWritten,
-		BytesRead:    r.BytesRead,
-
-		KeysWritten: r.KeysWritten,
-		KeysRead:    r.KeysRead,
-		// Approximate range size.
-		ApproximateSize: r.ApproximateSize,
-
-		State:         r.State,
-		Trace:         r.Trace,
-
-		LastHbTimeTS:    r.LastHbTimeTS,
-	}
+	return len(r.downPeers) > 0 ||
+		r.GetState() == metapb.RangeState_R_Remove
 }

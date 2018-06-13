@@ -184,6 +184,8 @@ func (manager *hb_range_manager) createDelPeerTask(cluster *Cluster, r *Range, p
 	return NewTaskChain(id, r.GetId(), creator, delPeerTask)
 }
 
+func (manager *hb_range_manager) Handle()
+
 func (manager *hb_range_manager) Check(cluster *Cluster, r *Range) *TaskChain {
 	// 处理分片回收
 	// TODO: 直接调用DS接口删除range 然后回收
