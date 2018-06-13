@@ -122,13 +122,12 @@ bool Range::PushHeartBeatMessage() {
     }
 
     // 设置leader
-    metapb::Peer leader_peer;
-    if (!FindPeerByNodeID(node_id_, &leader_peer)) {
+    auto leader_peer = req.mutable_leader();
+    if (!FindPeerByNodeID(node_id_, leader_peer)) {
         FLOG_ERROR("range[%" PRIu64 "] heartbeat not found leader: %" PRIu64, meta_.id(),
                    node_id_);
         return false;
     }
-    req.set_leader(leader_peer.id());
 
     raft::RaftStatus rs;
     raft_->GetStatus(&rs);
@@ -141,23 +140,22 @@ bool Range::PushHeartBeatMessage() {
     req.set_term(rs.term);
 
     for (const auto &pr : rs.replicas) {
-        metapb::Peer peer;
-        if (!FindPeerByNodeID(pr.first, &peer)) {
+        auto peer_status = req.add_peers_status();
+
+        auto peer = peer_status->mutable_peer();
+        if (!FindPeerByNodeID(pr.first, peer)) {
             FLOG_ERROR("range[%" PRIu64 "] heartbeat not found peer: %" PRIu64,
                        meta_.id(), pr.first);
             continue;
         }
+
+        peer_status->set_index(pr.second.match);
+        peer_status->set_commit(pr.second.commit);
         // 检查down peers
         if (pr.second.inactive_seconds > kDownPeerThresholdSecs) {
-            auto down_peer = req.add_down_peers();
-            down_peer->set_peer_id(peer.id());
-            down_peer->set_down_seconds(pr.second.inactive_seconds);
+            peer_status->set_down_seconds(pr.second.inactive_seconds);
         }
-        // 上报副本进度
-        auto progress = req.add_progresses();
-        progress->set_peer_id(peer.id());
-        progress->set_index(pr.second.match);
-        progress->set_snapshotting(pr.second.snapshotting);
+        peer_status->set_snapshotting(pr.second.snapshotting);
     }
 
     // metric stats

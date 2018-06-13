@@ -48,16 +48,12 @@ message GetMSLeaderResponse {
     MSLeader leader                 = 2;
 }
 
-message DownPeer {
-    uint64 peer_id      = 1;
-    uint64 down_seconds = 2;
-}
-
-message ReplicateProgress {
-    uint64 peer_id    = 1;
-    uint64 index      = 2;
-    uint64 commit     = 3;
-    bool snapshotting = 4;
+message PeerStatus {
+    metapb.Peer peer    = 1;
+    uint64 index        = 2;
+    uint64 commit       = 3;
+    uint64 down_seconds = 4;
+    bool snapshotting   = 5;
 }
 
 message RangeStats {
@@ -76,16 +72,14 @@ message RangeHeartbeatRequest {
     RequestHeader header                  = 1;
 
     metapb.Range range                    = 2;
-    // leader peer id
-    uint64 leader                         = 3;
+    // leader
+    metapb.Peer leader                    = 3;
     // leader term
     uint64 term                           = 4;
-    // Leader considers that these peers are down.
-    repeated DownPeer down_peers          = 5;
-    // peer's replicate progress
-    repeated ReplicateProgress progresses = 6;
+    // replica status
+    repeated PeerStatus peers_status      = 5;
     // range metric stats
-    RangeStats stats                      = 7;
+    RangeStats stats                      = 6;
 }
 
 message RangeHeartbeatResponse {
