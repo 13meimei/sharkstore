@@ -93,7 +93,7 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 		for rows.Next() {
 			info := models.NewClusterInfo()
 			if err := rows.Scan(&(info.Id), &(info.Name), &(info.MasterUrl), &(info.GatewayHttpUrl), &(info.GatewaySqlUrl),
-				&(info.ClusterToken), &(info.AutoTransferUnable), &(info.AutoFailoverUnable), &(info.CreateTime)); err != nil {
+				&(info.ClusterToken), &(info.AutoTransferUnable), &(info.AutoFailoverUnable), &(info.AutoSplitUnable), &(info.CreateTime)); err != nil {
 				log.Error("db scan is failed. err:[%v]", err)
 				return nil, common.DB_ERROR
 			}
@@ -115,7 +115,7 @@ func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 	for rows.Next() {
 		info := models.NewClusterInfo()
 		if err := rows.Scan(&(info.Id), &(info.Name), &(info.MasterUrl), &(info.GatewayHttpUrl), &(info.GatewaySqlUrl),
-			&(info.ClusterToken), &(info.AutoTransferUnable), &(info.AutoFailoverUnable), &(info.CreateTime)); err != nil {
+			&(info.ClusterToken), &(info.AutoTransferUnable), &(info.AutoFailoverUnable), &(info.AutoSplitUnable), &(info.CreateTime)); err != nil {
 			log.Error("db scan is failed. err:[%v]", err)
 			return nil, common.DB_ERROR
 		}
@@ -128,7 +128,7 @@ func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 
 func (s *Service) CreateCluster(cId int, cName, masterUrl, gateHttpUrl, gateSqlUrl, cToken string, cTime int64) error {
 	result, err := s.db.Exec(fmt.Sprintf(`INSERT INTO %s (id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
-		auto_failover, auto_transfer, create_time) values (%d, "%s", "%s", "%s", "%s", "%s", 1, 1, %d)`, TABLE_NAME_CLUSTER, cId, cName, masterUrl,
+		auto_failover, auto_transfer, auto_split, create_time) values (%d, "%s", "%s", "%s", "%s", "%s", 0, 0, 0, %d)`, TABLE_NAME_CLUSTER, cId, cName, masterUrl,
 		gateHttpUrl, gateSqlUrl, cToken, cTime))
 	if err != nil {
 		log.Error("db exec is failed. err:[%v]", err)
@@ -889,7 +889,7 @@ func (s *Service) GetRangeTopoByNodeId(clusterId, nodeId int) (interface{}, erro
 	return getRangeTopoOfNodeResp.Data, nil
 }
 
-func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover string) error {
+func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover, autoSplit string) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return err
@@ -907,6 +907,7 @@ func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover str
 	reqParams["s"] = sign
 	reqParams["autoTransferUnable"] = autoTransfer
 	reqParams["autoFailoverUnable"] = autoFailover
+	reqParams["autoSplitUnable"] = autoSplit
 
 	var clusterToggleSetResp = struct {
 		Code int    `json:"code"`
@@ -2146,17 +2147,20 @@ func (s *Service) insertClusterById(info *models.ClusterInfo) error {
 	//}
 	//res, err := stmt.Exec(TABLE_NAME_CLUSTER, info.Id, info.Name, info.MasterUrl,
 	//	info.GatewayUrl, info.ClusterToken, info.CreateTime, info.AutoTransferUnable, info.AutoFailoverUnable)
-	var autoTransfer, autoFailover int
+	var autoTransfer, autoFailover, autoSplit int
 	if info.AutoTransferUnable {
 		autoTransfer = 1
 	}
 	if info.AutoFailoverUnable {
 		autoFailover = 1
 	}
+	if info.AutoSplitUnable {
+		autoSplit = 1
+	}
 	sql := fmt.Sprintf(`INSERT INTO %s (id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
-		create_time, auto_transfer, auto_failover ) values (%d, "%s", "%s", "%s", "%s", "%s", %d, %d, %d)`, TABLE_NAME_CLUSTER,
+		create_time, auto_transfer, auto_failover, auto_split ) values (%d, "%s", "%s", "%s", "%s", "%s", %d, %d, %d, %d)`, TABLE_NAME_CLUSTER,
 		info.Id, info.Name, info.MasterUrl,
-		info.GatewayHttpUrl, info.GatewaySqlUrl, info.ClusterToken, info.CreateTime, autoTransfer, autoFailover)
+		info.GatewayHttpUrl, info.GatewaySqlUrl, info.ClusterToken, info.CreateTime, autoTransfer, autoFailover, autoSplit)
 	rowsAffected, err := s.execSql(sql)
 	if err != nil {
 		return err

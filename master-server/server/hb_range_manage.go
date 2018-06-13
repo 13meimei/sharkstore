@@ -56,12 +56,6 @@ func peerGC(cluster *Cluster, r *metapb.Range, peer *metapb.Peer) error {
 
 func (manager *hb_range_manager) CheckRange(cluster *Cluster, rng *Range) RangeEvent {
 
-	// 启动故障恢复或者分片需要删除,优先处理故障的副本
-	if cluster.autoFailoverUnable {
-		log.Debug("can not failover")
-		return nil
-	}
-
 	// 处理分片回收
 	if rng.State == metapb.RangeState_R_Remove {
 		//TODO: 直接调用DS接口删除range 然后回收
@@ -72,9 +66,11 @@ func (manager *hb_range_manager) CheckRange(cluster *Cluster, rng *Range) RangeE
 		return NewDelRangeEvent(id, rng.GetId(), "hb range remove")
 	}
 
-	//down peer 处理
-	if event := manager.checkDownPeer(cluster, rng); event != nil {
-		return event
+	// 启动故障恢复或者分片需要删除,优先处理故障的副本
+	if !cluster.autoFailoverUnable {
+		if event := manager.checkDownPeer(cluster, rng); event != nil {
+			return event
+		}
 	}
 
 	if len(rng.GetPeers()) < cluster.opt.GetMaxReplicas() {

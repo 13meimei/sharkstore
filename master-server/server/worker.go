@@ -11,7 +11,7 @@ const (
 	defaultWorkerInterval  =  time.Second
 	maxScheduleInterval       = time.Minute
 	minScheduleInterval       = time.Millisecond * 10
-	scheduleIntervalFactor    = 1.3
+	scheduleIntervalFactor    = 0.8
 
 	writeStatLRUMaxLen            = 1000
 	regionHeartBeatReportInterval = 10

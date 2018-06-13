@@ -397,18 +397,6 @@ func (t *CreateTable) GetAllRanges() []*Range {
 	return ranges
 }
 
-func (t *CreateTable) GetNodeRangeStat() map[uint64]int  {
-	rngStat := make(map[uint64]int, 0)
-	tRanges := t.GetAllRanges()
-	for _, r := range tRanges {
-		rPeers := r.GetPeers()
-		for _, p := range rPeers {
-			rngStat[p.GetNodeId()] = rngStat[p.GetNodeId()] + 1
-		}
-	}
-	return rngStat
-}
-
 type CreateTableCache struct {
 	lock    sync.RWMutex
 	tableIs map[uint64]*CreateTable
@@ -711,25 +699,15 @@ func (dt *CreateTableWorker) createRange(c *Cluster, table *CreateTable) error {
 				log.Error("table %v rangesToCreateList is closed", table.GetName())
 				return ErrInternalError
 			}
-
-			r, err:= c.allocRange(create.startKey, create.endKey, table.Table)
+			region, err := c.newRangeByScope(create.startKey, create.endKey, table.Table)
 			if err != nil {
 				return err
 			}
-			region := NewRange(r, nil)
-			newPeer, err := c.allocPrePeerAndSelectNode(region, table)
-			if err != nil {
-				return err
-			}
-			var peers []*metapb.Peer
-			peers = append(peers, newPeer)
-			region.Peers = peers
-
 			table.AddRange(region)
 			c.AddRange(region)
 			// create range remote
-			if err = c.createRangeRemote(r); err != nil {
-				return fmt.Errorf("create range[%v]failed, err[%v]", r, err)
+			if err = c.createRangeRemote(region.Range); err != nil {
+				return fmt.Errorf("create range[%v, %v] failed, err[%v]", region.GetTableId(), region.GetId(), err)
 			}
 		default:
 			// 创建分片结束
