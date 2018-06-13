@@ -12,6 +12,7 @@ import (
 	"util/deepcopy"
 	"util/log"
 
+	"github.com/syndtr/goleveldb/leveldb/util"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
 )
@@ -127,151 +128,101 @@ func (service *Server) handleNodeHeartbeat(ctx context.Context, req *mspb.NodeHe
 }
 
 func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.RangeHeartbeatRequest) (resp *mspb.RangeHeartbeatResponse) {
-	// r := req.GetRange()
-	// log.Debug("[HB] range[%d:%d] heartbeat, from ip[%s] Peers:%v DownPeers:%v", r.GetTableID(), r.GetId(), util.GetIpFromContext(ctx),
-	// 	req.GetRange().GetPeers(), req.GetDownPeers())
+	r := req.GetRange()
+	log.Debug("[HB] range[%d:%d] heartbeat, from ip[%s] Peers:%v DownPeers:%v", r.GetTableID(), r.GetId(), util.GetIpFromContext(ctx),
+		req.GetRange().GetPeers(), req.GetDownPeers())
 
-	// cluster := service.cluster
-	// resp = new(mspb.RangeHeartbeatResponse)
-	// resp.Header = &mspb.ResponseHeader{}
-	// resp.RangeId = r.GetId()
-	// delFlag := false
-	// table, find := cluster.FindTableById(r.GetTableID())
-	// if !find {
-	// 	table, find = cluster.FindDeleteTableById(r.GetTableID()) //删除表已经到期被删除
-	// 	if !find {
-	// 		delFlag = true
-	// 	}
-	// }
-	// if _, found := cluster.deletedRanges.FindRange(r.GetId()); found {
-	// 	log.Error("range[%v] had been deleted, but still exist heartbeat from nodeId[%d]. Please check ds log for more detail!", r.GetId(), req.GetLeader().GetNodeId())
-	// 	return
-	// }
-	// var saveStore, saveCache bool
-	// rng := cluster.FindRange(r.GetId())
-	// if rng == nil {
-	// 	log.Info("range[%d:%d] not found", r.GetTableId(), r.GetId())
-	// 	rng = NewRange(r, req.GetLeader())
-	// 	if !delFlag {
-	// 		saveCache = true
-	// 		saveStore = true
-	// 	}
-	// }
-	// // 临时标记需要删除，并不持久化
-	// if delFlag {
-	// 	rng.State = metapb.RangeState_R_Remove
-	// }
+	cluster := service.cluster
+	resp = new(mspb.RangeHeartbeatResponse)
+	resp.Header = &mspb.ResponseHeader{}
+	resp.RangeId = r.GetId()
+	delFlag := false
+	table, find := cluster.FindTableById(r.GetTableID())
+	if !find {
+		table, find = cluster.FindDeleteTableById(r.GetTableID()) //删除表已经到期被删除
+		if !find {
+			delFlag = true
+		}
+	}
+	var saveStore, saveCache bool
+	rng := cluster.FindRange(r.GetId())
+	if rng == nil {
+		log.Info("range[%d:%d] not found", r.GetTableId(), r.GetId())
+		rng = NewRange(r, req.GetLeader())
+		if !delFlag {
+			saveCache = true
+			saveStore = true
+		}
+	}
+	// 临时标记需要删除，并不持久化
+	if delFlag {
+		rng.State = metapb.RangeState_R_Remove
+	}
 
-	// if rng.Trace || log.IsEnableInfo() {
-	// 	log.Info("[HB] range[%s] heartbeat, from ip[%s]", rng.SString(), util.GetIpFromContext(ctx))
-	// }
+	if rng.Trace || log.IsEnableInfo() {
+		log.Info("[HB] range[%s] heartbeat, from ip[%s]", rng.SString(), util.GetIpFromContext(ctx))
+	}
 
-	// //range心跳恢复
-	// if rng.State == metapb.RangeState_R_Abnormal && len(req.GetDownPeers())*2 < len(r.GetPeers()) {
-	// 	rng.State = metapb.RangeState_R_Normal
-	// 	//执行store GC .
-	// 	oldRng, found := cluster.FindPreGCRangeById(rng.GetId())
-	// 	if found {
-	// 		for _, peer := range oldRng.GetPeers() {
-	// 			peerGC(cluster, oldRng, peer)
-	// 		}
-	// 		cluster.preGCRanges.Delete(rng.GetId())
-	// 		if err := cluster.deleteRangeGC(rng.GetId()); err != nil {
-	// 			log.Warn("delete range gc remark from store failed. err: [%v]", err)
-	// 		}
-	// 	}
-	// }
+	//range心跳恢复
+	if rng.State == metapb.RangeState_R_Abnormal && len(req.GetDownPeers())*2 < len(r.GetPeers()) {
+		rng.State = metapb.RangeState_R_Normal
+		//执行store GC .
+		oldRng, found := cluster.FindPreGCRangeById(rng.GetId())
+		if found {
+			for _, peer := range oldRng.GetPeers() {
+				peerGC(cluster, oldRng, peer)
+			}
+			cluster.preGCRanges.Delete(rng.GetId())
+			if err := cluster.deleteRangeGC(rng.GetId()); err != nil {
+				log.Warn("delete range gc remark from store failed. err: [%v]", err)
+			}
+		}
+	}
 
-	// // Range meta is stale, return.
-	// if r.GetRangeEpoch().GetVersion() < rng.GetRangeEpoch().GetVersion() ||
-	// 	r.GetRangeEpoch().GetConfVer() < rng.GetRangeEpoch().GetConfVer() {
-	// 	log.Warn("range[%v] stale %v", rng.Range, r)
-	// 	return
-	// }
-	// // 超过半数的副本发生down，　同时leader不一致, 疑似脑裂，新的leader已经在多数派选举出来
-	// if len(req.GetDownPeers())*2 >= len(r.GetPeers()) && req.GetLeader().GetNodeId() != rng.GetLeader().GetNodeId() {
-	// 	log.Warn("range[%v] maybe net split %v", rng.Range, r)
-	// 	// TODO alarm
-	// 	return
-	// }
+	if saveStore {
+		err := cluster.storeRange(r)
+		if err != nil {
+			log.Error("store range[%s] failed, err[%v]", rng.SString(), err)
+			return
+		}
+		saveCache = true
+	}
+	if saveCache {
+		// 更新node的分片副本信息
+		for _, p := range rng.GetPeers() {
+			find := false
+			for _, peer := range r.GetPeers() {
+				if p.GetId() == peer.GetId() {
+					find = true
+					break
+				}
+			}
+			if !find {
+				cluster.FindNodeById(p.GetNodeId()).DeleteRange(rng.GetId())
+			}
+		}
 
-	// if r.GetRangeEpoch().GetVersion() > rng.GetRangeEpoch().GetVersion() {
-	// 	saveCache = true
-	// 	saveStore = true
-	// 	log.Info("range %d version change from %d to %d",
-	// 		rng.GetId(), rng.GetRangeEpoch().GetVersion(), r.GetRangeEpoch().GetVersion())
-	// }
-	// if r.GetRangeEpoch().GetConfVer() > rng.GetRangeEpoch().GetConfVer() {
-	// 	saveCache = true
-	// 	saveStore = true
-	// 	log.Info("range %d conf version change from %d to %d",
-	// 		rng.GetId(), rng.GetRangeEpoch().GetConfVer(), r.GetRangeEpoch().GetConfVer())
-	// }
-	// if req.GetLeader().GetNodeId() != rng.GetLeader().GetNodeId() {
-	// 	saveCache = true
-	// }
-	// if len(req.GetDownPeers()) > 0 || len(req.GetPendingPeers()) > 0 {
-	// 	saveCache = true
-	// }
-	// if len(rng.GetDownPeers()) > 0 || len(rng.GetPendingPeers()) > 0 {
-	// 	saveCache = true
-	// }
-	// // 有learner提升
-	// for _, peer := range r.GetPeers() {
-	// 	oldPeer := rng.GetPeer(peer.GetId())
-	// 	if oldPeer == nil || oldPeer.Type != peer.Type {
-	// 		saveCache = true
-	// 		saveStore = true
-	// 	}
-	// }
+		rng.Range = r
+		rng.DownPeers = req.GetDownPeers()
+		rng.PendingPeers = req.GetPendingPeers()
+		rng.Leader = req.GetLeader()
 
-	// if saveStore {
-	// 	err := cluster.storeRange(r)
-	// 	if err != nil {
-	// 		log.Error("store range[%s] failed, err[%v]", rng.SString(), err)
-	// 		return
-	// 	}
-	// 	saveCache = true
-	// }
-	// if saveCache {
-	// 	// 更新node的分片副本信息
-	// 	for _, p := range rng.GetPeers() {
-	// 		find := false
-	// 		for _, peer := range r.GetPeers() {
-	// 			if p.GetId() == peer.GetId() {
-	// 				find = true
-	// 				break
-	// 			}
-	// 		}
-	// 		if !find {
-	// 			cluster.FindNodeById(p.GetNodeId()).DeleteRange(rng.GetId())
-	// 		}
-	// 	}
-
-	// 	rng.Range = r
-	// 	rng.DownPeers = req.GetDownPeers()
-	// 	rng.PendingPeers = req.GetPendingPeers()
-	// 	rng.Leader = req.GetLeader()
-
-	// 	cluster.AddRange(rng)
-	// }
-	// rng.LastHbTimeTS = time.Now()
-	// cluster.updateStatus(rng, req.GetStats())
-	// if rng.Trace || log.IsEnableDebug() {
-	// 	log.Debug("[HB] range[%s] dispatch task", rng.SString())
-	// }
-	// // 暂时不能参与任务调度
-	// if table != nil && table.Status == metapb.TableStatus_TableInit {
-	// 	return
-	// }
-	// task := cluster.Dispatch(rng)
-	// if task != nil {
-	// 	if rng.Trace || log.IsEnableInfo() {
-	// 		log.Info("[HB] range[%s] dispatch task[%v]", rng.SString(), task)
-	// 	}
-	// 	resp.Task = task
-	// }
-	// return
+		cluster.AddRange(rng)
+	}
+	if rng.Trace || log.IsEnableDebug() {
+		log.Debug("[HB] range[%s] dispatch task", rng.SString())
+	}
+	// 暂时不能参与任务调度
+	if table != nil && table.Status == metapb.TableStatus_TableInit {
+		return
+	}
+	task := cluster.Dispatch(rng)
+	if task != nil {
+		if rng.Trace || log.IsEnableInfo() {
+			log.Info("[HB] range[%s] dispatch task[%v]", rng.SString(), task)
+		}
+		resp.Task = task
+	}
 	return nil
 }
 
