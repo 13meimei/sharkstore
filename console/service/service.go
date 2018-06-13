@@ -105,7 +105,8 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 }
 
 func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
-	rows, err := s.db.Query(fmt.Sprintf(`SELECT * FROM %s`, TABLE_NAME_CLUSTER))
+	rows, err := s.db.Query(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
+		auto_failover, auto_transfer, auto_split, create_time FROM %s`, TABLE_NAME_CLUSTER))
 	if err != nil {
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
