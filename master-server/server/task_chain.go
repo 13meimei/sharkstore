@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"model/pkg/metapb"
 	"sync/atomic"
 	"time"
 
@@ -118,4 +119,28 @@ func (c *TaskChain) Next(cluster *Cluster, r *Range) (over bool, task *taskpb.Ta
 func (c *TaskChain) String() string {
 	return fmt.Sprintf("{\"id\": %d, \"name\": \"%s\", \"range\": %d, \"begin\": %v, \"update\": %v, \"tasks\": %v}",
 		c.id, c.name, c.rangeID, c.begin, c.lastUpdate, c.tasks)
+}
+
+// NewTransferPeerTasks new transfer peer tasks
+func NewTransferPeerTasks(id uint64, r *Range, name string, from *metapb.Peer) *TaskChain {
+	addPeerTask := NewAddPeerTask()
+	delPeerTask := NewDeletePeerTask(from)
+
+	if r.GetLeader() != nil && r.GetLeader().GetId() == from.GetId() {
+		changeLeaderTask := NewChangeLeaderTask(r.GetLeader().GetNodeId(), 0)
+		changeLeaderTask.SetAllowFail()
+		return NewTaskChain(id, r.GetID(), name, addPeerTask, changeLeaderTask, delPeerTask)
+	}
+	return NewTaskChain(id, r.GetID(), name, addPeerTask, delPeerTask)
+}
+
+// NewDeletePeerTasks new delete peer tasks
+func NewDeletePeerTasks(id, r *Range, name string, peer *metapb.Peer) *TaskChain {
+	delPeerTask := NewDeletePeerTask(peer)
+	if r.GetLeader() != nil && r.GetLeader().GetId() == peer.GetId() {
+		changeLeaderTask := NewChangeLeaderTask(r.GetLeader().GetNodeId(), 0)
+		changeLeaderTask.SetAllowFail()
+		return NewTaskChain(id, r.GetID(), creator, changeLeaderTask, delPeerTask)
+	}
+	return NewTaskChain(id, r.GetID(), creator, delPeerTask)
 }

@@ -38,6 +38,12 @@ func (t *ChangeLeaderTask) String() string {
 
 // Step step
 func (t *ChangeLeaderTask) Step(cluster *Cluster, r *Range) (over bool, task *taskpb.Task) {
+	if t.isChanged(r) {
+		log.Info("%s change finished. final leader: %d", t.logID, r.Leader.GetNodeId())
+		t.state = TaskStateFinished
+		return true, nil
+	}
+
 	switch t.GetState() {
 	case TaskStateStart:
 		t.tryToChangeLeader(cluster, r)
@@ -45,12 +51,6 @@ func (t *ChangeLeaderTask) Step(cluster *Cluster, r *Range) (over bool, task *ta
 		return false, nil
 
 	case WaitLeaderChanged:
-		if t.isChanged(r) {
-			log.Info("%s change finished. final leader: %d", t.logID, r.Leader.GetNodeId())
-			t.state = TaskStateFinished
-			return true, nil
-		}
-
 		if t.retries >= defaultMaxChangeLeaderRetryTimes {
 			log.Info("%s change canceled(max retry reached). final leader: %d", t.logID, r.Leader.GetNodeId())
 			t.state = TaskStateCanceled

@@ -1,21 +1,21 @@
 package server
 
 import (
-	"time"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"errors"
+	"math"
+	"net"
+	"net/http"
 	"strings"
 	"sync"
-	"math"
-	"encoding/json"
-	"net/http"
-	"net"
+	"time"
 
-	"util/log"
-	"util/deepcopy"
-	"model/pkg/statspb"
 	"model/pkg/mspb"
+	"model/pkg/statspb"
+	"util/deepcopy"
+	"util/log"
 
 	"golang.org/x/net/context"
 )
@@ -30,7 +30,7 @@ type Metric struct {
 	wg       sync.WaitGroup
 
 	lock            sync.Mutex
-	eventList       []RangeEvent
+	taskList        []*TaskChain
 	scheduleCounter map[string]map[string]uint64
 }
 

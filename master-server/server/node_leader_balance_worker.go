@@ -3,8 +3,8 @@ package server
 import (
 	"golang.org/x/net/context"
 
-	"util/log"
 	"model/pkg/metapb"
+	"util/log"
 
 	"time"
 )
@@ -54,7 +54,10 @@ func (w *balanceNodeLeaderWorker) Work(cluster *Cluster) {
 
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to transfer leader, range:[%v], new leader:[%v]", rng.GetId(), newLeader.GetId())
-	cluster.eventDispatcher.pushEvent(NewTryChangeLeaderEvent(id, rng.GetId(), rng.GetLeader(), newLeader, w.GetName()))
+	tc := NewTaskChain(id, rng.GetId(), "balance-change-leader",
+		NewChangeLeaderTask(rng.GetLeader().GetNodeId(), newLeader.GetNodeId()))
+	// TODO: check return
+	cluster.taskManager.Add(tc)
 	return
 }
 
@@ -84,7 +87,7 @@ func countLeaderAvg(nodes []*Node) float64 {
 
 /**
 选择需要切换leader的range
- */
+*/
 func selectChangeLeader(cluster *Cluster, workerName string) (*Range, *metapb.Peer) {
 	nodes := cluster.GetAllActiveNode()
 	if len(nodes) == 0 {
@@ -115,7 +118,7 @@ func selectChangeLeader(cluster *Cluster, workerName string) (*Range, *metapb.Pe
 	}
 
 	balanceThreshold := avgLeaderNum / 10
-	if balanceThreshold <  float64(Min_leader_balance_num) {
+	if balanceThreshold < float64(Min_leader_balance_num) {
 		balanceThreshold = float64(Min_leader_balance_num)
 	}
 
@@ -137,7 +140,7 @@ func selectChangeLeader(cluster *Cluster, workerName string) (*Range, *metapb.Pe
 		for _, r := range leastLeaderNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() != leastLeaderNode.GetId() && r.require(cluster) {
 				leaderNode := cluster.getLeaderNode(r)
-				if float64(leaderNode.GetLeaderCount()- leastLeaderNode.GetLeaderCount()) > float64(Min_leader_balance_num) {
+				if float64(leaderNode.GetLeaderCount()-leastLeaderNode.GetLeaderCount()) > float64(Min_leader_balance_num) {
 					return r, r.GetNodePeer(leastLeaderNode.GetId())
 				}
 			}

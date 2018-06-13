@@ -10,6 +10,12 @@ import (
 	"model/pkg/mspb"
 )
 
+// DownPeer down peer
+type DownPeer struct {
+	Peer        *metapb.Peer
+	DownSeconds uint64
+}
+
 // Range range's data and states
 type Range struct {
 	sync.RWMutex
@@ -17,11 +23,11 @@ type Range struct {
 	id      uint64 // const range id
 	tableID uint64 // const table id
 
-	meta       *metapb.Range // keep not nil
-	leader     *metapb.Peer  // leader peer id
-	term       uint64        // newest term
-	downPeers  []*mspb.DownPeer
-	progresses []*mspb.ReplicateProgress
+	meta        *metapb.Range // keep not nil
+	leader      *metapb.Peer  // leader peer id
+	term        uint64        // newest term
+	peersStatus []*mspb.PeerStatus
+	downPeers   []*DownPeer
 
 	BytesWritten uint64
 	BytesRead    uint64
@@ -54,7 +60,12 @@ func (r *Range) GetTableID() uint64 {
 
 // GetID return range id
 func (r *Range) GetID() uint64 {
-	return r.ID
+	return r.id
+}
+
+// GetId return range id
+func (r *Range) GetId() uint64 {
+	return r.id
 }
 
 func (r *Range) setTerm(term uint64) {
@@ -63,7 +74,7 @@ func (r *Range) setTerm(term uint64) {
 
 // GetTerm return range's term
 func (r *Range) GetTerm() (term uint64) {
-	atomic.LoadUint64(r.term)
+	return atomic.LoadUint64(&r.term)
 }
 
 // GetLeader return current leader
@@ -71,6 +82,7 @@ func (r *Range) GetLeader() (leader *metapb.Peer) {
 	r.RLock()
 	leader = r.leader
 	r.RUnlock()
+	return
 }
 
 // GetVersion return range version
@@ -78,6 +90,7 @@ func (r *Range) GetVersion() (ver uint64) {
 	r.RLock()
 	ver = r.meta.GetRangeEpoch().GetVersion()
 	r.RUnlock()
+	return
 }
 
 // GetConfVer return conf verion
@@ -85,6 +98,15 @@ func (r *Range) GetConfVer() (ver uint64) {
 	r.RLock()
 	ver = r.meta.GetRangeEpoch().GetConfVer()
 	r.RUnlock()
+	return
+}
+
+// SetVersion change version
+func (r *Range) SetVersion(version, confVer uint64) {
+	r.Lock()
+	r.meta.RangeEpoch.Version = version
+	r.meta.RangeEpoch.ConfVer = confVer
+	r.Unlock()
 }
 
 // GetMeta return range meta
@@ -92,11 +114,28 @@ func (r *Range) GetMeta() (meta *metapb.Range) {
 	r.RLock()
 	meta = r.meta
 	r.RUnlock()
+	return
+}
+
+// GetStartKey return table's start key
+func (r *Range) GetStartKey() (key []byte) {
+	r.RLock()
+	key = r.meta.GetStartKey()
+	r.RUnlock()
+	return
+}
+
+// GetEndKey return table's end key
+func (r *Range) GetEndKey() (key []byte) {
+	r.RLock()
+	key = r.meta.GetEndKey()
+	r.RUnlock()
+	return
 }
 
 // SString to printable string
 func (r *Range) SString() string {
-	return fmt.Sprintf("%d:%d", r.tableID, r.ID)
+	return fmt.Sprintf("%d:%d", r.tableID, r.id)
 }
 
 func (r *Range) getPeerUnlock(peerID uint64) *metapb.Peer {
@@ -124,29 +163,46 @@ func (r *Range) GetPeers() []*metapb.Peer {
 	return r.meta.GetPeers()
 }
 
-// GetDownPeer return the down peers with specified peer id
-func (r *Range) GetDownPeer(peerID uint64) *metapb.Peer {
+// GetPeersStatus return peers' status
+func (r *Range) GetPeersStatus() []*mspb.PeerStatus {
 	r.RLock()
 	defer r.RUnlock()
 
-	for _, down := range r.DownPeers {
-		if down.GetPeer().GetId() == peerID {
-			return r.getPeerUnlock(peerID)
+	return r.peersStatus
+}
+
+// GetDownPeer return the down peers with specified peer id
+func (r *Range) GetDownPeer(peerID uint64) *DownPeer {
+	r.RLock()
+	defer r.RUnlock()
+
+	for _, down := range r.downPeers {
+		if down.Peer.GetId() == peerID {
+			return down
 		}
 	}
 	return nil
 }
 
 // GetDownPeers return down peers
-func (r *Range) GetDownPeers() (peers []*metapb.Peer) {
+func (r *Range) GetDownPeers() (peers []*DownPeer) {
 	r.RLock()
-	for _, down := range r.downPeers {
-		peer := r.getPeerUnlock(down.GetPeerId())
-		if peer != nil {
-			peers = append(peers, peer)
+	peers = r.downPeers
+	r.RUnlock()
+	return
+}
+
+// GetPendingPeers return pending peers
+func (r *Range) GetPendingPeers() (peers []*metapb.Peer) {
+	r.RLock()
+	defer r.RUnlock()
+
+	for _, status := range r.peersStatus {
+		if status.Snapshotting {
+			peers = append(peers, status.GetPeer())
 		}
 	}
-	r.RUnlock()
+	return
 }
 
 // GetNodePeer return the peer in specified Node
@@ -205,7 +261,7 @@ func (r *Range) GetFollowers() map[uint64]*metapb.Peer {
 }
 
 // LastHeartbeat return last heartbeat time
-func (r *Range) LastHeartbeat() (t *time.Time) {
+func (r *Range) LastHeartbeat() (t time.Time) {
 	r.RLock()
 	t = r.lastHbTimeTS
 	r.RUnlock()

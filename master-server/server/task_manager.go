@@ -32,11 +32,18 @@ func (m *TaskManager) Add(tc *TaskChain) bool {
 }
 
 // Remove remove
-func (m *TaskManager) Remove(rangeID uint64) {
+func (m *TaskManager) Remove(tc *TaskChain) bool {
 	m.Lock()
 	defer m.Unlock()
 
-	delete(m.tasks, rangeID)
+	old, ok := m.tasks[tc.GetRangeID()]
+	if !ok {
+		return false
+	}
+	if old.GetID() != tc.GetID() {
+		return false
+	}
+	delete(m.tasks, tc.GetRangeID())
 }
 
 // Find find

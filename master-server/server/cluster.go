@@ -73,11 +73,10 @@ type Cluster struct {
 
 	workerPool map[string]bool
 	//coordinator   *Coordinator
-	hbManager       *hb_range_manager
-	workerManger    *WorkerManager
-	eventDispatcher *EventDispatcher
-	taskManager     *TaskManager
-	metric          *Metric
+	hbManager    *hb_range_manager
+	workerManger *WorkerManager
+	taskManager  *TaskManager
+	metric       *Metric
 
 	close bool
 
@@ -116,7 +115,6 @@ func NewCluster(clusterId, nodeId uint64, store Store, opt *scheduleOption) *Clu
 	//cluster.coordinator = NewCoordinator(cluster, opt)
 	cluster.workerManger = NewWorkerManager(cluster, opt)
 	cluster.hbManager = NewHBRangeManager(cluster)
-	cluster.eventDispatcher = NewEventDispatcher(cluster, opt)
 	cluster.taskManager = NewTaskManager()
 	return cluster
 }
@@ -179,7 +177,6 @@ func (c *Cluster) LoadCache() error {
 func (c *Cluster) Start() {
 	c.close = false
 	c.metric.Run()
-	c.eventDispatcher.Run()
 	c.workerManger.Run()
 }
 
@@ -189,7 +186,6 @@ func (c *Cluster) Close() {
 	}
 	c.cli.Close()
 	//c.coordinator.Stop()
-	c.eventDispatcher.Stop()
 	c.workerManger.Stop()
 	c.metric.Stop()
 	c.close = true
@@ -587,20 +583,9 @@ func (c *Cluster) RemoveWorker(name string) error {
 	return c.workerManger.removeWorker(name)
 }
 
-func (c *Cluster) GetAllEvent() []RangeEvent {
-	return c.eventDispatcher.getEvents()
-}
-
-func (c *Cluster) GetEvent(rangeID uint64) RangeEvent {
-	return c.eventDispatcher.peekEvent(rangeID)
-}
-
-func (c *Cluster) AddEvent(event RangeEvent) bool {
-	return c.eventDispatcher.pushEvent(event)
-}
-
-func (c *Cluster) RemoveEvent(event RangeEvent) {
-	c.eventDispatcher.removeEvent(event)
+func (c *Cluster) GetAllTasks() []*TaskChain {
+	// TODO:
+	return nil
 }
 
 func (c *Cluster) loadAutoTransfer() error {
@@ -1174,7 +1159,7 @@ func (c *Cluster) createRangeByScope(startKey, endKey []byte, table *Table) erro
 	}
 	var peers []*metapb.Peer
 	peers = append(peers, newPeer)
-	region.Peers = peers
+	rng.Peers = peers
 
 	c.AddRange(region)
 	// create range remote
@@ -1277,7 +1262,7 @@ func (c *Cluster) selectBestNodesForAddPeer(rng *Range) []*Node {
 		flag := true
 		for _, selector := range newSelectors {
 			if !selector.CanSelect(node) {
-				log.Debug("addPeer: range [%v] cannot select node %v, because of %v", rng.GetId(), node.GetId(), selector.Name())
+				log.Debug("addPeer: range [%v] cannot select node %v, because of %v", rng.GetID(), node.GetId(), selector.Name())
 				flag = false
 				break
 			}
@@ -1308,8 +1293,9 @@ func (c *Cluster) checkSameIpNode(nodes []*Node) (string, bool) {
 }
 
 func (c *Cluster) selectWorstPeer(rng *Range) *metapb.Peer {
-	if len(rng.DownPeers) > 0 {
-		return rng.DownPeers[0].Peer
+	downPeers := rng.GetDownPeers()
+	if len(downPeers) > 0 {
+		return downPeers[0].Peer
 	}
 
 	//TODO:复制位置落后的peer
@@ -1346,7 +1332,7 @@ func (c *Cluster) selectWorstPeer(rng *Range) *metapb.Peer {
 		return nil
 	}
 
-	for _, peer := range rng.Peers {
+	for _, peer := range rng.GetPeers() {
 		if peer.NodeId == worstNode.GetId() {
 			return peer
 		}
@@ -1362,7 +1348,7 @@ func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
 		tc = c.hbManager.Check(c, r)
 		if tc != nil {
 			if !c.taskManager.Add(tc) {
-				log.Warn("add tasks for range(%d) failed. maybe other tasks is running.", r.GetId())
+				log.Warn("add tasks for range(%d) failed. maybe other tasks is running.", r.GetID())
 				tc = nil
 			}
 		}
@@ -1373,7 +1359,7 @@ func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
 		if !over {
 			return task
 		} else {
-			c.taskManager.Remove(r.GetId())
+			c.taskManager.Remove(tc)
 		}
 	}
 	return nil

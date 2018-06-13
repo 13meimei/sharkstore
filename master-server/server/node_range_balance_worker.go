@@ -1,10 +1,11 @@
 package server
 
 import (
-	"time"
-	"golang.org/x/net/context"
-	"util/log"
 	"model/pkg/metapb"
+	"time"
+	"util/log"
+
+	"golang.org/x/net/context"
 )
 
 var (
@@ -54,7 +55,9 @@ func (w *balanceNodeRangeWorker) Work(cluster *Cluster) {
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to balance region and remove peer, region:[%v], old peer:[%v], old node:[%v], new node:[%v]",
 		rng.GetId(), oldPeer.GetId(), oldPeer.GetNodeId(), targetNodeId)
-	cluster.eventDispatcher.pushEvent(NewChangePeerEvent(id, rng, oldPeer, newPeer, w.GetName()))
+	tc := NewTransferPeerTasks(id, rng, "balance-range-tranfer", oldPeer)
+	// TODO: check return
+	cluster.taskManager.Add(tc)
 	return
 }
 
@@ -150,7 +153,7 @@ func selectRemovePeer(cluster *Cluster, workerName string) (*Range, *metapb.Peer
 	if rng == nil {
 		log.Debug("%v: select follow range to best node is nil  %v", workerName, leastRangeNode)
 		for _, r := range mostRangeNode.GetAllRanges() {
-			if r.GetLeader().GetNodeId() == mostRangeNode.GetId() && r.require(cluster)  {
+			if r.GetLeader().GetNodeId() == mostRangeNode.GetId() && r.require(cluster) {
 				leastRangeNode = cluster.selectNodeForAddPeer(r)
 				if leastRangeNode != nil {
 					rng = r

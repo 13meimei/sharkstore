@@ -26,13 +26,6 @@ func (r *Range) Update(hb *mspb.RangeHeartbeatRequest) (presist bool, err error)
 	if err != nil {
 		return false, err
 	}
-
-	// try to update term
-	if hb.GetTerm() > r.GetTerm() {
-		log.Info("range[%d]: term %d->%d", r.id, r.term, hb.GetTerm())
-		r.setTerm(hb.Term())
-	}
-
 	// try to update meta
 	var metaUpdated bool
 	metaUpdated, err = r.maybeMetaUpdate(hb.GetRange())
@@ -44,16 +37,26 @@ func (r *Range) Update(hb *mspb.RangeHeartbeatRequest) (presist bool, err error)
 		presist = true
 	}
 
-	// try to update leader
-	err = r.updateLeader(hb.GetLeader())
-	if err != nil {
-		return
+	// update leader and term
+	r.leader = hb.GetLeader()
+	if hb.GetTerm() > r.GetTerm() {
+		log.Info("range[%d]: term %d->%d", r.id, r.term, hb.GetTerm())
+		r.setTerm(hb.Term())
 	}
 
-	r.downPeers = hb.GetDownPeers()
-	r.progresses = hb.GetProgresses()
+	// update peers status
+	r.peersStatus = hb.GetPeersStatus()
+	r.downPeers = nil
+	for _, status := range r.peersStatus {
+		if status.GetDownSeconds() > 0 {
+			r.downPeers = append(r.downPeers, &DownPeer{
+				Peer:        status.GetPeer(),
+				DownSeconds: status.GetDownSeconds(),
+			})
+		}
+	}
 
-	// updat stats
+	// updat range stats
 	stat := hb.GetStats()
 	if stat != nil {
 		r.BytesRead = stat.BytesRead

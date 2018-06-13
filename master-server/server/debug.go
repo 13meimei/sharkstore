@@ -22,11 +22,10 @@ type NodeDebug struct {
 
 type RangeDebug struct {
 	*metapb.Range
-	Leader       *metapb.Peer     `json:"leader,omitempty"`
-	DownPeers    []*mspb.DownPeer `json:"down_peers,omitempty"`
-	PendingPeers []*metapb.Peer   `json:"pending_peers,omitempty"`
-	LastHbTime   time.Time        `json:"last_hb_time,omitempty"`
-	Task         *taskpb.Task     `json:"task,omitempty"`
+	Leader      *metapb.Peer       `json:"leader,omitempty"`
+	PeersStatus []*mspb.PeerStatus `json:"status,omitempty"`
+	LastHbTime  time.Time          `json:"last_hb_time,omitempty"`
+	Task        *taskpb.Task       `json:"task,omitempty"`
 }
 
 func (service *Server) handleDebugNodeInfo(w http.ResponseWriter, r *http.Request) {
@@ -64,11 +63,10 @@ func (service *Server) handleDebugRangeInfo(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	reply.Data = &RangeDebug{
-		Range:        deepcopy.Iface(rng.Range).(*metapb.Range),
-		Leader:       deepcopy.Iface(rng.Leader).(*metapb.Peer),
-		DownPeers:    deepcopy.Iface(rng.DownPeers).([]*mspb.DownPeer),
-		PendingPeers: deepcopy.Iface(rng.PendingPeers).([]*metapb.Peer),
-		LastHbTime:   rng.LastHbTimeTS,
+		Range:       deepcopy.Iface(rng.GetMeta()).(*metapb.Range),
+		Leader:      deepcopy.Iface(rng.GetLeader()).(*metapb.Peer),
+		PeersStatus: rng.GetPeersStatus(),
+		LastHbTime:  rng.LastHeartbeat(),
 	}
 }
 
