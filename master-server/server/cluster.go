@@ -20,6 +20,7 @@ import (
 	sErr "master-server/engine/errors"
 
 	"github.com/gogo/protobuf/proto"
+	"util/alarm"
 )
 
 // NOTE: prefix's first char must not be '\xff'
@@ -85,6 +86,8 @@ type Cluster struct {
 	autoFailoverUnable bool
 	autoTransferUnable bool
 	autoSplitUnable    bool
+
+	alarmCli *alarm.Client
 }
 
 func NewCluster(clusterId, nodeId uint64, store Store, opt *scheduleOption) *Cluster {

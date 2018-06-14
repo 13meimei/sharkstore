@@ -15,6 +15,7 @@ import (
 	"master-server/raft"
 	"golang.org/x/net/context"
 	"master-server/metric"
+		"util/alarm"
 )
 
 type Server struct {
@@ -29,6 +30,8 @@ type Server struct {
 	rpcServer   *grpc.Server
 
 	metricServer *metric.Metric
+	alarmServer *alarm.Server
+	alarmClient *alarm.Client
 
 	leaderChangeNotify chan uint64
 	wg     sync.WaitGroup
@@ -178,7 +181,25 @@ func (service *Server) InitMasterServer(conf *Config) {
 	}
 
 	service.initHttpHandler()
+	service.alarmClient, err = alarm.NewAlarmClient(conf.AlarmConfig.ServerAddress)
+	if err != nil {
+		log.Fatal("create alarm client failed, err[%v]", err)
+	}
+	service.cluster.alarmCli = service.alarmClient
 }
+
+func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
+	var alarmReceivers []*alarm.User
+	for _, r := range conf.Receivers {
+		alarmReceivers = append(alarmReceivers, &alarm.User{
+			Mail: r.Mail,
+			Sms: r.Sms,
+		})
+	}
+	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort, conf.MessageGatewayAddress, alarm.NewSimpleReceiver(alarmReceivers))
+	return err
+}
+
 
 func (service *Server) InitMetricServer(conf *Config) {
 	if service.server == nil {
@@ -211,6 +232,7 @@ func (service *Server) InitServer(conf *Config) {
 		service.InitMasterServer(conf)
 	case "metric":
 		service.InitMetricServer(conf)
+		service.InitAlarmServer(conf.AlarmConfig)
 	}
 }
 
