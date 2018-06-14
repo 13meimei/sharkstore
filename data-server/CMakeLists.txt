@@ -59,13 +59,70 @@ if(ENABLE_SANITIZE )
 endif()
 
 
-
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
 find_package(Protobuf REQUIRED)
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 
+
+# find grpc 
+find_library(GRPC_LIB grpc)
+if(NOT GRPC_LIB)
+    message(FATAL_ERROR "Grpc library not found")
+else()
+    message(STATUS "Found Grpc library: " ${GRPC_LIB})
+endif() 
+
+find_library(GRPC_CPP_LIB grpc++)
+if(NOT GRPC_CPP_LIB)
+    message(FATAL_ERROR "Grpc++ library not found")
+else()
+    message(STATUS "Found Grpc C++ library: " ${GRPC_CPP_LIB})
+endif() 
+
+# find grpc header
+find_path(GRPC_HEADER_PATH grpc/grpc.h)
+if(NOT GRPC_HEADER_PATH )
+    message(FATAL_ERROR "Grpc headers not found")
+else()
+    message(STATUS "Found Grpc headers path: " ${GRPC_HEADER_PATH})
+    include_directories(${GRPC_HEADER_PATH})
+endif() 
+
+
+# find rocksdb
+find_library(ROCKSDB_LIB rocksdb)
+if(NOT ROCKSDB_LIB)
+    message(FATAL_ERROR "Rocksdb library not found")
+else()
+    message(STATUS "Found Rocksdb library: " ${ROCKSDB_LIB})
+endif() 
+
+find_path(ROCKSDB_HEADER_PATH rocksdb/db.h)
+if(NOT ROCKSDB_HEADER_PATH)
+    message(FATAL_ERROR "Rocksdb headers not found")
+else()
+    message(STATUS "Found Rocksdb headers path: " ${ROCKSDB_HEADER_PATH})
+    include_directories(${ROCKSDB_HEADER_PATH})
+endif() 
+
+
+# find fastcommon
+find_library(FASTCOMMON_LIB fastcommon) 
+if(NOT FASTCOMMON_LIB)
+    message(FATAL_ERROR "Fastcommon library not found")
+else()
+    message(STATUS "Found Fastcommon library: " ${FASTCOMMON_LIB})
+endif() 
+
+find_path(FASTCOMMON_HEADER_PATH fastcommon/fast_task_queue.h)
+if(NOT FASTCOMMON_HEADER_PATH )
+    message(FATAL_ERROR "Fastcommon headers not found")
+else()
+    message(STATUS "Found Fastcommon headers path: " ${FASTCOMMON_HEADER_PATH})
+    include_directories(${FASTCOMMON_HEADER_PATH})
+endif() 
 
 set(SOURCES
     src/server/main.cpp
@@ -130,10 +187,10 @@ set (depend_LIBRARYS
     fbase-frame
     fbase-lkqueue
     ${PROTOBUF_LIBRARY}
-    grpc
-    grpc++
-    fastcommon
-    rocksdb
+    ${GRPC_LIB}
+    ${GRPC_CPP_LIB}
+    ${ROCKSDB_LIB}
+    ${FASTCOMMON_LIB}
     pthread
     dl
     z
