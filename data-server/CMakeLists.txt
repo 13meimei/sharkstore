@@ -28,7 +28,7 @@ elseif(UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DOS_LINUX -DIOEVENT_USE_EPOLL")
 else()
     message(FATAL_ERROR "Unsupported OS Type: " ${CMAKE_SYSTEM_NAME})
-endif (UNIX)
+endif()
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DNDEBUG")
