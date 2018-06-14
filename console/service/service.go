@@ -93,7 +93,7 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 		for rows.Next() {
 			info := models.NewClusterInfo()
 			if err := rows.Scan(&(info.Id), &(info.Name), &(info.MasterUrl), &(info.GatewayHttpUrl), &(info.GatewaySqlUrl),
-				&(info.ClusterToken), &(info.AutoTransferUnable), &(info.AutoFailoverUnable), &(info.CreateTime)); err != nil {
+				&(info.ClusterToken), &(info.AutoTransferUnable), &(info.AutoFailoverUnable), &(info.AutoSplitUnable), &(info.CreateTime)); err != nil {
 				log.Error("db scan is failed. err:[%v]", err)
 				return nil, common.DB_ERROR
 			}
@@ -105,7 +105,8 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 }
 
 func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
-	rows, err := s.db.Query(fmt.Sprintf(`SELECT * FROM %s`, TABLE_NAME_CLUSTER))
+	rows, err := s.db.Query(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
+		auto_failover, auto_transfer, auto_split, create_time FROM %s`, TABLE_NAME_CLUSTER))
 	if err != nil {
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
@@ -115,7 +116,7 @@ func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 	for rows.Next() {
 		info := models.NewClusterInfo()
 		if err := rows.Scan(&(info.Id), &(info.Name), &(info.MasterUrl), &(info.GatewayHttpUrl), &(info.GatewaySqlUrl),
-			&(info.ClusterToken), &(info.AutoTransferUnable), &(info.AutoFailoverUnable), &(info.CreateTime)); err != nil {
+			&(info.ClusterToken), &(info.AutoTransferUnable), &(info.AutoFailoverUnable), &(info.AutoSplitUnable), &(info.CreateTime)); err != nil {
 			log.Error("db scan is failed. err:[%v]", err)
 			return nil, common.DB_ERROR
 		}
@@ -128,7 +129,7 @@ func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 
 func (s *Service) CreateCluster(cId int, cName, masterUrl, gateHttpUrl, gateSqlUrl, cToken string, cTime int64) error {
 	result, err := s.db.Exec(fmt.Sprintf(`INSERT INTO %s (id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
-		auto_failover, auto_transfer, create_time) values (%d, "%s", "%s", "%s", "%s", "%s", 1, 1, %d)`, TABLE_NAME_CLUSTER, cId, cName, masterUrl,
+		auto_failover, auto_transfer, auto_split, create_time) values (%d, "%s", "%s", "%s", "%s", "%s", 0, 0, 0, %d)`, TABLE_NAME_CLUSTER, cId, cName, masterUrl,
 		gateHttpUrl, gateSqlUrl, cToken, cTime))
 	if err != nil {
 		log.Error("db exec is failed. err:[%v]", err)
@@ -889,7 +890,7 @@ func (s *Service) GetRangeTopoByNodeId(clusterId, nodeId int) (interface{}, erro
 	return getRangeTopoOfNodeResp.Data, nil
 }
 
-func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover string) error {
+func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover, autoSplit string) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return err
@@ -907,6 +908,7 @@ func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover str
 	reqParams["s"] = sign
 	reqParams["autoTransferUnable"] = autoTransfer
 	reqParams["autoFailoverUnable"] = autoFailover
+	reqParams["autoSplitUnable"] = autoSplit
 
 	var clusterToggleSetResp = struct {
 		Code int    `json:"code"`
@@ -922,6 +924,7 @@ func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover str
 		//改库
 		info.AutoFailoverUnable, _ = strconv.ParseBool(autoFailover)
 		info.AutoTransferUnable, _ = strconv.ParseBool(autoTransfer)
+		info.AutoSplitUnable, _ =  strconv.ParseBool(autoSplit)
 		log.Debug("start to update database, %v", info)
 		if err := s.insertClusterById(info); err != nil {
 			return fmt.Errorf("更新集群开关失败")
@@ -960,6 +963,39 @@ func (s *Service) GetSchedulerAll(clusterId int) (map[string]bool, error) {
 		return nil, fmt.Errorf(getScheduleResp.Msg)
 	}
 	return getScheduleResp.Data, nil
+}
+
+func (s *Service) GetSchedulerDetail(clusterId int, name string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	log.Debug("get cluster scheduler detail, clusterId:%d, scheduler name:%s", clusterId, name)
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["name"] = name
+
+	var scheduleDetailResp = struct {
+		Code int             `json:"code"`
+		Msg  string          `json:"message"`
+		Data interface{} `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/scheduler/detail", reqParams, &scheduleDetailResp); err != nil {
+		return nil, err
+	}
+	if scheduleDetailResp.Code != 0 {
+		log.Error("get cluster[%d] scheduler %s detail failed. err:[%v]", clusterId, name, scheduleDetailResp)
+		return nil, fmt.Errorf(scheduleDetailResp.Msg)
+	}
+	return scheduleDetailResp.Data, nil
 }
 
 func (s *Service) AdjustScheduler(clusterId, optType int, scheduler string) (error) {
@@ -2146,17 +2182,20 @@ func (s *Service) insertClusterById(info *models.ClusterInfo) error {
 	//}
 	//res, err := stmt.Exec(TABLE_NAME_CLUSTER, info.Id, info.Name, info.MasterUrl,
 	//	info.GatewayUrl, info.ClusterToken, info.CreateTime, info.AutoTransferUnable, info.AutoFailoverUnable)
-	var autoTransfer, autoFailover int
+	var autoTransfer, autoFailover, autoSplit int
 	if info.AutoTransferUnable {
 		autoTransfer = 1
 	}
 	if info.AutoFailoverUnable {
 		autoFailover = 1
 	}
+	if info.AutoSplitUnable {
+		autoSplit = 1
+	}
 	sql := fmt.Sprintf(`INSERT INTO %s (id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
-		create_time, auto_transfer, auto_failover ) values (%d, "%s", "%s", "%s", "%s", "%s", %d, %d, %d)`, TABLE_NAME_CLUSTER,
+		create_time, auto_transfer, auto_failover, auto_split ) values (%d, "%s", "%s", "%s", "%s", "%s", %d, %d, %d, %d)`, TABLE_NAME_CLUSTER,
 		info.Id, info.Name, info.MasterUrl,
-		info.GatewayHttpUrl, info.GatewaySqlUrl, info.ClusterToken, info.CreateTime, autoTransfer, autoFailover)
+		info.GatewayHttpUrl, info.GatewaySqlUrl, info.ClusterToken, info.CreateTime, autoTransfer, autoFailover, autoSplit)
 	rowsAffected, err := s.execSql(sql)
 	if err != nil {
 		return err

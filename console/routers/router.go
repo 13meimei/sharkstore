@@ -729,6 +729,9 @@ func (r *Router)StartRouter() *gin.Engine {
 	router.GET(controllers.REQURI_SCHEDULER_GETALL, func(c *gin.Context) {
 		handleAction(c, controllers.NewSchedulerAllAction())
 	})
+	router.GET(controllers.REQURI_SCHEDULER_GETDETAIL, func(c *gin.Context) {
+		handleAction(c, controllers.NewSchedulerDetailAction())
+	})
 	router.POST(controllers.REQURI_SCHEDULER_ADJUST, func(c *gin.Context) {
 		handleAction(c, controllers.NewSchedulerAdjustAction())
 	})

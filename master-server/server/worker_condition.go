@@ -8,17 +8,17 @@ import (
 
 var (
 	// 单位是秒
-	DefaultDownTimeLimit      time.Duration = 60 * time.Second
-	MaxDownReplicaTimeLimit   time.Duration = 5 * 60 * time.Second
-	DefaultDsHearbeatInterval time.Duration = 10 * time.Second
-	DefaultDsRecoveryInterim  time.Duration = 5 * 60 * time.Second
+	DefaultDownTimeLimit      = 60 * time.Second
+	MaxDownReplicaTimeLimit   = 5 * 60 * time.Second
+	DefaultDsHearbeatInterval = 10 * time.Second
+	DefaultDsRecoveryInterim  = 5 * 60 * time.Second
 
 	DefaultTimeFormat = "2006-01-02 15:04:05"
 	// 大于一个调度周期+一个心跳周期，预留冗余
-	DefaultChangeLeaderTaskTimeout time.Duration = time.Second * time.Duration(30)
-	DefaultRangeDeleteTaskTimeout  time.Duration = time.Second * time.Duration(30)
-	DefaultRangeAddPeerTaskTimeout time.Duration = time.Second * time.Duration(300)
-	DefaultRangeDelPeerTaskTimeout time.Duration = time.Second * time.Duration(30)
+	DefaultChangeLeaderTaskTimeout = time.Second * time.Duration(30)
+	DefaultRangeDeleteTaskTimeout  = time.Second * time.Duration(30)
+	DefaultRangeAddPeerTaskTimeout = time.Second * time.Duration(300)
+	DefaultRangeDelPeerTaskTimeout = time.Second * time.Duration(30)
 )
 
 func (node *Node) require() bool {

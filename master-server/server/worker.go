@@ -5,13 +5,14 @@ import (
 	"sync"
 	"golang.org/x/net/context"
 	"util/log"
+	"fmt"
 )
 
 const (
 	defaultWorkerInterval  =  time.Second
 	maxScheduleInterval       = time.Minute
 	minScheduleInterval       = time.Millisecond * 10
-	scheduleIntervalFactor    = 1.3
+	scheduleIntervalFactor    = 0.8
 
 	writeStatLRUMaxLen            = 1000
 	regionHeartBeatReportInterval = 10
@@ -147,11 +148,23 @@ func (wm *WorkerManager) removeWorker(name string) error {
 }
 
 func (wm *WorkerManager) GetAllWorker() []string  {
-	wm.lock.Lock()
-	defer wm.lock.Unlock()
+	wm.lock.RLock()
+	defer wm.lock.RUnlock()
 	var names []string
 	for name := range wm.workers {
 		names = append(names, name)
 	}
 	return names
+}
+
+
+func (wm *WorkerManager) GetWorker(workerName string) string  {
+	wm.lock.RLock()
+	defer wm.lock.RUnlock()
+	for name, w := range wm.workers {
+		if workerName == name {
+			return fmt.Sprintf("%s: 调度中, interval: %v", workerName, w.GetInterval())
+		}
+	}
+	return fmt.Sprintf("%s: 未被调度", workerName)
 }
