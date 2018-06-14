@@ -10,7 +10,7 @@ import (
 
 var (
 	DefaultMaxNodeDownTimeInterval time.Duration = 60 * time.Second
-	DefaultMaxPeerDownTimeInterval time.Duration = 5 * 60 * time.Second
+	DefaultMaxPeerDownTimeInterval time.Duration = 2 * 60 * time.Second
 
 	// 大于一个调度周期+一个心跳周期，预留冗余
 	DefaultChangeLeaderTimeout time.Duration = time.Second * time.Duration(30)
@@ -56,12 +56,6 @@ func peerGC(cluster *Cluster, r *metapb.Range, peer *metapb.Peer) error {
 
 func (manager *hb_range_manager) CheckRange(cluster *Cluster, rng *Range) RangeEvent {
 
-	// 启动故障恢复或者分片需要删除,优先处理故障的副本
-	if cluster.autoFailoverUnable {
-		log.Debug("can not failover")
-		return nil
-	}
-
 	// 处理分片回收
 	if rng.State == metapb.RangeState_R_Remove {
 		//TODO: 直接调用DS接口删除range 然后回收
@@ -70,6 +64,13 @@ func (manager *hb_range_manager) CheckRange(cluster *Cluster, rng *Range) RangeE
 			return nil
 		}
 		return NewDelRangeEvent(id, rng.GetId(), "hb range remove")
+	}
+
+	// 启动故障恢复或者分片需要删除,优先处理故障的副本
+	if !cluster.autoFailoverUnable {
+		if event := manager.checkDownPeer(cluster, rng); event != nil {
+			return event
+		}
 	}
 
 	if len(rng.GetPeers()) < cluster.opt.GetMaxReplicas() {

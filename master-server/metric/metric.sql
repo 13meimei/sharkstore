@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `fbase_cluster` (
     `cluster_sign` varchar(64) NOT NULL,
     `auto_transfer` tinyint NOT NULL,
     `auto_failover` tinyint NOT NULL,
+    `auto_split` tinyint NOT NULL,
     `create_time` bigint(20) NOT NULL,
 	PRIMARY KEY (`id`)
 )

@@ -104,6 +104,7 @@ const (
 	HTTP_CLUSTER_AUTO_SCHEDULE_INFO = "clusterAutoScheduleInfo"
 	HTTP_AUTO_TRANSFER_UNABLE       = "autoTransferUnable"
 	HTTP_AUTO_FAILOVER_UNABLE       = "autoFailoverUnable"
+	HTTP_AUTO_SPLIT_UNABLE          = "autoSplitUnable"
 	HTTP_TABLE_AUTO_INFO            = "tableAutoInfo"
 	HTTP_FAST                       = "fast"
 	HTTP_STARTKEY                   = "startKey"
@@ -437,6 +438,15 @@ func (service *Server) handleSchedulerGetAll(w http.ResponseWriter, r *http.Requ
 	defer sendReply(w, reply)
 	log.Debug("get executed schedule all")
 	reply.Data = service.cluster.GetAllWorker()
+	return
+}
+
+func (service *Server) handleQuerySchedulerDetail(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+	name := r.FormValue("name")
+	log.Debug("get schedule %v info ", name)
+	reply.Data = service.cluster.GetWorkerInfo(name)
 	return
 }
 
@@ -1007,7 +1017,7 @@ func (service *Server) handleRangeDelPeer(w http.ResponseWriter, r *http.Request
 		reply.Message = err.Error()
 		return
 	}
-	event := cluster.hbManager.createDelPeerEvent(id,rng,peer,"console")
+	event := cluster.hbManager.createDelPeerEvent(id, rng, peer, "console")
 	cluster.eventDispatcher.pushEvent(event)
 	log.Info("del range<%v> peer<%v> create task success", rangeId, peerId)
 }
@@ -1021,10 +1031,12 @@ func (service *Server) handleManageGetAutoScheduleInfo(w http.ResponseWriter, r 
 		AutoTransferUnable bool `json:"autoTransferUnable"`
 		// 是否支持failOver
 		AutoFailoverUnable bool `json:"autoFailoverUnable"`
+		AutoSplitUnable    bool `json:"autoSplitUnable"`
 	}
 	info := ClusterAutoScheduleInfo{
 		AutoTransferUnable: service.cluster.autoTransferUnable,
 		AutoFailoverUnable: service.cluster.autoFailoverUnable,
+		AutoSplitUnable:    service.cluster.autoSplitUnable,
 	}
 	reply.Data = info
 	log.Info("get cluster auto schedule info success!!!")
@@ -1036,7 +1048,8 @@ func (service *Server) handleManageSetAutoScheduleInfo(w http.ResponseWriter, r 
 	defer sendReply(w, reply)
 	_autoTransferUnable := r.FormValue(HTTP_AUTO_TRANSFER_UNABLE)
 	_autoFailoverUnable := r.FormValue(HTTP_AUTO_FAILOVER_UNABLE)
-	var autoTransferUnable, autoFailoverUnable bool
+	_autoSplitUnable := r.FormValue(HTTP_AUTO_SPLIT_UNABLE)
+	var autoTransferUnable, autoFailoverUnable, autoSplitUnable bool
 	autoTransferUnable, err := strconv.ParseBool(_autoTransferUnable)
 	if err != nil {
 		reply.Code = HTTP_ERROR_INVALID_PARAM
@@ -1049,8 +1062,14 @@ func (service *Server) handleManageSetAutoScheduleInfo(w http.ResponseWriter, r 
 		reply.Message = http_error_invalid_parameter
 		return
 	}
+	autoSplitUnable, err = strconv.ParseBool(_autoSplitUnable)
+	if err != nil {
+		reply.Code = HTTP_ERROR_INVALID_PARAM
+		reply.Message = http_error_invalid_parameter
+		return
+	}
 
-	if err := service.cluster.UpdateAutoScheduleInfo(autoFailoverUnable, autoTransferUnable); err != nil {
+	if err := service.cluster.UpdateAutoScheduleInfo(autoFailoverUnable, autoTransferUnable, autoSplitUnable); err != nil {
 		log.Error("update cluster auto schedule info failed, err[%v]", err)
 		reply.Code = HTTP_ERROR
 		reply.Message = http_error_parameter_not_enough
@@ -1444,6 +1463,7 @@ var (
 		&metapb.Column{Name: "cluster_sign", DataType: metapb.DataType_Varchar},
 		&metapb.Column{Name: "auto_transfer", DataType: metapb.DataType_Tinyint},
 		&metapb.Column{Name: "auto_failover", DataType: metapb.DataType_Tinyint},
+		&metapb.Column{Name: "auto_split", DataType: metapb.DataType_Tinyint},
 		&metapb.Column{Name: "create_time", DataType: metapb.DataType_BigInt}}
 
 	fbase_role = []*metapb.Column{
@@ -2000,7 +2020,7 @@ func (service *Server) handleRangeTopNQuery(w http.ResponseWriter, r *http.Reque
 			RangeId:      r.GetId(),
 			LeaderId:     leader.GetId(),
 			NodeAddr:     nodeAddr,
-			TableId:	  r.GetTableId(),
+			TableId:      r.GetTableId(),
 			BytesWritten: r.BytesWritten,
 			BytesRead:    r.BytesRead,
 			KeysWritten:  r.KeysWritten,
