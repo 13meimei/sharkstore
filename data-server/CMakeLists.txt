@@ -21,7 +21,14 @@ set(CXX_FLAGS
 
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CXX_FLAGS}")
 
-set(CMAKE_C_FLAGS "-std=c99 -Wall -Wformat -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -DOS_LINUX -DIOEVENT_USE_EPOLL")
+set(CMAKE_C_FLAGS "-std=c99 -Wall -Wformat -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE")
+if (APPLE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDARWIN  -DIOEVENT_USE_KQUEUE")
+elseif(UNIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DOS_LINUX -DIOEVENT_USE_EPOLL")
+else()
+    message(FATAL_ERROR "Unsupported OS Type: " ${CMAKE_SYSTEM_NAME})
+endif (UNIX)
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DNDEBUG")
@@ -58,10 +65,14 @@ if(ENABLE_SANITIZE )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address" )
 endif()
 
+message(STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
+message(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
+
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
+# find protobuf
 find_package(Protobuf REQUIRED)
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 
