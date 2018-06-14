@@ -128,15 +128,3 @@ func (r *Range) maybeMetaUpdate(meta *metapb.Range) (bool, error) {
 	// check learner promoted
 	return r.maybePromoted(meta)
 }
-
-// unlocked
-func (r *Range) updateLeader(newLeader uint64) error {
-	for _, peer := range r.meta.GetPeers() {
-		if peer.GetId() == newLeader {
-			r.leader = peer
-			return nil
-		}
-	}
-	return fmt.Errorf("could find leader in peers to update. leader: %d, peers: %v",
-		newLeader, r.meta.GetPeers())
-}

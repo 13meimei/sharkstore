@@ -202,11 +202,6 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 			}
 		}
 
-		rng.Range = r
-		rng.DownPeers = req.GetDownPeers()
-		rng.PendingPeers = req.GetPendingPeers()
-		rng.Leader = req.GetLeader()
-
 		cluster.AddRange(rng)
 	}
 	if rng.Trace || log.IsEnableDebug() {

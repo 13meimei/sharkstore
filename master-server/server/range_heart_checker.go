@@ -43,10 +43,6 @@ func (c *RangeHeartChecker) isQuorumDown(r *Range) bool {
 	return totalVoters-downVoters < quorum
 }
 
-func (c *RangeHeartChecker) needToStore(r *Range) bool {
-	return true
-}
-
 func (c *RangeHeartChecker) validate(req *mspb.RangeHeartbeatRequest, from string) bool {
 	// meta must be not nil
 	meta := req.GetRange()
