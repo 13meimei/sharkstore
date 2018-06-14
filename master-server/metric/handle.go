@@ -236,34 +236,34 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 	usedSize := node.GetUsedSize()
 	capacity := node.GetCapacity()+1
 	if usedSize/capacity > m.Threshold.Node.CapacityUsedRate {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] cacapcity used rate %v > %v \r\n",
+		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] cacapcity used rate %v > %v <br>",
 			clusterId, nodeId, nodeAddr, usedSize/capacity, m.Threshold.Node.CapacityUsedRate))...)
 	}
 	writeBps := node.GetBytesWritten()
 	if writeBps > m.Threshold.Node.WriteBps {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] write bps %v > %v \r\n",
+		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] write bps %v > %v <br>",
 			clusterId, nodeId, nodeAddr, writeBps, m.Threshold.Node.WriteBps))...)
 	}
 	writeOps := node.GetKeysWritten()
 	if writeOps > m.Threshold.Node.WriteOps {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] write ops %v > %v \r\n",
+		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] write ops %v > %v <br>",
 			clusterId, nodeId, nodeAddr, writeOps, m.Threshold.Node.WriteOps))...)
 	}
 	readBps := node.GetBytesRead()
 	if readBps > m.Threshold.Node.ReadBps {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] read bps %v > %v \r\n",
+		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] read bps %v > %v <br>",
 			clusterId, nodeId, nodeAddr, readBps, m.Threshold.Node.ReadBps))...)
 	}
 	readOps := node.GetKeysRead()
 	if readOps > m.Threshold.Node.ReadOps {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] read ops %v > %v \r\n",
+		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] read ops %v > %v <br>",
 			clusterId, nodeId, nodeAddr, readOps, m.Threshold.Node.ReadOps))...)
 	}
 	if len(msg) == 0 {
 		return nil
 	}
 
-	return m.AlarmCli.SimpleAlarm(clusterId, string(msg))
+	return m.AlarmCli.SimpleAlarm(clusterId, "node stats alarm", string(msg))
 }
 
 func (m *Metric) doNodeMetric(ctx *Context, data []byte) error {
@@ -298,22 +298,22 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 	for _, rang := range rangeStats {
 		writeBps := rang.GetStats().GetBytesWritten()
 		if writeBps > m.Threshold.Range.WriteBps {
-			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] write bps %v > %v \r\n",
+			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] write bps %v > %v <br>",
 				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), writeBps, m.Threshold.Range.WriteBps))...)
 		}
 		writeOps := rang.GetStats().GetKeysWritten()
 		if writeOps > m.Threshold.Range.WriteOps {
-			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] write ops %v > %v \r\n",
+			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] write ops %v > %v <br>",
 				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), writeOps, m.Threshold.Range.WriteOps))...)
 		}
 		readBps := rang.GetStats().GetBytesRead()
 		if readBps > m.Threshold.Range.ReadBps {
-			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] read bps %v > %v \r\n",
+			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] read bps %v > %v <br>",
 				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), readBps, m.Threshold.Range.ReadBps))...)
 		}
 		readOps := rang.GetStats().GetKeysRead()
 		if readOps > m.Threshold.Range.ReadOps {
-			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] read ops %v > %v \r\n",
+			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] read ops %v > %v <br>",
 				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), readOps, m.Threshold.Range.ReadOps))...)
 		}
 	}
@@ -321,7 +321,7 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 		return nil
 	}
 
-	return m.AlarmCli.SimpleAlarm(clusterId, string(msg))
+	return m.AlarmCli.SimpleAlarm(clusterId, "range stats alarm", string(msg))
 }
 
 func (m *Metric) doRangeMetric(ctx *Context, data []byte) error {

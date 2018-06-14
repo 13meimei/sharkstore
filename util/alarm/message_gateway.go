@@ -50,7 +50,7 @@ func NewMessageGateway(ctx context.Context, addr string, receiver MessageReceive
 	gw := &MessageGateway{
 		address: addr,
 		client: &http.Client{
-			Timeout: time.Second,
+			Timeout: time.Second*3,
 		},
 		messages: make(chan Message, MESSAGEGATEWAY_WAIT_QUEUE_LENGTH),
 		receiver: receiver,
@@ -62,11 +62,16 @@ func NewMessageGateway(ctx context.Context, addr string, receiver MessageReceive
 }
 
 func (gw *MessageGateway) send_(msg string) error {
-	req, err := http.NewRequest("post", gw.address, strings.NewReader(msg))
+	req, err := http.NewRequest("POST", gw.address, strings.NewReader(msg))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("len", fmt.Sprint(len(msg)))
+	req.Header.Add("User-Agent", "Jimdb-Message-Sender")
+	req.Header.Set("Content-Type", "application/json;charset=utf-8")
+	req.Header.Set("Accept", "application/json,text/html,text/plain")
+	req.Header.Set("Accept-Charset", "utf-8,GBK")
+
 	resp, err := gw.client.Do(req)
 	//_, err = gw.client.Do(req)
 	if err != nil {

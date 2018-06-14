@@ -62,13 +62,11 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
 				}
 
-				if cluster.alarmCli != nil {
-					if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
-						Range: deepcopy.Iface(r.Range).(*metapb.Range),
-						LastHeartbeatTime: r.LastHbTimeTS.String(),
-					}, desc); err != nil {
-						log.Error("range no leader alarm failed: %v", err)
-					}
+				if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
+					Range: deepcopy.Iface(r.Range).(*metapb.Range),
+					LastHeartbeatTime: r.LastHbTimeTS.String(),
+				}, desc); err != nil {
+					log.Error("range no leader alarm failed: %v", err)
 				}
 
 				r.State = metapb.RangeState_R_Abnormal

@@ -131,7 +131,8 @@ message AliveResponse {
 
 message SimpleRequest {
     RequestHeader head          = 1;
-    string message              = 2;
+    string title                = 2;
+    string content              = 3;
 }
 
 message SimpleResponse {

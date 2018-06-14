@@ -55,6 +55,7 @@ func NewAlarmServer(ctx context.Context, port int, gatewayAddress string, receiv
 }
 
 func (s *Server) TaskAlarm(ctx context.Context, req *alarmpb.TaskAlarmRequest) (*alarmpb.TaskAlarmResponse, error) {
+	log.Info("receive task alarm message: %v", req.String())
 	var err error
 	resp := new(alarmpb.TaskAlarmResponse)
 	clusterId := req.GetHead().GetClusterId()
@@ -75,6 +76,7 @@ func (s *Server) TaskAlarm(ctx context.Context, req *alarmpb.TaskAlarmRequest) (
 }
 
 func (s *Server) NodeRangeAlarm(ctx context.Context, req *alarmpb.NodeRangeAlarmRequest) (*alarmpb.NodeRangeAlarmResponse, error) {
+	log.Info("receive node/range alarm message: %v", req.String())
 	var err error
 	resp := new(alarmpb.NodeRangeAlarmResponse)
 	clusterId := req.GetHead().GetClusterId()
@@ -97,6 +99,7 @@ func (s *Server) NodeRangeAlarm(ctx context.Context, req *alarmpb.NodeRangeAlarm
 }
 
 func (s *Server) AliveAlarm(ctx context.Context, req *alarmpb.AliveRequest) (*alarmpb.AliveResponse, error) {
+	log.Info("receive alive alarm message: %v", req.String())
 	var err error
 	resp := new(alarmpb.AliveResponse)
 	// todo
@@ -104,6 +107,7 @@ func (s *Server) AliveAlarm(ctx context.Context, req *alarmpb.AliveRequest) (*al
 }
 
 func (s *Server) SimpleAlarm(ctx context.Context, req *alarmpb.SimpleRequest) (*alarmpb.SimpleResponse, error) {
+	log.Info("receive simple alarm message: %v", req.String())
 	var err error
 	resp := new(alarmpb.SimpleResponse)
 
@@ -111,8 +115,8 @@ func (s *Server) SimpleAlarm(ctx context.Context, req *alarmpb.SimpleRequest) (*
 
 	if err := s.gateway.notify(Message{
 		ClusterId: clusterId,
-		Title: "simple alarm",
-		Content: req.GetMessage(),
+		Title: req.GetTitle(),
+		Content: req.GetContent(),
 	}, time.Second); err != nil {
 		log.Error("simple alarm notify timeout")
 	}

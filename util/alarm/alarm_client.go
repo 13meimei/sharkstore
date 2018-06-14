@@ -151,7 +151,7 @@ func (c *Client) AliveAlarm() error {
 	return err
 }
 
-func (c *Client) SimpleAlarm(clusterId uint64, message string) error {
+func (c *Client) SimpleAlarm(clusterId uint64, title, content string) error {
 	if c == nil {
 		return nil
 	}
@@ -160,7 +160,8 @@ func (c *Client) SimpleAlarm(clusterId uint64, message string) error {
 	defer cancel()
 	_, err := cli.SimpleAlarm(ctx, &alarmpb.SimpleRequest{
 		Head: &alarmpb.RequestHeader{ClusterId: int64(clusterId)},
-		Message: message,
+		Title: title,
+		Content: content,
 	})
 	return err
 }
