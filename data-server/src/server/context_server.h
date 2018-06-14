@@ -39,6 +39,7 @@ struct ContextServer {
 
     rocksdb::DB *rocks_db = nullptr;
     std::shared_ptr<rocksdb::Cache> block_cache;  // rocksdb block cache
+    std::shared_ptr<rocksdb::Cache> row_cache; // rocksdb row cache
     storage::MetaStore *meta_store = nullptr;
 
     raft::RaftServer *raft_server = nullptr;
