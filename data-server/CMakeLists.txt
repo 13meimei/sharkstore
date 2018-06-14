@@ -170,11 +170,15 @@ set(SOURCES
     src/master/rpc_types.cpp
     src/master/worker.cpp
     src/monitor/isystemstatus.cpp
-    src/monitor/linuxstatus.cpp
     src/monitor/datacacl.cpp
     src/monitor/encodedata.cpp
     src/monitor/rangedata.cpp
 )
+
+if(UNIX AND NOT APPLE)
+    list(APPEND SOURCES src/monitor/linuxstatus.cpp)
+endif()
+
 
 add_subdirectory(src/base)
 add_subdirectory(src/lk_queue)

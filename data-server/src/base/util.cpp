@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
 
 namespace fbase {
 
@@ -28,8 +29,15 @@ std::string randomString(size_t length) {
 
 std::string strErrno(int errno_copy) {
     static thread_local char errbuf[1025] = {'\0'};
+#ifdef __linux__
     char *ret = ::strerror_r(errno_copy, errbuf, 1024);
     return std::string(ret);
+#elif defined(__APPLE__)
+    ::strerror_r(errno_copy, errbuf, 1024);
+    return std::string(errbuf);
+#else
+#error unsupport platform
+#endif
 }
 
 std::string SliceSeparate(const std::string &l, const std::string &r,

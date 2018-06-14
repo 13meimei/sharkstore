@@ -40,7 +40,7 @@ private:
             return Status::OK();
         }
 
-        Status Close() { return Status::OK(); }
+        Status Close() override { return Status::OK(); }
 
     private:
         InProcessTransport* t_ = nullptr;

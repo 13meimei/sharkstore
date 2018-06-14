@@ -246,7 +246,7 @@ private:
         common::ProtoMessage *msg, RequestT &req,
         const std::function<void(raft_cmdpb::Command &cmd)> &init) {
         raft_cmdpb::Command cmd;
-        uint64_t seq_id = std::atomic_fetch_add(&submit_seq_, 1ul);
+        uint64_t seq_id = submit_seq_.fetch_add(1);
 
         cmd.mutable_cmd_id()->set_node_id(node_id_);
         cmd.mutable_cmd_id()->set_seq(seq_id);
