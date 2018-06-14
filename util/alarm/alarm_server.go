@@ -21,6 +21,7 @@ type AlarmServer interface {
 
 type Server struct {
 	gateway *MessageGateway
+	filters []alarmFilter
 
 }
 
@@ -30,9 +31,10 @@ func newServer(ctx context.Context, gatewayAddr string, receiver MessageReceiver
 		return nil
 	}
 
-	return &Server{
-		gateway: gateway,
-	}
+	s := new(Server)
+	s.gateway = gateway
+	s.filters = append(s.filters, new(clusterIdFilter))
+	return s
 }
 
 
@@ -64,6 +66,13 @@ func (s *Server) TaskAlarm(ctx context.Context, req *alarmpb.TaskAlarmRequest) (
 	case alarmpb.TaskAlarmType_TIMEOUT:
 	case alarmpb.TaskAlarmType_LONG_TIME_RUNNING:
 	}
+
+	for _, f := range s.filters {
+		if ok := f.FilteredByInt(req.GetHead().GetClusterId()); ok {
+			return resp, nil
+		}
+	}
+
 	if err := s.gateway.notify(Message{
 		ClusterId: clusterId,
 		Title: "task timeout",
@@ -87,6 +96,12 @@ func (s *Server) NodeRangeAlarm(ctx context.Context, req *alarmpb.NodeRangeAlarm
 	case alarmpb.NodeRangeAlarmType_NODE_DISK_SIZE:
 	case alarmpb.NodeRangeAlarmType_NODE_LEADER_COUNT:
 	}
+
+	for _, f := range s.filters {
+		if ok := f.FilteredByInt(req.GetHead().GetClusterId()); ok {
+			return resp, nil
+		}
+	}
 	if err := s.gateway.notify(Message{
 		ClusterId: clusterId,
 		Title: "node/range alarm",
@@ -103,6 +118,11 @@ func (s *Server) AliveAlarm(ctx context.Context, req *alarmpb.AliveRequest) (*al
 	var err error
 	resp := new(alarmpb.AliveResponse)
 	// todo
+	for _, f := range s.filters {
+		if ok := f.FilteredByInt(req.GetHead().GetClusterId()); ok {
+			return resp, nil
+		}
+	}
 	return resp, err
 }
 
@@ -113,6 +133,11 @@ func (s *Server) SimpleAlarm(ctx context.Context, req *alarmpb.SimpleRequest) (*
 
 	clusterId := req.GetHead().GetClusterId()
 
+	for _, f := range s.filters {
+		if ok := f.FilteredByInt(req.GetHead().GetClusterId()); ok {
+			return resp, nil
+		}
+	}
 	if err := s.gateway.notify(Message{
 		ClusterId: clusterId,
 		Title: req.GetTitle(),
