@@ -441,6 +441,15 @@ func (service *Server) handleSchedulerGetAll(w http.ResponseWriter, r *http.Requ
 	return
 }
 
+func (service *Server) handleQuerySchedulerDetail(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+	name := r.FormValue("name")
+	log.Debug("get schedule %v info ", name)
+	reply.Data = service.cluster.GetWorkerInfo(name)
+	return
+}
+
 func (service *Server) handleAddScheduler(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)

@@ -554,6 +554,10 @@ func (c *Cluster) GetAllWorker() map[string]bool {
 	return workers
 }
 
+func (c *Cluster) GetWorkerInfo(workerName string) string {
+	return c.workerManger.GetWorker(workerName)
+}
+
 func (c *Cluster) AddFailoverWorker() {
 	c.workerManger.addWorker(NewFailoverWorker(c.workerManger, time.Second))
 }

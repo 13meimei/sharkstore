@@ -74,6 +74,8 @@ func (service *Server) initHttpHandler() (){
 	s.Handle("/manage/scheduler/getall", NewHandler(service.validRequest, service.handleSchedulerGetAll))
 	s.Handle("/manage/scheduler/add", NewHandler(service.validRequest, service.handleAddScheduler))
 	s.Handle("/manage/scheduler/remove", NewHandler(service.validRequest, service.handleRemoveScheduler))
+	s.Handle("/manage/scheduler/detail", NewHandler(service.validRequest, service.handleQuerySchedulerDetail))
+
 	s.Handle("/manage/database/getall", NewHandler(service.validRequest, service.handleDBGetAll))
 	s.Handle("/manage/table/getall", NewHandler(service.validRequest, service.handleTableGetAll))
 	s.Handle("/manage/get/table", NewHandler(service.validRequest, service.handleTableGet))

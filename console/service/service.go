@@ -924,6 +924,7 @@ func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover, au
 		//改库
 		info.AutoFailoverUnable, _ = strconv.ParseBool(autoFailover)
 		info.AutoTransferUnable, _ = strconv.ParseBool(autoTransfer)
+		info.AutoSplitUnable, _ =  strconv.ParseBool(autoSplit)
 		log.Debug("start to update database, %v", info)
 		if err := s.insertClusterById(info); err != nil {
 			return fmt.Errorf("更新集群开关失败")
@@ -962,6 +963,39 @@ func (s *Service) GetSchedulerAll(clusterId int) (map[string]bool, error) {
 		return nil, fmt.Errorf(getScheduleResp.Msg)
 	}
 	return getScheduleResp.Data, nil
+}
+
+func (s *Service) GetSchedulerDetail(clusterId int, name string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	log.Debug("get cluster scheduler detail, clusterId:%d, scheduler name:%s", clusterId, name)
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["name"] = name
+
+	var scheduleDetailResp = struct {
+		Code int             `json:"code"`
+		Msg  string          `json:"message"`
+		Data interface{} `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/scheduler/detail", reqParams, &scheduleDetailResp); err != nil {
+		return nil, err
+	}
+	if scheduleDetailResp.Code != 0 {
+		log.Error("get cluster[%d] scheduler %s detail failed. err:[%v]", clusterId, name, scheduleDetailResp)
+		return nil, fmt.Errorf(scheduleDetailResp.Msg)
+	}
+	return scheduleDetailResp.Data, nil
 }
 
 func (s *Service) AdjustScheduler(clusterId, optType int, scheduler string) (error) {

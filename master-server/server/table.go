@@ -122,6 +122,8 @@ func (t *Table) MergeColumn(source []*metapb.Column, cluster *Cluster) error {
 	defer t.schemaLock.Unlock()
 	table := deepcopy.Iface(t.Table).(*metapb.Table)
 
+	newColMap := make(map[string]uint64, 0)
+
 	for _, col := range source {
 		col.Name = strings.ToLower(col.GetName())
 
@@ -132,6 +134,8 @@ func (t *Table) MergeColumn(source []*metapb.Column, cluster *Cluster) error {
 			log.Warn("col[%s] is sql reserved word", col.Name)
 			return ErrSqlReservedWord
 		}
+
+		newColMap[col.Name] = col.GetId()
 
 		if col.GetId() == 0 { // add column
 			if col.PrimaryKey == 1 {
@@ -160,6 +164,18 @@ func (t *Table) MergeColumn(source []*metapb.Column, cluster *Cluster) error {
 			table.Epoch.ConfVer++
 		}
 	}
+
+	//删除列处理
+	var tartCols []*metapb.Column
+	for _, col := range table.GetColumns() {
+		_, found := newColMap[col.GetName()]
+		if col.PrimaryKey == 1 || found{
+			tartCols = append(tartCols, col)
+		}
+	}
+	table.Columns = tartCols
+	table.Epoch.ConfVer++
+
 	err := cluster.storeTable(table)
 	if err != nil {
 		log.Error("store table failed, err[%v]", err)
