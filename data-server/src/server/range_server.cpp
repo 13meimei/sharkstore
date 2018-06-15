@@ -187,7 +187,6 @@ int RangeServer::OpenDB() {
     ops.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
     ops.max_open_files = ds_config.rocksdb_config.max_open_files;
     ops.create_if_missing = true;
-    ops.allow_mmap_writes = true;
     ops.use_fsync = true;
     ops.use_adaptive_mutex = true;
     ops.bytes_per_sync = ds_config.rocksdb_config.bytes_per_sync;
