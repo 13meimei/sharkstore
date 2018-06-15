@@ -337,6 +337,7 @@ func (service *Server) RaftLeaderChange(leaderId uint64) {
 		cluster.UpdateLeader(raftLeader)
 		cluster.Start()
 		service.cluster = cluster
+		service.cluster.alarmCli = service.alarmClient
 		return
 	}
 
