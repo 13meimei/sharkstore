@@ -183,8 +183,17 @@ int RangeServer::OpenDB() {
         table_options.block_cache = context_->block_cache;
     }
 
+    if (ds_config.rocksdb_config.cache_index_and_filter_blocks){
+        table_options.cache_index_and_filter_blocks = true;
+    }
+
     rocksdb::Options ops;
     ops.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
+    if (ds_config.rocksdb_config.row_cache_size > 0){
+        context_->row_cache =
+                rocksdb::NewLRUCache(ds_config.rocksdb_config.row_cache_size);
+        ops.row_cache = context_->row_cache;
+    }
     ops.max_open_files = ds_config.rocksdb_config.max_open_files;
     ops.create_if_missing = true;
     ops.use_fsync = true;

@@ -13,6 +13,7 @@ typedef struct ds_config_s {
     struct {
         char path[PATH_MAX];
         size_t block_cache_size; // default: 1024MB
+        size_t row_cache_size;
         size_t block_size; // default: 16K
         int max_open_files;
         size_t bytes_per_sync;
@@ -29,6 +30,7 @@ typedef struct ds_config_s {
         int level0_slowdown_writes_trigger;
         int level0_stop_writes_trigger;
         bool disable_wal;
+        bool cache_index_and_filter_blocks;
         int ttl;
     } rocksdb_config;
 
