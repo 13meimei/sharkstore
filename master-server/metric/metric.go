@@ -12,6 +12,7 @@ import (
 	"model/pkg/statspb"
 	"model/pkg/mspb"
 	"time"
+	"util/alarm"
 )
 
 const (
@@ -46,8 +47,31 @@ const (
 	METRIC_NODE_STATS = "node_stats"
 	METRIC_RANGE_STATS = "range_stats"
 )
+type NodeThreshold struct {
+	CapacityUsedRate uint64 `toml:"capacity-used-rate" json:"capacity-used-rate"` // capacity/used_city in node stats
+	WriteBps uint64 	`toml:"write-bps" json:"write-bps"`
+	WriteOps uint64 	`toml:"write-ops" json:"write-ops"`
+	ReadBps uint64 		`toml:"read-bps" json:"read-bps"`
+	ReadOps uint64 		`toml:"read-ops" json:"read-ops"`
+}
+
+type RangeThreshold struct {
+	WriteBps uint64 	`toml:"write-bps" json:"write-bps"`
+	WriteOps uint64 	`toml:"write-ops" json:"write-ops"`
+	ReadBps uint64 		`toml:"read-bps" json:"read-bps"`
+	ReadOps uint64 		`toml:"read-ops" json:"read-ops"`
+}
+
+type ThresholdConfig struct {
+	Node NodeThreshold `toml:"node-threshold" json:"node-threshold"`
+	Range RangeThreshold `toml:"range-threshold" json:"range-threshold"`
+}
+
 
 type Metric struct {
+	AlarmCli *alarm.Client
+	Threshold ThresholdConfig
+
 	ip        string
 	port      uint16
 	server    *server.Server
@@ -80,9 +104,11 @@ func NewRawMetric(ip string, port uint16, store Store) *Metric {
 	}
 }
 
-func NewMetric(svr *server.Server, store Store) *Metric {
+func NewMetric(svr *server.Server, store Store, threshold ThresholdConfig) *Metric {
 	ctx, cancel := context.WithCancel(context.Background())
-	m := &Metric{}
+	m := &Metric{
+		Threshold: threshold,
+	}
 	m.server = svr
 
 	m.store = store
