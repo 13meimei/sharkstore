@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <sys/types.h>
+
 namespace fbase {
 namespace monitor {
 
@@ -18,7 +19,7 @@ public:
     bool GetMemInfo(MemInfo&info) { return false; }
     bool GetHardDiskInfo(HardDiskInfo&info) { return false; }
 
-    bool GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *available) { return false; }
+    bool GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *available);
 
     bool GetMemProcInfo(MemInfo &info,const pid_t  id) { return false; }
     bool GetCPUInfo(CpuInfo &info,const pid_t  id) { return false; }

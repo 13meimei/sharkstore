@@ -175,8 +175,12 @@ set(SOURCES
     src/monitor/rangedata.cpp
 )
 
-if(UNIX AND NOT APPLE)
+if (APPLE)
+    list(APPEND SOURCES src/monitor/mac_status.cpp)
+elseif(UNIX)
     list(APPEND SOURCES src/monitor/linuxstatus.cpp)
+else()
+    message(FATAL_ERROR "Unsupported OS Type: " ${CMAKE_SYSTEM_NAME})
 endif()
 
 
