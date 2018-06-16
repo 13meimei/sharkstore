@@ -10,6 +10,8 @@
 	It has these top-level messages:
 		RequestHeader
 		ResponseHeader
+		SimpleAlarmRequest
+		SimpleAlarmResponse
 		TaskAlarmRequest
 		TaskTimeout
 		TaskLongTimeRunning
@@ -22,6 +24,8 @@
 		NodeRangeAlarmResponse
 		AliveRequest
 		AliveResponse
+		SimpleRequest
+		SimpleResponse
 */
 package alarmpb
 
@@ -142,6 +146,46 @@ func (m *ResponseHeader) GetError() string {
 	return ""
 }
 
+type SimpleAlarmRequest struct {
+	Head     *RequestHeader `protobuf:"bytes,1,opt,name=head" json:"head,omitempty"`
+	Describe string         `protobuf:"bytes,2,opt,name=Describe,proto3" json:"Describe,omitempty"`
+}
+
+func (m *SimpleAlarmRequest) Reset()                    { *m = SimpleAlarmRequest{} }
+func (m *SimpleAlarmRequest) String() string            { return proto.CompactTextString(m) }
+func (*SimpleAlarmRequest) ProtoMessage()               {}
+func (*SimpleAlarmRequest) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{2} }
+
+func (m *SimpleAlarmRequest) GetHead() *RequestHeader {
+	if m != nil {
+		return m.Head
+	}
+	return nil
+}
+
+func (m *SimpleAlarmRequest) GetDescribe() string {
+	if m != nil {
+		return m.Describe
+	}
+	return ""
+}
+
+type SimpleAlarmResponse struct {
+	Head *ResponseHeader `protobuf:"bytes,1,opt,name=head" json:"head,omitempty"`
+}
+
+func (m *SimpleAlarmResponse) Reset()                    { *m = SimpleAlarmResponse{} }
+func (m *SimpleAlarmResponse) String() string            { return proto.CompactTextString(m) }
+func (*SimpleAlarmResponse) ProtoMessage()               {}
+func (*SimpleAlarmResponse) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{3} }
+
+func (m *SimpleAlarmResponse) GetHead() *ResponseHeader {
+	if m != nil {
+		return m.Head
+	}
+	return nil
+}
+
 type TaskAlarmRequest struct {
 	Head                     *RequestHeader       `protobuf:"bytes,1,opt,name=head" json:"head,omitempty"`
 	Type                     TaskAlarmType        `protobuf:"varint,2,opt,name=type,proto3,enum=alarmpb.TaskAlarmType" json:"type,omitempty"`
@@ -154,7 +198,7 @@ type TaskAlarmRequest struct {
 func (m *TaskAlarmRequest) Reset()                    { *m = TaskAlarmRequest{} }
 func (m *TaskAlarmRequest) String() string            { return proto.CompactTextString(m) }
 func (*TaskAlarmRequest) ProtoMessage()               {}
-func (*TaskAlarmRequest) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{2} }
+func (*TaskAlarmRequest) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{4} }
 
 func (m *TaskAlarmRequest) GetHead() *RequestHeader {
 	if m != nil {
@@ -206,7 +250,7 @@ type TaskTimeout struct {
 func (m *TaskTimeout) Reset()                    { *m = TaskTimeout{} }
 func (m *TaskTimeout) String() string            { return proto.CompactTextString(m) }
 func (*TaskTimeout) ProtoMessage()               {}
-func (*TaskTimeout) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{3} }
+func (*TaskTimeout) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{5} }
 
 func (m *TaskTimeout) GetStart() string {
 	if m != nil {
@@ -230,7 +274,7 @@ type TaskLongTimeRunning struct {
 func (m *TaskLongTimeRunning) Reset()                    { *m = TaskLongTimeRunning{} }
 func (m *TaskLongTimeRunning) String() string            { return proto.CompactTextString(m) }
 func (*TaskLongTimeRunning) ProtoMessage()               {}
-func (*TaskLongTimeRunning) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{4} }
+func (*TaskLongTimeRunning) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{6} }
 
 func (m *TaskLongTimeRunning) GetStart() string {
 	if m != nil {
@@ -253,7 +297,7 @@ type TaskAlarmResponse struct {
 func (m *TaskAlarmResponse) Reset()                    { *m = TaskAlarmResponse{} }
 func (m *TaskAlarmResponse) String() string            { return proto.CompactTextString(m) }
 func (*TaskAlarmResponse) ProtoMessage()               {}
-func (*TaskAlarmResponse) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{5} }
+func (*TaskAlarmResponse) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{7} }
 
 func (m *TaskAlarmResponse) GetHead() *ResponseHeader {
 	if m != nil {
@@ -275,7 +319,7 @@ type NodeRangeAlarmRequest struct {
 func (m *NodeRangeAlarmRequest) Reset()                    { *m = NodeRangeAlarmRequest{} }
 func (m *NodeRangeAlarmRequest) String() string            { return proto.CompactTextString(m) }
 func (*NodeRangeAlarmRequest) ProtoMessage()               {}
-func (*NodeRangeAlarmRequest) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{6} }
+func (*NodeRangeAlarmRequest) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{8} }
 
 func (m *NodeRangeAlarmRequest) GetHead() *RequestHeader {
 	if m != nil {
@@ -334,7 +378,7 @@ type RangeNoHeartbeatAlarm struct {
 func (m *RangeNoHeartbeatAlarm) Reset()                    { *m = RangeNoHeartbeatAlarm{} }
 func (m *RangeNoHeartbeatAlarm) String() string            { return proto.CompactTextString(m) }
 func (*RangeNoHeartbeatAlarm) ProtoMessage()               {}
-func (*RangeNoHeartbeatAlarm) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{7} }
+func (*RangeNoHeartbeatAlarm) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{9} }
 
 func (m *RangeNoHeartbeatAlarm) GetRange() *metapb.Range {
 	if m != nil {
@@ -358,7 +402,7 @@ type NodeNoHeartbeatAlarm struct {
 func (m *NodeNoHeartbeatAlarm) Reset()                    { *m = NodeNoHeartbeatAlarm{} }
 func (m *NodeNoHeartbeatAlarm) String() string            { return proto.CompactTextString(m) }
 func (*NodeNoHeartbeatAlarm) ProtoMessage()               {}
-func (*NodeNoHeartbeatAlarm) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{8} }
+func (*NodeNoHeartbeatAlarm) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{10} }
 
 func (m *NodeNoHeartbeatAlarm) GetNode() *metapb.Node {
 	if m != nil {
@@ -382,7 +426,7 @@ type NodeDiskSizeAlarm struct {
 func (m *NodeDiskSizeAlarm) Reset()                    { *m = NodeDiskSizeAlarm{} }
 func (m *NodeDiskSizeAlarm) String() string            { return proto.CompactTextString(m) }
 func (*NodeDiskSizeAlarm) ProtoMessage()               {}
-func (*NodeDiskSizeAlarm) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{9} }
+func (*NodeDiskSizeAlarm) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{11} }
 
 func (m *NodeDiskSizeAlarm) GetNode() *metapb.Node {
 	if m != nil {
@@ -406,7 +450,7 @@ type NodeLeaderCountAlarm struct {
 func (m *NodeLeaderCountAlarm) Reset()                    { *m = NodeLeaderCountAlarm{} }
 func (m *NodeLeaderCountAlarm) String() string            { return proto.CompactTextString(m) }
 func (*NodeLeaderCountAlarm) ProtoMessage()               {}
-func (*NodeLeaderCountAlarm) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{10} }
+func (*NodeLeaderCountAlarm) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{12} }
 
 func (m *NodeLeaderCountAlarm) GetNode() *metapb.Node {
 	if m != nil {
@@ -429,7 +473,7 @@ type NodeRangeAlarmResponse struct {
 func (m *NodeRangeAlarmResponse) Reset()                    { *m = NodeRangeAlarmResponse{} }
 func (m *NodeRangeAlarmResponse) String() string            { return proto.CompactTextString(m) }
 func (*NodeRangeAlarmResponse) ProtoMessage()               {}
-func (*NodeRangeAlarmResponse) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{11} }
+func (*NodeRangeAlarmResponse) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{13} }
 
 func (m *NodeRangeAlarmResponse) GetHead() *ResponseHeader {
 	if m != nil {
@@ -445,7 +489,7 @@ type AliveRequest struct {
 func (m *AliveRequest) Reset()                    { *m = AliveRequest{} }
 func (m *AliveRequest) String() string            { return proto.CompactTextString(m) }
 func (*AliveRequest) ProtoMessage()               {}
-func (*AliveRequest) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{12} }
+func (*AliveRequest) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{14} }
 
 func (m *AliveRequest) GetHead() *RequestHeader {
 	if m != nil {
@@ -461,9 +505,57 @@ type AliveResponse struct {
 func (m *AliveResponse) Reset()                    { *m = AliveResponse{} }
 func (m *AliveResponse) String() string            { return proto.CompactTextString(m) }
 func (*AliveResponse) ProtoMessage()               {}
-func (*AliveResponse) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{13} }
+func (*AliveResponse) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{15} }
 
 func (m *AliveResponse) GetHead() *ResponseHeader {
+	if m != nil {
+		return m.Head
+	}
+	return nil
+}
+
+type SimpleRequest struct {
+	Head    *RequestHeader `protobuf:"bytes,1,opt,name=head" json:"head,omitempty"`
+	Title   string         `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Content string         `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+}
+
+func (m *SimpleRequest) Reset()                    { *m = SimpleRequest{} }
+func (m *SimpleRequest) String() string            { return proto.CompactTextString(m) }
+func (*SimpleRequest) ProtoMessage()               {}
+func (*SimpleRequest) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{16} }
+
+func (m *SimpleRequest) GetHead() *RequestHeader {
+	if m != nil {
+		return m.Head
+	}
+	return nil
+}
+
+func (m *SimpleRequest) GetTitle() string {
+	if m != nil {
+		return m.Title
+	}
+	return ""
+}
+
+func (m *SimpleRequest) GetContent() string {
+	if m != nil {
+		return m.Content
+	}
+	return ""
+}
+
+type SimpleResponse struct {
+	Head *ResponseHeader `protobuf:"bytes,1,opt,name=head" json:"head,omitempty"`
+}
+
+func (m *SimpleResponse) Reset()                    { *m = SimpleResponse{} }
+func (m *SimpleResponse) String() string            { return proto.CompactTextString(m) }
+func (*SimpleResponse) ProtoMessage()               {}
+func (*SimpleResponse) Descriptor() ([]byte, []int) { return fileDescriptorAlarmpb, []int{17} }
+
+func (m *SimpleResponse) GetHead() *ResponseHeader {
 	if m != nil {
 		return m.Head
 	}
@@ -473,6 +565,8 @@ func (m *AliveResponse) GetHead() *ResponseHeader {
 func init() {
 	proto.RegisterType((*RequestHeader)(nil), "alarmpb.RequestHeader")
 	proto.RegisterType((*ResponseHeader)(nil), "alarmpb.ResponseHeader")
+	proto.RegisterType((*SimpleAlarmRequest)(nil), "alarmpb.SimpleAlarmRequest")
+	proto.RegisterType((*SimpleAlarmResponse)(nil), "alarmpb.SimpleAlarmResponse")
 	proto.RegisterType((*TaskAlarmRequest)(nil), "alarmpb.TaskAlarmRequest")
 	proto.RegisterType((*TaskTimeout)(nil), "alarmpb.TaskTimeout")
 	proto.RegisterType((*TaskLongTimeRunning)(nil), "alarmpb.TaskLongTimeRunning")
@@ -485,6 +579,8 @@ func init() {
 	proto.RegisterType((*NodeRangeAlarmResponse)(nil), "alarmpb.NodeRangeAlarmResponse")
 	proto.RegisterType((*AliveRequest)(nil), "alarmpb.AliveRequest")
 	proto.RegisterType((*AliveResponse)(nil), "alarmpb.AliveResponse")
+	proto.RegisterType((*SimpleRequest)(nil), "alarmpb.SimpleRequest")
+	proto.RegisterType((*SimpleResponse)(nil), "alarmpb.SimpleResponse")
 	proto.RegisterEnum("alarmpb.TaskAlarmType", TaskAlarmType_name, TaskAlarmType_value)
 	proto.RegisterEnum("alarmpb.NodeRangeAlarmType", NodeRangeAlarmType_name, NodeRangeAlarmType_value)
 }
@@ -503,6 +599,7 @@ type AlarmClient interface {
 	TaskAlarm(ctx context.Context, in *TaskAlarmRequest, opts ...grpc.CallOption) (*TaskAlarmResponse, error)
 	NodeRangeAlarm(ctx context.Context, in *NodeRangeAlarmRequest, opts ...grpc.CallOption) (*NodeRangeAlarmResponse, error)
 	AliveAlarm(ctx context.Context, in *AliveRequest, opts ...grpc.CallOption) (*AliveResponse, error)
+	SimpleAlarm(ctx context.Context, in *SimpleRequest, opts ...grpc.CallOption) (*SimpleResponse, error)
 }
 
 type alarmClient struct {
@@ -540,12 +637,22 @@ func (c *alarmClient) AliveAlarm(ctx context.Context, in *AliveRequest, opts ...
 	return out, nil
 }
 
+func (c *alarmClient) SimpleAlarm(ctx context.Context, in *SimpleRequest, opts ...grpc.CallOption) (*SimpleResponse, error) {
+	out := new(SimpleResponse)
+	err := grpc.Invoke(ctx, "/alarmpb.Alarm/SimpleAlarm", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for Alarm service
 
 type AlarmServer interface {
 	TaskAlarm(context.Context, *TaskAlarmRequest) (*TaskAlarmResponse, error)
 	NodeRangeAlarm(context.Context, *NodeRangeAlarmRequest) (*NodeRangeAlarmResponse, error)
 	AliveAlarm(context.Context, *AliveRequest) (*AliveResponse, error)
+	SimpleAlarm(context.Context, *SimpleRequest) (*SimpleResponse, error)
 }
 
 func RegisterAlarmServer(s *grpc.Server, srv AlarmServer) {
@@ -606,6 +713,24 @@ func _Alarm_AliveAlarm_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Alarm_SimpleAlarm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SimpleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AlarmServer).SimpleAlarm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/alarmpb.Alarm/SimpleAlarm",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AlarmServer).SimpleAlarm(ctx, req.(*SimpleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Alarm_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "alarmpb.Alarm",
 	HandlerType: (*AlarmServer)(nil),
@@ -621,6 +746,10 @@ var _Alarm_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AliveAlarm",
 			Handler:    _Alarm_AliveAlarm_Handler,
+		},
+		{
+			MethodName: "SimpleAlarm",
+			Handler:    _Alarm_SimpleAlarm_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -679,6 +808,68 @@ func (m *ResponseHeader) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *SimpleAlarmRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SimpleAlarmRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Head != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
+		n1, err := m.Head.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n1
+	}
+	if len(m.Describe) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(len(m.Describe)))
+		i += copy(dAtA[i:], m.Describe)
+	}
+	return i, nil
+}
+
+func (m *SimpleAlarmResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SimpleAlarmResponse) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Head != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
+		n2, err := m.Head.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n2
+	}
+	return i, nil
+}
+
 func (m *TaskAlarmRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -698,11 +889,11 @@ func (m *TaskAlarmRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
-		n1, err := m.Head.MarshalTo(dAtA[i:])
+		n3, err := m.Head.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n1
+		i += n3
 	}
 	if m.Type != 0 {
 		dAtA[i] = 0x10
@@ -713,31 +904,31 @@ func (m *TaskAlarmRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Task.Size()))
-		n2, err := m.Task.MarshalTo(dAtA[i:])
+		n4, err := m.Task.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n2
+		i += n4
 	}
 	if m.TaskTimeoutAlarm != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.TaskTimeoutAlarm.Size()))
-		n3, err := m.TaskTimeoutAlarm.MarshalTo(dAtA[i:])
+		n5, err := m.TaskTimeoutAlarm.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n3
+		i += n5
 	}
 	if m.TaskLongTimeRunningAlarm != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.TaskLongTimeRunningAlarm.Size()))
-		n4, err := m.TaskLongTimeRunningAlarm.MarshalTo(dAtA[i:])
+		n6, err := m.TaskLongTimeRunningAlarm.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n4
+		i += n6
 	}
 	if len(m.Describe) > 0 {
 		dAtA[i] = 0x32
@@ -825,11 +1016,11 @@ func (m *TaskAlarmResponse) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
-		n5, err := m.Head.MarshalTo(dAtA[i:])
+		n7, err := m.Head.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n5
+		i += n7
 	}
 	return i, nil
 }
@@ -853,11 +1044,11 @@ func (m *NodeRangeAlarmRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
-		n6, err := m.Head.MarshalTo(dAtA[i:])
+		n8, err := m.Head.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n6
+		i += n8
 	}
 	if m.Type != 0 {
 		dAtA[i] = 0x10
@@ -868,41 +1059,41 @@ func (m *NodeRangeAlarmRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.RangeNoHbAlarm.Size()))
-		n7, err := m.RangeNoHbAlarm.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n7
-	}
-	if m.NodeNoHbAlarm != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintAlarmpb(dAtA, i, uint64(m.NodeNoHbAlarm.Size()))
-		n8, err := m.NodeNoHbAlarm.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n8
-	}
-	if m.NodeDiskSizeAlarm != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintAlarmpb(dAtA, i, uint64(m.NodeDiskSizeAlarm.Size()))
-		n9, err := m.NodeDiskSizeAlarm.MarshalTo(dAtA[i:])
+		n9, err := m.RangeNoHbAlarm.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n9
 	}
-	if m.NodeLeaderCountAlarm != nil {
-		dAtA[i] = 0x32
+	if m.NodeNoHbAlarm != nil {
+		dAtA[i] = 0x22
 		i++
-		i = encodeVarintAlarmpb(dAtA, i, uint64(m.NodeLeaderCountAlarm.Size()))
-		n10, err := m.NodeLeaderCountAlarm.MarshalTo(dAtA[i:])
+		i = encodeVarintAlarmpb(dAtA, i, uint64(m.NodeNoHbAlarm.Size()))
+		n10, err := m.NodeNoHbAlarm.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n10
+	}
+	if m.NodeDiskSizeAlarm != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(m.NodeDiskSizeAlarm.Size()))
+		n11, err := m.NodeDiskSizeAlarm.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n11
+	}
+	if m.NodeLeaderCountAlarm != nil {
+		dAtA[i] = 0x32
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(m.NodeLeaderCountAlarm.Size()))
+		n12, err := m.NodeLeaderCountAlarm.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n12
 	}
 	if len(m.Describe) > 0 {
 		dAtA[i] = 0x3a
@@ -932,11 +1123,11 @@ func (m *RangeNoHeartbeatAlarm) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Range.Size()))
-		n11, err := m.Range.MarshalTo(dAtA[i:])
+		n13, err := m.Range.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n11
+		i += n13
 	}
 	if len(m.LastHeartbeatTime) > 0 {
 		dAtA[i] = 0x12
@@ -966,11 +1157,11 @@ func (m *NodeNoHeartbeatAlarm) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Node.Size()))
-		n12, err := m.Node.MarshalTo(dAtA[i:])
+		n14, err := m.Node.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n12
+		i += n14
 	}
 	if len(m.LastHeartbeatTime) > 0 {
 		dAtA[i] = 0x12
@@ -1000,11 +1191,11 @@ func (m *NodeDiskSizeAlarm) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Node.Size()))
-		n13, err := m.Node.MarshalTo(dAtA[i:])
+		n15, err := m.Node.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n13
+		i += n15
 	}
 	if m.DiskSize != 0 {
 		dAtA[i] = 0x10
@@ -1033,11 +1224,11 @@ func (m *NodeLeaderCountAlarm) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Node.Size()))
-		n14, err := m.Node.MarshalTo(dAtA[i:])
+		n16, err := m.Node.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n14
+		i += n16
 	}
 	if m.LeaderCount != 0 {
 		dAtA[i] = 0x10
@@ -1066,11 +1257,11 @@ func (m *NodeRangeAlarmResponse) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
-		n15, err := m.Head.MarshalTo(dAtA[i:])
+		n17, err := m.Head.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n15
+		i += n17
 	}
 	return i, nil
 }
@@ -1094,11 +1285,11 @@ func (m *AliveRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
-		n16, err := m.Head.MarshalTo(dAtA[i:])
+		n18, err := m.Head.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n16
+		i += n18
 	}
 	return i, nil
 }
@@ -1122,11 +1313,79 @@ func (m *AliveResponse) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
-		n17, err := m.Head.MarshalTo(dAtA[i:])
+		n19, err := m.Head.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n17
+		i += n19
+	}
+	return i, nil
+}
+
+func (m *SimpleRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SimpleRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Head != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
+		n20, err := m.Head.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n20
+	}
+	if len(m.Title) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(len(m.Title)))
+		i += copy(dAtA[i:], m.Title)
+	}
+	if len(m.Content) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(len(m.Content)))
+		i += copy(dAtA[i:], m.Content)
+	}
+	return i, nil
+}
+
+func (m *SimpleResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SimpleResponse) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Head != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintAlarmpb(dAtA, i, uint64(m.Head.Size()))
+		n21, err := m.Head.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n21
 	}
 	return i, nil
 }
@@ -1157,6 +1416,30 @@ func (m *ResponseHeader) Size() (n int) {
 	}
 	l = len(m.Error)
 	if l > 0 {
+		n += 1 + l + sovAlarmpb(uint64(l))
+	}
+	return n
+}
+
+func (m *SimpleAlarmRequest) Size() (n int) {
+	var l int
+	_ = l
+	if m.Head != nil {
+		l = m.Head.Size()
+		n += 1 + l + sovAlarmpb(uint64(l))
+	}
+	l = len(m.Describe)
+	if l > 0 {
+		n += 1 + l + sovAlarmpb(uint64(l))
+	}
+	return n
+}
+
+func (m *SimpleAlarmResponse) Size() (n int) {
+	var l int
+	_ = l
+	if m.Head != nil {
+		l = m.Head.Size()
 		n += 1 + l + sovAlarmpb(uint64(l))
 	}
 	return n
@@ -1344,6 +1627,34 @@ func (m *AliveResponse) Size() (n int) {
 	return n
 }
 
+func (m *SimpleRequest) Size() (n int) {
+	var l int
+	_ = l
+	if m.Head != nil {
+		l = m.Head.Size()
+		n += 1 + l + sovAlarmpb(uint64(l))
+	}
+	l = len(m.Title)
+	if l > 0 {
+		n += 1 + l + sovAlarmpb(uint64(l))
+	}
+	l = len(m.Content)
+	if l > 0 {
+		n += 1 + l + sovAlarmpb(uint64(l))
+	}
+	return n
+}
+
+func (m *SimpleResponse) Size() (n int) {
+	var l int
+	_ = l
+	if m.Head != nil {
+		l = m.Head.Size()
+		n += 1 + l + sovAlarmpb(uint64(l))
+	}
+	return n
+}
+
 func sovAlarmpb(x uint64) (n int) {
 	for {
 		n++
@@ -1502,6 +1813,201 @@ func (m *ResponseHeader) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Error = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAlarmpb(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SimpleAlarmRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAlarmpb
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SimpleAlarmRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SimpleAlarmRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Head", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAlarmpb
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Head == nil {
+				m.Head = &RequestHeader{}
+			}
+			if err := m.Head.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Describe", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAlarmpb
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Describe = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAlarmpb(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SimpleAlarmResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAlarmpb
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SimpleAlarmResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SimpleAlarmResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Head", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAlarmpb
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Head == nil {
+				m.Head = &ResponseHeader{}
+			}
+			if err := m.Head.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -2973,6 +3479,230 @@ func (m *AliveResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *SimpleRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAlarmpb
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SimpleRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SimpleRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Head", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAlarmpb
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Head == nil {
+				m.Head = &RequestHeader{}
+			}
+			if err := m.Head.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAlarmpb
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Title = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Content", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAlarmpb
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Content = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAlarmpb(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SimpleResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAlarmpb
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SimpleResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SimpleResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Head", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAlarmpb
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Head == nil {
+				m.Head = &ResponseHeader{}
+			}
+			if err := m.Head.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAlarmpb(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAlarmpb
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func skipAlarmpb(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3081,57 +3811,62 @@ var (
 func init() { proto.RegisterFile("alarmpb.proto", fileDescriptorAlarmpb) }
 
 var fileDescriptorAlarmpb = []byte{
-	// 825 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x96, 0xdd, 0x4e, 0xeb, 0x46,
-	0x10, 0xc7, 0x31, 0x49, 0xe0, 0x64, 0xf2, 0x21, 0x67, 0x4f, 0x12, 0x52, 0x03, 0x29, 0x75, 0x6f,
-	0x10, 0x95, 0x82, 0x04, 0x57, 0x45, 0xad, 0xd4, 0x40, 0x5c, 0x88, 0x48, 0x1d, 0x69, 0x63, 0x6e,
-	0xda, 0x4a, 0x96, 0x13, 0xaf, 0x12, 0x2b, 0xc6, 0x4e, 0x6d, 0xa7, 0x12, 0x3c, 0x49, 0x9f, 0xa8,
-	0xaa, 0x7a, 0xd5, 0x47, 0x68, 0xe9, 0x8b, 0x54, 0xfb, 0x61, 0x63, 0x27, 0x41, 0x3d, 0xe4, 0x0a,
-	0xef, 0xec, 0x7f, 0x7f, 0x33, 0x9e, 0xf9, 0xaf, 0x09, 0x54, 0x2c, 0xd7, 0x0a, 0x1e, 0x17, 0xe3,
-	0xce, 0x22, 0xf0, 0x23, 0x1f, 0xed, 0x8b, 0xa5, 0x52, 0x9f, 0xfa, 0x53, 0x9f, 0xc5, 0xce, 0xe9,
-	0x13, 0xdf, 0x56, 0xca, 0x91, 0x15, 0xce, 0x63, 0xb1, 0x52, 0x7e, 0x24, 0x91, 0x15, 0xaf, 0xd4,
-	0x0e, 0x54, 0x30, 0xf9, 0x65, 0x49, 0xc2, 0xe8, 0x8e, 0x58, 0x36, 0x09, 0xd0, 0x31, 0xc0, 0xc4,
-	0x5d, 0x86, 0x11, 0x09, 0x4c, 0xc7, 0x6e, 0x49, 0x27, 0xd2, 0x69, 0x0e, 0x17, 0x45, 0xa4, 0x6f,
-	0xab, 0x57, 0x50, 0xc5, 0x24, 0x5c, 0xf8, 0x5e, 0x48, 0xc4, 0x01, 0x04, 0xf9, 0x89, 0x6f, 0x13,
-	0x26, 0x2d, 0x60, 0xf6, 0x8c, 0xea, 0x50, 0x20, 0x41, 0xe0, 0x07, 0xad, 0xdd, 0x13, 0xe9, 0xb4,
-	0x88, 0xf9, 0x42, 0xfd, 0x73, 0x17, 0x64, 0xc3, 0x0a, 0xe7, 0x5d, 0x5a, 0xad, 0xc8, 0x8a, 0xce,
-	0x20, 0x3f, 0x23, 0x16, 0xcf, 0x54, 0xba, 0x68, 0x76, 0xe2, 0x37, 0xcb, 0x54, 0x85, 0x99, 0x86,
-	0x6a, 0xa3, 0xa7, 0x05, 0x61, 0xd4, 0x6a, 0x4a, 0x9b, 0x40, 0x8d, 0xa7, 0x05, 0xc1, 0x4c, 0x83,
-	0x4e, 0x20, 0x4f, 0x5f, 0xbb, 0x95, 0x63, 0xdc, 0x72, 0x47, 0xf4, 0x80, 0x4a, 0x31, 0xdb, 0x41,
-	0xd7, 0x80, 0xe8, 0x5f, 0x33, 0x72, 0x1e, 0x89, 0xbf, 0x8c, 0x4c, 0x46, 0x6b, 0xe5, 0x99, 0xbe,
-	0x9e, 0x61, 0x1b, 0x5c, 0x81, 0xe5, 0xe8, 0x75, 0xc1, 0xf2, 0xa1, 0x9f, 0xe1, 0x88, 0x31, 0x5c,
-	0xdf, 0x9b, 0x32, 0x90, 0x19, 0x2c, 0x3d, 0xcf, 0xf1, 0xa6, 0x82, 0x56, 0x60, 0xb4, 0xa3, 0x0c,
-	0x6d, 0xe0, 0x7b, 0x53, 0x0a, 0xc1, 0x5c, 0x89, 0x5b, 0xd1, 0x7a, 0x90, 0xd3, 0x15, 0xf8, 0xd0,
-	0x23, 0xe1, 0x24, 0x70, 0xc6, 0xa4, 0xb5, 0xc7, 0x3a, 0x99, 0xac, 0xd5, 0xaf, 0xa1, 0x94, 0x2a,
-	0x8d, 0x76, 0x3c, 0x8c, 0xac, 0x20, 0x8a, 0x3b, 0xce, 0x16, 0x34, 0x1a, 0x59, 0x73, 0x12, 0xb2,
-	0x2e, 0xe4, 0x30, 0x5f, 0xa8, 0x5d, 0xf8, 0xb8, 0xa1, 0x8e, 0x77, 0x21, 0xbe, 0x83, 0x5a, 0x6a,
-	0x92, 0xdc, 0x0f, 0xe8, 0xab, 0xcc, 0x28, 0x0f, 0x52, 0xa3, 0x4c, 0x1b, 0x86, 0xcf, 0x52, 0xfd,
-	0x3d, 0x07, 0x0d, 0xdd, 0xb7, 0x09, 0xb6, 0xbc, 0x29, 0xd9, 0xda, 0x11, 0xe7, 0x19, 0x47, 0x1c,
-	0x26, 0xda, 0x2c, 0x39, 0x65, 0x8b, 0x3e, 0xd4, 0x02, 0x1a, 0x37, 0x3d, 0xdf, 0x9c, 0x8d, 0xc5,
-	0x94, 0xb8, 0x47, 0xda, 0xaf, 0x99, 0xa8, 0x42, 0xf7, 0xef, 0x88, 0x15, 0x44, 0x63, 0x62, 0xf1,
-	0x59, 0xe3, 0x6a, 0x20, 0xc2, 0x63, 0x3e, 0x9d, 0xef, 0x41, 0xf6, 0x7c, 0x3b, 0x4b, 0xe2, 0xee,
-	0x39, 0xce, 0xd4, 0xb1, 0x06, 0xaa, 0x78, 0x3c, 0x2a, 0x38, 0xf7, 0x50, 0x67, 0x1c, 0xdb, 0x09,
-	0xe7, 0x66, 0xe8, 0x3c, 0x93, 0x8c, 0x77, 0x94, 0x0c, 0xab, 0xe7, 0x84, 0xf3, 0x91, 0xf3, 0x2c,
-	0x1a, 0x56, 0xf3, 0x56, 0x43, 0xc8, 0x80, 0x03, 0x06, 0x73, 0x59, 0x97, 0xcc, 0x89, 0xbf, 0xf4,
-	0x62, 0x67, 0xef, 0x6d, 0xa8, 0x6d, 0xc0, 0x64, 0x37, 0x54, 0xc5, 0x91, 0xac, 0x94, 0xd5, 0x68,
-	0xc6, 0x88, 0xfb, 0x2b, 0x46, 0x74, 0xa1, 0xb1, 0xb1, 0x5f, 0xe8, 0x4b, 0x28, 0xb0, 0x8e, 0x89,
-	0x41, 0x56, 0x3a, 0xe2, 0xc3, 0xc3, 0xd4, 0x98, 0xef, 0xa1, 0x0e, 0x7c, 0x74, 0xad, 0x30, 0x32,
-	0x67, 0xf1, 0x59, 0x76, 0x8b, 0x84, 0x05, 0x6b, 0x74, 0x2b, 0xa1, 0x52, 0xaf, 0xaa, 0x33, 0xa8,
-	0x6f, 0xea, 0x29, 0xbd, 0xee, 0x5e, 0xfc, 0x15, 0xa2, 0xd7, 0x5d, 0xe4, 0x62, 0x3e, 0x60, 0x3b,
-	0xef, 0xce, 0x84, 0xa1, 0xb6, 0xd6, 0xf1, 0x4f, 0x48, 0x73, 0x08, 0xc5, 0x64, 0x90, 0x0c, 0x9e,
-	0xc3, 0x1f, 0x6c, 0xc1, 0x50, 0x7f, 0xe2, 0xd5, 0xaf, 0xf5, 0xf7, 0xff, 0xb1, 0x5f, 0x40, 0x39,
-	0x3d, 0x52, 0x41, 0x2e, 0xb9, 0xaf, 0x24, 0x55, 0x83, 0xe6, 0xea, 0x85, 0xda, 0xe6, 0x62, 0x5e,
-	0x41, 0xb9, 0xeb, 0x3a, 0xbf, 0x92, 0x2d, 0xae, 0xa3, 0xfa, 0x0d, 0x54, 0xc4, 0xd9, 0x2d, 0x32,
-	0x9f, 0x5d, 0x42, 0x25, 0xf3, 0x25, 0x47, 0x25, 0xd8, 0x37, 0xfa, 0x3f, 0x68, 0xc3, 0x07, 0x43,
-	0xde, 0x41, 0x0d, 0xa8, 0x0d, 0x86, 0xfa, 0xad, 0x49, 0x23, 0x26, 0x7e, 0xd0, 0xf5, 0xbe, 0x7e,
-	0x2b, 0x4b, 0x67, 0x1e, 0xa0, 0xf5, 0xcb, 0x8e, 0x9a, 0x80, 0x70, 0x57, 0xbf, 0xd5, 0x4c, 0x7d,
-	0x68, 0xde, 0x69, 0x5d, 0x6c, 0x5c, 0x6b, 0x5d, 0x01, 0xd1, 0x87, 0xbd, 0x95, 0xb0, 0x84, 0x10,
-	0x54, 0x59, 0xb8, 0xd7, 0x1f, 0xdd, 0x9b, 0xa3, 0xfe, 0x8f, 0x9a, 0xbc, 0x9b, 0x48, 0x07, 0x5a,
-	0xb7, 0xa7, 0x61, 0xf3, 0x66, 0xf8, 0xa0, 0x1b, 0x72, 0xee, 0xe2, 0x1f, 0x09, 0x0a, 0x7c, 0x68,
-	0x3d, 0x28, 0x26, 0xe5, 0xa2, 0xcf, 0xd6, 0xff, 0x19, 0x89, 0x06, 0x29, 0xca, 0xa6, 0x2d, 0xfe,
-	0xfa, 0xea, 0x0e, 0x1a, 0x41, 0x35, 0x5b, 0x3f, 0x6a, 0xbf, 0xf1, 0x15, 0x8b, 0x79, 0x9f, 0xbf,
-	0xb9, 0x9f, 0x40, 0xbf, 0x05, 0x60, 0x73, 0xe0, 0xc0, 0x46, 0x72, 0x20, 0x3d, 0x58, 0xa5, 0xb9,
-	0x1a, 0x8e, 0x8f, 0x5f, 0xcb, 0x7f, 0xbc, 0xb4, 0xa5, 0xbf, 0x5e, 0xda, 0xd2, 0xdf, 0x2f, 0x6d,
-	0xe9, 0xb7, 0x7f, 0xdb, 0x3b, 0xe3, 0x3d, 0xf6, 0x6b, 0xe1, 0xf2, 0xbf, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0xe1, 0x65, 0x6b, 0xba, 0x79, 0x08, 0x00, 0x00,
+	// 900 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x96, 0xcd, 0x6e, 0xdb, 0x46,
+	0x10, 0xc7, 0x2d, 0x4b, 0xb2, 0xa3, 0xd1, 0x07, 0xa4, 0xb5, 0x6c, 0xab, 0x4c, 0xa2, 0xba, 0xec,
+	0x25, 0x70, 0x01, 0x05, 0x48, 0x4e, 0x0d, 0x1a, 0x20, 0x72, 0xc4, 0xda, 0x42, 0x5c, 0x0a, 0x58,
+	0xd1, 0x97, 0x36, 0x00, 0x41, 0x89, 0x0b, 0x99, 0x10, 0xbd, 0xab, 0x92, 0xab, 0x02, 0xc9, 0x93,
+	0xf4, 0xde, 0x77, 0x29, 0x8a, 0x9e, 0xfa, 0x08, 0x85, 0xfb, 0x22, 0xc5, 0x7e, 0x90, 0x26, 0x25,
+	0x05, 0x6d, 0x78, 0x92, 0x66, 0x76, 0xf6, 0x37, 0xc3, 0x99, 0xff, 0x2e, 0x09, 0x4d, 0x2f, 0xf4,
+	0xa2, 0xbb, 0xd5, 0x6c, 0xb0, 0x8a, 0x18, 0x67, 0xe8, 0x50, 0x9b, 0x46, 0x77, 0xc1, 0x16, 0x4c,
+	0xfa, 0x9e, 0x8b, 0x7f, 0x6a, 0xd9, 0x68, 0x70, 0x2f, 0x5e, 0x26, 0xc1, 0x46, 0xe3, 0x8e, 0x70,
+	0x2f, 0xb1, 0xcc, 0x01, 0x34, 0x31, 0xf9, 0x79, 0x4d, 0x62, 0x7e, 0x45, 0x3c, 0x9f, 0x44, 0xe8,
+	0x29, 0xc0, 0x3c, 0x5c, 0xc7, 0x9c, 0x44, 0x6e, 0xe0, 0xf7, 0x4a, 0x67, 0xa5, 0x67, 0x65, 0x5c,
+	0xd3, 0x9e, 0xb1, 0x6f, 0xbe, 0x82, 0x16, 0x26, 0xf1, 0x8a, 0xd1, 0x98, 0xe8, 0x0d, 0x08, 0x2a,
+	0x73, 0xe6, 0x13, 0x19, 0x5a, 0xc5, 0xf2, 0x3f, 0xea, 0x42, 0x95, 0x44, 0x11, 0x8b, 0x7a, 0xfb,
+	0x67, 0xa5, 0x67, 0x35, 0xac, 0x0c, 0xf3, 0x3d, 0xa0, 0x69, 0x70, 0xb7, 0x0a, 0xc9, 0x50, 0x94,
+	0xab, 0xd3, 0xa2, 0x73, 0xa8, 0xdc, 0x12, 0x4f, 0xa5, 0xaa, 0xbf, 0x38, 0x19, 0x24, 0x8f, 0x96,
+	0x2b, 0x0b, 0xcb, 0x18, 0x64, 0xc0, 0xa3, 0x11, 0x89, 0xe7, 0x51, 0x30, 0x23, 0x1a, 0x9d, 0xda,
+	0xe6, 0x05, 0x1c, 0xe5, 0xe8, 0xaa, 0x48, 0xf4, 0x4d, 0x0e, 0x7f, 0x9a, 0xc1, 0x67, 0x9f, 0x42,
+	0xf1, 0xcd, 0x3f, 0xf7, 0xa1, 0xed, 0x78, 0xf1, 0xb2, 0x70, 0x81, 0xe7, 0x50, 0xe1, 0x1f, 0x56,
+	0xaa, 0xb8, 0x56, 0x26, 0x36, 0x85, 0x3a, 0x1f, 0x56, 0x04, 0xcb, 0x18, 0x74, 0x06, 0x15, 0x31,
+	0x98, 0x5e, 0x59, 0x72, 0x1b, 0x03, 0x3d, 0x25, 0x11, 0x8a, 0xe5, 0x0a, 0xba, 0x00, 0x24, 0x7e,
+	0x5d, 0x1e, 0xdc, 0x11, 0xb6, 0xe6, 0xae, 0xa4, 0xf5, 0x2a, 0x32, 0xbe, 0x9b, 0x63, 0x3b, 0x2a,
+	0x02, 0xb7, 0xf9, 0x83, 0x21, 0xf3, 0xa1, 0xf7, 0xf0, 0x44, 0x32, 0x42, 0x46, 0x17, 0x12, 0xe4,
+	0x46, 0x6b, 0x4a, 0x03, 0xba, 0xd0, 0xb4, 0xaa, 0xa4, 0x3d, 0xc9, 0xd1, 0xae, 0x19, 0x5d, 0x08,
+	0x08, 0x56, 0x91, 0xb8, 0xc7, 0xb7, 0x9d, 0x8a, 0x9e, 0x1d, 0xc8, 0xc1, 0xc6, 0x40, 0xbe, 0x85,
+	0x7a, 0xa6, 0x34, 0xa1, 0x89, 0x98, 0x7b, 0x11, 0x4f, 0x34, 0x21, 0x0d, 0xe1, 0xe5, 0xde, 0x92,
+	0xc4, 0xb2, 0x0b, 0x65, 0xac, 0x0c, 0x73, 0x08, 0x47, 0x3b, 0xea, 0xf8, 0x2c, 0xc4, 0x1b, 0xe8,
+	0x64, 0x26, 0x59, 0x44, 0x0c, 0xbf, 0x97, 0xe1, 0xd8, 0x66, 0x3e, 0xc1, 0x1e, 0x5d, 0x14, 0x97,
+	0xec, 0xf3, 0x9c, 0x22, 0x1e, 0xa7, 0xb1, 0x79, 0x72, 0x46, 0x16, 0x63, 0xe8, 0x44, 0xc2, 0xef,
+	0x52, 0xe6, 0xde, 0xce, 0xf4, 0x94, 0x94, 0x46, 0xfa, 0x0f, 0x99, 0x44, 0x84, 0xcd, 0xae, 0x88,
+	0x17, 0xf1, 0x19, 0xf1, 0xd4, 0xac, 0x71, 0x2b, 0xd2, 0xee, 0x99, 0x9a, 0xce, 0xf7, 0xd0, 0xa6,
+	0xcc, 0xcf, 0x93, 0x94, 0x7a, 0x9e, 0xe6, 0xea, 0xd8, 0x02, 0x35, 0xa9, 0xf2, 0x6a, 0xce, 0x3b,
+	0xe8, 0x4a, 0x8e, 0x1f, 0xc4, 0x4b, 0x37, 0x0e, 0x3e, 0x92, 0x9c, 0x76, 0x8c, 0x1c, 0x6b, 0x14,
+	0xc4, 0xcb, 0x69, 0xf0, 0x51, 0x37, 0xac, 0x43, 0x37, 0x5d, 0xc8, 0x81, 0x53, 0x09, 0x0b, 0x65,
+	0x97, 0xdc, 0x39, 0x5b, 0xd3, 0x44, 0xd9, 0x07, 0x3b, 0x6a, 0xbb, 0x96, 0x61, 0x6f, 0x45, 0x94,
+	0x42, 0xca, 0x52, 0x36, 0xbd, 0x39, 0x21, 0x1e, 0x6e, 0x08, 0x31, 0x84, 0xe3, 0x9d, 0xfd, 0x42,
+	0x5f, 0x43, 0x55, 0x76, 0x4c, 0x0f, 0xb2, 0x39, 0xd0, 0x57, 0xa3, 0x8c, 0xc6, 0x6a, 0x0d, 0x0d,
+	0xe0, 0x28, 0xf4, 0x62, 0xee, 0xde, 0x26, 0x7b, 0xe5, 0x29, 0xd2, 0x12, 0xec, 0x88, 0xa5, 0x94,
+	0x2a, 0xb4, 0x6a, 0xde, 0x42, 0x77, 0x57, 0x4f, 0xc5, 0x71, 0xa7, 0xc9, 0x3d, 0x29, 0x8e, 0xbb,
+	0xce, 0x25, 0x75, 0x20, 0x57, 0x3e, 0x3b, 0x13, 0x86, 0xce, 0x56, 0xc7, 0xff, 0x47, 0x9a, 0xc7,
+	0x50, 0x4b, 0x07, 0x29, 0xe1, 0x65, 0xfc, 0xc8, 0xd7, 0x0c, 0xf3, 0x27, 0x55, 0xfd, 0x56, 0x7f,
+	0xff, 0x1b, 0xfb, 0x15, 0x34, 0xb2, 0x23, 0xd5, 0xe4, 0x7a, 0xf8, 0x40, 0x32, 0x2d, 0x38, 0xd9,
+	0x3c, 0x50, 0x45, 0x0e, 0xe6, 0x2b, 0x68, 0x0c, 0xc3, 0xe0, 0x17, 0x52, 0xe0, 0x38, 0x9a, 0xdf,
+	0x41, 0x53, 0xef, 0x2d, 0x92, 0x79, 0x09, 0x4d, 0xf5, 0x8e, 0x29, 0x72, 0x13, 0x88, 0x7b, 0x2a,
+	0xe0, 0x61, 0x32, 0x50, 0x65, 0xa0, 0x1e, 0x1c, 0xce, 0x19, 0xe5, 0x84, 0x72, 0x79, 0xc8, 0x6b,
+	0x38, 0x31, 0xcd, 0xd7, 0xd0, 0x4a, 0x92, 0x15, 0xa8, 0xf5, 0xfc, 0x25, 0x34, 0x73, 0x6f, 0x1d,
+	0x54, 0x87, 0x43, 0x67, 0xfc, 0x83, 0x35, 0xb9, 0x71, 0xda, 0x7b, 0xe8, 0x18, 0x3a, 0xd7, 0x13,
+	0xfb, 0xd2, 0x15, 0x1e, 0x17, 0xdf, 0xd8, 0xf6, 0xd8, 0xbe, 0x6c, 0x97, 0xce, 0x29, 0xa0, 0xed,
+	0x8b, 0x09, 0x9d, 0x00, 0xc2, 0x43, 0xfb, 0xd2, 0x72, 0xed, 0x89, 0x7b, 0x65, 0x0d, 0xb1, 0x73,
+	0x61, 0x0d, 0x35, 0xc4, 0x9e, 0x8c, 0x36, 0xdc, 0x25, 0x84, 0xa0, 0x25, 0xdd, 0xa3, 0xf1, 0xf4,
+	0x9d, 0x3b, 0x1d, 0xff, 0x68, 0xb5, 0xf7, 0xd3, 0xd0, 0x6b, 0x6b, 0x38, 0xb2, 0xb0, 0xfb, 0x76,
+	0x72, 0x63, 0x3b, 0xed, 0xf2, 0x8b, 0xdf, 0xf6, 0xa1, 0xaa, 0x04, 0x36, 0x82, 0x5a, 0x5a, 0x2e,
+	0xfa, 0x62, 0xfb, 0xc5, 0xa9, 0x3b, 0x6a, 0x18, 0xbb, 0x96, 0xd4, 0xe3, 0x9b, 0x7b, 0x68, 0x0a,
+	0xad, 0x7c, 0xfd, 0xa8, 0xff, 0x89, 0x1b, 0x37, 0xe1, 0x7d, 0xf9, 0xc9, 0xf5, 0x14, 0xfa, 0x1a,
+	0x40, 0x6a, 0x46, 0x01, 0x8f, 0xd3, 0x0d, 0x59, 0x11, 0x1a, 0x27, 0x9b, 0xee, 0x74, 0xfb, 0x1b,
+	0xa8, 0x67, 0x3e, 0x4c, 0xd0, 0x43, 0x60, 0x4e, 0x4a, 0xc6, 0xe9, 0x96, 0x3f, 0x21, 0x5c, 0xb4,
+	0xff, 0xb8, 0xef, 0x97, 0xfe, 0xba, 0xef, 0x97, 0xfe, 0xbe, 0xef, 0x97, 0x7e, 0xfd, 0xa7, 0xbf,
+	0x37, 0x3b, 0x90, 0x5f, 0x6f, 0x2f, 0xff, 0x0d, 0x00, 0x00, 0xff, 0xff, 0x46, 0x34, 0xa8, 0x6b,
+	0x09, 0x0a, 0x00, 0x00,
 }

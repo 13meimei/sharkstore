@@ -38,6 +38,7 @@ var PREFIX_REPLICA string = fmt.Sprintf("schema%sreplica%s", SCHEMA_SPLITOR, SCH
 var PREFIX_PRE_GC string = fmt.Sprintf("schema%spre_gc%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 var PREFIX_AUTO_TRANSFER string = fmt.Sprintf("$auto_transfer_%d")
 var PREFIX_AUTO_FAILOVER string = fmt.Sprintf("$auto_failover_%d")
+var PREFIX_AUTO_SPLIT string = fmt.Sprintf("$auto_split_%d")
 
 type Cluster struct {
 	clusterId uint64
@@ -86,6 +87,7 @@ type Cluster struct {
 
 	autoFailoverUnable bool
 	autoTransferUnable bool
+	autoSplitUnable    bool
 
 	alarmCli *alarm.Client
 }
@@ -350,7 +352,7 @@ func (c *Cluster) CreateTable(dbName, tableName string, columns, regxs []*metapb
 	// create table
 	tableId, err := c.idGener.GenID()
 	if err != nil {
-		log.Error("cannot generte table[%s:%s] ID, err[%v]", dbName, tableName, err)
+		log.Error("cannot generate table[%s:%s] ID, err[%v]", dbName, tableName, err)
 		return nil, ErrGenID
 	}
 	var start, end []byte
@@ -502,8 +504,8 @@ func (c *Cluster) IsLeader() bool {
 	return c.nodeId == c.leader.GetId()
 }
 
-func (c *Cluster) UpdateAutoScheduleInfo(autoFailoverUnable, autoTransferUnable bool) error {
-	if c.autoFailoverUnable == autoFailoverUnable && c.autoTransferUnable == autoTransferUnable {
+func (c *Cluster) UpdateAutoScheduleInfo(autoFailoverUnable, autoTransferUnable, autoSplitUnable bool) error {
+	if c.autoFailoverUnable == autoFailoverUnable && c.autoTransferUnable == autoTransferUnable && c.autoSplitUnable == autoSplitUnable {
 		return nil
 	}
 	batch := c.store.NewBatch()
@@ -522,6 +524,13 @@ func (c *Cluster) UpdateAutoScheduleInfo(autoFailoverUnable, autoTransferUnable 
 		value = uint64ToBytes(uint64(0))
 	}
 	batch.Put(key, value)
+	key = []byte(fmt.Sprintf(PREFIX_AUTO_SPLIT, c.clusterId))
+	if autoSplitUnable {
+		value = uint64ToBytes(uint64(1))
+	} else {
+		value = uint64ToBytes(uint64(0))
+	}
+	batch.Put(key, value)
 	err := batch.Commit()
 	if err != nil {
 		log.Error("batch commit failed, err[%v]", err)
@@ -529,7 +538,8 @@ func (c *Cluster) UpdateAutoScheduleInfo(autoFailoverUnable, autoTransferUnable 
 	}
 	c.autoTransferUnable = autoTransferUnable
 	c.autoFailoverUnable = autoFailoverUnable
-	log.Info("auto[T:%t F:%t]", c.autoTransferUnable, c.autoFailoverUnable)
+	c.autoSplitUnable = autoSplitUnable
+	log.Info("auto[T:%t F:%t S:%t]", c.autoTransferUnable, c.autoFailoverUnable, c.autoSplitUnable)
 	return nil
 }
 
@@ -545,6 +555,10 @@ func (c *Cluster) GetAllWorker() map[string]bool {
 		workers[s] = found
 	}
 	return workers
+}
+
+func (c *Cluster) GetWorkerInfo(workerName string) string {
+	return c.workerManger.GetWorker(workerName)
 }
 
 func (c *Cluster) AddFailoverWorker() {
@@ -642,6 +656,33 @@ func (c *Cluster) loadAutoFailover() error {
 	return nil
 }
 
+func (c *Cluster) loadAutoSplit() error {
+	var s uint64
+	s = uint64(1)
+	key := fmt.Sprintf(PREFIX_AUTO_SPLIT, c.clusterId)
+	value, err := c.store.Get([]byte(key))
+	if err != nil {
+		if err == sErr.ErrNotFound {
+			s = uint64(0)
+		} else {
+			return err
+		}
+	}
+	var auto bool
+	auto = true // enable by default
+	if value != nil {
+		s, err = bytesToUint64(value)
+		if err != nil {
+			return err
+		}
+	}
+	if s == 0 {
+		auto = false
+	}
+	c.autoSplitUnable = auto
+	return nil
+}
+
 func (c *Cluster) loadScheduleSwitch() error {
 	if err := c.loadAutoFailover(); err != nil {
 		log.Error("load auto failover failed, err[%v]", err)
@@ -649,6 +690,10 @@ func (c *Cluster) loadScheduleSwitch() error {
 	}
 	if err := c.loadAutoTransfer(); err != nil {
 		log.Error("load auto transfer failed, err[%v]", err)
+		return err
+	}
+	if err := c.loadAutoSplit(); err != nil {
+		log.Error("load auto split failed, err[%v]", err)
 		return err
 	}
 	return nil
@@ -1096,22 +1141,6 @@ func (c *Cluster) allocPeer(nodeId uint64) (*metapb.Peer, error) {
 	return &metapb.Peer{Id: peerId, NodeId: nodeId}, nil
 }
 
-func (c *Cluster) allocPrePeerAndSelectNode(rng *Range, t *CreateTable) (*metapb.Peer, error) {
-	node := c.selectNodeForPreAddPeer(rng, t)
-	if node == nil {
-		return nil, ERR_NO_SELECTED_NODE
-	}
-	newPeer, err := c.allocPeer(node.GetId())
-	if err != nil {
-		return nil, err
-	}
-
-	if node != nil {
-		node.stats.RangeCount++
-	}
-	return newPeer, nil
-}
-
 /**
 选择节点需要排除已有peer相同的IP
 优先table的range分布少的node
@@ -1147,24 +1176,31 @@ func (c *Cluster) allocRange(startKey, endKey []byte, table *Table) (*metapb.Ran
 	}, nil
 }
 
-func (c *Cluster) createRangeByScope(startKey, endKey []byte, table *Table) error {
+func (c *Cluster) newRangeByScope(startKey, endKey []byte, table *Table) (*Range, error) {
 	rng, err := c.allocRange(startKey, endKey, table)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	region := NewRange(rng)
 	newPeer, err := c.allocPeerAndSelectNode(region)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var peers []*metapb.Peer
 	peers = append(peers, newPeer)
-	rng.Peers = peers
+	region.Peers = peers
+	return region, nil
+}
 
+func (c *Cluster) createRangeByScope(startKey, endKey []byte, table *Table) error {
+	region, err := c.newRangeByScope(startKey, endKey, table)
+	if err != nil {
+		return err
+	}
 	c.AddRange(region)
 	// create range remote
-	if err = c.createRangeRemote(rng); err != nil {
-		return fmt.Errorf("create range[%s, %s] failed", startKey, endKey)
+	if err = c.createRangeRemote(region.Range); err != nil {
+		return fmt.Errorf("create table [%s, %s] range remote failed", startKey, endKey)
 	}
 	return nil
 }
@@ -1181,18 +1217,6 @@ func initWorkerPool() map[string]bool {
 	pool[balanceLeaderWorkerName] = true
 	pool[balanceNodeOpsWorkerName] = true
 	return pool
-}
-
-func (c *Cluster) selectNodeForPreAddPeer(rng *Range, t *CreateTable) *Node {
-	candidateNodes := c.selectBestNodesForAddPeer(rng)
-	if len(candidateNodes) == 0 {
-		return nil
-	}
-	if len(candidateNodes) == 1 {
-		return candidateNodes[0]
-	}
-	rngStat := t.GetNodeRangeStat()
-	return c.selectBestNodeST(candidateNodes, rng, rngStat)
 }
 
 func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {

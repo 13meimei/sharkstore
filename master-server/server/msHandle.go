@@ -223,6 +223,12 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 
 func (service *Server) handleAskSplit(ctx context.Context, req *mspb.AskSplitRequest) (resp *mspb.AskSplitResponse, err error) {
 	cluster := service.cluster
+	//集群不允许分裂
+	if cluster.autoSplitUnable {
+		log.Debug("cluster is not allowed split")
+		err = ErrNotAllowSplit
+		return
+	}
 	// 标记删除的table拒绝分片分裂
 	table, find := cluster.FindTableById(req.GetRange().GetTableId())
 	if !find {

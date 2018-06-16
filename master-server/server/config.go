@@ -8,6 +8,7 @@ import (
 
 	"util/log"
 	"github.com/BurntSushi/toml"
+	"master-server/metric"
 )
 
 const (
@@ -116,7 +117,8 @@ type Config struct {
 	Schedule ScheduleConfig `toml:"schedule,omitempty" json:"schedule"`
 	Replication ReplicationConfig `toml:"replication,omitempty" json:"replication"`
 
-	AlarmConfig AlarmConfig`toml:"alarm,omitempty" json:"alarm"`
+	Threshold metric.ThresholdConfig `toml:"threshold,omitempty" json:"threshold"`
+	Alarm AlarmConfig`toml:"alarm,omitempty" json:"alarm"`
 }
 
 func NewDefaultConfig() *Config {
@@ -213,6 +215,8 @@ type AlarmReceiver struct {
 	Mail string	`toml:"mail,omitempty" json:"mail"`
 	Sms string 	`toml:"sms,omitempty" json:"sms"`
 }
+
+
 
 type AlarmConfig struct {
 	ServerAddress string  			`toml:"server-address" json:"server-address"`

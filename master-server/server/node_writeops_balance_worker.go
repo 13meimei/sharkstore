@@ -109,7 +109,7 @@ func scheduleRemoveMaxOpsPeer(cluster *Cluster, workerName string) (*Range, *met
 }
 
 func (w *balanceNodeOpsWorker) AllowWork(cluster *Cluster) bool {
-	if cluster.autoFailoverUnable {
+	if cluster.autoTransferUnable {
 		return false
 	}
 	return true

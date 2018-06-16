@@ -77,6 +77,8 @@ func (service *Server) initHttpHandler() (){
 	s.Handle("/manage/scheduler/getall", NewHandler(service.validRequest, service.handleSchedulerGetAll))
 	s.Handle("/manage/scheduler/add", NewHandler(service.validRequest, service.handleAddScheduler))
 	s.Handle("/manage/scheduler/remove", NewHandler(service.validRequest, service.handleRemoveScheduler))
+	s.Handle("/manage/scheduler/detail", NewHandler(service.validRequest, service.handleQuerySchedulerDetail))
+
 	s.Handle("/manage/database/getall", NewHandler(service.validRequest, service.handleDBGetAll))
 	s.Handle("/manage/table/getall", NewHandler(service.validRequest, service.handleTableGetAll))
 	s.Handle("/manage/get/table", NewHandler(service.validRequest, service.handleTableGet))
@@ -132,6 +134,8 @@ func (service *Server) initHttpHandler() (){
 
 	s.Handle("/peer/delete_force", NewHandler(service.validRequest, service.handlePeerDeleteForce))
 	s.Handle("/range/locate", NewHandler(service.validRequest, service.handleRangeLocate))
+
+	s.Handle("/test/alarm", NewHandler(nil, service.handleTestAlarm))
 	return
 }
 
@@ -179,11 +183,13 @@ func (service *Server) InitMasterServer(conf *Config) {
 	}
 
 	service.initHttpHandler()
-	service.alarmClient, err = alarm.NewAlarmClient(conf.AlarmConfig.ServerAddress)
-	if err != nil {
-		log.Fatal("create alarm client failed, err[%v]", err)
+	if "" != conf.Alarm.ServerAddress {
+		service.alarmClient, err = alarm.NewAlarmClient(conf.Alarm.ServerAddress)
+		if err != nil {
+			log.Fatal("create alarm client failed, err[%v]", err)
+		}
+		service.cluster.alarmCli = service.alarmClient
 	}
-	service.cluster.alarmCli = service.alarmClient
 }
 
 func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
@@ -216,7 +222,16 @@ func (service *Server) InitMetricServer(conf *Config) {
 	} else { //默认为es存储
 		store = metric.NewEsStore(conf.Metric.Server.StoreUrl, int(conf.Metric.Server.QueueNum))
 	}
-	service.metricServer = metric.NewMetric(service.server, store)
+	service.metricServer = metric.NewMetric(service.server, store, conf.Threshold)
+
+	if "" != conf.Alarm.ServerAddress {
+		var err error
+		service.alarmClient, err = alarm.NewAlarmClient(conf.Alarm.ServerAddress)
+		if err != nil {
+			log.Fatal("create alarm client failed, err[%v]", err)
+		}
+		service.metricServer.AlarmCli = service.alarmClient
+	}
 }
 
 func (service *Server) InitServer(conf *Config) {
@@ -230,7 +245,7 @@ func (service *Server) InitServer(conf *Config) {
 		service.InitMasterServer(conf)
 	case "metric":
 		service.InitMetricServer(conf)
-		service.InitAlarmServer(conf.AlarmConfig)
+		service.InitAlarmServer(conf.Alarm)
 	}
 }
 
@@ -324,6 +339,7 @@ func (service *Server) RaftLeaderChange(leaderId uint64) {
 		cluster.UpdateLeader(raftLeader)
 		cluster.Start()
 		service.cluster = cluster
+		service.cluster.alarmCli = service.alarmClient
 		return
 	}
 

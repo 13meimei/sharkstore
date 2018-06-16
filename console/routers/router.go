@@ -39,8 +39,7 @@ func NewRouter(c *config.Config, db *sql.DB) *Router {
 }
 
 func (r *Router) GetUserCluster(userName string) (*right.User, error) {
-	//return right.GetUserCluster(r.db, userName)
-	return right.GetUserClusterFake(r.db, userName)
+	return right.GetUserCluster(r.db, userName)
 }
 
 func (r *Router)StartRouter() *gin.Engine {
@@ -61,11 +60,10 @@ func (r *Router)StartRouter() *gin.Engine {
 	router.Static("/static" , r.staticRootDir)
 
 	router.GET("/", func(c *gin.Context) {
-		userName := "admin"
-		//userName, ok := sessions.Default(c).Get("user_name").(string)
-		//if !ok {
-		//	c.Redirect(http.StatusMovedPermanently, r.config.SsoLogoutUrl+ "?ReturnUrl=" + r.config.AppUrl)
-		//}
+		userName, ok := sessions.Default(c).Get("user_name").(string)
+		if !ok {
+			c.Redirect(http.StatusMovedPermanently, "/logout")
+		}
 		admin := "none"
 		user, err := r.GetUserCluster(userName)
 		if err == nil {
@@ -83,16 +81,11 @@ func (r *Router)StartRouter() *gin.Engine {
 		})
 	})
 
-	//兼容以前
-	router.GET("/index", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/")
-	})
-
 	router.GET("/logout", func(c *gin.Context) {
 		session := sessions.Default(c)
 		session.Clear()
 		session.Save()
-		//c.Redirect(http.StatusMovedPermanently, r.config.SsoLogoutUrl+ "?ReturnUrl=" + r.config.AppUrl)
+		c.Redirect(http.StatusMovedPermanently, r.config.SsoLogoutUrl+ "?ReturnUrl=" + r.config.AppUrl)
 	})
 
 	// -----------------page controller router -------------
@@ -225,11 +218,10 @@ func (r *Router)StartRouter() *gin.Engine {
 		dbId := c.Query("dbId")
 		dbName := c.Query("dbName")
 
-		userName := "admin"
-		//userName, ok := sessions.Default(c).Get("user_name").(string)
-		//if !ok {
-		//	c.Redirect(http.StatusMovedPermanently, r.config.SsoLogoutUrl+ "?ReturnUrl=" + r.config.AppUrl)
-		//}
+		userName, ok := sessions.Default(c).Get("user_name").(string)
+		if !ok {
+			c.Redirect(http.StatusMovedPermanently, "/logout")
+		}
 		admin := "none"
 		user, err := r.GetUserCluster(userName)
 		if err == nil {
@@ -725,7 +717,7 @@ func (r *Router)StartRouter() *gin.Engine {
 	router.POST(controllers.RANGE_CHANGE_LEADER, func(c *gin.Context) {
 		handleAction(c, controllers.NewRangeLeaderChange())
 	})
-	router.POST(controllers.RANGE_OPS_TOPN, func(c *gin.Context) {
+	router.GET(controllers.RANGE_OPS_TOPN, func(c *gin.Context) {
 		handleAction(c, controllers.NewRangeOpsTopN())
 	})
 	router.POST(controllers.TASK_GET_PRESENT, func(c *gin.Context) {
@@ -736,6 +728,9 @@ func (r *Router)StartRouter() *gin.Engine {
 	})
 	router.GET(controllers.REQURI_SCHEDULER_GETALL, func(c *gin.Context) {
 		handleAction(c, controllers.NewSchedulerAllAction())
+	})
+	router.GET(controllers.REQURI_SCHEDULER_GETDETAIL, func(c *gin.Context) {
+		handleAction(c, controllers.NewSchedulerDetailAction())
 	})
 	router.POST(controllers.REQURI_SCHEDULER_ADJUST, func(c *gin.Context) {
 		handleAction(c, controllers.NewSchedulerAdjustAction())

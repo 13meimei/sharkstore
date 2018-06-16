@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include <stdint.h>
+#include <string>
 #include <map>
 
 #include "raft/types.h"

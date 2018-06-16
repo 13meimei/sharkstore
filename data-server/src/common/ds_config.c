@@ -55,6 +55,9 @@ static int load_rocksdb_config(IniContext *ini_context) {
     ds_config.rocksdb_config.block_cache_size =
             load_bytes_value_ne(ini_context, section, "block_cache_size", 1024 * 1024 * 1024);
 
+    ds_config.rocksdb_config.row_cache_size =
+            load_bytes_value_ne(ini_context, section, "row_cache_size", 0);
+
     ds_config.rocksdb_config.block_size =
             load_bytes_value_ne(ini_context, section, "block_size", 16 * 1024);
 
@@ -98,6 +101,9 @@ static int load_rocksdb_config(IniContext *ini_context) {
     ds_config.rocksdb_config.disable_wal =
             iniGetIntValue(section, "disable_wal", ini_context, 0);
 
+    ds_config.rocksdb_config.cache_index_and_filter_blocks =
+            iniGetIntValue(section, "cache_index_and_filter_blocks", ini_context, 0);
+
     ds_config.rocksdb_config.ttl = load_integer_value_atleast(ini_context, section, "ttl", 0, 0);
 
     return 0;
@@ -107,6 +113,7 @@ void print_rocksdb_config() {
     FLOG_INFO("rockdb_configs: "
               "\n\tpath: %s"
               "\n\tblock_cache_size: %lu"
+              "\n\trow_cache_size: %lu"
               "\n\tblock_size: %lu"
               "\n\tmax_open_files: %d"
               "\n\tbytes_per_sync: %lu"
@@ -123,10 +130,12 @@ void print_rocksdb_config() {
               "\n\tlevel0_slowdown_writes_trigger: %d"
               "\n\tlevel0_stop_writes_trigger: %d"
               "\n\tdisable_wal: %d"
+              "\n\tcache_index_and_filter_blocks: %d"
               "\n\tttl: %d"
               ,
               ds_config.rocksdb_config.path,
               ds_config.rocksdb_config.block_cache_size,
+              ds_config.rocksdb_config.row_cache_size,
               ds_config.rocksdb_config.block_size,
               ds_config.rocksdb_config.max_open_files,
               ds_config.rocksdb_config.bytes_per_sync,
@@ -143,6 +152,7 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.level0_slowdown_writes_trigger,
               ds_config.rocksdb_config.level0_stop_writes_trigger,
               ds_config.rocksdb_config.disable_wal,
+              ds_config.rocksdb_config.cache_index_and_filter_blocks,
               ds_config.rocksdb_config.ttl
               );
 }

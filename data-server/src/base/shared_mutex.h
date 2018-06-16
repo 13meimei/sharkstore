@@ -56,7 +56,9 @@ public:
 
     shared_lock() noexcept : m_pm_(nullptr) {}
 
-    explicit shared_lock(mutex_type& m) : m_pm_(std::__addressof(m)) { m.lock_shared(); }
+    explicit shared_lock(mutex_type& m) : m_pm_(std::addressof(m)) {
+        m.lock_shared();
+    }
 
     ~shared_lock() { m_pm_->unlock_shared(); }
 
