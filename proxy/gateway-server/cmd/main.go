@@ -2,19 +2,34 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"runtime"
 
 	"proxy/gateway-server/server"
-	"util/log"
 	"util/gogc"
+	"util/log"
 )
 
 var (
 	configFileName = flag.String("config", "", "Usage : -config conf/config.toml")
+	printVersion   = flag.Bool("v", false, "Usage : -v")
+)
+
+var (
+	// BuildVersion should generate from build script
+	BuildVersion = "unknown"
+	// BuildDate should generate from build script
+	BuildDate = "unknown"
 )
 
 func main() {
 	flag.Parse()
+
+	if *printVersion {
+		fmt.Println("Version:", BuildVersion)
+		fmt.Println("Build Date:", BuildDate)
+		return
+	}
 
 	runtime.GOMAXPROCS(runtime.NumCPU() - 1)
 

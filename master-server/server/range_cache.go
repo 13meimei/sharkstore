@@ -14,15 +14,14 @@ package server
 
 import (
 	"bytes"
-	"fmt"
 	"sync"
-	"time"
 	"util"
+	"fmt"
+	"time"
 
-	"container/list"
 	"model/pkg/metapb"
 	"util/log"
-
+	"container/list"
 	"github.com/google/btree"
 )
 
@@ -116,17 +115,17 @@ func (rc *RangeCache) Add(r *Range) {
 	rc.lock.Lock()
 	defer rc.lock.Unlock()
 
-	rc.rangesMap[r.GetID()] = r
-	rc.rangesTree.update(r.GetMeta())
+	rc.rangesMap[r.ID()] = r
+	rc.rangesTree.update(r.Range)
 }
 
-func (rc *RangeCache) Delete(id uint64) *Range {
+func (rc *RangeCache) Delete(id uint64) (*Range) {
 	rc.lock.Lock()
 	defer rc.lock.Unlock()
 
 	if r, find := rc.rangesMap[id]; find {
 		delete(rc.rangesMap, id)
-		rc.rangesTree.remove(r.GetMeta())
+		rc.rangesTree.remove(r.Range)
 		return r
 	}
 	return nil
@@ -187,7 +186,7 @@ func (rc *RangeCache) GetTableAllRanges(tableId uint64) []*Range {
 	defer rc.lock.RUnlock()
 	var ranges []*Range
 	for _, r := range rc.rangesMap {
-		if r.GetTableID() == tableId {
+		if r.GetTableId() == tableId {
 			ranges = append(ranges, r)
 		}
 	}
@@ -275,8 +274,8 @@ func (rc *RangeCache) GetTableRangeDuplicate(tableId uint64) []*metapb.Range {
 	var rangeIdSlice []uint64
 	rc.lock.RLock()
 	for _, r := range rc.rangesMap {
-		if r.GetTableID() == tableId {
-			key := jointFunc(r.GetStartKey(), r.GetEndKey())
+		if r.GetTableId() == tableId {
+			key := jointFunc(r.StartKey, r.EndKey)
 			rangeIdSlice = rangeDuplMap[key]
 			rangeIdSlice = append(rangeIdSlice, r.GetId())
 			rangeDuplMap[key] = rangeIdSlice
@@ -286,7 +285,7 @@ func (rc *RangeCache) GetTableRangeDuplicate(tableId uint64) []*metapb.Range {
 		if len(slice) > 1 {
 			for _, rngId := range slice {
 				rng := rc.rangesMap[rngId]
-				ranges = append(ranges, rng.GetMeta())
+				ranges = append(ranges, rng.Range)
 			}
 		}
 	}
@@ -501,7 +500,7 @@ func (rc *RegionCache) Add(r *Range) {
 	rc.lock.Lock()
 	defer rc.lock.Unlock()
 
-	rc.rangesMap[r.GetID()] = r
+	rc.rangesMap[r.ID()] = r
 }
 
 func (rc *RegionCache) Delete(id uint64) {

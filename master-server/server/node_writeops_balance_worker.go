@@ -1,10 +1,10 @@
 package server
 
 import (
-	"context"
+	"util/log"
 	"model/pkg/metapb"
 	"time"
-	"util/log"
+	"context"
 )
 
 type balanceNodeOpsWorker struct {
@@ -60,9 +60,7 @@ func (w *balanceNodeOpsWorker) Work(cluster *Cluster) {
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to balance region and transfer peer, region:[%v], old peer:[%v], old node:[%v], new node:[%v]",
 		rng.GetId(), oldPeer.GetId(), oldPeer.GetNodeId(), newPeer.GetNodeId())
-	tc := NewTransferPeerTasks(taskID, rng, "ops-range-tranfer", oldPeer)
-	// TODO: check return
-	cluster.taskManager.Add(tc)
+	cluster.eventDispatcher.pushEvent(NewChangePeerEvent(taskID, rng, oldPeer, newPeer, w.GetName()))
 	return
 }
 
@@ -92,7 +90,7 @@ func scheduleRemoveMaxOpsPeer(cluster *Cluster, workerName string) (*Range, *met
 	var rng *Range
 	for _, peer := range sourceNode.GetAllRanges() {
 		r := cluster.FindRange(peer.GetId())
-		if r == nil || !r.require(cluster) {
+		if r == nil || !r.require(cluster){
 			continue
 		}
 		if rng == nil || (r.opsStat.hit > 10 && rng.opsStat.GetMax() < r.opsStat.GetMax()) {

@@ -597,9 +597,9 @@ func (c *Cluster) RemoveWorker(name string) error {
 	return c.workerManger.removeWorker(name)
 }
 
+// GetAllTasks return all tasks
 func (c *Cluster) GetAllTasks() []*TaskChain {
-	// TODO:
-	return nil
+	return c.taskManager.GetAll()
 }
 
 func (c *Cluster) loadAutoTransfer() error {
@@ -929,7 +929,8 @@ func (c *Cluster) loadRanges() error {
 		if err != nil {
 			return err
 		}
-		rr := NewRange(r)
+		leader := deepcopy.Iface(r.GetPeers()[0]).(*metapb.Peer)
+		rr := NewRange(r, leader)
 		c.AddRange(rr)
 	}
 	// 删除垃圾分片(无归属分片)
@@ -1181,7 +1182,7 @@ func (c *Cluster) newRangeByScope(startKey, endKey []byte, table *Table) (*Range
 	if err != nil {
 		return nil, err
 	}
-	region := NewRange(rng)
+	region := NewRange(rng, nil)
 	newPeer, err := c.allocPeerAndSelectNode(region)
 	if err != nil {
 		return nil, err
@@ -1227,7 +1228,7 @@ func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {
 	if len(candidateNodes) == 1 {
 		return candidateNodes[0]
 	}
-	tableId := rng.GetTableID()
+	tableId := rng.GetTableId()
 	rngStat := c.GetNodeRangeStatByTable(tableId)
 	return c.selectBestNodeST(candidateNodes, rng, rngStat)
 }
@@ -1286,7 +1287,7 @@ func (c *Cluster) selectBestNodesForAddPeer(rng *Range) []*Node {
 		flag := true
 		for _, selector := range newSelectors {
 			if !selector.CanSelect(node) {
-				log.Debug("addPeer: range [%v] cannot select node %v, because of %v", rng.GetID(), node.GetId(), selector.Name())
+				log.Debug("addPeer: range [%v] cannot select node %v, because of %v", rng.GetId(), node.GetId(), selector.Name())
 				flag = false
 				break
 			}
@@ -1317,9 +1318,17 @@ func (c *Cluster) checkSameIpNode(nodes []*Node) (string, bool) {
 }
 
 func (c *Cluster) selectWorstPeer(rng *Range) *metapb.Peer {
-	downPeers := rng.GetDownPeers()
-	if len(downPeers) > 0 {
-		return downPeers[0].Peer
+	downs := rng.GetDownPeers()
+	if len(downs) > 0 {
+		return downs[0].Peer
+	}
+
+	// 优先删除learner：
+	peers := rng.GetPeers()
+	for _, peer := range peers {
+		if peer.GetType() == metapb.PeerType_PeerType_Learner {
+			return peer
+		}
 	}
 
 	//TODO:复制位置落后的peer
@@ -1356,7 +1365,7 @@ func (c *Cluster) selectWorstPeer(rng *Range) *metapb.Peer {
 		return nil
 	}
 
-	for _, peer := range rng.GetPeers() {
+	for _, peer := range rng.Peers {
 		if peer.NodeId == worstNode.GetId() {
 			return peer
 		}
@@ -1364,15 +1373,15 @@ func (c *Cluster) selectWorstPeer(rng *Range) *metapb.Peer {
 	return nil
 }
 
-// Dispatch dispatch range heartbeat
+// Dispatch dispatch range
 func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
 	// get taskchain
-	tc := c.taskManager.Find(r.GetID())
+	tc := c.taskManager.Find(r.GetId())
 	if tc == nil {
-		tc = c.hbManager.Check(c, r)
+		tc = c.hbManager.CheckRange(c, r)
 		if tc != nil {
 			if !c.taskManager.Add(tc) {
-				log.Warn("add tasks for range(%d) failed. maybe other tasks is running.", r.GetID())
+				log.Warn("add tasks for range(%d) failed. maybe other tasks is running.", r.GetId())
 				tc = nil
 			}
 		}

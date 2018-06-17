@@ -53,3 +53,15 @@ func (m *TaskManager) Find(rangeID uint64) *TaskChain {
 
 	return m.tasks[rangeID]
 }
+
+// GetAll return all tasks
+func (m *TaskManager) GetAll() []*TaskChain {
+	m.RLock()
+	defer m.RUnlock()
+
+	tasks := make([]*TaskChain, 0, len(m.tasks))
+	for _, t := range m.tasks {
+		tasks = append(tasks, t)
+	}
+	return tasks
+}

@@ -59,6 +59,11 @@ func (c *TaskChain) GetRangeID() uint64 {
 	return c.rangeID
 }
 
+// GetName return name
+func (c *TaskChain) GetName() string {
+	return c.name
+}
+
 // Elapsed time since begin
 func (c *TaskChain) Elapsed() time.Duration {
 	return time.Since(c.begin)

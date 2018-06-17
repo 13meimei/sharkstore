@@ -169,7 +169,7 @@ func (t *Table) MergeColumn(source []*metapb.Column, cluster *Cluster) error {
 	var tartCols []*metapb.Column
 	for _, col := range table.GetColumns() {
 		_, found := newColMap[col.GetName()]
-		if col.PrimaryKey == 1 || found {
+		if col.PrimaryKey == 1 || found{
 			tartCols = append(tartCols, col)
 		}
 	}

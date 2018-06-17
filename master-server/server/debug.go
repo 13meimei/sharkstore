@@ -23,7 +23,7 @@ type NodeDebug struct {
 type RangeDebug struct {
 	*metapb.Range
 	Leader      *metapb.Peer       `json:"leader,omitempty"`
-	PeersStatus []*mspb.PeerStatus `json:"status,omitempty"`
+	PeersStatus []*mspb.PeerStatus `json:"peers_status,omitempty"`
 	LastHbTime  time.Time          `json:"last_hb_time,omitempty"`
 	Task        *taskpb.Task       `json:"task,omitempty"`
 }
@@ -63,10 +63,10 @@ func (service *Server) handleDebugRangeInfo(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	reply.Data = &RangeDebug{
-		Range:       deepcopy.Iface(rng.GetMeta()).(*metapb.Range),
-		Leader:      deepcopy.Iface(rng.GetLeader()).(*metapb.Peer),
-		PeersStatus: rng.GetPeersStatus(),
-		LastHbTime:  rng.LastHeartbeat(),
+		Range:       deepcopy.Iface(rng.Range).(*metapb.Range),
+		Leader:      deepcopy.Iface(rng.Leader).(*metapb.Peer),
+		PeersStatus: rng.PeersStatus,
+		LastHbTime:  rng.LastHbTimeTS,
 	}
 }
 

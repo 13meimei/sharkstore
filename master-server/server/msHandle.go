@@ -9,10 +9,10 @@ import (
 
 	"model/pkg/metapb"
 	"model/pkg/mspb"
+	"util"
 	"util/deepcopy"
 	"util/log"
 
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
 )
@@ -39,8 +39,8 @@ func (service *Server) handleGetRoute(ctx context.Context, req *mspb.GetRouteReq
 		}
 		routes = make([]*metapb.Route, 0, max)
 		for ind, rng := range ranges {
-			if rng.GetTableID() != req.GetTableId() {
-				log.Warn("table id is not equal %d , %d", rng.GetTableID(), req.GetTableId())
+			if rng.GetTableId() != req.GetTableId() {
+				log.Warn("table id is not equal %d , %d", rng.GetTableId(), req.GetTableId())
 				continue
 			}
 			leader := rng.GetLeader()
@@ -55,13 +55,13 @@ func (service *Server) handleGetRoute(ctx context.Context, req *mspb.GetRouteReq
 				leader = peers[0]
 			}
 			routes = append(routes, &metapb.Route{
-				Range:  deepcopy.Iface(rng.GetMeta()).(*metapb.Range),
+				Range:  deepcopy.Iface(rng.Range).(*metapb.Range),
 				Leader: leader,
 			})
 
 			if ind == 0 {
 				//just trace,
-				log.Info("get route table %d ,range %d", rng.GetTableID(), rng.GetId())
+				log.Info("get route table %d ,range %d", rng.GetTableId(), rng.GetId())
 			}
 		}
 	} else {
@@ -129,20 +129,23 @@ func (service *Server) handleNodeHeartbeat(ctx context.Context, req *mspb.NodeHe
 
 func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.RangeHeartbeatRequest) (resp *mspb.RangeHeartbeatResponse) {
 	r := req.GetRange()
-	log.Debug("[HB] range[%d:%d] heartbeat, from ip[%s] Peers:%v DownPeers:%v", r.GetTableID(), r.GetId(), util.GetIpFromContext(ctx),
-		req.GetRange().GetPeers(), req.GetDownPeers())
+	log.Debug("[HB] range[%d:%d] heartbeat, from ip[%s]", r.GetTableId(), r.GetId(), util.GetIpFromContext(ctx))
 
 	cluster := service.cluster
 	resp = new(mspb.RangeHeartbeatResponse)
 	resp.Header = &mspb.ResponseHeader{}
 	resp.RangeId = r.GetId()
 	delFlag := false
-	table, find := cluster.FindTableById(r.GetTableID())
+	table, find := cluster.FindTableById(r.GetTableId())
 	if !find {
-		table, find = cluster.FindDeleteTableById(r.GetTableID()) //删除表已经到期被删除
+		table, find = cluster.FindDeleteTableById(r.GetTableId()) //删除表已经到期被删除
 		if !find {
 			delFlag = true
 		}
+	}
+	if _, found := cluster.deletedRanges.FindRange(r.GetId()); found {
+		log.Error("range[%v] had been deleted, but still exist heartbeat from nodeId[%d]. Please check ds log for more detail!", r.GetId(), req.GetLeader().GetNodeId())
+		return
 	}
 	var saveStore, saveCache bool
 	rng := cluster.FindRange(r.GetId())
@@ -179,6 +182,41 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 		}
 	}
 
+	// Range meta is stale, return.
+	if r.GetRangeEpoch().GetVersion() < rng.GetRangeEpoch().GetVersion() ||
+		r.GetRangeEpoch().GetConfVer() < rng.GetRangeEpoch().GetConfVer() {
+		log.Warn("range[%v] stale %v", rng.Range, r)
+		return
+	}
+	// 超过半数的副本发生down，　同时leader不一致, 疑似脑裂，新的leader已经在多数派选举出来
+	if len(req.GetDownPeers())*2 >= len(r.GetPeers()) && req.GetLeader().GetNodeId() != rng.GetLeader().GetNodeId() {
+		log.Warn("range[%v] maybe net split %v", rng.Range, r)
+		// TODO alarm
+		return
+	}
+
+	if r.GetRangeEpoch().GetVersion() > rng.GetRangeEpoch().GetVersion() {
+		saveCache = true
+		saveStore = true
+		log.Info("range %d version change from %d to %d",
+			rng.GetId(), rng.GetRangeEpoch().GetVersion(), r.GetRangeEpoch().GetVersion())
+	}
+	if r.GetRangeEpoch().GetConfVer() > rng.GetRangeEpoch().GetConfVer() {
+		saveCache = true
+		saveStore = true
+		log.Info("range %d conf version change from %d to %d",
+			rng.GetId(), rng.GetRangeEpoch().GetConfVer(), r.GetRangeEpoch().GetConfVer())
+	}
+	if req.GetLeader().GetNodeId() != rng.GetLeader().GetNodeId() {
+		saveCache = true
+	}
+	if len(req.GetDownPeers()) > 0 || len(req.GetPendingPeers()) > 0 {
+		saveCache = true
+	}
+	if len(rng.GetDownPeers()) > 0 || len(rng.GetPendingPeers()) > 0 {
+		saveCache = true
+	}
+
 	if saveStore {
 		err := cluster.storeRange(r)
 		if err != nil {
@@ -202,8 +240,14 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 			}
 		}
 
+		rng.Range = r
+		rng.PeersStatus = req.GetPeersStatus()
+		rng.Leader = req.GetLeader()
+
 		cluster.AddRange(rng)
 	}
+	rng.LastHbTimeTS = time.Now()
+	cluster.updateStatus(rng, req.GetStats())
 	if rng.Trace || log.IsEnableDebug() {
 		log.Debug("[HB] range[%s] dispatch task", rng.SString())
 	}
@@ -218,7 +262,7 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 		}
 		resp.Task = task
 	}
-	return nil
+	return
 }
 
 func (service *Server) handleAskSplit(ctx context.Context, req *mspb.AskSplitRequest) (resp *mspb.AskSplitResponse, err error) {
@@ -249,7 +293,7 @@ func (service *Server) handleAskSplit(ctx context.Context, req *mspb.AskSplitReq
 		return
 	}
 	// 检查元数据
-	rm := rng.GetMeta()
+	rm := rng.Range
 	rd := req.GetRange()
 	if rm.GetRangeEpoch().GetConfVer() == rd.GetRangeEpoch().GetConfVer() &&
 		rm.GetRangeEpoch().GetVersion() == rd.GetRangeEpoch().GetVersion() {

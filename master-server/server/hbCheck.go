@@ -40,62 +40,60 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 			continue
 		}
 		for _, r := range cluster.GetTableAllRanges(table.GetId()) {
-			if r.GetState() == metapb.RangeState_R_Remove {
+			if r.State == metapb.RangeState_R_Remove {
 				continue
 			}
 			leader := r.GetLeader()
 
 			//12个周期leader无心跳
-			if time.Since(r.LastHeartbeat()) > cluster.opt.GetMaxRangeDownTime() {
+			if time.Since(r.LastHbTimeTS) > cluster.opt.GetMaxRangeDownTime() {
 				var desc string
 				if leader == nil {
 					log.Error("must bug !!!  range[%d:%d] no leader, no heartbeat, lastHeartbeat :[%v]",
-						table.GetId(), r.GetID(), r.LastHeartbeat())
+						table.GetId(), r.GetId(), r.LastHbTimeTS)
 
 					desc = fmt.Sprintf("range[%d:%d] no leader, no heartbeat, lastHeartbeat :[%v]",
-						table.GetId(), r.GetID(), r.LastHeartbeat())
+						table.GetId(), r.GetId(), r.LastHbTimeTS)
 				} else {
 					log.Error("range[%d:%d] no heartbeat, leader is [%d], lastHeartbeat:[%v]",
-						table.GetId(), r.GetID(), leader.GetNodeId(), r.LastHeartbeat())
+						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
 
 					desc = fmt.Sprintf("range[%d:%d] no heartbeat, leader is [%d], lastheartbeat:[%v]",
-						table.GetId(), r.GetID(), leader.GetNodeId(), r.LastHeartbeat())
+						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
 				}
 
 				if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
-					Range:             deepcopy.Iface(r.GetMeta()).(*metapb.Range),
-					LastHeartbeatTime: r.LastHeartbeat().String(),
+					Range:             deepcopy.Iface(r.Range).(*metapb.Range),
+					LastHeartbeatTime: r.LastHbTimeTS.String(),
 				}, desc); err != nil {
 					log.Error("range no leader alarm failed: %v", err)
 				}
 
-				r.SetState(metapb.RangeState_R_Abnormal)
-				cluster.unhealthyRanges.Put(r.GetID(), r)
+				r.State = metapb.RangeState_R_Abnormal
+				cluster.unhealthyRanges.Put(r.GetId(), r)
 				nodeAble := retrieveNode(cluster, r) //节点状态并不能完全决定range的状态【正常是可以的，不排除意外】
 				if len(nodeAble) > 1 {               //节点正常，range不正常，不符合逻辑，需要特别关注
 					//todo alarm
 					log.Error("range[%d:%d] is unhealthy, but node is healthy, please attention. normal node: %v, peer:%v",
-						table.GetId(), r.GetID(), nodeAble, r.GetPeers())
+						table.GetId(), r.GetId(), nodeAble, r.GetPeers())
 				}
 
 			} else { //leader上报心跳正常
-				quorum := len(r.GetPeers())/2 + 1
-				// 好的节点不足quorum
-				if len(r.GetPeers())-len(r.GetDownPeers()) < quorum {
-					r.SetState(metapb.RangeState_R_Abnormal)
-					cluster.unhealthyRanges.Put(r.GetID(), r)
+				if isQuorumDown(r) {
+					r.State = metapb.RangeState_R_Abnormal
+					cluster.unhealthyRanges.Put(r.GetId(), r)
 
 					var leaderNodeID uint64
 					if leader != nil {
 						leaderNodeID = leader.GetNodeId()
 					}
 					log.Error("range[%d:%d] heartbeat normal, but more than half peer down, please attention. leader:[%d], downPeer:[%v]",
-						table.GetId(), r.GetID(), leaderNodeID, r.GetDownPeers())
+						table.GetId(), r.GetId(), leaderNodeID, r.GetDownPeers())
 
 					//TODO: alarm
 				} else {
-					if len(r.GetPeers()) != cluster.opt.GetMaxReplicas() || len(r.GetDownPeers()) > 0 {
-						cluster.unstableRanges.Put(r.GetID(), r)
+					if len(r.Peers) != cluster.opt.GetMaxReplicas() || len(r.GetDownPeers()) > 0 {
+						cluster.unstableRanges.Put(r.GetId(), r)
 					}
 				}
 			}

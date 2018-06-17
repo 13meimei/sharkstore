@@ -3,35 +3,35 @@ package server
 import (
 	"golang.org/x/net/context"
 
-	"model/pkg/metapb"
 	"util/log"
+	"model/pkg/metapb"
 
 	"time"
 )
 
 const (
 	Min_leader_balance_num = 5
-	Min_leader_adjust_num  = 50
+	Min_leader_adjust_num = 50
 )
 
 type balanceNodeLeaderWorker struct {
-	name            string
-	ctx             context.Context
-	cancel          context.CancelFunc
-	interval        time.Duration
+	name     string
+	ctx      context.Context
+	cancel   context.CancelFunc
+	interval time.Duration
 	defaultInterval time.Duration
-	option          *scheduleOption
+	option   *scheduleOption
 }
 
 func NewBalanceNodeLeaderWorker(wm *WorkerManager, interval time.Duration) Worker {
 	ctx, cancel := context.WithCancel(wm.ctx)
 	return &balanceNodeLeaderWorker{
-		name:            balanceLeaderWorkerName,
-		ctx:             ctx,
-		cancel:          cancel,
-		interval:        interval,
+		name:     balanceLeaderWorkerName,
+		ctx:      ctx,
+		cancel:   cancel,
+		interval: interval,
 		defaultInterval: interval,
-		option:          wm.opt,
+		option:   wm.opt,
 	}
 }
 
@@ -57,10 +57,7 @@ func (w *balanceNodeLeaderWorker) Work(cluster *Cluster) {
 
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to transfer leader, range:[%v], new leader:[%v]", rng.GetId(), newLeader.GetId())
-	tc := NewTaskChain(id, rng.GetId(), "balance-change-leader",
-		NewChangeLeaderTask(rng.GetLeader().GetNodeId(), newLeader.GetNodeId()))
-	// TODO: check return
-	cluster.taskManager.Add(tc)
+	cluster.eventDispatcher.pushEvent(NewTryChangeLeaderEvent(id, rng.GetId(), rng.GetLeader(), newLeader, w.GetName()))
 	return
 }
 
@@ -90,7 +87,7 @@ func countLeaderAvg(nodes []*Node) float64 {
 
 /**
 选择需要切换leader的range
-*/
+ */
 func (w *balanceNodeLeaderWorker) selectChangeLeader(cluster *Cluster) (*Range, *metapb.Peer) {
 	nodes := cluster.GetAllActiveNode()
 	if len(nodes) == 0 {
@@ -122,7 +119,7 @@ func (w *balanceNodeLeaderWorker) selectChangeLeader(cluster *Cluster) (*Range, 
 
 	w.adjustNextInterval(mostLeaderNum, leastLeaderNum, avgLeaderNum)
 
-	balanceThreshold := maxFloat64(avgLeaderNum/10, float64(Min_leader_balance_num))
+	balanceThreshold := maxFloat64(avgLeaderNum / 10, float64(Min_leader_balance_num))
 	if (mostLeaderNum - avgLeaderNum) > balanceThreshold {
 		// 在Node上选择一个leader
 		for _, r := range mostLeaderNode.GetAllRanges() {
@@ -141,7 +138,7 @@ func (w *balanceNodeLeaderWorker) selectChangeLeader(cluster *Cluster) (*Range, 
 		for _, r := range leastLeaderNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() != leastLeaderNode.GetId() && r.require(cluster) {
 				leaderNode := cluster.getLeaderNode(r)
-				if float64(leaderNode.GetLeaderCount()-leastLeaderNode.GetLeaderCount()) > float64(Min_leader_balance_num) {
+				if float64(leaderNode.GetLeaderCount()- leastLeaderNode.GetLeaderCount()) > float64(Min_leader_balance_num) {
 					return r, r.GetNodePeer(leastLeaderNode.GetId())
 				}
 			}
@@ -152,11 +149,11 @@ func (w *balanceNodeLeaderWorker) selectChangeLeader(cluster *Cluster) (*Range, 
 
 }
 
-func (w *balanceNodeLeaderWorker) adjustNextInterval(mostLeaderNum, leastLeaderNum, avgLeaderNum float64) {
-	adjustThreshold := maxFloat64(avgLeaderNum/2, float64(Min_leader_adjust_num))
+func (w *balanceNodeLeaderWorker) adjustNextInterval(mostLeaderNum,leastLeaderNum, avgLeaderNum float64) {
+	adjustThreshold := maxFloat64(avgLeaderNum / 2, float64(Min_leader_adjust_num))
 	if (mostLeaderNum - leastLeaderNum) > adjustThreshold {
-		w.interval = maxDuration(time.Duration(float64(w.interval)*scheduleIntervalFactor), minScheduleInterval)
+		w.interval = maxDuration(time.Duration(float64(w.interval) * scheduleIntervalFactor), minScheduleInterval)
 	} else {
-		w.interval = w.defaultInterval
+		w.interval =  w.defaultInterval
 	}
 }

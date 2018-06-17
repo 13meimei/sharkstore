@@ -1,11 +1,10 @@
 package server
 
 import (
-	"model/pkg/metapb"
 	"time"
-	"util/log"
-
 	"golang.org/x/net/context"
+	"util/log"
+	"model/pkg/metapb"
 )
 
 var (
@@ -58,9 +57,7 @@ func (w *balanceNodeRangeWorker) Work(cluster *Cluster) {
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to balance region and remove peer, region:[%v], old peer:[%v], old node:[%v], new node:[%v]",
 		rng.GetId(), oldPeer.GetId(), oldPeer.GetNodeId(), targetNodeId)
-	tc := NewTransferPeerTasks(id, rng, "balance-range-tranfer", oldPeer)
-	// TODO: check return
-	cluster.taskManager.Add(tc)
+	cluster.eventDispatcher.pushEvent(NewChangePeerEvent(id, rng, oldPeer, newPeer, w.GetName()))
 	return
 }
 

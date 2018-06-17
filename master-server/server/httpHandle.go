@@ -623,7 +623,7 @@ func (service *Server) handleRangeGetLeader(w http.ResponseWriter, r *http.Reque
 		reply.Message = http_error_range_find
 		return
 	}
-	leader := range_.GetLeader()
+	leader := range_.Leader
 	if leader == nil {
 		log.Error("http get range leader: no leader")
 		reply.Code = HTTP_ERROR_CLUSTER_HAS_NO_LEADER
@@ -684,7 +684,7 @@ func (service *Server) handleRangeGetRangeTopo(w http.ResponseWriter, r *http.Re
 	}
 
 	var _peers []*Peer
-	for _, p := range myRange.GetPeers() {
+	for _, p := range myRange.Peers {
 		node := cluster.FindNodeById(p.NodeId)
 		peer := &Peer{
 			p.Id,
@@ -695,15 +695,14 @@ func (service *Server) handleRangeGetRangeTopo(w http.ResponseWriter, r *http.Re
 		}
 		_peers = append(_peers, peer)
 	}
-	meta := myRange.GetMeta()
 	_range := &Range{
 		Id:         myRange.GetId(),
-		StartKey:   meta.GetStartKey(),
-		EndKey:     meta.GetEndKey(),
-		RangeEpoch: meta.GetRangeEpoch(),
+		StartKey:   myRange.StartKey,
+		EndKey:     myRange.EndKey,
+		RangeEpoch: myRange.RangeEpoch,
 		Peers:      _peers,
-		State:      int32(myRange.GetState()),
-		LastHbTime: myRange.LastHeartbeat().Format("2006-01-02 15:04:05") + opsDescription,
+		State:      int32(myRange.State),
+		LastHbTime: myRange.LastHbTimeTS.Format("2006-01-02 15:04:05") + opsDescription,
 	}
 	_route := &Route{
 		Range: _range,
@@ -795,7 +794,7 @@ func (service *Server) handleNodeGetRangeTopo(w http.ResponseWriter, r *http.Req
 		var peers []*Peer
 		var leader *Peer
 
-		for _, p := range r.GetPeers() {
+		for _, p := range r.Peers {
 			nd := cluster.FindNodeById(p.GetNodeId())
 			peer := &Peer{
 				p.Id,
@@ -811,15 +810,14 @@ func (service *Server) handleNodeGetRangeTopo(w http.ResponseWriter, r *http.Req
 		opsDescription := fmt.Sprintf(" \nBytesWritten=[%d], BytesRead=[%d], KeysWritten=[%d], KeysRead=[%d], OpsMax=[%d]",
 			r.BytesWritten, r.BytesRead, r.KeysWritten, r.KeysRead, r.opsStat.GetMax())
 
-		meta := r.GetMeta()
 		_range := &Range{
 			Id:         r.GetId(),
-			StartKey:   meta.GetStartKey(),
-			EndKey:     meta.GetEndKey(),
-			RangeEpoch: meta.GetRangeEpoch(),
+			StartKey:   r.GetStartKey(),
+			EndKey:     r.GetEndKey(),
+			RangeEpoch: r.GetRangeEpoch(),
 			Peers:      peers,
-			State:      int32(r.GetState()),
-			LastHbTime: r.LastHeartbeat().Format("2006-01-02 15:04:05") + opsDescription,
+			State:      int32(r.State),
+			LastHbTime: r.LastHbTimeTS.Format("2006-01-02 15:04:05") + opsDescription,
 		}
 		if table != nil && tbFind {
 			_range.DbName = table.GetDbName()
@@ -891,14 +889,13 @@ func (service *Server) handleRangeGetPeerInfo(w http.ResponseWriter, r *http.Req
 		Id:   p.GetId(),
 		Node: deepcopy.Iface(node.Node).(*metapb.Node),
 	}
-	meta := rang.GetMeta()
 	info := &PeerInfo{
 		Id:         rang.GetId(),
-		StartKey:   meta.GetStartKey(),
-		EndKey:     meta.GetEndKey(),
-		RangeEpoch: meta.GetRangeEpoch(),
+		StartKey:   rang.GetStartKey(),
+		EndKey:     rang.GetEndKey(),
+		RangeEpoch: rang.GetRangeEpoch(),
 		Peer:       peer,
-		State:      rang.GetState().String(),
+		State:      rang.State.String(),
 	}
 	reply.Data = info
 	log.Info("get range[%s] peer[%s] info success", rang.SString(), rang.GetId(), peer.Node.GetServerAddr())
@@ -935,7 +932,7 @@ func (service *Server) handleRangeDelete(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	rngCopy := deepcopy.Iface(region.GetMeta()).(*metapb.Range)
+	rngCopy := deepcopy.Iface(region.Range).(*metapb.Range)
 	if err := cluster.storeDeleteRange(rngCopy); err != nil {
 		log.Error("http delete range range [%d] failed!", rangeId)
 		reply.Code = HTTP_ERROR
@@ -949,7 +946,7 @@ func (service *Server) handleRangeDelete(w http.ResponseWriter, r *http.Request)
 func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
-	rangeID, err := strconv.ParseUint(r.FormValue(HTTP_RANGE_ID), 10, 64)
+	rangeId, err := strconv.ParseUint(r.FormValue(HTTP_RANGE_ID), 10, 64)
 	if err != nil {
 		log.Error("http range add peer: range id is not int: %v", err)
 		reply.Code = HTTP_ERROR
@@ -958,11 +955,17 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 	}
 
 	cluster := service.cluster
-	rng := cluster.FindRange(rangeID)
+	rng := cluster.FindRange(rangeId)
 	if rng == nil {
-		log.Error("http range add peer: range [%d] is not existed", rangeID)
+		log.Error("http range add peer: range [%d] is not existed", rangeId)
 		reply.Code = HTTP_ERROR_RANGE_FIND
 		reply.Message = http_error_range_find
+		return
+	}
+	newPeer, err := cluster.allocPeerAndSelectNode(rng)
+	if newPeer == nil || err != nil {
+		reply.Code = -1
+		reply.Message = "can not find best node to add peer"
 		return
 	}
 	id, err := cluster.GenId()
@@ -974,7 +977,7 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 	tc := NewTaskChain(id, rng.GetId(), "console-add-peer", NewAddPeerTask())
 	// TOOD: check return
 	cluster.taskManager.Add(tc)
-	log.Info("add range<%v> peer create task success", rangeID)
+	log.Info("add range<%v> peer create task success", rangeId)
 }
 
 func (service *Server) handleRangeDelPeer(w http.ResponseWriter, r *http.Request) {
@@ -1902,7 +1905,7 @@ func (service *Server) handleRangeLeaderChange(w http.ResponseWriter, r *http.Re
 	}
 
 	if !rng.require(cluster) {
-		log.Debug("http range leader change: range [%d] cannot be schedule, status: %v", rng.GetId(), rng.GetState())
+		log.Debug("http range leader change: range [%d] cannot be schedule, status: %v", rng.GetId(), rng.State)
 		reply.Code = -1
 		reply.Message = fmt.Sprintf("range [%d] cannot be schedule", rng.GetId())
 		return
@@ -1914,7 +1917,7 @@ func (service *Server) handleRangeLeaderChange(w http.ResponseWriter, r *http.Re
 		reply.Message = err.Error()
 		return
 	}
-	tc := NewTaskChain(taskID, rng.GetID(), "console-change-leader",
+	tc := NewTaskChain(taskID, rng.GetId(), "console-change-leader",
 		NewChangeLeaderTask(rng.GetLeader().GetNodeId(), newLeader.GetNodeId()))
 	// TODO: check return
 	cluster.taskManager.Add(tc)
@@ -1967,7 +1970,7 @@ func (service *Server) handleRangeTransfer(w http.ResponseWriter, r *http.Reques
 	}
 
 	if !rng.require(cluster) {
-		log.Debug("http range peer transfer: range [%d] cannot be schedule, status: %v", rng.GetId(), rng.GetState())
+		log.Debug("http range peer transfer: range [%d] cannot be schedule, status: %v", rng.GetId(), rng.State)
 		reply.Code = -1
 		reply.Message = fmt.Sprintf("range [%d] cannot be schedule", rng.GetId())
 		return
@@ -2071,7 +2074,7 @@ func (service *Server) handleGetAllTask(w http.ResponseWriter, r *http.Request) 
 			Type:     e.GetName(),
 			RangeId:  e.GetRangeID(),
 			Describe: e.String(),
-			State:    ToEventStatusName(e.GetStatus()),
+			// TODO:
 		})
 	}
 	reply.Data = resp
@@ -2260,7 +2263,7 @@ func (service *Server) handleUnhealthyRangeRecover(w http.ResponseWriter, r *htt
 			if rng == nil {
 				continue
 			}
-			table, found := service.cluster.FindTableById(rng.GetTableID())
+			table, found := service.cluster.FindTableById(rng.GetTableId())
 			if !found {
 				continue
 			}
@@ -2310,15 +2313,15 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 
 	var result []*http_reply.RangeBrief
 	for _, r := range cluster.GetAllUnhealthyRanges() {
-		if r.GetTableID() == table.GetId() && r.GetState() == metapb.RangeState_R_Abnormal {
-			rCopy := deepcopy.Iface(r.GetMeta()).(*metapb.Range)
+		if r.GetTableId() == table.GetId() && r.State == metapb.RangeState_R_Abnormal {
+			rCopy := deepcopy.Iface(r.Range).(*metapb.Range)
 
 			rng := &http_reply.RangeBrief{
 				Id:         rCopy.GetId(),
 				StartKey:   fmt.Sprintf("%v", rCopy.StartKey),
 				EndKey:     fmt.Sprintf("%v", rCopy.EndKey),
-				State:      int32(r.GetState()),
-				LastHbTime: r.LastHeartbeat().Format("2006-01-02 15:04:05"),
+				State:      int32(r.State),
+				LastHbTime: r.LastHbTimeTS.Format("2006-01-02 15:04:05"),
 			}
 
 			var peers []uint64
@@ -2335,8 +2338,8 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 				rng.DownPeers = downPeers
 			}
 
-			if r.GetLeader() != nil {
-				rng.Leader = r.GetLeader().GetId()
+			if r.Leader != nil {
+				rng.Leader = r.Leader.GetId()
 			}
 
 			result = append(result, rng)
@@ -2348,15 +2351,15 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 			break
 		}
 		r := cluster.FindRange(uint64(rangeId))
-		if r != nil && r.GetTableID() == table.GetId() {
-			rCopy := deepcopy.Iface(r.GetMeta()).(*metapb.Range)
+		if r != nil && r.GetTableId() == table.GetId() {
+			rCopy := deepcopy.Iface(r.Range).(*metapb.Range)
 
 			rng := &http_reply.RangeBrief{
 				Id:         rCopy.GetId(),
 				StartKey:   fmt.Sprintf("%v", rCopy.StartKey),
 				EndKey:     fmt.Sprintf("%v", rCopy.EndKey),
-				State:      int32(r.GetState()),
-				LastHbTime: r.LastHeartbeat().Format("2006-01-02 15:04:05"),
+				State:      int32(r.State),
+				LastHbTime: r.LastHbTimeTS.Format("2006-01-02 15:04:05"),
 			}
 
 			var peers []uint64
@@ -2373,8 +2376,8 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 				rng.DownPeers = downPeers
 			}
 
-			if r.GetLeader() != nil {
-				rng.Leader = r.GetLeader().GetId()
+			if r.Leader != nil {
+				rng.Leader = r.Leader.GetId()
 			}
 
 			result = append(result, rng)
@@ -2416,15 +2419,15 @@ func (service *Server) handleUnstableRangeQuery(w http.ResponseWriter, r *http.R
 
 	var result []*http_reply.RangeBrief
 	for _, r := range cluster.GetAllUnstableRanges() {
-		if r.GetTableID() == table.GetId() {
-			rCopy := deepcopy.Iface(r.GetMeta()).(*metapb.Range)
+		if r.GetTableId() == table.GetId() {
+			rCopy := deepcopy.Iface(r.Range).(*metapb.Range)
 
 			rng := &http_reply.RangeBrief{
 				Id:         rCopy.GetId(),
 				StartKey:   fmt.Sprintf("%v", rCopy.StartKey),
 				EndKey:     fmt.Sprintf("%v", rCopy.EndKey),
-				State:      int32(r.GetState()),
-				LastHbTime: r.LastHeartbeat().Format("2006-01-02 15:04:05"),
+				State:      int32(r.State),
+				LastHbTime: r.LastHbTimeTS.Format("2006-01-02 15:04:05"),
 			}
 
 			var peers []uint64
@@ -2441,8 +2444,8 @@ func (service *Server) handleUnstableRangeQuery(w http.ResponseWriter, r *http.R
 				rng.DownPeers = downPeers
 			}
 
-			if r.GetLeader() != nil {
-				rng.Leader = r.GetLeader().GetId()
+			if r.Leader != nil {
+				rng.Leader = r.Leader.GetId()
 			}
 
 			result = append(result, rng)
@@ -2492,13 +2495,13 @@ func (service *Server) handlePeerInfoQuery(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if range_.GetTableID() != table.GetId() {
+	if range_.GetTableId() != table.GetId() {
 		reply.Code = HTTP_ERROR
 		reply.Message = fmt.Sprintf("range<%v> not in table<%v>", rangeId, table.GetName())
 		return
 	}
 
-	reply.Data = cluster.queryPeerRemote(range_.GetMeta())
+	reply.Data = cluster.queryPeerRemote(range_.Range)
 	return
 }
 
@@ -2525,7 +2528,7 @@ func (service *Server) handleUnhealthyRangeUpdate(w http.ResponseWriter, r *http
 		return
 	}
 
-	if range_.GetState() != metapb.RangeState_R_Abnormal {
+	if range_.State != metapb.RangeState_R_Abnormal {
 		reply.Code = HTTP_ERROR
 		reply.Message = "range has been recovered"
 		return
@@ -2549,7 +2552,7 @@ func (service *Server) handleUnhealthyRangeUpdate(w http.ResponseWriter, r *http
 		return
 	}
 
-	if range_.GetTableID() != table.GetId() {
+	if range_.GetTableId() != table.GetId() {
 		reply.Code = HTTP_ERROR
 		reply.Message = fmt.Sprintf("range<%v> not in table<%v>", rangeId, table.GetName())
 		return
@@ -2593,7 +2596,7 @@ func (service *Server) handleUpdateRangeEpoch(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if range_.GetState() != metapb.RangeState_R_Abnormal {
+	if range_.State != metapb.RangeState_R_Abnormal {
 		reply.Code = HTTP_ERROR
 		reply.Message = "range has been recovered"
 		return
@@ -2617,7 +2620,7 @@ func (service *Server) handleUpdateRangeEpoch(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if range_.GetTableID() != table.GetId() {
+	if range_.GetTableId() != table.GetId() {
 		reply.Code = HTTP_ERROR
 		reply.Message = fmt.Sprintf("range<%v> not in table<%v>", rangeId, table.GetName())
 		return
@@ -2676,7 +2679,7 @@ func (service *Server) handleRangeOffline(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if range_.GetTableID() != table.GetId() {
+	if range_.GetTableId() != table.GetId() {
 		reply.Code = HTTP_ERROR
 		reply.Message = fmt.Sprintf("range<%v> not in table<%v>", rangeId, table.GetName())
 		return
@@ -2790,7 +2793,7 @@ func (service *Server) handleRangeLocate(w http.ResponseWriter, r *http.Request)
 	for _, rng := range ranges {
 		routes = append(routes, &routeInfo{
 			Route: &metapb.Route{
-				Range:  deepcopy.Iface(rng.GetMeta()).(*metapb.Range),
+				Range:  deepcopy.Iface(rng.Range).(*metapb.Range),
 				Leader: rng.GetLeader(),
 			},
 			downPeer: func() (downs []uint64) {
@@ -2801,7 +2804,7 @@ func (service *Server) handleRangeLocate(w http.ResponseWriter, r *http.Request)
 			}(),
 			pendPeer: func() (pends []uint64) {
 				for _, pend := range rng.GetPendingPeers() {
-					pends = append(pends, pend.GetId())
+					pends = append(pends, deepcopy.Iface(pend.GetId()).(uint64))
 				}
 				return
 			}(),
@@ -2914,7 +2917,7 @@ func (service *Server) handleTableGetRoute(w http.ResponseWriter, r *http.Reques
 	ranges := cluster.GetTableAllRanges(table.GetId())
 	var _routes []*Route
 	for _, rng := range ranges {
-		rngCopy := deepcopy.Iface(rng.GetMeta()).(*metapb.Range)
+		rngCopy := deepcopy.Iface(rng.Range).(*metapb.Range)
 		var peers []*Peer
 		var leader *Peer
 		for _, p := range rngCopy.GetPeers() {
@@ -2943,10 +2946,10 @@ func (service *Server) handleTableGetRoute(w http.ResponseWriter, r *http.Reques
 			RangeEpoch: &metapb.RangeEpoch{ConfVer: rngCopy.GetRangeEpoch().GetConfVer(), Version: rngCopy.GetRangeEpoch().GetVersion()},
 			Peers:      peers,
 			// Range state
-			State:      int32(rng.GetState()),
+			State:      int32(rng.State),
 			DbName:     table.GetDbName(),
 			TableName:  table.GetName(),
-			LastHbTime: rng.LastHeartbeat().Format("2006-01-02 15:04:05"),
+			LastHbTime: rng.LastHbTimeTS.Format("2006-01-02 15:04:05"),
 		}
 		route := &Route{
 			Range:  _range,
@@ -2979,7 +2982,7 @@ func (service *Server) handleTableGetRanges(w http.ResponseWriter, r *http.Reque
 	ranges := cluster.GetTableAllRanges(table.GetId())
 	var rngs []*metapb.Range
 	for _, r := range ranges {
-		rngs = append(rngs, r.GetMeta())
+		rngs = append(rngs, r.Range)
 	}
 	reply.Data = rngs
 
@@ -3074,7 +3077,10 @@ func (service *Server) handleRangeSetEpoch(w http.ResponseWriter, r *http.Reques
 		reply.Message = ErrNotExistRange.Error()
 		return
 	}
-	rang.SetVersion(Version, ConfVer)
+	rang.lock.Lock()
+	defer rang.lock.Unlock()
+	rang.RangeEpoch.ConfVer = ConfVer
+	rang.RangeEpoch.Version = Version
 }
 
 func (service *Server) handleSearchRange(w http.ResponseWriter, r *http.Request) {
@@ -3124,7 +3130,7 @@ func (service *Server) handleSearchRange(w http.ResponseWriter, r *http.Request)
 		reply.Message = "not find range"
 		return
 	}
-	reply.Data = rng.GetMeta()
+	reply.Data = rng.Range
 
 	return
 }
