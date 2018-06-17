@@ -158,7 +158,7 @@ Status RaftFsm::start() {
     LOG_INFO("newRaft[%llu]%s commit: %llu, applied: %llu, lastindex: %llu, "
              "peers: %s",
              id_, (is_learner_ ? " [learner]" : ""), raft_log_->committed(),
-             rops_.applied, raft_log_->lastIndex(), PeersToString(rops_.peers));
+             rops_.applied, raft_log_->lastIndex(), PeersToString(rops_.peers).c_str());
 
     if (rops_.applied > 0) {
         uint64_t lasti = raft_log_->lastIndex();

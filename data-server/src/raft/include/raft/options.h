@@ -61,8 +61,8 @@ struct RaftServerOptions {
     // learner跟leader的日志差距小于下面条件中的任意一个就算是进度追上了
     // 1) 条数
     // 2) 当前最大日志index的百分比
-    size_t promote_gap_threshold = 500;
-    size_t promote_gap_percent = 5;
+    uint64_t promote_gap_threshold = 500;
+    uint64_t promote_gap_percent = 5;
 
     // tick间隔时间
     std::chrono::milliseconds tick_interval = std::chrono::milliseconds(500);

@@ -3,7 +3,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 
-namespace fbase {
+namespace sharkstore {
 namespace monitor {
 
 bool MacStatus::GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *available) {
