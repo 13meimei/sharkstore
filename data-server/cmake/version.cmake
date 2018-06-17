@@ -3,7 +3,7 @@ find_program(DATE_BIN date)
 if(NOT DATE_BIN)
 	message(FATAL_ERROR "Date program is not found")
 else()
-    execute_process(COMMAND date +"%Y/%m/%d %H:%M:%S"
+    execute_process(COMMAND ${DATE_BIN} +"%Y/%m/%d %H:%M:%S"
         RESULT_VARIABLE RETVAL OUTPUT_VARIABLE
         BUILD_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
