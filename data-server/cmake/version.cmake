@@ -9,7 +9,7 @@ else()
 endif()
 
 # config buid type
-if (NOT BUILD_TYPE STREQUAL "Debug")
+if (BUILD_TYPE STREQUAL "")
     set(BUILD_TYPE "Relase")
 endif()
 
