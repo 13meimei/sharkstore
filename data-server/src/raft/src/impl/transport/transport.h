@@ -1,7 +1,7 @@
 _Pragma("once");
 
 #include "base/status.h"
-
+#include <functional>
 #include "../raft_types.h"
 
 namespace fbase {

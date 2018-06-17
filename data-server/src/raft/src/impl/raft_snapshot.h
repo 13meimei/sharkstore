@@ -3,7 +3,7 @@ _Pragma("once");
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-
+#include <functional>
 #include "raft/snapshot.h"
 #include "raft_types.h"
 

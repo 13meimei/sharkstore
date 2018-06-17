@@ -3,7 +3,7 @@ _Pragma("once");
 #include <list>
 #include "raft/options.h"
 #include "raft/status.h"
-
+#include <functional>
 #include "raft_log.h"
 #include "raft_snapshot.h"
 #include "raft_types.h"

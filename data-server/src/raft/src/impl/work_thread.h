@@ -6,6 +6,7 @@ _Pragma("once");
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <functional>
 #include <unordered_map>
 #include "raft_types.h"
 
