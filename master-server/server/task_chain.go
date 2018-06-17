@@ -134,18 +134,18 @@ func NewTransferPeerTasks(id uint64, r *Range, name string, from *metapb.Peer) *
 	if r.GetLeader() != nil && r.GetLeader().GetId() == from.GetId() {
 		changeLeaderTask := NewChangeLeaderTask(r.GetLeader().GetNodeId(), 0)
 		changeLeaderTask.SetAllowFail()
-		return NewTaskChain(id, r.GetID(), name, addPeerTask, changeLeaderTask, delPeerTask)
+		return NewTaskChain(id, r.GetId(), name, addPeerTask, changeLeaderTask, delPeerTask)
 	}
-	return NewTaskChain(id, r.GetID(), name, addPeerTask, delPeerTask)
+	return NewTaskChain(id, r.GetId(), name, addPeerTask, delPeerTask)
 }
 
 // NewDeletePeerTasks new delete peer tasks
-func NewDeletePeerTasks(id, r *Range, name string, peer *metapb.Peer) *TaskChain {
+func NewDeletePeerTasks(id uint64, r *Range, name string, peer *metapb.Peer) *TaskChain {
 	delPeerTask := NewDeletePeerTask(peer)
 	if r.GetLeader() != nil && r.GetLeader().GetId() == peer.GetId() {
 		changeLeaderTask := NewChangeLeaderTask(r.GetLeader().GetNodeId(), 0)
 		changeLeaderTask.SetAllowFail()
-		return NewTaskChain(id, r.GetID(), creator, changeLeaderTask, delPeerTask)
+		return NewTaskChain(id, r.GetId(), name, changeLeaderTask, delPeerTask)
 	}
-	return NewTaskChain(id, r.GetID(), creator, delPeerTask)
+	return NewTaskChain(id, r.GetId(), name, delPeerTask)
 }

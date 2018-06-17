@@ -110,6 +110,7 @@ func (manager *hb_range_manager) CheckRange(cluster *Cluster, r *Range) *TaskCha
 		if err != nil {
 			return nil
 		}
+		return NewTaskChain(id, r.GetId(), "hb-range-remove", NewDeleteRangeTask())
 	}
 
 	// range failover

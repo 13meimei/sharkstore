@@ -44,6 +44,7 @@ func (m *TaskManager) Remove(tc *TaskChain) bool {
 		return false
 	}
 	delete(m.tasks, tc.GetRangeID())
+	return true
 }
 
 // Find find

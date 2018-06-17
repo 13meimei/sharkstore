@@ -1,8 +1,9 @@
 package server
 
 import (
-	"golang.org/x/net/context"
 	"model/pkg/mspb"
+
+	"golang.org/x/net/context"
 )
 
 func (service *Server) checkClusterValid() *mspb.Error {
@@ -15,7 +16,10 @@ func (service *Server) checkClusterValid() *mspb.Error {
 			}
 		} else {
 			err = &mspb.Error{
-				MsLeader: &mspb.MsLeader{MsLeader: point.RpcServerAddr},
+				NewLeader: &mspb.MSLeader{
+					Address: point.RpcServerAddr,
+					Id:      point.ID,
+				},
 			}
 		}
 		return err
@@ -139,7 +143,7 @@ func (service *Server) GetMSLeader(ctx context.Context, req *mspb.GetMSLeaderReq
 }
 
 func (service *Server) TruncateTable(context.Context, *mspb.TruncateTableRequest) (*mspb.TruncateTableResponse, error) {
-    return &mspb.TruncateTableResponse{}, nil
+	return &mspb.TruncateTableResponse{}, nil
 }
 
 func (service *Server) AddColumn(ctx context.Context, req *mspb.AddColumnRequest) (*mspb.AddColumnResponse, error) {

@@ -21,6 +21,7 @@ type Range struct {
 	lock sync.RWMutex
 	*metapb.Range
 	Leader      *metapb.Peer
+	Term        uint64
 	PeersStatus []*mspb.PeerStatus
 
 	BytesWritten uint64
@@ -139,7 +140,7 @@ func (r *Range) GetDownPeers() []*DownPeer {
 	var downs []*DownPeer
 	for _, status := range r.PeersStatus {
 		if status.DownSeconds > 0 {
-			downs = append(down, &DownPeer{
+			downs = append(downs, &DownPeer{
 				Peer:        status.GetPeer(),
 				DownSeconds: status.GetDownSeconds(),
 			})
@@ -274,29 +275,4 @@ func (r *Range) IsHealthy() bool {
 		return false
 	}
 	return true
-}
-
-func (r *Range) clone() *Range {
-	if r == nil {
-		return nil
-	}
-	return &Range{
-		Range:        deepcopy.Iface(r.Range).(*metapb.Range),
-		Leader:       r.Leader,
-		DownPeers:    r.DownPeers,
-		PendingPeers: r.PendingPeers,
-
-		BytesWritten: r.BytesWritten,
-		BytesRead:    r.BytesRead,
-
-		KeysWritten: r.KeysWritten,
-		KeysRead:    r.KeysRead,
-		// Approximate range size.
-		ApproximateSize: r.ApproximateSize,
-
-		State: r.State,
-		Trace: r.Trace,
-
-		LastHbTimeTS: r.LastHbTimeTS,
-	}
 }
