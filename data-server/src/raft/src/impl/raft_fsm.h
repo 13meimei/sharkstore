@@ -1,9 +1,10 @@
 _Pragma("once");
 
 #include <list>
+#include <functional>
+
 #include "raft/options.h"
 #include "raft/status.h"
-
 #include "raft_log.h"
 #include "raft_types.h"
 #include "replica.h"

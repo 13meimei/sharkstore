@@ -15,7 +15,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace master {
 
-class AsyncCallResult;
+struct AsyncCallResult;
 
 // Client 管理同MasterServer之间的RPC请求
 // 所有请求如果当前没有leader，会先获取一次leader，如果获取失败则本次请求失败

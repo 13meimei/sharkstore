@@ -7,7 +7,6 @@
 #include "statemachine.h"
 #include "telnet_service.h"
 
-#include "raft/src/impl/raft_snapshot.h"
 #include "raft/src/impl/raft_fsm.h"
 
 namespace sharkstore {
