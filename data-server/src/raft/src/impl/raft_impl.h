@@ -13,9 +13,9 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
-class SnapContext;
-class SnapResult;
 class RaftFsm;
+struct SnapContext;
+struct SnapResult;
 
 class RaftImpl : public Raft, public std::enable_shared_from_this<RaftImpl> {
 public:

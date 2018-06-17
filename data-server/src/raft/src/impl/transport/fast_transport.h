@@ -31,7 +31,6 @@ public:
 
 private:
     std::shared_ptr<NodeResolver> resolver_;
-    const size_t send_threads_num_ = 0;
     const size_t recv_threads_num_ = 0;
 
     FastServer* server_ = nullptr;

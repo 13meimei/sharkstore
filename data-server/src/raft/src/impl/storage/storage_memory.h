@@ -52,7 +52,6 @@ private:
     uint64_t trunc_index_ = 0;
     uint64_t trunc_term_ = 0;
 
-    uint64_t start_ = 0;
     std::deque<EntryPtr> entries_;
 
     pb::HardState hardstate_;

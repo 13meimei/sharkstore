@@ -8,7 +8,9 @@ namespace impl {
 namespace storage {
 
 MemoryStorage::MemoryStorage(uint64_t id, uint64_t capacity)
-    : id_(id), capacity_(capacity) {}
+    : id_(id), capacity_(capacity) {
+        (void)id_;
+}
 
 MemoryStorage::~MemoryStorage() {}
 

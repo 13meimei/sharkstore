@@ -12,7 +12,7 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
-class Ready;
+struct Ready;
 class SendSnapTask;
 class ApplySnapTask;
 

@@ -12,7 +12,6 @@ namespace transport {
 FastTransport::FastTransport(const std::shared_ptr<NodeResolver>& resolver,
                              size_t send_threads, size_t recv_threads)
     : resolver_(resolver),
-      send_threads_num_(send_threads),
       recv_threads_num_(recv_threads) {}
 
 FastTransport::~FastTransport() {
