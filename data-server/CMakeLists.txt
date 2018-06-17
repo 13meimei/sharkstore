@@ -145,6 +145,7 @@ set(SOURCES
     src/server/raft_logger.cpp
     src/server/run_status.cpp
     src/server/range_server.cpp
+    src/server/version.cpp
     src/range/range.cpp
     src/range/lock.cpp
     src/range/raw_get.cpp
@@ -227,6 +228,13 @@ endforeach()
 
 add_executable(data-server ${SOURCES})
 target_link_libraries(data-server ${depend_LIBRARYS})
+
+add_custom_target(
+    gen-version ALL
+    ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR} -DBUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -P ${CMAKE_SOURCE_DIR}/cmake/version.cmake
+)
+add_dependencies(data-server gen-version)
 
 OPTION (BUILD_TEST "build fbase tests" OFF)
 MESSAGE(STATUS BUILD_TEST=${BUILD_TEST})

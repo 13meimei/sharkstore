@@ -7,6 +7,7 @@
 #include "common/socket_session_impl.h"
 #include "frame/sf_logger.h"
 
+#include "version.h"
 #include "manager.h"
 #include "master/worker.h"
 #include "node_address.h"
@@ -76,7 +77,7 @@ int DataServer::Init() {
     // GetNodeId from master server
     bool clearup = false;
     uint64_t node_id = 0;
-    std::string version;
+    std::string version = GetGitDescribe();
     auto s = context_->master_worker->GetNodeId(
         ds_config.raft_config.port, ds_config.worker_config.port,
         ds_config.manager_config.port, version, &node_id, &clearup);
