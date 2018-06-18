@@ -232,7 +232,7 @@ target_link_libraries(data-server ${depend_LIBRARYS})
 add_custom_target(
     gen-version ALL
     ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR} -DBUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DBUILD_FLAGS=${CMAKE_CXX_FLAGS} -P ${CMAKE_SOURCE_DIR}/cmake/version.cmake
+        -DBUILD_FLAGS=${CMAKE_CXX_FLAGS} -P ${PROJECT_SOURCE_DIR}/cmake/version.cmake
 )
 add_dependencies(data-server gen-version)
 

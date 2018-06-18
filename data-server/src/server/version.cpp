@@ -1,7 +1,7 @@
-#include "version_gen.h"
-
 #include <string>
 #include <sstream>
+
+#include "version_gen.h"
 
 namespace sharkstore {
 namespace dataserver {

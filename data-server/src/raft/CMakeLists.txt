@@ -51,8 +51,8 @@ set (raft_test_Deps
         sharkstore-frame
         sharkstore-base
         sharkstore-lkqueue
-        fastcommon
         ${PROTOBUF_LIBRARY}
+        ${FASTCOMMON_LIB}
         pthread
         )
 
