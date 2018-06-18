@@ -104,6 +104,13 @@ static int load_rocksdb_config(IniContext *ini_context) {
     ds_config.rocksdb_config.cache_index_and_filter_blocks =
             iniGetIntValue(section, "cache_index_and_filter_blocks", ini_context, 0);
 
+    ds_config.rocksdb_config.storage_type = load_integer_value_atleast(ini_context, section, "storage_type", 0, 0);
+
+    ds_config.rocksdb_config.min_blob_size = load_integer_value_atleast(ini_context, section, "min_blob_size", 0, 0);
+
+    ds_config.rocksdb_config.enable_garbage_collection =
+            iniGetIntValue(section, "enable_garbage_collection",ini_context,  0);
+
     ds_config.rocksdb_config.ttl = load_integer_value_atleast(ini_context, section, "ttl", 0, 0);
 
     return 0;
@@ -131,6 +138,9 @@ void print_rocksdb_config() {
               "\n\tlevel0_stop_writes_trigger: %d"
               "\n\tdisable_wal: %d"
               "\n\tcache_index_and_filter_blocks: %d"
+              "\n\tstorage_type: %d"
+              "\n\tmin_blob_size: %d"
+              "\n\tenable_garbage_collection: %d"
               "\n\tttl: %d"
               ,
               ds_config.rocksdb_config.path,
@@ -153,6 +163,9 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.level0_stop_writes_trigger,
               ds_config.rocksdb_config.disable_wal,
               ds_config.rocksdb_config.cache_index_and_filter_blocks,
+              ds_config.rocksdb_config.storage_type,
+              ds_config.rocksdb_config.min_blob_size,
+              ds_config.rocksdb_config.enable_garbage_collection,
               ds_config.rocksdb_config.ttl
               );
 }

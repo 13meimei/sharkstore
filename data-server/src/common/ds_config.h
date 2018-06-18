@@ -31,6 +31,9 @@ typedef struct ds_config_s {
         int level0_stop_writes_trigger;
         bool disable_wal;
         bool cache_index_and_filter_blocks;
+        int storage_type;
+        int min_blob_size;
+        bool enable_garbage_collection;
         int ttl;
     } rocksdb_config;
 

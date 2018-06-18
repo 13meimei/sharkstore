@@ -9,6 +9,7 @@
 #include <rocksdb/cache.h>
 #include <rocksdb/table.h>
 #include <rocksdb/utilities/db_ttl.h>
+#include <rocksdb/utilities/blob_db/blob_db.h>
 
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -216,28 +217,47 @@ int RangeServer::OpenDB() {
     ops.level0_slowdown_writes_trigger =
         ds_config.rocksdb_config.level0_slowdown_writes_trigger;
     ops.level0_stop_writes_trigger = ds_config.rocksdb_config.level0_stop_writes_trigger;
-
-    if (ds_config.rocksdb_config.ttl == 0) {
-        auto ret = rocksdb::DB::Open(ops, db_path, &db_);
-        if (!ret.ok()) {
-            FLOG_ERROR("open rocksdb(%s) failed(%s)", db_path.c_str(),
-                       ret.ToString().c_str());
+    if (ds_config.rocksdb_config.storage_type == 0){
+        if (ds_config.rocksdb_config.ttl == 0) {
+            auto ret = rocksdb::DB::Open(ops, db_path, &db_);
+            if (!ret.ok()) {
+                FLOG_ERROR("open rocksdb(%s) failed(%s)", db_path.c_str(),
+                           ret.ToString().c_str());
+                return -1;
+            }
+        } else if (ds_config.rocksdb_config.ttl > 0) {
+            FLOG_WARN("rocksdb ttl enabled. ttl=%d", ds_config.rocksdb_config.ttl);
+            rocksdb::DBWithTTL *ttl_db = nullptr;
+            auto ret =
+                rocksdb::DBWithTTL::Open(ops, db_path, &ttl_db, ds_config.rocksdb_config.ttl);
+            if (!ret.ok()) {
+                FLOG_ERROR("open rocksdb(%s) failed(%s)", db_path.c_str(),
+                           ret.ToString().c_str());
+                return -1;
+            } else {
+                db_ = ttl_db;
+            }
+        } else {
+            FLOG_ERROR("invalid rocksdb ttl(%d)", ds_config.rocksdb_config.ttl);
             return -1;
         }
-    } else if (ds_config.rocksdb_config.ttl > 0) {
-        FLOG_WARN("rocksdb ttl enabled. ttl=%d", ds_config.rocksdb_config.ttl);
-        rocksdb::DBWithTTL *ttl_db = nullptr;
-        auto ret =
-            rocksdb::DBWithTTL::Open(ops, db_path, &ttl_db, ds_config.rocksdb_config.ttl);
-        if (!ret.ok()) {
-            FLOG_ERROR("open rocksdb(%s) failed(%s)", db_path.c_str(),
+    }else if (ds_config.rocksdb_config.storage_type == 1){
+        rocksdb::blob_db::BlobDBOptions blobDBOptions = rocksdb::blob_db::BlobDBOptions();
+        blobDBOptions.min_blob_size = ds_config.rocksdb_config.min_blob_size;
+        blobDBOptions.enable_garbage_collection = ds_config.rocksdb_config.enable_garbage_collection;
+        rocksdb::blob_db::BlobDB *blobDB = nullptr;
+
+        auto ret = rocksdb::blob_db::BlobDB::Open(ops,blobDBOptions,db_path,&blobDB);
+
+        if (!ret.ok()){
+            FLOG_ERROR("open rocksdb_blob(%s) failed(%s)", db_path.c_str(),
                        ret.ToString().c_str());
             return -1;
         } else {
-            db_ = ttl_db;
+            db_ = blobDB;
         }
-    } else {
-        FLOG_ERROR("invalid rocksdb ttl(%d)", ds_config.rocksdb_config.ttl);
+    }else{
+        FLOG_ERROR("invalid rocksdb storage_type(%d)", ds_config.rocksdb_config.storage_type);
         return -1;
     }
     return 0;
