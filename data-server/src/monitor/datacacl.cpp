@@ -53,6 +53,7 @@ namespace sharkstore
                     break;
                 case PrintTag::Store:
                     StorePutData(tag,timedata);
+		    break;
                 case PrintTag::Qwait:
                     QwaitPutData(tag,timedata);
                     break;

@@ -61,10 +61,10 @@ void Range::DelPeer(const metapb::Peer &peer) {
     raft::ConfChange cch;
 
     metapb::Peer old_peer;
-    if (!FindPeerByNodeID(peer.node_id()) || old_peer.id() != peer.id()) {
+    if (!FindPeerByNodeID(peer.node_id(), &old_peer) || old_peer.id() != peer.id()) {
         FLOG_WARN("Range %" PRIu64 " DelPeer NodeId: %" PRIu64 " peer:%" PRIu64
-                  " info mismatch!",
-                  meta_.id(), peer.node_id(), peer.id());
+                  " info mismatch, Current Peer NodeId: %" PRIu64 " peer: %" PRIu64,
+                  meta_.id(), peer.node_id(), peer.id(), old_peer.node_id(), old_peer.id());
         return;
     }
 

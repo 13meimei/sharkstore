@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	defaultDelPeerTaskTimeout = time.Second * time.Duration(30)
+	defaultDelPeerTaskTimeout      = time.Second * time.Duration(30)
+	defaultMaxDeletePeerRetryTimes = 2
 )
 
 // DeletePeerTask  delete peer task
@@ -18,8 +19,7 @@ type DeletePeerTask struct {
 	*BaseTask
 	peer *metapb.Peer // peer to delete
 
-	confRetries   int
-	deleteRetries int
+	confRetries int
 }
 
 // NewDeletePeerTask new delete peer task
@@ -83,14 +83,22 @@ func (t *DeletePeerTask) stepDeleteRange(cluster *Cluster, r *Range) (over bool)
 		return true
 	}
 
-	err := cluster.cli.DeleteRange(node.GetServerAddr(), r.GetId())
-	if err == nil {
-		log.Error("%s delete range failed, target node: %d, retries: %d, err: %v", t.logID, t.peer.GetNodeId(), t.deleteRetries, err)
-		t.deleteRetries++
-		return false
+	// try delete direcly, if fail then put to gc
+	var err error
+	for i := 0; i < defaultMaxDeletePeerRetryTimes; i++ {
+		err = cluster.cli.DeleteRange(node.GetServerAddr(), r.GetId())
+		if err != nil {
+			log.Warn("%s delete range failed, target node: %d, err: %v", t.logID, t.peer.GetNodeId(), err)
+		} else {
+			break
+		}
 	}
-
-	log.Info("%s delete range finished, peer[id:%d, node:%d]", t.logID, t.peer.GetId(), t.peer.GetNodeId())
+	if err != nil {
+		log.Info("%s start gc peer: %v ", t.logID, t.peer.GetNodeId())
+		peerGC(cluster, r.Range, t.peer)
+	} else {
+		log.Info("%s delete range finished, peer[id:%d, node:%d]", t.logID, t.peer.GetId(), t.peer.GetNodeId())
+	}
 
 	t.state = TaskStateFinished
 	return true
