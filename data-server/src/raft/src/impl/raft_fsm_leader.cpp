@@ -403,8 +403,8 @@ void RaftFsm::checkCaughtUp() {
 
     assert(lasti >= max_match);
     if (lasti - max_match < final_threshold) {
-        LOG_INFO("raft[%lu] start promote learner %s [matche:%lu] at term %lu.", id_,
-                 max_peer.ToString().c_str(), max_match, term_);
+        LOG_INFO("raft[%lu] start promote learner %s [match:%lu, lasti:%lu] at term %lu.", id_,
+                 max_peer.ToString().c_str(), max_match, lasti, term_);
 
         max_peer.type = PeerType::kNormal;
         ConfChange cc;

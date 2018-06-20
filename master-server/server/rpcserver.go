@@ -16,9 +16,8 @@ func (service *Server) checkClusterValid() *mspb.Error {
 			}
 		} else {
 			err = &mspb.Error{
-				NewLeader: &mspb.MSLeader{
+				NewLeader: &mspb.LeaderHint{
 					Address: point.RpcServerAddr,
-					Id:      point.ID,
 				},
 			}
 		}

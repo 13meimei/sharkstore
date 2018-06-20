@@ -64,6 +64,18 @@ extern RequestHeaderDefaultTypeInternal _RequestHeader_default_instance_;
 class ResponseHeader;
 class ResponseHeaderDefaultTypeInternal;
 extern ResponseHeaderDefaultTypeInternal _ResponseHeader_default_instance_;
+class SimpleAlarmRequest;
+class SimpleAlarmRequestDefaultTypeInternal;
+extern SimpleAlarmRequestDefaultTypeInternal _SimpleAlarmRequest_default_instance_;
+class SimpleAlarmResponse;
+class SimpleAlarmResponseDefaultTypeInternal;
+extern SimpleAlarmResponseDefaultTypeInternal _SimpleAlarmResponse_default_instance_;
+class SimpleRequest;
+class SimpleRequestDefaultTypeInternal;
+extern SimpleRequestDefaultTypeInternal _SimpleRequest_default_instance_;
+class SimpleResponse;
+class SimpleResponseDefaultTypeInternal;
+extern SimpleResponseDefaultTypeInternal _SimpleResponse_default_instance_;
 class TaskAlarmRequest;
 class TaskAlarmRequestDefaultTypeInternal;
 extern TaskAlarmRequestDefaultTypeInternal _TaskAlarmRequest_default_instance_;
@@ -350,6 +362,221 @@ class ResponseHeader : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
+class SimpleAlarmRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:alarmpb.SimpleAlarmRequest) */ {
+ public:
+  SimpleAlarmRequest();
+  virtual ~SimpleAlarmRequest();
+
+  SimpleAlarmRequest(const SimpleAlarmRequest& from);
+
+  inline SimpleAlarmRequest& operator=(const SimpleAlarmRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  SimpleAlarmRequest(SimpleAlarmRequest&& from) noexcept
+    : SimpleAlarmRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline SimpleAlarmRequest& operator=(SimpleAlarmRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SimpleAlarmRequest& default_instance();
+
+  static inline const SimpleAlarmRequest* internal_default_instance() {
+    return reinterpret_cast<const SimpleAlarmRequest*>(
+               &_SimpleAlarmRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    2;
+
+  void Swap(SimpleAlarmRequest* other);
+  friend void swap(SimpleAlarmRequest& a, SimpleAlarmRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SimpleAlarmRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  SimpleAlarmRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const SimpleAlarmRequest& from);
+  void MergeFrom(const SimpleAlarmRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(SimpleAlarmRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string Describe = 2;
+  void clear_describe();
+  static const int kDescribeFieldNumber = 2;
+  const ::std::string& describe() const;
+  void set_describe(const ::std::string& value);
+  #if LANG_CXX11
+  void set_describe(::std::string&& value);
+  #endif
+  void set_describe(const char* value);
+  void set_describe(const char* value, size_t size);
+  ::std::string* mutable_describe();
+  ::std::string* release_describe();
+  void set_allocated_describe(::std::string* describe);
+
+  // .alarmpb.RequestHeader head = 1;
+  bool has_head() const;
+  void clear_head();
+  static const int kHeadFieldNumber = 1;
+  const ::alarmpb::RequestHeader& head() const;
+  ::alarmpb::RequestHeader* mutable_head();
+  ::alarmpb::RequestHeader* release_head();
+  void set_allocated_head(::alarmpb::RequestHeader* head);
+
+  // @@protoc_insertion_point(class_scope:alarmpb.SimpleAlarmRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr describe_;
+  ::alarmpb::RequestHeader* head_;
+  mutable int _cached_size_;
+  friend struct protobuf_alarmpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class SimpleAlarmResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:alarmpb.SimpleAlarmResponse) */ {
+ public:
+  SimpleAlarmResponse();
+  virtual ~SimpleAlarmResponse();
+
+  SimpleAlarmResponse(const SimpleAlarmResponse& from);
+
+  inline SimpleAlarmResponse& operator=(const SimpleAlarmResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  SimpleAlarmResponse(SimpleAlarmResponse&& from) noexcept
+    : SimpleAlarmResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline SimpleAlarmResponse& operator=(SimpleAlarmResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SimpleAlarmResponse& default_instance();
+
+  static inline const SimpleAlarmResponse* internal_default_instance() {
+    return reinterpret_cast<const SimpleAlarmResponse*>(
+               &_SimpleAlarmResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    3;
+
+  void Swap(SimpleAlarmResponse* other);
+  friend void swap(SimpleAlarmResponse& a, SimpleAlarmResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SimpleAlarmResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  SimpleAlarmResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const SimpleAlarmResponse& from);
+  void MergeFrom(const SimpleAlarmResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(SimpleAlarmResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .alarmpb.ResponseHeader head = 1;
+  bool has_head() const;
+  void clear_head();
+  static const int kHeadFieldNumber = 1;
+  const ::alarmpb::ResponseHeader& head() const;
+  ::alarmpb::ResponseHeader* mutable_head();
+  ::alarmpb::ResponseHeader* release_head();
+  void set_allocated_head(::alarmpb::ResponseHeader* head);
+
+  // @@protoc_insertion_point(class_scope:alarmpb.SimpleAlarmResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::alarmpb::ResponseHeader* head_;
+  mutable int _cached_size_;
+  friend struct protobuf_alarmpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class TaskAlarmRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:alarmpb.TaskAlarmRequest) */ {
  public:
   TaskAlarmRequest();
@@ -384,7 +611,7 @@ class TaskAlarmRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_TaskAlarmRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    2;
+    4;
 
   void Swap(TaskAlarmRequest* other);
   friend void swap(TaskAlarmRequest& a, TaskAlarmRequest& b) {
@@ -536,7 +763,7 @@ class TaskTimeout : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_TaskTimeout_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    3;
+    5;
 
   void Swap(TaskTimeout* other);
   friend void swap(TaskTimeout& a, TaskTimeout& b) {
@@ -648,7 +875,7 @@ class TaskLongTimeRunning : public ::google::protobuf::Message /* @@protoc_inser
                &_TaskLongTimeRunning_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    4;
+    6;
 
   void Swap(TaskLongTimeRunning* other);
   friend void swap(TaskLongTimeRunning& a, TaskLongTimeRunning& b) {
@@ -760,7 +987,7 @@ class TaskAlarmResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_TaskAlarmResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    5;
+    7;
 
   void Swap(TaskAlarmResponse* other);
   friend void swap(TaskAlarmResponse& a, TaskAlarmResponse& b) {
@@ -860,7 +1087,7 @@ class NodeRangeAlarmRequest : public ::google::protobuf::Message /* @@protoc_ins
                &_NodeRangeAlarmRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    6;
+    8;
 
   void Swap(NodeRangeAlarmRequest* other);
   friend void swap(NodeRangeAlarmRequest& a, NodeRangeAlarmRequest& b) {
@@ -1022,7 +1249,7 @@ class RangeNoHeartbeatAlarm : public ::google::protobuf::Message /* @@protoc_ins
                &_RangeNoHeartbeatAlarm_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    7;
+    9;
 
   void Swap(RangeNoHeartbeatAlarm* other);
   friend void swap(RangeNoHeartbeatAlarm& a, RangeNoHeartbeatAlarm& b) {
@@ -1137,7 +1364,7 @@ class NodeNoHeartbeatAlarm : public ::google::protobuf::Message /* @@protoc_inse
                &_NodeNoHeartbeatAlarm_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    8;
+    10;
 
   void Swap(NodeNoHeartbeatAlarm* other);
   friend void swap(NodeNoHeartbeatAlarm& a, NodeNoHeartbeatAlarm& b) {
@@ -1252,7 +1479,7 @@ class NodeDiskSizeAlarm : public ::google::protobuf::Message /* @@protoc_inserti
                &_NodeDiskSizeAlarm_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    9;
+    11;
 
   void Swap(NodeDiskSizeAlarm* other);
   friend void swap(NodeDiskSizeAlarm& a, NodeDiskSizeAlarm& b) {
@@ -1359,7 +1586,7 @@ class NodeLeaderCountAlarm : public ::google::protobuf::Message /* @@protoc_inse
                &_NodeLeaderCountAlarm_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    10;
+    12;
 
   void Swap(NodeLeaderCountAlarm* other);
   friend void swap(NodeLeaderCountAlarm& a, NodeLeaderCountAlarm& b) {
@@ -1466,7 +1693,7 @@ class NodeRangeAlarmResponse : public ::google::protobuf::Message /* @@protoc_in
                &_NodeRangeAlarmResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    11;
+    13;
 
   void Swap(NodeRangeAlarmResponse* other);
   friend void swap(NodeRangeAlarmResponse& a, NodeRangeAlarmResponse& b) {
@@ -1566,7 +1793,7 @@ class AliveRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_AliveRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    12;
+    14;
 
   void Swap(AliveRequest* other);
   friend void swap(AliveRequest& a, AliveRequest& b) {
@@ -1666,7 +1893,7 @@ class AliveResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_AliveResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    13;
+    15;
 
   void Swap(AliveResponse* other);
   friend void swap(AliveResponse& a, AliveResponse& b) {
@@ -1723,6 +1950,236 @@ class AliveResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
   void set_allocated_head(::alarmpb::ResponseHeader* head);
 
   // @@protoc_insertion_point(class_scope:alarmpb.AliveResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::alarmpb::ResponseHeader* head_;
+  mutable int _cached_size_;
+  friend struct protobuf_alarmpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class SimpleRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:alarmpb.SimpleRequest) */ {
+ public:
+  SimpleRequest();
+  virtual ~SimpleRequest();
+
+  SimpleRequest(const SimpleRequest& from);
+
+  inline SimpleRequest& operator=(const SimpleRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  SimpleRequest(SimpleRequest&& from) noexcept
+    : SimpleRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline SimpleRequest& operator=(SimpleRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SimpleRequest& default_instance();
+
+  static inline const SimpleRequest* internal_default_instance() {
+    return reinterpret_cast<const SimpleRequest*>(
+               &_SimpleRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    16;
+
+  void Swap(SimpleRequest* other);
+  friend void swap(SimpleRequest& a, SimpleRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SimpleRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  SimpleRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const SimpleRequest& from);
+  void MergeFrom(const SimpleRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(SimpleRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string title = 2;
+  void clear_title();
+  static const int kTitleFieldNumber = 2;
+  const ::std::string& title() const;
+  void set_title(const ::std::string& value);
+  #if LANG_CXX11
+  void set_title(::std::string&& value);
+  #endif
+  void set_title(const char* value);
+  void set_title(const char* value, size_t size);
+  ::std::string* mutable_title();
+  ::std::string* release_title();
+  void set_allocated_title(::std::string* title);
+
+  // string content = 3;
+  void clear_content();
+  static const int kContentFieldNumber = 3;
+  const ::std::string& content() const;
+  void set_content(const ::std::string& value);
+  #if LANG_CXX11
+  void set_content(::std::string&& value);
+  #endif
+  void set_content(const char* value);
+  void set_content(const char* value, size_t size);
+  ::std::string* mutable_content();
+  ::std::string* release_content();
+  void set_allocated_content(::std::string* content);
+
+  // .alarmpb.RequestHeader head = 1;
+  bool has_head() const;
+  void clear_head();
+  static const int kHeadFieldNumber = 1;
+  const ::alarmpb::RequestHeader& head() const;
+  ::alarmpb::RequestHeader* mutable_head();
+  ::alarmpb::RequestHeader* release_head();
+  void set_allocated_head(::alarmpb::RequestHeader* head);
+
+  // @@protoc_insertion_point(class_scope:alarmpb.SimpleRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr title_;
+  ::google::protobuf::internal::ArenaStringPtr content_;
+  ::alarmpb::RequestHeader* head_;
+  mutable int _cached_size_;
+  friend struct protobuf_alarmpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class SimpleResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:alarmpb.SimpleResponse) */ {
+ public:
+  SimpleResponse();
+  virtual ~SimpleResponse();
+
+  SimpleResponse(const SimpleResponse& from);
+
+  inline SimpleResponse& operator=(const SimpleResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  SimpleResponse(SimpleResponse&& from) noexcept
+    : SimpleResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline SimpleResponse& operator=(SimpleResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SimpleResponse& default_instance();
+
+  static inline const SimpleResponse* internal_default_instance() {
+    return reinterpret_cast<const SimpleResponse*>(
+               &_SimpleResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    17;
+
+  void Swap(SimpleResponse* other);
+  friend void swap(SimpleResponse& a, SimpleResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SimpleResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  SimpleResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const SimpleResponse& from);
+  void MergeFrom(const SimpleResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(SimpleResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .alarmpb.ResponseHeader head = 1;
+  bool has_head() const;
+  void clear_head();
+  static const int kHeadFieldNumber = 1;
+  const ::alarmpb::ResponseHeader& head() const;
+  ::alarmpb::ResponseHeader* mutable_head();
+  ::alarmpb::ResponseHeader* release_head();
+  void set_allocated_head(::alarmpb::ResponseHeader* head);
+
+  // @@protoc_insertion_point(class_scope:alarmpb.SimpleResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -1825,6 +2282,147 @@ inline void ResponseHeader::set_allocated_error(::std::string* error) {
   }
   error_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), error);
   // @@protoc_insertion_point(field_set_allocated:alarmpb.ResponseHeader.error)
+}
+
+// -------------------------------------------------------------------
+
+// SimpleAlarmRequest
+
+// .alarmpb.RequestHeader head = 1;
+inline bool SimpleAlarmRequest::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+inline void SimpleAlarmRequest::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) delete head_;
+  head_ = NULL;
+}
+inline const ::alarmpb::RequestHeader& SimpleAlarmRequest::head() const {
+  const ::alarmpb::RequestHeader* p = head_;
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleAlarmRequest.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::alarmpb::RequestHeader*>(
+      &::alarmpb::_RequestHeader_default_instance_);
+}
+inline ::alarmpb::RequestHeader* SimpleAlarmRequest::mutable_head() {
+  
+  if (head_ == NULL) {
+    head_ = new ::alarmpb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleAlarmRequest.head)
+  return head_;
+}
+inline ::alarmpb::RequestHeader* SimpleAlarmRequest::release_head() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleAlarmRequest.head)
+  
+  ::alarmpb::RequestHeader* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+inline void SimpleAlarmRequest::set_allocated_head(::alarmpb::RequestHeader* head) {
+  delete head_;
+  head_ = head;
+  if (head) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleAlarmRequest.head)
+}
+
+// string Describe = 2;
+inline void SimpleAlarmRequest::clear_describe() {
+  describe_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& SimpleAlarmRequest::describe() const {
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleAlarmRequest.Describe)
+  return describe_.GetNoArena();
+}
+inline void SimpleAlarmRequest::set_describe(const ::std::string& value) {
+  
+  describe_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleAlarmRequest.Describe)
+}
+#if LANG_CXX11
+inline void SimpleAlarmRequest::set_describe(::std::string&& value) {
+  
+  describe_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:alarmpb.SimpleAlarmRequest.Describe)
+}
+#endif
+inline void SimpleAlarmRequest::set_describe(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  describe_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:alarmpb.SimpleAlarmRequest.Describe)
+}
+inline void SimpleAlarmRequest::set_describe(const char* value, size_t size) {
+  
+  describe_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.SimpleAlarmRequest.Describe)
+}
+inline ::std::string* SimpleAlarmRequest::mutable_describe() {
+  
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleAlarmRequest.Describe)
+  return describe_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* SimpleAlarmRequest::release_describe() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleAlarmRequest.Describe)
+  
+  return describe_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void SimpleAlarmRequest::set_allocated_describe(::std::string* describe) {
+  if (describe != NULL) {
+    
+  } else {
+    
+  }
+  describe_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), describe);
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleAlarmRequest.Describe)
+}
+
+// -------------------------------------------------------------------
+
+// SimpleAlarmResponse
+
+// .alarmpb.ResponseHeader head = 1;
+inline bool SimpleAlarmResponse::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+inline void SimpleAlarmResponse::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) delete head_;
+  head_ = NULL;
+}
+inline const ::alarmpb::ResponseHeader& SimpleAlarmResponse::head() const {
+  const ::alarmpb::ResponseHeader* p = head_;
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleAlarmResponse.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::alarmpb::ResponseHeader*>(
+      &::alarmpb::_ResponseHeader_default_instance_);
+}
+inline ::alarmpb::ResponseHeader* SimpleAlarmResponse::mutable_head() {
+  
+  if (head_ == NULL) {
+    head_ = new ::alarmpb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleAlarmResponse.head)
+  return head_;
+}
+inline ::alarmpb::ResponseHeader* SimpleAlarmResponse::release_head() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleAlarmResponse.head)
+  
+  ::alarmpb::ResponseHeader* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+inline void SimpleAlarmResponse::set_allocated_head(::alarmpb::ResponseHeader* head) {
+  delete head_;
+  head_ = head;
+  if (head) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleAlarmResponse.head)
 }
 
 // -------------------------------------------------------------------
@@ -2957,10 +3555,212 @@ inline void AliveResponse::set_allocated_head(::alarmpb::ResponseHeader* head) {
   // @@protoc_insertion_point(field_set_allocated:alarmpb.AliveResponse.head)
 }
 
+// -------------------------------------------------------------------
+
+// SimpleRequest
+
+// .alarmpb.RequestHeader head = 1;
+inline bool SimpleRequest::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+inline void SimpleRequest::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) delete head_;
+  head_ = NULL;
+}
+inline const ::alarmpb::RequestHeader& SimpleRequest::head() const {
+  const ::alarmpb::RequestHeader* p = head_;
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleRequest.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::alarmpb::RequestHeader*>(
+      &::alarmpb::_RequestHeader_default_instance_);
+}
+inline ::alarmpb::RequestHeader* SimpleRequest::mutable_head() {
+  
+  if (head_ == NULL) {
+    head_ = new ::alarmpb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleRequest.head)
+  return head_;
+}
+inline ::alarmpb::RequestHeader* SimpleRequest::release_head() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleRequest.head)
+  
+  ::alarmpb::RequestHeader* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+inline void SimpleRequest::set_allocated_head(::alarmpb::RequestHeader* head) {
+  delete head_;
+  head_ = head;
+  if (head) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleRequest.head)
+}
+
+// string title = 2;
+inline void SimpleRequest::clear_title() {
+  title_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& SimpleRequest::title() const {
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleRequest.title)
+  return title_.GetNoArena();
+}
+inline void SimpleRequest::set_title(const ::std::string& value) {
+  
+  title_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleRequest.title)
+}
+#if LANG_CXX11
+inline void SimpleRequest::set_title(::std::string&& value) {
+  
+  title_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:alarmpb.SimpleRequest.title)
+}
+#endif
+inline void SimpleRequest::set_title(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  title_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:alarmpb.SimpleRequest.title)
+}
+inline void SimpleRequest::set_title(const char* value, size_t size) {
+  
+  title_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.SimpleRequest.title)
+}
+inline ::std::string* SimpleRequest::mutable_title() {
+  
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleRequest.title)
+  return title_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* SimpleRequest::release_title() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleRequest.title)
+  
+  return title_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void SimpleRequest::set_allocated_title(::std::string* title) {
+  if (title != NULL) {
+    
+  } else {
+    
+  }
+  title_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), title);
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleRequest.title)
+}
+
+// string content = 3;
+inline void SimpleRequest::clear_content() {
+  content_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& SimpleRequest::content() const {
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleRequest.content)
+  return content_.GetNoArena();
+}
+inline void SimpleRequest::set_content(const ::std::string& value) {
+  
+  content_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleRequest.content)
+}
+#if LANG_CXX11
+inline void SimpleRequest::set_content(::std::string&& value) {
+  
+  content_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:alarmpb.SimpleRequest.content)
+}
+#endif
+inline void SimpleRequest::set_content(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  content_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:alarmpb.SimpleRequest.content)
+}
+inline void SimpleRequest::set_content(const char* value, size_t size) {
+  
+  content_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.SimpleRequest.content)
+}
+inline ::std::string* SimpleRequest::mutable_content() {
+  
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleRequest.content)
+  return content_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* SimpleRequest::release_content() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleRequest.content)
+  
+  return content_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void SimpleRequest::set_allocated_content(::std::string* content) {
+  if (content != NULL) {
+    
+  } else {
+    
+  }
+  content_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), content);
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleRequest.content)
+}
+
+// -------------------------------------------------------------------
+
+// SimpleResponse
+
+// .alarmpb.ResponseHeader head = 1;
+inline bool SimpleResponse::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+inline void SimpleResponse::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) delete head_;
+  head_ = NULL;
+}
+inline const ::alarmpb::ResponseHeader& SimpleResponse::head() const {
+  const ::alarmpb::ResponseHeader* p = head_;
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleResponse.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::alarmpb::ResponseHeader*>(
+      &::alarmpb::_ResponseHeader_default_instance_);
+}
+inline ::alarmpb::ResponseHeader* SimpleResponse::mutable_head() {
+  
+  if (head_ == NULL) {
+    head_ = new ::alarmpb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleResponse.head)
+  return head_;
+}
+inline ::alarmpb::ResponseHeader* SimpleResponse::release_head() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleResponse.head)
+  
+  ::alarmpb::ResponseHeader* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+inline void SimpleResponse::set_allocated_head(::alarmpb::ResponseHeader* head) {
+  delete head_;
+  head_ = head;
+  if (head) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleResponse.head)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

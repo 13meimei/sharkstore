@@ -238,6 +238,11 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<ResponseHeader>
      _instance;
 } _ResponseHeader_default_instance_;
+class LeaderHintDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<LeaderHint>
+     _instance;
+} _LeaderHint_default_instance_;
 class NoLeaderDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<NoLeader>
@@ -254,7 +259,7 @@ namespace protobuf_mspb_2eproto {
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[46];
+::google::protobuf::Metadata file_level_metadata[47];
 
 }  // namespace
 
@@ -269,6 +274,7 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::AuxillaryParseTableField
 };
 PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
     TableStruct::schema[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
@@ -673,6 +679,13 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ResponseHeader, cluster_id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ResponseHeader, error_),
   ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LeaderHint, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LeaderHint, address_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LeaderHint, term_),
+  ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NoLeader, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -730,8 +743,9 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 335, -1, sizeof(CreateTableResponse)},
   { 341, -1, sizeof(RequestHeader)},
   { 347, -1, sizeof(ResponseHeader)},
-  { 354, -1, sizeof(NoLeader)},
-  { 359, -1, sizeof(Error)},
+  { 354, -1, sizeof(LeaderHint)},
+  { 361, -1, sizeof(NoLeader)},
+  { 366, -1, sizeof(Error)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -779,6 +793,7 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_CreateTableResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_RequestHeader_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_ResponseHeader_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_LeaderHint_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_NoLeader_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_Error_default_instance_),
 };
@@ -801,7 +816,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 46);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 47);
 }
 
 }  // namespace
@@ -899,7 +914,9 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_RequestHeader_default_instance_);_ResponseHeader_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_ResponseHeader_default_instance_);_NoLeader_default_instance_._instance.DefaultConstruct();
+      &_ResponseHeader_default_instance_);_LeaderHint_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_LeaderHint_default_instance_);_NoLeader_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_NoLeader_default_instance_);_Error_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -1019,8 +1036,8 @@ void TableStruct::InitDefaultsImpl() {
       ::mspb::ResponseHeader::internal_default_instance());
   _ResponseHeader_default_instance_._instance.get_mutable()->error_ = const_cast< ::mspb::Error*>(
       ::mspb::Error::internal_default_instance());
-  _Error_default_instance_._instance.get_mutable()->new_leader_ = const_cast< ::mspb::MSLeader*>(
-      ::mspb::MSLeader::internal_default_instance());
+  _Error_default_instance_._instance.get_mutable()->new_leader_ = const_cast< ::mspb::LeaderHint*>(
+      ::mspb::LeaderHint::internal_default_instance());
   _Error_default_instance_._instance.get_mutable()->no_leader_ = const_cast< ::mspb::NoLeader*>(
       ::mspb::NoLeader::internal_default_instance());
 }
@@ -1146,45 +1163,46 @@ void AddDescriptorsImpl() {
       " \001(\0132\024.mspb.ResponseHeader\"#\n\rRequestHea"
       "der\022\022\n\ncluster_id\030\001 \001(\004\"@\n\016ResponseHeade"
       "r\022\022\n\ncluster_id\030\001 \001(\004\022\032\n\005error\030\002 \001(\0132\013.m"
-      "spb.Error\"\n\n\010NoLeader\"N\n\005Error\022\"\n\nnew_le"
-      "ader\030\002 \001(\0132\016.mspb.MSLeader\022!\n\tno_leader\030"
-      "\003 \001(\0132\016.mspb.NoLeader2\241\n\n\010MsServer\022J\n\rNo"
-      "deHeartbeat\022\032.mspb.NodeHeartbeatRequest\032"
-      "\033.mspb.NodeHeartbeatResponse\"\000\022M\n\016RangeH"
-      "eartbeat\022\033.mspb.RangeHeartbeatRequest\032\034."
-      "mspb.RangeHeartbeatResponse\"\000\022;\n\010AskSpli"
-      "t\022\025.mspb.AskSplitRequest\032\026.mspb.AskSplit"
-      "Response\"\000\022D\n\013ReportSplit\022\030.mspb.ReportS"
-      "plitRequest\032\031.mspb.ReportSplitResponse\"\000"
-      "\022>\n\tNodeLogin\022\026.mspb.NodeLoginRequest\032\027."
-      "mspb.NodeLoginResponse\"\000\022>\n\tGetNodeId\022\026."
-      "mspb.GetNodeIdRequest\032\027.mspb.GetNodeIdRe"
-      "sponse\"\000\022D\n\013GetMSLeader\022\030.mspb.GetMSLead"
-      "erRequest\032\031.mspb.GetMSLeaderResponse\"\000\022;"
-      "\n\010GetRoute\022\025.mspb.GetRouteRequest\032\026.mspb"
-      ".GetRouteResponse\"\000\0228\n\007GetNode\022\024.mspb.Ge"
-      "tNodeRequest\032\025.mspb.GetNodeResponse\"\000\0222\n"
-      "\005GetDB\022\022.mspb.GetDBRequest\032\023.mspb.GetDBR"
-      "esponse\"\000\022;\n\010GetTable\022\025.mspb.GetTableReq"
-      "uest\032\026.mspb.GetTableResponse\"\000\022G\n\014GetTab"
-      "leById\022\031.mspb.GetTableByIdRequest\032\032.mspb"
-      ".GetTableByIdResponse\"\000\022A\n\nGetColumns\022\027."
-      "mspb.GetColumnsRequest\032\030.mspb.GetColumns"
-      "Response\"\000\022P\n\017GetColumnByName\022\034.mspb.Get"
-      "ColumnByNameRequest\032\035.mspb.GetColumnByNa"
-      "meResponse\"\000\022J\n\rGetColumnById\022\032.mspb.Get"
-      "ColumnByIdRequest\032\033.mspb.GetColumnByIdRe"
-      "sponse\"\000\022J\n\rTruncateTable\022\032.mspb.Truncat"
-      "eTableRequest\032\033.mspb.TruncateTableRespon"
-      "se\"\000\022>\n\tAddColumn\022\026.mspb.AddColumnReques"
-      "t\032\027.mspb.AddColumnResponse\"\000\022M\n\016CreateDa"
-      "tabase\022\033.mspb.CreateDatabaseRequest\032\034.ms"
-      "pb.CreateDatabaseResponse\"\000\022D\n\013CreateTab"
-      "le\022\030.mspb.CreateTableRequest\032\031.mspb.Crea"
-      "teTableResponse\"\000b\006proto3"
+      "spb.Error\"+\n\nLeaderHint\022\017\n\007address\030\001 \001(\t"
+      "\022\014\n\004term\030\002 \001(\004\"\n\n\010NoLeader\"P\n\005Error\022$\n\nn"
+      "ew_leader\030\002 \001(\0132\020.mspb.LeaderHint\022!\n\tno_"
+      "leader\030\003 \001(\0132\016.mspb.NoLeader2\241\n\n\010MsServe"
+      "r\022J\n\rNodeHeartbeat\022\032.mspb.NodeHeartbeatR"
+      "equest\032\033.mspb.NodeHeartbeatResponse\"\000\022M\n"
+      "\016RangeHeartbeat\022\033.mspb.RangeHeartbeatReq"
+      "uest\032\034.mspb.RangeHeartbeatResponse\"\000\022;\n\010"
+      "AskSplit\022\025.mspb.AskSplitRequest\032\026.mspb.A"
+      "skSplitResponse\"\000\022D\n\013ReportSplit\022\030.mspb."
+      "ReportSplitRequest\032\031.mspb.ReportSplitRes"
+      "ponse\"\000\022>\n\tNodeLogin\022\026.mspb.NodeLoginReq"
+      "uest\032\027.mspb.NodeLoginResponse\"\000\022>\n\tGetNo"
+      "deId\022\026.mspb.GetNodeIdRequest\032\027.mspb.GetN"
+      "odeIdResponse\"\000\022D\n\013GetMSLeader\022\030.mspb.Ge"
+      "tMSLeaderRequest\032\031.mspb.GetMSLeaderRespo"
+      "nse\"\000\022;\n\010GetRoute\022\025.mspb.GetRouteRequest"
+      "\032\026.mspb.GetRouteResponse\"\000\0228\n\007GetNode\022\024."
+      "mspb.GetNodeRequest\032\025.mspb.GetNodeRespon"
+      "se\"\000\0222\n\005GetDB\022\022.mspb.GetDBRequest\032\023.mspb"
+      ".GetDBResponse\"\000\022;\n\010GetTable\022\025.mspb.GetT"
+      "ableRequest\032\026.mspb.GetTableResponse\"\000\022G\n"
+      "\014GetTableById\022\031.mspb.GetTableByIdRequest"
+      "\032\032.mspb.GetTableByIdResponse\"\000\022A\n\nGetCol"
+      "umns\022\027.mspb.GetColumnsRequest\032\030.mspb.Get"
+      "ColumnsResponse\"\000\022P\n\017GetColumnByName\022\034.m"
+      "spb.GetColumnByNameRequest\032\035.mspb.GetCol"
+      "umnByNameResponse\"\000\022J\n\rGetColumnById\022\032.m"
+      "spb.GetColumnByIdRequest\032\033.mspb.GetColum"
+      "nByIdResponse\"\000\022J\n\rTruncateTable\022\032.mspb."
+      "TruncateTableRequest\032\033.mspb.TruncateTabl"
+      "eResponse\"\000\022>\n\tAddColumn\022\026.mspb.AddColum"
+      "nRequest\032\027.mspb.AddColumnResponse\"\000\022M\n\016C"
+      "reateDatabase\022\033.mspb.CreateDatabaseReque"
+      "st\032\034.mspb.CreateDatabaseResponse\"\000\022D\n\013Cr"
+      "eateTable\022\030.mspb.CreateTableRequest\032\031.ms"
+      "pb.CreateTableResponse\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 5945);
+      descriptor, 5992);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "mspb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -20084,6 +20102,370 @@ void ResponseHeader::set_allocated_error(::mspb::Error* error) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int LeaderHint::kAddressFieldNumber;
+const int LeaderHint::kTermFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+LeaderHint::LeaderHint()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_mspb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:mspb.LeaderHint)
+}
+LeaderHint::LeaderHint(const LeaderHint& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  address_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.address().size() > 0) {
+    address_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.address_);
+  }
+  term_ = from.term_;
+  // @@protoc_insertion_point(copy_constructor:mspb.LeaderHint)
+}
+
+void LeaderHint::SharedCtor() {
+  address_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  term_ = GOOGLE_ULONGLONG(0);
+  _cached_size_ = 0;
+}
+
+LeaderHint::~LeaderHint() {
+  // @@protoc_insertion_point(destructor:mspb.LeaderHint)
+  SharedDtor();
+}
+
+void LeaderHint::SharedDtor() {
+  address_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void LeaderHint::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* LeaderHint::descriptor() {
+  protobuf_mspb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_mspb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const LeaderHint& LeaderHint::default_instance() {
+  protobuf_mspb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+LeaderHint* LeaderHint::New(::google::protobuf::Arena* arena) const {
+  LeaderHint* n = new LeaderHint;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void LeaderHint::Clear() {
+// @@protoc_insertion_point(message_clear_start:mspb.LeaderHint)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  address_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  term_ = GOOGLE_ULONGLONG(0);
+  _internal_metadata_.Clear();
+}
+
+bool LeaderHint::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:mspb.LeaderHint)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string address = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_address()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->address().data(), static_cast<int>(this->address().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "mspb.LeaderHint.address"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 term = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &term_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:mspb.LeaderHint)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:mspb.LeaderHint)
+  return false;
+#undef DO_
+}
+
+void LeaderHint::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:mspb.LeaderHint)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string address = 1;
+  if (this->address().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->address().data(), static_cast<int>(this->address().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "mspb.LeaderHint.address");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->address(), output);
+  }
+
+  // uint64 term = 2;
+  if (this->term() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(2, this->term(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:mspb.LeaderHint)
+}
+
+::google::protobuf::uint8* LeaderHint::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:mspb.LeaderHint)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string address = 1;
+  if (this->address().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->address().data(), static_cast<int>(this->address().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "mspb.LeaderHint.address");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->address(), target);
+  }
+
+  // uint64 term = 2;
+  if (this->term() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(2, this->term(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:mspb.LeaderHint)
+  return target;
+}
+
+size_t LeaderHint::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:mspb.LeaderHint)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string address = 1;
+  if (this->address().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->address());
+  }
+
+  // uint64 term = 2;
+  if (this->term() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->term());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void LeaderHint::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:mspb.LeaderHint)
+  GOOGLE_DCHECK_NE(&from, this);
+  const LeaderHint* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const LeaderHint>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:mspb.LeaderHint)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:mspb.LeaderHint)
+    MergeFrom(*source);
+  }
+}
+
+void LeaderHint::MergeFrom(const LeaderHint& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:mspb.LeaderHint)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.address().size() > 0) {
+
+    address_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.address_);
+  }
+  if (from.term() != 0) {
+    set_term(from.term());
+  }
+}
+
+void LeaderHint::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:mspb.LeaderHint)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void LeaderHint::CopyFrom(const LeaderHint& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:mspb.LeaderHint)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool LeaderHint::IsInitialized() const {
+  return true;
+}
+
+void LeaderHint::Swap(LeaderHint* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void LeaderHint::InternalSwap(LeaderHint* other) {
+  using std::swap;
+  address_.Swap(&other->address_);
+  swap(term_, other->term_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata LeaderHint::GetMetadata() const {
+  protobuf_mspb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_mspb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// LeaderHint
+
+// string address = 1;
+void LeaderHint::clear_address() {
+  address_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& LeaderHint::address() const {
+  // @@protoc_insertion_point(field_get:mspb.LeaderHint.address)
+  return address_.GetNoArena();
+}
+void LeaderHint::set_address(const ::std::string& value) {
+  
+  address_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.LeaderHint.address)
+}
+#if LANG_CXX11
+void LeaderHint::set_address(::std::string&& value) {
+  
+  address_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.LeaderHint.address)
+}
+#endif
+void LeaderHint::set_address(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  address_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.LeaderHint.address)
+}
+void LeaderHint::set_address(const char* value, size_t size) {
+  
+  address_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.LeaderHint.address)
+}
+::std::string* LeaderHint::mutable_address() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.LeaderHint.address)
+  return address_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* LeaderHint::release_address() {
+  // @@protoc_insertion_point(field_release:mspb.LeaderHint.address)
+  
+  return address_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void LeaderHint::set_allocated_address(::std::string* address) {
+  if (address != NULL) {
+    
+  } else {
+    
+  }
+  address_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), address);
+  // @@protoc_insertion_point(field_set_allocated:mspb.LeaderHint.address)
+}
+
+// uint64 term = 2;
+void LeaderHint::clear_term() {
+  term_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 LeaderHint::term() const {
+  // @@protoc_insertion_point(field_get:mspb.LeaderHint.term)
+  return term_;
+}
+void LeaderHint::set_term(::google::protobuf::uint64 value) {
+  
+  term_ = value;
+  // @@protoc_insertion_point(field_set:mspb.LeaderHint.term)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 NoLeader::NoLeader()
@@ -20298,7 +20680,7 @@ Error::Error(const Error& from)
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_new_leader()) {
-    new_leader_ = new ::mspb::MSLeader(*from.new_leader_);
+    new_leader_ = new ::mspb::LeaderHint(*from.new_leader_);
   } else {
     new_leader_ = NULL;
   }
@@ -20377,7 +20759,7 @@ bool Error::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .mspb.MSLeader new_leader = 2;
+      // .mspb.LeaderHint new_leader = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
@@ -20427,7 +20809,7 @@ void Error::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .mspb.MSLeader new_leader = 2;
+  // .mspb.LeaderHint new_leader = 2;
   if (this->has_new_leader()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       2, *this->new_leader_, output);
@@ -20453,7 +20835,7 @@ void Error::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .mspb.MSLeader new_leader = 2;
+  // .mspb.LeaderHint new_leader = 2;
   if (this->has_new_leader()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -20484,7 +20866,7 @@ size_t Error::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .mspb.MSLeader new_leader = 2;
+  // .mspb.LeaderHint new_leader = 2;
   if (this->has_new_leader()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -20528,7 +20910,7 @@ void Error::MergeFrom(const Error& from) {
   (void) cached_has_bits;
 
   if (from.has_new_leader()) {
-    mutable_new_leader()->::mspb::MSLeader::MergeFrom(from.new_leader());
+    mutable_new_leader()->::mspb::LeaderHint::MergeFrom(from.new_leader());
   }
   if (from.has_no_leader()) {
     mutable_no_leader()->::mspb::NoLeader::MergeFrom(from.no_leader());
@@ -20573,7 +20955,7 @@ void Error::InternalSwap(Error* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // Error
 
-// .mspb.MSLeader new_leader = 2;
+// .mspb.LeaderHint new_leader = 2;
 bool Error::has_new_leader() const {
   return this != internal_default_instance() && new_leader_ != NULL;
 }
@@ -20581,28 +20963,28 @@ void Error::clear_new_leader() {
   if (GetArenaNoVirtual() == NULL && new_leader_ != NULL) delete new_leader_;
   new_leader_ = NULL;
 }
-const ::mspb::MSLeader& Error::new_leader() const {
-  const ::mspb::MSLeader* p = new_leader_;
+const ::mspb::LeaderHint& Error::new_leader() const {
+  const ::mspb::LeaderHint* p = new_leader_;
   // @@protoc_insertion_point(field_get:mspb.Error.new_leader)
-  return p != NULL ? *p : *reinterpret_cast<const ::mspb::MSLeader*>(
-      &::mspb::_MSLeader_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::LeaderHint*>(
+      &::mspb::_LeaderHint_default_instance_);
 }
-::mspb::MSLeader* Error::mutable_new_leader() {
+::mspb::LeaderHint* Error::mutable_new_leader() {
   
   if (new_leader_ == NULL) {
-    new_leader_ = new ::mspb::MSLeader;
+    new_leader_ = new ::mspb::LeaderHint;
   }
   // @@protoc_insertion_point(field_mutable:mspb.Error.new_leader)
   return new_leader_;
 }
-::mspb::MSLeader* Error::release_new_leader() {
+::mspb::LeaderHint* Error::release_new_leader() {
   // @@protoc_insertion_point(field_release:mspb.Error.new_leader)
   
-  ::mspb::MSLeader* temp = new_leader_;
+  ::mspb::LeaderHint* temp = new_leader_;
   new_leader_ = NULL;
   return temp;
 }
-void Error::set_allocated_new_leader(::mspb::MSLeader* new_leader) {
+void Error::set_allocated_new_leader(::mspb::LeaderHint* new_leader) {
   delete new_leader_;
   new_leader_ = new_leader;
   if (new_leader) {

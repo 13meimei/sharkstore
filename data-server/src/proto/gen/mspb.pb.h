@@ -120,6 +120,9 @@ extern GetTableRequestDefaultTypeInternal _GetTableRequest_default_instance_;
 class GetTableResponse;
 class GetTableResponseDefaultTypeInternal;
 extern GetTableResponseDefaultTypeInternal _GetTableResponse_default_instance_;
+class LeaderHint;
+class LeaderHintDefaultTypeInternal;
+extern LeaderHintDefaultTypeInternal _LeaderHint_default_instance_;
 class MSLeader;
 class MSLeaderDefaultTypeInternal;
 extern MSLeaderDefaultTypeInternal _MSLeader_default_instance_;
@@ -5419,6 +5422,118 @@ class ResponseHeader : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
+class LeaderHint : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.LeaderHint) */ {
+ public:
+  LeaderHint();
+  virtual ~LeaderHint();
+
+  LeaderHint(const LeaderHint& from);
+
+  inline LeaderHint& operator=(const LeaderHint& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  LeaderHint(LeaderHint&& from) noexcept
+    : LeaderHint() {
+    *this = ::std::move(from);
+  }
+
+  inline LeaderHint& operator=(LeaderHint&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const LeaderHint& default_instance();
+
+  static inline const LeaderHint* internal_default_instance() {
+    return reinterpret_cast<const LeaderHint*>(
+               &_LeaderHint_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    44;
+
+  void Swap(LeaderHint* other);
+  friend void swap(LeaderHint& a, LeaderHint& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline LeaderHint* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  LeaderHint* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const LeaderHint& from);
+  void MergeFrom(const LeaderHint& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(LeaderHint* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string address = 1;
+  void clear_address();
+  static const int kAddressFieldNumber = 1;
+  const ::std::string& address() const;
+  void set_address(const ::std::string& value);
+  #if LANG_CXX11
+  void set_address(::std::string&& value);
+  #endif
+  void set_address(const char* value);
+  void set_address(const char* value, size_t size);
+  ::std::string* mutable_address();
+  ::std::string* release_address();
+  void set_allocated_address(::std::string* address);
+
+  // uint64 term = 2;
+  void clear_term();
+  static const int kTermFieldNumber = 2;
+  ::google::protobuf::uint64 term() const;
+  void set_term(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:mspb.LeaderHint)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr address_;
+  ::google::protobuf::uint64 term_;
+  mutable int _cached_size_;
+  friend struct protobuf_mspb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class NoLeader : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:mspb.NoLeader) */ {
  public:
   NoLeader();
@@ -5453,7 +5568,7 @@ class NoLeader : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_NoLeader_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    44;
+    45;
 
   void Swap(NoLeader* other);
   friend void swap(NoLeader& a, NoLeader& b) {
@@ -5543,7 +5658,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Error_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    45;
+    46;
 
   void Swap(Error* other);
   friend void swap(Error& a, Error& b) {
@@ -5590,14 +5705,14 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
 
   // accessors -------------------------------------------------------
 
-  // .mspb.MSLeader new_leader = 2;
+  // .mspb.LeaderHint new_leader = 2;
   bool has_new_leader() const;
   void clear_new_leader();
   static const int kNewLeaderFieldNumber = 2;
-  const ::mspb::MSLeader& new_leader() const;
-  ::mspb::MSLeader* mutable_new_leader();
-  ::mspb::MSLeader* release_new_leader();
-  void set_allocated_new_leader(::mspb::MSLeader* new_leader);
+  const ::mspb::LeaderHint& new_leader() const;
+  ::mspb::LeaderHint* mutable_new_leader();
+  ::mspb::LeaderHint* release_new_leader();
+  void set_allocated_new_leader(::mspb::LeaderHint* new_leader);
 
   // .mspb.NoLeader no_leader = 3;
   bool has_no_leader() const;
@@ -5612,7 +5727,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::mspb::MSLeader* new_leader_;
+  ::mspb::LeaderHint* new_leader_;
   ::mspb::NoLeader* no_leader_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2eproto::TableStruct;
@@ -9822,13 +9937,84 @@ inline void ResponseHeader::set_allocated_error(::mspb::Error* error) {
 
 // -------------------------------------------------------------------
 
+// LeaderHint
+
+// string address = 1;
+inline void LeaderHint::clear_address() {
+  address_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& LeaderHint::address() const {
+  // @@protoc_insertion_point(field_get:mspb.LeaderHint.address)
+  return address_.GetNoArena();
+}
+inline void LeaderHint::set_address(const ::std::string& value) {
+  
+  address_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:mspb.LeaderHint.address)
+}
+#if LANG_CXX11
+inline void LeaderHint::set_address(::std::string&& value) {
+  
+  address_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:mspb.LeaderHint.address)
+}
+#endif
+inline void LeaderHint::set_address(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  address_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:mspb.LeaderHint.address)
+}
+inline void LeaderHint::set_address(const char* value, size_t size) {
+  
+  address_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:mspb.LeaderHint.address)
+}
+inline ::std::string* LeaderHint::mutable_address() {
+  
+  // @@protoc_insertion_point(field_mutable:mspb.LeaderHint.address)
+  return address_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* LeaderHint::release_address() {
+  // @@protoc_insertion_point(field_release:mspb.LeaderHint.address)
+  
+  return address_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void LeaderHint::set_allocated_address(::std::string* address) {
+  if (address != NULL) {
+    
+  } else {
+    
+  }
+  address_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), address);
+  // @@protoc_insertion_point(field_set_allocated:mspb.LeaderHint.address)
+}
+
+// uint64 term = 2;
+inline void LeaderHint::clear_term() {
+  term_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 LeaderHint::term() const {
+  // @@protoc_insertion_point(field_get:mspb.LeaderHint.term)
+  return term_;
+}
+inline void LeaderHint::set_term(::google::protobuf::uint64 value) {
+  
+  term_ = value;
+  // @@protoc_insertion_point(field_set:mspb.LeaderHint.term)
+}
+
+// -------------------------------------------------------------------
+
 // NoLeader
 
 // -------------------------------------------------------------------
 
 // Error
 
-// .mspb.MSLeader new_leader = 2;
+// .mspb.LeaderHint new_leader = 2;
 inline bool Error::has_new_leader() const {
   return this != internal_default_instance() && new_leader_ != NULL;
 }
@@ -9836,28 +10022,28 @@ inline void Error::clear_new_leader() {
   if (GetArenaNoVirtual() == NULL && new_leader_ != NULL) delete new_leader_;
   new_leader_ = NULL;
 }
-inline const ::mspb::MSLeader& Error::new_leader() const {
-  const ::mspb::MSLeader* p = new_leader_;
+inline const ::mspb::LeaderHint& Error::new_leader() const {
+  const ::mspb::LeaderHint* p = new_leader_;
   // @@protoc_insertion_point(field_get:mspb.Error.new_leader)
-  return p != NULL ? *p : *reinterpret_cast<const ::mspb::MSLeader*>(
-      &::mspb::_MSLeader_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::mspb::LeaderHint*>(
+      &::mspb::_LeaderHint_default_instance_);
 }
-inline ::mspb::MSLeader* Error::mutable_new_leader() {
+inline ::mspb::LeaderHint* Error::mutable_new_leader() {
   
   if (new_leader_ == NULL) {
-    new_leader_ = new ::mspb::MSLeader;
+    new_leader_ = new ::mspb::LeaderHint;
   }
   // @@protoc_insertion_point(field_mutable:mspb.Error.new_leader)
   return new_leader_;
 }
-inline ::mspb::MSLeader* Error::release_new_leader() {
+inline ::mspb::LeaderHint* Error::release_new_leader() {
   // @@protoc_insertion_point(field_release:mspb.Error.new_leader)
   
-  ::mspb::MSLeader* temp = new_leader_;
+  ::mspb::LeaderHint* temp = new_leader_;
   new_leader_ = NULL;
   return temp;
 }
-inline void Error::set_allocated_new_leader(::mspb::MSLeader* new_leader) {
+inline void Error::set_allocated_new_leader(::mspb::LeaderHint* new_leader) {
   delete new_leader_;
   new_leader_ = new_leader;
   if (new_leader) {
@@ -9912,6 +10098,8 @@ inline void Error::set_allocated_no_leader(::mspb::NoLeader* no_leader) {
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

@@ -28,6 +28,16 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<ResponseHeader>
      _instance;
 } _ResponseHeader_default_instance_;
+class SimpleAlarmRequestDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<SimpleAlarmRequest>
+     _instance;
+} _SimpleAlarmRequest_default_instance_;
+class SimpleAlarmResponseDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<SimpleAlarmResponse>
+     _instance;
+} _SimpleAlarmResponse_default_instance_;
 class TaskAlarmRequestDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<TaskAlarmRequest>
@@ -88,13 +98,23 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<AliveResponse>
      _instance;
 } _AliveResponse_default_instance_;
+class SimpleRequestDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<SimpleRequest>
+     _instance;
+} _SimpleRequest_default_instance_;
+class SimpleResponseDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<SimpleResponse>
+     _instance;
+} _SimpleResponse_default_instance_;
 
 namespace protobuf_alarmpb_2eproto {
 
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[14];
+::google::protobuf::Metadata file_level_metadata[18];
 const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[2];
 
 }  // namespace
@@ -110,6 +130,10 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::AuxillaryParseTableField
 };
 PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
     TableStruct::schema[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
@@ -140,6 +164,19 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ResponseHeader, code_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ResponseHeader, error_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleAlarmRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleAlarmRequest, head_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleAlarmRequest, describe_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleAlarmResponse, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleAlarmResponse, head_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TaskAlarmRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -229,27 +266,47 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AliveResponse, head_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleRequest, head_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleRequest, title_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleRequest, content_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleResponse, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleResponse, head_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(RequestHeader)},
   { 6, -1, sizeof(ResponseHeader)},
-  { 13, -1, sizeof(TaskAlarmRequest)},
-  { 24, -1, sizeof(TaskTimeout)},
-  { 31, -1, sizeof(TaskLongTimeRunning)},
-  { 38, -1, sizeof(TaskAlarmResponse)},
-  { 44, -1, sizeof(NodeRangeAlarmRequest)},
-  { 56, -1, sizeof(RangeNoHeartbeatAlarm)},
-  { 63, -1, sizeof(NodeNoHeartbeatAlarm)},
-  { 70, -1, sizeof(NodeDiskSizeAlarm)},
-  { 77, -1, sizeof(NodeLeaderCountAlarm)},
-  { 84, -1, sizeof(NodeRangeAlarmResponse)},
-  { 90, -1, sizeof(AliveRequest)},
-  { 96, -1, sizeof(AliveResponse)},
+  { 13, -1, sizeof(SimpleAlarmRequest)},
+  { 20, -1, sizeof(SimpleAlarmResponse)},
+  { 26, -1, sizeof(TaskAlarmRequest)},
+  { 37, -1, sizeof(TaskTimeout)},
+  { 44, -1, sizeof(TaskLongTimeRunning)},
+  { 51, -1, sizeof(TaskAlarmResponse)},
+  { 57, -1, sizeof(NodeRangeAlarmRequest)},
+  { 69, -1, sizeof(RangeNoHeartbeatAlarm)},
+  { 76, -1, sizeof(NodeNoHeartbeatAlarm)},
+  { 83, -1, sizeof(NodeDiskSizeAlarm)},
+  { 90, -1, sizeof(NodeLeaderCountAlarm)},
+  { 97, -1, sizeof(NodeRangeAlarmResponse)},
+  { 103, -1, sizeof(AliveRequest)},
+  { 109, -1, sizeof(AliveResponse)},
+  { 115, -1, sizeof(SimpleRequest)},
+  { 123, -1, sizeof(SimpleResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_RequestHeader_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_ResponseHeader_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_SimpleAlarmRequest_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_SimpleAlarmResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_TaskAlarmRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_TaskTimeout_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_TaskLongTimeRunning_default_instance_),
@@ -262,6 +319,8 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_NodeRangeAlarmResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_AliveRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_AliveResponse_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_SimpleRequest_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_SimpleResponse_default_instance_),
 };
 
 namespace {
@@ -282,7 +341,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 14);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 18);
 }
 
 }  // namespace
@@ -296,7 +355,11 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_RequestHeader_default_instance_);_ResponseHeader_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_ResponseHeader_default_instance_);_TaskAlarmRequest_default_instance_._instance.DefaultConstruct();
+      &_ResponseHeader_default_instance_);_SimpleAlarmRequest_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_SimpleAlarmRequest_default_instance_);_SimpleAlarmResponse_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_SimpleAlarmResponse_default_instance_);_TaskAlarmRequest_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_TaskAlarmRequest_default_instance_);_TaskTimeout_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -320,7 +383,15 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_AliveRequest_default_instance_);_AliveResponse_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_AliveResponse_default_instance_);_TaskAlarmRequest_default_instance_._instance.get_mutable()->head_ = const_cast< ::alarmpb::RequestHeader*>(
+      &_AliveResponse_default_instance_);_SimpleRequest_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_SimpleRequest_default_instance_);_SimpleResponse_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_SimpleResponse_default_instance_);_SimpleAlarmRequest_default_instance_._instance.get_mutable()->head_ = const_cast< ::alarmpb::RequestHeader*>(
+      ::alarmpb::RequestHeader::internal_default_instance());
+  _SimpleAlarmResponse_default_instance_._instance.get_mutable()->head_ = const_cast< ::alarmpb::ResponseHeader*>(
+      ::alarmpb::ResponseHeader::internal_default_instance());
+  _TaskAlarmRequest_default_instance_._instance.get_mutable()->head_ = const_cast< ::alarmpb::RequestHeader*>(
       ::alarmpb::RequestHeader::internal_default_instance());
   _TaskAlarmRequest_default_instance_._instance.get_mutable()->task_ = const_cast< ::taskpb::Task*>(
       ::taskpb::Task::internal_default_instance());
@@ -354,6 +425,10 @@ void TableStruct::InitDefaultsImpl() {
       ::alarmpb::RequestHeader::internal_default_instance());
   _AliveResponse_default_instance_._instance.get_mutable()->head_ = const_cast< ::alarmpb::ResponseHeader*>(
       ::alarmpb::ResponseHeader::internal_default_instance());
+  _SimpleRequest_default_instance_._instance.get_mutable()->head_ = const_cast< ::alarmpb::RequestHeader*>(
+      ::alarmpb::RequestHeader::internal_default_instance());
+  _SimpleResponse_default_instance_._instance.get_mutable()->head_ = const_cast< ::alarmpb::ResponseHeader*>(
+      ::alarmpb::ResponseHeader::internal_default_instance());
 }
 
 void InitDefaults() {
@@ -367,52 +442,60 @@ void AddDescriptorsImpl() {
       "\n\ralarmpb.proto\022\007alarmpb\032\014taskpb.proto\032\014"
       "metapb.proto\"#\n\rRequestHeader\022\022\n\ncluster"
       "_id\030\001 \001(\003\"-\n\016ResponseHeader\022\014\n\004code\030\001 \001("
-      "\005\022\r\n\005error\030\002 \001(\t\"\202\002\n\020TaskAlarmRequest\022$\n"
-      "\004head\030\001 \001(\0132\026.alarmpb.RequestHeader\022$\n\004t"
-      "ype\030\002 \001(\0162\026.alarmpb.TaskAlarmType\022\032\n\004tas"
-      "k\030\003 \001(\0132\014.taskpb.Task\0220\n\022task_timeout_al"
-      "arm\030\004 \001(\0132\024.alarmpb.TaskTimeout\022B\n\034task_"
-      "long_time_running_alarm\030\005 \001(\0132\034.alarmpb."
-      "TaskLongTimeRunning\022\020\n\010Describe\030\006 \001(\t\"+\n"
-      "\013TaskTimeout\022\r\n\005start\030\002 \001(\t\022\r\n\005takes\030\003 \001"
-      "(\003\"3\n\023TaskLongTimeRunning\022\r\n\005start\030\002 \001(\t"
-      "\022\r\n\005takes\030\003 \001(\003\":\n\021TaskAlarmResponse\022%\n\004"
-      "head\030\001 \001(\0132\027.alarmpb.ResponseHeader\"\350\002\n\025"
-      "NodeRangeAlarmRequest\022$\n\004head\030\001 \001(\0132\026.al"
-      "armpb.RequestHeader\022)\n\004type\030\002 \001(\0162\033.alar"
-      "mpb.NodeRangeAlarmType\0229\n\021range_no_hb_al"
-      "arm\030\003 \001(\0132\036.alarmpb.RangeNoHeartbeatAlar"
-      "m\0227\n\020node_no_hb_alarm\030\004 \001(\0132\035.alarmpb.No"
-      "deNoHeartbeatAlarm\0228\n\024node_disk_size_ala"
-      "rm\030\005 \001(\0132\032.alarmpb.NodeDiskSizeAlarm\022>\n\027"
-      "node_leader_count_alarm\030\006 \001(\0132\035.alarmpb."
-      "NodeLeaderCountAlarm\022\020\n\010Describe\030\007 \001(\t\"R"
-      "\n\025RangeNoHeartbeatAlarm\022\034\n\005range\030\001 \001(\0132\r"
-      ".metapb.Range\022\033\n\023last_heartbeat_time\030\002 \001"
-      "(\t\"O\n\024NodeNoHeartbeatAlarm\022\032\n\004node\030\001 \001(\013"
-      "2\014.metapb.Node\022\033\n\023last_heartbeat_time\030\002 "
-      "\001(\t\"B\n\021NodeDiskSizeAlarm\022\032\n\004node\030\001 \001(\0132\014"
-      ".metapb.Node\022\021\n\tdisk_size\030\002 \001(\003\"H\n\024NodeL"
-      "eaderCountAlarm\022\032\n\004node\030\001 \001(\0132\014.metapb.N"
-      "ode\022\024\n\014leader_count\030\002 \001(\003\"\?\n\026NodeRangeAl"
-      "armResponse\022%\n\004head\030\001 \001(\0132\027.alarmpb.Resp"
-      "onseHeader\"4\n\014AliveRequest\022$\n\004head\030\001 \001(\013"
-      "2\026.alarmpb.RequestHeader\"6\n\rAliveRespons"
-      "e\022%\n\004head\030\001 \001(\0132\027.alarmpb.ResponseHeader"
-      "*3\n\rTaskAlarmType\022\013\n\007TIMEOUT\020\000\022\025\n\021LONG_T"
-      "IME_RUNNING\020\001*n\n\022NodeRangeAlarmType\022\026\n\022R"
-      "ANGE_NO_HEARTBEAT\020\000\022\025\n\021NODE_NO_HEARTBEAT"
-      "\020\001\022\022\n\016NODE_DISK_SIZE\020\002\022\025\n\021NODE_LEADER_CO"
-      "UNT\020\0032\341\001\n\005Alarm\022D\n\tTaskAlarm\022\031.alarmpb.T"
-      "askAlarmRequest\032\032.alarmpb.TaskAlarmRespo"
-      "nse\"\000\022S\n\016NodeRangeAlarm\022\036.alarmpb.NodeRa"
-      "ngeAlarmRequest\032\037.alarmpb.NodeRangeAlarm"
-      "Response\"\000\022=\n\nAliveAlarm\022\025.alarmpb.Alive"
-      "Request\032\026.alarmpb.AliveResponse\"\000b\006proto"
-      "3"
+      "\005\022\r\n\005error\030\002 \001(\t\"L\n\022SimpleAlarmRequest\022$"
+      "\n\004head\030\001 \001(\0132\026.alarmpb.RequestHeader\022\020\n\010"
+      "Describe\030\002 \001(\t\"<\n\023SimpleAlarmResponse\022%\n"
+      "\004head\030\001 \001(\0132\027.alarmpb.ResponseHeader\"\202\002\n"
+      "\020TaskAlarmRequest\022$\n\004head\030\001 \001(\0132\026.alarmp"
+      "b.RequestHeader\022$\n\004type\030\002 \001(\0162\026.alarmpb."
+      "TaskAlarmType\022\032\n\004task\030\003 \001(\0132\014.taskpb.Tas"
+      "k\0220\n\022task_timeout_alarm\030\004 \001(\0132\024.alarmpb."
+      "TaskTimeout\022B\n\034task_long_time_running_al"
+      "arm\030\005 \001(\0132\034.alarmpb.TaskLongTimeRunning\022"
+      "\020\n\010Describe\030\006 \001(\t\"+\n\013TaskTimeout\022\r\n\005star"
+      "t\030\002 \001(\t\022\r\n\005takes\030\003 \001(\003\"3\n\023TaskLongTimeRu"
+      "nning\022\r\n\005start\030\002 \001(\t\022\r\n\005takes\030\003 \001(\003\":\n\021T"
+      "askAlarmResponse\022%\n\004head\030\001 \001(\0132\027.alarmpb"
+      ".ResponseHeader\"\350\002\n\025NodeRangeAlarmReques"
+      "t\022$\n\004head\030\001 \001(\0132\026.alarmpb.RequestHeader\022"
+      ")\n\004type\030\002 \001(\0162\033.alarmpb.NodeRangeAlarmTy"
+      "pe\0229\n\021range_no_hb_alarm\030\003 \001(\0132\036.alarmpb."
+      "RangeNoHeartbeatAlarm\0227\n\020node_no_hb_alar"
+      "m\030\004 \001(\0132\035.alarmpb.NodeNoHeartbeatAlarm\0228"
+      "\n\024node_disk_size_alarm\030\005 \001(\0132\032.alarmpb.N"
+      "odeDiskSizeAlarm\022>\n\027node_leader_count_al"
+      "arm\030\006 \001(\0132\035.alarmpb.NodeLeaderCountAlarm"
+      "\022\020\n\010Describe\030\007 \001(\t\"R\n\025RangeNoHeartbeatAl"
+      "arm\022\034\n\005range\030\001 \001(\0132\r.metapb.Range\022\033\n\023las"
+      "t_heartbeat_time\030\002 \001(\t\"O\n\024NodeNoHeartbea"
+      "tAlarm\022\032\n\004node\030\001 \001(\0132\014.metapb.Node\022\033\n\023la"
+      "st_heartbeat_time\030\002 \001(\t\"B\n\021NodeDiskSizeA"
+      "larm\022\032\n\004node\030\001 \001(\0132\014.metapb.Node\022\021\n\tdisk"
+      "_size\030\002 \001(\003\"H\n\024NodeLeaderCountAlarm\022\032\n\004n"
+      "ode\030\001 \001(\0132\014.metapb.Node\022\024\n\014leader_count\030"
+      "\002 \001(\003\"\?\n\026NodeRangeAlarmResponse\022%\n\004head\030"
+      "\001 \001(\0132\027.alarmpb.ResponseHeader\"4\n\014AliveR"
+      "equest\022$\n\004head\030\001 \001(\0132\026.alarmpb.RequestHe"
+      "ader\"6\n\rAliveResponse\022%\n\004head\030\001 \001(\0132\027.al"
+      "armpb.ResponseHeader\"U\n\rSimpleRequest\022$\n"
+      "\004head\030\001 \001(\0132\026.alarmpb.RequestHeader\022\r\n\005t"
+      "itle\030\002 \001(\t\022\017\n\007content\030\003 \001(\t\"7\n\016SimpleRes"
+      "ponse\022%\n\004head\030\001 \001(\0132\027.alarmpb.ResponseHe"
+      "ader*3\n\rTaskAlarmType\022\013\n\007TIMEOUT\020\000\022\025\n\021LO"
+      "NG_TIME_RUNNING\020\001*n\n\022NodeRangeAlarmType\022"
+      "\026\n\022RANGE_NO_HEARTBEAT\020\000\022\025\n\021NODE_NO_HEART"
+      "BEAT\020\001\022\022\n\016NODE_DISK_SIZE\020\002\022\025\n\021NODE_LEADE"
+      "R_COUNT\020\0032\243\002\n\005Alarm\022D\n\tTaskAlarm\022\031.alarm"
+      "pb.TaskAlarmRequest\032\032.alarmpb.TaskAlarmR"
+      "esponse\"\000\022S\n\016NodeRangeAlarm\022\036.alarmpb.No"
+      "deRangeAlarmRequest\032\037.alarmpb.NodeRangeA"
+      "larmResponse\"\000\022=\n\nAliveAlarm\022\025.alarmpb.A"
+      "liveRequest\032\026.alarmpb.AliveResponse\"\000\022@\n"
+      "\013SimpleAlarm\022\026.alarmpb.SimpleRequest\032\027.a"
+      "larmpb.SimpleResponse\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1801);
+      descriptor, 2151);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "alarmpb.proto", &protobuf_RegisterTypes);
   ::taskpb::protobuf_taskpb_2eproto::AddDescriptors();
@@ -1078,6 +1161,694 @@ void ResponseHeader::set_allocated_error(::std::string* error) {
   }
   error_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), error);
   // @@protoc_insertion_point(field_set_allocated:alarmpb.ResponseHeader.error)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int SimpleAlarmRequest::kHeadFieldNumber;
+const int SimpleAlarmRequest::kDescribeFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+SimpleAlarmRequest::SimpleAlarmRequest()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_alarmpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:alarmpb.SimpleAlarmRequest)
+}
+SimpleAlarmRequest::SimpleAlarmRequest(const SimpleAlarmRequest& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  describe_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.describe().size() > 0) {
+    describe_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.describe_);
+  }
+  if (from.has_head()) {
+    head_ = new ::alarmpb::RequestHeader(*from.head_);
+  } else {
+    head_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:alarmpb.SimpleAlarmRequest)
+}
+
+void SimpleAlarmRequest::SharedCtor() {
+  describe_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  head_ = NULL;
+  _cached_size_ = 0;
+}
+
+SimpleAlarmRequest::~SimpleAlarmRequest() {
+  // @@protoc_insertion_point(destructor:alarmpb.SimpleAlarmRequest)
+  SharedDtor();
+}
+
+void SimpleAlarmRequest::SharedDtor() {
+  describe_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete head_;
+}
+
+void SimpleAlarmRequest::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* SimpleAlarmRequest::descriptor() {
+  protobuf_alarmpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_alarmpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const SimpleAlarmRequest& SimpleAlarmRequest::default_instance() {
+  protobuf_alarmpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+SimpleAlarmRequest* SimpleAlarmRequest::New(::google::protobuf::Arena* arena) const {
+  SimpleAlarmRequest* n = new SimpleAlarmRequest;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void SimpleAlarmRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:alarmpb.SimpleAlarmRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  describe_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) {
+    delete head_;
+  }
+  head_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool SimpleAlarmRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:alarmpb.SimpleAlarmRequest)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .alarmpb.RequestHeader head = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_head()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string Describe = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_describe()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->describe().data(), static_cast<int>(this->describe().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "alarmpb.SimpleAlarmRequest.Describe"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:alarmpb.SimpleAlarmRequest)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:alarmpb.SimpleAlarmRequest)
+  return false;
+#undef DO_
+}
+
+void SimpleAlarmRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:alarmpb.SimpleAlarmRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .alarmpb.RequestHeader head = 1;
+  if (this->has_head()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, *this->head_, output);
+  }
+
+  // string Describe = 2;
+  if (this->describe().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->describe().data(), static_cast<int>(this->describe().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.SimpleAlarmRequest.Describe");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->describe(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:alarmpb.SimpleAlarmRequest)
+}
+
+::google::protobuf::uint8* SimpleAlarmRequest::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:alarmpb.SimpleAlarmRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .alarmpb.RequestHeader head = 1;
+  if (this->has_head()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        1, *this->head_, deterministic, target);
+  }
+
+  // string Describe = 2;
+  if (this->describe().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->describe().data(), static_cast<int>(this->describe().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.SimpleAlarmRequest.Describe");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        2, this->describe(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:alarmpb.SimpleAlarmRequest)
+  return target;
+}
+
+size_t SimpleAlarmRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:alarmpb.SimpleAlarmRequest)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string Describe = 2;
+  if (this->describe().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->describe());
+  }
+
+  // .alarmpb.RequestHeader head = 1;
+  if (this->has_head()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->head_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void SimpleAlarmRequest::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:alarmpb.SimpleAlarmRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  const SimpleAlarmRequest* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const SimpleAlarmRequest>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:alarmpb.SimpleAlarmRequest)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:alarmpb.SimpleAlarmRequest)
+    MergeFrom(*source);
+  }
+}
+
+void SimpleAlarmRequest::MergeFrom(const SimpleAlarmRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:alarmpb.SimpleAlarmRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.describe().size() > 0) {
+
+    describe_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.describe_);
+  }
+  if (from.has_head()) {
+    mutable_head()->::alarmpb::RequestHeader::MergeFrom(from.head());
+  }
+}
+
+void SimpleAlarmRequest::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:alarmpb.SimpleAlarmRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void SimpleAlarmRequest::CopyFrom(const SimpleAlarmRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:alarmpb.SimpleAlarmRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool SimpleAlarmRequest::IsInitialized() const {
+  return true;
+}
+
+void SimpleAlarmRequest::Swap(SimpleAlarmRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void SimpleAlarmRequest::InternalSwap(SimpleAlarmRequest* other) {
+  using std::swap;
+  describe_.Swap(&other->describe_);
+  swap(head_, other->head_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata SimpleAlarmRequest::GetMetadata() const {
+  protobuf_alarmpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_alarmpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// SimpleAlarmRequest
+
+// .alarmpb.RequestHeader head = 1;
+bool SimpleAlarmRequest::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+void SimpleAlarmRequest::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) delete head_;
+  head_ = NULL;
+}
+const ::alarmpb::RequestHeader& SimpleAlarmRequest::head() const {
+  const ::alarmpb::RequestHeader* p = head_;
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleAlarmRequest.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::alarmpb::RequestHeader*>(
+      &::alarmpb::_RequestHeader_default_instance_);
+}
+::alarmpb::RequestHeader* SimpleAlarmRequest::mutable_head() {
+  
+  if (head_ == NULL) {
+    head_ = new ::alarmpb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleAlarmRequest.head)
+  return head_;
+}
+::alarmpb::RequestHeader* SimpleAlarmRequest::release_head() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleAlarmRequest.head)
+  
+  ::alarmpb::RequestHeader* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+void SimpleAlarmRequest::set_allocated_head(::alarmpb::RequestHeader* head) {
+  delete head_;
+  head_ = head;
+  if (head) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleAlarmRequest.head)
+}
+
+// string Describe = 2;
+void SimpleAlarmRequest::clear_describe() {
+  describe_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& SimpleAlarmRequest::describe() const {
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleAlarmRequest.Describe)
+  return describe_.GetNoArena();
+}
+void SimpleAlarmRequest::set_describe(const ::std::string& value) {
+  
+  describe_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleAlarmRequest.Describe)
+}
+#if LANG_CXX11
+void SimpleAlarmRequest::set_describe(::std::string&& value) {
+  
+  describe_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:alarmpb.SimpleAlarmRequest.Describe)
+}
+#endif
+void SimpleAlarmRequest::set_describe(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  describe_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:alarmpb.SimpleAlarmRequest.Describe)
+}
+void SimpleAlarmRequest::set_describe(const char* value, size_t size) {
+  
+  describe_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.SimpleAlarmRequest.Describe)
+}
+::std::string* SimpleAlarmRequest::mutable_describe() {
+  
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleAlarmRequest.Describe)
+  return describe_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* SimpleAlarmRequest::release_describe() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleAlarmRequest.Describe)
+  
+  return describe_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void SimpleAlarmRequest::set_allocated_describe(::std::string* describe) {
+  if (describe != NULL) {
+    
+  } else {
+    
+  }
+  describe_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), describe);
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleAlarmRequest.Describe)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int SimpleAlarmResponse::kHeadFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+SimpleAlarmResponse::SimpleAlarmResponse()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_alarmpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:alarmpb.SimpleAlarmResponse)
+}
+SimpleAlarmResponse::SimpleAlarmResponse(const SimpleAlarmResponse& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_head()) {
+    head_ = new ::alarmpb::ResponseHeader(*from.head_);
+  } else {
+    head_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:alarmpb.SimpleAlarmResponse)
+}
+
+void SimpleAlarmResponse::SharedCtor() {
+  head_ = NULL;
+  _cached_size_ = 0;
+}
+
+SimpleAlarmResponse::~SimpleAlarmResponse() {
+  // @@protoc_insertion_point(destructor:alarmpb.SimpleAlarmResponse)
+  SharedDtor();
+}
+
+void SimpleAlarmResponse::SharedDtor() {
+  if (this != internal_default_instance()) delete head_;
+}
+
+void SimpleAlarmResponse::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* SimpleAlarmResponse::descriptor() {
+  protobuf_alarmpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_alarmpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const SimpleAlarmResponse& SimpleAlarmResponse::default_instance() {
+  protobuf_alarmpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+SimpleAlarmResponse* SimpleAlarmResponse::New(::google::protobuf::Arena* arena) const {
+  SimpleAlarmResponse* n = new SimpleAlarmResponse;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void SimpleAlarmResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:alarmpb.SimpleAlarmResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) {
+    delete head_;
+  }
+  head_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool SimpleAlarmResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:alarmpb.SimpleAlarmResponse)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .alarmpb.ResponseHeader head = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_head()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:alarmpb.SimpleAlarmResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:alarmpb.SimpleAlarmResponse)
+  return false;
+#undef DO_
+}
+
+void SimpleAlarmResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:alarmpb.SimpleAlarmResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .alarmpb.ResponseHeader head = 1;
+  if (this->has_head()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, *this->head_, output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:alarmpb.SimpleAlarmResponse)
+}
+
+::google::protobuf::uint8* SimpleAlarmResponse::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:alarmpb.SimpleAlarmResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .alarmpb.ResponseHeader head = 1;
+  if (this->has_head()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        1, *this->head_, deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:alarmpb.SimpleAlarmResponse)
+  return target;
+}
+
+size_t SimpleAlarmResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:alarmpb.SimpleAlarmResponse)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // .alarmpb.ResponseHeader head = 1;
+  if (this->has_head()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->head_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void SimpleAlarmResponse::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:alarmpb.SimpleAlarmResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  const SimpleAlarmResponse* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const SimpleAlarmResponse>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:alarmpb.SimpleAlarmResponse)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:alarmpb.SimpleAlarmResponse)
+    MergeFrom(*source);
+  }
+}
+
+void SimpleAlarmResponse::MergeFrom(const SimpleAlarmResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:alarmpb.SimpleAlarmResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.has_head()) {
+    mutable_head()->::alarmpb::ResponseHeader::MergeFrom(from.head());
+  }
+}
+
+void SimpleAlarmResponse::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:alarmpb.SimpleAlarmResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void SimpleAlarmResponse::CopyFrom(const SimpleAlarmResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:alarmpb.SimpleAlarmResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool SimpleAlarmResponse::IsInitialized() const {
+  return true;
+}
+
+void SimpleAlarmResponse::Swap(SimpleAlarmResponse* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void SimpleAlarmResponse::InternalSwap(SimpleAlarmResponse* other) {
+  using std::swap;
+  swap(head_, other->head_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata SimpleAlarmResponse::GetMetadata() const {
+  protobuf_alarmpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_alarmpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// SimpleAlarmResponse
+
+// .alarmpb.ResponseHeader head = 1;
+bool SimpleAlarmResponse::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+void SimpleAlarmResponse::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) delete head_;
+  head_ = NULL;
+}
+const ::alarmpb::ResponseHeader& SimpleAlarmResponse::head() const {
+  const ::alarmpb::ResponseHeader* p = head_;
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleAlarmResponse.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::alarmpb::ResponseHeader*>(
+      &::alarmpb::_ResponseHeader_default_instance_);
+}
+::alarmpb::ResponseHeader* SimpleAlarmResponse::mutable_head() {
+  
+  if (head_ == NULL) {
+    head_ = new ::alarmpb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleAlarmResponse.head)
+  return head_;
+}
+::alarmpb::ResponseHeader* SimpleAlarmResponse::release_head() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleAlarmResponse.head)
+  
+  ::alarmpb::ResponseHeader* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+void SimpleAlarmResponse::set_allocated_head(::alarmpb::ResponseHeader* head) {
+  delete head_;
+  head_ = head;
+  if (head) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleAlarmResponse.head)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -5965,6 +6736,804 @@ void AliveResponse::set_allocated_head(::alarmpb::ResponseHeader* head) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:alarmpb.AliveResponse.head)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int SimpleRequest::kHeadFieldNumber;
+const int SimpleRequest::kTitleFieldNumber;
+const int SimpleRequest::kContentFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+SimpleRequest::SimpleRequest()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_alarmpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:alarmpb.SimpleRequest)
+}
+SimpleRequest::SimpleRequest(const SimpleRequest& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  title_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.title().size() > 0) {
+    title_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.title_);
+  }
+  content_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.content().size() > 0) {
+    content_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.content_);
+  }
+  if (from.has_head()) {
+    head_ = new ::alarmpb::RequestHeader(*from.head_);
+  } else {
+    head_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:alarmpb.SimpleRequest)
+}
+
+void SimpleRequest::SharedCtor() {
+  title_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  content_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  head_ = NULL;
+  _cached_size_ = 0;
+}
+
+SimpleRequest::~SimpleRequest() {
+  // @@protoc_insertion_point(destructor:alarmpb.SimpleRequest)
+  SharedDtor();
+}
+
+void SimpleRequest::SharedDtor() {
+  title_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  content_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete head_;
+}
+
+void SimpleRequest::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* SimpleRequest::descriptor() {
+  protobuf_alarmpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_alarmpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const SimpleRequest& SimpleRequest::default_instance() {
+  protobuf_alarmpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+SimpleRequest* SimpleRequest::New(::google::protobuf::Arena* arena) const {
+  SimpleRequest* n = new SimpleRequest;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void SimpleRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:alarmpb.SimpleRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  title_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  content_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) {
+    delete head_;
+  }
+  head_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool SimpleRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:alarmpb.SimpleRequest)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .alarmpb.RequestHeader head = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_head()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string title = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_title()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->title().data(), static_cast<int>(this->title().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "alarmpb.SimpleRequest.title"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string content = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_content()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->content().data(), static_cast<int>(this->content().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "alarmpb.SimpleRequest.content"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:alarmpb.SimpleRequest)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:alarmpb.SimpleRequest)
+  return false;
+#undef DO_
+}
+
+void SimpleRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:alarmpb.SimpleRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .alarmpb.RequestHeader head = 1;
+  if (this->has_head()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, *this->head_, output);
+  }
+
+  // string title = 2;
+  if (this->title().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->title().data(), static_cast<int>(this->title().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.SimpleRequest.title");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->title(), output);
+  }
+
+  // string content = 3;
+  if (this->content().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->content().data(), static_cast<int>(this->content().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.SimpleRequest.content");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      3, this->content(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:alarmpb.SimpleRequest)
+}
+
+::google::protobuf::uint8* SimpleRequest::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:alarmpb.SimpleRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .alarmpb.RequestHeader head = 1;
+  if (this->has_head()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        1, *this->head_, deterministic, target);
+  }
+
+  // string title = 2;
+  if (this->title().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->title().data(), static_cast<int>(this->title().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.SimpleRequest.title");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        2, this->title(), target);
+  }
+
+  // string content = 3;
+  if (this->content().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->content().data(), static_cast<int>(this->content().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.SimpleRequest.content");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        3, this->content(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:alarmpb.SimpleRequest)
+  return target;
+}
+
+size_t SimpleRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:alarmpb.SimpleRequest)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string title = 2;
+  if (this->title().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->title());
+  }
+
+  // string content = 3;
+  if (this->content().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->content());
+  }
+
+  // .alarmpb.RequestHeader head = 1;
+  if (this->has_head()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->head_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void SimpleRequest::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:alarmpb.SimpleRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  const SimpleRequest* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const SimpleRequest>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:alarmpb.SimpleRequest)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:alarmpb.SimpleRequest)
+    MergeFrom(*source);
+  }
+}
+
+void SimpleRequest::MergeFrom(const SimpleRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:alarmpb.SimpleRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.title().size() > 0) {
+
+    title_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.title_);
+  }
+  if (from.content().size() > 0) {
+
+    content_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.content_);
+  }
+  if (from.has_head()) {
+    mutable_head()->::alarmpb::RequestHeader::MergeFrom(from.head());
+  }
+}
+
+void SimpleRequest::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:alarmpb.SimpleRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void SimpleRequest::CopyFrom(const SimpleRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:alarmpb.SimpleRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool SimpleRequest::IsInitialized() const {
+  return true;
+}
+
+void SimpleRequest::Swap(SimpleRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void SimpleRequest::InternalSwap(SimpleRequest* other) {
+  using std::swap;
+  title_.Swap(&other->title_);
+  content_.Swap(&other->content_);
+  swap(head_, other->head_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata SimpleRequest::GetMetadata() const {
+  protobuf_alarmpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_alarmpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// SimpleRequest
+
+// .alarmpb.RequestHeader head = 1;
+bool SimpleRequest::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+void SimpleRequest::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) delete head_;
+  head_ = NULL;
+}
+const ::alarmpb::RequestHeader& SimpleRequest::head() const {
+  const ::alarmpb::RequestHeader* p = head_;
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleRequest.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::alarmpb::RequestHeader*>(
+      &::alarmpb::_RequestHeader_default_instance_);
+}
+::alarmpb::RequestHeader* SimpleRequest::mutable_head() {
+  
+  if (head_ == NULL) {
+    head_ = new ::alarmpb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleRequest.head)
+  return head_;
+}
+::alarmpb::RequestHeader* SimpleRequest::release_head() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleRequest.head)
+  
+  ::alarmpb::RequestHeader* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+void SimpleRequest::set_allocated_head(::alarmpb::RequestHeader* head) {
+  delete head_;
+  head_ = head;
+  if (head) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleRequest.head)
+}
+
+// string title = 2;
+void SimpleRequest::clear_title() {
+  title_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& SimpleRequest::title() const {
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleRequest.title)
+  return title_.GetNoArena();
+}
+void SimpleRequest::set_title(const ::std::string& value) {
+  
+  title_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleRequest.title)
+}
+#if LANG_CXX11
+void SimpleRequest::set_title(::std::string&& value) {
+  
+  title_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:alarmpb.SimpleRequest.title)
+}
+#endif
+void SimpleRequest::set_title(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  title_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:alarmpb.SimpleRequest.title)
+}
+void SimpleRequest::set_title(const char* value, size_t size) {
+  
+  title_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.SimpleRequest.title)
+}
+::std::string* SimpleRequest::mutable_title() {
+  
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleRequest.title)
+  return title_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* SimpleRequest::release_title() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleRequest.title)
+  
+  return title_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void SimpleRequest::set_allocated_title(::std::string* title) {
+  if (title != NULL) {
+    
+  } else {
+    
+  }
+  title_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), title);
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleRequest.title)
+}
+
+// string content = 3;
+void SimpleRequest::clear_content() {
+  content_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& SimpleRequest::content() const {
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleRequest.content)
+  return content_.GetNoArena();
+}
+void SimpleRequest::set_content(const ::std::string& value) {
+  
+  content_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleRequest.content)
+}
+#if LANG_CXX11
+void SimpleRequest::set_content(::std::string&& value) {
+  
+  content_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:alarmpb.SimpleRequest.content)
+}
+#endif
+void SimpleRequest::set_content(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  content_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:alarmpb.SimpleRequest.content)
+}
+void SimpleRequest::set_content(const char* value, size_t size) {
+  
+  content_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.SimpleRequest.content)
+}
+::std::string* SimpleRequest::mutable_content() {
+  
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleRequest.content)
+  return content_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* SimpleRequest::release_content() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleRequest.content)
+  
+  return content_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void SimpleRequest::set_allocated_content(::std::string* content) {
+  if (content != NULL) {
+    
+  } else {
+    
+  }
+  content_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), content);
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleRequest.content)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int SimpleResponse::kHeadFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+SimpleResponse::SimpleResponse()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_alarmpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:alarmpb.SimpleResponse)
+}
+SimpleResponse::SimpleResponse(const SimpleResponse& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_head()) {
+    head_ = new ::alarmpb::ResponseHeader(*from.head_);
+  } else {
+    head_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:alarmpb.SimpleResponse)
+}
+
+void SimpleResponse::SharedCtor() {
+  head_ = NULL;
+  _cached_size_ = 0;
+}
+
+SimpleResponse::~SimpleResponse() {
+  // @@protoc_insertion_point(destructor:alarmpb.SimpleResponse)
+  SharedDtor();
+}
+
+void SimpleResponse::SharedDtor() {
+  if (this != internal_default_instance()) delete head_;
+}
+
+void SimpleResponse::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* SimpleResponse::descriptor() {
+  protobuf_alarmpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_alarmpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const SimpleResponse& SimpleResponse::default_instance() {
+  protobuf_alarmpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+SimpleResponse* SimpleResponse::New(::google::protobuf::Arena* arena) const {
+  SimpleResponse* n = new SimpleResponse;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void SimpleResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:alarmpb.SimpleResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) {
+    delete head_;
+  }
+  head_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool SimpleResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:alarmpb.SimpleResponse)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .alarmpb.ResponseHeader head = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_head()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:alarmpb.SimpleResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:alarmpb.SimpleResponse)
+  return false;
+#undef DO_
+}
+
+void SimpleResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:alarmpb.SimpleResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .alarmpb.ResponseHeader head = 1;
+  if (this->has_head()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, *this->head_, output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:alarmpb.SimpleResponse)
+}
+
+::google::protobuf::uint8* SimpleResponse::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:alarmpb.SimpleResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .alarmpb.ResponseHeader head = 1;
+  if (this->has_head()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        1, *this->head_, deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:alarmpb.SimpleResponse)
+  return target;
+}
+
+size_t SimpleResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:alarmpb.SimpleResponse)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // .alarmpb.ResponseHeader head = 1;
+  if (this->has_head()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->head_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void SimpleResponse::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:alarmpb.SimpleResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  const SimpleResponse* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const SimpleResponse>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:alarmpb.SimpleResponse)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:alarmpb.SimpleResponse)
+    MergeFrom(*source);
+  }
+}
+
+void SimpleResponse::MergeFrom(const SimpleResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:alarmpb.SimpleResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.has_head()) {
+    mutable_head()->::alarmpb::ResponseHeader::MergeFrom(from.head());
+  }
+}
+
+void SimpleResponse::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:alarmpb.SimpleResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void SimpleResponse::CopyFrom(const SimpleResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:alarmpb.SimpleResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool SimpleResponse::IsInitialized() const {
+  return true;
+}
+
+void SimpleResponse::Swap(SimpleResponse* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void SimpleResponse::InternalSwap(SimpleResponse* other) {
+  using std::swap;
+  swap(head_, other->head_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata SimpleResponse::GetMetadata() const {
+  protobuf_alarmpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_alarmpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// SimpleResponse
+
+// .alarmpb.ResponseHeader head = 1;
+bool SimpleResponse::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+void SimpleResponse::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) delete head_;
+  head_ = NULL;
+}
+const ::alarmpb::ResponseHeader& SimpleResponse::head() const {
+  const ::alarmpb::ResponseHeader* p = head_;
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleResponse.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::alarmpb::ResponseHeader*>(
+      &::alarmpb::_ResponseHeader_default_instance_);
+}
+::alarmpb::ResponseHeader* SimpleResponse::mutable_head() {
+  
+  if (head_ == NULL) {
+    head_ = new ::alarmpb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleResponse.head)
+  return head_;
+}
+::alarmpb::ResponseHeader* SimpleResponse::release_head() {
+  // @@protoc_insertion_point(field_release:alarmpb.SimpleResponse.head)
+  
+  ::alarmpb::ResponseHeader* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+void SimpleResponse::set_allocated_head(::alarmpb::ResponseHeader* head) {
+  delete head_;
+  head_ = head;
+  if (head) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleResponse.head)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
