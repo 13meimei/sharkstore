@@ -68,12 +68,11 @@ func (t *AddPeerTask) stepStart(cluster *Cluster, r *Range) (task *taskpb.Task) 
 	// not alloc new peer yet
 	if t.peer == nil {
 		var err error
-		t.peer, err = cluster.allocPeerAndSelectNode(r)
+		t.peer, err = cluster.allocPeerAndSelectNode(r, true)
 		if err != nil {
 			log.Error("%s alloc peer failed: %s", t.logID, err.Error())
 			return nil
 		}
-		t.peer.Type = metapb.PeerType_PeerType_Learner
 	}
 
 	t.state = WaitRaftConfReady

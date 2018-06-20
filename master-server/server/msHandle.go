@@ -146,7 +146,8 @@ func checkQurumDown(req *mspb.RangeHeartbeatRequest) bool {
 
 func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.RangeHeartbeatRequest) (resp *mspb.RangeHeartbeatResponse) {
 	r := req.GetRange()
-	log.Debug("[HB] range[%d:%d] heartbeat, from ip[%s]", r.GetTableId(), r.GetId(), util.GetIpFromContext(ctx))
+	log.Debug("[HB] range[%d:%d] heartbeat, from ip[%s], peers: %v",
+		r.GetTableId(), r.GetId(), util.GetIpFromContext(ctx), req.GetRange().GetPeers())
 
 	cluster := service.cluster
 	resp = new(mspb.RangeHeartbeatResponse)
@@ -273,6 +274,7 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 		}
 
 		rng.Range = r
+		rng.Term = req.GetTerm()
 		rng.PeersStatus = req.GetPeersStatus()
 		rng.Leader = req.GetLeader()
 

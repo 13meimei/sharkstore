@@ -962,7 +962,7 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 		reply.Message = http_error_range_find
 		return
 	}
-	newPeer, err := cluster.allocPeerAndSelectNode(rng)
+	newPeer, err := cluster.allocPeerAndSelectNode(rng, true)
 	if newPeer == nil || err != nil {
 		reply.Code = -1
 		reply.Message = "can not find best node to add peer"

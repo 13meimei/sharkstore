@@ -6,17 +6,21 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-bool Range::FindPeerByNodeID(uint64_t node_id, metapb::Peer *out_peer) {
-    sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
-
-    for (int i = 0; i < meta_.peers_size(); i++) {
-        const auto &peer = meta_.peers(i);
+static bool findPeerByNodeID(const metapb::Range& meta, uint64_t node_id, metapb::Peer *out_peer = nullptr) {
+    for (int i = 0; i < meta.peers_size(); i++) {
+        const auto &peer = meta.peers(i);
         if (peer.node_id() == node_id) {
             if (out_peer) out_peer->CopyFrom(peer);
             return true;
         }
     }
     return false;
+}
+
+bool Range::FindPeerByNodeID(uint64_t node_id, metapb::Peer *out_peer) {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
+
+    return findPeerByNodeID(meta_, node_id, out_peer);
 }
 
 void Range::AddPeer(const metapb::Peer &peer) {
@@ -150,7 +154,7 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc) {
     do {
         std::unique_lock<sharkstore::shared_mutex> lock(meta_lock_);
 
-        if (FindPeerByNodeID(cc.peer.node_id)) {
+        if (findPeerByNodeID(meta_, cc.peer.node_id)) {
             FLOG_WARN("Range %" PRIu64 " ApplyAddPeer NodeId: %" PRIu64 " is existed",
                       meta_.id(), cc.peer.node_id);
             return Status::OK();

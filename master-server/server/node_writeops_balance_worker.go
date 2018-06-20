@@ -41,7 +41,7 @@ func (w *balanceNodeOpsWorker) Work(cluster *Cluster) {
 	}
 
 	sourceNode := cluster.FindNodeById(oldPeer.GetNodeId())
-	newPeer, err := cluster.allocPeerAndSelectNode(rng)
+	newPeer, err := cluster.allocPeerAndSelectNode(rng, true)
 	if newPeer == nil || err != nil {
 		cluster.metric.CollectScheduleCounter(w.GetName(), "no_peer")
 		log.Error("alloc peer failure rngId:%d err:%s", rng.GetId(), err.Error())

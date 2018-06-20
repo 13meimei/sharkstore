@@ -236,6 +236,9 @@ add_custom_target(
 )
 add_dependencies(data-server gen-version)
 
+install(TARGETS data-server RUNTIME DESTINATION bin)
+
+
 OPTION (BUILD_TEST "build sharkstore tests" OFF)
 MESSAGE(STATUS BUILD_TEST=${BUILD_TEST})
 if (BUILD_TEST)

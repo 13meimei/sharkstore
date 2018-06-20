@@ -1134,24 +1134,30 @@ func (c *Cluster) loadTrashReplica(peerId uint64) (*metapb.Replica, error) {
 	return rep, nil
 }
 
-func (c *Cluster) allocPeer(nodeId uint64) (*metapb.Peer, error) {
+func (c *Cluster) allocPeer(nodeId uint64, isLearner bool) (*metapb.Peer, error) {
 	peerId, err := c.idGener.GenID()
 	if err != nil {
 		return nil, ErrGenID
 	}
-	return &metapb.Peer{Id: peerId, NodeId: nodeId}, nil
+	peer := &metapb.Peer{Id: peerId, NodeId: nodeId}
+	if isLearner {
+		peer.Type = metapb.PeerType_PeerType_Learner
+	} else {
+		peer.Type = metapb.PeerType_PeerType_Normal
+	}
+	return peer, nil
 }
 
 /**
 选择节点需要排除已有peer相同的IP
 优先table的range分布少的node
 */
-func (c *Cluster) allocPeerAndSelectNode(rng *Range) (*metapb.Peer, error) {
+func (c *Cluster) allocPeerAndSelectNode(rng *Range, isLearner bool) (*metapb.Peer, error) {
 	node := c.selectNodeForAddPeer(rng)
 	if node == nil {
 		return nil, ERR_NO_SELECTED_NODE
 	}
-	newPeer, err := c.allocPeer(node.GetId())
+	newPeer, err := c.allocPeer(node.GetId(), isLearner)
 	if err != nil {
 		return nil, err
 	}
@@ -1183,7 +1189,7 @@ func (c *Cluster) newRangeByScope(startKey, endKey []byte, table *Table) (*Range
 		return nil, err
 	}
 	region := NewRange(rng, nil)
-	newPeer, err := c.allocPeerAndSelectNode(region)
+	newPeer, err := c.allocPeerAndSelectNode(region, false)
 	if err != nil {
 		return nil, err
 	}
@@ -1386,8 +1392,8 @@ func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
 			}
 		}
 	}
-
 	if tc != nil {
+		log.Debug("range[%d] step Task: %v", r.GetId(), tc.String())
 		over, task := tc.Next(c, r)
 		if !over {
 			return task
