@@ -1379,8 +1379,7 @@ func (c *Cluster) selectWorstPeer(rng *Range) *metapb.Peer {
 	return nil
 }
 
-// Dispatch dispatch range
-func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
+func (c *Cluster) dispatchOne(r *Range) (task *taskpb.Task, over bool) {
 	// get taskchain
 	tc := c.taskManager.Find(r.GetId())
 	if tc == nil {
@@ -1392,13 +1391,27 @@ func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
 			}
 		}
 	}
-	if tc != nil {
-		log.Debug("range[%d] step Task: %v", r.GetId(), tc.String())
-		over, task := tc.Next(c, r)
+
+	// no taskchain
+	if tc == nil {
+		return nil, true // no task is over
+	}
+
+	log.Debug("range[%d] step Task: %v", r.GetId(), tc.String())
+	over, task = tc.Next(c, r)
+	if over {
+		c.taskManager.Remove(tc)
+	}
+	return task, over
+}
+
+// Dispatch dispatch range
+func (c *Cluster) Dispatch(r *Range) *taskpb.Task {
+	// max dispatch three times in one heartbeat
+	for i := 0; i < 3; i++ {
+		task, over := c.dispatchOne(r)
 		if !over {
 			return task
-		} else {
-			c.taskManager.Remove(tc)
 		}
 	}
 	return nil

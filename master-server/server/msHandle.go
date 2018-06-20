@@ -229,6 +229,8 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 			rng.GetId(), rng.GetRangeEpoch().GetConfVer(), r.GetRangeEpoch().GetConfVer())
 	}
 	if req.GetLeader().GetNodeId() != rng.GetLeader().GetNodeId() {
+		log.Info("range[%d] leader change from Node: %d to Node: %d", rng.GetId(),
+			rng.GetLeader().GetNodeId(), req.GetLeader().GetNodeId())
 		saveCache = true
 	}
 	// 有down peer 或者 pending peer
@@ -282,9 +284,6 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 	}
 	rng.LastHbTimeTS = time.Now()
 	cluster.updateStatus(rng, req.GetStats())
-	if rng.Trace || log.IsEnableDebug() {
-		log.Debug("[HB] range[%s] dispatch task", rng.SString())
-	}
 	// 暂时不能参与任务调度
 	if table != nil && table.Status == metapb.TableStatus_TableInit {
 		return
