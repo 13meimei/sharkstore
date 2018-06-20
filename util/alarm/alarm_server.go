@@ -1,7 +1,6 @@
 package alarm
 
 import (
-	"context"
 	"net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -10,6 +9,7 @@ import (
 	"errors"
 	"util/log"
 	"time"
+	"golang.org/x/net/context"
 )
 
 type AlarmServer interface {
