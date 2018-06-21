@@ -63,6 +63,8 @@ public:
     void ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result);
 
 private:
+    void initPublish();
+
     void post(const std::function<void()>& f);
     bool tryPost(const std::function<void()>& f);
 

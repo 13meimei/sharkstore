@@ -728,8 +728,8 @@ void RaftFsm::reset(uint64_t term, bool is_leader) {
     votes_.clear();
     pending_conf_ = false;
 
-    void abortSendSnap();
-    void abortApplySnap();
+    abortSendSnap();
+    abortApplySnap();
 
     // reset non-learner replicas
     auto old_replicas = std::move(replicas_);

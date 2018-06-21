@@ -19,9 +19,22 @@ static const time_t kFetchStatusIntervalSec = 3;
 
 RaftImpl::RaftImpl(const RaftServerOptions& sops, const RaftOptions& ops,
                    const RaftContext& ctx)
-    : sops_(sops), ops_(ops), ctx_(ctx), fsm_(new RaftFsm(sops, ops)) {}
+    : sops_(sops), ops_(ops), ctx_(ctx), fsm_(new RaftFsm(sops, ops)) {
+    initPublish();
+}
 
 RaftImpl::~RaftImpl() { Stop(); }
+
+void RaftImpl::initPublish() {
+    uint64_t leader = 0, term = 0;
+    std::tie(leader, term) = fsm_->GetLeaderTerm();
+    bulletin_board_.PublishLeaderTerm(leader, term);
+
+    bulletin_board_.PublishPeers(fsm_->GetPeers());
+
+    last_fetch_status_ = time(NULL);
+    bulletin_board_.PublishStatus(fsm_->GetStatus());
+}
 
 Status RaftImpl::TryToLeader() {
     if (stopped_) {

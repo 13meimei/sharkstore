@@ -132,7 +132,7 @@ bool Range::PushHeartBeatMessage() {
     raft::RaftStatus rs;
     raft_->GetStatus(&rs);
     if (rs.leader != node_id_) {
-        FLOG_ERROR("range[%" PRIu64 "] heartbeat raft say not leader, leader=: %" PRIu64,
+        FLOG_ERROR("range[%" PRIu64 "] heartbeat raft say not leader, leader=%" PRIu64,
                    meta_.id(), rs.leader);
         return false;
     }
@@ -274,7 +274,7 @@ Status Range::Submit(const raft_cmdpb::Command &cmd) {
 }
 
 void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
-    FLOG_INFO("Range %" PRIu64 " Leader Change to Node %" PRIu64, meta_.id(), leader);
+    FLOG_INFO("range[%" PRIu64 "] Leader Change to Node %" PRIu64, meta_.id(), leader);
 
     if (!valid_) {
         FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
