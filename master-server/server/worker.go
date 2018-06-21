@@ -11,7 +11,7 @@ import (
 const (
 	defaultWorkerInterval  =  time.Second
 	maxScheduleInterval       = time.Minute
-	minScheduleInterval       = time.Millisecond * 10
+	minScheduleInterval       = time.Millisecond * 20
 	scheduleIntervalFactor    = 0.8
 
 	writeStatLRUMaxLen            = 1000

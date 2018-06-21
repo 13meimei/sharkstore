@@ -3356,6 +3356,30 @@ func (service *Server) handleTableTopologyQuery(w http.ResponseWriter, r *http.R
 	return
 }
 
+//metric send config
+func (service *Server) handleMetricSendSet(w http.ResponseWriter, r *http.Request)() {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+	interval := r.FormValue("interval")
+	addr := r.FormValue("address")
+
+	intervalI, err := strconv.ParseUint(interval, 10, 32)
+	if err != nil {
+		reply.Code = HTTP_ERROR
+		reply.Message = fmt.Sprintf("metric interval parse uint error: %v", err)
+		return
+	}
+
+	metricInterval := time.Duration(intervalI) * time.Second
+	metric, err := UpdateMetric(service.cluster, addr, metricInterval)
+	if err != nil {
+		log.Warn("set metric send config err, %v", err)
+	}
+	service.cluster.metric = metric
+	log.Info("set metric send config success, interval:%v, addr:%v", metricInterval, addr)
+	return
+}
+
 type SignHandler func(w http.ResponseWriter, r *http.Request) bool
 type HttpHandler func(w http.ResponseWriter, r *http.Request)
 

@@ -134,6 +134,8 @@ func (service *Server) initHttpHandler() (){
 
 	s.Handle("/peer/delete_force", NewHandler(service.validRequest, service.handlePeerDeleteForce))
 	s.Handle("/range/locate", NewHandler(service.validRequest, service.handleRangeLocate))
+
+	s.Handle("/metric/send/set", NewHandler(service.validRequest, service.handleMetricSendSet))
 	return
 }
 
@@ -179,7 +181,6 @@ func (service *Server) InitMasterServer(conf *Config) {
 		}, )
 		service.server = s
 	}
-
 	service.initHttpHandler()
 	service.alarmClient, err = alarm.NewAlarmClient(conf.AlarmConfig.ServerAddress)
 	if err != nil {

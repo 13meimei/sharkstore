@@ -14,6 +14,7 @@ import (
 
 	"util/log"
 	"util/deepcopy"
+	"util"
 	"model/pkg/statspb"
 	"model/pkg/mspb"
 
@@ -56,6 +57,49 @@ func NewMetric(cluster *Cluster, addr string, interval time.Duration) *Metric {
 		ctx: ctx, cancel: cancel, scheduleCounter: make(map[string]map[string]uint64)}
 	return m
 }
+
+func UpdateMetric(cluster *Cluster, addr string, interval time.Duration) (*Metric, error) {
+	metric := cluster.metric
+	if metric != nil && metric.addr == addr && metric.interval == interval {
+		log.Info("metric server is running on the same config")
+		return metric, nil
+	}
+	//落盘
+	err := cluster.StoreMetricConfig(&MetricConfig{Interval: util.NewDuration(interval), Address:addr})
+	if err != nil {
+		return nil, err
+	}
+
+	if metric == nil {
+		metric = NewMetric(cluster, addr, interval)
+		metric.Run()
+	} else {
+		metric.lock.Lock()
+		if metric.addr != addr && addr != ""{
+			cli := &http.Client{
+				Transport: &http.Transport{
+					Dial: func(netw, addr string) (net.Conn, error) {
+						deadline := time.Now().Add(time.Second)
+						c, err := net.DialTimeout(netw, addr, time.Second)
+						if err != nil {
+							return nil, err
+						}
+						c.SetDeadline(deadline)
+						return c, nil
+					},
+				},
+			}
+			metric.cli = cli
+			metric.addr = addr
+		}
+		if interval != 0 {
+			metric.interval = interval
+		}
+		metric.lock.Unlock()
+	}
+	return metric, nil
+}
+
 
 func (m *Metric) run() {
 	defer m.wg.Done()
@@ -149,7 +193,6 @@ func (m *Metric) eventInfoStats() error {
 	for _, event := range eventList {
 		if err := metricEvent(m.cli, m.cluster.GetClusterId(), m.addr, changeEventToMetricTask(event)); err != nil {
 			log.Warn("report task to metric server failed, err %v", err)
-			return err
 		}
 	}
 	return nil

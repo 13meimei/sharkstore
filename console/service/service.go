@@ -84,7 +84,8 @@ func (s *Service) GetUserInfoByErp(erp string) (*models.UserInfo, error) {
 func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 	result := make([]*models.ClusterInfo, 0, 10) // TODO: 分页
 	for _, id := range ids {
-		rows, err := s.db.Query(fmt.Sprintf(`SELECT * FROM %s where id=%d`, TABLE_NAME_CLUSTER, id))
+		rows, err := s.db.Query(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
+		auto_transfer, auto_failover, auto_split, create_time FROM %s where id=%d`, TABLE_NAME_CLUSTER, id))
 		if err != nil {
 			log.Error("db select is failed. err:[%v]", err)
 			return nil, common.DB_ERROR
@@ -106,7 +107,7 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 
 func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 	rows, err := s.db.Query(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
-		auto_failover, auto_transfer, auto_split, create_time FROM %s`, TABLE_NAME_CLUSTER))
+		auto_transfer, auto_failover, auto_split, create_time FROM %s`, TABLE_NAME_CLUSTER))
 	if err != nil {
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR

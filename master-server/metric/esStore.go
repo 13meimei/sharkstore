@@ -23,7 +23,6 @@ type EsStore struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	lock sync.RWMutex
-	keepTimer *time.Timer
 }
 
 func NewEsStore(nodes []string, worker_num int) Store {
@@ -40,7 +39,6 @@ func NewEsStore(nodes []string, worker_num int) Store {
 		message: make(chan *Message, 100000),
 		ctx: ctx,
 		cancel: cancel,
-		keepTimer: time.NewTimer(10*time.Minute),
 	}
 	return p
 }
@@ -57,18 +55,10 @@ func (s *EsStore) work() {
 			if !ok {
 				continue
 			}
-			s.keepTimer.Reset(10*time.Minute)
 			err := s.push(msg)
 			if err != nil {
 				log.Warn("push message failed, err[%v]", err)
 			}
-		case <-s.keepTimer.C:
-			s.lock.Lock()
-			if s.esClient != nil {
-				s.esClient.Stop()
-				s.esClient = nil
-			}
-			s.lock.Unlock()
 		}
 	}
 }
