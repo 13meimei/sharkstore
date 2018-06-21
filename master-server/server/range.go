@@ -117,6 +117,19 @@ func (r *Range) GetPeer(peerID uint64) *metapb.Peer {
 	return nil
 }
 
+// GetStatus return peer's status
+func (r *Range) GetStatus(peerID uint64) *mspb.PeerStatus {
+	if r == nil || peerID == 0 {
+		return nil
+	}
+	for _, status := range r.PeersStatus {
+		if status.GetPeer().GetId() == peerID {
+			return status
+		}
+	}
+	return nil
+}
+
 // GetDownPeer return the down peers with specified peer id
 func (r *Range) GetDownPeer(peerID uint64) *DownPeer {
 	if r == nil {

@@ -98,13 +98,13 @@ func (t *AddPeerTask) stepWaitConf(cluster *Cluster, r *Range) (task *taskpb.Tas
 
 func prepareAddPeer(cluster *Cluster, r *Range, peer *metapb.Peer) error {
 	rng := deepcopy.Iface(r.Range).(*metapb.Range)
-	nodeId := peer.GetNodeId()
-	node := cluster.FindNodeById(nodeId)
+	nodeID := peer.GetNodeId()
+	node := cluster.FindNodeById(nodeID)
 	if node == nil || !node.IsLogin() {
 		return ErrRangeStatusErr
 	}
 	// 即使创建失败，raft leader添加成员
-	var retry int = 3
+	retry := 3
 	var err error
 	for i := 0; i < retry; i++ {
 		err = cluster.cli.CreateRange(node.GetServerAddr(), rng)
@@ -145,6 +145,27 @@ func (t *AddPeerTask) stepCreateRange(cluster *Cluster, r *Range) bool {
 	return false
 }
 
+func (t *AddPeerTask) getProgressInfo(r *Range) string {
+	var leaderLogIndex uint64
+	leader := r.GetLeader()
+	if leader != nil {
+		status := r.GetStatus(leader.GetId())
+		if status != nil {
+			leaderLogIndex = status.GetIndex()
+		}
+	}
+
+	var peerLogIndex uint64
+	var snapshotting bool
+	status := r.GetStatus(t.peer.GetId())
+	if status != nil {
+		peerLogIndex = status.GetIndex()
+		snapshotting = status.GetSnapshotting()
+	}
+
+	return fmt.Sprintf("[leader:%d, peer:%d, snaping:%v]", leaderLogIndex, peerLogIndex, snapshotting)
+}
+
 func (t *AddPeerTask) stepWaitSync(r *Range) bool {
 
 	log.Debug("step range: %v", r.GetPeers())
@@ -155,7 +176,8 @@ func (t *AddPeerTask) stepWaitSync(r *Range) bool {
 		return false
 	}
 
-	log.Info("%s added peer[id:%d, node:%d] current type: %v", t.logID, t.peer.GetId(), t.peer.GetNodeId(), peer.Type)
+	log.Info("%s added peer[id:%d, node:%d] current type: %v, status: %s",
+		t.logID, t.peer.GetId(), t.peer.GetNodeId(), peer.Type, t.getProgressInfo(r))
 
 	if peer.Type == metapb.PeerType_PeerType_Learner {
 		return false
