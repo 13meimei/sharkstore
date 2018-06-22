@@ -61,7 +61,14 @@ Status Store::Get(const std::string& key, std::string* value) {
 }
 
 Status Store::Put(const std::string& key, const std::string& value) {
-    rocksdb::Status s = db_->Put(write_options_, key, value);
+    rocksdb::Status s;
+    if(ds_config.rocksdb_config.storage_type == 1 && ds_config.rocksdb_config.ttl > 0){
+        auto *blobdb = static_cast<rocksdb::blob_db::BlobDB*>(db_);
+        s = blobdb->PutWithTTL(write_options_,rocksdb::Slice(key),rocksdb::Slice(value),ds_config.rocksdb_config.ttl);
+    }else{
+        s = db_->Put(write_options_, key, value);
+    }
+
     if (s.ok()) {
         addMetricWrite(1, key.size() + value.size());
         return Status::OK();
@@ -82,6 +89,36 @@ Status Store::Delete(const std::string& key) {
 }
 
 Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
+    if(ds_config.rocksdb_config.storage_type == 1 && ds_config.rocksdb_config.ttl > 0){
+        auto *blobdb = static_cast<rocksdb::blob_db::BlobDB*>(db_);
+        std::string value;
+        rocksdb::Status s;
+        bool check_dup = req.check_duplicate();
+        *affected = 0;
+        for (int i = 0; i < req.rows_size(); ++i) {
+            const kvrpcpb::KeyValue& kv = req.rows(i);
+            if (check_dup) {
+                s = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true), kv.key(), &value);
+                if (s.ok()) {
+                    return Status(Status::kDuplicate);
+                } else if (!s.IsNotFound()) {
+                    return Status(Status::kIOError, "get", s.ToString());
+                }
+            }
+            s = blobdb->PutWithTTL(write_options_,rocksdb::Slice(kv.key()),rocksdb::Slice(kv.value()),ds_config.rocksdb_config.ttl);
+            if (!s.ok()) {
+                return Status(Status::kIOError, "blobdb put", s.ToString());
+            }else{
+                addMetricWrite(*affected, kv.key().size()+kv.value().size());
+                *affected = *affected + 1;
+            }
+
+        }
+
+       return Status::OK();
+
+    }
+
     uint64_t bytes_written = 0;
     rocksdb::WriteBatch batch;
     rocksdb::Status s;

@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include <rocksdb/db.h>
+#include <rocksdb/utilities/blob_db/blob_db.h>
 #include <mutex>
 
 #include "iterator.h"
