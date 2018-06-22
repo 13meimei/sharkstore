@@ -52,14 +52,14 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 					log.Error("must bug !!!  range[%d:%d] no leader, no heartbeat, lastHeartbeat :[%v]",
 						table.GetId(), r.GetId(), r.LastHbTimeTS)
 
-					desc = fmt.Sprintf("range[%d:%d] no leader, no heartbeat, lastHeartbeat :[%v]",
-						table.GetId(), r.GetId(), r.LastHbTimeTS)
+					desc = fmt.Sprintf("cluster[%v] table[%v] range[%v] no heartbeat, no leader, lastheartbeat:[%v]",
+						cluster.GetClusterId(), table.GetId(), r.GetId(), r.LastHbTimeTS)
 				} else {
 					log.Error("range[%d:%d] no heartbeat, leader is [%d], lastHeartbeat:[%v]",
 						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
 
-					desc = fmt.Sprintf("range[%d:%d] no heartbeat, leader is [%d], lastheartbeat:[%v]",
-						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
+					desc = fmt.Sprintf("cluster[%v] table[%v] range[%v] no heartbeat, leader node[id %v, addr %v], lastheartbeat:[%v]",
+						cluster.GetClusterId(), table.GetId(), r.GetId(), leader.GetNodeId(), cluster.FindNodeById(leader.GetNodeId()).GetServerAddr(), r.LastHbTimeTS)
 				}
 
 				if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
