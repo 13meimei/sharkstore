@@ -122,8 +122,9 @@ func (c *TaskChain) Next(cluster *Cluster, r *Range) (over bool, task *taskpb.Ta
 }
 
 func (c *TaskChain) String() string {
-	return fmt.Sprintf("{\"id\": %d, \"name\": \"%s\", \"range\": %d, \"begin\": %v, \"update\": %v, \"tasks\": %v}",
-		c.id, c.name, c.rangeID, c.begin, c.lastUpdate, c.tasks)
+	return fmt.Sprintf("{\"id\": %d, \"name\": \"%s\", \"range\": %d, \"begin\": \"%s\", \"update\": \"%v\", \"tasks\": %v}",
+		c.id, c.name, c.rangeID, c.begin.Format("2006/01/02-03:04:05"),
+		c.lastUpdate.Format("2006/01/02-03:04:05"), c.tasks)
 }
 
 // NewTransferPeerTasks new transfer peer tasks

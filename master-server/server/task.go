@@ -209,5 +209,5 @@ func (t *BaseTask) CheckOver() bool {
 
 func (t *BaseTask) String() string {
 	return fmt.Sprintf("\"type\": \"%s\", \"state\": \"%s\", \"begin\": \"%s\"",
-		t.typ.String(), t.state.String(), t.begin.String())
+		t.typ.String(), t.state.String(), t.begin.Format("2006/01/02-03:04:05"))
 }
