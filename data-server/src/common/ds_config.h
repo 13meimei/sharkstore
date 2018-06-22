@@ -46,6 +46,7 @@ typedef struct ds_config_s {
     } hb_config;
 
     struct {
+        int recover_skip_fail;
         uint64_t check_size;
         uint64_t split_size;
         uint64_t max_size;

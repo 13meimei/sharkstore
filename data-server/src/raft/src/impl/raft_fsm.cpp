@@ -151,8 +151,8 @@ Status RaftFsm::start() {
         }
     }
     if (!local_found) {
-        return Status(Status::kInvalidArgument, "start raft",
-                      "could not find local node in peers");
+        return Status(Status::kInvalidArgument, "could not find local node in peers",
+                      PeersToString(rops_.peers));
     }
 
     LOG_INFO("newRaft[%llu]%s commit: %llu, applied: %llu, lastindex: %llu, "
