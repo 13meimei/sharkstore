@@ -447,6 +447,7 @@ Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader) {
                range.range_epoch().conf_ver());
 
     if (range.peers_size() == 0) {
+        FLOG_ERROR("CreateRange range[%" PRIu64 "] failed. peers is zero", range.id());
         return Status(Status::kInvalidArgument, "invalid peer size", "0");
     }
 
