@@ -76,6 +76,7 @@ func NewRange(r *metapb.Range, leader *metapb.Peer) *Range {
 		Range:        r,
 		Leader:       leader,
 		LastHbTimeTS: time.Now(),
+		State: metapb.RangeState_R_Init,
 	}
 	return region
 }

@@ -180,6 +180,10 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 		rng.State = metapb.RangeState_R_Remove
 	}
 
+	if rng.State == metapb.RangeState_R_Init {
+		rng.State = metapb.RangeState_R_Normal
+	}
+
 	if rng.Trace || log.IsEnableInfo() {
 		log.Info("[HB] range[%s] heartbeat, from ip[%s]", rng.SString(), util.GetIpFromContext(ctx))
 	}
