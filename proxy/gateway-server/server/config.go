@@ -103,8 +103,8 @@ level = "debug"
 [metric]
 # metric client push interval, set "0s" to disable metric.
 interval = "15s"
-#receive metric server address
-address = "127.0.165.52:8887"
+# receive metric address, leaves it empty will disable metric.
+address = ""
 `
 
 func (c *Config) LoadConfig(configFileName *string) {
