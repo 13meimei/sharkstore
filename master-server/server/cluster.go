@@ -1388,6 +1388,8 @@ func (c *Cluster) dispatchOne(r *Range) (task *taskpb.Task, over bool) {
 			if !c.taskManager.Add(tc) {
 				log.Warn("add tasks for range(%d) failed. maybe other tasks is running.", r.GetId())
 				tc = nil
+			} else {
+				log.Info("%s created.", tc.GetLogID())
 			}
 		}
 	}

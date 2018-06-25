@@ -189,7 +189,7 @@ func (service *Server) verifier(w http.ResponseWriter, r *http.Request) bool {
 func (service *Server) validRequest(w http.ResponseWriter, r *http.Request) bool {
 	reply := &httpReply{}
 	if !service.IsLeader() {
-		log.Debug("service not leader node %d leader %d", service.cluster.nodeId, service.cluster.leader)
+		log.Debug("service not leader node %d leader %v", service.cluster.nodeId, service.cluster.leader)
 		if point := service.GetLeader(); point == nil {
 			reply.Code = HTTP_ERROR_MASTER_IS_NOT_LEADER
 			reply.Message = http_error_cluster_has_no_leader
