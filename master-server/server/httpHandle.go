@@ -3371,7 +3371,7 @@ func (service *Server) handleTableTopologyQuery(w http.ResponseWriter, r *http.R
 }
 
 //set metric send config
-func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request)() {
+func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) () {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 	interval := r.FormValue("interval")
@@ -3395,15 +3395,14 @@ func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Requ
 }
 
 //get metric send config
-func (service *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request)() {
+func (service *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) () {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 
 	cluster := service.cluster
-	var metricConfig *MetricConfig
-	if cluster.metric != nil {
-		metricConfig.Interval = util.NewDuration(cluster.metric.GetMetricInterval())
-		metricConfig.Address = cluster.metric.GetMetricAddr()
+	metricConfig := &MetricConfig{
+		Address:  cluster.metric.GetMetricAddr(),
+		Interval: util.NewDuration(cluster.metric.GetMetricInterval()),
 	}
 	reply.Data = metricConfig
 	log.Info("get metric send config success, %v", metricConfig)
