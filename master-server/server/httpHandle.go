@@ -3377,19 +3377,15 @@ func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Requ
 	interval := r.FormValue("interval")
 	addr := r.FormValue("address")
 
-	intervalI, err := strconv.ParseUint(interval, 10, 32)
-	if err != nil {
+	var metricInterval util.Duration
+	metricInterval.UnmarshalJSON([]byte(interval))
+
+	if err := UpdateMetric(service.cluster, addr, metricInterval.Duration); err != nil {
+		log.Warn("set metric send config err, %v", err)
 		reply.Code = HTTP_ERROR
-		reply.Message = fmt.Sprintf("metric interval parse uint error: %v", err)
+		reply.Message = err.Error()
 		return
 	}
-
-	metricInterval := time.Duration(intervalI) * time.Second
-	metric, err := UpdateMetric(service.cluster, addr, metricInterval)
-	if err != nil {
-		log.Warn("set metric send config err, %v", err)
-	}
-	service.cluster.metric = metric
 	log.Info("set metric send config success, interval:%v, addr:%v", metricInterval, addr)
 	return
 }

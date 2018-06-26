@@ -96,14 +96,15 @@ func TestMetric_Update(t *testing.T)  {
 
 	assert.Equal(t, len(mockMetric.eventList), 1000, "ok")
 
-	metric, err := UpdateMetric(mockCluster, "192.168.108.111:8887", metricInterval.Duration)
+	err = UpdateMetric(mockCluster, "192.168.108.111:8887", metricInterval.Duration)
+	assert.Nil(t, err)
 
 	nowConfig, err := mockCluster.loadMetricConfig()
 	t.Logf("new metric config is: %v", nowConfig)
 	t.Logf("current event list is: %v", len(mockCluster.metric.eventList))
 
 	assert.Nil(t, err)
-	assert.NotNil(t, metric)
+	assert.NotNil(t, mockCluster.metric)
 	time.Sleep(time.Duration(2) * time.Minute)
 
 }

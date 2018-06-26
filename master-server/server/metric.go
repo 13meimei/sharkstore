@@ -58,16 +58,16 @@ func NewMetric(cluster *Cluster, addr string, interval time.Duration) *Metric {
 	return m
 }
 
-func UpdateMetric(cluster *Cluster, addr string, interval time.Duration) (*Metric, error) {
+func UpdateMetric(cluster *Cluster, addr string, interval time.Duration) error {
 	metric := cluster.metric
 	if metric != nil && metric.addr == addr && metric.interval == interval {
 		log.Info("metric server is running on the same config")
-		return metric, nil
+		return nil
 	}
 	//落盘
 	err := cluster.StoreMetricConfig(&MetricConfig{Interval: util.NewDuration(interval), Address:addr})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if metric == nil {
@@ -97,7 +97,7 @@ func UpdateMetric(cluster *Cluster, addr string, interval time.Duration) (*Metri
 		}
 		metric.lock.Unlock()
 	}
-	return metric, nil
+	return nil
 }
 
 func (m *Metric) GetMetricAddr() string  {
@@ -525,11 +525,11 @@ func send(cli *http.Client, request *http.Request) error {
 	}
 	if response.Body != nil {
 		defer response.Body.Close()
-		data, err := ioutil.ReadAll(response.Body)
+		_, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			return err
 		}
-		log.Debug("response ", string(data))
+		//log.Debug("response ", string(data))
 	}
 	if response.StatusCode != http.StatusOK {
 		return errors.New("request failed, not ok")
