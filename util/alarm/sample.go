@@ -19,10 +19,10 @@ type Sample struct {
 
 func NewSample(ip string, port int, spaceId int, info map[string]interface{}) *Sample {
 	return &Sample{
-		ip: ip,
-		port: port,
-		spaceId: spaceId,
-		timestamp: time.Now(),
+		//ip: ip,
+		//port: port,
+		//spaceId: spaceId,
+		//timestamp: time.Now(),
 		info: info,
 	}
 }
@@ -61,6 +61,8 @@ func (sample *Sample) ToJson() string {
 			val = strconv.FormatInt(int64(threshold), 10)
 		case int64:
 			val = strconv.FormatInt(threshold, 10)
+		case uint64:
+			val = strconv.FormatUint(threshold, 10)
 		case float32:
 			val = strconv.FormatFloat(float64(threshold), 'f', -1, 64)
 		case float64:
@@ -68,10 +70,12 @@ func (sample *Sample) ToJson() string {
 		case bool:
 			val = strconv.FormatBool(threshold)
 		}
-		json = append(json, "\""+strings.ToLower(key)+"\":\""+val+"\"")
+		json = append(json, "\""+key+"\":\""+val+"\"")
 	}
 
-	return "{\"ip\":\"" + sample.ip + "\",\"port\":\"" + strconv.Itoa(sample.port) + "\",\"privData\":\"" + string(sample.privData) + "\"," + strings.Join(json, ",") + "}"
+	ret := "{\"ip\":\"" + sample.ip + "\",\"port\":\"" + strconv.Itoa(sample.port) + "\",\"privData\":\"" + string(sample.privData) + "\"," + strings.Join(json, ",") + "}"
+	log.Info("sample to json: %v", ret)
+	return ret
 }
 
 
