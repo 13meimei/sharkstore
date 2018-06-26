@@ -240,7 +240,6 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 	info["ip"] = ip
 	info["port"] = port
 	info["spaceId"] = clusterId
-	sample := alarm.NewSample(ip, int(port), int(clusterId), info)
 	usedSize := node.GetUsedSize()
 	capacity := node.GetCapacity()+1
 	if usedSize/capacity > m.Threshold.Node.CapacityUsedRate {
@@ -276,6 +275,7 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 		return nil
 	}
 
+	sample := alarm.NewSample(ip, int(port), int(clusterId), info)
 	return m.AlarmCli.SimpleAlarm(clusterId, "node stats alarm", string(msg), []*alarm.Sample{sample})
 }
 
@@ -342,6 +342,7 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 			info["range_read_ops"] = readOps
 		}
 
+		log.Info("sample info: %+v", info)
 		samples = append(samples, alarm.NewSample(ip, int(port), int(clusterId), info))
 	}
 	if len(msg) == 0 {
