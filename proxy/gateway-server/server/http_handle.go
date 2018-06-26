@@ -83,7 +83,7 @@ func (q *Query) commandFieldNameToLower() {
 		}
 	}
 
-	andLower := func (and *And) {
+	andLower := func(and *And) {
 		if and.Field != nil {
 			and.Field.Column = strings.ToLower(and.Field.Column)
 		}
@@ -117,9 +117,9 @@ func (q *Query) commandFieldNameToLower() {
 
 func (s *Server) handleKVCommand(w http.ResponseWriter, r *http.Request) {
 	var (
-		query *Query
-		err   error
-		reply *Reply
+		query       *Query
+		err         error
+		reply       *Reply
 		commandType string
 	)
 	defer func() {
@@ -308,7 +308,6 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 			}
 		}
 
-
 		return formatReply(t.columns, allRows, nil, columns), nil
 	}
 }
@@ -482,9 +481,9 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	}
 	if len(duplicateKey) > 0 {
 		return nil, fmt.Errorf("duplicate key: %v", duplicateKey)
-	}else if affected != uint64(len(rows)){
-		log.Error("insert error table[%s:%s],request num:%d,inserted num:%d", db, tableName, len(rows),affected)
-		return nil,ErrAffectRows
+	} else if affected != uint64(len(rows)) {
+		log.Error("insert error table[%s:%s],request num:%d,inserted num:%d", db, tableName, len(rows), affected)
+		return nil, ErrAffectRows
 	}
 	return &Reply{
 		Code:         0,
@@ -572,7 +571,6 @@ func (s *Server) handleTableInfo(w http.ResponseWriter, r *http.Request) {
 	resp.Data = tInfo
 }
 
-
 func (s *Server) handleCreateDatabase(w http.ResponseWriter, r *http.Request) {
 	var (
 		query *CreateDatabase
@@ -628,17 +626,17 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		uuid := r.FormValue("uuid")
 		deleteTime, err := strconv.ParseInt(r.FormValue("deleteTime"), 10, 64)
 		if err != nil {
-			w.Write([]byte("deleteTime: "+err.Error()))
+			w.Write([]byte("deleteTime: " + err.Error()))
 			return
 		}
 		resp, err := s.proxy.Lock(dbName, tableName, lockName, userCondition, uuid, deleteTime, userName)
 		if err != nil {
-			w.Write([]byte("lock: "+err.Error()))
+			w.Write([]byte("lock: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
 		if err != nil {
-			w.Write([]byte("lock reply marshal: "+err.Error()))
+			w.Write([]byte("lock reply marshal: " + err.Error()))
 			return
 		}
 		w.Write(reply)
@@ -646,12 +644,12 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		uuid := r.FormValue("uuid")
 		resp, err := s.proxy.LockUpdate(dbName, tableName, lockName, uuid, []byte(""))
 		if err != nil {
-			w.Write([]byte("lockupdate: "+err.Error()))
+			w.Write([]byte("lockupdate: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
 		if err != nil {
-			w.Write([]byte("lockupdate reply marshal: "+err.Error()))
+			w.Write([]byte("lockupdate reply marshal: " + err.Error()))
 			return
 		}
 		w.Write(reply)
@@ -660,12 +658,12 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		userName := r.FormValue("userName")
 		resp, err := s.proxy.Unlock(dbName, tableName, lockName, uuid, userName)
 		if err != nil {
-			w.Write([]byte("unlock reply marshal: "+err.Error()))
+			w.Write([]byte("unlock reply marshal: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
 		if err != nil {
-			w.Write([]byte("unlock reply marshal: "+err.Error()))
+			w.Write([]byte("unlock reply marshal: " + err.Error()))
 			return
 		}
 		w.Write(reply)
@@ -673,12 +671,12 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		userName := r.FormValue("userName")
 		resp, err := s.proxy.UnlockForce(dbName, tableName, lockName, userName)
 		if err != nil {
-			w.Write([]byte("unlockforce reply marshal: "+err.Error()))
+			w.Write([]byte("unlockforce reply marshal: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
 		if err != nil {
-			w.Write([]byte("unlockforce reply marshal: "+err.Error()))
+			w.Write([]byte("unlockforce reply marshal: " + err.Error()))
 			return
 		}
 		w.Write(reply)
@@ -778,6 +776,35 @@ func (s *Server) handleCreateTable(w http.ResponseWriter, r *http.Request) {
 		reply = &Response{Code: errCreateTable, Message: err.Error()}
 		return
 	}
+	return
+}
+
+func (s *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) {
+	reply := new(Response)
+	defer httpSendReply(w, reply)
+
+	addr := metric.GsMetric.GetMetricAddress()
+	reply.Data = &MetricConfig{Address: addr}
+	log.Info("get metric send config success, addr:%v", addr)
+	return
+}
+
+func (s *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) {
+	reply := new(Response)
+	defer httpSendReply(w, reply)
+
+	addr := r.FormValue("address")
+	err := metric.UpdateMetric(addr)
+	if err != nil {
+		log.Warn("set metric send config err, %v", err)
+		reply.Code = errCommandRun
+		reply.Message = err.Error()
+		return
+	}
+	//落盘
+	//todo
+
+	log.Info("set metric send config success, addr:%v", addr)
 	return
 }
 

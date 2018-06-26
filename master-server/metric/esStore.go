@@ -242,13 +242,6 @@ func (s *EsStore) bulkInsert(index string, indexType string, items ...interface{
 	bulkRequest := s.esClient.Bulk()
 	for _, item := range items {
 		r := elastic.NewBulkIndexRequest().Index(index).Type(indexType).Doc(item)
-		//body, err := json.Marshal(item)
-		//if err != nil {
-		//	log.Error("error %v", err)
-		//}
-		result, _ := r.Source()
-		//log.Info("body is %v", string(body))
-		log.Info("source is %v", result)
 		bulkRequest = bulkRequest.Add(r)
 	}
 	resp, err := bulkRequest.Do(ctx)

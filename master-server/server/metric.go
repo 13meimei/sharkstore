@@ -100,6 +100,19 @@ func UpdateMetric(cluster *Cluster, addr string, interval time.Duration) (*Metri
 	return metric, nil
 }
 
+func (m *Metric) GetMetricAddr() string  {
+	if m == nil {
+		return ""
+	}
+	return m.addr
+}
+
+func (m *Metric) GetMetricInterval() time.Duration  {
+	if m == nil {
+		return 0
+	}
+	return m.interval
+}
 
 func (m *Metric) run() {
 	defer m.wg.Done()

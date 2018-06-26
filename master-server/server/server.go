@@ -135,7 +135,8 @@ func (service *Server) initHttpHandler() (){
 	s.Handle("/peer/delete_force", NewHandler(service.validRequest, service.handlePeerDeleteForce))
 	s.Handle("/range/locate", NewHandler(service.validRequest, service.handleRangeLocate))
 
-	s.Handle("/metric/send/set", NewHandler(service.validRequest, service.handleMetricSendSet))
+	s.Handle("/metric/config/set", NewHandler(service.validRequest, service.handleMetricConfigSet))
+	s.Handle("/metric/config/get", NewHandler(service.validRequest, service.handleMetricConfigGet))
 	return
 }
 

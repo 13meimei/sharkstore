@@ -1494,6 +1494,10 @@ var (
 		&metapb.Column{Name: "cluster_id", DataType: metapb.DataType_BigInt, PrimaryKey: 1},
 		&metapb.Column{Name: "applyer", DataType: metapb.DataType_Varchar},
 		&metapb.Column{Name: "create_time", DataType: metapb.DataType_TimeStamp}}
+
+	metric_server = []*metapb.Column{
+		&metapb.Column{Name: "addr", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
+	}
 )
 
 func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Request) {
@@ -1626,6 +1630,16 @@ func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Re
 		log.Warn("create table %s %s failed, err %v", fbase, "fbase_lock_nsp", err)
 		reply.Code = HTTP_ERROR
 		reply.Message = fmt.Errorf("createTable fbase_lock_nsp err: %v", err).Error()
+		return
+	}
+
+	//metric_server
+	parseColumn(metric_server)
+	_, err = cluster.CreateTable(fbase, "metric_server", metric_server, nil, false, nil)
+	if err != nil {
+		log.Warn("create table %s %s failed, err %v", fbase, "fbase_lock_nsp", err)
+		reply.Code = HTTP_ERROR
+		reply.Message = fmt.Errorf("createTable metric_server err: %v", err).Error()
 		return
 	}
 
@@ -3356,8 +3370,8 @@ func (service *Server) handleTableTopologyQuery(w http.ResponseWriter, r *http.R
 	return
 }
 
-//metric send config
-func (service *Server) handleMetricSendSet(w http.ResponseWriter, r *http.Request)() {
+//set metric send config
+func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request)() {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 	interval := r.FormValue("interval")
@@ -3377,6 +3391,22 @@ func (service *Server) handleMetricSendSet(w http.ResponseWriter, r *http.Reques
 	}
 	service.cluster.metric = metric
 	log.Info("set metric send config success, interval:%v, addr:%v", metricInterval, addr)
+	return
+}
+
+//get metric send config
+func (service *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request)() {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	cluster := service.cluster
+	var metricConfig *MetricConfig
+	if cluster.metric != nil {
+		metricConfig.Interval = util.NewDuration(cluster.metric.GetMetricInterval())
+		metricConfig.Address = cluster.metric.GetMetricAddr()
+	}
+	reply.Data = metricConfig
+	log.Info("get metric send config success, %v", metricConfig)
 	return
 }
 

@@ -153,6 +153,8 @@ func NewServer(cfg *Config) (*Server, error) {
 	svr.Handle("/createdatabase", s.handleCreateDatabase)
 	svr.Handle("/createtable", s.handleCreateTable)
 	svr.Handle("/lock/debug", s.handleLockDebug)
+	svr.Handle("/metric/config/set", s.handleMetricConfigSet)
+	svr.Handle("/metric/config/get", s.handleMetricConfigGet)
 	go svr.Run()
 	s.httpSvr = svr
 

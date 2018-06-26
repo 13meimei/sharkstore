@@ -266,6 +266,11 @@ CREATE TABLE IF NOT EXISTS `range_stats` (
 	  PRIMARY KEY (`cluster_id`, `range_id`)
 )
 
+CREATE TABLE IF NOT EXISTS `metric_server` (
+    `addr`  bigint(20) NOT NULL,
+	  PRIMARY KEY (`addr`)
+)
+
 #需要初始化fbase_role, fbase_privilege
 insert into fbase_role values (3, "普通用户")
 insert into fbase_role values (2, "集群管理员")

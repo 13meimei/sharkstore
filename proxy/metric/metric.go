@@ -54,29 +54,60 @@ type Metric struct {
 }
 
 func NewMetric(clusterId uint64, host, addr string, maxSlowLogNum uint64) *Metric {
-	cli := &http.Client{
-		Transport: &http.Transport{
-			Dial: func(network, addr string) (net.Conn, error) {
-				return net.DialTimeout(network, addr, time.Second)
-			},
-			ResponseHeaderTimeout: time.Second,
-		},
-	}
 	metric := &Metric{
 		clusterId: clusterId,
 		host: host,
 		metricAddr: addr,
-		cli: cli,
 		maxSlowLogNum: maxSlowLogNum,
 		slowLogger: &SlowLog{
 			maxSlowLogNum: maxSlowLogNum,
 			slowLog: make([]*statspb.SlowLog, 0, maxSlowLogNum),
 		},
 	}
+	if addr != "" {
+		metric.cli = &http.Client{
+			Transport: &http.Transport{
+				Dial: func(network, addr string) (net.Conn, error) {
+					return net.DialTimeout(network, addr, time.Second)
+				},
+				ResponseHeaderTimeout: time.Second,
+			},
+		}
+	}
 	metric.proxyMeter = metrics.NewMetricMeter("GS-Proxy", time.Second * 60, metric)
 	metric.storeMeter = metrics.NewMetricMeter("GS-Store", time.Second * 60, metric)
 	go metric.Run()
 	return metric
+}
+
+func UpdateMetric(addr string) error {
+	if GsMetric == nil {
+		return errors.New("wait init")
+	}
+	if GsMetric.metricAddr == addr {
+		log.Info("metric server is running on the same config")
+		return nil
+	}
+	if GsMetric.metricAddr != addr && addr != ""{
+		cli := &http.Client{
+			Transport: &http.Transport{
+				Dial: func(network, addr string) (net.Conn, error) {
+					return net.DialTimeout(network, addr, time.Second)
+				},
+				ResponseHeaderTimeout: time.Second,
+			},
+		}
+		GsMetric.cli = cli
+		GsMetric.metricAddr = addr
+	}
+	return nil
+}
+
+func (m *Metric) GetMetricAddress() string  {
+	if m == nil {
+		return ""
+	}
+	return m.metricAddr
 }
 
 func (m *Metric) Run() {
