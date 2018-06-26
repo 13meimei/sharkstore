@@ -234,12 +234,10 @@ func (m *Metric) doHotspotMetric(ctx *Context, data []byte) error {
 
 func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, node *mspb.NodeStats) (err error) {
 	var msg []byte
+	var sample *alarm.Sample
 	ip := strings.Split(nodeAddr, ":")[0]
 	port, _ := strconv.ParseInt(strings.Split(nodeAddr, ":")[1], 10, 64)
 	info := make(map[string]interface{})
-	info["ip"] = ip
-	info["port"] = port
-	info["spaceId"] = clusterId
 	usedSize := node.GetUsedSize()
 	capacity := node.GetCapacity()+1
 	if usedSize/capacity > m.Threshold.Node.CapacityUsedRate {
@@ -274,8 +272,14 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 	if len(msg) == 0 {
 		return nil
 	}
+	if len(info) != 0 {
+		info["ip"] = ip
+		info["port"] = port
+		info["spaceId"] = clusterId
+		log.Info("sample info: %+v", info)
+		sample = alarm.NewSample(ip, int(port), int(clusterId), info)
+	}
 
-	sample := alarm.NewSample(ip, int(port), int(clusterId), info)
 	return m.AlarmCli.SimpleAlarm(clusterId, "node stats alarm", string(msg), []*alarm.Sample{sample})
 }
 
@@ -313,9 +317,6 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 		ip := strings.Split(rang.GetNodeAdder(), ":")[0]
 		port, _ := strconv.ParseInt(strings.Split(rang.GetNodeAdder(), ":")[1], 10, 64)
 		info := make(map[string]interface{})
-		info["ip"] = ip
-		info["port"] = port
-		info["spaceId"] = clusterId
 
 		writeBps := rang.GetStats().GetBytesWritten()
 		if writeBps > m.Threshold.Range.WriteBps {
@@ -342,8 +343,13 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 			info["range_read_ops"] = readOps
 		}
 
-		log.Info("sample info: %+v", info)
-		samples = append(samples, alarm.NewSample(ip, int(port), int(clusterId), info))
+		if len(info) != 0 {
+			info["ip"] = ip
+			info["port"] = port
+			info["spaceId"] = clusterId
+			log.Info("sample info: %+v", info)
+			samples = append(samples, alarm.NewSample(ip, int(port), int(clusterId), info))
+		}
 	}
 	if len(msg) == 0 {
 		return nil

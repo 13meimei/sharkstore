@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"util/log"
 )
 
 type Sample struct {
@@ -29,6 +30,7 @@ func NewSample(ip string, port int, spaceId int, info map[string]interface{}) *S
 func SamplesToJson(samples []*Sample) []string {
 	var ret []string
 	for _, sample := range samples {
+		log.Info("samples to json: %v", sample.ToJson())
 		ret = append(ret, sample.ToJson())
 	}
 	return ret
