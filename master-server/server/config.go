@@ -221,6 +221,7 @@ type AlarmReceiver struct {
 type AlarmConfig struct {
 	ServerAddress string  			`toml:"server-address" json:"server-address"`
 	ServerPort int   				`toml:"server-port,omitempty" json:"port"`
+	RemoteAlarmServerAddress string`toml:"remote-alarm-server-address,omitempty" json:"remote-alarm-server-address"`
 	MessageGatewayAddress string	`toml:"message-gateway-address,omitempty" json:"message-gateway-address"`
 	Receivers []*AlarmReceiver		`toml:"receivers,omitempty" json:"receivers"`
 }

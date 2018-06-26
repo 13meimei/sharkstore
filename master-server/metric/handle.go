@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"util/log"
 	"util/deepcopy"
-	"jd.com/jimdb/util/zk/leader"
 	"util/alarm"
 )
 
@@ -235,37 +234,49 @@ func (m *Metric) doHotspotMetric(ctx *Context, data []byte) error {
 
 func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, node *mspb.NodeStats) (err error) {
 	var msg []byte
+	ip := strings.Split(nodeAddr, ":")[0]
+	port, _ := strconv.ParseInt(strings.Split(nodeAddr, ":")[1], 10, 64)
+	info := make(map[string]interface{})
+	info["ip"] = ip
+	info["port"] = port
+	info["spaceId"] = clusterId
+	sample := alarm.NewSample(ip, int(port), int(clusterId), info)
 	usedSize := node.GetUsedSize()
 	capacity := node.GetCapacity()+1
 	if usedSize/capacity > m.Threshold.Node.CapacityUsedRate {
 		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] cacapcity used rate %v > %v <br>",
 			clusterId, nodeId, nodeAddr, usedSize/capacity, m.Threshold.Node.CapacityUsedRate))...)
+		info["node_capacity_used_rate"] = usedSize/capacity
 	}
 	writeBps := node.GetBytesWritten()
 	if writeBps > m.Threshold.Node.WriteBps {
 		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] write bps %v > %v <br>",
 			clusterId, nodeId, nodeAddr, writeBps, m.Threshold.Node.WriteBps))...)
+		info["node_write_bps"] = writeBps
 	}
 	writeOps := node.GetKeysWritten()
 	if writeOps > m.Threshold.Node.WriteOps {
 		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] write ops %v > %v <br>",
 			clusterId, nodeId, nodeAddr, writeOps, m.Threshold.Node.WriteOps))...)
+		info["node_write_ops"] = writeOps
 	}
 	readBps := node.GetBytesRead()
 	if readBps > m.Threshold.Node.ReadBps {
 		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] read bps %v > %v <br>",
 			clusterId, nodeId, nodeAddr, readBps, m.Threshold.Node.ReadBps))...)
+		info["node_read_bps"] = readBps
 	}
 	readOps := node.GetKeysRead()
 	if readOps > m.Threshold.Node.ReadOps {
 		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] read ops %v > %v <br>",
 			clusterId, nodeId, nodeAddr, readOps, m.Threshold.Node.ReadOps))...)
+		info["node_read_ops"] = readOps
 	}
 	if len(msg) == 0 {
 		return nil
 	}
 
-	return m.AlarmCli.SimpleAlarm(clusterId, "node stats alarm", string(msg), sample)
+	return m.AlarmCli.SimpleAlarm(clusterId, "node stats alarm", string(msg), []*alarm.Sample{sample})
 }
 
 func (m *Metric) doNodeMetric(ctx *Context, data []byte) error {
@@ -297,10 +308,10 @@ func (m *Metric) doNodeMetric(ctx *Context, data []byte) error {
 
 func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.RangeInfo) (err error) {
 	var msg []byte
+	var samples []*alarm.Sample
 	for _, rang := range rangeStats {
-		var samples []*alarm.Sample
 		ip := strings.Split(rang.GetNodeAdder(), ":")[0]
-		port := strings.Split(rang.GetNodeAdder(), ":")[1]
+		port, _ := strconv.ParseInt(strings.Split(rang.GetNodeAdder(), ":")[1], 10, 64)
 		info := make(map[string]interface{})
 		info["ip"] = ip
 		info["port"] = port
@@ -310,32 +321,28 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 		if writeBps > m.Threshold.Range.WriteBps {
 			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] write bps %v > %v <br>",
 				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), writeBps, m.Threshold.Range.WriteBps))...)
-
 			info["range_write_bps"] = writeBps
 		}
 		writeOps := rang.GetStats().GetKeysWritten()
 		if writeOps > m.Threshold.Range.WriteOps {
 			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] write ops %v > %v <br>",
 				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), writeOps, m.Threshold.Range.WriteOps))...)
-
 			info["range_write_ops"] = writeOps
 		}
 		readBps := rang.GetStats().GetBytesRead()
 		if readBps > m.Threshold.Range.ReadBps {
 			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] read bps %v > %v <br>",
 				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), readBps, m.Threshold.Range.ReadBps))...)
-
 			info["range_read_bps"] = readBps
 		}
 		readOps := rang.GetStats().GetKeysRead()
 		if readOps > m.Threshold.Range.ReadOps {
 			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] read ops %v > %v <br>",
 				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), readOps, m.Threshold.Range.ReadOps))...)
-
 			info["range_read_ops"] = readOps
 		}
 
-		samples = append(samples, alarm.NewSample(ip, port, int(clusterId), info))
+		samples = append(samples, alarm.NewSample(ip, int(port), int(clusterId), info))
 	}
 	if len(msg) == 0 {
 		return nil

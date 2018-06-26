@@ -26,6 +26,14 @@ func NewSample(ip string, port int, spaceId int, info map[string]interface{}) *S
 	}
 }
 
+func SamplesToJson(samples []*Sample) []string {
+	var ret []string
+	for _, sample := range samples {
+		ret = append(ret, sample.ToJson())
+	}
+	return ret
+}
+
 func (sample *Sample) ToJson() string {
 	info := sample.info
 	var json = make([]string, 0, len(info))
@@ -63,3 +71,5 @@ func (sample *Sample) ToJson() string {
 
 	return "{\"ip\":\"" + sample.ip + "\",\"port\":\"" + strconv.Itoa(sample.port) + "\",\"privData\":\"" + string(sample.privData) + "\"," + strings.Join(json, ",") + "}"
 }
+
+
