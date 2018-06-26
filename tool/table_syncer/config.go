@@ -8,6 +8,7 @@ import (
 const (
 	maxConcurrency = 1024
 	maxBatchSize   = 10000
+	maxHash        = 16384
 )
 
 // TableTarget  table target
@@ -19,6 +20,8 @@ type TableTarget struct {
 
 // Config config
 type Config struct {
+	StartHash   int         `toml:"start_hash" json:"start_hash"`
+	EndHash     int         `toml:"end_hash" json:"end_hash"`
 	Concurrency int         `toml:"concurrency" json:"concurrency"`
 	BatchSize   uint64      `toml:"batch_size" json:"batch_size"`
 	Src         TableTarget `toml:"src" json:"src"`
@@ -41,6 +44,16 @@ func (t *TableTarget) Validate() error {
 
 // Validate valiate config
 func (c *Config) Validate() error {
+	if c.StartHash < 0 || c.StartHash >= maxHash {
+		return fmt.Errorf("invalid start hash value: %d", c.StartHash)
+	}
+	if c.EndHash <= 0 || c.EndHash > maxHash {
+		return fmt.Errorf("invalid end hash value: %d", c.EndHash)
+	}
+	if c.StartHash >= c.EndHash {
+		return fmt.Errorf("invalid hash range[%d-%d)", c.StartHash, c.EndHash)
+	}
+
 	if c.Concurrency <= 0 || c.Concurrency > maxConcurrency {
 		return fmt.Errorf("invalid concurrency: %d", c.Concurrency)
 	}

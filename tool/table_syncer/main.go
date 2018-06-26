@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	gw "proxy/gateway-server/server"
@@ -15,19 +16,21 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+const (
+	maxRetryTimes = 10
+)
+
 var confFile = flag.String("config", "./config.toml", "config file")
 
 var cfg Config
+var tableFields []string
+var totalCount uint64
 
-var kvURL string
-var infoURL string
-var fields []string
-
-func getTableFields() {
+func getTableFields() ([]string, error) {
 	resp, err := http.Get(fmt.Sprintf("http://%s/tableinfo?dbname=%s&tablename=%s",
 		cfg.Src.Gateway, cfg.Src.DB, cfg.Src.Table))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -42,13 +45,14 @@ func getTableFields() {
 	}
 	err = json.NewDecoder(resp.Body).Decode(&reply)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
+	fields := make([]string, 0, len(reply.Data.Columns))
 	for _, c := range reply.Data.Columns {
 		fields = append(fields, c.Column)
 	}
-	return
+	return fields, nil
 }
 
 func fetchRows(client *http.Client, h int, offset uint64) (rows [][]interface{}, err error) {
@@ -57,7 +61,7 @@ func fetchRows(client *http.Client, h int, offset uint64) (rows [][]interface{},
 		TableName:    cfg.Src.Table,
 		Command: &gw.Command{
 			Type:  "get",
-			Field: fields,
+			Field: tableFields,
 			Filter: &gw.Filter_{
 				And: []*gw.And{&gw.And{
 					Field: &gw.Field_{
@@ -105,7 +109,7 @@ func putRows(client *http.Client, rows [][]interface{}) (affected uint64, err er
 		TableName:    cfg.Dest.Table,
 		Command: &gw.Command{
 			Type:   "set",
-			Field:  fields,
+			Field:  tableFields,
 			Values: rows,
 		},
 	}
@@ -138,7 +142,7 @@ func putRows(client *http.Client, rows [][]interface{}) (affected uint64, err er
 func run(h int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	fmt.Println("start to process h:", h)
+	log.Println("start to process h:", h)
 
 	client := &http.Client{
 		Timeout: time.Second * 10,
@@ -147,15 +151,15 @@ func run(h int, wg *sync.WaitGroup) {
 	var retries int
 	var err error
 	for {
-		if retries > 10 {
-			panic(err)
+		if retries > maxRetryTimes {
+			log.Panicf("sync hash %d offset %d failed: %v", h, offset, err)
 		}
 
 		var rows [][]interface{}
 		rows, err = fetchRows(client, h, offset)
-		fmt.Println(rows, err)
+		log.Println(rows, err)
 		if err != nil {
-			fmt.Printf("fetch rows[h:%d, offset:%d] failed: %v\n", h, offset, err)
+			log.Printf("fetch rows[h:%d, offset:%d] failed: %v\n", h, offset, err)
 			retries++
 			continue
 		}
@@ -163,8 +167,16 @@ func run(h int, wg *sync.WaitGroup) {
 			break
 		}
 
-		// affected, err = putRows(client, rows)
-		// fmt.Println(affected, err)
+		affected, err := putRows(client, rows)
+		if err != nil || affected < uint64(len(rows)) {
+			log.Printf("puts rows[h:%d, offset:%d] [rows:%d, affected: %d] failed: %v\n",
+				h, offset, len(rows), affected, err)
+			retries++
+			continue
+		}
+
+		retries = 0
+		atomic.AddUint64(&totalCount, uint64(len(rows)))
 		offset += cfg.BatchSize
 	}
 }
@@ -180,8 +192,27 @@ func main() {
 	}
 	log.Printf("config: %s", cfg.String())
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go run(0, &wg)
-	wg.Wait()
+	tableFields, err = getTableFields()
+	if err != nil {
+		log.Panicf("get table fields failed: %v", err)
+	}
+	log.Printf("table fields: %v", tableFields)
+
+	hash := cfg.StartHash
+	for hash < cfg.EndHash {
+		concurrency := cfg.Concurrency
+		if cfg.EndHash-hash < concurrency {
+			concurrency = cfg.EndHash - hash
+		}
+
+		var wg sync.WaitGroup
+		wg.Add(concurrency)
+		for i := 0; i < concurrency; i++ {
+			go run(hash, &wg)
+			hash++
+		}
+		wg.Wait()
+	}
+
+	log.Printf("total synced: %d", atomic.LoadUint64(&totalCount))
 }

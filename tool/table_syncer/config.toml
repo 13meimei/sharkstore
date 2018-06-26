@@ -1,3 +1,5 @@
+start_hash = 0
+end_hash = 16384
 concurrency = 4
 batch_size = 100
 
