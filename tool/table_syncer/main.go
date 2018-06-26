@@ -5,16 +5,19 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
 
 	gw "proxy/gateway-server/server"
+
+	"github.com/BurntSushi/toml"
 )
 
 var confFile = flag.String("config", "./config.toml", "config file")
 
-var cfg *Config
+var cfg Config
 
 var kvURL string
 var infoURL string
@@ -168,4 +171,17 @@ func run(h int, wg *sync.WaitGroup) {
 
 func main() {
 	flag.Parse()
+	_, err := toml.DecodeFile(*confFile, &cfg)
+	if err != nil {
+		log.Panicf("load config file failed, err %v", err)
+	}
+	if err = cfg.Validate(); err != nil {
+		log.Panicf("invalid config: %v", err)
+	}
+	log.Printf("config: %s", cfg.String())
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go run(0, &wg)
+	wg.Wait()
 }

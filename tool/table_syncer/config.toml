@@ -1,0 +1,12 @@
+concurrency = 4
+batch_size = 100
+
+[src]
+gateway = "127.0.0.1:8080"
+db = "bank"
+table = "balance"
+
+[dest]
+gateway = "127.0.0.2:8080"
+db = "bank"
+table = "balance"
