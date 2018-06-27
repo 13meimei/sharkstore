@@ -88,8 +88,8 @@ func UpdateMetric(addr string) error {
 		log.Info("metric server is running on the same config")
 		return nil
 	}
-	if GsMetric.metricAddr != addr && addr != ""{
-		cli := &http.Client{
+	if addr != "" {
+		GsMetric.cli = &http.Client{
 			Transport: &http.Transport{
 				Dial: func(network, addr string) (net.Conn, error) {
 					return net.DialTimeout(network, addr, time.Second)
@@ -97,9 +97,10 @@ func UpdateMetric(addr string) error {
 				ResponseHeaderTimeout: time.Second,
 			},
 		}
-		GsMetric.cli = cli
-		GsMetric.metricAddr = addr
+	} else {
+		GsMetric.cli = nil
 	}
+	GsMetric.metricAddr = addr
 	return nil
 }
 
@@ -186,6 +187,12 @@ func (m *Metric) AddConnectCount(delta int64) {
 }
 
 func (m *Metric) SendMetric(url string, message proto.Message) error {
+	if m == nil {
+		return nil
+	}
+	if m.cli == nil {
+		return nil
+	}
 	data, err := json.Marshal(message)
 	if err != nil {
 		return err

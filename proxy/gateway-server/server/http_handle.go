@@ -19,6 +19,7 @@ import (
 	"master-server/server"
 	"proxy/metric"
 	"util"
+	"sync"
 )
 
 type Response struct {
@@ -789,11 +790,16 @@ func (s *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+var metricConfigLock sync.Mutex
 func (s *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) {
 	reply := new(Response)
 	defer httpSendReply(w, reply)
 
 	addr := r.FormValue("address")
+
+	metricConfigLock.Lock()
+	defer metricConfigLock.Unlock()
+
 	err := metric.UpdateMetric(addr)
 	if err != nil {
 		log.Warn("set metric send config err, %v", err)
@@ -802,8 +808,13 @@ func (s *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//落盘
-	//todo
-
+	err = UpdateConfig(addr)
+	if err != nil {
+		log.Warn("set metric send config to store err, %v", err)
+		reply.Code = errCommandRun
+		reply.Message = err.Error()
+		return
+	}
 	log.Info("set metric send config success, addr:%v", addr)
 	return
 }
