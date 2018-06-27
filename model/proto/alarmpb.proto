@@ -14,6 +14,7 @@ service Alarm {
     rpc TaskAlarm(TaskAlarmRequest) returns (TaskAlarmResponse) {}
     rpc NodeRangeAlarm(NodeRangeAlarmRequest) returns (NodeRangeAlarmResponse) {}
     rpc AliveAlarm(AliveRequest) returns (AliveResponse) {}
+    rpc SimpleAlarm(SimpleRequest) returns (SimpleResponse) {}
 }
 
 message RequestHeader {
@@ -24,6 +25,17 @@ message RequestHeader {
 message ResponseHeader {
     int32 code          = 1;
     string error        = 2;
+}
+
+//////////////////////////////////////
+
+message SimpleAlarmRequest {
+    RequestHeader head          = 1;
+    string Describe             = 2;
+}
+
+message SimpleAlarmResponse {
+    ResponseHeader head         = 1;
 }
 
 //////////////////////////////////////
@@ -113,4 +125,16 @@ message AliveRequest {
 message AliveResponse {
     ResponseHeader head         = 1;
 
+}
+
+//////////////////////////////////////
+
+message SimpleRequest {
+    RequestHeader head          = 1;
+    string title                = 2;
+    string content              = 3;
+}
+
+message SimpleResponse {
+    ResponseHeader head          = 1;
 }

@@ -1,30 +1,30 @@
 package server
 
 import (
-	"fmt"
-	"net/http"
-	"net/http/httputil"
-	"net/http/httptest"
-	"net/url"
-	"strconv"
-	"strings"
-	"crypto/md5"
-	"time"
 	"bytes"
-	"sync"
-	"sort"
-	"io/ioutil"
+	"container/heap"
+	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
-	"container/heap"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"net/http/httputil"
+	"net/url"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
-	"util/log"
-	"util/server"
-	"util/deepcopy"
-	"util"
+	"master-server/http_reply"
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
-	"master-server/http_reply"
+	"util"
+	"util/deepcopy"
+	"util/log"
+	"util/server"
 )
 
 var (
@@ -50,7 +50,7 @@ var (
 )
 
 const (
-	HTTP_OK                          = iota
+	HTTP_OK = iota
 	HTTP_ERROR
 	HTTP_ERROR_PARAMETER_NOT_ENOUGH
 	HTTP_ERROR_INVALID_PARAM
@@ -189,7 +189,7 @@ func (service *Server) verifier(w http.ResponseWriter, r *http.Request) bool {
 func (service *Server) validRequest(w http.ResponseWriter, r *http.Request) bool {
 	reply := &httpReply{}
 	if !service.IsLeader() {
-		log.Debug("service not leader node %d leader %d", service.cluster.nodeId, service.cluster.leader)
+		log.Debug("service not leader node %d leader %v", service.cluster.nodeId, service.cluster.leader)
 		if point := service.GetLeader(); point == nil {
 			reply.Code = HTTP_ERROR_MASTER_IS_NOT_LEADER
 			reply.Message = http_error_cluster_has_no_leader
@@ -725,7 +725,7 @@ func (service *Server) handleNodeGetRangeTopo(w http.ResponseWriter, r *http.Req
 	dbName := r.FormValue(HTTP_DB_NAME)
 	tName := r.FormValue(HTTP_TABLE_NAME)
 
-	var table *Table;
+	var table *Table
 	var tbFind bool
 	if dbName != "" {
 		db, dbFind := cluster.FindDatabase(dbName)
@@ -962,7 +962,7 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 		reply.Message = http_error_range_find
 		return
 	}
-	newPeer, err := cluster.allocPeerAndSelectNode(rng)
+	newPeer, err := cluster.allocPeerAndSelectNode(rng, true)
 	if newPeer == nil || err != nil {
 		reply.Code = -1
 		reply.Message = "can not find best node to add peer"
@@ -974,8 +974,9 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 		reply.Message = err.Error()
 		return
 	}
-	event := NewAddPeerEvent(id, rng.GetId(), newPeer, "console")
-	cluster.eventDispatcher.pushEvent(event)
+	tc := NewTaskChain(id, rng.GetId(), "console-add-peer", NewAddPeerTask())
+	// TOOD: check return
+	cluster.taskManager.Add(tc)
 	log.Info("add range<%v> peer create task success", rangeId)
 }
 
@@ -1017,8 +1018,9 @@ func (service *Server) handleRangeDelPeer(w http.ResponseWriter, r *http.Request
 		reply.Message = err.Error()
 		return
 	}
-	event := cluster.hbManager.createDelPeerEvent(id, rng, peer, "console")
-	cluster.eventDispatcher.pushEvent(event)
+	tc := cluster.hbManager.createDelPeerTask(id, rng, peer, "console-del-peer")
+	// TODO: check return
+	cluster.taskManager.Add(tc)
 	log.Info("del range<%v> peer<%v> create task success", rangeId, peerId)
 }
 
@@ -1929,8 +1931,10 @@ func (service *Server) handleRangeLeaderChange(w http.ResponseWriter, r *http.Re
 		reply.Message = err.Error()
 		return
 	}
-	event := NewTryChangeLeaderEvent(taskID, rng.GetId(), rng.GetLeader(), newLeader, "console change leader")
-	cluster.eventDispatcher.pushEvent(event)
+	tc := NewTaskChain(taskID, rng.GetId(), "console-change-leader",
+		NewChangeLeaderTask(rng.GetLeader().GetNodeId(), newLeader.GetNodeId()))
+	// TODO: check return
+	cluster.taskManager.Add(tc)
 	log.Info("to change leader range[%s] success", rng.SString())
 	return
 }
@@ -1986,20 +1990,15 @@ func (service *Server) handleRangeTransfer(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	newPeer, err := cluster.allocPeerAndSelectNode(rng)
-	if err != nil {
-		reply.Code = -1
-		reply.Message = err.Error()
-		return
-	}
-
 	taskID, err := cluster.GenId()
 	if err != nil {
 		reply.Code = -1
 		reply.Message = err.Error()
 		return
 	}
-	cluster.eventDispatcher.pushEvent(NewChangePeerEvent(taskID, rng, oldPeer, newPeer, "console range transfer"))
+	tc := NewTransferPeerTasks(taskID, rng, "console-transfer-peer", oldPeer)
+	// TODO: check tc
+	cluster.taskManager.Add(tc)
 	log.Info("to transfer range[%s] peer success", rng.SString())
 	return
 }
@@ -2070,9 +2069,9 @@ func (service *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	cluster := service.cluster
-	task := cluster.eventDispatcher.peekEvent(rangeId)
-	if task.GetId() == taskId {
-		cluster.eventDispatcher.removeEvent(task)
+	task := cluster.taskManager.Find(rangeId)
+	if task.GetID() == taskId {
+		cluster.taskManager.Remove(task)
 	}
 	log.Info("delete range %v task[%s] success", rangeId, task.String())
 
@@ -2083,13 +2082,13 @@ func (service *Server) handleGetAllTask(w http.ResponseWriter, r *http.Request) 
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 	var resp http_reply.TaskResponse
-	for _, e := range service.cluster.GetAllEvent() {
+	for _, e := range service.cluster.GetAllTasks() {
 		resp = append(resp, &http_reply.Task{
-			Id:       e.GetId(),
-			Type:     ToEventTypeName(e.GetType()),
+			Id:       e.GetID(),
+			Type:     e.GetName(),
 			RangeId:  e.GetRangeID(),
 			Describe: e.String(),
-			State:    ToEventStatusName(e.GetStatus()),
+			// TODO:
 		})
 	}
 	reply.Data = resp
@@ -2114,7 +2113,7 @@ func (service *Server) handleRangeTaskQuery(w http.ResponseWriter, r *http.Reque
 		reply.Message = http_error_range_find
 		return
 	}
-	t := cluster.eventDispatcher.peekEvent(rangeId)
+	t := cluster.taskManager.Find(rangeId)
 	reply.Data = t
 	return
 }
@@ -2348,7 +2347,7 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 			if len(r.GetDownPeers()) != 0 {
 				var downPeers []uint64
 				for _, downPeer := range r.GetDownPeers() {
-					downPeers = append(downPeers, downPeer.GetId())
+					downPeers = append(downPeers, downPeer.Peer.GetId())
 				}
 				rng.DownPeers = downPeers
 			}
@@ -2386,7 +2385,7 @@ func (service *Server) handleUnhealthyRangeQuery(w http.ResponseWriter, r *http.
 			if len(r.GetDownPeers()) != 0 {
 				var downPeers []uint64
 				for _, downPeer := range r.GetDownPeers() {
-					downPeers = append(downPeers, downPeer.GetId())
+					downPeers = append(downPeers, downPeer.Peer.GetId())
 				}
 				rng.DownPeers = downPeers
 			}
@@ -2454,7 +2453,7 @@ func (service *Server) handleUnstableRangeQuery(w http.ResponseWriter, r *http.R
 			if len(r.GetDownPeers()) != 0 {
 				var downPeers []uint64
 				for _, downPeer := range r.GetDownPeers() {
-					downPeers = append(downPeers, downPeer.GetId())
+					downPeers = append(downPeers, downPeer.Peer.GetId())
 				}
 				rng.DownPeers = downPeers
 			}
@@ -2760,6 +2759,15 @@ func (ri routeInfoByStartKey) Less(i, j int) bool {
 	return true
 }
 
+func (service *Server) handleTestAlarm(w http.ResponseWriter, r *http.Request) {
+	err := service.cluster.alarmCli.RangeNoHeartbeatAlarm(int64(service.cluster.GetClusterId()), nil, "test alarm")
+	if err != nil {
+		w.Write([]byte(err.Error()))
+	} else {
+		w.Write([]byte("ok"))
+	}
+}
+
 func (service *Server) handleRangeLocate(w http.ResponseWriter, r *http.Request) {
 	reply := &http_reply.Reply{}
 	defer http_reply.SendReply(w, reply)
@@ -2804,7 +2812,7 @@ func (service *Server) handleRangeLocate(w http.ResponseWriter, r *http.Request)
 			},
 			downPeer: func() (downs []uint64) {
 				for _, down := range rng.GetDownPeers() {
-					downs = append(downs, deepcopy.Iface(down.GetId()).(uint64))
+					downs = append(downs, down.Peer.GetId())
 				}
 				return
 			}(),
@@ -3142,8 +3150,8 @@ func (service *Server) handleSearchRange(w http.ResponseWriter, r *http.Request)
 }
 
 /**
-	integrality check
- */
+integrality check
+*/
 func (service *Server) handleTopologyCheck(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
@@ -3193,8 +3201,8 @@ func (service *Server) handleTopologyCheck(w http.ResponseWriter, r *http.Reques
 }
 
 /**
-	topology miss scope
- */
+topology miss scope
+*/
 func (service *Server) handleTableTopologyMissing(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
@@ -3339,7 +3347,7 @@ func (service *Server) handleTableRangeDuplicate(w http.ResponseWriter, r *http.
 	return
 }
 
-func (service *Server) handleTopologyQuery(w http.ResponseWriter, r *http.Request) () {
+func (service *Server) handleTopologyQuery(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 
@@ -3348,7 +3356,7 @@ func (service *Server) handleTopologyQuery(w http.ResponseWriter, r *http.Reques
 	return
 }
 
-func (service *Server) handleTableTopologyQuery(w http.ResponseWriter, r *http.Request) () {
+func (service *Server) handleTableTopologyQuery(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 	dbName := r.FormValue(HTTP_DB_NAME)

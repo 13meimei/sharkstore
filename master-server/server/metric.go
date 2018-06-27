@@ -1,16 +1,16 @@
 package server
 
 import (
-	"time"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"errors"
+	"math"
+	"net"
+	"net/http"
 	"strings"
 	"sync"
-	"math"
-	"encoding/json"
-	"net/http"
-	"net"
+	"time"
 
 	"util/log"
 	"util/deepcopy"
@@ -31,7 +31,7 @@ type Metric struct {
 	wg       sync.WaitGroup
 
 	lock            sync.Mutex
-	eventList       []RangeEvent
+	taskList        []*TaskChain
 	scheduleCounter map[string]map[string]uint64
 }
 
@@ -168,16 +168,16 @@ func (m *Metric) Stop() {
 	m.wg.Wait()
 }
 
-func (m *Metric) CollectEvent(event RangeEvent) {
+func (m *Metric) CollectEvent(task *TaskChain) {
 	if m == nil {
 		return
 	}
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	list := m.eventList
-	list = append(list, event)
-	m.eventList = list
-	log.Info("add event success %v", event)
+	list := m.taskList
+	list = append(list, task)
+	m.taskList = list
+	log.Info("add task success %v", task)
 }
 
 func (m *Metric) CollectScheduleCounter(name, label string) {
@@ -200,25 +200,25 @@ func (m *Metric) CollectScheduleCounter(name, label string) {
 
 func (m *Metric) eventInfoStats() error {
 	m.lock.Lock()
-	eventList := m.eventList
-	m.eventList = make([]RangeEvent, 0)
+	taskList := m.taskList
+	m.taskList = make([]*TaskChain, 0)
 	m.lock.Unlock()
-	for _, event := range eventList {
-		if err := metricEvent(m.cli, m.cluster.GetClusterId(), m.addr, changeEventToMetricTask(event)); err != nil {
+	for _, task := range taskList {
+		if err := metricEvent(m.cli, m.cluster.GetClusterId(), m.addr, changeEventToMetricTask(task)); err != nil {
 			log.Warn("report task to metric server failed, err %v", err)
 		}
 	}
 	return nil
 }
 
-func changeEventToMetricTask(e RangeEvent) *statspb.TaskInfo {
+func changeEventToMetricTask(t *TaskChain) *statspb.TaskInfo {
 	return &statspb.TaskInfo{
-		TaskId:   e.GetId(),
-		RangeId:  e.GetRangeID(),
-		Kind:     ToEventTypeName(e.GetType()),
-		Describe: e.String(),
-		UsedTime: e.ExecTime().Seconds(),
-		State:    ToEventStatusName(e.GetStatus()),
+		TaskId:   t.GetID(),
+		RangeId:  t.GetRangeID(),
+		Kind:     t.GetName(),
+		Describe: t.String(),
+		UsedTime: t.Elapsed().Seconds(),
+		// TODO: state
 	}
 }
 

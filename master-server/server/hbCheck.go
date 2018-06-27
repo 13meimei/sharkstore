@@ -3,14 +3,14 @@ package server
 import (
 	"time"
 
-	"model/pkg/metapb"
 	"model/pkg/alarmpb"
+	"model/pkg/metapb"
 	"util/log"
 
-	"golang.org/x/net/context"
 	"fmt"
 	"util/deepcopy"
 
+	"golang.org/x/net/context"
 )
 
 type RegionHbCheckWorker struct {
@@ -52,18 +52,18 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 					log.Error("must bug !!!  range[%d:%d] no leader, no heartbeat, lastHeartbeat :[%v]",
 						table.GetId(), r.GetId(), r.LastHbTimeTS)
 
-					desc = fmt.Sprintf("range[%d:%d] no leader, no heartbeat, lastHeartbeat :[%v]",
-						table.GetId(), r.GetId(), r.LastHbTimeTS)
+					desc = fmt.Sprintf("cluster[%v] table[%v] range[%v] no heartbeat, no leader, lastheartbeat:[%v]",
+						cluster.GetClusterId(), table.GetId(), r.GetId(), r.LastHbTimeTS)
 				} else {
 					log.Error("range[%d:%d] no heartbeat, leader is [%d], lastHeartbeat:[%v]",
 						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
 
-					desc = fmt.Sprintf("range[%d:%d] no heartbeat, leader is [%d], lastheartbeat:[%v]",
-						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
+					desc = fmt.Sprintf("cluster[%v] table[%v] range[%v] no heartbeat, leader node[id %v, addr %v], lastheartbeat:[%v]",
+						cluster.GetClusterId(), table.GetId(), r.GetId(), leader.GetNodeId(), cluster.FindNodeById(leader.GetNodeId()).GetServerAddr(), r.LastHbTimeTS)
 				}
 
 				if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
-					Range: deepcopy.Iface(r.Range).(*metapb.Range),
+					Range:             deepcopy.Iface(r.Range).(*metapb.Range),
 					LastHeartbeatTime: r.LastHbTimeTS.String(),
 				}, desc); err != nil {
 					log.Error("range no leader alarm failed: %v", err)
@@ -79,9 +79,7 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 				}
 
 			} else { //leader上报心跳正常
-				quorum := len(r.Peers)/2 + 1
-				// 好的节点不足quorum
-				if len(r.Peers)-len(r.DownPeers) < quorum {
+				if isQuorumDown(r) {
 					r.State = metapb.RangeState_R_Abnormal
 					cluster.unhealthyRanges.Put(r.GetId(), r)
 
@@ -94,7 +92,7 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 
 					//TODO: alarm
 				} else {
-					if len(r.Peers) != cluster.opt.GetMaxReplicas() || len(r.DownPeers) > 0 {
+					if len(r.Peers) != cluster.opt.GetMaxReplicas() || len(r.GetDownPeers()) > 0 {
 						cluster.unstableRanges.Put(r.GetId(), r)
 					}
 				}

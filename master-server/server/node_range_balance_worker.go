@@ -1,15 +1,16 @@
 package server
 
 import (
-	"time"
-	"golang.org/x/net/context"
-	"util/log"
 	"model/pkg/metapb"
+	"time"
+	"util/log"
+
+	"golang.org/x/net/context"
 )
 
 var (
-	Min_range_balance_num     = 10
-	Min_range_adjust_num      = 50
+	Min_range_balance_num = 10
+	Min_range_adjust_num  = 50
 )
 
 type balanceNodeRangeWorker struct {
@@ -49,15 +50,12 @@ func (w *balanceNodeRangeWorker) Work(cluster *Cluster) {
 	if err != nil {
 		return
 	}
-	newPeer, err := cluster.allocPeer(targetNodeId)
-	if err != nil {
-		log.Error("create peer nodeId:%d error:%s", targetNodeId, err.Error())
-		return
-	}
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to balance region and remove peer, region:[%v], old peer:[%v], old node:[%v], new node:[%v]",
 		rng.GetId(), oldPeer.GetId(), oldPeer.GetNodeId(), targetNodeId)
-	cluster.eventDispatcher.pushEvent(NewChangePeerEvent(id, rng, oldPeer, newPeer, w.GetName()))
+	tc := NewTransferPeerTasks(id, rng, "balance-range-tranfer", oldPeer)
+	// TODO: check return
+	cluster.taskManager.Add(tc)
 	return
 }
 
