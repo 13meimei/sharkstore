@@ -24,6 +24,7 @@ import (
 	"util/ttlcache"
 	"strconv"
 	"errors"
+	"sync"
 )
 
 const (
@@ -37,6 +38,7 @@ const (
 	TABLE_NAME_ROLE      = "fbase_role"
 	TABLE_NAME_PRIVILEGE = "fbase_privilege"
 	TABLE_NAME_LOCK_NSP  = "fbase_lock_nsp"
+	TABLE_NAME_METRIC_SERVER   = "metric_server"
 )
 
 var serviceInstance *Service = nil
@@ -84,7 +86,8 @@ func (s *Service) GetUserInfoByErp(erp string) (*models.UserInfo, error) {
 func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 	result := make([]*models.ClusterInfo, 0, 10) // TODO: 分页
 	for _, id := range ids {
-		rows, err := s.db.Query(fmt.Sprintf(`SELECT * FROM %s where id=%d`, TABLE_NAME_CLUSTER, id))
+		rows, err := s.db.Query(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
+		auto_transfer, auto_failover, auto_split, create_time FROM %s where id=%d`, TABLE_NAME_CLUSTER, id))
 		if err != nil {
 			log.Error("db select is failed. err:[%v]", err)
 			return nil, common.DB_ERROR
@@ -106,7 +109,7 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 
 func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 	rows, err := s.db.Query(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
-		auto_failover, auto_transfer, auto_split, create_time FROM %s`, TABLE_NAME_CLUSTER))
+		auto_transfer, auto_failover, auto_split, create_time FROM %s`, TABLE_NAME_CLUSTER))
 	if err != nil {
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
@@ -1979,8 +1982,214 @@ func (s *Service) GetLockCluster() (*models.ClusterInfo, error) {
 	}
 	return info, nil
 }
-
 //=============lock end================
+
+
+//=============metric add ===============
+
+func (s *Service) GetAllMetricServer() ([]models.MetricServer, error) {
+	rows, err := s.db.Query(fmt.Sprintf(`SELECT addr FROM %s`, TABLE_NAME_METRIC_SERVER))
+	if err != nil {
+		log.Error("metric server select is failed. err:[%v]", err)
+		return nil, common.DB_ERROR
+	}
+
+	var result []models.MetricServer
+	for rows.Next() {
+		var info models.MetricServer
+		if err := rows.Scan(&info.Addr); err != nil {
+			log.Error("metric server scan is failed. err:[%v]", err)
+			return nil, common.DB_ERROR
+		}
+		log.Debug("selected metric server:%v", info)
+		result = append(result, info)
+	}
+
+	return result, nil
+}
+
+func (s *Service) CreateMetricServer(addr string) error {
+	rows, err := s.db.Exec(fmt.Sprintf(`insert into %s values("%s")`, TABLE_NAME_METRIC_SERVER, addr))
+	if err != nil {
+		log.Error("db exec is failed. err:[%v]", err)
+		return common.DB_ERROR
+	}
+	rowsAffected, err := rows.RowsAffected()
+	if err != nil {
+		log.Error("db rowsaffected is failed. err:[%v]", err)
+		return common.DB_ERROR
+	}
+	if rowsAffected != 1 {
+		return common.CLUSTER_DUPCREATE_ERROR
+	}
+	return nil
+}
+
+func (s *Service) DeleteMetricServer(addrs []string) error {
+	for _, addr := range addrs {
+		rows, err := s.db.Exec(fmt.Sprintf(`delete from %s where addr = "%s"`, TABLE_NAME_METRIC_SERVER, addr))
+		if err != nil {
+			log.Error("db exec is failed. err:[%v]", err)
+			return common.DB_ERROR
+		}
+		rowsAffected, err := rows.RowsAffected()
+		if err != nil {
+			log.Error("db rowsaffected is failed. err:[%v]", err)
+			return common.DB_ERROR
+		}
+		if rowsAffected != 1 {
+			return common.CLUSTER_DUPCREATE_ERROR
+		}
+	}
+	return nil
+}
+
+
+func (s *Service) GetMetricConfig(cId int) (map[string]*models.MetricConfig, error) {
+	info, err := s.selectClusterById(cId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	msConfig := &models.MetricConfig{}
+	gsConfig := &models.MetricConfig{}
+
+	var waitLock sync.WaitGroup
+	waitLock.Add(1)
+
+	go func(msConfig *models.MetricConfig) {
+		defer waitLock.Done()
+
+		ts := time.Now().Unix()
+		sign := common.CalcMsReqSign(info.Id, info.ClusterToken, ts)
+
+		reqParams := make(map[string]interface{})
+		reqParams["d"] = ts
+		reqParams["s"] = sign
+
+		var getConfigResp = struct {
+			Code int         `json:"code"`
+			Msg  string      `json:"message"`
+			Data models.MetricConfig `json:"data"`
+		}{}
+		if err := sendGetReq(info.MasterUrl, "/metric/config/get", reqParams, &getConfigResp); err != nil {
+			msConfig.Address = err.Error()
+		} else {
+			if getConfigResp.Code != 0 {
+				msConfig.Address = getConfigResp.Msg
+			} else {
+				msConfig.Address = getConfigResp.Data.Address
+				msConfig.Interval = getConfigResp.Data.Interval
+			}
+		}
+	}(msConfig)
+
+	waitLock.Add(1)
+	 go func(gsConfig *models.MetricConfig) {
+		 defer waitLock.Done()
+
+		 ts := time.Now().Unix()
+		 sign := common.CalcMsReqSign(info.Id, info.ClusterToken, ts)
+
+		 reqParams := make(map[string]interface{})
+		 reqParams["d"] = ts
+		 reqParams["s"] = sign
+
+		 var getConfigResp = struct {
+			 Code int         `json:"code"`
+			 Msg  string      `json:"message"`
+			 Data models.MetricConfig `json:"data"`
+		 }{}
+		 if err := sendGetReq(info.GatewayHttpUrl, "/metric/config/get", reqParams, &getConfigResp); err != nil {
+			 msConfig.Address = err.Error()
+		 } else {
+			 if getConfigResp.Code != 0 {
+				 gsConfig.Address = getConfigResp.Msg
+			 } else {
+				 gsConfig.Address = getConfigResp.Data.Address
+			 }
+		 }
+	}(gsConfig)
+	waitLock.Wait()
+
+	reply := make(map[string]*models.MetricConfig)
+	reply["ms"] = msConfig
+	reply["gs"] = gsConfig
+
+	log.Debug("get metric config: {}", reply)
+	return reply, nil
+}
+
+
+func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]string, error) {
+	info, err := s.selectClusterById(cId)
+	if err != nil {
+		return  nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	respose := make(map[string]string, 0)
+
+	var waitLock sync.WaitGroup
+	waitLock.Add(1)
+	go func(response map[string]string) {
+		defer waitLock.Done()
+		ts := time.Now().Unix()
+		sign := common.CalcMsReqSign(info.Id, info.ClusterToken, ts)
+		reqParams := make(map[string]interface{})
+		reqParams["d"] = ts
+		reqParams["s"] = sign
+		reqParams["interval"] = interval
+		reqParams["address"] = addr
+		var setConfigResp = struct {
+			Code int         `json:"code"`
+			Msg  string      `json:"message"`
+		}{}
+		if err := sendGetReq(info.MasterUrl, "/metric/config/set", reqParams, &setConfigResp); err != nil {
+			respose["ms"] = err.Error()
+		} else if setConfigResp.Code > 0{
+			respose["ms"] = setConfigResp.Msg
+		} else {
+			respose["ms"] = "success"
+		}
+
+	}(respose)
+
+	waitLock.Add(1)
+	go func(response map[string]string) {
+		defer waitLock.Done()
+
+		ts := time.Now().Unix()
+		sign := common.CalcMsReqSign(info.Id, info.ClusterToken, ts)
+
+		reqParams := make(map[string]interface{})
+		reqParams["d"] = ts
+		reqParams["s"] = sign
+		reqParams["address"] = addr
+		var setConfigResp = struct {
+			Code int         `json:"code"`
+			Msg  string      `json:"message"`
+		}{}
+		if err := sendGetReq(info.GatewayHttpUrl, "/metric/config/set", reqParams, &setConfigResp); err != nil {
+			respose["gs"] = err.Error()
+		} else if setConfigResp.Code > 0{
+			respose["gs"] = setConfigResp.Msg
+		} else {
+			respose["gs"] = "success"
+		}
+	}(respose)
+	waitLock.Wait()
+
+	log.Debug("set master client config: %v", respose)
+	return respose, nil
+}
+//=============metric end ===============
+
 
 // ------------http request -------------------
 func sendGetSimpleReq(host, uri string, params map[string]interface{}, result string) (error) {
@@ -2369,6 +2578,8 @@ func InitService(c *config.Config) {
 	if err != nil {
 		panic("Fail to initialize mysql")
 	}
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(0)
 	serviceInstance = &Service{
 		config:     c,
 		db:         db,

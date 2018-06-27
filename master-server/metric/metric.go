@@ -16,36 +16,38 @@ import (
 )
 
 const (
-	TYPE_SQL = "sql"
+	TYPE_SQL           = "sql"
 	TYPE_ELASTICSEARCH = "elasticsearch"
 
 	NAMESPACE_CLUSTER  = "cluster"
-	NAMESPACE_MAC = "mac"
-	NAMESPACE_PROCESS = "process"
-	NAMESPACE_DB = "db"
-	NAMESPACE_TABLE = "table"
-	NAMESPACE_TASK = "task"
+	NAMESPACE_MAC      = "mac"
+	NAMESPACE_PROCESS  = "process"
+	NAMESPACE_DB       = "db"
+	NAMESPACE_TABLE    = "table"
+	NAMESPACE_TASK     = "task"
 	NAMESPACE_SCHEDULE = "schedule"
-	NAMESPACE_HOTSPOT = "hotspot"
+	NAMESPACE_HOTSPOT  = "hotspot"
+	NAMESPACE_NODE     = "node"
+	NAMESPACE_RANGE    = "range"
 
-	METRIC_TASK_STATS = "task_stats"
-	METRIC_CLUSTER_META = "cluster_meta"
-	METRIC_CLUSTER_NET = "cluster_net"
-	METRIC_CLUSTER_SLOWLOG = "cluster_slowlog"
-	METRIC_MAC_META = "mac_meta"
-	METRIC_MAC_NET = "mac_net"
-	METRIC_MAC_MEM = "mac_mem"
-	METRIC_MAC_DISK = "mac_disk"
-	METRIC_PROCESS_META = "process_meta"
-	METRIC_PROCESS_DISK = "process_disk"
-	METRIC_PROCESS_NET = "process_net"
-	METRIC_PROCESS_DS = "process_ds"
-	METRIC_DB_META = "db_meta"
-	METRIC_TABLE_META = "table_meta"
+	METRIC_TASK_STATS       = "task_stats"
+	METRIC_CLUSTER_META     = "cluster_meta"
+	METRIC_CLUSTER_NET      = "cluster_net"
+	METRIC_CLUSTER_SLOWLOG  = "cluster_slowlog"
+	METRIC_MAC_META         = "mac_meta"
+	METRIC_MAC_NET          = "mac_net"
+	METRIC_MAC_MEM          = "mac_mem"
+	METRIC_MAC_DISK         = "mac_disk"
+	METRIC_PROCESS_META     = "process_meta"
+	METRIC_PROCESS_DISK     = "process_disk"
+	METRIC_PROCESS_NET      = "process_net"
+	METRIC_PROCESS_DS       = "process_ds"
+	METRIC_DB_META          = "db_meta"
+	METRIC_TABLE_META       = "table_meta"
 	METRIC_SCHEDULE_COUNTER = "schedule_counter"
-	METRIC_HOTSPOT = "hotspot_stats"
-	METRIC_NODE_STATS = "node_stats"
-	METRIC_RANGE_STATS = "range_stats"
+	METRIC_HOTSPOT          = "hotspot_stats"
+	METRIC_NODE_STATS       = "node_stats"
+	METRIC_RANGE_STATS      = "range_stats"
 )
 type NodeThreshold struct {
 	CapacityUsedRate uint64 `toml:"capacity-used-rate" json:"capacity-used-rate"` // capacity/used_city in node stats
@@ -69,18 +71,18 @@ type ThresholdConfig struct {
 
 
 type Metric struct {
+	ip     string
+	port   uint16
+	server *server.Server
+
 	AlarmCli *alarm.Client
 	Threshold ThresholdConfig
 
-	ip        string
-	port      uint16
-	server    *server.Server
-
-	store     Store
+	store  Store
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	items  *ClusterCache
+	items *ClusterCache
 
 	wg sync.WaitGroup
 
@@ -88,19 +90,19 @@ type Metric struct {
 	conns     map[*conn]struct{}
 
 	// TODO alarm filter
-	index     uint64
+	index uint64
 }
 
 func NewRawMetric(ip string, port uint16, store Store) *Metric {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Metric{
-		ip: ip,
-		port: port,
-		store: store,
-		ctx: ctx,
+		ip:     ip,
+		port:   port,
+		store:  store,
+		ctx:    ctx,
 		cancel: cancel,
-		items: NewClusterCache(),
-		conns: make(map[*conn]struct{}),
+		items:  NewClusterCache(),
+		conns:  make(map[*conn]struct{}),
 	}
 }
 
@@ -159,7 +161,7 @@ func (m *Metric) Start() {
 	s.Run()
 }
 
-func (m *Metric) Open()  error{
+func (m *Metric) Open() error {
 	return m.store.Open()
 }
 
@@ -233,10 +235,10 @@ func (m *Metric) pushCluster(clusterId uint64, cluster *Cluster) {
 	item := cluster.Item
 	// cluster meta
 	meta := make(map[string]interface{})
-    /*
-    cluster_id, total_capacity, used_capacity, range_count, db_count, table_count, ds_count, task_count, gs_count,
-	    fault_list, update_time
-    */
+	/*
+	cluster_id, total_capacity, used_capacity, range_count, db_count, table_count, ds_count, task_count, gs_count,
+		fault_list, update_time
+	*/
 	meta["cluster_id"] = clusterId
 	meta["total_capacity"] = item.CapacityTotal
 	meta["used_capacity"] = item.SizeUsed
@@ -258,7 +260,7 @@ func (m *Metric) pushCluster(clusterId uint64, cluster *Cluster) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_CLUSTER,
 		Subsystem: METRIC_CLUSTER_META,
-		Items: meta,
+		Items:     meta,
 	})
 
 	// cluster net
@@ -287,21 +289,21 @@ func (m *Metric) pushCluster(clusterId uint64, cluster *Cluster) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_CLUSTER,
 		Subsystem: METRIC_CLUSTER_NET,
-		Items: net,
+		Items:     net,
 	})
 }
 
 func (m *Metric) pushMac(clusterId uint64, item *MacItem) {
-    /*
-    mac_meta: cluster_id, type, ip, cpu_rate, load1, load5, load15, process_num, thread_num, handle_num, create_time
-    mac_net: cluster_id, type, ip, net_io_in_byte_per_sec, net_io_out_byte_per_sec, net_io_in_package_per_sec, net_io_out_package_per_sec,
-             net_tcp_connections, net_tcp_active_opens_per_sec, net_ip_recv_package_per_sec, net_ip_send_package_per_sec,net_ip_drop_package_per_sec,
-             net_tcp_recv_package_per_sec, net_tcp_send_package_per_sec, net_tcp_err_package_per_sec, net_tcp_retransfer_package_per_sec, create_time
-    mac_mem: cluster_id, type, ip, memory_total, memory_used_rss, memory_used, memory_free, memory_used_percent, swap_memory_total, swap_memory_used, swap_memory_free,
-             swap_memory_used_percent, create_time
-    max_disk: cluster_id, type, ip, disk_path, disk_total, disk_used, disk_free, disk_proc_rate, disk_read_byte_per_sec, disk_write_byte_per_sec,
-              disk_read_count_per_sec, disk_write_count_per_sec, create_time
-    */
+	/*
+	mac_meta: cluster_id, type, ip, cpu_rate, load1, load5, load15, process_num, thread_num, handle_num, create_time
+	mac_net: cluster_id, type, ip, net_io_in_byte_per_sec, net_io_out_byte_per_sec, net_io_in_package_per_sec, net_io_out_package_per_sec,
+			 net_tcp_connections, net_tcp_active_opens_per_sec, net_ip_recv_package_per_sec, net_ip_send_package_per_sec,net_ip_drop_package_per_sec,
+			 net_tcp_recv_package_per_sec, net_tcp_send_package_per_sec, net_tcp_err_package_per_sec, net_tcp_retransfer_package_per_sec, create_time
+	mac_mem: cluster_id, type, ip, memory_total, memory_used_rss, memory_used, memory_free, memory_used_percent, swap_memory_total, swap_memory_used, swap_memory_free,
+			 swap_memory_used_percent, create_time
+	max_disk: cluster_id, type, ip, disk_path, disk_total, disk_used, disk_free, disk_proc_rate, disk_read_byte_per_sec, disk_write_byte_per_sec,
+			  disk_read_count_per_sec, disk_write_count_per_sec, create_time
+	*/
 	// mac meta
 	meta := make(map[string]interface{})
 	meta["cluster_id"] = clusterId
@@ -320,7 +322,7 @@ func (m *Metric) pushMac(clusterId uint64, item *MacItem) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_MAC,
 		Subsystem: METRIC_MAC_META,
-		Items: meta,
+		Items:     meta,
 	})
 
 	// mac net
@@ -347,7 +349,7 @@ func (m *Metric) pushMac(clusterId uint64, item *MacItem) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_MAC,
 		Subsystem: METRIC_MAC_NET,
-		Items: net,
+		Items:     net,
 	})
 
 	// mac mem
@@ -370,7 +372,7 @@ func (m *Metric) pushMac(clusterId uint64, item *MacItem) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_MAC,
 		Subsystem: METRIC_MAC_MEM,
-		Items: mem,
+		Items:     mem,
 	})
 
 	for _, diskStats := range item.Item.DiskStats {
@@ -397,22 +399,22 @@ func (m *Metric) pushMac(clusterId uint64, item *MacItem) {
 			ClusterId: clusterId,
 			Namespace: NAMESPACE_MAC,
 			Subsystem: METRIC_MAC_DISK,
-			Items: disk,
+			Items:     disk,
 		})
 	}
 
 }
 
 func (m *Metric) pushProcess(clusterId uint64, item *ProcessItem) {
-    /*
-    process_meta: cluster_id, type, addr, id, cpu_rate, load1, load5, load15, thread_num, handle_num, memory_used, start_time, create_time
-    process_disk: cluster_id, type, addr, id, disk_path, disk_total, disk_used, disk_free, disk_proc_rate, disk_read_byte_per_sec, disk_write_byte_per_sec,
-              disk_read_count_per_sec, disk_write_count_per_sec, create_time
-    process_net: cluster_id, type, addr, id, tps, min_tp, max_tp, avg_tp, tp50, tp90, tp99, tp999, net_io_in_byte_per_sec, net_io_out_byte_per_sec, net_io_in_package_per_sec,
-                 net_io_out_package_per_sec, net_tcp_connections, net_tcp_active_opens_per_sec, create_time
-    process_ds: cluster_id, type, addr, id, range_count, range_split_count, sending_snap_count, receiving_snap_count,
-                applying_snap_count, range_leader_count, version, create_time
-    */
+	/*
+	process_meta: cluster_id, type, addr, id, cpu_rate, load1, load5, load15, thread_num, handle_num, memory_used, start_time, create_time
+	process_disk: cluster_id, type, addr, id, disk_path, disk_total, disk_used, disk_free, disk_proc_rate, disk_read_byte_per_sec, disk_write_byte_per_sec,
+			  disk_read_count_per_sec, disk_write_count_per_sec, create_time
+	process_net: cluster_id, type, addr, id, tps, min_tp, max_tp, avg_tp, tp50, tp90, tp99, tp999, net_io_in_byte_per_sec, net_io_out_byte_per_sec, net_io_in_package_per_sec,
+				 net_io_out_package_per_sec, net_tcp_connections, net_tcp_active_opens_per_sec, create_time
+	process_ds: cluster_id, type, addr, id, range_count, range_split_count, sending_snap_count, receiving_snap_count,
+				applying_snap_count, range_leader_count, version, create_time
+	*/
 	var typeUpper = strings.ToUpper(item.Type)
 	// process meta
 	meta := make(map[string]interface{})
@@ -432,7 +434,7 @@ func (m *Metric) pushProcess(clusterId uint64, item *ProcessItem) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_PROCESS,
 		Subsystem: METRIC_PROCESS_META,
-		Items: meta,
+		Items:     meta,
 	})
 
 	// process disk
@@ -461,7 +463,7 @@ func (m *Metric) pushProcess(clusterId uint64, item *ProcessItem) {
 			ClusterId: clusterId,
 			Namespace: NAMESPACE_PROCESS,
 			Subsystem: METRIC_PROCESS_DISK,
-			Items: disk,
+			Items:     disk,
 		})
 	}
 
@@ -491,7 +493,7 @@ func (m *Metric) pushProcess(clusterId uint64, item *ProcessItem) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_PROCESS,
 		Subsystem: METRIC_PROCESS_NET,
-		Items: net,
+		Items:     net,
 	})
 
 	if item.Item.DsInfo != nil {
@@ -516,7 +518,7 @@ func (m *Metric) pushProcess(clusterId uint64, item *ProcessItem) {
 			ClusterId: clusterId,
 			Namespace: NAMESPACE_PROCESS,
 			Subsystem: METRIC_PROCESS_DS,
-			Items: ds,
+			Items:     ds,
 		})
 	}
 }
@@ -548,7 +550,7 @@ func (m *Metric) pushSlowLog(clusterId uint64, item *SlowLogItem) {
 			ClusterId: clusterId,
 			Namespace: NAMESPACE_CLUSTER,
 			Subsystem: METRIC_CLUSTER_SLOWLOG,
-			Items: meta,
+			Items:     meta,
 		})
 	}
 }
@@ -574,7 +576,7 @@ func (m *Metric) pushDb(clusterId uint64, item *DbItem) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_DB,
 		Subsystem: METRIC_DB_META,
-		Items: meta,
+		Items:     meta,
 	})
 }
 
@@ -593,7 +595,7 @@ func (m *Metric) pushTable(clusterId uint64, item *TableItem) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_TABLE,
 		Subsystem: METRIC_TABLE_META,
-		Items: meta,
+		Items:     meta,
 	})
 }
 
@@ -616,7 +618,7 @@ func (m *Metric) pushTask(clusterId uint64, item *statspb.TaskInfo) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_TASK,
 		Subsystem: METRIC_TASK_STATS,
-		Items: meta,
+		Items:     meta,
 	})
 }
 
@@ -633,7 +635,7 @@ func (m *Metric) pushSchedule(clusterId uint64, item *statspb.ScheduleCount) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_SCHEDULE,
 		Subsystem: METRIC_SCHEDULE_COUNTER,
-		Items: meta,
+		Items:     meta,
 	})
 }
 
@@ -652,7 +654,7 @@ func (m *Metric) pushHotspot(clusterId uint64, hotspot *statspb.HotSpotStats) {
 		ClusterId: clusterId,
 		Namespace: NAMESPACE_HOTSPOT,
 		Subsystem: METRIC_HOTSPOT,
-		Items: meta,
+		Items:     meta,
 	})
 }
 
@@ -679,13 +681,14 @@ func (m *Metric) pushNodeStats(clusterId, nodeId uint64, nodeAddr string, nodeSt
 
 	m.store.Put(&Message{
 		ClusterId: clusterId,
-		Namespace: NAMESPACE_HOTSPOT,
+		Namespace: NAMESPACE_NODE,
 		Subsystem: METRIC_NODE_STATS,
-		Items: meta,
+		Items:     meta,
 	})
 }
 
 func (m *Metric) pushRangeStats(clusterId uint64, rangeStats []*statspb.RangeInfo) {
+	var metaList []interface{}
 	for _, rngStat := range rangeStats {
 		if rngStat.GetStats() == nil {
 			continue
@@ -700,11 +703,14 @@ func (m *Metric) pushRangeStats(clusterId uint64, rangeStats []*statspb.RangeInf
 		meta["keys_read"] = rngStat.GetStats().GetKeysRead()
 		meta["approximate_size"] = rngStat.GetStats().GetApproximateSize()
 		meta["update_time"] = time.Now().Unix()
+		metaList = append(metaList, meta)
+	}
+	if len(metaList) > 0 {
 		m.store.Put(&Message{
 			ClusterId: clusterId,
-			Namespace: NAMESPACE_HOTSPOT,
+			Namespace: NAMESPACE_RANGE,
 			Subsystem: METRIC_RANGE_STATS,
-			Items: meta,
+			Items:     metaList,
 		})
 	}
 }
@@ -714,7 +720,7 @@ func (m *Metric) push(queue chan *Message) {
 		select {
 		case <-m.ctx.Done():
 			return
-		case msg, ok :=<-queue:
+		case msg, ok := <-queue:
 			if !ok {
 				continue
 			}

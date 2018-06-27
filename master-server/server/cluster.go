@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"encoding/binary"
+	"encoding/json"
 	"time"
 
 	"model/pkg/metapb"
@@ -16,10 +18,8 @@ import (
 	"util/deepcopy"
 	"util/log"
 	"util/ttlcache"
-
-	"encoding/binary"
+	"util/alarm"
 	sErr "master-server/engine/errors"
-
 	"util/alarm"
 
 	"github.com/gogo/protobuf/proto"
@@ -39,6 +39,8 @@ var PREFIX_PRE_GC string = fmt.Sprintf("schema%spre_gc%s", SCHEMA_SPLITOR, SCHEM
 var PREFIX_AUTO_TRANSFER string = fmt.Sprintf("$auto_transfer_%d")
 var PREFIX_AUTO_FAILOVER string = fmt.Sprintf("$auto_failover_%d")
 var PREFIX_AUTO_SPLIT string = fmt.Sprintf("$auto_split_%d")
+
+var PREFIX_METRIC string = fmt.Sprintf("$metric_send_%d")
 
 type Cluster struct {
 	clusterId uint64
@@ -113,12 +115,23 @@ func NewCluster(clusterId, nodeId uint64, store Store, opt *scheduleOption) *Clu
 		idGener:         NewClusterIDGenerator(store),
 	}
 	cluster.workerPool = initWorkerPool()
-	cluster.metric = NewMetric(cluster, opt.GetMetricAddress(), opt.GetMetricInterval())
-	//cluster.coordinator = NewCoordinator(cluster, opt)
 	cluster.workerManger = NewWorkerManager(cluster, opt)
 	cluster.hbManager = NewHBRangeManager(cluster)
+	cluster.metric = initMetricSender(cluster, opt)
 	cluster.taskManager = NewTaskManager()
 	return cluster
+}
+
+func initMetricSender(cluster *Cluster, opt *scheduleOption) *Metric {
+	//only load metric config from store when ms start and metric config is disable
+	if opt.GetMetricAddress() == "" || opt.GetMetricInterval() == 0 {
+		metricConfig, err := cluster.loadMetricConfig()
+		if err == nil {
+			opt.MetricAddr = metricConfig.Address
+			opt.MetricInterval = metricConfig.Interval.Duration
+		}
+	}
+	return NewMetric(cluster, opt.GetMetricAddress(), opt.GetMetricInterval())
 }
 
 func (c *Cluster) LoadCache() error {
@@ -173,6 +186,12 @@ func (c *Cluster) LoadCache() error {
 		return err
 	}
 
+	err = c.loadScheduleSwitch()
+	if err != nil {
+		log.Error("load schedule switch from store failed, err[%v]", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -187,7 +206,6 @@ func (c *Cluster) Close() {
 		return
 	}
 	c.cli.Close()
-	//c.coordinator.Stop()
 	c.workerManger.Stop()
 	c.metric.Stop()
 	c.close = true
@@ -829,6 +847,16 @@ func (c *Cluster) storeRangeGC(r *metapb.Range) error {
 	return c.store.Put(key, data)
 }
 
+func (c *Cluster) StoreMetricConfig(m *MetricConfig) error {
+	config := deepcopy.Iface(m).(*MetricConfig)
+	data, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+	key := []byte(fmt.Sprintf("%s%d", PREFIX_METRIC, c.GetClusterId()))
+	return c.store.Put(key, data)
+}
+
 func (c *Cluster) deleteRangeGC(rangeId uint64) error {
 	key := []byte(fmt.Sprintf("%s%d", PREFIX_PRE_GC, rangeId))
 	return c.store.Delete(key)
@@ -1134,7 +1162,25 @@ func (c *Cluster) loadTrashReplica(peerId uint64) (*metapb.Replica, error) {
 	return rep, nil
 }
 
+func (c *Cluster) loadMetricConfig() (*MetricConfig, error) {
+	key := []byte(fmt.Sprintf("%s%d", PREFIX_METRIC, c.GetClusterId()))
+	value, err := c.store.Get(key)
+	if err != nil {
+		return nil, err
+	}
+	if value == nil {
+		return nil, ErrNotFound
+	}
+	rep := new(MetricConfig)
+	err = json.Unmarshal(value, &rep)
+	if err != nil {
+		return nil, err
+	}
+	return rep, nil
+}
+
 func (c *Cluster) allocPeer(nodeId uint64, isLearner bool) (*metapb.Peer, error) {
+
 	peerId, err := c.idGener.GenID()
 	if err != nil {
 		return nil, ErrGenID
