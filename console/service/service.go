@@ -2185,7 +2185,7 @@ func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]st
 	}(respose)
 	waitLock.Wait()
 
-	log.Debug("set master client config: {}", respose)
+	log.Debug("set master client config: %v", respose)
 	return respose, nil
 }
 //=============metric end ===============
@@ -2578,6 +2578,8 @@ func InitService(c *config.Config) {
 	if err != nil {
 		panic("Fail to initialize mysql")
 	}
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(0)
 	serviceInstance = &Service{
 		config:     c,
 		db:         db,

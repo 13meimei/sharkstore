@@ -319,6 +319,9 @@ func readAndReplaceConfig(fileName string, addr string) (string, error)   {
 	var lines []string
 	for {
 		line, err := rd.ReadString('\n')
+		if err != nil && err != io.EOF {
+			return "", err
+		}
 		if strings.Contains(line, "[metric]") {
 			blockFlag = true
 		}
@@ -329,8 +332,6 @@ func readAndReplaceConfig(fileName string, addr string) (string, error)   {
 		lines = append(lines, line)
 		if err != nil && io.EOF == err {
 			break
-		} else {
-			return "", err
 		}
 	}
 	content := strings.Join(lines, "")
@@ -338,7 +339,7 @@ func readAndReplaceConfig(fileName string, addr string) (string, error)   {
 }
 func writeConfig(fileName string, content string) error {
 	data := []byte(content)
-	err := ioutil.WriteFile(fileName, data, 0644)
+	err := ioutil.WriteFile(fileName, data, 0666)
 	if err != nil {
 		return err
 	}
