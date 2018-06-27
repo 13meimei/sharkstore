@@ -2,25 +2,24 @@ package server
 
 import (
 	"bytes"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"encoding/binary"
-	"encoding/json"
 	"time"
 
+	sErr "master-server/engine/errors"
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
 	"pkg-go/ds_client"
 	"util"
+	"util/alarm"
 	"util/deepcopy"
 	"util/log"
 	"util/ttlcache"
-	"util/alarm"
-	sErr "master-server/engine/errors"
-	"util/alarm"
 
 	"github.com/gogo/protobuf/proto"
 )
