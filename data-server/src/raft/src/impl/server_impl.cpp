@@ -299,7 +299,7 @@ void RaftServerImpl::sendHeartbeat(const RaftMapType& rafts) {
 void RaftServerImpl::stepTick(const RaftMapType& rafts) {
     assert(tick_msg_->type() == pb::LOCAL_MSG_TICK);
     for (auto& r : rafts) {
-        r.second->RecvMsg(tick_msg_);
+        r.second->Tick(tick_msg_);
     }
 }
 

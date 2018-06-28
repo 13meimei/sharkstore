@@ -253,6 +253,24 @@ CREATE TABLE IF NOT EXISTS `fbase_lock_nsp` (
 	  PRIMARY KEY (`namespace`, `cluster_id`)
 )
 
+CREATE TABLE IF NOT EXISTS `range_stats` (
+    `cluster_id`  bigint(20) NOT NULL,
+    `range_id`  bigint(20) NOT NULL,
+    `addr`  varchar(32) NOT NULL,
+    `bytes_written`     bigint(20) NOT NULL,
+    `bytes_read`     bigint(20) NOT NULL,
+    `keys_written`     bigint(20) NOT NULL,
+    `keys_read`     bigint(20) NOT NULL,
+    `approximate_size`     bigint(20) NOT NULL,
+    `update_time` bigint(20) NOT NULL,
+	  PRIMARY KEY (`cluster_id`, `range_id`)
+)
+
+CREATE TABLE IF NOT EXISTS `metric_server` (
+    `addr`  bigint(20) NOT NULL,
+	  PRIMARY KEY (`addr`)
+)
+
 #需要初始化fbase_role, fbase_privilege
 insert into fbase_role values (3, "普通用户")
 insert into fbase_role values (2, "集群管理员")

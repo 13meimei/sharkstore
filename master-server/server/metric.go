@@ -12,10 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"model/pkg/mspb"
-	"model/pkg/statspb"
-	"util/deepcopy"
 	"util/log"
+	"util/deepcopy"
+	"util"
+	"model/pkg/statspb"
+	"model/pkg/mspb"
 
 	"golang.org/x/net/context"
 )
@@ -55,6 +56,62 @@ func NewMetric(cluster *Cluster, addr string, interval time.Duration) *Metric {
 	m := &Metric{cli: cli, addr: addr, interval: interval, cluster: cluster,
 		ctx: ctx, cancel: cancel, scheduleCounter: make(map[string]map[string]uint64)}
 	return m
+}
+
+func UpdateMetric(cluster *Cluster, addr string, interval time.Duration) error {
+	metric := cluster.metric
+	if metric != nil && metric.addr == addr && metric.interval == interval {
+		log.Info("metric server is running on the same config")
+		return nil
+	}
+	//落盘
+	err := cluster.StoreMetricConfig(&MetricConfig{Interval: util.NewDuration(interval), Address:addr})
+	if err != nil {
+		return err
+	}
+
+	if metric == nil {
+		metric = NewMetric(cluster, addr, interval)
+		metric.Run()
+	} else {
+		metric.lock.Lock()
+		if metric.addr != addr && addr != ""{
+			cli := &http.Client{
+				Transport: &http.Transport{
+					Dial: func(netw, addr string) (net.Conn, error) {
+						deadline := time.Now().Add(time.Second)
+						c, err := net.DialTimeout(netw, addr, time.Second)
+						if err != nil {
+							return nil, err
+						}
+						c.SetDeadline(deadline)
+						return c, nil
+					},
+				},
+			}
+			metric.cli = cli
+			metric.addr = addr
+		}
+		if interval != 0 {
+			metric.interval = interval
+		}
+		metric.lock.Unlock()
+	}
+	return nil
+}
+
+func (m *Metric) GetMetricAddr() string  {
+	if m == nil {
+		return ""
+	}
+	return m.addr
+}
+
+func (m *Metric) GetMetricInterval() time.Duration  {
+	if m == nil {
+		return 0
+	}
+	return m.interval
 }
 
 func (m *Metric) run() {
@@ -149,7 +206,6 @@ func (m *Metric) eventInfoStats() error {
 	for _, task := range taskList {
 		if err := metricEvent(m.cli, m.cluster.GetClusterId(), m.addr, changeEventToMetricTask(task)); err != nil {
 			log.Warn("report task to metric server failed, err %v", err)
-			return err
 		}
 	}
 	return nil
@@ -469,11 +525,11 @@ func send(cli *http.Client, request *http.Request) error {
 	}
 	if response.Body != nil {
 		defer response.Body.Close()
-		data, err := ioutil.ReadAll(response.Body)
+		_, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			return err
 		}
-		log.Debug("response ", string(data))
+		//log.Debug("response ", string(data))
 	}
 	if response.StatusCode != http.StatusOK {
 		return errors.New("request failed, not ok")

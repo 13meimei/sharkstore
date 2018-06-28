@@ -35,7 +35,7 @@ func (w *balanceNodeOpsWorker) Work(cluster *Cluster) {
 	cluster.metric.CollectScheduleCounter(w.GetName(), "schedule")
 	// Select a peer from the node with most regions.
 	rng, oldPeer := scheduleRemoveMaxOpsPeer(cluster, w.GetName())
-	if rng == nil {
+	if rng == nil || oldPeer == nil {
 		log.Debug("%s: no range need balance", w.GetName())
 		return
 	}

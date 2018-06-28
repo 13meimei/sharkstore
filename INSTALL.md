@@ -96,14 +96,14 @@ touch sharkstore/bin/ms/ms.conf
 > max-replicas = 1<br>
 > location-labels = []<br>
 
-## 配置gateway
+## 配置gateway：
 在sharkstore/bin/gw目录中创建如下配置gw.conf<br>
 
 ```
 touch sharkstore/bin/gw/gw.conf
 ```
 
-> # GS Configuration.
+> #GS Configuration.
 > http-port = 18080<br>
 > lock-port = 18090<br>
 > mysql-port = 4360<br>
@@ -115,27 +115,27 @@ touch sharkstore/bin/gw/gw.conf
 
 > [performance]<br>
 > max-work-num = 100<br>
-> #task queue size
+> #task queue size<br>
 > max-task-queue-len = 10000<br>
-> #keep connect size for each ds
+> #keep connect size for each ds<br>
 > grpc-pool-size = 10<br>
-> # 128 KB
+> #128 KB<br>
 > grpc-win-size = 131072<br>
 > slow-insert = "20ms"<br>
 > slow-select = "100ms"<br>
 > slow-delete = "20ms"<br>
 
-> [cluster]
+> [cluster]<br>
 > id = 1<br>
 > address = ["127.0.0.1:38887"]<br>
 > token = "test"<br>
 
-> [log]
+> [log]<br>
 > dir = "./log"<br>
 > module = "gateway"<br>
 > level = "debug"<br>
 
-> [metric]
+> [metric]<br>
 > interval = "15s"<br>
 > address = ""<br>
 

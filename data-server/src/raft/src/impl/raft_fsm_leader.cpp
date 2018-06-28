@@ -334,7 +334,7 @@ std::shared_ptr<SendSnapTask> RaftFsm::newSendSnapTask(uint64_t to,
 
     pb::SnapshotMeta snap_meta;
     // 添加成员信息
-    traverseReplicas([this, &snap_meta](uint64_t node, const Replica& pr) {
+    traverseReplicas([&snap_meta](uint64_t node, const Replica& pr) {
         auto p = snap_meta.add_peers();
         auto s = EncodePeer(pr.peer(), p);
         if (!s.ok()) {

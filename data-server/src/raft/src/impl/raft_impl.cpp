@@ -15,8 +15,6 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
-static const time_t kFetchStatusIntervalSec = 3;
-
 RaftImpl::RaftImpl(const RaftServerOptions& sops, const RaftOptions& ops,
                    const RaftContext& ctx)
     : sops_(sops), ops_(ops), ctx_(ctx), fsm_(new RaftFsm(sops, ops)) {
@@ -29,10 +27,7 @@ void RaftImpl::initPublish() {
     uint64_t leader = 0, term = 0;
     std::tie(leader, term) = fsm_->GetLeaderTerm();
     bulletin_board_.PublishLeaderTerm(leader, term);
-
     bulletin_board_.PublishPeers(fsm_->GetPeers());
-
-    last_fetch_status_ = time(NULL);
     bulletin_board_.PublishStatus(fsm_->GetStatus());
 }
 
@@ -109,7 +104,7 @@ void RaftImpl::Truncate(uint64_t index) {
     post(std::bind(&RaftImpl::truncate, shared_from_this(), index));
 }
 
-void RaftImpl::RecvMsg(MessagePtr& msg) {
+void RaftImpl::RecvMsg(MessagePtr msg) {
 #ifdef FBASE_RAFT_TRACE_MSG
     if (msg->type() != pb::LOCAL_TICK) {
         LOG_DEBUG("recv msg type: %s from %llu, term: %llu at term: %llu",
@@ -128,7 +123,12 @@ void RaftImpl::RecvMsg(MessagePtr& msg) {
     }
 }
 
-void RaftImpl::Step(MessagePtr& msg) {
+void RaftImpl::Tick(MessagePtr msg) {
+    ++tick_count_;
+    RecvMsg(msg);
+}
+
+void RaftImpl::Step(MessagePtr msg) {
     if (!fsm_->Validate(msg)) {
         LOG_DEBUG("raft[%lu] ignore invalidate msg type: %s from %llu, term: %llu",
                   ops_.id, pb::MessageType_Name(msg->type()).c_str(), msg->from(),
@@ -251,9 +251,8 @@ void RaftImpl::persist() {
 }
 
 void RaftImpl::publish() {
-    bool leader_changed = false;
-
     // leader或term有变化，更新leader和term
+    bool leader_changed = false;
     uint64_t leader = 0, term = 0;
     std::tie(leader, term) = fsm_->GetLeaderTerm();
     if (leader != bulletin_board_.Leader() || term != bulletin_board_.Term()) {
@@ -261,15 +260,13 @@ void RaftImpl::publish() {
         leader_changed = true;
     }
 
-    // 更新peers
+    // 更新成员
     if (conf_changed_) {
         bulletin_board_.PublishPeers(fsm_->GetPeers());
     }
 
-    // 有条件地更新RaftStatus
-    if (conf_changed_ || leader_changed ||
-        time(NULL) - last_fetch_status_ >= kFetchStatusIntervalSec) {
-        last_fetch_status_ = time(NULL);
+    // 每隔一定间隔更新RaftStatus
+    if (conf_changed_ || leader_changed || tick_count_ % sops_.status_tick == 0) {
         bulletin_board_.PublishStatus(fsm_->GetStatus());
     }
     conf_changed_ = false;
@@ -316,7 +313,7 @@ void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& r
                   result.blocks_count, result.bytes_count);
     }
 
-    // 通知本地leader
+    // 通知本地follower
     MessagePtr resp(new pb::Message);
     resp->set_type(pb::LOCAL_SNAPSHOT_STATUS);
     resp->set_to(sops_.node_id);
