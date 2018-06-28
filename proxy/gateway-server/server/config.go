@@ -7,6 +7,11 @@ import (
 
 	"time"
 	"fmt"
+	"bufio"
+	"strings"
+	"io"
+	"io/ioutil"
+	"os"
 )
 
 const (
@@ -103,12 +108,15 @@ level = "debug"
 [metric]
 # metric client push interval, set "0s" to disable metric.
 interval = "15s"
-#receive metric server address
-address = "127.0.165.52:8887"
+# receive metric address, leaves it empty will disable metric.
+address = ""
 `
+
+var configFileN *string
 
 func (c *Config) LoadConfig(configFileName *string) {
 	if *configFileName != "" {
+		configFileN = configFileName
 		_, err := toml.DecodeFile(*configFileName, c)
 		if err != nil {
 			log.Panic("load config file failed, err %v", err)
@@ -282,4 +290,58 @@ type BenchMarkConfig struct {
 	DB      string `toml:"db,omitempty" json:"db"`
 	Table   string `toml:"table,omitempty" json:"table"`
 	Batch   int    `toml:"batch,omitempty" json:"batch"`
+}
+
+func UpdateConfig(addr string) error{
+	if *configFileN == "" {
+		return nil
+	}
+	content, err := readAndReplaceConfig(*configFileN, addr)
+	if err != nil {
+		return  err
+	}
+	if content == "" {
+		return nil
+	}
+	err = writeConfig(*configFileN, content)
+	return err
+}
+
+func readAndReplaceConfig(fileName string, addr string) (string, error)   {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	rd := bufio.NewReader(f)
+	blockFlag := false
+	var lines []string
+	for {
+		line, err := rd.ReadString('\n')
+		if err != nil && err != io.EOF {
+			return "", err
+		}
+		if strings.Contains(line, "[metric]") {
+			blockFlag = true
+		}
+		if blockFlag && strings.Contains(line, "address")  && strings.Contains(line, "=") {
+			line = "address = \"" + addr + "\"\n"
+			blockFlag = false
+		}
+		lines = append(lines, line)
+		if err != nil && io.EOF == err {
+			break
+		}
+	}
+	content := strings.Join(lines, "")
+	return content, nil
+}
+func writeConfig(fileName string, content string) error {
+	data := []byte(content)
+	err := ioutil.WriteFile(fileName, data, 0666)
+	if err != nil {
+		return err
+	}
+	return nil
 }

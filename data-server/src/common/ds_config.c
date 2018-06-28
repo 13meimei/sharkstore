@@ -190,6 +190,9 @@ static int load_range_config(IniContext *ini_context) {
         ds_config.range_config.worker_threads = 1;
     }
 
+    ds_config.range_config.recover_skip_fail =
+            iniGetIntValue(section, "recover_skip_fail", ini_context, 0);
+
     ds_config.range_config.access_mode =
         iniGetIntValue(section, "access_mode", ini_context, 0);
     if (ds_config.range_config.access_mode != 0 && ds_config.range_config.access_mode != 1) {

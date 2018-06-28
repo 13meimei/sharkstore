@@ -76,7 +76,10 @@ struct RaftServerOptions {
     // 连续几个tick没有收到副本的消息算作副本不活跃，
     unsigned inactive_tick = 10;
 
-    // 复制pipline量（按条数）
+    // 每个几个tick，更新一次raft status
+    unsigned status_tick = 4;
+
+    // 复制pipeline量（按条数）
     int max_inflight_msgs = 128;
 
     // 复制batch数量（按字节大小）

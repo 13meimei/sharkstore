@@ -53,13 +53,11 @@ public:
     Status Destroy();
 
 public:
-    const RaftOptions& Options() const { return ops_; }
-
-    void RecvMsg(MessagePtr& msg);
-    void Step(MessagePtr& msg);
+    void RecvMsg(MessagePtr msg);
+    void Tick(MessagePtr msg);
+    void Step(MessagePtr msg);
 
     void ReportSnapSendResult(const SnapContext& ctx, const SnapResult& result);
-
     void ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result);
 
 private:
@@ -93,8 +91,8 @@ private:
 
     Ready ready_;
     pb::HardState prev_hard_state_;
-    bool conf_changed_ = true;  // init peers for bulletin board
-    time_t last_fetch_status_ = 0;
+    bool conf_changed_ = false;
+    std::atomic<uint64_t> tick_count_ = {0};
 };
 
 } /* namespace impl */

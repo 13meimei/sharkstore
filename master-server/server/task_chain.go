@@ -44,8 +44,6 @@ func NewTaskChain(id uint64, rangeID uint64, name string, tasks ...Task) *TaskCh
 		t.SetLogID(c.logID)
 	}
 
-	log.Info("%s created.", c.logID)
-
 	return c
 }
 
@@ -62,6 +60,11 @@ func (c *TaskChain) GetRangeID() uint64 {
 // GetName return name
 func (c *TaskChain) GetName() string {
 	return c.name
+}
+
+// GetLogID return log id to print log
+func (c *TaskChain) GetLogID() string {
+	return c.logID
 }
 
 // Elapsed time since begin
@@ -122,8 +125,8 @@ func (c *TaskChain) Next(cluster *Cluster, r *Range) (over bool, task *taskpb.Ta
 }
 
 func (c *TaskChain) String() string {
-	return fmt.Sprintf("{\"id\": %d, \"name\": \"%s\", \"range\": %d, \"begin\": \"%s\", \"update\": \"%v\", \"tasks\": %v}",
-		c.id, c.name, c.rangeID, c.begin.Format("2006/01/02-03:04:05"),
+	return fmt.Sprintf("{\"id\": %d, \"name\": \"%s\", \"range\": %d, \"index\": %d, \"begin\": \"%s\", \"update\": \"%v\", \"tasks\": %v}",
+		c.id, c.name, c.rangeID, c.curIdx, c.begin.Format("2006/01/02-03:04:05"),
 		c.lastUpdate.Format("2006/01/02-03:04:05"), c.tasks)
 }
 
