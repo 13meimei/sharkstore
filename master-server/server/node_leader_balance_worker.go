@@ -42,7 +42,7 @@ func (w *balanceNodeLeaderWorker) GetName() string {
 func (w *balanceNodeLeaderWorker) Work(cluster *Cluster) {
 	log.Debug("start %s", w.GetName())
 	rng, newLeader := w.selectChangeLeader(cluster)
-	if rng == nil {
+	if rng == nil || newLeader == nil {
 		log.Debug("%v: no node need to change leader", w.GetName())
 		return
 	}
