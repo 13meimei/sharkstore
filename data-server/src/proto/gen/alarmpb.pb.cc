@@ -188,6 +188,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TaskAlarmRequest, task_timeout_alarm_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TaskAlarmRequest, task_long_time_running_alarm_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TaskAlarmRequest, describe_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TaskAlarmRequest, sample_json_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TaskTimeout, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -220,6 +221,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeRangeAlarmRequest, node_disk_size_alarm_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeRangeAlarmRequest, node_leader_count_alarm_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeRangeAlarmRequest, describe_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NodeRangeAlarmRequest, sample_json_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeNoHeartbeatAlarm, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -260,6 +262,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AliveRequest, head_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AliveRequest, sample_json_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AliveResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -274,6 +277,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleRequest, head_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleRequest, title_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleRequest, content_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleRequest, sample_json_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SimpleResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -287,19 +291,19 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 13, -1, sizeof(SimpleAlarmRequest)},
   { 20, -1, sizeof(SimpleAlarmResponse)},
   { 26, -1, sizeof(TaskAlarmRequest)},
-  { 37, -1, sizeof(TaskTimeout)},
-  { 44, -1, sizeof(TaskLongTimeRunning)},
-  { 51, -1, sizeof(TaskAlarmResponse)},
-  { 57, -1, sizeof(NodeRangeAlarmRequest)},
-  { 69, -1, sizeof(RangeNoHeartbeatAlarm)},
-  { 76, -1, sizeof(NodeNoHeartbeatAlarm)},
-  { 83, -1, sizeof(NodeDiskSizeAlarm)},
-  { 90, -1, sizeof(NodeLeaderCountAlarm)},
-  { 97, -1, sizeof(NodeRangeAlarmResponse)},
-  { 103, -1, sizeof(AliveRequest)},
-  { 109, -1, sizeof(AliveResponse)},
-  { 115, -1, sizeof(SimpleRequest)},
-  { 123, -1, sizeof(SimpleResponse)},
+  { 38, -1, sizeof(TaskTimeout)},
+  { 45, -1, sizeof(TaskLongTimeRunning)},
+  { 52, -1, sizeof(TaskAlarmResponse)},
+  { 58, -1, sizeof(NodeRangeAlarmRequest)},
+  { 71, -1, sizeof(RangeNoHeartbeatAlarm)},
+  { 78, -1, sizeof(NodeNoHeartbeatAlarm)},
+  { 85, -1, sizeof(NodeDiskSizeAlarm)},
+  { 92, -1, sizeof(NodeLeaderCountAlarm)},
+  { 99, -1, sizeof(NodeRangeAlarmResponse)},
+  { 105, -1, sizeof(AliveRequest)},
+  { 112, -1, sizeof(AliveResponse)},
+  { 118, -1, sizeof(SimpleRequest)},
+  { 127, -1, sizeof(SimpleResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -445,57 +449,59 @@ void AddDescriptorsImpl() {
       "\005\022\r\n\005error\030\002 \001(\t\"L\n\022SimpleAlarmRequest\022$"
       "\n\004head\030\001 \001(\0132\026.alarmpb.RequestHeader\022\020\n\010"
       "Describe\030\002 \001(\t\"<\n\023SimpleAlarmResponse\022%\n"
-      "\004head\030\001 \001(\0132\027.alarmpb.ResponseHeader\"\202\002\n"
+      "\004head\030\001 \001(\0132\027.alarmpb.ResponseHeader\"\227\002\n"
       "\020TaskAlarmRequest\022$\n\004head\030\001 \001(\0132\026.alarmp"
       "b.RequestHeader\022$\n\004type\030\002 \001(\0162\026.alarmpb."
       "TaskAlarmType\022\032\n\004task\030\003 \001(\0132\014.taskpb.Tas"
       "k\0220\n\022task_timeout_alarm\030\004 \001(\0132\024.alarmpb."
       "TaskTimeout\022B\n\034task_long_time_running_al"
       "arm\030\005 \001(\0132\034.alarmpb.TaskLongTimeRunning\022"
-      "\020\n\010Describe\030\006 \001(\t\"+\n\013TaskTimeout\022\r\n\005star"
-      "t\030\002 \001(\t\022\r\n\005takes\030\003 \001(\003\"3\n\023TaskLongTimeRu"
-      "nning\022\r\n\005start\030\002 \001(\t\022\r\n\005takes\030\003 \001(\003\":\n\021T"
-      "askAlarmResponse\022%\n\004head\030\001 \001(\0132\027.alarmpb"
-      ".ResponseHeader\"\350\002\n\025NodeRangeAlarmReques"
-      "t\022$\n\004head\030\001 \001(\0132\026.alarmpb.RequestHeader\022"
-      ")\n\004type\030\002 \001(\0162\033.alarmpb.NodeRangeAlarmTy"
-      "pe\0229\n\021range_no_hb_alarm\030\003 \001(\0132\036.alarmpb."
-      "RangeNoHeartbeatAlarm\0227\n\020node_no_hb_alar"
-      "m\030\004 \001(\0132\035.alarmpb.NodeNoHeartbeatAlarm\0228"
-      "\n\024node_disk_size_alarm\030\005 \001(\0132\032.alarmpb.N"
-      "odeDiskSizeAlarm\022>\n\027node_leader_count_al"
-      "arm\030\006 \001(\0132\035.alarmpb.NodeLeaderCountAlarm"
-      "\022\020\n\010Describe\030\007 \001(\t\"R\n\025RangeNoHeartbeatAl"
-      "arm\022\034\n\005range\030\001 \001(\0132\r.metapb.Range\022\033\n\023las"
-      "t_heartbeat_time\030\002 \001(\t\"O\n\024NodeNoHeartbea"
-      "tAlarm\022\032\n\004node\030\001 \001(\0132\014.metapb.Node\022\033\n\023la"
-      "st_heartbeat_time\030\002 \001(\t\"B\n\021NodeDiskSizeA"
-      "larm\022\032\n\004node\030\001 \001(\0132\014.metapb.Node\022\021\n\tdisk"
-      "_size\030\002 \001(\003\"H\n\024NodeLeaderCountAlarm\022\032\n\004n"
-      "ode\030\001 \001(\0132\014.metapb.Node\022\024\n\014leader_count\030"
-      "\002 \001(\003\"\?\n\026NodeRangeAlarmResponse\022%\n\004head\030"
-      "\001 \001(\0132\027.alarmpb.ResponseHeader\"4\n\014AliveR"
-      "equest\022$\n\004head\030\001 \001(\0132\026.alarmpb.RequestHe"
-      "ader\"6\n\rAliveResponse\022%\n\004head\030\001 \001(\0132\027.al"
-      "armpb.ResponseHeader\"U\n\rSimpleRequest\022$\n"
-      "\004head\030\001 \001(\0132\026.alarmpb.RequestHeader\022\r\n\005t"
-      "itle\030\002 \001(\t\022\017\n\007content\030\003 \001(\t\"7\n\016SimpleRes"
-      "ponse\022%\n\004head\030\001 \001(\0132\027.alarmpb.ResponseHe"
-      "ader*3\n\rTaskAlarmType\022\013\n\007TIMEOUT\020\000\022\025\n\021LO"
-      "NG_TIME_RUNNING\020\001*n\n\022NodeRangeAlarmType\022"
-      "\026\n\022RANGE_NO_HEARTBEAT\020\000\022\025\n\021NODE_NO_HEART"
-      "BEAT\020\001\022\022\n\016NODE_DISK_SIZE\020\002\022\025\n\021NODE_LEADE"
-      "R_COUNT\020\0032\243\002\n\005Alarm\022D\n\tTaskAlarm\022\031.alarm"
-      "pb.TaskAlarmRequest\032\032.alarmpb.TaskAlarmR"
-      "esponse\"\000\022S\n\016NodeRangeAlarm\022\036.alarmpb.No"
-      "deRangeAlarmRequest\032\037.alarmpb.NodeRangeA"
-      "larmResponse\"\000\022=\n\nAliveAlarm\022\025.alarmpb.A"
-      "liveRequest\032\026.alarmpb.AliveResponse\"\000\022@\n"
-      "\013SimpleAlarm\022\026.alarmpb.SimpleRequest\032\027.a"
-      "larmpb.SimpleResponse\"\000b\006proto3"
+      "\020\n\010Describe\030\006 \001(\t\022\023\n\013sample_json\030\n \003(\t\"+"
+      "\n\013TaskTimeout\022\r\n\005start\030\002 \001(\t\022\r\n\005takes\030\003 "
+      "\001(\003\"3\n\023TaskLongTimeRunning\022\r\n\005start\030\002 \001("
+      "\t\022\r\n\005takes\030\003 \001(\003\":\n\021TaskAlarmResponse\022%\n"
+      "\004head\030\001 \001(\0132\027.alarmpb.ResponseHeader\"\375\002\n"
+      "\025NodeRangeAlarmRequest\022$\n\004head\030\001 \001(\0132\026.a"
+      "larmpb.RequestHeader\022)\n\004type\030\002 \001(\0162\033.ala"
+      "rmpb.NodeRangeAlarmType\0229\n\021range_no_hb_a"
+      "larm\030\003 \001(\0132\036.alarmpb.RangeNoHeartbeatAla"
+      "rm\0227\n\020node_no_hb_alarm\030\004 \001(\0132\035.alarmpb.N"
+      "odeNoHeartbeatAlarm\0228\n\024node_disk_size_al"
+      "arm\030\005 \001(\0132\032.alarmpb.NodeDiskSizeAlarm\022>\n"
+      "\027node_leader_count_alarm\030\006 \001(\0132\035.alarmpb"
+      ".NodeLeaderCountAlarm\022\020\n\010Describe\030\007 \001(\t\022"
+      "\023\n\013sample_json\030\n \003(\t\"R\n\025RangeNoHeartbeat"
+      "Alarm\022\034\n\005range\030\001 \001(\0132\r.metapb.Range\022\033\n\023l"
+      "ast_heartbeat_time\030\002 \001(\t\"O\n\024NodeNoHeartb"
+      "eatAlarm\022\032\n\004node\030\001 \001(\0132\014.metapb.Node\022\033\n\023"
+      "last_heartbeat_time\030\002 \001(\t\"B\n\021NodeDiskSiz"
+      "eAlarm\022\032\n\004node\030\001 \001(\0132\014.metapb.Node\022\021\n\tdi"
+      "sk_size\030\002 \001(\003\"H\n\024NodeLeaderCountAlarm\022\032\n"
+      "\004node\030\001 \001(\0132\014.metapb.Node\022\024\n\014leader_coun"
+      "t\030\002 \001(\003\"\?\n\026NodeRangeAlarmResponse\022%\n\004hea"
+      "d\030\001 \001(\0132\027.alarmpb.ResponseHeader\"I\n\014Aliv"
+      "eRequest\022$\n\004head\030\001 \001(\0132\026.alarmpb.Request"
+      "Header\022\023\n\013sample_json\030\n \003(\t\"6\n\rAliveResp"
+      "onse\022%\n\004head\030\001 \001(\0132\027.alarmpb.ResponseHea"
+      "der\"j\n\rSimpleRequest\022$\n\004head\030\001 \001(\0132\026.ala"
+      "rmpb.RequestHeader\022\r\n\005title\030\002 \001(\t\022\017\n\007con"
+      "tent\030\003 \001(\t\022\023\n\013sample_json\030\n \003(\t\"7\n\016Simpl"
+      "eResponse\022%\n\004head\030\001 \001(\0132\027.alarmpb.Respon"
+      "seHeader*3\n\rTaskAlarmType\022\013\n\007TIMEOUT\020\000\022\025"
+      "\n\021LONG_TIME_RUNNING\020\001*n\n\022NodeRangeAlarmT"
+      "ype\022\026\n\022RANGE_NO_HEARTBEAT\020\000\022\025\n\021NODE_NO_H"
+      "EARTBEAT\020\001\022\022\n\016NODE_DISK_SIZE\020\002\022\025\n\021NODE_L"
+      "EADER_COUNT\020\0032\243\002\n\005Alarm\022D\n\tTaskAlarm\022\031.a"
+      "larmpb.TaskAlarmRequest\032\032.alarmpb.TaskAl"
+      "armResponse\"\000\022S\n\016NodeRangeAlarm\022\036.alarmp"
+      "b.NodeRangeAlarmRequest\032\037.alarmpb.NodeRa"
+      "ngeAlarmResponse\"\000\022=\n\nAliveAlarm\022\025.alarm"
+      "pb.AliveRequest\032\026.alarmpb.AliveResponse\""
+      "\000\022@\n\013SimpleAlarm\022\026.alarmpb.SimpleRequest"
+      "\032\027.alarmpb.SimpleResponse\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 2151);
+      descriptor, 2235);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "alarmpb.proto", &protobuf_RegisterTypes);
   ::taskpb::protobuf_taskpb_2eproto::AddDescriptors();
@@ -1862,6 +1868,7 @@ const int TaskAlarmRequest::kTaskFieldNumber;
 const int TaskAlarmRequest::kTaskTimeoutAlarmFieldNumber;
 const int TaskAlarmRequest::kTaskLongTimeRunningAlarmFieldNumber;
 const int TaskAlarmRequest::kDescribeFieldNumber;
+const int TaskAlarmRequest::kSampleJsonFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 TaskAlarmRequest::TaskAlarmRequest()
@@ -1875,6 +1882,7 @@ TaskAlarmRequest::TaskAlarmRequest()
 TaskAlarmRequest::TaskAlarmRequest(const TaskAlarmRequest& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
+      sample_json_(from.sample_json_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   describe_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -1955,6 +1963,7 @@ void TaskAlarmRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  sample_json_.Clear();
   describe_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && head_ != NULL) {
     delete head_;
@@ -2065,6 +2074,23 @@ bool TaskAlarmRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // repeated string sample_json = 10;
+      case 10: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_sample_json()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->sample_json(this->sample_json_size() - 1).data(),
+            static_cast<int>(this->sample_json(this->sample_json_size() - 1).length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "alarmpb.TaskAlarmRequest.sample_json"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -2131,6 +2157,16 @@ void TaskAlarmRequest::SerializeWithCachedSizes(
       6, this->describe(), output);
   }
 
+  // repeated string sample_json = 10;
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sample_json(i).data(), static_cast<int>(this->sample_json(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.TaskAlarmRequest.sample_json");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      10, this->sample_json(i), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -2190,6 +2226,16 @@ void TaskAlarmRequest::SerializeWithCachedSizes(
         6, this->describe(), target);
   }
 
+  // repeated string sample_json = 10;
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sample_json(i).data(), static_cast<int>(this->sample_json(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.TaskAlarmRequest.sample_json");
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(10, this->sample_json(i), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -2207,6 +2253,14 @@ size_t TaskAlarmRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // repeated string sample_json = 10;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->sample_json_size());
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->sample_json(i));
+  }
+
   // string Describe = 6;
   if (this->describe().size() > 0) {
     total_size += 1 +
@@ -2277,6 +2331,7 @@ void TaskAlarmRequest::MergeFrom(const TaskAlarmRequest& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  sample_json_.MergeFrom(from.sample_json_);
   if (from.describe().size() > 0) {
 
     describe_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.describe_);
@@ -2322,6 +2377,7 @@ void TaskAlarmRequest::Swap(TaskAlarmRequest* other) {
 }
 void TaskAlarmRequest::InternalSwap(TaskAlarmRequest* other) {
   using std::swap;
+  sample_json_.InternalSwap(&other->sample_json_);
   describe_.Swap(&other->describe_);
   swap(head_, other->head_);
   swap(task_, other->task_);
@@ -2565,6 +2621,75 @@ void TaskAlarmRequest::set_allocated_describe(::std::string* describe) {
   }
   describe_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), describe);
   // @@protoc_insertion_point(field_set_allocated:alarmpb.TaskAlarmRequest.Describe)
+}
+
+// repeated string sample_json = 10;
+int TaskAlarmRequest::sample_json_size() const {
+  return sample_json_.size();
+}
+void TaskAlarmRequest::clear_sample_json() {
+  sample_json_.Clear();
+}
+const ::std::string& TaskAlarmRequest::sample_json(int index) const {
+  // @@protoc_insertion_point(field_get:alarmpb.TaskAlarmRequest.sample_json)
+  return sample_json_.Get(index);
+}
+::std::string* TaskAlarmRequest::mutable_sample_json(int index) {
+  // @@protoc_insertion_point(field_mutable:alarmpb.TaskAlarmRequest.sample_json)
+  return sample_json_.Mutable(index);
+}
+void TaskAlarmRequest::set_sample_json(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.TaskAlarmRequest.sample_json)
+  sample_json_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+void TaskAlarmRequest::set_sample_json(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.TaskAlarmRequest.sample_json)
+  sample_json_.Mutable(index)->assign(std::move(value));
+}
+#endif
+void TaskAlarmRequest::set_sample_json(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:alarmpb.TaskAlarmRequest.sample_json)
+}
+void TaskAlarmRequest::set_sample_json(int index, const char* value, size_t size) {
+  sample_json_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.TaskAlarmRequest.sample_json)
+}
+::std::string* TaskAlarmRequest::add_sample_json() {
+  // @@protoc_insertion_point(field_add_mutable:alarmpb.TaskAlarmRequest.sample_json)
+  return sample_json_.Add();
+}
+void TaskAlarmRequest::add_sample_json(const ::std::string& value) {
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:alarmpb.TaskAlarmRequest.sample_json)
+}
+#if LANG_CXX11
+void TaskAlarmRequest::add_sample_json(::std::string&& value) {
+  sample_json_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:alarmpb.TaskAlarmRequest.sample_json)
+}
+#endif
+void TaskAlarmRequest::add_sample_json(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:alarmpb.TaskAlarmRequest.sample_json)
+}
+void TaskAlarmRequest::add_sample_json(const char* value, size_t size) {
+  sample_json_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:alarmpb.TaskAlarmRequest.sample_json)
+}
+const ::google::protobuf::RepeatedPtrField< ::std::string>&
+TaskAlarmRequest::sample_json() const {
+  // @@protoc_insertion_point(field_list:alarmpb.TaskAlarmRequest.sample_json)
+  return sample_json_;
+}
+::google::protobuf::RepeatedPtrField< ::std::string>*
+TaskAlarmRequest::mutable_sample_json() {
+  // @@protoc_insertion_point(field_mutable_list:alarmpb.TaskAlarmRequest.sample_json)
+  return &sample_json_;
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -3596,6 +3721,7 @@ const int NodeRangeAlarmRequest::kNodeNoHbAlarmFieldNumber;
 const int NodeRangeAlarmRequest::kNodeDiskSizeAlarmFieldNumber;
 const int NodeRangeAlarmRequest::kNodeLeaderCountAlarmFieldNumber;
 const int NodeRangeAlarmRequest::kDescribeFieldNumber;
+const int NodeRangeAlarmRequest::kSampleJsonFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 NodeRangeAlarmRequest::NodeRangeAlarmRequest()
@@ -3609,6 +3735,7 @@ NodeRangeAlarmRequest::NodeRangeAlarmRequest()
 NodeRangeAlarmRequest::NodeRangeAlarmRequest(const NodeRangeAlarmRequest& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
+      sample_json_(from.sample_json_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   describe_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -3695,6 +3822,7 @@ void NodeRangeAlarmRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  sample_json_.Clear();
   describe_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && head_ != NULL) {
     delete head_;
@@ -3821,6 +3949,23 @@ bool NodeRangeAlarmRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // repeated string sample_json = 10;
+      case 10: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_sample_json()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->sample_json(this->sample_json_size() - 1).data(),
+            static_cast<int>(this->sample_json(this->sample_json_size() - 1).length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "alarmpb.NodeRangeAlarmRequest.sample_json"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -3893,6 +4038,16 @@ void NodeRangeAlarmRequest::SerializeWithCachedSizes(
       7, this->describe(), output);
   }
 
+  // repeated string sample_json = 10;
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sample_json(i).data(), static_cast<int>(this->sample_json(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.NodeRangeAlarmRequest.sample_json");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      10, this->sample_json(i), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -3959,6 +4114,16 @@ void NodeRangeAlarmRequest::SerializeWithCachedSizes(
         7, this->describe(), target);
   }
 
+  // repeated string sample_json = 10;
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sample_json(i).data(), static_cast<int>(this->sample_json(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.NodeRangeAlarmRequest.sample_json");
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(10, this->sample_json(i), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -3976,6 +4141,14 @@ size_t NodeRangeAlarmRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // repeated string sample_json = 10;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->sample_json_size());
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->sample_json(i));
+  }
+
   // string Describe = 7;
   if (this->describe().size() > 0) {
     total_size += 1 +
@@ -4053,6 +4226,7 @@ void NodeRangeAlarmRequest::MergeFrom(const NodeRangeAlarmRequest& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  sample_json_.MergeFrom(from.sample_json_);
   if (from.describe().size() > 0) {
 
     describe_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.describe_);
@@ -4101,6 +4275,7 @@ void NodeRangeAlarmRequest::Swap(NodeRangeAlarmRequest* other) {
 }
 void NodeRangeAlarmRequest::InternalSwap(NodeRangeAlarmRequest* other) {
   using std::swap;
+  sample_json_.InternalSwap(&other->sample_json_);
   describe_.Swap(&other->describe_);
   swap(head_, other->head_);
   swap(range_no_hb_alarm_, other->range_no_hb_alarm_);
@@ -4385,6 +4560,75 @@ void NodeRangeAlarmRequest::set_allocated_describe(::std::string* describe) {
   }
   describe_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), describe);
   // @@protoc_insertion_point(field_set_allocated:alarmpb.NodeRangeAlarmRequest.Describe)
+}
+
+// repeated string sample_json = 10;
+int NodeRangeAlarmRequest::sample_json_size() const {
+  return sample_json_.size();
+}
+void NodeRangeAlarmRequest::clear_sample_json() {
+  sample_json_.Clear();
+}
+const ::std::string& NodeRangeAlarmRequest::sample_json(int index) const {
+  // @@protoc_insertion_point(field_get:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return sample_json_.Get(index);
+}
+::std::string* NodeRangeAlarmRequest::mutable_sample_json(int index) {
+  // @@protoc_insertion_point(field_mutable:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return sample_json_.Mutable(index);
+}
+void NodeRangeAlarmRequest::set_sample_json(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.NodeRangeAlarmRequest.sample_json)
+  sample_json_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+void NodeRangeAlarmRequest::set_sample_json(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.NodeRangeAlarmRequest.sample_json)
+  sample_json_.Mutable(index)->assign(std::move(value));
+}
+#endif
+void NodeRangeAlarmRequest::set_sample_json(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+void NodeRangeAlarmRequest::set_sample_json(int index, const char* value, size_t size) {
+  sample_json_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+::std::string* NodeRangeAlarmRequest::add_sample_json() {
+  // @@protoc_insertion_point(field_add_mutable:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return sample_json_.Add();
+}
+void NodeRangeAlarmRequest::add_sample_json(const ::std::string& value) {
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+#if LANG_CXX11
+void NodeRangeAlarmRequest::add_sample_json(::std::string&& value) {
+  sample_json_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+#endif
+void NodeRangeAlarmRequest::add_sample_json(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+void NodeRangeAlarmRequest::add_sample_json(const char* value, size_t size) {
+  sample_json_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+const ::google::protobuf::RepeatedPtrField< ::std::string>&
+NodeRangeAlarmRequest::sample_json() const {
+  // @@protoc_insertion_point(field_list:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return sample_json_;
+}
+::google::protobuf::RepeatedPtrField< ::std::string>*
+NodeRangeAlarmRequest::mutable_sample_json() {
+  // @@protoc_insertion_point(field_mutable_list:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return &sample_json_;
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -6166,6 +6410,7 @@ void NodeRangeAlarmResponse::set_allocated_head(::alarmpb::ResponseHeader* head)
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int AliveRequest::kHeadFieldNumber;
+const int AliveRequest::kSampleJsonFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 AliveRequest::AliveRequest()
@@ -6179,6 +6424,7 @@ AliveRequest::AliveRequest()
 AliveRequest::AliveRequest(const AliveRequest& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
+      sample_json_(from.sample_json_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_head()) {
@@ -6232,6 +6478,7 @@ void AliveRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  sample_json_.Clear();
   if (GetArenaNoVirtual() == NULL && head_ != NULL) {
     delete head_;
   }
@@ -6255,6 +6502,23 @@ bool AliveRequest::MergePartialFromCodedStream(
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_head()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated string sample_json = 10;
+      case 10: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_sample_json()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->sample_json(this->sample_json_size() - 1).data(),
+            static_cast<int>(this->sample_json(this->sample_json_size() - 1).length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "alarmpb.AliveRequest.sample_json"));
         } else {
           goto handle_unusual;
         }
@@ -6293,6 +6557,16 @@ void AliveRequest::SerializeWithCachedSizes(
       1, *this->head_, output);
   }
 
+  // repeated string sample_json = 10;
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sample_json(i).data(), static_cast<int>(this->sample_json(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.AliveRequest.sample_json");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      10, this->sample_json(i), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -6314,6 +6588,16 @@ void AliveRequest::SerializeWithCachedSizes(
         1, *this->head_, deterministic, target);
   }
 
+  // repeated string sample_json = 10;
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sample_json(i).data(), static_cast<int>(this->sample_json(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.AliveRequest.sample_json");
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(10, this->sample_json(i), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -6331,6 +6615,14 @@ size_t AliveRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // repeated string sample_json = 10;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->sample_json_size());
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->sample_json(i));
+  }
+
   // .alarmpb.RequestHeader head = 1;
   if (this->has_head()) {
     total_size += 1 +
@@ -6367,6 +6659,7 @@ void AliveRequest::MergeFrom(const AliveRequest& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  sample_json_.MergeFrom(from.sample_json_);
   if (from.has_head()) {
     mutable_head()->::alarmpb::RequestHeader::MergeFrom(from.head());
   }
@@ -6396,6 +6689,7 @@ void AliveRequest::Swap(AliveRequest* other) {
 }
 void AliveRequest::InternalSwap(AliveRequest* other) {
   using std::swap;
+  sample_json_.InternalSwap(&other->sample_json_);
   swap(head_, other->head_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
@@ -6447,6 +6741,75 @@ void AliveRequest::set_allocated_head(::alarmpb::RequestHeader* head) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:alarmpb.AliveRequest.head)
+}
+
+// repeated string sample_json = 10;
+int AliveRequest::sample_json_size() const {
+  return sample_json_.size();
+}
+void AliveRequest::clear_sample_json() {
+  sample_json_.Clear();
+}
+const ::std::string& AliveRequest::sample_json(int index) const {
+  // @@protoc_insertion_point(field_get:alarmpb.AliveRequest.sample_json)
+  return sample_json_.Get(index);
+}
+::std::string* AliveRequest::mutable_sample_json(int index) {
+  // @@protoc_insertion_point(field_mutable:alarmpb.AliveRequest.sample_json)
+  return sample_json_.Mutable(index);
+}
+void AliveRequest::set_sample_json(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.AliveRequest.sample_json)
+  sample_json_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+void AliveRequest::set_sample_json(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.AliveRequest.sample_json)
+  sample_json_.Mutable(index)->assign(std::move(value));
+}
+#endif
+void AliveRequest::set_sample_json(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:alarmpb.AliveRequest.sample_json)
+}
+void AliveRequest::set_sample_json(int index, const char* value, size_t size) {
+  sample_json_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.AliveRequest.sample_json)
+}
+::std::string* AliveRequest::add_sample_json() {
+  // @@protoc_insertion_point(field_add_mutable:alarmpb.AliveRequest.sample_json)
+  return sample_json_.Add();
+}
+void AliveRequest::add_sample_json(const ::std::string& value) {
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:alarmpb.AliveRequest.sample_json)
+}
+#if LANG_CXX11
+void AliveRequest::add_sample_json(::std::string&& value) {
+  sample_json_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:alarmpb.AliveRequest.sample_json)
+}
+#endif
+void AliveRequest::add_sample_json(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:alarmpb.AliveRequest.sample_json)
+}
+void AliveRequest::add_sample_json(const char* value, size_t size) {
+  sample_json_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:alarmpb.AliveRequest.sample_json)
+}
+const ::google::protobuf::RepeatedPtrField< ::std::string>&
+AliveRequest::sample_json() const {
+  // @@protoc_insertion_point(field_list:alarmpb.AliveRequest.sample_json)
+  return sample_json_;
+}
+::google::protobuf::RepeatedPtrField< ::std::string>*
+AliveRequest::mutable_sample_json() {
+  // @@protoc_insertion_point(field_mutable_list:alarmpb.AliveRequest.sample_json)
+  return &sample_json_;
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -6746,6 +7109,7 @@ void AliveResponse::set_allocated_head(::alarmpb::ResponseHeader* head) {
 const int SimpleRequest::kHeadFieldNumber;
 const int SimpleRequest::kTitleFieldNumber;
 const int SimpleRequest::kContentFieldNumber;
+const int SimpleRequest::kSampleJsonFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 SimpleRequest::SimpleRequest()
@@ -6759,6 +7123,7 @@ SimpleRequest::SimpleRequest()
 SimpleRequest::SimpleRequest(const SimpleRequest& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
+      sample_json_(from.sample_json_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   title_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -6824,6 +7189,7 @@ void SimpleRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  sample_json_.Clear();
   title_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   content_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && head_ != NULL) {
@@ -6887,6 +7253,23 @@ bool SimpleRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // repeated string sample_json = 10;
+      case 10: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_sample_json()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->sample_json(this->sample_json_size() - 1).data(),
+            static_cast<int>(this->sample_json(this->sample_json_size() - 1).length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "alarmpb.SimpleRequest.sample_json"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -6939,6 +7322,16 @@ void SimpleRequest::SerializeWithCachedSizes(
       3, this->content(), output);
   }
 
+  // repeated string sample_json = 10;
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sample_json(i).data(), static_cast<int>(this->sample_json(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.SimpleRequest.sample_json");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      10, this->sample_json(i), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -6982,6 +7375,16 @@ void SimpleRequest::SerializeWithCachedSizes(
         3, this->content(), target);
   }
 
+  // repeated string sample_json = 10;
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sample_json(i).data(), static_cast<int>(this->sample_json(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "alarmpb.SimpleRequest.sample_json");
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(10, this->sample_json(i), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -6999,6 +7402,14 @@ size_t SimpleRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // repeated string sample_json = 10;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->sample_json_size());
+  for (int i = 0, n = this->sample_json_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->sample_json(i));
+  }
+
   // string title = 2;
   if (this->title().size() > 0) {
     total_size += 1 +
@@ -7049,6 +7460,7 @@ void SimpleRequest::MergeFrom(const SimpleRequest& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  sample_json_.MergeFrom(from.sample_json_);
   if (from.title().size() > 0) {
 
     title_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.title_);
@@ -7086,6 +7498,7 @@ void SimpleRequest::Swap(SimpleRequest* other) {
 }
 void SimpleRequest::InternalSwap(SimpleRequest* other) {
   using std::swap;
+  sample_json_.InternalSwap(&other->sample_json_);
   title_.Swap(&other->title_);
   content_.Swap(&other->content_);
   swap(head_, other->head_);
@@ -7245,6 +7658,75 @@ void SimpleRequest::set_allocated_content(::std::string* content) {
   }
   content_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), content);
   // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleRequest.content)
+}
+
+// repeated string sample_json = 10;
+int SimpleRequest::sample_json_size() const {
+  return sample_json_.size();
+}
+void SimpleRequest::clear_sample_json() {
+  sample_json_.Clear();
+}
+const ::std::string& SimpleRequest::sample_json(int index) const {
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleRequest.sample_json)
+  return sample_json_.Get(index);
+}
+::std::string* SimpleRequest::mutable_sample_json(int index) {
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleRequest.sample_json)
+  return sample_json_.Mutable(index);
+}
+void SimpleRequest::set_sample_json(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleRequest.sample_json)
+  sample_json_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+void SimpleRequest::set_sample_json(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleRequest.sample_json)
+  sample_json_.Mutable(index)->assign(std::move(value));
+}
+#endif
+void SimpleRequest::set_sample_json(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:alarmpb.SimpleRequest.sample_json)
+}
+void SimpleRequest::set_sample_json(int index, const char* value, size_t size) {
+  sample_json_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.SimpleRequest.sample_json)
+}
+::std::string* SimpleRequest::add_sample_json() {
+  // @@protoc_insertion_point(field_add_mutable:alarmpb.SimpleRequest.sample_json)
+  return sample_json_.Add();
+}
+void SimpleRequest::add_sample_json(const ::std::string& value) {
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:alarmpb.SimpleRequest.sample_json)
+}
+#if LANG_CXX11
+void SimpleRequest::add_sample_json(::std::string&& value) {
+  sample_json_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:alarmpb.SimpleRequest.sample_json)
+}
+#endif
+void SimpleRequest::add_sample_json(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:alarmpb.SimpleRequest.sample_json)
+}
+void SimpleRequest::add_sample_json(const char* value, size_t size) {
+  sample_json_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:alarmpb.SimpleRequest.sample_json)
+}
+const ::google::protobuf::RepeatedPtrField< ::std::string>&
+SimpleRequest::sample_json() const {
+  // @@protoc_insertion_point(field_list:alarmpb.SimpleRequest.sample_json)
+  return sample_json_;
+}
+::google::protobuf::RepeatedPtrField< ::std::string>*
+SimpleRequest::mutable_sample_json() {
+  // @@protoc_insertion_point(field_mutable_list:alarmpb.SimpleRequest.sample_json)
+  return &sample_json_;
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
