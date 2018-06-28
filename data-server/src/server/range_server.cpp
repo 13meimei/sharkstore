@@ -341,6 +341,9 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
         case funcpb::kFuncUnlockForce:
             UnlockForce(msg);
             break;
+        case funcpb::kFuncLockScan:
+            LockScan(msg);
+            break;
 
         // following for redis commands
         case funcpb::kFuncKvSet:
@@ -877,6 +880,16 @@ void RangeServer::UnlockForce(common::ProtoMessage *msg) {
     if (range != nullptr) {
         range->UnlockForce(msg, req);
     }
+}
+
+void RangeServer::LockScan(common::ProtoMessage *msg) {
+    kvrpcpb::DsLockScanRequest req;
+    kvrpcpb::DsLockScanResponse *resp;
+
+    auto range = CheckAndDecodeRequest("LockScan", req, resp, msg);
+    if (range != nullptr) {
+        range->LockScan(msg, req);
+  }
 }
 
 void RangeServer::KVSet(common::ProtoMessage *msg) {
