@@ -115,10 +115,7 @@ func NewServer(cfg *Config) (*Server, error) {
 	mysql.DEFAULT_COLLATION_ID = cid
 	mysql.DEFAULT_COLLATION_NAME = mysql.Collations[cid]
 
-	ips := util.GetLocalIps()
-	addr := fmt.Sprintf("%s:%d", ips[0], cfg.SqlPort)
-	//performance monitor about mysql port [addr] transport to metric server[cfg.MetricAddr]
-	metric.GsMetric= metric.NewMetric(cfg.Cluster.ID, addr, cfg.Metric.Address, cfg.Performance.SlowLogMaxLen)
+	initMetricSender(cfg)
 
 	var l net.Listener
 	var err error
@@ -153,12 +150,21 @@ func NewServer(cfg *Config) (*Server, error) {
 	svr.Handle("/createdatabase", s.handleCreateDatabase)
 	svr.Handle("/createtable", s.handleCreateTable)
 	svr.Handle("/lock/debug", s.handleLockDebug)
+	svr.Handle("/metric/config/set", s.handleMetricConfigSet)
+	svr.Handle("/metric/config/get", s.handleMetricConfigGet)
 	go svr.Run()
 	s.httpSvr = svr
 
 	log.Info("NewServer: Server running. netProto: %v, address: %v", netProto, s.addr)
 
 	return s, nil
+}
+
+func initMetricSender(cfg *Config)  {
+	ips := util.GetLocalIps()
+	addr := fmt.Sprintf("%s:%d", ips[0], cfg.SqlPort)
+	//performance monitor about mysql port [addr] transport to metric server[cfg.MetricAddr]
+	metric.GsMetric= metric.NewMetric(cfg.Cluster.ID, addr, cfg.Metric.Address, cfg.Performance.SlowLogMaxLen)
 }
 
 func (s *Server) GetCfg() *Config{

@@ -18,7 +18,7 @@ func TestAdjust_Interval(t *testing.T) {
 	interval := 5 * defaultWorkerInterval
 	adjustThreshold := maxFloat64(60, float64(Min_leader_adjust_num))
 	if 100 > adjustThreshold {
-		interval = maxDuration(time.Duration(float64(interval)*scheduleIntervalFactor), Min_leader_adjust_interval)
+		interval = maxDuration(time.Duration(float64(interval)*scheduleIntervalFactor), minScheduleInterval)
 	} else {
 		interval = 5 * defaultWorkerInterval
 	}
@@ -27,16 +27,21 @@ func TestAdjust_Interval(t *testing.T) {
 
 	adjustThreshold = maxFloat64(60, float64(Min_leader_adjust_num))
 	if 100 > adjustThreshold {
-		interval = maxDuration(time.Duration(float64(interval)*scheduleIntervalFactor), Min_leader_adjust_interval)
+		interval = maxDuration(time.Duration(float64(interval)*scheduleIntervalFactor), minScheduleInterval)
 	} else {
 		interval = 5 * defaultWorkerInterval
 	}
 
 	t.Logf("second adjust, interval: %v", interval)
 
+	for i := 0; i< 100; i++ {
+		interval = maxDuration(time.Duration(float64(interval)*scheduleIntervalFactor), minScheduleInterval)
+		t.Logf("adjust, interval: %v", interval)
+	}
+
 	adjustThreshold = maxFloat64(60, float64(Min_leader_adjust_num))
 	if 50 > adjustThreshold {
-		interval = maxDuration(time.Duration(float64(interval)*scheduleIntervalFactor), Min_leader_adjust_interval)
+		interval = maxDuration(time.Duration(float64(interval)*scheduleIntervalFactor), minScheduleInterval)
 	} else {
 		interval = 5 * defaultWorkerInterval
 	}

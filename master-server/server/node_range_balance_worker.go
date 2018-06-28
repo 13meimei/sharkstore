@@ -41,7 +41,7 @@ func (w *balanceNodeRangeWorker) Work(cluster *Cluster) {
 	log.Debug("start %s", w.GetName())
 	cluster.metric.CollectScheduleCounter(w.GetName(), "schedule")
 	rng, oldPeer, targetNodeId := w.selectRemovePeer(cluster)
-	if rng == nil {
+	if rng == nil || oldPeer == nil {
 		log.Debug("no range need balance")
 		return
 	}

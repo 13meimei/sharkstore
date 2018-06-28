@@ -29,7 +29,6 @@ private:
     Server* server_;
     asio::ip::tcp::socket socket_;
     asio::streambuf buffer_;
-    char data_[1024];
 };
 
 } /* namespace playground */

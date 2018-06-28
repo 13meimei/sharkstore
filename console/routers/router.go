@@ -10,15 +10,15 @@ import (
 
 	"path/filepath"
 	"net/http"
+	"database/sql"
 	"fmt"
 
 	"console/controllers"
 	"console/common"
 	"console/config"
-	"util/log"
 	"console/auth"
 	"console/right"
-	"database/sql"
+	"util/log"
 )
 
 type Router struct {
@@ -598,6 +598,18 @@ func (r *Router)StartRouter() *gin.Engine {
 		}
 	})
 
+	router.GET("/page/metric/viewServerList", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "metric_server.html", gin.H{
+			"basePath" : r.staticRootDir,
+		})
+	})
+
+	router.GET("/page/metric/clusterManage", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "metric_manage.html", gin.H{
+			"basePath" : r.staticRootDir,
+		})
+	})
+
 	// ----------------api router ---------------------
 	// cluster
 	router.GET(controllers.REQURI_CLUSTER_GETALL, func(c *gin.Context) {
@@ -795,6 +807,23 @@ func (r *Router)StartRouter() *gin.Engine {
 	})
 	router.GET(controllers.REQURI_LOCK_CLUSTER_INFO, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockClusterGetAction())
+	})
+
+	//metric
+	router.GET(controllers.REQURL_METRIC_SERVER_GETALL, func(c *gin.Context) {
+		handleAction(c, controllers.NewGetMetricServerAction())
+	})
+	router.POST(controllers.REQURL_METRIC_SERVER_ADD, func(c *gin.Context) {
+		handleAction(c, controllers.NewAddMetricServerAction())
+	})
+	router.POST(controllers.REQURL_METRIC_SERVER_DEL, func(c *gin.Context) {
+		handleAction(c, controllers.NewDelMetricServerAction())
+	})
+	router.POST(controllers.REQURL_METRIC_CONFIG_GET, func(c *gin.Context) {
+		handleAction(c, controllers.NewGetMetricConfigAction())
+	})
+	router.POST(controllers.REQURL_METRIC_CONFIG_SET, func(c *gin.Context) {
+		handleAction(c, controllers.NewSetMetricConfigAction())
 	})
 	router.Run(":" + fmt.Sprint(r.config.ReqListenPort))
 

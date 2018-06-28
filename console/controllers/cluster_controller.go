@@ -41,7 +41,7 @@ func (ctrl *ClusterGetAllAction) Execute(c *gin.Context) (interface{}, error) {
 	var clusterIds []int64
 	for id, r := range user.Right {
 		if id == 0 && r == 1 {
-			log.Debug("admin [%v] get cluster: %v", userName, clusterIds)
+			log.Debug("admin [%v] get all cluster", userName)
 			return service.NewService().GetAllClusters()
 		}
 		clusterIds = append(clusterIds, id)

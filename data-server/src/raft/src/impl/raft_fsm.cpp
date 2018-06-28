@@ -151,8 +151,8 @@ Status RaftFsm::start() {
         }
     }
     if (!local_found) {
-        return Status(Status::kInvalidArgument, "start raft",
-                      "could not find local node in peers");
+        return Status(Status::kInvalidArgument, "could not find local node in peers",
+                      PeersToString(rops_.peers));
     }
 
     LOG_INFO("newRaft[%llu]%s commit: %llu, applied: %llu, lastindex: %llu, "
@@ -478,19 +478,20 @@ RaftStatus RaftFsm::GetStatus() const {
     s.state = FsmStateName(state_);
     if (state_ == FsmState::kLeader) {
         traverseReplicas([&](uint64_t node, const Replica& pr) {
+            ReplicaStatus rs;
+            rs.peer = pr.peer();
+            rs.match = pr.match();
+            rs.commit = pr.committed();
+            rs.next = pr.next();
+            // leader self is always active
             if (node != node_id_) {
-                ReplicaStatus rs;
-                rs.peer = pr.peer();
-                rs.match = pr.match();
-                rs.commit = pr.committed();
-                rs.next = pr.next();
-                rs.inactive_seconds = std::chrono::duration_cast<std::chrono::seconds>(
-                                          pr.inactive_ticks() * sops_.tick_interval)
-                                          .count();
-                rs.state = ReplicateStateName(pr.state());
-                rs.snapshotting = pr.state() == ReplicaState::kSnapshot;
-                s.replicas.emplace(node, rs);
+                auto inactive_seconds = std::chrono::duration_cast<std::chrono::seconds>(
+                        pr.inactive_ticks() * sops_.tick_interval) .count();
+                rs.inactive_seconds = static_cast<int>(inactive_seconds);
             }
+            rs.state = ReplicateStateName(pr.state());
+            rs.snapshotting = pr.state() == ReplicaState::kSnapshot;
+            s.replicas.emplace(node, rs);
         });
     }
     return s;

@@ -419,7 +419,7 @@ void RangeServer::CreateRange(common::ProtoMessage *msg) {
             err = new errorpb::Error;
             err->set_message("create range seriaize meta failed");
 
-            FLOG_ERROR("create range save meta failed");
+            FLOG_ERROR("create range save meta failed: %s", ret.ToString().c_str());
             break;
         }
 
@@ -450,6 +450,7 @@ Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader) {
                range.range_epoch().conf_ver());
 
     if (range.peers_size() == 0) {
+        FLOG_ERROR("CreateRange range[%" PRIu64 "] failed. peers is zero", range.id());
         return Status(Status::kInvalidArgument, "invalid peer size", "0");
     }
 
@@ -1066,7 +1067,11 @@ int RangeServer::Recover(std::vector<std::string> &metas) {
         FLOG_DEBUG("Recover meta range id=%" PRIu64, meta.id());
         if (!CreateRange(meta).ok()) {
             FLOG_ERROR("Recover CreateRange failed,id=%" PRIu64, meta.id());
-            return -1;
+            if (ds_config.range_config.recover_skip_fail > 0) {
+                continue;
+            } else {
+                return -1;
+            }
         }
     }
 

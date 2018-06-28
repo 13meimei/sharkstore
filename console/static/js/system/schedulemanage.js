@@ -46,7 +46,7 @@ app.controller('myFbaseClusterInfo', function($rootScope, $scope, $http, $timeou
                 window.location.href = window.location.href = "/range/getRangeTopo?clusterId=" + space.id + "&rangeId=" + rangeId;
             }
         );
-    }
+    };
 
     $scope.viewRangeOpsTopN = function (space) {
         swal({
@@ -67,5 +67,5 @@ app.controller('myFbaseClusterInfo', function($rootScope, $scope, $http, $timeou
                 window.location.href = "/page/cluster/viewRangeOpsTopN?clusterId=" + space.id + "&topN=" + topN;
             }
         );
-    }
+    };
 });
