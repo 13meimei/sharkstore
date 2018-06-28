@@ -202,7 +202,7 @@ func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
 			Sms: r.Sms,
 		})
 	}
-	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort, conf.MessageGatewayAddress, alarm.NewSimpleReceiver(alarmReceivers))
+	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort, conf.MessageGatewayAddress, conf.RemoteAlarmServerAddress, alarm.NewSimpleReceiver(alarmReceivers))
 	return err
 }
 
