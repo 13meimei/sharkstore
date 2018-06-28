@@ -551,7 +551,7 @@ func (c *DSRpcClient) UnlockForce(ctx context.Context, in *kvrpcpb.DsUnlockForce
 }
 func (c *DSRpcClient) LockScan(ctx context.Context, in *kvrpcpb.DsLockScanRequest) (*kvrpcpb.DsLockScanResponse, error) {
 	out := new(kvrpcpb.DsLockScanResponse)
-		err := c.execute(uint16(funcpb.FunctionID_kFuncLockScan), ctx, in, out)
+		_, err := c.execute(uint16(funcpb.FunctionID_kFuncLockScan), ctx, in, out)
 	if err != nil {
 		return nil, err
 	} else {
