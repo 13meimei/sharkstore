@@ -37,19 +37,21 @@ void SnapWorker::post(const std::shared_ptr<SnapTask>& task) {
 }
 
 void SnapWorker::runTask() {
-    std::shared_ptr<SnapTask> task;
-    {
-        std::unique_lock<std::mutex> lock(mu_);
-        while (task_ == nullptr && running_) {
-            cv_.wait(lock);
+    while (true) {
+        std::shared_ptr<SnapTask> task;
+        {
+            std::unique_lock<std::mutex> lock(mu_);
+            while (task_ == nullptr && running_) {
+                cv_.wait(lock);
+            }
+            if (!running_) return;
+            task = std::move(task_);
         }
-        if (!running_) return;
-        task = std::move(task_);
+
+        task->Run();
+
+        pool_->addToFreeList(this);
     }
-
-    task->Run();
-
-    pool_->addToFreeList(this);
 }
 
 } /* namespace impl */
