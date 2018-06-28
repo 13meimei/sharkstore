@@ -70,6 +70,13 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 			goto Err
 		}
 		resp.UnlockForceResp = _resp
+	case Type_LockScan:
+		_resp, _err := p.Cli.LockScan(ctx, addr, req.GetLockScanReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.LockScanResp = _resp
 	case Type_RawPut:
 		_resp, _err := p.Cli.RawPut(ctx, addr, req.GetRawPutReq())
 		if _err != nil {
@@ -221,6 +228,9 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 		timeout = client.ReadTimeoutShort
 	case Type_UnlockForce:
 		header = req.UnlockForceReq.GetHeader()
+		timeout = client.ReadTimeoutShort
+	case Type_LockScan:
+		header = req.LockScanReq.GetHeader()
 		timeout = client.ReadTimeoutShort
 
 	case Type_KvSet:

@@ -658,6 +658,28 @@ class TaskAlarmRequest : public ::google::protobuf::Message /* @@protoc_insertio
 
   // accessors -------------------------------------------------------
 
+  // repeated string sample_json = 10;
+  int sample_json_size() const;
+  void clear_sample_json();
+  static const int kSampleJsonFieldNumber = 10;
+  const ::std::string& sample_json(int index) const;
+  ::std::string* mutable_sample_json(int index);
+  void set_sample_json(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_sample_json(int index, ::std::string&& value);
+  #endif
+  void set_sample_json(int index, const char* value);
+  void set_sample_json(int index, const char* value, size_t size);
+  ::std::string* add_sample_json();
+  void add_sample_json(const ::std::string& value);
+  #if LANG_CXX11
+  void add_sample_json(::std::string&& value);
+  #endif
+  void add_sample_json(const char* value);
+  void add_sample_json(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& sample_json() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_sample_json();
+
   // string Describe = 6;
   void clear_describe();
   static const int kDescribeFieldNumber = 6;
@@ -718,6 +740,7 @@ class TaskAlarmRequest : public ::google::protobuf::Message /* @@protoc_insertio
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> sample_json_;
   ::google::protobuf::internal::ArenaStringPtr describe_;
   ::alarmpb::RequestHeader* head_;
   ::taskpb::Task* task_;
@@ -1134,6 +1157,28 @@ class NodeRangeAlarmRequest : public ::google::protobuf::Message /* @@protoc_ins
 
   // accessors -------------------------------------------------------
 
+  // repeated string sample_json = 10;
+  int sample_json_size() const;
+  void clear_sample_json();
+  static const int kSampleJsonFieldNumber = 10;
+  const ::std::string& sample_json(int index) const;
+  ::std::string* mutable_sample_json(int index);
+  void set_sample_json(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_sample_json(int index, ::std::string&& value);
+  #endif
+  void set_sample_json(int index, const char* value);
+  void set_sample_json(int index, const char* value, size_t size);
+  ::std::string* add_sample_json();
+  void add_sample_json(const ::std::string& value);
+  #if LANG_CXX11
+  void add_sample_json(::std::string&& value);
+  #endif
+  void add_sample_json(const char* value);
+  void add_sample_json(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& sample_json() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_sample_json();
+
   // string Describe = 7;
   void clear_describe();
   static const int kDescribeFieldNumber = 7;
@@ -1203,6 +1248,7 @@ class NodeRangeAlarmRequest : public ::google::protobuf::Message /* @@protoc_ins
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> sample_json_;
   ::google::protobuf::internal::ArenaStringPtr describe_;
   ::alarmpb::RequestHeader* head_;
   ::alarmpb::RangeNoHeartbeatAlarm* range_no_hb_alarm_;
@@ -1840,6 +1886,28 @@ class AliveRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
 
   // accessors -------------------------------------------------------
 
+  // repeated string sample_json = 10;
+  int sample_json_size() const;
+  void clear_sample_json();
+  static const int kSampleJsonFieldNumber = 10;
+  const ::std::string& sample_json(int index) const;
+  ::std::string* mutable_sample_json(int index);
+  void set_sample_json(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_sample_json(int index, ::std::string&& value);
+  #endif
+  void set_sample_json(int index, const char* value);
+  void set_sample_json(int index, const char* value, size_t size);
+  ::std::string* add_sample_json();
+  void add_sample_json(const ::std::string& value);
+  #if LANG_CXX11
+  void add_sample_json(::std::string&& value);
+  #endif
+  void add_sample_json(const char* value);
+  void add_sample_json(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& sample_json() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_sample_json();
+
   // .alarmpb.RequestHeader head = 1;
   bool has_head() const;
   void clear_head();
@@ -1853,6 +1921,7 @@ class AliveRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> sample_json_;
   ::alarmpb::RequestHeader* head_;
   mutable int _cached_size_;
   friend struct protobuf_alarmpb_2eproto::TableStruct;
@@ -2040,6 +2109,28 @@ class SimpleRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
 
   // accessors -------------------------------------------------------
 
+  // repeated string sample_json = 10;
+  int sample_json_size() const;
+  void clear_sample_json();
+  static const int kSampleJsonFieldNumber = 10;
+  const ::std::string& sample_json(int index) const;
+  ::std::string* mutable_sample_json(int index);
+  void set_sample_json(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_sample_json(int index, ::std::string&& value);
+  #endif
+  void set_sample_json(int index, const char* value);
+  void set_sample_json(int index, const char* value, size_t size);
+  ::std::string* add_sample_json();
+  void add_sample_json(const ::std::string& value);
+  #if LANG_CXX11
+  void add_sample_json(::std::string&& value);
+  #endif
+  void add_sample_json(const char* value);
+  void add_sample_json(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& sample_json() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_sample_json();
+
   // string title = 2;
   void clear_title();
   static const int kTitleFieldNumber = 2;
@@ -2081,6 +2172,7 @@ class SimpleRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> sample_json_;
   ::google::protobuf::internal::ArenaStringPtr title_;
   ::google::protobuf::internal::ArenaStringPtr content_;
   ::alarmpb::RequestHeader* head_;
@@ -2656,6 +2748,75 @@ inline void TaskAlarmRequest::set_allocated_describe(::std::string* describe) {
   // @@protoc_insertion_point(field_set_allocated:alarmpb.TaskAlarmRequest.Describe)
 }
 
+// repeated string sample_json = 10;
+inline int TaskAlarmRequest::sample_json_size() const {
+  return sample_json_.size();
+}
+inline void TaskAlarmRequest::clear_sample_json() {
+  sample_json_.Clear();
+}
+inline const ::std::string& TaskAlarmRequest::sample_json(int index) const {
+  // @@protoc_insertion_point(field_get:alarmpb.TaskAlarmRequest.sample_json)
+  return sample_json_.Get(index);
+}
+inline ::std::string* TaskAlarmRequest::mutable_sample_json(int index) {
+  // @@protoc_insertion_point(field_mutable:alarmpb.TaskAlarmRequest.sample_json)
+  return sample_json_.Mutable(index);
+}
+inline void TaskAlarmRequest::set_sample_json(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.TaskAlarmRequest.sample_json)
+  sample_json_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void TaskAlarmRequest::set_sample_json(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.TaskAlarmRequest.sample_json)
+  sample_json_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void TaskAlarmRequest::set_sample_json(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:alarmpb.TaskAlarmRequest.sample_json)
+}
+inline void TaskAlarmRequest::set_sample_json(int index, const char* value, size_t size) {
+  sample_json_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.TaskAlarmRequest.sample_json)
+}
+inline ::std::string* TaskAlarmRequest::add_sample_json() {
+  // @@protoc_insertion_point(field_add_mutable:alarmpb.TaskAlarmRequest.sample_json)
+  return sample_json_.Add();
+}
+inline void TaskAlarmRequest::add_sample_json(const ::std::string& value) {
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:alarmpb.TaskAlarmRequest.sample_json)
+}
+#if LANG_CXX11
+inline void TaskAlarmRequest::add_sample_json(::std::string&& value) {
+  sample_json_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:alarmpb.TaskAlarmRequest.sample_json)
+}
+#endif
+inline void TaskAlarmRequest::add_sample_json(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:alarmpb.TaskAlarmRequest.sample_json)
+}
+inline void TaskAlarmRequest::add_sample_json(const char* value, size_t size) {
+  sample_json_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:alarmpb.TaskAlarmRequest.sample_json)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+TaskAlarmRequest::sample_json() const {
+  // @@protoc_insertion_point(field_list:alarmpb.TaskAlarmRequest.sample_json)
+  return sample_json_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+TaskAlarmRequest::mutable_sample_json() {
+  // @@protoc_insertion_point(field_mutable_list:alarmpb.TaskAlarmRequest.sample_json)
+  return &sample_json_;
+}
+
 // -------------------------------------------------------------------
 
 // TaskTimeout
@@ -3113,6 +3274,75 @@ inline void NodeRangeAlarmRequest::set_allocated_describe(::std::string* describ
   // @@protoc_insertion_point(field_set_allocated:alarmpb.NodeRangeAlarmRequest.Describe)
 }
 
+// repeated string sample_json = 10;
+inline int NodeRangeAlarmRequest::sample_json_size() const {
+  return sample_json_.size();
+}
+inline void NodeRangeAlarmRequest::clear_sample_json() {
+  sample_json_.Clear();
+}
+inline const ::std::string& NodeRangeAlarmRequest::sample_json(int index) const {
+  // @@protoc_insertion_point(field_get:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return sample_json_.Get(index);
+}
+inline ::std::string* NodeRangeAlarmRequest::mutable_sample_json(int index) {
+  // @@protoc_insertion_point(field_mutable:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return sample_json_.Mutable(index);
+}
+inline void NodeRangeAlarmRequest::set_sample_json(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.NodeRangeAlarmRequest.sample_json)
+  sample_json_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void NodeRangeAlarmRequest::set_sample_json(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.NodeRangeAlarmRequest.sample_json)
+  sample_json_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void NodeRangeAlarmRequest::set_sample_json(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+inline void NodeRangeAlarmRequest::set_sample_json(int index, const char* value, size_t size) {
+  sample_json_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+inline ::std::string* NodeRangeAlarmRequest::add_sample_json() {
+  // @@protoc_insertion_point(field_add_mutable:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return sample_json_.Add();
+}
+inline void NodeRangeAlarmRequest::add_sample_json(const ::std::string& value) {
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+#if LANG_CXX11
+inline void NodeRangeAlarmRequest::add_sample_json(::std::string&& value) {
+  sample_json_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+#endif
+inline void NodeRangeAlarmRequest::add_sample_json(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+inline void NodeRangeAlarmRequest::add_sample_json(const char* value, size_t size) {
+  sample_json_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:alarmpb.NodeRangeAlarmRequest.sample_json)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+NodeRangeAlarmRequest::sample_json() const {
+  // @@protoc_insertion_point(field_list:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return sample_json_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+NodeRangeAlarmRequest::mutable_sample_json() {
+  // @@protoc_insertion_point(field_mutable_list:alarmpb.NodeRangeAlarmRequest.sample_json)
+  return &sample_json_;
+}
+
 // -------------------------------------------------------------------
 
 // RangeNoHeartbeatAlarm
@@ -3511,6 +3741,75 @@ inline void AliveRequest::set_allocated_head(::alarmpb::RequestHeader* head) {
   // @@protoc_insertion_point(field_set_allocated:alarmpb.AliveRequest.head)
 }
 
+// repeated string sample_json = 10;
+inline int AliveRequest::sample_json_size() const {
+  return sample_json_.size();
+}
+inline void AliveRequest::clear_sample_json() {
+  sample_json_.Clear();
+}
+inline const ::std::string& AliveRequest::sample_json(int index) const {
+  // @@protoc_insertion_point(field_get:alarmpb.AliveRequest.sample_json)
+  return sample_json_.Get(index);
+}
+inline ::std::string* AliveRequest::mutable_sample_json(int index) {
+  // @@protoc_insertion_point(field_mutable:alarmpb.AliveRequest.sample_json)
+  return sample_json_.Mutable(index);
+}
+inline void AliveRequest::set_sample_json(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.AliveRequest.sample_json)
+  sample_json_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void AliveRequest::set_sample_json(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.AliveRequest.sample_json)
+  sample_json_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void AliveRequest::set_sample_json(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:alarmpb.AliveRequest.sample_json)
+}
+inline void AliveRequest::set_sample_json(int index, const char* value, size_t size) {
+  sample_json_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.AliveRequest.sample_json)
+}
+inline ::std::string* AliveRequest::add_sample_json() {
+  // @@protoc_insertion_point(field_add_mutable:alarmpb.AliveRequest.sample_json)
+  return sample_json_.Add();
+}
+inline void AliveRequest::add_sample_json(const ::std::string& value) {
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:alarmpb.AliveRequest.sample_json)
+}
+#if LANG_CXX11
+inline void AliveRequest::add_sample_json(::std::string&& value) {
+  sample_json_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:alarmpb.AliveRequest.sample_json)
+}
+#endif
+inline void AliveRequest::add_sample_json(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:alarmpb.AliveRequest.sample_json)
+}
+inline void AliveRequest::add_sample_json(const char* value, size_t size) {
+  sample_json_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:alarmpb.AliveRequest.sample_json)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+AliveRequest::sample_json() const {
+  // @@protoc_insertion_point(field_list:alarmpb.AliveRequest.sample_json)
+  return sample_json_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+AliveRequest::mutable_sample_json() {
+  // @@protoc_insertion_point(field_mutable_list:alarmpb.AliveRequest.sample_json)
+  return &sample_json_;
+}
+
 // -------------------------------------------------------------------
 
 // AliveResponse
@@ -3703,6 +4002,75 @@ inline void SimpleRequest::set_allocated_content(::std::string* content) {
   }
   content_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), content);
   // @@protoc_insertion_point(field_set_allocated:alarmpb.SimpleRequest.content)
+}
+
+// repeated string sample_json = 10;
+inline int SimpleRequest::sample_json_size() const {
+  return sample_json_.size();
+}
+inline void SimpleRequest::clear_sample_json() {
+  sample_json_.Clear();
+}
+inline const ::std::string& SimpleRequest::sample_json(int index) const {
+  // @@protoc_insertion_point(field_get:alarmpb.SimpleRequest.sample_json)
+  return sample_json_.Get(index);
+}
+inline ::std::string* SimpleRequest::mutable_sample_json(int index) {
+  // @@protoc_insertion_point(field_mutable:alarmpb.SimpleRequest.sample_json)
+  return sample_json_.Mutable(index);
+}
+inline void SimpleRequest::set_sample_json(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleRequest.sample_json)
+  sample_json_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void SimpleRequest::set_sample_json(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:alarmpb.SimpleRequest.sample_json)
+  sample_json_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void SimpleRequest::set_sample_json(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:alarmpb.SimpleRequest.sample_json)
+}
+inline void SimpleRequest::set_sample_json(int index, const char* value, size_t size) {
+  sample_json_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:alarmpb.SimpleRequest.sample_json)
+}
+inline ::std::string* SimpleRequest::add_sample_json() {
+  // @@protoc_insertion_point(field_add_mutable:alarmpb.SimpleRequest.sample_json)
+  return sample_json_.Add();
+}
+inline void SimpleRequest::add_sample_json(const ::std::string& value) {
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:alarmpb.SimpleRequest.sample_json)
+}
+#if LANG_CXX11
+inline void SimpleRequest::add_sample_json(::std::string&& value) {
+  sample_json_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:alarmpb.SimpleRequest.sample_json)
+}
+#endif
+inline void SimpleRequest::add_sample_json(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  sample_json_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:alarmpb.SimpleRequest.sample_json)
+}
+inline void SimpleRequest::add_sample_json(const char* value, size_t size) {
+  sample_json_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:alarmpb.SimpleRequest.sample_json)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+SimpleRequest::sample_json() const {
+  // @@protoc_insertion_point(field_list:alarmpb.SimpleRequest.sample_json)
+  return sample_json_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+SimpleRequest::mutable_sample_json() {
+  // @@protoc_insertion_point(field_mutable_list:alarmpb.SimpleRequest.sample_json)
+  return &sample_json_;
 }
 
 // -------------------------------------------------------------------

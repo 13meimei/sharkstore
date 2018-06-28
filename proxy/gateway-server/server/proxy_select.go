@@ -159,16 +159,18 @@ func (p *Proxy) selectRemote(t *Table, req *kvrpcpb.SelectRequest) ([][]*Row, er
 	// single get
 	if len(req.Key) != 0 {
 		pbRows, err = p.singleSelectRemote(proxy, req, req.GetKey())
-		if err != nil {
-			return nil, err
-		}
 	} else {
-		// range select
-		pbRows, err = p.rangeSelectRemote(proxy, req)
-		if err != nil {
-			return nil, err
+		// 聚合函数，并行执行, 并且没有limit、offset逻辑
+		if len(req.FieldList) > 0 && req.FieldList[0].Typ == kvrpcpb.SelectField_AggreFunction {
+			pbRows, err = p.selectAggre(t, proxy, req)
+		} else { // 普通的范围查询
+			pbRows, err = p.rangeSelectRemote(proxy, req)
 		}
 	}
+	if err != nil {
+		return nil, err
+	}
+
 	return decodeRows(t, req.FieldList, pbRows)
 }
 
