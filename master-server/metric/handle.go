@@ -276,6 +276,7 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 		info["ip"] = ip
 		info["port"] = port
 		info["spaceId"] = clusterId
+		info["nodeId"] = fmt.Sprint(nodeId)
 		log.Info("sample info: %+v", info)
 		sample = alarm.NewSample(ip, int(port), int(clusterId), info)
 	}
@@ -347,6 +348,7 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 			info["ip"] = ip
 			info["port"] = port
 			info["spaceId"] = clusterId
+			info["rangeId"] = rang.GetRangeId()
 			log.Info("sample info: %+v", info)
 			samples = append(samples, alarm.NewSample(ip, int(port), int(clusterId), info))
 		}
