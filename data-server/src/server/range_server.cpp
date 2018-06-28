@@ -416,7 +416,7 @@ void RangeServer::CreateRange(common::ProtoMessage *msg) {
             err = new errorpb::Error;
             err->set_message("create range seriaize meta failed");
 
-            FLOG_ERROR("create range save meta failed");
+            FLOG_ERROR("create range save meta failed: %s", ret.ToString().c_str());
             break;
         }
 

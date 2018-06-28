@@ -84,7 +84,7 @@ Status MetaStore::AddRange(uint64_t range_id, std::string &meta) {
     if (ret.ok()) {
         return Status::OK();
     }
-    return Status(Status::kIOError, ret.ToString(), "");
+    return Status(Status::kIOError, ret.ToString(), "put meta");
 }
 
 Status MetaStore::DelRange(uint64_t range_id) {
