@@ -94,8 +94,6 @@ public:
                       const raft_cmdpb::SplitRequest &req);
     void LeaderQueuePush(uint64_t leader, time_t expire);
 
-    void AddReadStats(uint64_t size, uint64_t count);
-    void AddWriteStats(uint64_t size, uint64_t count);
     void ResetStats();
 
 private:  // admin

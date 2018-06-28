@@ -529,8 +529,6 @@ void Range::LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req)
         iterator->Next();
     }
 
-    AddReadStats(total_size, count);
-
     if (resp->info_size() > 0) {
         auto lastIdx = resp->info_size()-1;
         auto lastInfo = resp->info(lastIdx);
