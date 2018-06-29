@@ -619,8 +619,7 @@ func (c *Cluster) GetAllTasks() []*TaskChain {
 }
 
 func (c *Cluster) loadAutoTransfer() error {
-	var s uint64
-	s = uint64(1)
+	s := uint64(0)
 	key := fmt.Sprintf(PREFIX_AUTO_TRANSFER, c.clusterId)
 	value, err := c.store.Get([]byte(key))
 	if err != nil {
@@ -630,23 +629,22 @@ func (c *Cluster) loadAutoTransfer() error {
 			return err
 		}
 	}
-	var auto bool
+	var auto bool  // enable by default
 	if value != nil {
 		s, err = bytesToUint64(value)
 		if err != nil {
 			return err
 		}
 	}
-	if s == 0 {
-		auto = false
+	if s == 1 {
+		auto = true
 	}
 	c.autoTransferUnable = auto
 	return nil
 }
 
 func (c *Cluster) loadAutoFailover() error {
-	var s uint64
-	s = uint64(1)
+	s := uint64(0)
 	key := fmt.Sprintf(PREFIX_AUTO_FAILOVER, c.clusterId)
 	value, err := c.store.Get([]byte(key))
 	if err != nil {
@@ -657,23 +655,21 @@ func (c *Cluster) loadAutoFailover() error {
 		}
 	}
 	var auto bool
-	auto = true
 	if value != nil {
 		s, err = bytesToUint64(value)
 		if err != nil {
 			return err
 		}
 	}
-	if s == 0 {
-		auto = false
+	if s == 1 {
+		auto = true
 	}
 	c.autoFailoverUnable = auto
 	return nil
 }
 
 func (c *Cluster) loadAutoSplit() error {
-	var s uint64
-	s = uint64(1)
+	s := uint64(0)
 	key := fmt.Sprintf(PREFIX_AUTO_SPLIT, c.clusterId)
 	value, err := c.store.Get([]byte(key))
 	if err != nil {
@@ -684,15 +680,14 @@ func (c *Cluster) loadAutoSplit() error {
 		}
 	}
 	var auto bool
-	auto = true // enable by default
 	if value != nil {
 		s, err = bytesToUint64(value)
 		if err != nil {
 			return err
 		}
 	}
-	if s == 0 {
-		auto = false
+	if s == 1 {
+		auto = true
 	}
 	c.autoSplitUnable = auto
 	return nil

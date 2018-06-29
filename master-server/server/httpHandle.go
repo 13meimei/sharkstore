@@ -675,6 +675,7 @@ func (service *Server) handleRangeGetRangeTopo(w http.ResponseWriter, r *http.Re
 		State      int32  `json:"state,omitempty"`
 		DbName     string `json:"db_name,omitempty"`
 		TableName  string `json:"table_name,omitempty"`
+		TableId    uint64 `json:"table_id,omitempty"`
 		CreateTime int64  `json:"create_time,omitempty"`
 		LastHbTime string `json:"last_hb_time,omitempty"`
 	}
@@ -703,6 +704,7 @@ func (service *Server) handleRangeGetRangeTopo(w http.ResponseWriter, r *http.Re
 		Peers:      _peers,
 		State:      int32(myRange.State),
 		LastHbTime: myRange.LastHbTimeTS.Format("2006-01-02 15:04:05") + opsDescription,
+		TableId:    myRange.GetTableId(),
 	}
 	_route := &Route{
 		Range: _range,
@@ -781,6 +783,7 @@ func (service *Server) handleNodeGetRangeTopo(w http.ResponseWriter, r *http.Req
 		State      int32  `json:"state,omitempty"`
 		DbName     string `json:"db_name,omitempty"`
 		TableName  string `json:"table_name,omitempty"`
+		TableId    uint64 `json:"table_id,omitempty"`
 		CreateTime int64  `json:"create_time,omitempty"`
 		LastHbTime string `json:"last_hb_time,omitempty"`
 	}
@@ -822,6 +825,7 @@ func (service *Server) handleNodeGetRangeTopo(w http.ResponseWriter, r *http.Req
 		if table != nil && tbFind {
 			_range.DbName = table.GetDbName()
 			_range.TableName = table.GetName()
+			_range.TableId = table.GetId()
 		}
 
 		_route := &Route{
@@ -2920,6 +2924,7 @@ func (service *Server) handleTableGetRoute(w http.ResponseWriter, r *http.Reques
 		State      int32  `json:"state,omitempty"`
 		DbName     string `json:"db_name,omitempty"`
 		TableName  string `json:"table_name,omitempty"`
+		TableId    uint64 `json:"table_id,omitempty"`
 		CreateTime int64  `json:"create_time,omitempty"`
 		LastHbTime string `json:"last_hb_time,omitempty"`
 	}
@@ -2963,6 +2968,7 @@ func (service *Server) handleTableGetRoute(w http.ResponseWriter, r *http.Reques
 			State:      int32(rng.State),
 			DbName:     table.GetDbName(),
 			TableName:  table.GetName(),
+			TableId:  table.GetId(),
 			LastHbTime: rng.LastHbTimeTS.Format("2006-01-02 15:04:05"),
 		}
 		route := &Route{

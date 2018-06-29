@@ -427,7 +427,7 @@ func TestAllocPeerAndSelectNode(t *testing.T) {
 
 			for _, rng := range ranges {
 				go func(rng *Range) {
-					newPeer, err := cluster.allocPeerAndSelectNode(rng)
+					newPeer, err := cluster.allocPeerAndSelectNode(rng, false)
 					if err != nil {
 						t.Errorf("alloc rangeId:%d, %s", rng.GetId(), err.Error())
 						return
@@ -445,7 +445,7 @@ func TestAllocPeerAndSelectNode(t *testing.T) {
 
 			for _, rng := range ranges {
 				go func(rng *Range) {
-					newPeer, err := cluster.allocPeerAndSelectNode(rng)
+					newPeer, err := cluster.allocPeerAndSelectNode(rng, false)
 					if err != nil {
 						t.Errorf("alloc rangeId:%d, %s", rng.GetId(), err.Error())
 						return
@@ -464,4 +464,35 @@ func TestAllocPeerAndSelectNode(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestConfig_LoadFromFile(t *testing.T) {
+	cluster := MockCluster(t)
+	defer closeLocalCluster(cluster)
+
+	get(cluster, t)
+	cluster.UpdateAutoScheduleInfo(false, true, false)
+	get(cluster, t)
+}
+
+func get(cluster *Cluster, t *testing.T)  {
+
+	if err := cluster.loadAutoSplit(); err != nil {
+		t.Errorf("error1 %v", err)
+	}
+
+	t.Logf("split %v", cluster.autoSplitUnable)
+
+
+	if err := cluster.loadAutoFailover(); err != nil {
+		t.Errorf("error2 %v", err)
+	}
+
+	t.Logf("failover %v", cluster.autoFailoverUnable)
+
+	if err := cluster.loadAutoTransfer(); err != nil {
+		t.Errorf("error3 %v", err)
+	}
+
+	t.Logf("transfer %v", cluster.autoTransferUnable)
 }
