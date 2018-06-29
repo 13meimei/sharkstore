@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	client "pkg-go/ds_client"
 	"sort"
 	"strings"
 	"sync"
@@ -629,7 +630,7 @@ func (c *Cluster) loadAutoTransfer() error {
 			return err
 		}
 	}
-	var auto bool  // enable by default
+	var auto bool // enable by default
 	if value != nil {
 		s, err = bytesToUint64(value)
 		if err != nil {
@@ -698,6 +699,8 @@ func (c *Cluster) loadScheduleSwitch() error {
 		log.Error("load auto failover failed, err[%v]", err)
 		return err
 	}
+	log.Info("cluster autoFailoverUnable:", c.autoFailoverUnable)
+
 	if err := c.loadAutoTransfer(); err != nil {
 		log.Error("load auto transfer failed, err[%v]", err)
 		return err
