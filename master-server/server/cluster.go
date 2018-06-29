@@ -699,7 +699,7 @@ func (c *Cluster) loadScheduleSwitch() error {
 		log.Error("load auto failover failed, err[%v]", err)
 		return err
 	}
-	log.Info("cluster autoFailoverUnable:", c.autoFailoverUnable)
+	log.Info("cluster autoFailoverUnable: %v", c.autoFailoverUnable)
 
 	if err := c.loadAutoTransfer(); err != nil {
 		log.Error("load auto transfer failed, err[%v]", err)
