@@ -11,6 +11,9 @@ import (
 	"util/deepcopy"
 
 	"golang.org/x/net/context"
+	"util/alarm"
+	"strings"
+	"strconv"
 )
 
 type RegionHbCheckWorker struct {
@@ -62,10 +65,18 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 						cluster.GetClusterId(), table.GetId(), r.GetId(), leader.GetNodeId(), cluster.FindNodeById(leader.GetNodeId()).GetServerAddr(), r.LastHbTimeTS)
 				}
 
+				ip := strings.Split(cluster.FindNodeById(leader.GetNodeId()).GetServerAddr(), ":")[0]
+				port, _ := strconv.ParseInt(strings.Split(cluster.FindNodeById(leader.GetNodeId()).GetServerAddr(), ":")[1], 10, 64)
+				info := make(map[string]interface{})
+				info["ip"] = ip
+				info["port"] = port
+				info["spaceId"] = cluster.GetClusterId()
+				info["range_no_heartbeat"] = 1
+				sample := alarm.NewSample(ip, int(port), int(cluster.GetClusterId()), info)
 				if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
 					Range:             deepcopy.Iface(r.Range).(*metapb.Range),
 					LastHeartbeatTime: r.LastHbTimeTS.String(),
-				}, desc); err != nil {
+				}, desc, []*alarm.Sample{sample}); err != nil {
 					log.Error("range no leader alarm failed: %v", err)
 				}
 

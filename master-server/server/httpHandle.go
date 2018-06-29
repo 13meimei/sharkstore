@@ -2764,7 +2764,7 @@ func (ri routeInfoByStartKey) Less(i, j int) bool {
 }
 
 func (service *Server) handleTestAlarm(w http.ResponseWriter, r *http.Request) {
-	err := service.cluster.alarmCli.RangeNoHeartbeatAlarm(int64(service.cluster.GetClusterId()), nil, "test alarm")
+	err := service.cluster.alarmCli.RangeNoHeartbeatAlarm(int64(service.cluster.GetClusterId()), nil, "test alarm", nil)
 	if err != nil {
 		w.Write([]byte(err.Error()))
 	} else {

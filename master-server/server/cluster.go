@@ -14,7 +14,6 @@ import (
 	sErr "master-server/engine/errors"
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
-	"pkg-go/ds_client"
 	"util"
 	"util/alarm"
 	"util/deepcopy"
@@ -703,6 +702,7 @@ func (c *Cluster) loadScheduleSwitch() error {
 		log.Error("load auto transfer failed, err[%v]", err)
 		return err
 	}
+	log.Info("auto transfer: %v", c.autoFailoverUnable)
 	if err := c.loadAutoSplit(); err != nil {
 		log.Error("load auto split failed, err[%v]", err)
 		return err

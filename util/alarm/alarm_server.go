@@ -25,8 +25,8 @@ type Server struct {
 
 }
 
-func newServer(ctx context.Context, gatewayAddr string, receiver MessageReceiver) *Server {
-	gateway := NewMessageGateway(ctx, gatewayAddr, receiver)
+func newServer(ctx context.Context, gatewayAddr, alarmServerAddr string, receiver MessageReceiver) *Server {
+	gateway := NewMessageGateway(ctx, gatewayAddr, alarmServerAddr, receiver)
 	if gateway == nil {
 		return nil
 	}
@@ -38,13 +38,13 @@ func newServer(ctx context.Context, gatewayAddr string, receiver MessageReceiver
 }
 
 
-func NewAlarmServer(ctx context.Context, port int, gatewayAddress string, receiver MessageReceiver) (*Server, error) {
+func NewAlarmServer(ctx context.Context, port int, gatewayAddress, remoteAlarmServerAddress string, receiver MessageReceiver) (*Server, error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
 	if err != nil {
 		return nil, err
 	}
 	s := grpc.NewServer()
-	server := newServer(ctx, gatewayAddress, receiver)
+	server := newServer(ctx, gatewayAddress, remoteAlarmServerAddress, receiver)
 	if server == nil {
 		return nil, errors.New("server is nil")
 	}
@@ -77,6 +77,7 @@ func (s *Server) TaskAlarm(ctx context.Context, req *alarmpb.TaskAlarmRequest) (
 		ClusterId: clusterId,
 		Title: "task timeout",
 		Content: req.GetDescribe(),
+		samples: req.SampleJson,
 	}, time.Second); err != nil {
 		log.Error("task alarm notify timeout")
 	}
@@ -106,6 +107,7 @@ func (s *Server) NodeRangeAlarm(ctx context.Context, req *alarmpb.NodeRangeAlarm
 		ClusterId: clusterId,
 		Title: "node/range alarm",
 		Content: req.GetDescribe(),
+		samples: req.SampleJson,
 	}, time.Second); err != nil {
 		log.Error("node/range alarm notify timeout")
 	}
@@ -142,6 +144,7 @@ func (s *Server) SimpleAlarm(ctx context.Context, req *alarmpb.SimpleRequest) (*
 		ClusterId: clusterId,
 		Title: req.GetTitle(),
 		Content: req.GetContent(),
+		samples: req.SampleJson,
 	}, time.Second); err != nil {
 		log.Error("simple alarm notify timeout")
 	}

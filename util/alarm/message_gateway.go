@@ -9,6 +9,7 @@ import (
 	"time"
 	"errors"
 	"fmt"
+	"io/ioutil"
 )
 
 
@@ -23,6 +24,7 @@ type Message struct {
 	Title string
 	Content string
 	Level int
+	samples []string
 }
 
 type MessageTo struct {
@@ -34,7 +36,10 @@ type MessageTo struct {
 
 type MessageGateway struct {
 	address string
-	client *http.Client
+	client *http.Client // direct push to message gateway
+
+	alarmServerAddress string // alarm server address
+	pusher *http.Client // direct to alarm server
 
 	messages chan Message
 	receiver MessageReceiver
@@ -46,11 +51,27 @@ const (
 	MESSAGEGATEWAY_WAIT_QUEUE_LENGTH = 10000
 )
 
-func NewMessageGateway(ctx context.Context, addr string, receiver MessageReceiver) *MessageGateway {
+func NewMessageGateway(ctx context.Context, addr, alarmServerAddr string, receiver MessageReceiver) *MessageGateway {
 	gw := &MessageGateway{
 		address: addr,
 		client: &http.Client{
 			Timeout: time.Second*3,
+		},
+		alarmServerAddress: alarmServerAddr,
+		pusher: &http.Client{
+			Timeout: time.Second*3,
+			//Transport: &http.Transport{
+			//	Dial: func(netw, addr string) (net.Conn, error) {
+			//		c, err := net.DialTimeout(netw, addr, connTimeout)
+			//		if err != nil {
+			//			return nil, err
+			//		}
+			//
+			//		return c, nil
+			//	},
+			//	MaxIdleConnsPerHost:   2,
+			//	ResponseHeaderTimeout: readTimeout,
+			//},
 		},
 		messages: make(chan Message, MESSAGEGATEWAY_WAIT_QUEUE_LENGTH),
 		receiver: receiver,
@@ -104,6 +125,12 @@ func (gw *MessageGateway) wait() {
 			if err := gw.send(msg.Title, msg.Content, mailTo, smsTo); err != nil {
 				log.Error("alarm message send: %v", err)
 			}
+			// to alarm server
+			for _, sample := range msg.samples {
+				if err := gw.PushSampleJson(sample); err != nil {
+					log.Error("push to remote alarm server error: ", err)
+				}
+			}
 		case <-gw.ctx.Done():
 			return
 		}
@@ -120,4 +147,27 @@ func (gw *MessageGateway) notify(message Message, timeout time.Duration) (err er
 		err = errors.New("message notify is canceled")
 	}
 	return
+}
+
+func (gw *MessageGateway) PushSampleJson(sample string) error {
+	req, _ := http.NewRequest("POST", gw.alarmServerAddress, strings.NewReader(sample))
+	req.Header.Add("User-Agent", "AlarmPusher-Agent")
+	req.Header.Set("Connection", "close")
+	resp, err := gw.pusher.Do(req)
+	defer func() {
+		if resp != nil {
+			resp.Body.Close()
+		}
+	}()
+
+	if err == nil {
+		if resp.StatusCode == http.StatusOK {
+			return nil
+		} else {
+			ret, _ := ioutil.ReadAll(resp.Body)
+			return errors.New("[AlarmPusher-Push]Alarm server error,Error=[" + string(ret) + "]")
+		}
+	} else {
+		return errors.New("[AlarmPusher-Push]Alarm request service error,Error=[" + err.Error() + "]")
+	}
 }

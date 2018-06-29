@@ -659,7 +659,7 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		userName := r.FormValue("userName")
 		resp, err := s.proxy.Unlock(dbName, tableName, lockName, uuid, userName)
 		if err != nil {
-			w.Write([]byte("unlock reply marshal: " + err.Error()))
+			w.Write([]byte("unlock: "+err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
@@ -672,12 +672,28 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		userName := r.FormValue("userName")
 		resp, err := s.proxy.UnlockForce(dbName, tableName, lockName, userName)
 		if err != nil {
-			w.Write([]byte("unlockforce reply marshal: " + err.Error()))
+			w.Write([]byte("unlockforce: "+err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
 		if err != nil {
 			w.Write([]byte("unlockforce reply marshal: " + err.Error()))
+			return
+		}
+		w.Write(reply)
+	case "scan":
+		startKey := r.FormValue("startKey")
+		endKey := r.FormValue("endKey")
+		number, _ := strconv.ParseUint(r.FormValue("number"), 10, 64)
+
+		resp, err := s.proxy.LockScan(dbName, tableName, startKey, endKey, uint32(number))
+		if err != nil {
+			w.Write([]byte("lockscan: "+err.Error()))
+			return
+		}
+		reply, err := json.Marshal(resp)
+		if err != nil {
+			w.Write([]byte("lockscan reply marshal: "+err.Error()))
 			return
 		}
 		w.Write(reply)
