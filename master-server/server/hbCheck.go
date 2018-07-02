@@ -72,6 +72,9 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 				info["port"] = port
 				info["spaceId"] = cluster.GetClusterId()
 				info["range_no_heartbeat"] = 1
+				info["tableId"] = table.GetId()
+				info["rangeId"] = r.GetId()
+				info["nodeId"] = leader.GetNodeId()
 				sample := alarm.NewSample(ip, int(port), int(cluster.GetClusterId()), info)
 				if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
 					Range:             deepcopy.Iface(r.Range).(*metapb.Range),
