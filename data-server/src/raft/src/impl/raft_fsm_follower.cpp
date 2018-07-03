@@ -137,13 +137,13 @@ void RaftFsm::handleSnapshot(MessagePtr& msg) {
         LOG_ERROR("raft[%lu] apply snapshot[%lu:%lu] from %lu at term %lu failed: %s", id_, msg->snapshot().uuid(),
                   msg->snapshot().seq(), msg->from(), term_, s.ToString().c_str());
 
-        MessagePtr msg(new pb::Message);
-        msg->set_type(pb::SNAPSHOT_ACK);
-        msg->set_to(msg->from());
-        msg->set_reject(true);
-        msg->mutable_snapshot()->set_uuid(msg->snapshot().uuid());
-        msg->mutable_snapshot()->set_seq(msg->snapshot().seq());
-        send(msg);
+        MessagePtr resp(new pb::Message);
+        resp->set_type(pb::SNAPSHOT_ACK);
+        resp->set_to(msg->from());
+        resp->set_reject(true);
+        resp->mutable_snapshot()->set_uuid(msg->snapshot().uuid());
+        resp->mutable_snapshot()->set_seq(msg->snapshot().seq());
+        send(resp);
     }
 }
 
