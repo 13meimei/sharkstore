@@ -609,16 +609,54 @@ func (dt *DeleteTableWorker) Work(cluster *Cluster) {
 		// 超过三天，正式删除
 		if table.Status == metapb.TableStatus_TableDeleting || time.Since(table.deleteTime) > DefaultRetentionTime {
 			table.Status = metapb.TableStatus_TableDeleting
-			key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
-			if err := cluster.store.Delete(key); err != nil {
-				log.Error("MS worker delete expired table:[%s][%d] from store is failed.",
-					table.GetName(), table.GetId())
-				return
+		}
+
+		if table.Status == metapb.TableStatus_TableDeleting {
+			ranges := cluster.GetTableAllRanges(table.GetId())
+			if len(ranges) == 0 { // len(ranges) == 0
+				key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
+				if err := cluster.store.Delete(key); err != nil {
+					log.Error("MS worker delete expired table:[%s][%d] from store is failed.",
+						table.GetName(), table.GetId())
+					return
+				}
+
+				cluster.deletingTables.DeleteById(table.GetId())
 			}
-			cluster.deletingTables.DeleteById(table.GetId())
+
+			for _, rang := range ranges {
+				if err := deleteRange(cluster, rang); err != nil {
+					log.Error("delete table range[%v] failed: %v", table.GetId(), err)
+				} else {
+					// del meta
+					if err := cluster.deleteRange(rang.GetId()); err != nil {
+						log.Error("delete range meta on store failed: %v", err)
+					}
+					cluster.DeleteRange(rang.GetId())
+				}
+			}
 		}
 	}
 	return
+}
+
+func deleteRange(c *Cluster, rang *Range) error {
+	if rang == nil {
+		return errors.New("range pointer is nil")
+	}
+
+	ok := true
+	nodes := c.getRangeNodes(rang)
+	for _, node := range nodes {
+		if err := c.cli.DeleteRange(node.GetServerAddr(), rang.GetId()); err != nil {
+			ok = false
+		}
+	}
+	if !ok {
+		return errors.New("delete range do rpc failed")
+	}
+
+	return nil
 }
 
 func (dt *DeleteTableWorker) AllowWork(cluster *Cluster) bool {

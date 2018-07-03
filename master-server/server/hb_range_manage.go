@@ -106,11 +106,12 @@ func (manager *hb_range_manager) CheckRange(cluster *Cluster, r *Range) *TaskCha
 	// 处理分片回收
 	// TODO: 直接调用DS接口删除range 然后回收
 	if r.State == metapb.RangeState_R_Remove {
-		id, err := cluster.GenId()
-		if err != nil {
-			return nil
-		}
-		return NewTaskChain(id, r.GetId(), "hb-range-remove", NewDeleteRangeTask())
+		return nil // XXX master active do delete range. do not use delete task by hb
+		//id, err := cluster.GenId()
+		//if err != nil {
+		//	return nil
+		//}
+		//return NewTaskChain(id, r.GetId(), "hb-range-remove", NewDeleteRangeTask())
 	}
 
 	// range failover
