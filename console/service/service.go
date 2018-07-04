@@ -111,7 +111,7 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 
 func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 	rows, err := s.db.Query(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
-		auto_transfer, auto_failover, auto_split, create_time FROM %s`, TABLE_NAME_CLUSTER))
+		auto_transfer, auto_failover, auto_split, create_time FROM %s order by id`, TABLE_NAME_CLUSTER))
 	if err != nil {
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
@@ -1906,9 +1906,9 @@ func (s *Service) IsAdmin(userName string) (bool, error) {
 func (s *Service) GetAllSqlApply(userName string, isAdmin bool) ([]*models.SqlApply, error) {
 	var sql string
 	if isAdmin {
-		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s`, TABLE_NAME_SQL_APPLY)
+		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s order by create_time desc`, TABLE_NAME_SQL_APPLY)
 	} else {
-		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s where applyer = "%s" `, TABLE_NAME_SQL_APPLY, userName)
+		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s where applyer = "%s" order by create_time desc`, TABLE_NAME_SQL_APPLY, userName)
 	}
 	log.Debug("get all sql apply records:  %s", sql)
 

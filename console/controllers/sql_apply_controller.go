@@ -35,7 +35,7 @@ func (ctrl *SqlGetAllAction)Execute(c *gin.Context) (interface{}, error) {
 	userName := sessions.Default(c).Get("user_name").(string)
 	isAdmin, err := service.NewService().IsAdmin(userName)
 	if err != nil {
-		return nil, fmt.Errorf("query user right failed %v")
+		return nil, fmt.Errorf("query user right failed %v", userName)
 	}
 	log.Debug("user [%v] get sql apply list, isAdmin: %v", userName, isAdmin)
 	return service.NewService().GetAllSqlApply(userName, isAdmin)
@@ -121,6 +121,15 @@ func (ctrl *SqlAuditAction)Execute(c *gin.Context) (interface{}, error) {
 	}
 
 	userName := sessions.Default(c).Get("user_name").(string)
+	isAdmin, err := service.NewService().IsAdmin(userName)
+	if err != nil  {
+		return nil, fmt.Errorf("query user right failed %v", userName)
+	}
+
+	if !isAdmin {
+		return nil, fmt.Errorf("only admin can audit")
+	}
+
 	err = service.NewService().AuditSql(idArray, statusI, userName)
 	if err != nil {
 		return nil, err

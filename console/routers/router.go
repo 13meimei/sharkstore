@@ -97,8 +97,23 @@ func (r *Router) StartRouter() *gin.Engine {
 	})
 
 	router.GET("/page/sql/viewApplyList", func(c *gin.Context) {
+		userName, ok := sessions.Default(c).Get("user_name").(string)
+		if !ok {
+			c.Redirect(http.StatusMovedPermanently, "/logout")
+		}
+		admin := "none"
+		user, err := r.GetUserCluster(userName)
+		if err == nil {
+			for _, r := range user.Right {
+				if r == 1 {
+					admin = ""
+					break
+				}
+			}
+		}
 		c.HTML(http.StatusOK, "sqlapply_list.html", gin.H{
 			"basePath": r.staticRootDir,
+			"admin": 	admin,
 		})
 	})
 
