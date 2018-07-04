@@ -1481,6 +1481,7 @@ var (
 		&metapb.Column{Name: "cluster_id", DataType: metapb.DataType_BigInt, PrimaryKey: 1},
 		&metapb.Column{Name: "privilege", DataType: metapb.DataType_BigInt},
 	}
+
 	fbase_user = []*metapb.Column{
 		&metapb.Column{Name: "id", DataType: metapb.DataType_BigInt, PrimaryKey: 1},
 		&metapb.Column{Name: "erp", DataType: metapb.DataType_Varchar},
@@ -1494,6 +1495,17 @@ var (
 		&metapb.Column{Name: "organization_name", DataType: metapb.DataType_Varchar},
 		&metapb.Column{Name: "create_time", DataType: metapb.DataType_TimeStamp},
 		&metapb.Column{Name: "update_time", DataType: metapb.DataType_TimeStamp}}
+
+	fbase_sql_apply = []*metapb.Column{
+		&metapb.Column{Name: "id", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
+		&metapb.Column{Name: "db_name", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "table_name", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "sentence", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "status", DataType: metapb.DataType_Tinyint},
+		&metapb.Column{Name: "applyer", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "auditor", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "create_time", DataType: metapb.DataType_TimeStamp},
+		&metapb.Column{Name: "remark", DataType: metapb.DataType_Varchar}}
 
 	fbase_lock_nsp = []*metapb.Column{
 		&metapb.Column{Name: "namespace", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
@@ -1628,7 +1640,14 @@ func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Re
 		reply.Message = fmt.Errorf("createTable fbase_privilege err: %v", err).Error()
 		return
 	}
-
+	parseColumn(fbase_sql_apply)
+	_, err = cluster.CreateTable(fbase, "fbase_sql_apply", fbase_sql_apply, nil, false, nil)
+	if err != nil {
+		log.Warn("create table %s %s failed, err %v", fbase, "fbase_sql_apply", err)
+		reply.Code = HTTP_ERROR
+		reply.Message = fmt.Errorf("createTable fbase_sql_apply err: %v", err).Error()
+		return
+	}
 	//lock namespace
 	parseColumn(fbase_lock_nsp)
 	_, err = cluster.CreateTable(fbase, "fbase_lock_nsp", fbase_lock_nsp, nil, false, nil)

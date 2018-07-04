@@ -15,6 +15,7 @@ import (
 )
 import (
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/satori/go.uuid"
 )
 import (
 	"console/models"
@@ -33,12 +34,13 @@ const (
 	LOCK_DBNAME = "lock"
 	LOCK_COLUMN = "lock_col"
 
-	TABLE_NAME_USER      = "fbase_user"
-	TABLE_NAME_CLUSTER   = "fbase_cluster"
-	TABLE_NAME_ROLE      = "fbase_role"
-	TABLE_NAME_PRIVILEGE = "fbase_privilege"
-	TABLE_NAME_LOCK_NSP  = "fbase_lock_nsp"
-	TABLE_NAME_METRIC_SERVER   = "metric_server"
+	TABLE_NAME_USER          = "fbase_user"
+	TABLE_NAME_CLUSTER       = "fbase_cluster"
+	TABLE_NAME_ROLE          = "fbase_role"
+	TABLE_NAME_PRIVILEGE     = "fbase_privilege"
+	TABLE_NAME_SQL_APPLY     = "fbase_sql_apply"
+	TABLE_NAME_LOCK_NSP      = "fbase_lock_nsp"
+	TABLE_NAME_METRIC_SERVER = "metric_server"
 )
 
 var serviceInstance *Service = nil
@@ -109,7 +111,7 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 
 func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 	rows, err := s.db.Query(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
-		auto_transfer, auto_failover, auto_split, create_time FROM %s`, TABLE_NAME_CLUSTER))
+		auto_transfer, auto_failover, auto_split, create_time FROM %s order by id`, TABLE_NAME_CLUSTER))
 	if err != nil {
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
@@ -817,8 +819,8 @@ func (s *Service) AddPeer(clusterId int, rangeId string) error {
 	reqParams["rangeId"] = rangeId
 
 	var peerAddResp = struct {
-		Code int         `json:"code"`
-		Msg  string      `json:"message"`
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/range/add/peer", reqParams, &peerAddResp); err != nil {
 		return err
@@ -927,7 +929,7 @@ func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover, au
 		//改库
 		info.AutoFailoverUnable, _ = strconv.ParseBool(autoFailover)
 		info.AutoTransferUnable, _ = strconv.ParseBool(autoTransfer)
-		info.AutoSplitUnable, _ =  strconv.ParseBool(autoSplit)
+		info.AutoSplitUnable, _ = strconv.ParseBool(autoSplit)
 		log.Debug("start to update database, %v", info)
 		if err := s.insertClusterById(info); err != nil {
 			return fmt.Errorf("更新集群开关失败")
@@ -987,8 +989,8 @@ func (s *Service) GetSchedulerDetail(clusterId int, name string) (interface{}, e
 	reqParams["name"] = name
 
 	var scheduleDetailResp = struct {
-		Code int             `json:"code"`
-		Msg  string          `json:"message"`
+		Code int         `json:"code"`
+		Msg  string      `json:"message"`
 		Data interface{} `json:"data"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/scheduler/detail", reqParams, &scheduleDetailResp); err != nil {
@@ -1377,7 +1379,6 @@ func (s *Service) GetUnstableRanges(clusterId int, dbName, tableName string) (in
 	}
 	return getUnstableRangesResp.Data, nil
 }
-
 
 func (s *Service) GetPeerInfo(clusterId int, dbName, tableName string, rangeId int) (interface{}, error) {
 	info, err := s.selectClusterById(clusterId)
@@ -1901,13 +1902,96 @@ func (s *Service) IsAdmin(userName string) (bool, error) {
 	return exist, nil
 }
 
+//=============sql apply start==============
+func (s *Service) GetAllSqlApply(userName string, isAdmin bool) ([]*models.SqlApply, error) {
+	var sql string
+	if isAdmin {
+		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s order by create_time desc`, TABLE_NAME_SQL_APPLY)
+	} else {
+		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s where applyer = "%s" order by create_time desc`, TABLE_NAME_SQL_APPLY, userName)
+	}
+	log.Debug("get all sql apply records:  %s", sql)
+
+	rows, err := s.db.Query(sql)
+	if err != nil {
+		log.Error("db select is failed. err:[%v]", err)
+		return nil, common.DB_ERROR
+	}
+	result := make([]*models.SqlApply, 0)
+	for rows.Next() {
+		info := new(models.SqlApply)
+		if err := rows.Scan(&(info.Id), &(info.DbName),&(info.TableName), &(info.Status), &(info.Applyer), &(info.CreateTime), &(info.Remark)); err != nil {
+			log.Error("db scan is failed. err:[%v]", err)
+			return nil, common.DB_ERROR
+		}
+		result = append(result, info)
+	}
+	return result, nil
+
+}
+
+func (s *Service) ApplySql(dbName, tableName, sentence, applyer, remark string, cTime int64) error {
+	id, err := uuid.NewV4()
+	if err != nil {
+		return err
+	}
+	idS := fmt.Sprintf("%s", id)
+
+	sql := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, sentence, status, applyer, create_time, remark) 
+		values ("%s", "%s", "%s", "%s", %d, "%s", %d, "%s")`,
+		TABLE_NAME_SQL_APPLY, idS, dbName, tableName, sentence, 1, applyer, cTime, remark)
+	_, err = s.execSql(sql)
+	if err != nil {
+		return err
+	}
+
+	log.Debug("%s apply sql success", applyer)
+	return nil
+}
+
+func (s *Service) GetSqlApplyInfo(id string) (*models.SqlApply, error) {
+	info := new(models.SqlApply)
+	if err := s.db.QueryRow(fmt.Sprintf(`SELECT id, db_name, table_name, sentence, status, applyer, create_time, remark FROM %s WHERE id="%s"`, TABLE_NAME_SQL_APPLY, id)).
+		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.Sentence),  &(info.Status),  &(info.Applyer),  &(info.CreateTime), &(info.Remark)); err != nil {
+		if err == sql.ErrNoRows {
+			log.Error("db row not exists. applyId:[%d]", id)
+			return nil, nil
+		} else {
+			log.Error("db query row is failed. err:[%v]", err)
+			return nil, common.DB_ERROR
+		}
+	}
+	return info, nil
+}
+
+func (s *Service) AuditSql(ids []string, status int, auditor string) error {
+	for _, id := range ids {
+		info, err := s.GetSqlApplyInfo(id)
+		if err != nil {
+			continue
+		}
+		sql := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, sentence, status, applyer, auditor, create_time, remark) 
+		values ("%s", "%s", "%s", "%s", %d, "%s", "%s", %d, "%s")`,
+			TABLE_NAME_SQL_APPLY, id, info.DbName, info.TableName, info.Sentence, status, info.Applyer, auditor, info.CreateTime, info.Remark)
+		_, err = s.execSql(sql)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Debug("%v audit sql success", auditor)
+	return nil
+}
+
+//=============sql apply end==============
+
 //=============lock start==============
 func (s *Service) GetAllNamespace(userName string, isAdmin bool) ([]*models.NamespaceApply, error) {
 	var sql string
 	if isAdmin {
-		sql = fmt.Sprintf(`select * from %s`, TABLE_NAME_LOCK_NSP)
+		sql = fmt.Sprintf(`select namespace, cluster_id, applyer, create_time from %s`, TABLE_NAME_LOCK_NSP)
 	} else {
-		sql = fmt.Sprintf(`select * from %s where applyer = "%s" `, TABLE_NAME_LOCK_NSP, userName)
+		sql = fmt.Sprintf(`select namespace, cluster_id, applyer, create_time from %s where applyer = "%s" `, TABLE_NAME_LOCK_NSP, userName)
 	}
 	log.Debug("get all apply lock namespace: %s", sql)
 
@@ -1982,8 +2066,8 @@ func (s *Service) GetLockCluster() (*models.ClusterInfo, error) {
 	}
 	return info, nil
 }
-//=============lock end================
 
+//=============lock end================
 
 //=============metric add ===============
 
@@ -2044,7 +2128,6 @@ func (s *Service) DeleteMetricServer(addrs []string) error {
 	return nil
 }
 
-
 func (s *Service) GetMetricConfig(cId int) (map[string]*models.MetricConfig, error) {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
@@ -2071,8 +2154,8 @@ func (s *Service) GetMetricConfig(cId int) (map[string]*models.MetricConfig, err
 		reqParams["s"] = sign
 
 		var getConfigResp = struct {
-			Code int         `json:"code"`
-			Msg  string      `json:"message"`
+			Code int                 `json:"code"`
+			Msg  string              `json:"message"`
 			Data models.MetricConfig `json:"data"`
 		}{}
 		if err := sendGetReq(info.MasterUrl, "/metric/config/get", reqParams, &getConfigResp); err != nil {
@@ -2088,30 +2171,30 @@ func (s *Service) GetMetricConfig(cId int) (map[string]*models.MetricConfig, err
 	}(msConfig)
 
 	waitLock.Add(1)
-	 go func(gsConfig *models.MetricConfig) {
-		 defer waitLock.Done()
+	go func(gsConfig *models.MetricConfig) {
+		defer waitLock.Done()
 
-		 ts := time.Now().Unix()
-		 sign := common.CalcMsReqSign(info.Id, info.ClusterToken, ts)
+		ts := time.Now().Unix()
+		sign := common.CalcMsReqSign(info.Id, info.ClusterToken, ts)
 
-		 reqParams := make(map[string]interface{})
-		 reqParams["d"] = ts
-		 reqParams["s"] = sign
+		reqParams := make(map[string]interface{})
+		reqParams["d"] = ts
+		reqParams["s"] = sign
 
-		 var getConfigResp = struct {
-			 Code int         `json:"code"`
-			 Msg  string      `json:"message"`
-			 Data models.MetricConfig `json:"data"`
-		 }{}
-		 if err := sendGetReq(info.GatewayHttpUrl, "/metric/config/get", reqParams, &getConfigResp); err != nil {
-			 msConfig.Address = err.Error()
-		 } else {
-			 if getConfigResp.Code != 0 {
-				 gsConfig.Address = getConfigResp.Msg
-			 } else {
-				 gsConfig.Address = getConfigResp.Data.Address
-			 }
-		 }
+		var getConfigResp = struct {
+			Code int                 `json:"code"`
+			Msg  string              `json:"message"`
+			Data models.MetricConfig `json:"data"`
+		}{}
+		if err := sendGetReq(info.GatewayHttpUrl, "/metric/config/get", reqParams, &getConfigResp); err != nil {
+			msConfig.Address = err.Error()
+		} else {
+			if getConfigResp.Code != 0 {
+				gsConfig.Address = getConfigResp.Msg
+			} else {
+				gsConfig.Address = getConfigResp.Data.Address
+			}
+		}
 	}(gsConfig)
 	waitLock.Wait()
 
@@ -2123,11 +2206,10 @@ func (s *Service) GetMetricConfig(cId int) (map[string]*models.MetricConfig, err
 	return reply, nil
 }
 
-
 func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]string, error) {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
-		return  nil, err
+		return nil, err
 	}
 	if info == nil {
 		return nil, common.CLUSTER_NOTEXISTS_ERROR
@@ -2147,12 +2229,12 @@ func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]st
 		reqParams["interval"] = interval
 		reqParams["address"] = addr
 		var setConfigResp = struct {
-			Code int         `json:"code"`
-			Msg  string      `json:"message"`
+			Code int    `json:"code"`
+			Msg  string `json:"message"`
 		}{}
 		if err := sendGetReq(info.MasterUrl, "/metric/config/set", reqParams, &setConfigResp); err != nil {
 			respose["ms"] = err.Error()
-		} else if setConfigResp.Code > 0{
+		} else if setConfigResp.Code > 0 {
 			respose["ms"] = setConfigResp.Msg
 		} else {
 			respose["ms"] = "success"
@@ -2172,12 +2254,12 @@ func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]st
 		reqParams["s"] = sign
 		reqParams["address"] = addr
 		var setConfigResp = struct {
-			Code int         `json:"code"`
-			Msg  string      `json:"message"`
+			Code int    `json:"code"`
+			Msg  string `json:"message"`
 		}{}
 		if err := sendGetReq(info.GatewayHttpUrl, "/metric/config/set", reqParams, &setConfigResp); err != nil {
 			respose["gs"] = err.Error()
-		} else if setConfigResp.Code > 0{
+		} else if setConfigResp.Code > 0 {
 			respose["gs"] = setConfigResp.Msg
 		} else {
 			respose["gs"] = "success"
@@ -2188,8 +2270,8 @@ func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]st
 	log.Debug("set master client config: %v", respose)
 	return respose, nil
 }
-//=============metric end ===============
 
+//=============metric end ===============
 
 // ------------http request -------------------
 func sendGetSimpleReq(host, uri string, params map[string]interface{}, result string) (error) {

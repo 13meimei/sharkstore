@@ -145,7 +145,7 @@
 					success: function(data){
 						if(data.code === 0){
 							swal("创建成功!", data.msg, "success");
-							window.location.href = "/page/user/welcome";
+							window.location.href = "/page/cluster/viewCluster";
 						}else {
 							$('#submit').removeAttr("disabled");
 							swal("创建失败", data.msg, "error");
