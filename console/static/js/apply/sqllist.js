@@ -11,7 +11,7 @@
         showColumns: true,
         iconSize: 'outline',
         toolbar: '#sqlApplyListsToolbar',
-//	      height: 500,
+        height: 500,
         icons: {
             refresh: 'glyphicon-repeat'
         },
