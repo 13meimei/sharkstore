@@ -629,6 +629,7 @@ func (dt *DeleteTableWorker) Work(cluster *Cluster) {
 
 			log.Debug("table id[%v] name[%v] is deleting, len(ranges) %v", table.GetId(), table.GetName(), len(ranges))
 			for _, rang := range ranges {
+				log.Debug("table id[%v] range id[%v] is deleting", table.GetId(), rang.GetId())
 				if err := deleteRange(cluster, rang); err != nil {
 					log.Error("delete table range[%v] failed: %v", table.GetId(), err)
 				} else {
@@ -637,6 +638,7 @@ func (dt *DeleteTableWorker) Work(cluster *Cluster) {
 						log.Error("delete range meta on store failed: %v", err)
 					}
 					cluster.DeleteRange(rang.GetId())
+					log.Debug("table id[%v] range id[%v] is deleted", table.GetId(), rang.GetId())
 				}
 			}
 		}
@@ -652,7 +654,8 @@ func deleteRange(c *Cluster, rang *Range) error {
 	nodes := c.getRangeNodes(rang)
 	for _, node := range nodes {
 		if err := c.cli.DeleteRange(node.GetServerAddr(), rang.GetId()); err != nil {
-			return errors.New("delete range do rpc failed: "+err.Error())
+			return errors.New(fmt.Sprintf("delete range id[%v] addr[%v]do rpc failed: %v",
+				node.GetServerAddr(), rang.GetId(), err))
 		}
 	}
 
