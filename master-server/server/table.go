@@ -609,16 +609,57 @@ func (dt *DeleteTableWorker) Work(cluster *Cluster) {
 		// 超过三天，正式删除
 		if table.Status == metapb.TableStatus_TableDeleting || time.Since(table.deleteTime) > DefaultRetentionTime {
 			table.Status = metapb.TableStatus_TableDeleting
-			key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
-			if err := cluster.store.Delete(key); err != nil {
-				log.Error("MS worker delete expired table:[%s][%d] from store is failed.",
-					table.GetName(), table.GetId())
-				return
+			log.Info("table id[%v] name[%v] is doing delete", table.GetId(), table.GetName())
+		}
+
+		if table.Status == metapb.TableStatus_TableDeleting {
+			ranges := cluster.GetTableAllRanges(table.GetId())
+			if len(ranges) == 0 {
+				log.Info("table id[%v] name[%v] ranges is empty", table.GetId(), table.GetName())
+				key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
+				if err := cluster.store.Delete(key); err != nil {
+					log.Error("MS worker delete expired table:[%s][%d] from store is failed.",
+						table.GetName(), table.GetId())
+					return
+				}
+
+				cluster.deletingTables.DeleteById(table.GetId())
+				log.Info("table id[%v] name[%v] delete ranges finish", table.GetId(), table.GetName())
 			}
-			cluster.deletingTables.DeleteById(table.GetId())
+
+			log.Debug("table id[%v] name[%v] is deleting, len(ranges) %v", table.GetId(), table.GetName(), len(ranges))
+			for _, rang := range ranges {
+				log.Debug("table id[%v] range id[%v] is deleting", table.GetId(), rang.GetId())
+				if err := deleteRange(cluster, rang); err != nil {
+					log.Error("delete table range[%v] failed: %v", table.GetId(), err)
+				} else {
+					// del meta
+					if err := cluster.deleteRange(rang.GetId()); err != nil {
+						log.Error("delete range meta on store failed: %v", err)
+					}
+					cluster.DeleteRange(rang.GetId())
+					log.Debug("table id[%v] range id[%v] is deleted", table.GetId(), rang.GetId())
+				}
+			}
 		}
 	}
 	return
+}
+
+func deleteRange(c *Cluster, rang *Range) error {
+	if rang == nil {
+		return errors.New("range pointer is nil")
+	}
+
+	nodes := c.getRangeNodes(rang)
+	for _, node := range nodes {
+		if err := c.cli.DeleteRange(node.GetServerAddr(), rang.GetId()); err != nil {
+			return errors.New(fmt.Sprintf("delete range id[%v] addr[%v]do rpc failed: %v",
+				node.GetServerAddr(), rang.GetId(), err))
+		}
+	}
+
+	return nil
 }
 
 func (dt *DeleteTableWorker) AllowWork(cluster *Cluster) bool {
