@@ -210,6 +210,10 @@ int RangeServer::OpenDB() {
     ops.target_file_size_base = ds_config.rocksdb_config.target_file_size_base;
     ops.target_file_size_multiplier =
         ds_config.rocksdb_config.target_file_size_multiplier;
+    if (ds_config.rocksdb_config.disable_auto_compactions) {
+        FLOG_WARN("rocksdb auto compactions is disabled.");
+        ops.disable_auto_compactions = true;
+    }
     ops.max_background_flushes = ds_config.rocksdb_config.max_background_flushes;
     ops.max_background_compactions = ds_config.rocksdb_config.max_background_compactions;
     ops.level0_file_num_compaction_trigger =
