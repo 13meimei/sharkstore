@@ -105,7 +105,7 @@ make -j `nproc`
 ## 单测覆盖率
 install gcov lcov    
 带选项编译 `cmake -DENABLE_COVERAGE=ON ..`  会生成.gcno文件      
-正常运行`./date-server ../conf/ds.conf start` 会生成.gcda文件      
+正常运行`./data-server ../conf/ds.conf start` 会生成.gcda文件      
 `find ./ -name "*.gcno" | xargs gcov`  会生成.gcov文件      
 将测试结果合并到一个文件 `lcov -d . -c -o ds.gcov.info   `   
 将结果文件转换成html格式，输出到ds_report目录  `genhtml ds.gcov.info -o ds_report`  

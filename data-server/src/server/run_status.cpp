@@ -190,10 +190,11 @@ void RunStatus::printDBMetric() {
     std::string mem_table_usage;
     db->GetProperty("rocksdb.cur-size-all-mem-tables", &mem_table_usage);
     FLOG_INFO("rocksdb memory usages: table-readers=%s, memtables=%s, "
-              "block-cache=%lu, pinned=%lu",
+              "block-cache=%lu, pinned=%lu, row-cache=%lu",
               tr_mem_usage.c_str(), mem_table_usage.c_str(),
               context_->block_cache->GetUsage(),
-              context_->block_cache->GetPinnedUsage());
+              context_->block_cache->GetPinnedUsage(),
+              (context_->row_cache ? context_->row_cache->GetUsage() : 0));
     //    auto status =
     //    context_->rocks_db->CompactRange(rocksdb::CompactRangeOptions(),
     //    nullptr, nullptr);
