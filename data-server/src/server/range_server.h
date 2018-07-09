@@ -79,6 +79,8 @@ private:
     void KVRangeDelete(common::ProtoMessage *msg);
     void KVScan(common::ProtoMessage *msg);
 
+    void Watch(common::ProtoMessage *msg);
+
     void TimeOut(const kvrpcpb::RequestHeader &req,
                  kvrpcpb::ResponseHeader *resp);
     void RangeNotFound(const kvrpcpb::RequestHeader &req,

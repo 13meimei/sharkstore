@@ -19,6 +19,7 @@
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/metapb.pb.h"
 #include "proto/gen/schpb.pb.h"
+#include "proto/gen/watchpb_v1.pb.h"
 #include "storage/metric.h"
 
 #include "server.h"
@@ -374,6 +375,11 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
         case funcpb::kFuncKvScan:
             KVScan(msg);
             break;
+
+        case funcpb::kFuncWatch:
+            Watch(msg);
+            break;
+
         default:
             FLOG_ERROR("func id is Invalid %d", header.func_id);
             return context_->socket_session->Send(msg, nullptr);
@@ -974,6 +980,16 @@ void RangeServer::KVScan(common::ProtoMessage *msg) {
     auto range = CheckAndDecodeRequest("KVScan", req, resp, msg);
     if (range != nullptr) {
         range->KVScan(msg, req);
+    }
+}
+
+void RangeServer::Watch(common::ProtoMessage *msg) {
+    watchpb::DsWatchCreateRequest req;
+    watchpb::DsWatchResponse *resp;
+
+    auto range = CheckAndDecodeRequest("watch", req, resp, msg);
+    if (range != nullptr) {
+        range->Watch(msg, req);
     }
 }
 

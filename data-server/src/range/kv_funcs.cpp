@@ -1,6 +1,7 @@
 //
 // Created by guo on 2/8/18.
 //
+#include <proto/gen/watchpb_v1.pb.h>
 #include "range.h"
 #include "server/range_server.h"
 
@@ -608,6 +609,22 @@ void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
                                                 ds_resp->mutable_header(), err);
     context_->socket_session->Send(msg, ds_resp);
 }
+
+void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req) {
+    errorpb::Error *err = nullptr;
+    auto ds_resp = new watchpb::DsWatchResponse;
+
+    // TODO
+    // find key
+
+    // if key found, add watcher
+
+    // else return error
+
+    context_->socket_session->SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
+    context_->socket_session->Send(msg, ds_resp);
+}
+
 }
 }
 }  // for namespace

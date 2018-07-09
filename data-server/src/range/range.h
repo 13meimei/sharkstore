@@ -32,6 +32,7 @@ _Pragma("once");
 
 #include "server/context_server.h"
 #include "server/run_status.h"
+#include "watch.hpp"
 
 namespace sharkstore {
 namespace dataserver {
@@ -104,6 +105,8 @@ public:
     void KVBatchDelete(common::ProtoMessage *msg, kvrpcpb::DsKvBatchDeleteRequest &req);
     void KVRangeDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRangeDeleteRequest &req);
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
+
+    void Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req);
 
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
@@ -383,6 +386,18 @@ private:
     range_status_t *range_status_ = nullptr;
 
     int64_t max_count_ = 1000;
+
+public:
+    WATCH_CODE AddKeyWatcher(std::string, common::SocketSession *);
+    void DelKeyWatcher(std::string);
+    std::vector<common::SocketSession*> GetKeyWatchers(std::string);
+
+//    WATCH_CODE AddRangeWatcher(std::string, common::SocketSession *);
+//    std::vector<common::SocketSession*> GetRangeWatchers(std::string);
+
+private:
+    WatcherSet key_watchers_;
+//    WatcherSet range_watchers_;
 };
 
 }  // namespace range

@@ -226,7 +226,7 @@ foreach(f IN LISTS SOURCES)
         COMPILE_DEFINITIONS "__FNAME__=\"${fname}\"") 
 endforeach() 
 
-add_executable(data-server ${SOURCES})
+add_executable(data-server ${SOURCES} src/range/watch.cpp src/range/watch.cpp src/range/watch.cpp)
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(
