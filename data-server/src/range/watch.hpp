@@ -18,17 +18,17 @@ namespace sharkstore {
                 WatcherSet() {
                 };
                 ~WatcherSet() {};
-                WATCH_CODE AddWatcher(std::string, common::SocketSession *);
+                WATCH_CODE AddWatcher(std::string, common::ProtoMessage*);
                 void DelWatcher(std::string);
-                std::vector<common::SocketSession*> GetWatchers(std::string);
+                std::vector<common::ProtoMessage*> GetWatchers(std::string);
 
             private:
-                std::map<std::string, std::map<int64_t, common::SocketSession *>> watcher_set_;
+                std::map<std::string, std::map<int64_t, common::ProtoMessage*>> watcher_set_;
                 std::mutex mutex_;
             };
 
 
-            WATCH_CODE WatcherSet::AddWatcher(std::string name, common::SocketSession* session) {
+            WATCH_CODE WatcherSet::AddWatcher(std::string name, common::ProtoMessage* msg) {
                 std::lock_guard(mutex_);
 
                 return WATCH_OK;
@@ -39,7 +39,7 @@ namespace sharkstore {
 
             }
 
-            std::vector<common::SocketSession*> WatcherSet::GetWathers(std::string name) {
+            std::vector<common::ProtoMessage*> WatcherSet::GetWatchers(std::string name) {
                 std::vector vec;
                 std::lock_guard(mutex_);
 

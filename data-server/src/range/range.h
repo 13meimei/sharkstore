@@ -388,12 +388,12 @@ private:
     int64_t max_count_ = 1000;
 
 public:
-    WATCH_CODE AddKeyWatcher(std::string, common::SocketSession *);
+    WATCH_CODE AddKeyWatcher(std::string, common::ProtoMessage*);
     void DelKeyWatcher(std::string);
-    std::vector<common::SocketSession*> GetKeyWatchers(std::string);
+    std::vector<common::ProtoMessage*> GetKeyWatchers(std::string);
 
-//    WATCH_CODE AddRangeWatcher(std::string, common::SocketSession *);
-//    std::vector<common::SocketSession*> GetRangeWatchers(std::string);
+//    WATCH_CODE AddRangeWatcher(std::string, common::ProtoMessage*);
+//    std::vector<common::ProtoMessage*> GetRangeWatchers(std::string);
 
 private:
     WatcherSet key_watchers_;

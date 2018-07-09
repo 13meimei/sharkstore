@@ -625,6 +625,10 @@ void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req)
     context_->socket_session->Send(msg, ds_resp);
 }
 
+    void Range::ApplyToWatch() {
+
+    }
+
 }
 }
 }  // for namespace
