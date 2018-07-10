@@ -97,7 +97,6 @@ private:
     uint64_t applied_ = 0;  // 大于applied_的不可截断
 
     std::vector<LogFile*> log_files_;
-    uint64_t next_file_seq_ = 1;
     uint64_t last_index_ = 0;
 };
 

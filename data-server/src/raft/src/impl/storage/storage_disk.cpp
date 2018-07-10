@@ -144,7 +144,6 @@ Status DiskStorage::openLogs() {
             return s;
         }
         log_files_.push_back(f);
-        next_file_seq_ = 2;
     } else {
         size_t count = 0;
         for (auto it = logs.begin(); it != logs.end(); ++it) {
@@ -157,7 +156,6 @@ Status DiskStorage::openLogs() {
             }
             ++count;
         }
-        next_file_seq_ = log_files_.back()->Seq() + 1;
     }
 
     // 恢复last index
@@ -189,19 +187,19 @@ Status DiskStorage::InitialState(pb::HardState* hs) const {
 }
 
 Status DiskStorage::tryRotate() {
+    assert(!log_files_.empty());
     auto f = log_files_.back();
     if (f->FileSize() >= ops_.log_file_size) {
         auto s = f->Rotate();
         if (!s.ok()) {
             return s;
         }
-        auto newf = new LogFile(path_, next_file_seq_, last_index_ + 1);
+        auto newf = new LogFile(path_, f->Seq() + 1, last_index_ + 1);
         s = newf->Open(false);
         if (!s.ok()) {
             return s;
         }
         log_files_.push_back(newf);
-        ++next_file_seq_;
     }
     return Status::OK();
 }
@@ -403,7 +401,6 @@ Status DiskStorage::truncateAll() {
         return s;
     }
     log_files_.push_back(f);
-    next_file_seq_ = 2;
     last_index_ = trunc_meta_.index();
 
     return Status::OK();
