@@ -647,7 +647,10 @@ void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req)
             break;
         }
 
+        // do not send response at this time.
+        // do send when watch event happend or timeout.
         AddKeyWatcher(req.req().key(), msg);
+        return;
 
     } while (false);
 
@@ -671,6 +674,8 @@ void Range::ApplyToWatch(common::ProtoMessage *msg/*, event ev*/) {
 
         // send
     context_->socket_session->Send(msg, resp);
+
+        // call delwatcher, because of lang-pull client
 }
 
 }
