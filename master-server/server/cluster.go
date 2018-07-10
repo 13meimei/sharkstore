@@ -705,11 +705,13 @@ func (c *Cluster) loadScheduleSwitch() error {
 		log.Error("load auto transfer failed, err[%v]", err)
 		return err
 	}
-	log.Info("auto transfer: %v", c.autoFailoverUnable)
+	log.Info("cluster autoTransferUnable: %v", c.autoTransferUnable)
+
 	if err := c.loadAutoSplit(); err != nil {
 		log.Error("load auto split failed, err[%v]", err)
 		return err
 	}
+	log.Info("cluster autoSplitUnable: %v", c.autoSplitUnable)
 	return nil
 }
 
