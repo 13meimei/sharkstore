@@ -614,20 +614,64 @@ void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req)
     errorpb::Error *err = nullptr;
     auto ds_resp = new watchpb::DsWatchResponse;
 
-    // TODO
-    // find key
+    do {
+        if (!VerifyLeader(err)) {
+            break;
+        }
 
-    // if key found, add watcher
+        auto &key = req.req().key();
+        if (key.empty()) {
+            FLOG_WARN("range[%" PRIu64 "] watch error: key empty", meta_.id());
+            err = KeyNotInRange(key);
+            break;
+        }
 
-    // else return error
+        auto epoch = req.header().range_epoch();
+        bool in_range = KeyInRange(key);
+        bool is_equal = EpochIsEqual(epoch);
+
+        if (!in_range) {
+            if (is_equal) {
+                err = KeyNotInRange(key);
+                break;
+            }
+        }
+
+        auto resp = ds_resp->mutable_resp();
+        std::string value;
+
+        auto ret = store_->Get(req.req().key(), &value);
+        if (ret.code() != sharkstore::Status::OK()) {
+            FLOG_ERROR("range[%" PRIu64 "] watch error: %s", meta_.id(), err->message().c_str());
+            err = Error("store get failed");
+            break;
+        }
+
+        AddKeyWatcher(req.req().key(), msg);
+
+    } while (false);
+
+    if (err != nullptr) {
+        FLOG_WARN("range[%" PRIu64 "] watch error: %s", meta_.id(), err->message().c_str());
+    }
 
     context_->socket_session->SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
     context_->socket_session->Send(msg, ds_resp);
 }
 
-    void Range::ApplyToWatch() {
+// TODO
+void Range::ApplyToWatch(common::ProtoMessage *msg/*, event ev*/) {
+    watchpb::DsWatchCreateRequest req;
+    watchpb::DsWatchResponse *resp;
 
-    }
+        // set header
+    context_->socket_session->SetResponseHeader(req.header(), resp->mutable_header(), nullptr);
+
+        // fix response content
+
+        // send
+    context_->socket_session->Send(msg, resp);
+}
 
 }
 }

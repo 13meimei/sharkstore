@@ -5,16 +5,16 @@
 namespace sharkstore {
     namespace dataserver {
         namespace range {
-            WATCH_CODE Range::AddKeyWatcher(std::string name, common::ProtoMessage* msg) {
+            void Range::AddKeyWatcher(std::string name, common::ProtoMessage* msg) {
                 return key_watchers_.AddWatcher(name, msg);
             }
 
-            void Range::DelKeyWatcher(std::string name) {
-                return key_watchers_.DelWatcher(name);
+            WATCH_CODE Range::DelKeyWatcher(int64_t id) {
+                return key_watchers_.DelWatcher(id);
             }
 
-            std::vector<common::ProtoMessage*> Range::GetKeyWatchers(std::string name) {
-                return key_watchers_.GetWatchers(name);
+            WATCH_CODE Range::GetKeyWatchers(std::vector<common::ProtoMessage*>& vec, std::string name) {
+                return key_watchers_.GetWatchers(vec, name);
             }
         }
     }

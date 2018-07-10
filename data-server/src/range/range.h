@@ -107,6 +107,7 @@ public:
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
 
     void Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req);
+    void ApplyToWatch(common::ProtoMessage *msg/*, event ev*/);
 
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
@@ -346,6 +347,7 @@ private:
 
     errorpb::Error *TimeOutError();
     errorpb::Error *RaftFailError();
+    errorpb::Error *Error(const char* );
     errorpb::Error *NoLeaderError();
     errorpb::Error *NotLeaderError(metapb::Peer &&peer);
     errorpb::Error *KeyNotInRange(const std::string &key);
@@ -388,9 +390,12 @@ private:
     int64_t max_count_ = 1000;
 
 public:
-    WATCH_CODE AddKeyWatcher(std::string, common::ProtoMessage*);
-    void DelKeyWatcher(std::string);
-    std::vector<common::ProtoMessage*> GetKeyWatchers(std::string);
+//    WATCH_CODE AddKeyWatcher(std::string, common::ProtoMessage*);
+//    void DelKeyWatcher(std::string);
+//    std::vector<common::ProtoMessage*> GetKeyWatchers(std::string);
+    void AddKeyWatcher(std::string, common::ProtoMessage*);
+    WATCH_CODE DelKeyWatcher(int64_t);
+    WATCH_CODE GetKeyWatchers(std::vector<common::ProtoMessage*>&, std::string);
 
 //    WATCH_CODE AddRangeWatcher(std::string, common::ProtoMessage*);
 //    std::vector<common::ProtoMessage*> GetRangeWatchers(std::string);

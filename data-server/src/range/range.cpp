@@ -580,6 +580,13 @@ void Range::ClearExpiredContext() {
     }
 }
 
+errorpb::Error *Range::Error(const char* str) {
+    errorpb::Error *err = new errorpb::Error;
+
+    err->set_message(str);
+    return err;
+}
+
 errorpb::Error *Range::NoLeaderError() {
     errorpb::Error *err = new errorpb::Error;
 
