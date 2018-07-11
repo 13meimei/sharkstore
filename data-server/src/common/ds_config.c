@@ -65,13 +65,13 @@ static int load_rocksdb_config(IniContext *ini_context) {
             load_integer_value_atleast(ini_context, section, "max_open_files", 1024, 100);
 
     ds_config.rocksdb_config.bytes_per_sync =
-            load_bytes_value_ne(ini_context, section, "bytes_per_sync", 1024 * 1024);
+            load_bytes_value_ne(ini_context, section, "bytes_per_sync", 0);
 
     ds_config.rocksdb_config.write_buffer_size =
-            load_bytes_value_ne(ini_context, section, "write_buffer_size", 512 << 20);
+            load_bytes_value_ne(ini_context, section, "write_buffer_size", 128 << 20);
 
     ds_config.rocksdb_config.max_write_buffer_number =
-            load_integer_value_atleast(ini_context, section, "max_write_buffer_number", 16, 2);
+            load_integer_value_atleast(ini_context, section, "max_write_buffer_number", 8, 2);
 
     ds_config.rocksdb_config.min_write_buffer_number_to_merge =
             load_integer_value_atleast(ini_context, section, "min_write_buffer_number_to_merge", 1, 1);
