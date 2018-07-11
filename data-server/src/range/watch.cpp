@@ -1,3 +1,4 @@
+//#include "watch.h"
 #include <common/socket_session.h>
 #include "watch.hpp"
 #include "range.h"
@@ -13,7 +14,7 @@ namespace sharkstore {
                 return key_watchers_.DelWatcher(id);
             }
 
-            WATCH_CODE Range::GetKeyWatchers(std::vector<common::ProtoMessage*>& vec, std::string name) {
+            uint32_t Range::GetKeyWatchers(std::vector<common::ProtoMessage*>& vec, std::string &name) {
                 return key_watchers_.GetWatchers(vec, name);
             }
         }
