@@ -48,6 +48,7 @@ typedef struct ds_config_s {
 
     struct {
         int recover_skip_fail;
+        int recover_concurrency;
         uint64_t check_size;
         uint64_t split_size;
         uint64_t max_size;

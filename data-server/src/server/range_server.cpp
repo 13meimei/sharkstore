@@ -1,15 +1,17 @@
 #include "range_server.h"
 
 #include <chrono>
+#include <future>
+#include <thread>
 
-#include <common/ds_config.h>
-#include <fastcommon/shared_func.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <rocksdb/advanced_options.h>
 #include <rocksdb/cache.h>
 #include <rocksdb/table.h>
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/utilities/blob_db/blob_db.h>
+#include <fastcommon/shared_func.h>
+#include <common/ds_config.h>
 
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -64,11 +66,22 @@ int RangeServer::Init(ContextServer *context) {
     }
     context_->meta_store = meta_store_;
 
-    std::vector<std::string> metas;
-    ret = meta_store_->GetAllRange(metas);
+    std::vector<std::string> meta_strs;
+    ret = meta_store_->GetAllRange(meta_strs);
     if (!ret.ok()) {
-        FLOG_ERROR("load local range meta failed(%s)", ret.ToString().c_str());
+        FLOG_ERROR("load range metas failed(%s)", ret.ToString().c_str());
         return -1;
+    }
+    // deserialize range meta
+    std::vector<metapb::Range> metas;
+    metas.resize(meta_strs.size());
+    int idx = 0;
+    for (const auto &str: meta_strs) {
+        if(!metas[idx].ParseFromString(str)) {
+            FLOG_ERROR("deserialize range meta failed(%s)", EncodeToHexString(str).c_str());
+            return -1;
+        }
+        ++idx;
     }
 
     if (Recover(metas) != 0) {
@@ -1060,23 +1073,68 @@ void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
     context_->socket_session->SetResponseHeader(req, resp, err);
 }
 
-int RangeServer::Recover(std::vector<std::string> &metas) {
-    FLOG_DEBUG("Recover meta range size %lu", metas.size());
-    for (auto &m : metas) {
-        metapb::Range meta;
-        if (!context_->socket_session->GetMessage(m.data(), m.size(), &meta)) {
-            FLOG_ERROR("Recover deserialize failed");
-            return -1;
-        }
-        FLOG_DEBUG("Recover meta range id=%" PRIu64, meta.id());
-        if (!CreateRange(meta).ok()) {
-            FLOG_ERROR("Recover CreateRange failed,id=%" PRIu64, meta.id());
-            if (ds_config.range_config.recover_skip_fail > 0) {
-                continue;
-            } else {
-                return -1;
+int RangeServer::Recover(const std::vector<metapb::Range> &metas) {
+    assert(ds_config.range_config.recover_concurrency > 0);
+    auto actual_concurrency = std::min(metas.size() / 4 + 1,
+                                       static_cast<size_t>(ds_config.range_config.recover_concurrency));
+    if (actual_concurrency > 50)  {
+        actual_concurrency = 50;
+    }
+
+    std::vector<std::future<bool>> recover_futures;
+    std::vector<uint64_t> failed_ranges;
+    std::atomic<size_t> recover_pos = {0};
+
+    FLOG_INFO("Start to recovery ranges. total ranges=%lu, concurrency=%lu, skip_fail=%d", metas.size(),
+              actual_concurrency, ds_config.range_config.recover_skip_fail);
+
+    auto begin = std::chrono::system_clock::now();
+
+    for (size_t i = 0; i < actual_concurrency; ++i) {
+        auto f = std::async(std::launch::async, [&, this] {
+            while (true) {
+                auto pos = recover_pos.fetch_add(1);
+                if (pos >= metas.size()) {
+                    return true;
+                }
+                const auto& meta = metas[pos];
+                FLOG_DEBUG("Start Recover range id=%" PRIu64, meta.id());
+                auto s = CreateRange(meta, 0);
+                if (!s.ok()) {
+                    FLOG_ERROR("Recover CreateRange failed,id=%" PRIu64, meta.id());
+                    if (ds_config.range_config.recover_skip_fail > 0) { // allow fail
+                        failed_ranges.push_back(meta.id());
+                        continue;
+                    } else {
+                        // let other thread quit
+                        recover_pos = metas.size();
+                        return false;
+                    }
+                }
+            }
+        });
+        recover_futures.push_back(std::move(f));
+    }
+    for (auto &f : recover_futures) {
+        if (!f.get()) return -1;
+    }
+
+    auto took_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now() - begin);
+
+    FLOG_INFO("Range recovery finished. success=%lu, failed=%u, time used=%lds%ldms",
+              metas.size() - failed_ranges.size(), failed_ranges.size(),
+              took_ms / 1000, took_ms % 1000);
+
+    if (!failed_ranges.empty()) {
+        std::string failed_str("[");
+        for (std::size_t i = 0; i < failed_ranges.size(); ++i) {
+            failed_str += std::to_string(failed_ranges[i]);
+            if (i != failed_ranges.size() - 1)  { // not last one
+                failed_str += ", ";
             }
         }
+        FLOG_ERROR("Range recovery failed ranges: %s", failed_str.c_str());
     }
 
     return 0;
