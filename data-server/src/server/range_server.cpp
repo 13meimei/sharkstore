@@ -184,7 +184,6 @@ int RangeServer::OpenDB() {
     if (ds_config.rocksdb_config.block_cache_size > 0) {
         table_options.block_cache = context_->block_cache;
     }
-
     if (ds_config.rocksdb_config.cache_index_and_filter_blocks){
         table_options.cache_index_and_filter_blocks = true;
     }
@@ -195,6 +194,11 @@ int RangeServer::OpenDB() {
         context_->row_cache =
                 rocksdb::NewLRUCache(ds_config.rocksdb_config.row_cache_size);
         ops.row_cache = context_->row_cache;
+    }
+    // stats
+    if (ds_config.rocksdb_config.enable_stats) {
+        context_->db_stats = rocksdb::CreateDBStatistics();
+        ops.statistics = context_->db_stats;
     }
     ops.max_open_files = ds_config.rocksdb_config.max_open_files;
     ops.create_if_missing = true;
@@ -1077,7 +1081,7 @@ int RangeServer::recover(const std::vector<metapb::Range> &metas) {
                         std::lock_guard<std::mutex> lock(failed_mu);
                         failed_ranges.push_back(meta.id());
                     }
-                    if (ds_config.range_config.recover_skip_fail > 0) { // allow failed
+                    if (ds_config.range_config.recover_skip_fail) { // allow failed
                         continue;
                     } else {
                         pos = metas.size(); // failed, let other threads exit

@@ -37,6 +37,7 @@ typedef struct ds_config_s {
         int min_blob_size;
         bool enable_garbage_collection;
         int ttl;
+        bool enable_stats;
     } rocksdb_config;
 
     struct {
@@ -47,7 +48,7 @@ typedef struct ds_config_s {
     } hb_config;
 
     struct {
-        int recover_skip_fail;
+        bool recover_skip_fail;
         int recover_concurrency;
         uint64_t check_size;
         uint64_t split_size;

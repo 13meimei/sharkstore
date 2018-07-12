@@ -195,12 +195,21 @@ void RunStatus::printDBMetric() {
               context_->block_cache->GetUsage(),
               context_->block_cache->GetPinnedUsage(),
               (context_->row_cache ? context_->row_cache->GetUsage() : 0));
-    //    auto status =
-    //    context_->rocks_db->CompactRange(rocksdb::CompactRangeOptions(),
-    //    nullptr, nullptr);
-    //    if (!status.ok()) {
-    //        FLOG_ERROR("compact db failed: %s", status.ToString().c_str());
-    //    }
+
+    auto stat = context_->db_stats;
+    if (stat) {
+        FLOG_INFO("rocksdb row cache stats: hit=%lu, miss=%lu",
+                  stat->getAndResetTickerCount(rocksdb::ROW_CACHE_HIT),
+                  stat->getAndResetTickerCount(rocksdb::ROW_CACHE_MISS));
+
+        FLOG_INFO("rocksdb block cache stats: hit=%lu, miss=%lu",
+                  stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_HIT),
+                  stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_MISS));
+
+        FLOG_INFO("rockdb get histograms: %s", stat->getHistogramString(rocksdb::DB_GET).c_str());
+        FLOG_INFO("rockdb write histograms: %s", stat->getHistogramString(rocksdb::DB_WRITE).c_str());
+        stat->Reset();
+    }
 }
 
 }  // namespace server

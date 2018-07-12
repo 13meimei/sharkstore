@@ -92,10 +92,10 @@ static int load_rocksdb_config(IniContext *ini_context) {
             load_integer_value_atleast(ini_context, section, "max_background_compactions", 32, 1);
 
     ds_config.rocksdb_config.disable_auto_compactions =
-            iniGetIntValue(section, "disable_auto_compactions", ini_context, 0);
+            (bool)iniGetIntValue(section, "disable_auto_compactions", ini_context, 0);
 
     ds_config.rocksdb_config.read_checksum =
-            iniGetIntValue(section, "read_checksum", ini_context, 1);
+            (bool)iniGetIntValue(section, "read_checksum", ini_context, 1);
 
     ds_config.rocksdb_config.level0_file_num_compaction_trigger =
             load_integer_value_atleast(ini_context, section, "level0_file_num_compaction_trigger", 8, 1);
@@ -105,19 +105,22 @@ static int load_rocksdb_config(IniContext *ini_context) {
             load_integer_value_atleast(ini_context, section, "level0_stop_writes_trigger", 46, 1);
 
     ds_config.rocksdb_config.disable_wal =
-            iniGetIntValue(section, "disable_wal", ini_context, 0);
+            (bool)iniGetIntValue(section, "disable_wal", ini_context, 0);
 
     ds_config.rocksdb_config.cache_index_and_filter_blocks =
-            iniGetIntValue(section, "cache_index_and_filter_blocks", ini_context, 0);
+            (bool)iniGetIntValue(section, "cache_index_and_filter_blocks", ini_context, 0);
 
     ds_config.rocksdb_config.storage_type = load_integer_value_atleast(ini_context, section, "storage_type", 0, 0);
 
     ds_config.rocksdb_config.min_blob_size = load_integer_value_atleast(ini_context, section, "min_blob_size", 0, 0);
 
     ds_config.rocksdb_config.enable_garbage_collection =
-            iniGetIntValue(section, "enable_garbage_collection",ini_context,  0);
+            (bool)iniGetIntValue(section, "enable_garbage_collection",ini_context,  0);
 
     ds_config.rocksdb_config.ttl = load_integer_value_atleast(ini_context, section, "ttl", 0, 0);
+
+    ds_config.rocksdb_config.enable_stats =
+            (bool)iniGetIntValue(section, "enable_stats",ini_context, 1);
 
     return 0;
 }
@@ -150,6 +153,7 @@ void print_rocksdb_config() {
               "\n\tmin_blob_size: %d"
               "\n\tenable_garbage_collection: %d"
               "\n\tttl: %d"
+              "\n\tenable_stats: %d"
               ,
               ds_config.rocksdb_config.path,
               ds_config.rocksdb_config.block_cache_size,
@@ -176,7 +180,8 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.storage_type,
               ds_config.rocksdb_config.min_blob_size,
               ds_config.rocksdb_config.enable_garbage_collection,
-              ds_config.rocksdb_config.ttl
+              ds_config.rocksdb_config.ttl,
+              ds_config.rocksdb_config.enable_stats
               );
 }
 
@@ -196,7 +201,7 @@ static int load_range_config(IniContext *ini_context) {
     }
 
     ds_config.range_config.recover_skip_fail =
-            iniGetIntValue(section, "recover_skip_fail", ini_context, 1);
+            (bool)iniGetIntValue(section, "recover_skip_fail", ini_context, 1);
 
     ds_config.range_config.recover_concurrency =
             load_integer_value_atleast(ini_context, section, "recover_concurrency", 4, 1);
