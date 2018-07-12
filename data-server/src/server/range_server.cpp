@@ -1059,6 +1059,7 @@ int RangeServer::recover(const std::vector<metapb::Range> &metas) {
     std::vector<uint64_t> failed_ranges;
     std::mutex failed_mu;
     std::atomic<size_t> recover_pos = {0};
+    std::atomic<size_t> success_counter = {0};
 
     FLOG_INFO("Start to recovery ranges. total ranges=%lu, concurrency=%lu, skip_fail=%d", metas.size(),
               actual_concurrency, ds_config.range_config.recover_skip_fail);
@@ -1075,7 +1076,9 @@ int RangeServer::recover(const std::vector<metapb::Range> &metas) {
                 const auto& meta = metas[pos];
                 FLOG_DEBUG("Start Recover range id=%" PRIu64, meta.id());
                 auto s = recover(meta);
-                if (!s.ok()) {
+                if (s.ok()) {
+                    ++success_counter;
+                } else {
                     FLOG_ERROR("Recovery range[%lu] failed: %s", meta.id(), s.ToString().c_str());
                     {
                         std::lock_guard<std::mutex> lock(failed_mu);
@@ -1084,7 +1087,7 @@ int RangeServer::recover(const std::vector<metapb::Range> &metas) {
                     if (ds_config.range_config.recover_skip_fail) { // allow failed
                         continue;
                     } else {
-                        pos = metas.size(); // failed, let other threads exit
+                        recover_pos = metas.size(); // failed, let other threads exit
                         return s;
                     }
                 }
@@ -1114,8 +1117,8 @@ int RangeServer::recover(const std::vector<metapb::Range> &metas) {
                   last_error.ToString().c_str(), failed_ranges.size());
         return -1;
     } else {
-        FLOG_INFO("Range recovery finished. failed=%lu, time used=%lds%ldms",
-                  failed_ranges.size(), took_ms / 1000, took_ms % 1000);
+        FLOG_INFO("Range recovery finished. success=%lu, failed=%lu, time used=%lds%ldms",
+                  success_counter.load(), failed_ranges.size(), took_ms / 1000, took_ms % 1000);
         return 0;
     }
 }
