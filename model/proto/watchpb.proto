@@ -7,11 +7,8 @@ import "kvrpcpb.proto";
 option (gogoproto.marshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 option (gogoproto.unmarshaler_all) = true;
-
-syntax = "proto3";
-
-import "kvrpcpb.proto";
 option java_package = "com.tig.shark.common.network.grpc";
+
 enum EventType {
     PUT = 0;
     DELETE = 1;
@@ -55,7 +52,7 @@ message WatchKeyValue {
 
 //create watch simple key
 message DsWatchRequest {
-    RequestHeader header = 1;
+    kvrpcpb.RequestHeader header = 1;
     WatchCreateRequest req = 2;
 }
 
@@ -79,7 +76,7 @@ message WatchCreateRequest {
 
 //watch simple key response
 message DsWatchResponse {
-    ResponseHeader header = 1;
+    kvrpcpb.ResponseHeader header = 1;
     WatchResponse resp = 2;
 }
 
@@ -93,13 +90,13 @@ message WatchResponse {
 
 //simple KV add request
 message DsKvWatchPutRequest {
-    RequestHeader header = 1;
+    kvrpcpb.RequestHeader header = 1;
     KvWatchPutRequest req = 2;
 }
 
 //simple KV add response
 message DsKvWatchPutResponse {
-    ResponseHeader header = 1;
+    kvrpcpb.ResponseHeader header = 1;
     KvWatchResponse resp = 2;
 }
 
@@ -109,13 +106,13 @@ message KvWatchPutRequest {
 
 //simple KV delete request
 message DsKvWatchDeleteRequest {
-    RequestHeader header = 1;
+    kvrpcpb.RequestHeader header = 1;
     KvWatchDeleteRequest req = 2;
 }
 
 //simple KV delete response
 message DsKvWatchDeleteResponse {
-    ResponseHeader header = 1;
+    kvrpcpb.ResponseHeader header = 1;
     KvWatchResponse resp = 2;
 }
 
@@ -131,7 +128,7 @@ message KvWatchResponse {
 
 //get single or multiple keys request
 message DsKvWatchGetMultiRequest {
-    RequestHeader header = 1;
+    kvrpcpb.RequestHeader header = 1;
     WatchKeyValue kv = 2;
     bool prefix = 3; // 单key false ，prefix（多key） true
     uint32 limit = 4;
@@ -139,7 +136,7 @@ message DsKvWatchGetMultiRequest {
 
 //get single or multiple keys response
 message DsKvWatchGetMultiResponse {
-    ResponseHeader header = 1;
+    kvrpcpb.ResponseHeader header = 1;
     int32 code = 2; // 0 success 1 failure
     repeated WatchKeyValue kvs = 3;
 }

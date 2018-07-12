@@ -377,13 +377,13 @@ class WatchKeyValue : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::int64 version() const;
   void set_version(::google::protobuf::int64 value);
 
-  // int64 ExpireAt = 4;
+  // int64 expireAt = 4;
   void clear_expireat();
   static const int kExpireAtFieldNumber = 4;
   ::google::protobuf::int64 expireat() const;
   void set_expireat(::google::protobuf::int64 value);
 
-  // int64 TableId = 5;
+  // int64 tableId = 5;
   void clear_tableid();
   static const int kTableIdFieldNumber = 5;
   ::google::protobuf::int64 tableid() const;
@@ -614,19 +614,19 @@ class WatchCreateRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::watchpb::WatchKeyValue* release_kv();
   void set_allocated_kv(::watchpb::WatchKeyValue* kv);
 
-  // int64 StartVersion = 2;
+  // int64 startVersion = 2;
   void clear_startversion();
   static const int kStartVersionFieldNumber = 2;
   ::google::protobuf::int64 startversion() const;
   void set_startversion(::google::protobuf::int64 value);
 
-  // int64 WatchId = 4;
+  // int64 watchId = 4;
   void clear_watchid();
   static const int kWatchIdFieldNumber = 4;
   ::google::protobuf::int64 watchid() const;
   void set_watchid(::google::protobuf::int64 value);
 
-  // int64 ExpireAt = 5;
+  // int64 expireAt = 5;
   void clear_expireat();
   static const int kExpireAtFieldNumber = 5;
   ::google::protobuf::int64 expireat() const;
@@ -857,7 +857,7 @@ class WatchResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
   const ::google::protobuf::RepeatedPtrField< ::watchpb::Event >&
       events() const;
 
-  // int64 WatchId = 1;
+  // int64 watchId = 1;
   void clear_watchid();
   static const int kWatchIdFieldNumber = 1;
   ::google::protobuf::int64 watchid() const;
@@ -2057,32 +2057,32 @@ inline void WatchKeyValue::set_allocated_value(::std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:watchpb.WatchKeyValue.value)
 }
 
-// int64 ExpireAt = 4;
+// int64 expireAt = 4;
 inline void WatchKeyValue::clear_expireat() {
   expireat_ = GOOGLE_LONGLONG(0);
 }
 inline ::google::protobuf::int64 WatchKeyValue::expireat() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.ExpireAt)
+  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.expireAt)
   return expireat_;
 }
 inline void WatchKeyValue::set_expireat(::google::protobuf::int64 value) {
   
   expireat_ = value;
-  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.ExpireAt)
+  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.expireAt)
 }
 
-// int64 TableId = 5;
+// int64 tableId = 5;
 inline void WatchKeyValue::clear_tableid() {
   tableid_ = GOOGLE_LONGLONG(0);
 }
 inline ::google::protobuf::int64 WatchKeyValue::tableid() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.TableId)
+  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.tableId)
   return tableid_;
 }
 inline void WatchKeyValue::set_tableid(::google::protobuf::int64 value) {
   
   tableid_ = value;
-  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.TableId)
+  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.tableId)
 }
 
 // bytes ext = 6;
@@ -2266,18 +2266,18 @@ inline void WatchCreateRequest::set_allocated_kv(::watchpb::WatchKeyValue* kv) {
   // @@protoc_insertion_point(field_set_allocated:watchpb.WatchCreateRequest.kv)
 }
 
-// int64 StartVersion = 2;
+// int64 startVersion = 2;
 inline void WatchCreateRequest::clear_startversion() {
   startversion_ = GOOGLE_LONGLONG(0);
 }
 inline ::google::protobuf::int64 WatchCreateRequest::startversion() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchCreateRequest.StartVersion)
+  // @@protoc_insertion_point(field_get:watchpb.WatchCreateRequest.startVersion)
   return startversion_;
 }
 inline void WatchCreateRequest::set_startversion(::google::protobuf::int64 value) {
   
   startversion_ = value;
-  // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.StartVersion)
+  // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.startVersion)
 }
 
 // repeated .watchpb.FilterType filters = 3;
@@ -2310,32 +2310,32 @@ WatchCreateRequest::mutable_filters() {
   return &filters_;
 }
 
-// int64 WatchId = 4;
+// int64 watchId = 4;
 inline void WatchCreateRequest::clear_watchid() {
   watchid_ = GOOGLE_LONGLONG(0);
 }
 inline ::google::protobuf::int64 WatchCreateRequest::watchid() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchCreateRequest.WatchId)
+  // @@protoc_insertion_point(field_get:watchpb.WatchCreateRequest.watchId)
   return watchid_;
 }
 inline void WatchCreateRequest::set_watchid(::google::protobuf::int64 value) {
   
   watchid_ = value;
-  // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.WatchId)
+  // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.watchId)
 }
 
-// int64 ExpireAt = 5;
+// int64 expireAt = 5;
 inline void WatchCreateRequest::clear_expireat() {
   expireat_ = GOOGLE_LONGLONG(0);
 }
 inline ::google::protobuf::int64 WatchCreateRequest::expireat() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchCreateRequest.ExpireAt)
+  // @@protoc_insertion_point(field_get:watchpb.WatchCreateRequest.expireAt)
   return expireat_;
 }
 inline void WatchCreateRequest::set_expireat(::google::protobuf::int64 value) {
   
   expireat_ = value;
-  // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.ExpireAt)
+  // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.expireAt)
 }
 
 // bool prefix = 6;
@@ -2440,18 +2440,18 @@ inline void DsWatchResponse::set_allocated_resp(::watchpb::WatchResponse* resp) 
 
 // WatchResponse
 
-// int64 WatchId = 1;
+// int64 watchId = 1;
 inline void WatchResponse::clear_watchid() {
   watchid_ = GOOGLE_LONGLONG(0);
 }
 inline ::google::protobuf::int64 WatchResponse::watchid() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchResponse.WatchId)
+  // @@protoc_insertion_point(field_get:watchpb.WatchResponse.watchId)
   return watchid_;
 }
 inline void WatchResponse::set_watchid(::google::protobuf::int64 value) {
   
   watchid_ = value;
-  // @@protoc_insertion_point(field_set:watchpb.WatchResponse.WatchId)
+  // @@protoc_insertion_point(field_set:watchpb.WatchResponse.watchId)
 }
 
 // int32 code = 2;
