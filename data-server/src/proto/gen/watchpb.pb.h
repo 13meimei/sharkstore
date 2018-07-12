@@ -329,23 +329,31 @@ class WatchKeyValue : public ::google::protobuf::Message /* @@protoc_insertion_p
 
   // accessors -------------------------------------------------------
 
-  // bytes key = 1;
+  // repeated bytes key = 2;
+  int key_size() const;
   void clear_key();
-  static const int kKeyFieldNumber = 1;
-  const ::std::string& key() const;
-  void set_key(const ::std::string& value);
+  static const int kKeyFieldNumber = 2;
+  const ::std::string& key(int index) const;
+  ::std::string* mutable_key(int index);
+  void set_key(int index, const ::std::string& value);
   #if LANG_CXX11
-  void set_key(::std::string&& value);
+  void set_key(int index, ::std::string&& value);
   #endif
-  void set_key(const char* value);
-  void set_key(const void* value, size_t size);
-  ::std::string* mutable_key();
-  ::std::string* release_key();
-  void set_allocated_key(::std::string* key);
+  void set_key(int index, const char* value);
+  void set_key(int index, const void* value, size_t size);
+  ::std::string* add_key();
+  void add_key(const ::std::string& value);
+  #if LANG_CXX11
+  void add_key(::std::string&& value);
+  #endif
+  void add_key(const char* value);
+  void add_key(const void* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& key() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_key();
 
-  // bytes value = 3;
+  // bytes value = 4;
   void clear_value();
-  static const int kValueFieldNumber = 3;
+  static const int kValueFieldNumber = 4;
   const ::std::string& value() const;
   void set_value(const ::std::string& value);
   #if LANG_CXX11
@@ -371,34 +379,34 @@ class WatchKeyValue : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::std::string* release_ext();
   void set_allocated_ext(::std::string* ext);
 
-  // int64 version = 2;
+  // int64 tableId = 1;
+  void clear_tableid();
+  static const int kTableIdFieldNumber = 1;
+  ::google::protobuf::int64 tableid() const;
+  void set_tableid(::google::protobuf::int64 value);
+
+  // int64 version = 3;
   void clear_version();
-  static const int kVersionFieldNumber = 2;
+  static const int kVersionFieldNumber = 3;
   ::google::protobuf::int64 version() const;
   void set_version(::google::protobuf::int64 value);
 
-  // int64 expireAt = 4;
+  // uint64 expireAt = 5;
   void clear_expireat();
-  static const int kExpireAtFieldNumber = 4;
-  ::google::protobuf::int64 expireat() const;
-  void set_expireat(::google::protobuf::int64 value);
-
-  // int64 tableId = 5;
-  void clear_tableid();
-  static const int kTableIdFieldNumber = 5;
-  ::google::protobuf::int64 tableid() const;
-  void set_tableid(::google::protobuf::int64 value);
+  static const int kExpireAtFieldNumber = 5;
+  ::google::protobuf::uint64 expireat() const;
+  void set_expireat(::google::protobuf::uint64 value);
 
   // @@protoc_insertion_point(class_scope:watchpb.WatchKeyValue)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr key_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> key_;
   ::google::protobuf::internal::ArenaStringPtr value_;
   ::google::protobuf::internal::ArenaStringPtr ext_;
-  ::google::protobuf::int64 version_;
-  ::google::protobuf::int64 expireat_;
   ::google::protobuf::int64 tableid_;
+  ::google::protobuf::int64 version_;
+  ::google::protobuf::uint64 expireat_;
   mutable int _cached_size_;
   friend struct protobuf_watchpb_2eproto::TableStruct;
 };
@@ -1937,60 +1945,90 @@ inline void Event::set_allocated_kv(::watchpb::WatchKeyValue* kv) {
 
 // WatchKeyValue
 
-// bytes key = 1;
-inline void WatchKeyValue::clear_key() {
-  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// int64 tableId = 1;
+inline void WatchKeyValue::clear_tableid() {
+  tableid_ = GOOGLE_LONGLONG(0);
 }
-inline const ::std::string& WatchKeyValue::key() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.key)
-  return key_.GetNoArena();
+inline ::google::protobuf::int64 WatchKeyValue::tableid() const {
+  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.tableId)
+  return tableid_;
 }
-inline void WatchKeyValue::set_key(const ::std::string& value) {
+inline void WatchKeyValue::set_tableid(::google::protobuf::int64 value) {
   
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.key)
-}
-#if LANG_CXX11
-inline void WatchKeyValue::set_key(::std::string&& value) {
-  
-  key_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:watchpb.WatchKeyValue.key)
-}
-#endif
-inline void WatchKeyValue::set_key(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:watchpb.WatchKeyValue.key)
-}
-inline void WatchKeyValue::set_key(const void* value, size_t size) {
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:watchpb.WatchKeyValue.key)
-}
-inline ::std::string* WatchKeyValue::mutable_key() {
-  
-  // @@protoc_insertion_point(field_mutable:watchpb.WatchKeyValue.key)
-  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* WatchKeyValue::release_key() {
-  // @@protoc_insertion_point(field_release:watchpb.WatchKeyValue.key)
-  
-  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void WatchKeyValue::set_allocated_key(::std::string* key) {
-  if (key != NULL) {
-    
-  } else {
-    
-  }
-  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:watchpb.WatchKeyValue.key)
+  tableid_ = value;
+  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.tableId)
 }
 
-// int64 version = 2;
+// repeated bytes key = 2;
+inline int WatchKeyValue::key_size() const {
+  return key_.size();
+}
+inline void WatchKeyValue::clear_key() {
+  key_.Clear();
+}
+inline const ::std::string& WatchKeyValue::key(int index) const {
+  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.key)
+  return key_.Get(index);
+}
+inline ::std::string* WatchKeyValue::mutable_key(int index) {
+  // @@protoc_insertion_point(field_mutable:watchpb.WatchKeyValue.key)
+  return key_.Mutable(index);
+}
+inline void WatchKeyValue::set_key(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.key)
+  key_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void WatchKeyValue::set_key(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.key)
+  key_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void WatchKeyValue::set_key(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  key_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:watchpb.WatchKeyValue.key)
+}
+inline void WatchKeyValue::set_key(int index, const void* value, size_t size) {
+  key_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:watchpb.WatchKeyValue.key)
+}
+inline ::std::string* WatchKeyValue::add_key() {
+  // @@protoc_insertion_point(field_add_mutable:watchpb.WatchKeyValue.key)
+  return key_.Add();
+}
+inline void WatchKeyValue::add_key(const ::std::string& value) {
+  key_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:watchpb.WatchKeyValue.key)
+}
+#if LANG_CXX11
+inline void WatchKeyValue::add_key(::std::string&& value) {
+  key_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:watchpb.WatchKeyValue.key)
+}
+#endif
+inline void WatchKeyValue::add_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  key_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:watchpb.WatchKeyValue.key)
+}
+inline void WatchKeyValue::add_key(const void* value, size_t size) {
+  key_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:watchpb.WatchKeyValue.key)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+WatchKeyValue::key() const {
+  // @@protoc_insertion_point(field_list:watchpb.WatchKeyValue.key)
+  return key_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+WatchKeyValue::mutable_key() {
+  // @@protoc_insertion_point(field_mutable_list:watchpb.WatchKeyValue.key)
+  return &key_;
+}
+
+// int64 version = 3;
 inline void WatchKeyValue::clear_version() {
   version_ = GOOGLE_LONGLONG(0);
 }
@@ -2004,7 +2042,7 @@ inline void WatchKeyValue::set_version(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.version)
 }
 
-// bytes value = 3;
+// bytes value = 4;
 inline void WatchKeyValue::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -2057,32 +2095,18 @@ inline void WatchKeyValue::set_allocated_value(::std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:watchpb.WatchKeyValue.value)
 }
 
-// int64 expireAt = 4;
+// uint64 expireAt = 5;
 inline void WatchKeyValue::clear_expireat() {
-  expireat_ = GOOGLE_LONGLONG(0);
+  expireat_ = GOOGLE_ULONGLONG(0);
 }
-inline ::google::protobuf::int64 WatchKeyValue::expireat() const {
+inline ::google::protobuf::uint64 WatchKeyValue::expireat() const {
   // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.expireAt)
   return expireat_;
 }
-inline void WatchKeyValue::set_expireat(::google::protobuf::int64 value) {
+inline void WatchKeyValue::set_expireat(::google::protobuf::uint64 value) {
   
   expireat_ = value;
   // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.expireAt)
-}
-
-// int64 tableId = 5;
-inline void WatchKeyValue::clear_tableid() {
-  tableid_ = GOOGLE_LONGLONG(0);
-}
-inline ::google::protobuf::int64 WatchKeyValue::tableid() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.tableId)
-  return tableid_;
-}
-inline void WatchKeyValue::set_tableid(::google::protobuf::int64 value) {
-  
-  tableid_ = value;
-  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.tableId)
 }
 
 // bytes ext = 6;

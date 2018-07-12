@@ -145,11 +145,11 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchKeyValue, tableid_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchKeyValue, key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchKeyValue, version_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchKeyValue, value_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchKeyValue, expireat_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchKeyValue, tableid_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchKeyValue, ext_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsWatchRequest, _internal_metadata_),
@@ -393,9 +393,9 @@ void AddDescriptorsImpl() {
       "\n\rwatchpb.proto\022\007watchpb\032\rkvrpcpb.proto\""
       "M\n\005Event\022 \n\004type\030\001 \001(\0162\022.watchpb.EventTy"
       "pe\022\"\n\002kv\030\002 \001(\0132\026.watchpb.WatchKeyValue\"l"
-      "\n\rWatchKeyValue\022\013\n\003key\030\001 \001(\014\022\017\n\007version\030"
-      "\002 \001(\003\022\r\n\005value\030\003 \001(\014\022\020\n\010expireAt\030\004 \001(\003\022\017"
-      "\n\007tableId\030\005 \001(\003\022\013\n\003ext\030\006 \001(\014\"b\n\016DsWatchR"
+      "\n\rWatchKeyValue\022\017\n\007tableId\030\001 \001(\003\022\013\n\003key\030"
+      "\002 \003(\014\022\017\n\007version\030\003 \001(\003\022\r\n\005value\030\004 \001(\014\022\020\n"
+      "\010expireAt\030\005 \001(\004\022\013\n\003ext\030\006 \001(\014\"b\n\016DsWatchR"
       "equest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Request"
       "Header\022(\n\003req\030\002 \001(\0132\033.watchpb.WatchCreat"
       "eRequest\"\247\001\n\022WatchCreateRequest\022\"\n\002kv\030\001 "
@@ -831,11 +831,11 @@ void Event::set_allocated_kv(::watchpb::WatchKeyValue* kv) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int WatchKeyValue::kTableIdFieldNumber;
 const int WatchKeyValue::kKeyFieldNumber;
 const int WatchKeyValue::kVersionFieldNumber;
 const int WatchKeyValue::kValueFieldNumber;
 const int WatchKeyValue::kExpireAtFieldNumber;
-const int WatchKeyValue::kTableIdFieldNumber;
 const int WatchKeyValue::kExtFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -850,12 +850,9 @@ WatchKeyValue::WatchKeyValue()
 WatchKeyValue::WatchKeyValue(const WatchKeyValue& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
+      key_(from.key_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.key().size() > 0) {
-    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
-  }
   value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.value().size() > 0) {
     value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
@@ -864,19 +861,18 @@ WatchKeyValue::WatchKeyValue(const WatchKeyValue& from)
   if (from.ext().size() > 0) {
     ext_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ext_);
   }
-  ::memcpy(&version_, &from.version_,
-    static_cast<size_t>(reinterpret_cast<char*>(&tableid_) -
-    reinterpret_cast<char*>(&version_)) + sizeof(tableid_));
+  ::memcpy(&tableid_, &from.tableid_,
+    static_cast<size_t>(reinterpret_cast<char*>(&expireat_) -
+    reinterpret_cast<char*>(&tableid_)) + sizeof(expireat_));
   // @@protoc_insertion_point(copy_constructor:watchpb.WatchKeyValue)
 }
 
 void WatchKeyValue::SharedCtor() {
-  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ext_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&version_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&tableid_) -
-      reinterpret_cast<char*>(&version_)) + sizeof(tableid_));
+  ::memset(&tableid_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&expireat_) -
+      reinterpret_cast<char*>(&tableid_)) + sizeof(expireat_));
   _cached_size_ = 0;
 }
 
@@ -886,7 +882,6 @@ WatchKeyValue::~WatchKeyValue() {
 }
 
 void WatchKeyValue::SharedDtor() {
-  key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ext_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -920,12 +915,12 @@ void WatchKeyValue::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  key_.Clear();
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ext_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&version_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&tableid_) -
-      reinterpret_cast<char*>(&version_)) + sizeof(tableid_));
+  ::memset(&tableid_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&expireat_) -
+      reinterpret_cast<char*>(&tableid_)) + sizeof(expireat_));
   _internal_metadata_.Clear();
 }
 
@@ -939,22 +934,36 @@ bool WatchKeyValue::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // bytes key = 1;
+      // int64 tableId = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_key()));
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &tableid_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // int64 version = 2;
+      // repeated bytes key = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->add_key()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int64 version = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
@@ -965,10 +974,10 @@ bool WatchKeyValue::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes value = 3;
-      case 3: {
+      // bytes value = 4;
+      case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_value()));
         } else {
@@ -977,28 +986,14 @@ bool WatchKeyValue::MergePartialFromCodedStream(
         break;
       }
 
-      // int64 expireAt = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
-                 input, &expireat_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // int64 tableId = 5;
+      // uint64 expireAt = 5;
       case 5: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
-                 input, &tableid_)));
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &expireat_)));
         } else {
           goto handle_unusual;
         }
@@ -1043,31 +1038,31 @@ void WatchKeyValue::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes key = 1;
-  if (this->key().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->key(), output);
+  // int64 tableId = 1;
+  if (this->tableid() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->tableid(), output);
   }
 
-  // int64 version = 2;
+  // repeated bytes key = 2;
+  for (int i = 0, n = this->key_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytes(
+      2, this->key(i), output);
+  }
+
+  // int64 version = 3;
   if (this->version() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->version(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(3, this->version(), output);
   }
 
-  // bytes value = 3;
+  // bytes value = 4;
   if (this->value().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      3, this->value(), output);
+      4, this->value(), output);
   }
 
-  // int64 expireAt = 4;
+  // uint64 expireAt = 5;
   if (this->expireat() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(4, this->expireat(), output);
-  }
-
-  // int64 tableId = 5;
-  if (this->tableid() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->tableid(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(5, this->expireat(), output);
   }
 
   // bytes ext = 6;
@@ -1090,33 +1085,32 @@ void WatchKeyValue::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes key = 1;
-  if (this->key().size() > 0) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        1, this->key(), target);
+  // int64 tableId = 1;
+  if (this->tableid() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(1, this->tableid(), target);
   }
 
-  // int64 version = 2;
+  // repeated bytes key = 2;
+  for (int i = 0, n = this->key_size(); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteBytesToArray(2, this->key(i), target);
+  }
+
+  // int64 version = 3;
   if (this->version() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(2, this->version(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(3, this->version(), target);
   }
 
-  // bytes value = 3;
+  // bytes value = 4;
   if (this->value().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        3, this->value(), target);
+        4, this->value(), target);
   }
 
-  // int64 expireAt = 4;
+  // uint64 expireAt = 5;
   if (this->expireat() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(4, this->expireat(), target);
-  }
-
-  // int64 tableId = 5;
-  if (this->tableid() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(5, this->tableid(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(5, this->expireat(), target);
   }
 
   // bytes ext = 6;
@@ -1143,14 +1137,15 @@ size_t WatchKeyValue::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // bytes key = 1;
-  if (this->key().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->key());
+  // repeated bytes key = 2;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->key_size());
+  for (int i = 0, n = this->key_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::BytesSize(
+      this->key(i));
   }
 
-  // bytes value = 3;
+  // bytes value = 4;
   if (this->value().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
@@ -1164,25 +1159,25 @@ size_t WatchKeyValue::ByteSizeLong() const {
         this->ext());
   }
 
-  // int64 version = 2;
+  // int64 tableId = 1;
+  if (this->tableid() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
+        this->tableid());
+  }
+
+  // int64 version = 3;
   if (this->version() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int64Size(
         this->version());
   }
 
-  // int64 expireAt = 4;
+  // uint64 expireAt = 5;
   if (this->expireat() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int64Size(
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->expireat());
-  }
-
-  // int64 tableId = 5;
-  if (this->tableid() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int64Size(
-        this->tableid());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -1214,10 +1209,7 @@ void WatchKeyValue::MergeFrom(const WatchKeyValue& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.key().size() > 0) {
-
-    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
-  }
+  key_.MergeFrom(from.key_);
   if (from.value().size() > 0) {
 
     value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
@@ -1226,14 +1218,14 @@ void WatchKeyValue::MergeFrom(const WatchKeyValue& from) {
 
     ext_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.ext_);
   }
+  if (from.tableid() != 0) {
+    set_tableid(from.tableid());
+  }
   if (from.version() != 0) {
     set_version(from.version());
   }
   if (from.expireat() != 0) {
     set_expireat(from.expireat());
-  }
-  if (from.tableid() != 0) {
-    set_tableid(from.tableid());
   }
 }
 
@@ -1261,12 +1253,12 @@ void WatchKeyValue::Swap(WatchKeyValue* other) {
 }
 void WatchKeyValue::InternalSwap(WatchKeyValue* other) {
   using std::swap;
-  key_.Swap(&other->key_);
+  key_.InternalSwap(&other->key_);
   value_.Swap(&other->value_);
   ext_.Swap(&other->ext_);
+  swap(tableid_, other->tableid_);
   swap(version_, other->version_);
   swap(expireat_, other->expireat_);
-  swap(tableid_, other->tableid_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -1279,60 +1271,90 @@ void WatchKeyValue::InternalSwap(WatchKeyValue* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // WatchKeyValue
 
-// bytes key = 1;
-void WatchKeyValue::clear_key() {
-  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// int64 tableId = 1;
+void WatchKeyValue::clear_tableid() {
+  tableid_ = GOOGLE_LONGLONG(0);
 }
-const ::std::string& WatchKeyValue::key() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.key)
-  return key_.GetNoArena();
+::google::protobuf::int64 WatchKeyValue::tableid() const {
+  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.tableId)
+  return tableid_;
 }
-void WatchKeyValue::set_key(const ::std::string& value) {
+void WatchKeyValue::set_tableid(::google::protobuf::int64 value) {
   
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.key)
-}
-#if LANG_CXX11
-void WatchKeyValue::set_key(::std::string&& value) {
-  
-  key_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:watchpb.WatchKeyValue.key)
-}
-#endif
-void WatchKeyValue::set_key(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:watchpb.WatchKeyValue.key)
-}
-void WatchKeyValue::set_key(const void* value, size_t size) {
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:watchpb.WatchKeyValue.key)
-}
-::std::string* WatchKeyValue::mutable_key() {
-  
-  // @@protoc_insertion_point(field_mutable:watchpb.WatchKeyValue.key)
-  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-::std::string* WatchKeyValue::release_key() {
-  // @@protoc_insertion_point(field_release:watchpb.WatchKeyValue.key)
-  
-  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-void WatchKeyValue::set_allocated_key(::std::string* key) {
-  if (key != NULL) {
-    
-  } else {
-    
-  }
-  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:watchpb.WatchKeyValue.key)
+  tableid_ = value;
+  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.tableId)
 }
 
-// int64 version = 2;
+// repeated bytes key = 2;
+int WatchKeyValue::key_size() const {
+  return key_.size();
+}
+void WatchKeyValue::clear_key() {
+  key_.Clear();
+}
+const ::std::string& WatchKeyValue::key(int index) const {
+  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.key)
+  return key_.Get(index);
+}
+::std::string* WatchKeyValue::mutable_key(int index) {
+  // @@protoc_insertion_point(field_mutable:watchpb.WatchKeyValue.key)
+  return key_.Mutable(index);
+}
+void WatchKeyValue::set_key(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.key)
+  key_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+void WatchKeyValue::set_key(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.key)
+  key_.Mutable(index)->assign(std::move(value));
+}
+#endif
+void WatchKeyValue::set_key(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  key_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:watchpb.WatchKeyValue.key)
+}
+void WatchKeyValue::set_key(int index, const void* value, size_t size) {
+  key_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:watchpb.WatchKeyValue.key)
+}
+::std::string* WatchKeyValue::add_key() {
+  // @@protoc_insertion_point(field_add_mutable:watchpb.WatchKeyValue.key)
+  return key_.Add();
+}
+void WatchKeyValue::add_key(const ::std::string& value) {
+  key_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:watchpb.WatchKeyValue.key)
+}
+#if LANG_CXX11
+void WatchKeyValue::add_key(::std::string&& value) {
+  key_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:watchpb.WatchKeyValue.key)
+}
+#endif
+void WatchKeyValue::add_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  key_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:watchpb.WatchKeyValue.key)
+}
+void WatchKeyValue::add_key(const void* value, size_t size) {
+  key_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:watchpb.WatchKeyValue.key)
+}
+const ::google::protobuf::RepeatedPtrField< ::std::string>&
+WatchKeyValue::key() const {
+  // @@protoc_insertion_point(field_list:watchpb.WatchKeyValue.key)
+  return key_;
+}
+::google::protobuf::RepeatedPtrField< ::std::string>*
+WatchKeyValue::mutable_key() {
+  // @@protoc_insertion_point(field_mutable_list:watchpb.WatchKeyValue.key)
+  return &key_;
+}
+
+// int64 version = 3;
 void WatchKeyValue::clear_version() {
   version_ = GOOGLE_LONGLONG(0);
 }
@@ -1346,7 +1368,7 @@ void WatchKeyValue::set_version(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.version)
 }
 
-// bytes value = 3;
+// bytes value = 4;
 void WatchKeyValue::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1399,32 +1421,18 @@ void WatchKeyValue::set_allocated_value(::std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:watchpb.WatchKeyValue.value)
 }
 
-// int64 expireAt = 4;
+// uint64 expireAt = 5;
 void WatchKeyValue::clear_expireat() {
-  expireat_ = GOOGLE_LONGLONG(0);
+  expireat_ = GOOGLE_ULONGLONG(0);
 }
-::google::protobuf::int64 WatchKeyValue::expireat() const {
+::google::protobuf::uint64 WatchKeyValue::expireat() const {
   // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.expireAt)
   return expireat_;
 }
-void WatchKeyValue::set_expireat(::google::protobuf::int64 value) {
+void WatchKeyValue::set_expireat(::google::protobuf::uint64 value) {
   
   expireat_ = value;
   // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.expireAt)
-}
-
-// int64 tableId = 5;
-void WatchKeyValue::clear_tableid() {
-  tableid_ = GOOGLE_LONGLONG(0);
-}
-::google::protobuf::int64 WatchKeyValue::tableid() const {
-  // @@protoc_insertion_point(field_get:watchpb.WatchKeyValue.tableId)
-  return tableid_;
-}
-void WatchKeyValue::set_tableid(::google::protobuf::int64 value) {
-  
-  tableid_ = value;
-  // @@protoc_insertion_point(field_set:watchpb.WatchKeyValue.tableId)
 }
 
 // bytes ext = 6;
