@@ -21,10 +21,9 @@ enum FunctionID {
   KFuncReplace          = 14;
 	
   kFuncWatchGet         = 50; //get and watch  
-  kFuncWatchBatchGet    = 51; //get with prefix and watch  
-  kFuncPureGet          = 52; //just get single key or key with prefix  
-  kFuncWatchPut         = 53; //put and trigger watch response  
-  kFuncWatchDel         = 54; //delete and trigger watch response
+  kFuncPureGet          = 51; //just get single key or key with prefix  
+  kFuncWatchPut         = 52; //put and trigger watch response  
+  kFuncWatchDel         = 53; //delete and trigger watch response
     
   kFuncKvSet              = 100;
   kFuncKvGet              = 101;
