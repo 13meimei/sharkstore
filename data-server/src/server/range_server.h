@@ -101,7 +101,6 @@ public:
 private:  // admin
     void CreateRange(common::ProtoMessage *msg);
     void DeleteRange(common::ProtoMessage *msg);
-    void UpdateRange(common::ProtoMessage *msg);
     void OfflineRange(common::ProtoMessage *msg);
     void ReplaceRange(common::ProtoMessage *msg);
 

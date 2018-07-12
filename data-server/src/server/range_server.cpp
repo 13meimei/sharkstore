@@ -321,9 +321,6 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
         case funcpb::kFuncRangeTransferLeader:
             TransferLeader(msg);
             break;
-        case funcpb::kFuncUpdateRange:
-            UpdateRange(msg);
-            break;
         case funcpb::kFuncReplaceRange:
             ReplaceRange(msg);
             break;
@@ -608,30 +605,6 @@ int RangeServer::CloseRange(uint64_t range_id) {
     return 0;
 }
 
-void RangeServer::UpdateRange(common::ProtoMessage *msg) {
-    schpb::UpdateRangeRequest req;
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
-        FLOG_ERROR("deserialize update range request failed");
-        return context_->socket_session->Send(msg, nullptr);
-    }
-
-    auto resp = new schpb::UpdateRangeResponse;
-    do {
-        if (CloseRange(req.range().id()) != 0) {
-            auto err = resp->mutable_header()->mutable_error();
-            err->set_message("update range failed");
-            break;
-        }
-        auto ret = CreateRange(req.range());
-        if (!ret.ok()) {
-            auto err = resp->mutable_header()->mutable_error();
-            err->set_message("update range failed");
-        }
-    } while (false);
-
-    context_->socket_session->Send(msg, resp);
-}
-
 void RangeServer::ReplaceRange(common::ProtoMessage *msg) {
     schpb::ReplaceRangeRequest req;
     if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
@@ -649,6 +622,8 @@ void RangeServer::ReplaceRange(common::ProtoMessage *msg) {
             err->set_message("close old range failed");
             break;
         }
+
+        std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
         auto ret = CreateRange(req.new_range());
         if (!ret.ok()) {
             auto err = resp->mutable_header()->mutable_error();
