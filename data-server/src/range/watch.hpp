@@ -120,9 +120,9 @@ namespace range {
     public:
         WatcherSet() {};
         ~WatcherSet() {};
-        void AddWatcher(std::string, common::ProtoMessage*);
-        WATCH_CODE DelWatcher(int64_t);
-        uint32_t GetWatchers(std::vector<common::ProtoMessage*>&, std::string);
+        void AddWatcher(std::string &, common::ProtoMessage*);
+        WATCH_CODE DelWatcher(const int64_t &, const std::string &);
+        uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , const std::string &);
 
     private:
         Key2Watchers_ key_index_;
@@ -131,15 +131,27 @@ namespace range {
     };
 
 
-    void WatcherSet::AddWatcher(std::string name, common::ProtoMessage* msg) {
+    void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage* msg) {
         std::lock_guard<std::mutex> lock(mutex_);
 
         // build key name to watcher session id
+/*//<<<<<<< HEAD
 //        auto kit0 = key_index_.find(name);
 //        if (kit0 == key_index_.end()) {
             auto kit_pair0 = key_index_.emplace(std::make_pair(name, std::make_pair(msg->session_id, msg)));
         auto kit0 = kit_pair0.first;
 //        } else {
+=======
+ */
+        auto kit0 = key_index_.find(name);
+        if (kit0 == key_index_.end()) {
+            auto tmpPair = key_index_.emplace(std::make_pair(name, std::make_pair(msg->session_id, msg)));
+            if (tmpPair->second) 
+                kit0 = tmpPair->first;
+            else
+                FLOG_DEBUG("AddWatcher fail key:%s session_id:%lld .", name.data(), msg->session_id);
+        } else {
+//>>>>>>> 82ef34844b3b8b52d54439ec9f1b04dbffb7360b
             auto kit1 = kit0->second.find(msg->session_id);
             if (kit1 == kit0->second.end()) {
                 kit0->second.emplace(std::make_pair(msg->session_id, msg));
@@ -149,7 +161,11 @@ namespace range {
         // build watcher id to key name
         auto wit0 = watcher_index_.find(msg->session_id);
         if (wit0 == watcher_index_.end()) {
-            wit0 = watcher_index_.emplace(std::make_pair(msg->session_id, std::make_pair(name, nullptr)));
+            auto tmpPair = watcher_index_.emplace(std::make_pair(msg->session_id, std::make_pair(name, nullptr)));
+            if (tmpPair->second)
+                wit0 = tmpPair->first;
+            else
+                FLOG_DEBUG("AddWatcher fail session_id:%lld key:%s .", msg->session_id, name.data());;
         } else {
             auto wit1 = wit0->second.find(name);
             if (wit1 == wit0->second.end()) {
@@ -196,7 +212,7 @@ namespace range {
         return WATCH_OK;
     }
 
-    uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage*>& vec, std::string &name) {
+    uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage*>& vec, const std::string &name) {
         std::lock_guard<std::mutex> lock(mutex_);
         
         auto kit = key_index_.find(name);
