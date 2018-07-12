@@ -204,7 +204,7 @@ static int load_range_config(IniContext *ini_context) {
             (bool)iniGetIntValue(section, "recover_skip_fail", ini_context, 1);
 
     ds_config.range_config.recover_concurrency =
-            load_integer_value_atleast(ini_context, section, "recover_concurrency", 4, 1);
+            load_integer_value_atleast(ini_context, section, "recover_concurrency", 8, 1);
 
     ds_config.range_config.access_mode =
         iniGetIntValue(section, "access_mode", ini_context, 0);

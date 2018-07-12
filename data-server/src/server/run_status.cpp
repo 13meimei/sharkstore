@@ -198,11 +198,11 @@ void RunStatus::printDBMetric() {
 
     auto stat = context_->db_stats;
     if (stat) {
-        FLOG_INFO("rocksdb row cache stats: hit=%lu, miss=%lu",
+        FLOG_INFO("rocksdb row-cache stats: hit=%lu, miss=%lu",
                   stat->getAndResetTickerCount(rocksdb::ROW_CACHE_HIT),
                   stat->getAndResetTickerCount(rocksdb::ROW_CACHE_MISS));
 
-        FLOG_INFO("rocksdb block cache stats: hit=%lu, miss=%lu",
+        FLOG_INFO("rocksdb block-cache stats: hit=%lu, miss=%lu",
                   stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_HIT),
                   stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_MISS));
 

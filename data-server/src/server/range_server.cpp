@@ -1119,6 +1119,13 @@ int RangeServer::recover(const std::vector<metapb::Range> &metas) {
     } else {
         FLOG_INFO("Range recovery finished. success=%lu, failed=%lu, time used=%lds%ldms",
                   success_counter.load(), failed_ranges.size(), took_ms / 1000, took_ms % 1000);
+        // init range count
+        {
+             sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+             range_status_->range_count = ranges_.size();
+        }
+        context_->run_status->PushRange(monitor::RangeTag::RangeCount,
+                                        range_status_->range_count);
         return 0;
     }
 }
