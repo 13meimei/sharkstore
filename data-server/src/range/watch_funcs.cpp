@@ -164,6 +164,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         Status::Code code;
 
         if (prefix) {
+            //need to encode and decode
             std::unique_ptr<storage::Iterator> iterator(
                 store_->NewIterator(req.req().kv().key(), req.req().kv().key()));
             uint32_t count{0};
@@ -175,9 +176,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
                 kv->set_key((std::move(iterator->key()));
                 kv->set_value(std::move(iterator->value()));
                 //to do decode value version 
-                //...
                 iterator->Next();
-
                 count++;
             }
 
@@ -187,7 +186,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             auto evt = resp->mutable_events()->add_events();
             auto ret = store_->Get(req.req().kv().key(), evt->mutable_kv()->mutable_value());
             //to do decode value version 
-            //...
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s ", meta_.id(), code, ret.ToString().data());
             code = ret.code();
         }
         context_->run_status->PushTime(monitor::PrintTag::Store,
@@ -416,7 +415,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd) {
 
         if (!ret.ok()) {
             FLOG_ERROR("ApplyWatchPut failed, code:%d, msg:%s", ret.code(),
-                       ret.ToString().c_str());
+                       ret.ToString().data());
             break;
         }
 
@@ -518,8 +517,19 @@ Status Range::WatchNotify(const EventType evtType, const watchpb::WatchKeyValue&
         int32_t idx{0};
         for(auto &pMsg : vecProtoMsg) {
             idx++;
-            pMsg->socket->Send(ds_resp);
-            FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%d/%d)>>>[session][%lld]", meta_.id(), key, idx, watchCnt, pMsg->session_id);
+            FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%d/%d)>>>[session][%lld]", 
+                       meta_.id(), key, idx, watchCnt, pMsg->session_id);
+            if(0 != pMsg->socket->Send(ds_resp)) {
+                FLOG_ERROR("range[%" PRIu64 "] WatchPut-Notify error:[key][%s] (%d/%d)>>>[session][%lld]", 
+                           meta_.id(), key, idx, watchCnt, pMsg->session_id);
+            } else {
+                //delete watch
+                if (WATCH_OK != DelKeyWatcher(pMsg->session_id, key)) {
+                    FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%d/%d)>>>[session][%lld]", 
+                           meta_.id(), key, idx, watchCnt, pMsg->session_id);
+                }
+            }
+            
         }
     }
 

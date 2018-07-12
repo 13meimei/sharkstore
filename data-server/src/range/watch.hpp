@@ -15,10 +15,10 @@ namespace range {
         WATCH_WATCHER_NOT_EXIST = -2
     };
 
-    typedef std::map<int64_t, common::ProtoMessage*> WatcherSet_;
-    typedef std::map<std::string, WatcherSet_> Key2Watchers_;
-    typedef std::map<std::string, nullptr_t> KeySet_;
-    typedef std::map<int64_t, KeySet_> Watcher2Keys_;
+    typedef std::unordered_map<int64_t, common::ProtoMessage*> WatcherSet_;
+    typedef std::unordered_map<std::string, WatcherSet_> Key2Watchers_;
+    typedef std::unordered_map<std::string, nullptr_t> KeySet_;
+    typedef std::unordered_map<int64_t, KeySet_> Watcher2Keys_;
 
     class WatcherSet {
     public:
@@ -90,7 +90,7 @@ namespace range {
                 key_index_.erase(itKeyIdx);
             }
             keys.erase(itKeys);
-        }
+        } 
 
         if(keys.size() < 1) {
             watcher_index_.erase(wit);
@@ -114,7 +114,7 @@ namespace range {
             vec.resize(msgSize);
 
             for (auto it = watchers.begin(); it != watchers.end(); ++it) {
-                vec.emplace_back(std::move(it->second));
+                vec.emplace_back(it->second);
             }
         }
         

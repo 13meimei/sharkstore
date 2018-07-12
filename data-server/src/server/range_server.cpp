@@ -19,7 +19,6 @@
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/metapb.pb.h"
 #include "proto/gen/schpb.pb.h"
-#include "proto/gen/watchpb_v1.pb.h"
 #include "storage/metric.h"
 
 #include "server.h"
@@ -211,10 +210,6 @@ int RangeServer::OpenDB() {
     ops.target_file_size_base = ds_config.rocksdb_config.target_file_size_base;
     ops.target_file_size_multiplier =
         ds_config.rocksdb_config.target_file_size_multiplier;
-    if (ds_config.rocksdb_config.disable_auto_compactions) {
-        FLOG_WARN("rocksdb auto compactions is disabled.");
-        ops.disable_auto_compactions = true;
-    }
     ops.max_background_flushes = ds_config.rocksdb_config.max_background_flushes;
     ops.max_background_compactions = ds_config.rocksdb_config.max_background_compactions;
     ops.level0_file_num_compaction_trigger =
@@ -308,6 +303,21 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
         case funcpb::kFuncDelete:
             Delete(msg);
             break;
+        case funcpb::kFuncWatchGet:
+            WatchGet(msg);
+            break;
+//      case funcpb::kFuncWatchBatchGet:
+//          WatchBatchGet(msg);
+//          break;
+        case funcpb::kFuncPureGet:
+            PureGet(msg);
+            break;
+        case funcpb::kFuncWatchPut:
+            WatchPut(msg);
+            break;
+        case funcpb::kFuncWatchDel:
+            WatchDel(msg);
+            break;
         case funcpb::kFuncCreateRange:
             CreateRange(msg);
             break;
@@ -346,9 +356,6 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
         case funcpb::kFuncUnlockForce:
             UnlockForce(msg);
             break;
-        case funcpb::kFuncLockScan:
-            LockScan(msg);
-            break;
 
         // following for redis commands
         case funcpb::kFuncKvSet:
@@ -375,11 +382,6 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
         case funcpb::kFuncKvScan:
             KVScan(msg);
             break;
-
-        case funcpb::kFuncWatch:
-            Watch(msg);
-            break;
-
         default:
             FLOG_ERROR("func id is Invalid %d", header.func_id);
             return context_->socket_session->Send(msg, nullptr);
@@ -429,7 +431,7 @@ void RangeServer::CreateRange(common::ProtoMessage *msg) {
             err = new errorpb::Error;
             err->set_message("create range seriaize meta failed");
 
-            FLOG_ERROR("create range save meta failed: %s", ret.ToString().c_str());
+            FLOG_ERROR("create range save meta failed");
             break;
         }
 
@@ -818,6 +820,46 @@ void RangeServer::Delete(common::ProtoMessage *msg) {
     }
 }
 
+void RangeServer::WatchGet(common::ProtoMessage *msg) {
+    watchpb::DsWatchRequest req;
+    watchpb::DsWatchResponse *resp;
+
+    auto range = CheckAndDecodeRequest("WatchGet", req, resp, msg);
+    if (range != nullptr) {
+        range->WatchGet(msg, req);
+    }
+}
+
+void RangeServer::PureGet(common::ProtoMessage *msg) {
+    watchpb::DsKvWatchGetMultiRequest req;
+    watchpb::DsKvWatchGetMultiResponse *resp;
+
+    auto range = CheckAndDecodeRequest("PureGet", req, resp, msg);
+    if (range != nullptr) {
+        range->PureGet(msg, req);
+    }
+}
+
+void RangeServer::WatchPut(common::ProtoMessage *msg) {
+    watchpb::DsKvWatchPutRequest req;
+    watchpb::DsKvWatchPutResponse *resp;
+
+    auto range = CheckAndDecodeRequest("WatchPut", req, resp, msg);
+    if (range != nullptr) {
+        range->WatchPut(msg, req);
+    }
+}
+
+void RangeServer::WatchDel(common::ProtoMessage *msg) {
+    watchpb::DsKvWatchDeleteRequest req;
+    watchpb::DsKvWatchDeleteResponse *resp;
+
+    auto range = CheckAndDecodeRequest("WatchDel", req, resp, msg);
+    if (range != nullptr) {
+        range->WatchDel(msg, req);
+    }
+}
+
 template <class RequestT, class ResponseT>
 std::shared_ptr<range::Range> RangeServer::CheckAndDecodeRequest(
     const char *func_name, RequestT &request, ResponseT *&respone,
@@ -891,16 +933,6 @@ void RangeServer::UnlockForce(common::ProtoMessage *msg) {
     if (range != nullptr) {
         range->UnlockForce(msg, req);
     }
-}
-
-void RangeServer::LockScan(common::ProtoMessage *msg) {
-    kvrpcpb::DsLockScanRequest req;
-    kvrpcpb::DsLockScanResponse *resp;
-
-    auto range = CheckAndDecodeRequest("LockScan", req, resp, msg);
-    if (range != nullptr) {
-        range->LockScan(msg, req);
-  }
 }
 
 void RangeServer::KVSet(common::ProtoMessage *msg) {
@@ -980,16 +1012,6 @@ void RangeServer::KVScan(common::ProtoMessage *msg) {
     auto range = CheckAndDecodeRequest("KVScan", req, resp, msg);
     if (range != nullptr) {
         range->KVScan(msg, req);
-    }
-}
-
-void RangeServer::Watch(common::ProtoMessage *msg) {
-    watchpb::DsWatchCreateRequest req;
-    watchpb::DsWatchResponse *resp;
-
-    auto range = CheckAndDecodeRequest("watch", req, resp, msg);
-    if (range != nullptr) {
-        range->Watch(msg, req);
     }
 }
 

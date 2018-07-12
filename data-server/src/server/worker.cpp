@@ -193,7 +193,8 @@ void Worker::Clean(HashQueue &hash_queue) {
 
 // 0: fast queue; 1: slow queue;
 int Worker::FuncType(common::ProtoMessage *msg) {
-    if (msg->header.func_id == funcpb::FunctionID::kFuncSelect) {
+    if (msg->header.func_id == funcpb::FunctionID::kFuncSelect || 
+        msg->header.func_id == funcpb::FunctionID::kFuncWatchGet ) {
         return 1;
     }
 

@@ -116,7 +116,7 @@ public:
     void WatchDecodeValue(std::string &value, uint64_t *version_seq);
 
     void AddKeyWatcher(std::string, common::ProtoMessage*);
-    WATCH_CODE DelKeyWatcher(int64_t);
+    WATCH_CODE DelKeyWatcher(const int64_t &id, const std::string &key);
     uint32_t GetKeyWatchers(std::vector<common::ProtoMessage*>&, std::string);
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);

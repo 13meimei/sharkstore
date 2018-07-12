@@ -64,11 +64,19 @@ private:
     void Select(common::ProtoMessage *msg);
     void Delete(common::ProtoMessage *msg);
 
+    //get and watch
+    void WatchGet(common::ProtoMessage *msg);
+    //just get single key or key with prefix  
+    void PureGet(common::ProtoMessage *msg);
+    //put and trigger watch response  
+    void WatchPut(common::ProtoMessage *msg);
+    //delete and trigger watch response
+    void WatchDel(common::ProtoMessage *msg);
+
     void Lock(common::ProtoMessage *msg);
     void LockUpdate(common::ProtoMessage *msg);
     void Unlock(common::ProtoMessage *msg);
     void UnlockForce(common::ProtoMessage *msg);
-    void LockScan(common::ProtoMessage *msg);
 
     void KVSet(common::ProtoMessage *msg);
     void KVGet(common::ProtoMessage *msg);
@@ -78,8 +86,6 @@ private:
     void KVBatchDelete(common::ProtoMessage *msg);
     void KVRangeDelete(common::ProtoMessage *msg);
     void KVScan(common::ProtoMessage *msg);
-
-    void Watch(common::ProtoMessage *msg);
 
     void TimeOut(const kvrpcpb::RequestHeader &req,
                  kvrpcpb::ResponseHeader *resp);
@@ -96,6 +102,8 @@ public:
                       const raft_cmdpb::SplitRequest &req);
     void LeaderQueuePush(uint64_t leader, time_t expire);
 
+    void AddReadStats(uint64_t size, uint64_t count);
+    void AddWriteStats(uint64_t size, uint64_t count);
     void ResetStats();
 
 private:  // admin
