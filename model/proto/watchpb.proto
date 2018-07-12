@@ -36,17 +36,18 @@ message Event {
 
 //simple key
 message WatchKeyValue {
+    int64 tableId = 1;
     // key is the key in bytes. An empty key is not allowed.
-    bytes key = 1;
+    bytes key = 2;
     // version is the version of the key. A deletion resets
     // the version to zero and any modification of the key
     // increases its version.
-    int64 version = 2;
+    int64 version = 3;
     // value is the value held by the key, in bytes.
-    bytes value = 3;
+    bytes value = 4;
     //expire time
-    int64 expireAt = 4;
-    int64 tableId = 5;
+    uint64 expireAt = 5;
+    //reserve    
     bytes ext = 6;
 }
 
