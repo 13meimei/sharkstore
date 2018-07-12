@@ -29,6 +29,7 @@ _Pragma("once");
 #include "proto/gen/metapb.pb.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
+#include "proto/gen/watchpb.pb.h"
 
 #include "server/context_server.h"
 #include "server/run_status.h"
@@ -81,12 +82,12 @@ public:
     void GetPeerInfo(raft::RaftStatus *raft_status);
 
     // lock
+    bool LockExist(const std::string &key);
     kvrpcpb::LockValue *LockGet(const std::string &key);
     void Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req);
     void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
     void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
     void UnlockForce(common::ProtoMessage *msg, kvrpcpb::DsUnlockForceRequest &req);
-    void LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req);
 
     // KV
     void RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req);
@@ -96,7 +97,7 @@ public:
     void Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req);
     void Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req);
     void Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
-
+    
     void KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req);
     void KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req);
     void KVBatchSet(common::ProtoMessage *msg, kvrpcpb::DsKvBatchSetRequest &req);
@@ -106,9 +107,17 @@ public:
     void KVRangeDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRangeDeleteRequest &req);
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
 
-    void Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req);
-    void ApplyToWatch(common::ProtoMessage *msg/*, event ev*/);
+    //KV watch series
+    void WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req);
+    void PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
+    void WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
+    void WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
+    void WatchEncodeValue(std::string &value, const uint64_t &version_seq);
+    void WatchDecodeValue(std::string &value, uint64_t *version_seq);
 
+    void AddKeyWatcher(std::string, common::ProtoMessage*);
+    WATCH_CODE DelKeyWatcher(const int64_t &id, const std::string &key);
+    uint32_t GetKeyWatchers(std::vector<common::ProtoMessage*>&, std::string);
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
     kvrpcpb::SelectResponse *SelectResp(const kvrpcpb::DsSelectRequest &req);
@@ -171,6 +180,8 @@ private:
     bool RawPutTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
     bool RawDeleteTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
     bool DeleteTry(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
+    bool WatchPutTry(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
+    bool WatchDelTry(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
 
 private:
     Status Submit(const raft_cmdpb::Command &cmd);
@@ -178,6 +189,9 @@ private:
 
     Status ApplyRawPut(const raft_cmdpb::Command &cmd);
     Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
+
+    Status ApplyWatchPut(const raft_cmdpb::Command &cmd);
+    Status ApplyWatchDel(const raft_cmdpb::Command &cmd);
 
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
     Status ApplyDelete(const raft_cmdpb::Command &cmd);
@@ -347,11 +361,14 @@ private:
 
     errorpb::Error *TimeOutError();
     errorpb::Error *RaftFailError();
-    errorpb::Error *Error(const char* );
     errorpb::Error *NoLeaderError();
     errorpb::Error *NotLeaderError(metapb::Peer &&peer);
     errorpb::Error *KeyNotInRange(const std::string &key);
     errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
+
+private:
+    WatcherSet key_watchers_;
+    Status WatchNotify(const EventType evtType, const watchpb::WatchKeyValue& kv);
 
 private:
     static const int kTimeTakeWarnThresoldUSec = 1000000;
@@ -373,6 +390,8 @@ private:
     std::atomic<bool> statis_flag_{false};
     std::atomic<uint64_t> statis_size_{0};
 
+    std::atomic<uint64_t> version_seq_{0};
+
     typedef std::pair<time_t, uint64_t> tr;
 
     std::mutex submit_mutex_;
@@ -388,21 +407,6 @@ private:
     range_status_t *range_status_ = nullptr;
 
     int64_t max_count_ = 1000;
-
-public:
-//    WATCH_CODE AddKeyWatcher(std::string, common::ProtoMessage*);
-//    void DelKeyWatcher(std::string);
-//    std::vector<common::ProtoMessage*> GetKeyWatchers(std::string);
-    void AddKeyWatcher(std::string, common::ProtoMessage*);
-    WATCH_CODE DelKeyWatcher(int64_t);
-    WATCH_CODE GetKeyWatchers(std::vector<common::ProtoMessage*>&, std::string);
-
-//    WATCH_CODE AddRangeWatcher(std::string, common::ProtoMessage*);
-//    std::vector<common::ProtoMessage*> GetRangeWatchers(std::string);
-
-private:
-    WatcherSet key_watchers_;
-//    WatcherSet range_watchers_;
 };
 
 }  // namespace range

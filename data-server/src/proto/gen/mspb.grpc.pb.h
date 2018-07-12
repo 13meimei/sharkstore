@@ -6,19 +6,20 @@
 
 #include "mspb.pb.h"
 
-#include <grpcpp/impl/codegen/async_stream.h>
-#include <grpcpp/impl/codegen/async_unary_call.h>
-#include <grpcpp/impl/codegen/method_handler_impl.h>
-#include <grpcpp/impl/codegen/proto_utils.h>
-#include <grpcpp/impl/codegen/rpc_method.h>
-#include <grpcpp/impl/codegen/service_type.h>
-#include <grpcpp/impl/codegen/status.h>
-#include <grpcpp/impl/codegen/stub_options.h>
-#include <grpcpp/impl/codegen/sync_stream.h>
+#include <grpc++/impl/codegen/async_stream.h>
+#include <grpc++/impl/codegen/async_unary_call.h>
+#include <grpc++/impl/codegen/method_handler_impl.h>
+#include <grpc++/impl/codegen/proto_utils.h>
+#include <grpc++/impl/codegen/rpc_method.h>
+#include <grpc++/impl/codegen/service_type.h>
+#include <grpc++/impl/codegen/status.h>
+#include <grpc++/impl/codegen/stub_options.h>
+#include <grpc++/impl/codegen/sync_stream.h>
 
 namespace grpc {
 class CompletionQueue;
 class Channel;
+class RpcService;
 class ServerCompletionQueue;
 class ServerContext;
 }  // namespace grpc
@@ -37,174 +38,98 @@ class MsServer final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeHeartbeatResponse>> AsyncNodeHeartbeat(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeHeartbeatResponse>>(AsyncNodeHeartbeatRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeHeartbeatResponse>> PrepareAsyncNodeHeartbeat(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeHeartbeatResponse>>(PrepareAsyncNodeHeartbeatRaw(context, request, cq));
-    }
     virtual ::grpc::Status RangeHeartbeat(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::mspb::RangeHeartbeatResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::RangeHeartbeatResponse>> AsyncRangeHeartbeat(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::RangeHeartbeatResponse>>(AsyncRangeHeartbeatRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::RangeHeartbeatResponse>> PrepareAsyncRangeHeartbeat(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::RangeHeartbeatResponse>>(PrepareAsyncRangeHeartbeatRaw(context, request, cq));
     }
     virtual ::grpc::Status AskSplit(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::mspb::AskSplitResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AskSplitResponse>> AsyncAskSplit(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AskSplitResponse>>(AsyncAskSplitRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AskSplitResponse>> PrepareAsyncAskSplit(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AskSplitResponse>>(PrepareAsyncAskSplitRaw(context, request, cq));
-    }
     virtual ::grpc::Status ReportSplit(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::mspb::ReportSplitResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::ReportSplitResponse>> AsyncReportSplit(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::ReportSplitResponse>>(AsyncReportSplitRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::ReportSplitResponse>> PrepareAsyncReportSplit(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::ReportSplitResponse>>(PrepareAsyncReportSplitRaw(context, request, cq));
     }
     virtual ::grpc::Status NodeLogin(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::mspb::NodeLoginResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeLoginResponse>> AsyncNodeLogin(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeLoginResponse>>(AsyncNodeLoginRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeLoginResponse>> PrepareAsyncNodeLogin(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeLoginResponse>>(PrepareAsyncNodeLoginRaw(context, request, cq));
-    }
     virtual ::grpc::Status GetNodeId(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::mspb::GetNodeIdResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeIdResponse>> AsyncGetNodeId(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeIdResponse>>(AsyncGetNodeIdRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeIdResponse>> PrepareAsyncGetNodeId(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeIdResponse>>(PrepareAsyncGetNodeIdRaw(context, request, cq));
     }
     virtual ::grpc::Status GetMSLeader(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::mspb::GetMSLeaderResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetMSLeaderResponse>> AsyncGetMSLeader(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetMSLeaderResponse>>(AsyncGetMSLeaderRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetMSLeaderResponse>> PrepareAsyncGetMSLeader(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetMSLeaderResponse>>(PrepareAsyncGetMSLeaderRaw(context, request, cq));
-    }
     virtual ::grpc::Status GetRoute(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::mspb::GetRouteResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetRouteResponse>> AsyncGetRoute(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetRouteResponse>>(AsyncGetRouteRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetRouteResponse>> PrepareAsyncGetRoute(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetRouteResponse>>(PrepareAsyncGetRouteRaw(context, request, cq));
     }
     virtual ::grpc::Status GetNode(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::mspb::GetNodeResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeResponse>> AsyncGetNode(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeResponse>>(AsyncGetNodeRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeResponse>> PrepareAsyncGetNode(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeResponse>>(PrepareAsyncGetNodeRaw(context, request, cq));
-    }
     virtual ::grpc::Status GetDB(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::mspb::GetDBResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetDBResponse>> AsyncGetDB(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetDBResponse>>(AsyncGetDBRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetDBResponse>> PrepareAsyncGetDB(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetDBResponse>>(PrepareAsyncGetDBRaw(context, request, cq));
     }
     virtual ::grpc::Status GetTable(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::mspb::GetTableResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableResponse>> AsyncGetTable(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableResponse>>(AsyncGetTableRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableResponse>> PrepareAsyncGetTable(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableResponse>>(PrepareAsyncGetTableRaw(context, request, cq));
-    }
     virtual ::grpc::Status GetTableById(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::mspb::GetTableByIdResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableByIdResponse>> AsyncGetTableById(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableByIdResponse>>(AsyncGetTableByIdRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableByIdResponse>> PrepareAsyncGetTableById(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableByIdResponse>>(PrepareAsyncGetTableByIdRaw(context, request, cq));
     }
     virtual ::grpc::Status GetColumns(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::mspb::GetColumnsResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnsResponse>> AsyncGetColumns(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnsResponse>>(AsyncGetColumnsRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnsResponse>> PrepareAsyncGetColumns(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnsResponse>>(PrepareAsyncGetColumnsRaw(context, request, cq));
-    }
     virtual ::grpc::Status GetColumnByName(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::mspb::GetColumnByNameResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByNameResponse>> AsyncGetColumnByName(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByNameResponse>>(AsyncGetColumnByNameRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByNameResponse>> PrepareAsyncGetColumnByName(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByNameResponse>>(PrepareAsyncGetColumnByNameRaw(context, request, cq));
     }
     virtual ::grpc::Status GetColumnById(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::mspb::GetColumnByIdResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByIdResponse>> AsyncGetColumnById(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByIdResponse>>(AsyncGetColumnByIdRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByIdResponse>> PrepareAsyncGetColumnById(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByIdResponse>>(PrepareAsyncGetColumnByIdRaw(context, request, cq));
-    }
     virtual ::grpc::Status TruncateTable(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::mspb::TruncateTableResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::TruncateTableResponse>> AsyncTruncateTable(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::TruncateTableResponse>>(AsyncTruncateTableRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::TruncateTableResponse>> PrepareAsyncTruncateTable(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::TruncateTableResponse>>(PrepareAsyncTruncateTableRaw(context, request, cq));
     }
     virtual ::grpc::Status AddColumn(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::mspb::AddColumnResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AddColumnResponse>> AsyncAddColumn(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AddColumnResponse>>(AsyncAddColumnRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AddColumnResponse>> PrepareAsyncAddColumn(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AddColumnResponse>>(PrepareAsyncAddColumnRaw(context, request, cq));
-    }
     virtual ::grpc::Status CreateDatabase(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::mspb::CreateDatabaseResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateDatabaseResponse>> AsyncCreateDatabase(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateDatabaseResponse>>(AsyncCreateDatabaseRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateDatabaseResponse>> PrepareAsyncCreateDatabase(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateDatabaseResponse>>(PrepareAsyncCreateDatabaseRaw(context, request, cq));
     }
     virtual ::grpc::Status CreateTable(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::mspb::CreateTableResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateTableResponse>> AsyncCreateTable(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateTableResponse>>(AsyncCreateTableRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateTableResponse>> PrepareAsyncCreateTable(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateTableResponse>>(PrepareAsyncCreateTableRaw(context, request, cq));
-    }
   private:
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeHeartbeatResponse>* AsyncNodeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeHeartbeatResponse>* PrepareAsyncNodeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::RangeHeartbeatResponse>* AsyncRangeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::RangeHeartbeatResponse>* PrepareAsyncRangeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AskSplitResponse>* AsyncAskSplitRaw(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AskSplitResponse>* PrepareAsyncAskSplitRaw(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::ReportSplitResponse>* AsyncReportSplitRaw(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::ReportSplitResponse>* PrepareAsyncReportSplitRaw(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeLoginResponse>* AsyncNodeLoginRaw(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::NodeLoginResponse>* PrepareAsyncNodeLoginRaw(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeIdResponse>* AsyncGetNodeIdRaw(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeIdResponse>* PrepareAsyncGetNodeIdRaw(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetMSLeaderResponse>* AsyncGetMSLeaderRaw(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetMSLeaderResponse>* PrepareAsyncGetMSLeaderRaw(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetRouteResponse>* AsyncGetRouteRaw(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetRouteResponse>* PrepareAsyncGetRouteRaw(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeResponse>* AsyncGetNodeRaw(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetNodeResponse>* PrepareAsyncGetNodeRaw(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetDBResponse>* AsyncGetDBRaw(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetDBResponse>* PrepareAsyncGetDBRaw(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableResponse>* AsyncGetTableRaw(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableResponse>* PrepareAsyncGetTableRaw(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableByIdResponse>* AsyncGetTableByIdRaw(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetTableByIdResponse>* PrepareAsyncGetTableByIdRaw(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnsResponse>* AsyncGetColumnsRaw(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnsResponse>* PrepareAsyncGetColumnsRaw(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByNameResponse>* AsyncGetColumnByNameRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByNameResponse>* PrepareAsyncGetColumnByNameRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByIdResponse>* AsyncGetColumnByIdRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::GetColumnByIdResponse>* PrepareAsyncGetColumnByIdRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::TruncateTableResponse>* AsyncTruncateTableRaw(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::TruncateTableResponse>* PrepareAsyncTruncateTableRaw(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AddColumnResponse>* AsyncAddColumnRaw(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::AddColumnResponse>* PrepareAsyncAddColumnRaw(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateDatabaseResponse>* AsyncCreateDatabaseRaw(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateDatabaseResponse>* PrepareAsyncCreateDatabaseRaw(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateTableResponse>* AsyncCreateTableRaw(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::mspb::CreateTableResponse>* PrepareAsyncCreateTableRaw(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
@@ -213,195 +138,119 @@ class MsServer final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>> AsyncNodeHeartbeat(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>>(AsyncNodeHeartbeatRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>> PrepareAsyncNodeHeartbeat(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>>(PrepareAsyncNodeHeartbeatRaw(context, request, cq));
-    }
     ::grpc::Status RangeHeartbeat(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::mspb::RangeHeartbeatResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>> AsyncRangeHeartbeat(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>>(AsyncRangeHeartbeatRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>> PrepareAsyncRangeHeartbeat(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>>(PrepareAsyncRangeHeartbeatRaw(context, request, cq));
     }
     ::grpc::Status AskSplit(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::mspb::AskSplitResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>> AsyncAskSplit(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>>(AsyncAskSplitRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>> PrepareAsyncAskSplit(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>>(PrepareAsyncAskSplitRaw(context, request, cq));
-    }
     ::grpc::Status ReportSplit(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::mspb::ReportSplitResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>> AsyncReportSplit(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>>(AsyncReportSplitRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>> PrepareAsyncReportSplit(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>>(PrepareAsyncReportSplitRaw(context, request, cq));
     }
     ::grpc::Status NodeLogin(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::mspb::NodeLoginResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>> AsyncNodeLogin(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>>(AsyncNodeLoginRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>> PrepareAsyncNodeLogin(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>>(PrepareAsyncNodeLoginRaw(context, request, cq));
-    }
     ::grpc::Status GetNodeId(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::mspb::GetNodeIdResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>> AsyncGetNodeId(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>>(AsyncGetNodeIdRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>> PrepareAsyncGetNodeId(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>>(PrepareAsyncGetNodeIdRaw(context, request, cq));
     }
     ::grpc::Status GetMSLeader(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::mspb::GetMSLeaderResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>> AsyncGetMSLeader(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>>(AsyncGetMSLeaderRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>> PrepareAsyncGetMSLeader(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>>(PrepareAsyncGetMSLeaderRaw(context, request, cq));
-    }
     ::grpc::Status GetRoute(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::mspb::GetRouteResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>> AsyncGetRoute(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>>(AsyncGetRouteRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>> PrepareAsyncGetRoute(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>>(PrepareAsyncGetRouteRaw(context, request, cq));
     }
     ::grpc::Status GetNode(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::mspb::GetNodeResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>> AsyncGetNode(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>>(AsyncGetNodeRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>> PrepareAsyncGetNode(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>>(PrepareAsyncGetNodeRaw(context, request, cq));
-    }
     ::grpc::Status GetDB(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::mspb::GetDBResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>> AsyncGetDB(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>>(AsyncGetDBRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>> PrepareAsyncGetDB(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>>(PrepareAsyncGetDBRaw(context, request, cq));
     }
     ::grpc::Status GetTable(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::mspb::GetTableResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>> AsyncGetTable(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>>(AsyncGetTableRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>> PrepareAsyncGetTable(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>>(PrepareAsyncGetTableRaw(context, request, cq));
-    }
     ::grpc::Status GetTableById(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::mspb::GetTableByIdResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>> AsyncGetTableById(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>>(AsyncGetTableByIdRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>> PrepareAsyncGetTableById(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>>(PrepareAsyncGetTableByIdRaw(context, request, cq));
     }
     ::grpc::Status GetColumns(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::mspb::GetColumnsResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>> AsyncGetColumns(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>>(AsyncGetColumnsRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>> PrepareAsyncGetColumns(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>>(PrepareAsyncGetColumnsRaw(context, request, cq));
-    }
     ::grpc::Status GetColumnByName(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::mspb::GetColumnByNameResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>> AsyncGetColumnByName(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>>(AsyncGetColumnByNameRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>> PrepareAsyncGetColumnByName(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>>(PrepareAsyncGetColumnByNameRaw(context, request, cq));
     }
     ::grpc::Status GetColumnById(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::mspb::GetColumnByIdResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>> AsyncGetColumnById(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>>(AsyncGetColumnByIdRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>> PrepareAsyncGetColumnById(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>>(PrepareAsyncGetColumnByIdRaw(context, request, cq));
-    }
     ::grpc::Status TruncateTable(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::mspb::TruncateTableResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>> AsyncTruncateTable(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>>(AsyncTruncateTableRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>> PrepareAsyncTruncateTable(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>>(PrepareAsyncTruncateTableRaw(context, request, cq));
     }
     ::grpc::Status AddColumn(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::mspb::AddColumnResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>> AsyncAddColumn(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>>(AsyncAddColumnRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>> PrepareAsyncAddColumn(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>>(PrepareAsyncAddColumnRaw(context, request, cq));
-    }
     ::grpc::Status CreateDatabase(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::mspb::CreateDatabaseResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>> AsyncCreateDatabase(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>>(AsyncCreateDatabaseRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>> PrepareAsyncCreateDatabase(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>>(PrepareAsyncCreateDatabaseRaw(context, request, cq));
     }
     ::grpc::Status CreateTable(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::mspb::CreateTableResponse* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>> AsyncCreateTable(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>>(AsyncCreateTableRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>> PrepareAsyncCreateTable(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>>(PrepareAsyncCreateTableRaw(context, request, cq));
-    }
 
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
     ::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>* AsyncNodeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>* PrepareAsyncNodeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>* AsyncRangeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>* PrepareAsyncRangeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>* AsyncAskSplitRaw(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>* PrepareAsyncAskSplitRaw(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>* AsyncReportSplitRaw(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>* PrepareAsyncReportSplitRaw(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>* AsyncNodeLoginRaw(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>* PrepareAsyncNodeLoginRaw(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>* AsyncGetNodeIdRaw(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>* PrepareAsyncGetNodeIdRaw(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>* AsyncGetMSLeaderRaw(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>* PrepareAsyncGetMSLeaderRaw(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>* AsyncGetRouteRaw(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>* PrepareAsyncGetRouteRaw(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>* AsyncGetNodeRaw(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>* PrepareAsyncGetNodeRaw(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>* AsyncGetDBRaw(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>* PrepareAsyncGetDBRaw(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>* AsyncGetTableRaw(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>* PrepareAsyncGetTableRaw(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>* AsyncGetTableByIdRaw(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>* PrepareAsyncGetTableByIdRaw(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>* AsyncGetColumnsRaw(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>* PrepareAsyncGetColumnsRaw(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>* AsyncGetColumnByNameRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>* PrepareAsyncGetColumnByNameRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>* AsyncGetColumnByIdRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>* PrepareAsyncGetColumnByIdRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>* AsyncTruncateTableRaw(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>* PrepareAsyncTruncateTableRaw(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>* AsyncAddColumnRaw(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>* PrepareAsyncAddColumnRaw(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>* AsyncCreateDatabaseRaw(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>* PrepareAsyncCreateDatabaseRaw(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>* AsyncCreateTableRaw(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>* PrepareAsyncCreateTableRaw(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) override;
-    const ::grpc::internal::RpcMethod rpcmethod_NodeHeartbeat_;
-    const ::grpc::internal::RpcMethod rpcmethod_RangeHeartbeat_;
-    const ::grpc::internal::RpcMethod rpcmethod_AskSplit_;
-    const ::grpc::internal::RpcMethod rpcmethod_ReportSplit_;
-    const ::grpc::internal::RpcMethod rpcmethod_NodeLogin_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetNodeId_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetMSLeader_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetRoute_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetNode_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetDB_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetTable_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetTableById_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetColumns_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetColumnByName_;
-    const ::grpc::internal::RpcMethod rpcmethod_GetColumnById_;
-    const ::grpc::internal::RpcMethod rpcmethod_TruncateTable_;
-    const ::grpc::internal::RpcMethod rpcmethod_AddColumn_;
-    const ::grpc::internal::RpcMethod rpcmethod_CreateDatabase_;
-    const ::grpc::internal::RpcMethod rpcmethod_CreateTable_;
+    const ::grpc::RpcMethod rpcmethod_NodeHeartbeat_;
+    const ::grpc::RpcMethod rpcmethod_RangeHeartbeat_;
+    const ::grpc::RpcMethod rpcmethod_AskSplit_;
+    const ::grpc::RpcMethod rpcmethod_ReportSplit_;
+    const ::grpc::RpcMethod rpcmethod_NodeLogin_;
+    const ::grpc::RpcMethod rpcmethod_GetNodeId_;
+    const ::grpc::RpcMethod rpcmethod_GetMSLeader_;
+    const ::grpc::RpcMethod rpcmethod_GetRoute_;
+    const ::grpc::RpcMethod rpcmethod_GetNode_;
+    const ::grpc::RpcMethod rpcmethod_GetDB_;
+    const ::grpc::RpcMethod rpcmethod_GetTable_;
+    const ::grpc::RpcMethod rpcmethod_GetTableById_;
+    const ::grpc::RpcMethod rpcmethod_GetColumns_;
+    const ::grpc::RpcMethod rpcmethod_GetColumnByName_;
+    const ::grpc::RpcMethod rpcmethod_GetColumnById_;
+    const ::grpc::RpcMethod rpcmethod_TruncateTable_;
+    const ::grpc::RpcMethod rpcmethod_AddColumn_;
+    const ::grpc::RpcMethod rpcmethod_CreateDatabase_;
+    const ::grpc::RpcMethod rpcmethod_CreateTable_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
@@ -1140,7 +989,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_NodeHeartbeat() {
       ::grpc::Service::MarkMethodStreamed(0,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::NodeHeartbeatRequest, ::mspb::NodeHeartbeatResponse>(std::bind(&WithStreamedUnaryMethod_NodeHeartbeat<BaseClass>::StreamedNodeHeartbeat, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::NodeHeartbeatRequest, ::mspb::NodeHeartbeatResponse>(std::bind(&WithStreamedUnaryMethod_NodeHeartbeat<BaseClass>::StreamedNodeHeartbeat, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_NodeHeartbeat() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1160,7 +1009,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_RangeHeartbeat() {
       ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::RangeHeartbeatRequest, ::mspb::RangeHeartbeatResponse>(std::bind(&WithStreamedUnaryMethod_RangeHeartbeat<BaseClass>::StreamedRangeHeartbeat, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::RangeHeartbeatRequest, ::mspb::RangeHeartbeatResponse>(std::bind(&WithStreamedUnaryMethod_RangeHeartbeat<BaseClass>::StreamedRangeHeartbeat, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_RangeHeartbeat() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1180,7 +1029,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_AskSplit() {
       ::grpc::Service::MarkMethodStreamed(2,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::AskSplitRequest, ::mspb::AskSplitResponse>(std::bind(&WithStreamedUnaryMethod_AskSplit<BaseClass>::StreamedAskSplit, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::AskSplitRequest, ::mspb::AskSplitResponse>(std::bind(&WithStreamedUnaryMethod_AskSplit<BaseClass>::StreamedAskSplit, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_AskSplit() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1200,7 +1049,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_ReportSplit() {
       ::grpc::Service::MarkMethodStreamed(3,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::ReportSplitRequest, ::mspb::ReportSplitResponse>(std::bind(&WithStreamedUnaryMethod_ReportSplit<BaseClass>::StreamedReportSplit, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::ReportSplitRequest, ::mspb::ReportSplitResponse>(std::bind(&WithStreamedUnaryMethod_ReportSplit<BaseClass>::StreamedReportSplit, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_ReportSplit() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1220,7 +1069,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_NodeLogin() {
       ::grpc::Service::MarkMethodStreamed(4,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::NodeLoginRequest, ::mspb::NodeLoginResponse>(std::bind(&WithStreamedUnaryMethod_NodeLogin<BaseClass>::StreamedNodeLogin, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::NodeLoginRequest, ::mspb::NodeLoginResponse>(std::bind(&WithStreamedUnaryMethod_NodeLogin<BaseClass>::StreamedNodeLogin, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_NodeLogin() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1240,7 +1089,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetNodeId() {
       ::grpc::Service::MarkMethodStreamed(5,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetNodeIdRequest, ::mspb::GetNodeIdResponse>(std::bind(&WithStreamedUnaryMethod_GetNodeId<BaseClass>::StreamedGetNodeId, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetNodeIdRequest, ::mspb::GetNodeIdResponse>(std::bind(&WithStreamedUnaryMethod_GetNodeId<BaseClass>::StreamedGetNodeId, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetNodeId() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1260,7 +1109,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetMSLeader() {
       ::grpc::Service::MarkMethodStreamed(6,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetMSLeaderRequest, ::mspb::GetMSLeaderResponse>(std::bind(&WithStreamedUnaryMethod_GetMSLeader<BaseClass>::StreamedGetMSLeader, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetMSLeaderRequest, ::mspb::GetMSLeaderResponse>(std::bind(&WithStreamedUnaryMethod_GetMSLeader<BaseClass>::StreamedGetMSLeader, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetMSLeader() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1280,7 +1129,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetRoute() {
       ::grpc::Service::MarkMethodStreamed(7,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetRouteRequest, ::mspb::GetRouteResponse>(std::bind(&WithStreamedUnaryMethod_GetRoute<BaseClass>::StreamedGetRoute, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetRouteRequest, ::mspb::GetRouteResponse>(std::bind(&WithStreamedUnaryMethod_GetRoute<BaseClass>::StreamedGetRoute, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetRoute() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1300,7 +1149,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetNode() {
       ::grpc::Service::MarkMethodStreamed(8,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetNodeRequest, ::mspb::GetNodeResponse>(std::bind(&WithStreamedUnaryMethod_GetNode<BaseClass>::StreamedGetNode, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetNodeRequest, ::mspb::GetNodeResponse>(std::bind(&WithStreamedUnaryMethod_GetNode<BaseClass>::StreamedGetNode, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetNode() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1320,7 +1169,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetDB() {
       ::grpc::Service::MarkMethodStreamed(9,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetDBRequest, ::mspb::GetDBResponse>(std::bind(&WithStreamedUnaryMethod_GetDB<BaseClass>::StreamedGetDB, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetDBRequest, ::mspb::GetDBResponse>(std::bind(&WithStreamedUnaryMethod_GetDB<BaseClass>::StreamedGetDB, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetDB() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1340,7 +1189,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetTable() {
       ::grpc::Service::MarkMethodStreamed(10,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetTableRequest, ::mspb::GetTableResponse>(std::bind(&WithStreamedUnaryMethod_GetTable<BaseClass>::StreamedGetTable, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetTableRequest, ::mspb::GetTableResponse>(std::bind(&WithStreamedUnaryMethod_GetTable<BaseClass>::StreamedGetTable, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetTable() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1360,7 +1209,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetTableById() {
       ::grpc::Service::MarkMethodStreamed(11,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetTableByIdRequest, ::mspb::GetTableByIdResponse>(std::bind(&WithStreamedUnaryMethod_GetTableById<BaseClass>::StreamedGetTableById, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetTableByIdRequest, ::mspb::GetTableByIdResponse>(std::bind(&WithStreamedUnaryMethod_GetTableById<BaseClass>::StreamedGetTableById, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetTableById() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1380,7 +1229,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetColumns() {
       ::grpc::Service::MarkMethodStreamed(12,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetColumnsRequest, ::mspb::GetColumnsResponse>(std::bind(&WithStreamedUnaryMethod_GetColumns<BaseClass>::StreamedGetColumns, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetColumnsRequest, ::mspb::GetColumnsResponse>(std::bind(&WithStreamedUnaryMethod_GetColumns<BaseClass>::StreamedGetColumns, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetColumns() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1400,7 +1249,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetColumnByName() {
       ::grpc::Service::MarkMethodStreamed(13,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetColumnByNameRequest, ::mspb::GetColumnByNameResponse>(std::bind(&WithStreamedUnaryMethod_GetColumnByName<BaseClass>::StreamedGetColumnByName, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetColumnByNameRequest, ::mspb::GetColumnByNameResponse>(std::bind(&WithStreamedUnaryMethod_GetColumnByName<BaseClass>::StreamedGetColumnByName, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetColumnByName() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1420,7 +1269,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_GetColumnById() {
       ::grpc::Service::MarkMethodStreamed(14,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::GetColumnByIdRequest, ::mspb::GetColumnByIdResponse>(std::bind(&WithStreamedUnaryMethod_GetColumnById<BaseClass>::StreamedGetColumnById, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::GetColumnByIdRequest, ::mspb::GetColumnByIdResponse>(std::bind(&WithStreamedUnaryMethod_GetColumnById<BaseClass>::StreamedGetColumnById, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetColumnById() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1440,7 +1289,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_TruncateTable() {
       ::grpc::Service::MarkMethodStreamed(15,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::TruncateTableRequest, ::mspb::TruncateTableResponse>(std::bind(&WithStreamedUnaryMethod_TruncateTable<BaseClass>::StreamedTruncateTable, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::TruncateTableRequest, ::mspb::TruncateTableResponse>(std::bind(&WithStreamedUnaryMethod_TruncateTable<BaseClass>::StreamedTruncateTable, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_TruncateTable() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1460,7 +1309,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_AddColumn() {
       ::grpc::Service::MarkMethodStreamed(16,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::AddColumnRequest, ::mspb::AddColumnResponse>(std::bind(&WithStreamedUnaryMethod_AddColumn<BaseClass>::StreamedAddColumn, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::AddColumnRequest, ::mspb::AddColumnResponse>(std::bind(&WithStreamedUnaryMethod_AddColumn<BaseClass>::StreamedAddColumn, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_AddColumn() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1480,7 +1329,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_CreateDatabase() {
       ::grpc::Service::MarkMethodStreamed(17,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::CreateDatabaseRequest, ::mspb::CreateDatabaseResponse>(std::bind(&WithStreamedUnaryMethod_CreateDatabase<BaseClass>::StreamedCreateDatabase, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::CreateDatabaseRequest, ::mspb::CreateDatabaseResponse>(std::bind(&WithStreamedUnaryMethod_CreateDatabase<BaseClass>::StreamedCreateDatabase, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_CreateDatabase() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1500,7 +1349,7 @@ class MsServer final {
    public:
     WithStreamedUnaryMethod_CreateTable() {
       ::grpc::Service::MarkMethodStreamed(18,
-        new ::grpc::internal::StreamedUnaryHandler< ::mspb::CreateTableRequest, ::mspb::CreateTableResponse>(std::bind(&WithStreamedUnaryMethod_CreateTable<BaseClass>::StreamedCreateTable, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::StreamedUnaryHandler< ::mspb::CreateTableRequest, ::mspb::CreateTableResponse>(std::bind(&WithStreamedUnaryMethod_CreateTable<BaseClass>::StreamedCreateTable, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_CreateTable() override {
       BaseClassMustBeDerivedFromService(this);

@@ -1,3 +1,4 @@
+//#include "watch.h"
 #include <common/socket_session.h>
 #include "watch.hpp"
 #include "range.h"
@@ -67,7 +68,6 @@ bool DecodeWatchValue(int64_t* version, std::string* value, std::string* extend,
     if (!DecodeBytesValue(buf, offset, extend)) return false;
     return true;
 }
-
 
 }
 }
