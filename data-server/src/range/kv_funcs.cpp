@@ -647,6 +647,8 @@ void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req)
             break;
         }
 
+        // todo check key VERSION
+
         // do not send response at this time.
         // do send when watch event happend or timeout.
         AddKeyWatcher(req.req().key(), msg);
@@ -656,10 +658,11 @@ void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req)
 
     if (err != nullptr) {
         FLOG_WARN("range[%" PRIu64 "] watch error: %s", meta_.id(), err->message().c_str());
+
+        context_->socket_session->SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
+        context_->socket_session->Send(msg, ds_resp);
     }
 
-    context_->socket_session->SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
-    context_->socket_session->Send(msg, ds_resp);
 }
 
 // TODO

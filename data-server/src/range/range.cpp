@@ -580,10 +580,10 @@ void Range::ClearExpiredContext() {
     }
 }
 
-errorpb::Error *Range::Error(const char* str) {
+errorpb::Error *Range::Error(std::string& str) {
     errorpb::Error *err = new errorpb::Error;
 
-    err->set_message(str);
+    err->set_message(str.c_str());
     return err;
 }
 
