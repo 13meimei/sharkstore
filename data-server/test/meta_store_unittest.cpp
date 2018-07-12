@@ -1,3 +1,4 @@
+#include <map>
 #include <gtest/gtest.h>
 
 #include "base/status.h"
@@ -12,6 +13,7 @@ int main(int argc, char *argv[]) {
 
 namespace {
 
+using namespace sharkstore;
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::storage;
 
@@ -92,4 +94,49 @@ TEST_F(MetaStoreTest, ApplyIndex) {
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_EQ(applied, 0);
 }
+
+static metapb::Range genRange(uint64_t i) {
+    metapb::Range rng;
+    rng.set_id(i);
+    rng.set_start_key(randomString(randomInt() % 50 + 10));
+    rng.set_end_key(randomString(randomInt() % 50 + 10));
+    rng.set_table_id(randomInt());
+    rng.mutable_range_epoch()->set_conf_ver(randomInt());
+    rng.mutable_range_epoch()->set_version(randomInt());
+    return rng;
+}
+
+TEST_F(MetaStoreTest, Range) {
+    auto rng = genRange(randomInt());
+    auto s = store_->AddRange(rng);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    std::vector<metapb::Range> get_results;
+    s = store_->GetAllRange(&get_results);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_EQ(get_results.size(), 1);
+    ASSERT_EQ(get_results[0].id(), rng.id());
+
+    s = store_->DelRange(rng.id());
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    get_results.clear();
+    s = store_->GetAllRange(&get_results);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_TRUE(get_results.empty());
+
+    std::vector<metapb::Range> ranges;
+    for (uint64_t i = 0; i < 100; ++i) {
+        auto r = genRange(i);
+        ranges.push_back(r);
+    }
+    s = store_->BatchAddRange(ranges);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    get_results.clear();
+    s = store_->GetAllRange(&get_results);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_EQ(get_results.size(), ranges.size());
+}
+
 }

@@ -66,25 +66,13 @@ int RangeServer::Init(ContextServer *context) {
     }
     context_->meta_store = meta_store_;
 
-    std::vector<std::string> meta_strs;
-    ret = meta_store_->GetAllRange(meta_strs);
+    std::vector<metapb::Range> range_metas;
+    ret = meta_store_->GetAllRange(&range_metas);
     if (!ret.ok()) {
         FLOG_ERROR("load range metas failed(%s)", ret.ToString().c_str());
         return -1;
     }
-    // deserialize range meta
-    std::vector<metapb::Range> metas;
-    metas.resize(meta_strs.size());
-    int idx = 0;
-    for (const auto &str: meta_strs) {
-        if(!metas[idx].ParseFromString(str)) {
-            FLOG_ERROR("deserialize range meta failed(%s)", EncodeToHexString(str).c_str());
-            return -1;
-        }
-        ++idx;
-    }
-
-    if (Recover(metas) != 0) {
+    if (recover(range_metas) != 0) {
         FLOG_ERROR("load local range meta failed");
         return -1;
     }
@@ -422,16 +410,7 @@ void RangeServer::CreateRange(common::ProtoMessage *msg) {
             break;
         }
 
-        std::string value;
-        if (!req.range().SerializeToString(&value)) {
-            err = new errorpb::Error;
-            err->set_message("create range seriaize meta failed");
-
-            FLOG_ERROR("create range seriaize meta failed");
-            break;
-        }
-
-        auto ret = meta_store_->AddRange(req.range().id(), value);
+        auto ret = meta_store_->AddRange(req.range());
         if (!ret.ok()) {
             err = new errorpb::Error;
             err->set_message("create range seriaize meta failed");
@@ -1015,48 +994,27 @@ Status RangeServer::ApplySplit(uint64_t old_range_id,
         }
     } while (false);
 
-    std::map<uint64_t, std::string> batch_range;
-
     metapb::Range meta = rng->options();
     meta.set_end_key(req.split_key());
-
     meta.mutable_range_epoch()->set_version(req.epoch().version());
 
-    std::string value;
-    if (meta.SerializeToString(&value)) {
-        batch_range.emplace(old_range_id, std::move(value));
-    } else {
-        FLOG_ERROR("ApplySplit range_id %" PRIu64 " failed", old_range_id);
-        DeleteRange(req.new_range().id());
-        return Status(Status::kInvalidArgument, "seriaize meta error", "");
-    }
-
+    std::vector<metapb::Range> batch_ranges{meta};
     if (!is_exist) {
-        if (req.new_range().SerializeToString(&value)) {
-            batch_range.emplace(req.new_range().id(), std::move(value));
-        } else {
-            FLOG_ERROR("ApplySplit range_id %" PRIu64 " failed", old_range_id);
-            DeleteRange(req.new_range().id());
-            return Status(Status::kInvalidArgument, "seriaize meta error", "");
-        }
+        batch_ranges.push_back(req.new_range());
     }
-
-    auto ret = meta_store_->BatchAddRange(batch_range);
+    auto ret = meta_store_->BatchAddRange(batch_ranges);
     if (!ret.ok()) {
         FLOG_ERROR("ApplySplit batch add range failed");
         if (!is_exist) {
             DeleteRange(req.new_range().id());
         }
-        return ret;
     }
-
     return ret;
 }
 
 void RangeServer::TimeOut(const kvrpcpb::RequestHeader &req,
                           kvrpcpb::ResponseHeader *resp) {
-    errorpb::Error *err = new errorpb::Error;
-
+    auto err = new errorpb::Error;
     err->set_message("time out");
     err->mutable_timeout();
 
@@ -1065,15 +1023,27 @@ void RangeServer::TimeOut(const kvrpcpb::RequestHeader &req,
 
 void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
                                 kvrpcpb::ResponseHeader *resp) {
-    errorpb::Error *err = new errorpb::Error;
-
+    auto err = new errorpb::Error;
     err->set_message("range not found");
     err->mutable_range_not_found()->set_range_id(req.range_id());
 
     context_->socket_session->SetResponseHeader(req, resp, err);
 }
 
-int RangeServer::Recover(const std::vector<metapb::Range> &metas) {
+Status RangeServer::recover(const metapb::Range& meta) {
+    auto rng = std::make_shared<range::Range>(context_, meta);
+    auto s = rng->Initialize(range_status_, 0);
+    if (!s.ok()) return s;
+
+    std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
+    auto ret = ranges_.emplace(meta.id(), rng);
+    if (!ret.second) {
+        return Status(Status::kDuplicate, "save range", std::to_string(meta.id()));
+    }
+    return Status::OK();
+}
+
+int RangeServer::recover(const std::vector<metapb::Range> &metas) {
     assert(ds_config.range_config.recover_concurrency > 0);
     auto actual_concurrency = std::min(metas.size() / 4 + 1,
                                        static_cast<size_t>(ds_config.range_config.recover_concurrency));
@@ -1081,8 +1051,9 @@ int RangeServer::Recover(const std::vector<metapb::Range> &metas) {
         actual_concurrency = 50;
     }
 
-    std::vector<std::future<bool>> recover_futures;
+    std::vector<std::future<Status>> recover_futures;
     std::vector<uint64_t> failed_ranges;
+    std::mutex failed_mu;
     std::atomic<size_t> recover_pos = {0};
 
     FLOG_INFO("Start to recovery ranges. total ranges=%lu, concurrency=%lu, skip_fail=%d", metas.size(),
@@ -1095,49 +1066,54 @@ int RangeServer::Recover(const std::vector<metapb::Range> &metas) {
             while (true) {
                 auto pos = recover_pos.fetch_add(1);
                 if (pos >= metas.size()) {
-                    return true;
+                    return Status::OK();
                 }
                 const auto& meta = metas[pos];
                 FLOG_DEBUG("Start Recover range id=%" PRIu64, meta.id());
-                auto s = CreateRange(meta, 0);
+                auto s = recover(meta);
                 if (!s.ok()) {
-                    FLOG_ERROR("Recover CreateRange failed,id=%" PRIu64, meta.id());
-                    if (ds_config.range_config.recover_skip_fail > 0) { // allow fail
+                    FLOG_ERROR("Recovery range[%lu] failed: %s", meta.id(), s.ToString().c_str());
+                    {
+                        std::lock_guard<std::mutex> lock(failed_mu);
                         failed_ranges.push_back(meta.id());
+                    }
+                    if (ds_config.range_config.recover_skip_fail > 0) { // allow failed
                         continue;
                     } else {
-                        // let other thread quit
-                        recover_pos = metas.size();
-                        return false;
+                        pos = metas.size(); // failed, let other threads exit
+                        return s;
                     }
                 }
             }
         });
         recover_futures.push_back(std::move(f));
     }
+
+    Status last_error;
     for (auto &f : recover_futures) {
-        if (!f.get()) return -1;
+        auto s = f.get();
+        if (!s.ok()) last_error = s;
     }
 
     auto took_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now() - begin);
-
-    FLOG_INFO("Range recovery finished. success=%lu, failed=%u, time used=%lds%ldms",
-              metas.size() - failed_ranges.size(), failed_ranges.size(),
-              took_ms / 1000, took_ms % 1000);
+            std::chrono::system_clock::now() - begin).count();
 
     if (!failed_ranges.empty()) {
-        std::string failed_str("[");
-        for (std::size_t i = 0; i < failed_ranges.size(); ++i) {
-            failed_str += std::to_string(failed_ranges[i]);
-            if (i != failed_ranges.size() - 1)  { // not last one
-                failed_str += ", ";
-            }
-        }
-        FLOG_ERROR("Range recovery failed ranges: %s", failed_str.c_str());
+        std::string failed_str;
+        for (std::size_t i = 0; i < failed_ranges.size(); ++i)
+            failed_str += std::to_string(failed_ranges[i]) + ", ";
+        FLOG_ERROR("Range recovery failed ranges: [%s]", failed_str.c_str());
     }
 
-    return 0;
+    if (!last_error.ok()) {
+        FLOG_ERROR("Range recovery abort, last status: %s. failed=%lu",
+                  last_error.ToString().c_str(), failed_ranges.size());
+        return -1;
+    } else {
+        FLOG_INFO("Range recovery finished. failed=%lu, time used=%lds%ldms",
+                  failed_ranges.size(), took_ms / 1000, took_ms % 1000);
+        return 0;
+    }
 }
 
 void RangeServer::Heartbeat() {

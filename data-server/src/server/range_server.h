@@ -55,7 +55,9 @@ public:
 private:
     int OpenDB();
     void CloseDB();
-    int Recover(const std::vector<metapb::Range> &metas);
+
+    Status recover(const metapb::Range& meta);
+    int recover(const std::vector<metapb::Range> &metas);
 
     void RawGet(common::ProtoMessage *msg);
     void RawPut(common::ProtoMessage *msg);

@@ -375,19 +375,12 @@ Status Range::ApplySnapshotFinish(uint64_t index) {
 }
 
 bool Range::SaveMeta(const metapb::Range &meta) {
-    std::string value;
-    if (!meta.SerializeToString(&value)) {
-        FLOG_ERROR("save range mate seriaize failed");
-        return false;
-    }
-
     auto ms = context_->range_server->meta_store();
-    auto ret = ms->AddRange(meta_.id(), value);
+    auto ret = ms->AddRange(meta);
     if (!ret.ok()) {
         FLOG_ERROR("save range meta failed");
         return false;
     }
-
     return true;
 }
 

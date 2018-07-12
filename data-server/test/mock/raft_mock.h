@@ -19,9 +19,6 @@ public:
     virtual Status Submit(std::string& cmd);
     virtual Status ChangeMemeber(const ConfChange& conf);
 
-    virtual void GetPeers(std::vector<Peer>* peers) const {}
-    virtual void GetDownPeers(std::vector<DownPeer>* peers) const {}
-    virtual void GetPeedingPeers(std::vector<Peer>* peers) const {}
     virtual void GetStatus(RaftStatus* status) const {}
 
     virtual void Truncate(uint64_t index) {}

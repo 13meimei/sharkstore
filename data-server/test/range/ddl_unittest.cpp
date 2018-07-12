@@ -94,8 +94,8 @@ TEST_F(DdlTest, Ddl) {
 
         ASSERT_TRUE(range_server_->find(1) != nullptr);
 
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 1) << metas.size();
         // end test create range
@@ -123,8 +123,8 @@ TEST_F(DdlTest, Ddl) {
         ASSERT_FALSE(resp.header().has_error());
 
         // test meta_store
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 1) << metas.size();
 
@@ -156,8 +156,8 @@ TEST_F(DdlTest, Ddl) {
         ASSERT_TRUE(resp.header().error().has_stale_range());
 
         // test meta_store
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 1) << metas.size();
         // end test create range
@@ -186,8 +186,8 @@ TEST_F(DdlTest, Ddl) {
         ASSERT_FALSE(resp.header().has_error());
 
         // test meta_store
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 0) << metas.size();
         // end test delete range
