@@ -366,7 +366,7 @@ private:
 
 private:
     WatcherSet key_watchers_;
-    Status WatchNotify(const EventType evtType, const watchpb::WatchKeyValue& kv);
+    Status WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv);
 
 private:
     static const int kTimeTakeWarnThresoldUSec = 1000000;
