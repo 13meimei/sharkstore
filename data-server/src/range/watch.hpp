@@ -4,6 +4,8 @@ _Pragma("once");
 #include <proto/gen/watchpb.pb.h>
 #include <common/socket_session.h>
 #include <mutex>
+#include <thread>
+#include <list>
 
 namespace sharkstore {
 namespace dataserver {
@@ -112,14 +114,40 @@ namespace range {
     };
 
     typedef std::unordered_map<int64_t, common::ProtoMessage*> WatcherSet_;
-    typedef std::unordered_map<std::string, WatcherSet_> Key2Watchers_;
+    typedef std::unordered_map<std::string, WatcherSet_*> Key2Watchers_;
     typedef std::unordered_map<std::string, nullptr_t> KeySet_;
-    typedef std::unordered_map<int64_t, KeySet_> Watcher2Keys_;
+    typedef std::unordered_map<int64_t, KeySet_*> Watcher2Keys_;
+
+    typedef common::ProtoMessage* Watcher;
+    auto cmp = [](Watcher a, Watcher b) { return a->expire_time > b->expire_time; };
+    typedef std::priority_queue<Watcher, std::vector<Watcher>, decltype(cmp)> Timer;
 
     class WatcherSet {
     public:
-        WatcherSet() {};
-        ~WatcherSet() {};
+        WatcherSet() {
+            watchers_expire_thread_ = std::thread([]() {
+                while (g_continue_flag) {
+                   Watcher w;
+                   {
+                       std::unique_lock<std::mutex> lock(timer_mutex_);
+                       if (timer_.empty()) continue;
+
+                       w = timer_.top();
+                       if (timer_cond_.wait_until(lock, std::chrono::milliseconds(w->expire_time)) ==
+                           std::cv_status::timeout) {
+
+                           // send timeout response
+                       }
+
+                       // delete watcher
+                   }
+               }
+            });
+        }
+        ~WatcherSet() {
+            watchers_expire_thread_.join();
+        }
+
         void AddWatcher(std::string &, common::ProtoMessage*);
         WATCH_CODE DelWatcher(const int64_t &, const std::string &);
         uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , const std::string &);
@@ -128,6 +156,12 @@ namespace range {
         Key2Watchers_ key_index_;
         Watcher2Keys_ watcher_index_;
         std::mutex mutex_;
+
+        Timer timer_;
+        std::mutex timer_mutex_;
+        std::condition_variable timer_cond_;
+
+        std::thread watchers_expire_thread_;
     };
 
 
@@ -156,7 +190,7 @@ namespace range {
             if (kit1 == kit0->second.end()) {
                 kit0->second.emplace(std::make_pair(msg->session_id, msg));
             }
-//        }
+        }
 
         // build watcher id to key name
         auto wit0 = watcher_index_.find(msg->session_id);
