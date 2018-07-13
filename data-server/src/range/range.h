@@ -33,7 +33,7 @@ _Pragma("once");
 
 #include "server/context_server.h"
 #include "server/run_status.h"
-#include "watch.hpp"
+#include "watch.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -115,7 +115,7 @@ public:
     void WatchEncodeValue(std::string &value, const uint64_t &version_seq);
     void WatchDecodeValue(std::string &value, uint64_t *version_seq);
 
-    void AddKeyWatcher(std::string, common::ProtoMessage*);
+    void AddKeyWatcher(std::string&, common::ProtoMessage*);
     WATCH_CODE DelKeyWatcher(const int64_t &id, const std::string &key);
     uint32_t GetKeyWatchers(std::vector<common::ProtoMessage*>&, std::string);
 public:
@@ -180,9 +180,7 @@ private:
     bool RawPutTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
     bool RawDeleteTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
     bool DeleteTry(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
-    bool WatchPutTry(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
-    bool WatchDelTry(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
-
+    
 private:
     Status Submit(const raft_cmdpb::Command &cmd);
     Status Apply(const raft_cmdpb::Command &cmd, uint64_t index);
