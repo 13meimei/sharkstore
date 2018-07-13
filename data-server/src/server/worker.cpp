@@ -33,7 +33,6 @@ int Worker::Init(ContextServer *context) {
     socket_server_.set_send_done(ds_send_done_callback);
 
     context_ = context;
-    g_status.worker_socket_status = &worker_status_;
 
     FLOG_INFO("Worker Init end ...");
     return 0;

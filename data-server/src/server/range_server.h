@@ -45,6 +45,7 @@ public:
     storage::MetaStore *meta_store() { return meta_store_; }
     metapb::Range *GetRangeMeta(uint64_t range_id);
 
+    size_t GetRangesSize() const;
     std::shared_ptr<range::Range> find(uint64_t range_id);
 
     void OnNodeHeartbeatResp(const mspb::NodeHeartbeatResponse &) override;
@@ -116,7 +117,7 @@ private:  // admin
     void Heartbeat();
 
 private:
-    shared_mutex rw_lock_;
+    mutable shared_mutex rw_lock_;
     std::unordered_map<int64_t, std::shared_ptr<range::Range>> ranges_;
 
     std::mutex statis_mutex_;
@@ -137,7 +138,6 @@ private:
     storage::MetaStore *meta_store_ = nullptr;
 
     ContextServer *context_ = nullptr;
-    range_status_t *range_status_ = nullptr;
 };
 
 }  // namespace server

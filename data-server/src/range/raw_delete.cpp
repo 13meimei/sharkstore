@@ -37,7 +37,7 @@ void Range::RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &
     auto btime = get_micro_second();
     context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
-    FLOG_DEBUG("range[%" PRIu64 "] RawDelete begin", meta_.id());
+    FLOG_DEBUG("range[%" PRIu64 "] RawDelete begin", id_);
 
     if (!CheckWriteable()) {
         auto resp = new kvrpcpb::DsKvRawDeleteResponse;
@@ -53,7 +53,7 @@ void Range::RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &
         auto &key = req.req().key();
 
         if (key.empty()) {
-            FLOG_WARN("range[%" PRIu64 "] RawDelete error: key empty", meta_.id());
+            FLOG_WARN("range[%" PRIu64 "] RawDelete error: key empty", id_);
             err = KeyNotInRange(key);
             break;
         }
@@ -82,8 +82,7 @@ void Range::RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] RawDelete error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] RawDelete error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvRawDeleteResponse;
         return SendError(msg, req.header(), resp, err);
@@ -94,7 +93,7 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
     Status ret;
     errorpb::Error *err = nullptr;
 
-    FLOG_DEBUG("range[%" PRIu64 "] ApplyRawDelete begin", meta_.id());
+    FLOG_DEBUG("range[%" PRIu64 "] ApplyRawDelete begin", id_);
 
     auto &req = cmd.kv_raw_delete_req();
 

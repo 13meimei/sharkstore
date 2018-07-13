@@ -36,7 +36,6 @@ int RangeServer::Init(ContextServer *context) {
     FLOG_INFO("RangeServer Init begin ...");
 
     context_ = context;
-    range_status_ = &g_status.range_status;
 
     // 打开数据db
     if (OpenDB() != 0) {
@@ -90,8 +89,6 @@ int RangeServer::Start() {
     auto handle = range_heartbeat_.native_handle();
     AnnotateThread(handle, "range_hb");
 
-    range_status_->assigned_worker_threads = ds_config.range_config.worker_threads;
-
     char name[16];
     for (int i = 0; i < ds_config.range_config.worker_threads; i++) {
         worker_.emplace_back([this] {
@@ -118,10 +115,7 @@ int RangeServer::Start() {
             }
 
             FLOG_INFO("StatisSize worker thread exit...");
-            range_status_->actual_worker_threads--;
         });
-
-        range_status_->actual_worker_threads++;
 
         auto handle = worker_[i].native_handle();
         sprintf(name, "statis:%d", i);
@@ -463,7 +457,7 @@ Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader) {
         return Status(Status::kNoMem, "new range null", "");
     }
     // 初始化range
-    auto ret = rng->Initialize(range_status_, leader);
+    auto ret = rng->Initialize(leader);
     if (!ret.ok()) {
         FLOG_ERROR("initialize range[%" PRIu64 "] failed: %s", range.id(),
                    ret.ToString().c_str());
@@ -473,10 +467,6 @@ Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader) {
     ranges_[range.id()] = rng;
 
     FLOG_INFO("create new range[%" PRIu64 "] success.", range.id());
-
-    range_status_->range_count++;
-    context_->run_status->PushRange(monitor::RangeTag::RangeCount,
-                                    range_status_->range_count);
 
     return ret;
 }
@@ -525,9 +515,6 @@ int RangeServer::DeleteRange(uint64_t range_id) {
 
     FLOG_INFO("delete range[%" PRIu64 "] success.", range_id);
 
-    range_status_->range_count--;
-    context_->run_status->PushRange(monitor::RangeTag::RangeCount,
-                                    range_status_->range_count);
     return 0;
 }
 
@@ -569,9 +556,6 @@ int RangeServer::OfflineRange(uint64_t range_id) {
 
     } while (false);
 
-    range_status_->range_count--;
-    context_->run_status->PushRange(monitor::RangeTag::RangeCount,
-                                    range_status_->range_count);
     return 0;
 }
 
@@ -599,9 +583,6 @@ int RangeServer::CloseRange(uint64_t range_id) {
 
     FLOG_INFO("close range[%" PRIu64 "] success.", range_id);
 
-    range_status_->range_count--;
-    context_->run_status->PushRange(monitor::RangeTag::RangeCount,
-                                    range_status_->range_count);
     return 0;
 }
 
@@ -701,6 +682,11 @@ void RangeServer::SetLogLevel(common::ProtoMessage *msg) {
     set_log_level(level);
 
     context_->socket_session->Send(msg, resp);
+}
+
+size_t RangeServer::GetRangesSize() const {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+    return ranges_.size();
 }
 
 std::shared_ptr<range::Range> RangeServer::find(uint64_t range_id) {
@@ -1011,7 +997,7 @@ void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
 
 Status RangeServer::recover(const metapb::Range& meta) {
     auto rng = std::make_shared<range::Range>(context_, meta);
-    auto s = rng->Initialize(range_status_, 0);
+    auto s = rng->Initialize(0);
     if (!s.ok()) return s;
 
     std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
@@ -1094,13 +1080,6 @@ int RangeServer::recover(const std::vector<metapb::Range> &metas) {
     } else {
         FLOG_INFO("Range recovery finished. success=%lu, failed=%lu, time used=%lds%ldms",
                   success_counter.load(), failed_ranges.size(), took_ms / 1000, took_ms % 1000);
-        // init range count
-        {
-             sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
-             range_status_->range_count = ranges_.size();
-        }
-        context_->run_status->PushRange(monitor::RangeTag::RangeCount,
-                                        range_status_->range_count);
         return 0;
     }
 }
@@ -1238,14 +1217,12 @@ void RangeServer::OnAskSplitResp(const mspb::AskSplitResponse &resp) {
 }
 
 void RangeServer::CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) {
-    context_->run_status->SetHardDiskInfo();
-
     req->set_node_id(context_->node_id);
 
     auto stats = req->mutable_stats();
-    stats->set_range_count(range_status_->range_count);
-    stats->set_range_leader_count(range_status_->range_leader_count);
-    stats->set_range_split_count(range_status_->range_split_count);
+    stats->set_range_count(GetRangesSize());
+    stats->set_range_leader_count(context_->run_status->GetLeaderCount());
+    stats->set_range_split_count(context_->run_status->GetSplitCount());
 
     raft::ServerStatus rss;
     context_->raft_server->GetStatus(&rss);
@@ -1253,10 +1230,14 @@ void RangeServer::CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) {
     stats->set_receiving_snap_count(rss.total_snap_applying);
     stats->set_applying_snap_count(rss.total_snap_applying);
 
-    stats->set_capacity(g_status.hard_info.total_size);
-    stats->set_used_size(g_status.hard_info.used_size);
-    stats->set_available(g_status.hard_info.free_size);
+    // collect file system usage
+    FileSystemUsage fs_usage;
+    context_->run_status->GetFilesystemUsage(&fs_usage);
+    stats->set_capacity(fs_usage.total_size);
+    stats->set_used_size(fs_usage.used_size);
+    stats->set_available(fs_usage.free_size);
 
+    // collect storage metric
     storage::MetricStat mstat;
     storage::Metric::CollectAll(&mstat);
     stats->set_keys_read(mstat.keys_read_per_sec);

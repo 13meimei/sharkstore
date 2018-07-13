@@ -23,21 +23,18 @@ void Range::KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req) {
 
     do {
         if (!VerifyLeader(err)) {
-            FLOG_WARN("range[%" PRIu64 "] KVSet error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] KVSet error: %s", id_, err->message().c_str());
             break;
         }
 
         if (!KeyInRange(key, err)) {
-            FLOG_WARN("range[%" PRIu64 "] KVSet error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] KVSet error: %s", id_, err->message().c_str());
             break;
         }
 
         auto epoch = req.header().range_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("range[%" PRIu64 "] KvSet error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] KvSet error: %s", id_, err->message().c_str());
             break;
         }
 
@@ -47,8 +44,7 @@ void Range::KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req) {
         });
 
         if (!ret.ok()) {
-            FLOG_ERROR("range[%" PRIu64 "] KVSet raft submit error: %s",
-                       meta_.id(), ret.ToString().c_str());
+            FLOG_ERROR("range[%" PRIu64 "] KVSet raft submit error: %s", id_, ret.ToString().c_str());
 
             err = RaftFailError();
         }
@@ -69,8 +65,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
     do {
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  ApplyInsert error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("Range %" PRIu64 "  ApplyInsert error: %s", id_, err->message().c_str());
             break;
         }
 
@@ -114,17 +109,15 @@ void Range::KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req) {
     auto ds_resp = new kvrpcpb::DsKvGetResponse;
     auto header = ds_resp->mutable_header();
 
-    FLOG_DEBUG("range[%" PRIu64 "] KVGet begin", meta_.id());
+    FLOG_DEBUG("range[%" PRIu64 "] KVGet begin", id_);
     do {
         auto &key = req.req().key();
         if (!VerifyLeader(err)) {
-            FLOG_WARN("range[%" PRIu64 "] KVGet error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] KVGet error: %s", id_, err->message().c_str());
             break;
         }
         if (key.empty() || !KeyInRange(key, err)) {
-            FLOG_WARN("range[%" PRIu64 "] KVGet error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] KVGet error: %s", id_, err->message().c_str());
             break;
         }
 
@@ -171,16 +164,14 @@ void Range::KVBatchSet(common::ProtoMessage *msg,
         });
 
         if (!ret.ok()) {
-            FLOG_ERROR("range[%" PRIu64 "] KVBatchSet raft submit error: %s",
-                       meta_.id(), ret.ToString().c_str());
+            FLOG_ERROR("range[%" PRIu64 "] KVBatchSet raft submit error: %s", id_, ret.ToString().c_str());
 
             err = RaftFailError();
         }
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] KVBatchSet error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] KVBatchSet error: %s", id_, err->message().c_str());
         auto resp = new kvrpcpb::DsKvBatchSetResponse;
         SendError(msg, req.header(), resp, RaftFailError());
     }
@@ -199,8 +190,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
 
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  ApplyKVBatchSet error: %s",
-                      meta_.id(), err->message().c_str());
+            FLOG_WARN("Range %" PRIu64 "  ApplyKVBatchSet error: %s", id_, err->message().c_str());
             break;
         }
 
@@ -271,8 +261,7 @@ void Range::KVBatchGet(common::ProtoMessage *msg,
     for (int i = 0; i < keys_size; ++i) {
         auto &key = req.req().keys(i);
         if (key.empty() || !KeyInRange(key)) {
-            FLOG_WARN("range[%" PRIu64 "] KVBatchGet error: %s not in range",
-                      meta_.id(), key.c_str());
+            FLOG_WARN("range[%" PRIu64 "] KVBatchGet error: %s not in range", id_, key.c_str());
         } else {
             auto kv = ds_resp->mutable_resp()->add_kvs();
             auto btime = get_micro_second();
@@ -316,15 +305,13 @@ void Range::KVDelete(common::ProtoMessage *msg,
             cmd.set_allocated_kv_delete_req(req.release_req());
         });
         if (!ret.ok()) {
-            FLOG_ERROR("range[%" PRIu64 "] KVDelete raft submit error: %s",
-                       meta_.id(), ret.ToString().c_str());
+            FLOG_ERROR("range[%" PRIu64 "] KVDelete raft submit error: %s", id_, ret.ToString().c_str());
             err = RaftFailError();
         }
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] KVDelete error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] KVDelete error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvDeleteResponse;
         SendError(msg, req.header(), resp, err);
@@ -340,8 +327,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
 
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  ApplyKVBatchSet error: %s",
-                      meta_.id(), err->message().c_str());
+            FLOG_WARN("Range %" PRIu64 "  ApplyKVBatchSet error: %s", id_, err->message().c_str());
             break;
         }
 
@@ -379,8 +365,7 @@ void Range::KVBatchDelete(common::ProtoMessage *msg,
     }
 
     if (!VerifyLeader(err)) {
-        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
         return SendError(msg, req.header(), resp, err);
@@ -388,8 +373,7 @@ void Range::KVBatchDelete(common::ProtoMessage *msg,
 
     auto epoch = req.header().range_epoch();
     if (!EpochIsEqual(epoch, err)) {
-        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
         return SendError(msg, req.header(), resp, err);
@@ -409,8 +393,7 @@ void Range::KVBatchDelete(common::ProtoMessage *msg,
     });
 
     if (!ret.ok()) {
-        FLOG_ERROR("range[%" PRIu64 "] Insert raft submit error: %s",
-                   meta_.id(), ret.ToString().c_str());
+        FLOG_ERROR("range[%" PRIu64 "] Insert raft submit error: %s", id_, ret.ToString().c_str());
 
         auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
         SendError(msg, req.header(), resp, RaftFailError());
@@ -429,8 +412,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
 
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  ApplyKVBatchDelete error: %s",
-                      meta_.id(), err->message().c_str());
+            FLOG_WARN("Range %" PRIu64 "  ApplyKVBatchDelete error: %s", id_, err->message().c_str());
             break;
         }
 
@@ -484,8 +466,7 @@ void Range::KVRangeDelete(common::ProtoMessage *msg,
     errorpb::Error *err = nullptr;
 
     if (!VerifyLeader(err)) {
-        FLOG_WARN("range[%" PRIu64 "] KVRangeDelet error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] KVRangeDelet error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
         return SendError(msg, req.header(), resp, err);
@@ -493,8 +474,7 @@ void Range::KVRangeDelete(common::ProtoMessage *msg,
 
     auto epoch = req.header().range_epoch();
     if (!EpochIsEqual(epoch, err)) {
-        FLOG_WARN("range[%" PRIu64 "] KVRangeDelet error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] KVRangeDelet error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
         return SendError(msg, req.header(), resp, err);
@@ -506,8 +486,7 @@ void Range::KVRangeDelete(common::ProtoMessage *msg,
     });
 
     if (!ret.ok()) {
-        FLOG_ERROR("range[%" PRIu64 "] KVRangeDelet raft submit error: %s",
-                   meta_.id(), ret.ToString().c_str());
+        FLOG_ERROR("range[%" PRIu64 "] KVRangeDelet raft submit error: %s", id_, ret.ToString().c_str());
 
         auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
         SendError(msg, req.header(), resp, RaftFailError());
@@ -528,8 +507,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
 
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("range[%" PRIu64 "] KVRangeDelet error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] KVRangeDelet error: %s", id_, err->message().c_str());
             break;
         }
 

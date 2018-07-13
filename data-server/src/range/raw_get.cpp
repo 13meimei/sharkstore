@@ -39,7 +39,7 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
     auto ds_resp = new kvrpcpb::DsKvRawGetResponse;
     auto header = ds_resp->mutable_header();
 
-    FLOG_DEBUG("range[%" PRIu64 "] RawGet begin", meta_.id());
+    FLOG_DEBUG("range[%" PRIu64 "] RawGet begin", id_);
 
     do {
         if (!VerifyLeader(err)) {
@@ -48,7 +48,7 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
 
         auto &key = req.req().key();
         if (key.empty()) {
-            FLOG_WARN("range[%" PRIu64 "] RawGet error: key empty", meta_.id());
+            FLOG_WARN("range[%" PRIu64 "] RawGet error: key empty", id_);
             err = KeyNotInRange(key);
             break;
         }
@@ -85,8 +85,7 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] RawGet error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] RawGet error: %s", id_, err->message().c_str());
     }
 
     context_->socket_session->SetResponseHeader(req.header(), header, err);
