@@ -609,7 +609,7 @@ void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
                                                 ds_resp->mutable_header(), err);
     context_->socket_session->Send(msg, ds_resp);
 }
-
+/*
 void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req) {
     errorpb::Error *err = nullptr;
     auto ds_resp = new watchpb::DsWatchResponse;
@@ -663,7 +663,7 @@ void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req)
         context_->socket_session->Send(msg, ds_resp);
     }
 
-}
+}*/
 
 // TODO
 void Range::ApplyToWatch(common::ProtoMessage *msg/*, event ev*/) {
