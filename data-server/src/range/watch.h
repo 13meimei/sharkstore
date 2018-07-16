@@ -1,8 +1,13 @@
 _Pragma("once");
 #include <string>
 #include <proto/gen/watchpb.pb.h>
+#include <proto/gen/funcpb.pb.h>
+#include <proto/gen/errorpb.pb.h>
 #include <common/socket_session.h>
+#include <common/ds_encoding.h>
+#include <frame/sf_logger.h>
 #include <mutex>
+#include <memory>
 
 namespace sharkstore {
 namespace dataserver {
@@ -10,29 +15,30 @@ namespace range {
 
 class WatchCode {
 public:
-    Code(){};
-    ~Code(){};
+    WatchCode(){};
+    ~WatchCode(){};
 
 public:
-    static int16_t EncodeKv(FunctionID funcId, watchpb::WatchKeyValue *kv, 
+    static int16_t EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv, 
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err) {
         int16_t ret(0);
         std::vector<std::string*> keys;
         std::string funcName("");
+        std::string ext("");
         keys.clear();
         db_key.clear();
 
         switch (funcId) {
-            case kFuncWatchGet:
-            case kFuncPureGet:
-            case kFuncWatchPut:
-            case kFuncWatchDel:
-                if (funcId == kFuncWatchGet) {
+            case funcpb::kFuncWatchGet:
+            case funcpb::kFuncPureGet:
+            case funcpb::kFuncWatchPut:
+            case funcpb::kFuncWatchDel:
+                if (funcId == funcpb::kFuncWatchGet) {
                     funcName.assign("WatchGet");
-                } else if (funcId == kFuncPureGet) {
+                } else if (funcId == funcpb::kFuncPureGet) {
                     funcName.assign("PureGet");
-                } else if (funcId == kFuncWatchPut) {
+                } else if (funcId == funcpb::kFuncWatchPut) {
                     funcName.assign("WatchPut");
                 } else {
                     funcName.assign("WatchDel");
@@ -50,15 +56,15 @@ public:
                     ret = -1;
                     if (db_key.empty() || kv->key_size() < 1) {
                         FLOG_WARN("range[%" PRIu64 "] %s error: key empty", meta_.id(), funcName.data());
-                        err = KeyNotInRange(key);
+                        //err = errorpb::KeyNotInRange(db_key);
                         break;
                     }
                 }
                 FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%lld key before:%s after:%s", 
-                           meta_.id(), funcName.data(), meta_.table_id(),  keys[0].data(), db_key.data());
+                           meta_.id(), funcName.data(), meta_.table_id(),  keys[0]->data(), db_key.data());
 
                 if (!kv->value().empty()) {
-                    EncodeWatchValue( &db_value, kv->version(), kv->value(), "");
+                    EncodeWatchValue( &db_value, kv->version(), kv->value(), ext);
                 }
                 FLOG_DEBUG("range[%" PRIu64 "] %s info: value before:%s after:%s", 
                            meta_.id(), funcName.data(), kv->value().data(), db_value.data());
@@ -73,7 +79,7 @@ public:
         return ret;
     }
 
-    static int16_t DecodeKv(FunctionID funcId, watchpb::WatchKeyValu *kv, 
+    static int16_t DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv, 
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err) {
         int16_t ret(0);
@@ -81,20 +87,20 @@ public:
         uint64_t version(0);
         keys.clear();
         
-        switch (funcId) {
-            case kFuncWatchGet:
-            case kFuncPureGet:
-            case kFuncWatchPut:
-            case kFuncWatchDel:
-                //decode value
-                auto val(std::make_unique<std::string>());
-                auto ext(std::make_unique<std::string>());
+        auto val = std::make_shared<std::string>("");
+        auto ext = std::make_shared<std::string>("");
 
-                DecodeWatchValue(&version, val, ext, db_value);
-                kv->set_key(db_key);
-                kv->set_value(std::move(val));
+        switch (funcId) {
+            case funcpb::kFuncWatchGet:
+            case funcpb::kFuncPureGet:
+            case funcpb::kFuncWatchPut:
+            case funcpb::kFuncWatchDel:
+                //decode value
+                DecodeWatchValue(&version, val.get(), ext.get(), db_value);
+                kv->set_key(0, db_key);
+                kv->set_value(*val);
                 kv->set_version(version);
-                kv->set_ext(std::move(ext));
+                kv->set_ext(*ext);
                 break;
             
             default:
@@ -109,7 +115,7 @@ public:
         return ret;
     }
 
-}
+};
 
 
 //<<<<<<< HEAD

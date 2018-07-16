@@ -41,7 +41,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             break;
         }
 
-        if( 0 != WatchCode::EncodeKv(kFuncWatchGet, req.req().mutable_kv(), dbKey, err) ) {
+        if( 0 != WatchCode::EncodeKv(kFuncWatchGet, meta_, req.req().mutable_kv(), dbKey, err) ) {
             break;
         }
 
@@ -71,12 +71,12 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         resp->set_code(Status::kOk);
         resp->set_code(static_cast<int>(ret.code()));
         
-        auto val = std::make_unique<std::string>();
-        auto ext = std::make_unique<std::string>();
+        auto val = std::make_shared<std::string>();
+        auto ext = std::make_shared<std::string>();
         auto evt = resp->mutable_events()->add_events();
         auto tmpKv = req.req().mutable_kv();
         //decode value
-        WatchCode::DecodeKv(kFuncWatchGet, tmpKv, dbKey, dbValue, err);
+        WatchCode::DecodeKv(kFuncWatchGet, meta_, tmpKv, dbKey, dbValue, err);
 
         evt->set_type(PUT);
         evt->set_allocated_kv(tmpKv);
@@ -135,7 +135,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         }
 
         //encode key
-        if( 0 != WatchCode::EncodeKv(kFuncWatchGet, req.req().mutable_kv(), dbKey, err) ) {
+        if( 0 != WatchCode::EncodeKv(kFuncWatchGet, meta_, req.req().mutable_kv(), dbKey, err) ) {
             break;
         }
 
@@ -157,7 +157,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
 
         if (prefix) {
             //need to encode and decode
-            std::unique_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKey));
+            std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKey));
             uint32_t count{0};
 
             for (int i = 0; iterator->Valid() ; ++i) {
@@ -165,7 +165,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
                 auto evt = resp->mutable_events()->add_events();
                 auto kv = evt->mutable_kv();
 
-                WatchCode::DecodeKv(kFuncPureGet, kv, dbKey, iterator->value());
+                WatchCode::DecodeKv(kFuncPureGet, meta_, kv, dbKey, iterator->value());
                 if (minVersion > kv->version()) {
                     minVersion = kv->version();
                 }
@@ -179,7 +179,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             auto kv = resp->mutable_events()->add_events()->mutable_kv();
             auto ret = store_->Get(dbKey, &dbValue);
             //to do decode value version             
-            WatchCode::DecodeKv(kFuncPureGet, kv, dbKey, dbValue);
+            WatchCode::DecodeKv(kFuncPureGet, meta_, kv, dbKey, dbValue);
             
             FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s ", meta_.id(), code, ret.ToString().data());
             code = ret.code();
@@ -233,7 +233,7 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
         version = version_seq_.fetch_add(1);
         //encode key
         kv->set_version(version);
-        if( 0 != WatchCode::EncodeKv(kFuncWatchPut, kv, dbKey, dbValue, err) ) {
+        if( 0 != WatchCode::EncodeKv(kFuncWatchPut, meta_, kv, dbKey, dbValue, err) ) {
             break;
         }
         
@@ -301,7 +301,7 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
             break;
         }
         
-        if( 0 != WatchCode::EncodeKv(kFuncWatchDel, kv, dbKey, dbValue, err) ) {
+        if( 0 != WatchCode::EncodeKv(kFuncWatchDel, meta_, kv, dbKey, dbValue, err) ) {
             break;
         }
 
@@ -467,7 +467,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd) {
 Status Range::WatchNotify(const EventType evtType, const watchpb::WatchKeyValue& kv) {
     Status ret;
 
-    std::unique_ptr<watchpb::WatchKeyValue> tmpKv = std::make_unique<watchpb::WatchKeyValue>();
+    std::shared_ptr<watchpb::WatchKeyValue> tmpKv = std::make_shared<watchpb::WatchKeyValue>();
     tmpKv->CopyFrom(kv);
 
     std::vector<common::ProtoMessage*> vecProtoMsg;
@@ -487,7 +487,7 @@ Status Range::WatchNotify(const EventType evtType, const watchpb::WatchKeyValue&
         funcId = kFuncHeartbeat;
     }
 
-    if( Status::kOk != WatchCode::DecodeKv(funcId, tmpKv, dbKey, dbValue, err)) {
+    if( Status::kOk != WatchCode::DecodeKv(funcId, meta_, tmpKv, dbKey, dbValue, err)) {
         return Status(kUnknown, err->message(), "");
     }
     

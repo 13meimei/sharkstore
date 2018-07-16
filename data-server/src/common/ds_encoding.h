@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace sharkstore {
 namespace dataserver {

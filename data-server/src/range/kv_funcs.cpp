@@ -1,7 +1,6 @@
 //
 // Created by guo on 2/8/18.
 //
-#include <proto/gen/watchpb_v1.pb.h>
 #include "range.h"
 #include "server/range_server.h"
 
@@ -665,21 +664,6 @@ void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req)
 
 }*/
 
-// TODO
-void Range::ApplyToWatch(common::ProtoMessage *msg/*, event ev*/) {
-    watchpb::DsWatchCreateRequest req;
-    watchpb::DsWatchResponse *resp;
-
-        // set header
-    context_->socket_session->SetResponseHeader(req.header(), resp->mutable_header(), nullptr);
-
-        // fix response content
-
-        // send
-    context_->socket_session->Send(msg, resp);
-
-        // call delwatcher, because of lang-pull client
-}
 
 }
 }

@@ -57,7 +57,7 @@ void EncodeWatchValue(std::string *buf,
     EncodeBytesValue(buf, 4, extend->c_str(), extend->length());
 }
 
-bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
+bool DecodeWatchValue(uint64_t *version, std::string *value, std::string *extend,
                       std::string &buf) {
     assert(version != nullptr && value != nullptr && extend != nullptr &&
            buf.length() != 0);
