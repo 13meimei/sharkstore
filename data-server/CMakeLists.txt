@@ -158,6 +158,8 @@ set(SOURCES
     src/range/peer.cpp
     src/range/snapshot.cpp
     src/range/kv_funcs.cpp
+    src/range/watch.cpp
+    src/range/watch_funcs.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
     src/storage/iterator.cpp
