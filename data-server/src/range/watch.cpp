@@ -38,15 +38,17 @@ bool DecodeWatchKey(std::vector<std::string *> &keys, std::string *buf) {
 
     size_t offset;
     for (offset = 9; offset != buf->length() - 1;) {
-        auto b = std::make_shared<std::string>();
+        std::string* b;
 
-        if (!DecodeBytesAscending(*buf, offset, b.get())) {
+        b = new std::string();
+        if (!DecodeBytesAscending(*buf, offset, b)) {
             return false;
         }
         keys.push_back(b.get());
     }
     return true;
 }
+
 void EncodeWatchValue(std::string *buf,
                       int64_t &version,
                       const std::string *value,
@@ -69,8 +71,70 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
     return true;
 }
 
+WatcherSet::WatcherSet() {
+    watchers_expire_thread_ = std::thread([this]() {
+        while (g_continue_flag) {
+            Watcher* w;
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                if (timer_.empty()) {
+                    timer_cond_.wait_for(lock, std::chrono::milliseconds(10));
+                    continue; // sleep 10ms
+                }
+
+                w = timer_.top();
+                if (timer_cond_.wait_until(lock, std::chrono::milliseconds(w->msg_->expire_time)) ==
+                    std::cv_status::timeout) {
+
+                    // todo send timeout response
+
+                    // delete watcher
+                    {
+                        auto id = w->msg_->session_id;
+                        auto key = w->key_;
+                        auto wit = watcher_index_.find(id);
+                        if (wit == watcher_index_.end()) {
+                            continue;
+                        }
+
+                        auto keys = wit->second; // key map
+                        auto itKeys = keys.find(*key);
+
+                        if (itKeys != keys.end()) {
+                            auto itKeyIdx = key_index_.find(key);
+
+                            if (itKeyIdx != key_index_.end()) {
+                                auto itSession = itKeyIdx->second.find(id);
+
+                                if (itSession != itKeyIdx->second.end()) {
+                                    itKeyIdx->second.erase(itSession)
+                                }
+                                key_index_.erase(itKeyIdx);
+                            }
+
+                            keys.erase(itKeys);
+                        }
+
+                        if (keys.size() < 1) {
+                            watcher_index_.erase(wit);
+                        }
+                    } // del watcher
+
+                    timer_.pop();
+                }
+            }
+        }
+    }
+}
+
+WatcherSet::~WatcherSet() {
+    watchers_expire_thread_.join();
+}
+
 void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
     std::lock_guard<std::mutex> lock(mutex_);
+    timer_cond_.notify_one();
+    timer_.push(Watcher(msg, &name));
 
     // build key name to watcher session id
     auto kit0 = key_index_.find(name);
@@ -106,6 +170,13 @@ void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
 
 WATCH_CODE WatcherSet::DelWatcher(const int64_t &id, const std::string &key) {
     std::lock_guard<std::mutex> lock(mutex_);
+    timer_cond_.notify_one();
+//   todo timer_.find and del
+    for (auto it: timer_.GetQueue()) {
+        if (it->msg_->session_id == id && (*it.key_) == key) {
+            timer_.GetQueue().erase(it);
+        }
+    }
 
     //<session:keys>
     auto wit = watcher_index_.find(id);
@@ -140,6 +211,7 @@ WATCH_CODE WatcherSet::DelWatcher(const int64_t &id, const std::string &key) {
 
 uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage *> &vec, const std::string &name) {
     std::lock_guard<std::mutex> lock(mutex_);
+    timer_cond_.notify_one();
 
     auto kit = key_index_.find(name);
     if (kit == key_index_.end()) {
