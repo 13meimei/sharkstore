@@ -19,7 +19,7 @@ public:
     ~WatchCode(){};
 
 public:
-    static int16_t EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv, 
+    static int16_t EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv,
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err) {
         int16_t ret(0);
@@ -60,16 +60,16 @@ public:
                         break;
                     }
                 }
-                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%lld key before:%s after:%s", 
+                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%lld key before:%s after:%s",
                            meta_.id(), funcName.data(), meta_.table_id(),  keys[0]->data(), db_key.data());
 
                 if (!kv->value().empty()) {
                     EncodeWatchValue( &db_value, kv->version(), kv->value(), ext);
                 }
-                FLOG_DEBUG("range[%" PRIu64 "] %s info: value before:%s after:%s", 
+                FLOG_DEBUG("range[%" PRIu64 "] %s info: value before:%s after:%s",
                            meta_.id(), funcName.data(), kv->value().data(), db_value.data());
                 break;
-            
+
             default:
                 ret = -1;
                 err->set_message("unknown func_id");
@@ -79,14 +79,14 @@ public:
         return ret;
     }
 
-    static int16_t DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv, 
+    static int16_t DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv,
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err) {
         int16_t ret(0);
         std::vector<std::string*> keys;
         uint64_t version(0);
         keys.clear();
-        
+
         auto val = std::make_shared<std::string>("");
         auto ext = std::make_shared<std::string>("");
 
@@ -102,7 +102,7 @@ public:
                 kv->set_version(version);
                 kv->set_ext(*ext);
                 break;
-            
+
             default:
                 ret = -1;
                 if (err == nullptr) {
@@ -118,7 +118,6 @@ public:
 };
 
 
-//<<<<<<< HEAD
 //enum WATCH_CODE {
 //    WATCH_OK = 0,
 //    WATCH_KEY_NOT_EXIST,
@@ -213,35 +212,55 @@ public:
 //} // namespace end
 //}
 //}
-//=======
-    enum WATCH_CODE {
-        WATCH_OK = 0,
-        WATCH_KEY_NOT_EXIST = -1,
-        WATCH_WATCHER_NOT_EXIST = -2
-    };
 
-    typedef std::unordered_map<int64_t, common::ProtoMessage*> WatcherSet_;
-    typedef std::unordered_map<std::string, WatcherSet_> Key2Watchers_;
-    typedef std::unordered_map<std::string, nullptr_t> KeySet_;
-    typedef std::unordered_map<int64_t, KeySet_> Watcher2Keys_;
+enum WATCH_CODE {
+    WATCH_OK = 0,
+    WATCH_KEY_NOT_EXIST = -1,
+    WATCH_WATCHER_NOT_EXIST = -2
+};
 
-    class WatcherSet {
-    public:
-        WatcherSet() {};
-        ~WatcherSet() {};
-        void AddWatcher(std::string &, common::ProtoMessage*);
-        WATCH_CODE DelWatcher(const int64_t &, const std::string &);
-        uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , const std::string &);
+typedef std::unordered_map<int64_t, common::ProtoMessage*> WatcherSet_;
+typedef std::unordered_map<std::string, WatcherSet_> Key2Watchers_;
+typedef std::unordered_map<std::string, nullptr_t> KeySet_;
+typedef std::unordered_map<int64_t, KeySet_> Watcher2Keys_;
 
-    private:
-        Key2Watchers_ key_index_;
-        Watcher2Keys_ watcher_index_;
-        std::mutex mutex_;
-    };
+struct Watcher{
+    Watcher() = delete;
+    Watcher(common::ProtoMessage* msg, std::string* key) {
+        this.msg = msg;
+        this.key = key;
+    }
+    ~Watcher() = default;
+    common::ProtoMessage* msg_;
+    std::string* key_;
+};
 
+auto cmp = [](Watcher a, Watcher b) { return a.msg_->expire_time > b.msg_->expire_time; };
+struct WatcherTimer final: public std::priority_queue {
+public:
+    std::deque GetQueue() { return this->c; }
 
-    
-//>>>>>>> 01d07887970bbd66062fde0030ec36fd194ea720
+    std::priority_queue<Watcher, std::deque<Watcher>, decltype(cmp)> timer_;
+};
+
+class WatcherSet {
+public:
+    WatcherSet() {}
+    ~WatcherSet() {}
+    void AddWatcher(std::string &, common::ProtoMessage*);
+    WATCH_CODE DelWatcher(const int64_t &, const std::string &);
+    uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , const std::string &);
+
+private:
+    Key2Watchers_ key_index_;
+    Watcher2Keys_ watcher_index_;
+    std::mutex mutex_;
+
+    WatcherTimer timer_;
+    std::condition_variable timer_cond_;
+    std::thread watchers_expire_thread_;
+};
+
 }  // namespace range
 }  // namespace dataserver
 }  // namespace sharkstore
