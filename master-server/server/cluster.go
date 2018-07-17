@@ -35,11 +35,10 @@ var AUTO_INCREMENT_ID string = fmt.Sprintf("$auto_increment_id")
 var PREFIX_TASK string = fmt.Sprintf("schema%stask%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 var PREFIX_REPLICA string = fmt.Sprintf("schema%sreplica%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 var PREFIX_PRE_GC string = fmt.Sprintf("schema%spre_gc%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
-var PREFIX_AUTO_TRANSFER string = fmt.Sprintf("$auto_transfer_%d")
-var PREFIX_AUTO_FAILOVER string = fmt.Sprintf("$auto_failover_%d")
-var PREFIX_AUTO_SPLIT string = fmt.Sprintf("$auto_split_%d")
-
-var PREFIX_METRIC string = fmt.Sprintf("$metric_send_%d")
+var PREFIX_AUTO_TRANSFER string = "$auto_transfer_%d"
+var PREFIX_AUTO_FAILOVER string = "$auto_failover_%d"
+var PREFIX_AUTO_SPLIT string = "$auto_split_%d"
+var PREFIX_METRIC string = "$metric_send_%d"
 
 type Cluster struct {
 	clusterId uint64
@@ -705,11 +704,13 @@ func (c *Cluster) loadScheduleSwitch() error {
 		log.Error("load auto transfer failed, err[%v]", err)
 		return err
 	}
-	log.Info("auto transfer: %v", c.autoFailoverUnable)
+	log.Info("cluster autoTransferUnable: %v", c.autoTransferUnable)
+
 	if err := c.loadAutoSplit(); err != nil {
 		log.Error("load auto split failed, err[%v]", err)
 		return err
 	}
+	log.Info("cluster autoSplitUnable: %v", c.autoSplitUnable)
 	return nil
 }
 
