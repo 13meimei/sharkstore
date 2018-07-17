@@ -87,9 +87,9 @@ static int load_rocksdb_config(IniContext *ini_context) {
             load_integer_value_atleast(ini_context, section, "target_file_size_multiplier", 1, 0);
 
     ds_config.rocksdb_config.max_background_flushes =
-            load_integer_value_atleast(ini_context, section, "max_background_flushes", 1, 1);
+            load_integer_value_atleast(ini_context, section, "max_background_flushes", 2, 1);
     ds_config.rocksdb_config.max_background_compactions =
-            load_integer_value_atleast(ini_context, section, "max_background_compactions", 32, 1);
+            load_integer_value_atleast(ini_context, section, "max_background_compactions", 4, 1);
     ds_config.rocksdb_config.background_rate_limit =
             load_bytes_value_ne(ini_context, section, "background_rate_limit", 0);
 
