@@ -47,7 +47,7 @@ public:
                 for (auto i = 0; i < kv->key_size(); i++) {
                     keys.push_back(kv->mutable_key(i));
 
-                    FLOG_DEBUG("range[%"PRIu64"] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
+                    //FLOG_DEBUG("range[%"PRIu64"] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
                 }
 
                 if(kv->key_size()) {
@@ -60,20 +60,20 @@ public:
                         break;
                     }
                 }
-                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%lld key before:%s after:%s",
-                           meta_.id(), funcName.data(), meta_.table_id(),  keys[0]->data(), db_key.data());
+                //FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%lld key before:%s after:%s",
+                //          meta_.id(), funcName.data(), meta_.table_id(),  keys[0]->data(), db_key.data());
 
                 if (!kv->value().empty()) {
-                    EncodeWatchValue( &db_value, kv->version(), kv->value(), ext);
+                    EncodeWatchValue(&db_value, kv->version(), &(kv->value()), &ext);
                 }
-                FLOG_DEBUG("range[%" PRIu64 "] %s info: value before:%s after:%s",
-                           meta_.id(), funcName.data(), kv->value().data(), db_value.data());
+//                FLOG_DEBUG("range[%" PRIu64 "] %s info: value before:%s after:%s",
+//                           meta_.id(), funcName.data(), kv->value().data(), db_value.data());
                 break;
 
             default:
                 ret = -1;
                 err->set_message("unknown func_id");
-                FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
+                //FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
                 break;
         }
         return ret;
@@ -84,7 +84,7 @@ public:
                             errorpb::Error *err) {
         int16_t ret(0);
         std::vector<std::string*> keys;
-        uint64_t version(0);
+        int64_t version(0);
         keys.clear();
 
         auto val = std::make_shared<std::string>("");
@@ -109,7 +109,7 @@ public:
                     err = new errorpb::Error;
                 }
                 err->set_message("unknown func_id");
-                FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
+                //FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
                 break;
         }
         return ret;
@@ -227,26 +227,39 @@ typedef std::unordered_map<int64_t, KeySet_> Watcher2Keys_;
 struct Watcher{
     Watcher() = delete;
     Watcher(common::ProtoMessage* msg, std::string* key) {
-        this.msg = msg;
-        this.key = key;
+        this->msg_ = msg;
+        this->key_ = key;
     }
     ~Watcher() = default;
+    bool operator<(const Watcher& other) const;
+
     common::ProtoMessage* msg_;
     std::string* key_;
 };
 
-auto cmp = [](Watcher a, Watcher b) { return a.msg_->expire_time > b.msg_->expire_time; };
-struct WatcherTimer final: public std::priority_queue {
-public:
-    std::deque GetQueue() { return this->c; }
+bool Watcher::operator<(const Watcher& other) const {
+    return msg_->expire_time > other.msg_->expire_time;
+}
 
-    std::priority_queue<Watcher, std::deque<Watcher>, decltype(cmp)> timer_;
+template <class T>
+struct Greater {
+    bool operator()(const T& a, const T& b) {
+        return a < b;
+    }
+};
+
+template <class T>
+struct Timer: public std::priority_queue<T> {
+public:
+    std::deque<T>& GetQueue() { return this->c; }
+
+    std::priority_queue<T, std::deque<T>, Greater<T>> timer_;
 };
 
 class WatcherSet {
 public:
-    WatcherSet() {}
-    ~WatcherSet() {}
+    WatcherSet() = default;
+    ~WatcherSet() = default;
     void AddWatcher(std::string &, common::ProtoMessage*);
     WATCH_CODE DelWatcher(const int64_t &, const std::string &);
     uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , const std::string &);
@@ -256,7 +269,7 @@ private:
     Watcher2Keys_ watcher_index_;
     std::mutex mutex_;
 
-    WatcherTimer timer_;
+    Timer<Watcher> timer_;
     std::condition_variable timer_cond_;
     std::thread watchers_expire_thread_;
 };
