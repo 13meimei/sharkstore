@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS `range_stats` (
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `metric_server` (
-    `addr`  bigint(20) NOT NULL,
+    `addr` varchar(32) NOT NULL,
 	  PRIMARY KEY (`addr`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

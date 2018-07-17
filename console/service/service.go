@@ -2168,6 +2168,7 @@ func (s *Service) GetMetricConfig(cId int) (map[string]*models.MetricConfig, err
 				msConfig.Interval = getConfigResp.Data.Interval
 			}
 		}
+		log.Debug("get master metric config: %v", msConfig)
 	}(msConfig)
 
 	waitLock.Add(1)
@@ -2187,7 +2188,7 @@ func (s *Service) GetMetricConfig(cId int) (map[string]*models.MetricConfig, err
 			Data models.MetricConfig `json:"data"`
 		}{}
 		if err := sendGetReq(info.GatewayHttpUrl, "/metric/config/get", reqParams, &getConfigResp); err != nil {
-			msConfig.Address = err.Error()
+			gsConfig.Address = err.Error()
 		} else {
 			if getConfigResp.Code != 0 {
 				gsConfig.Address = getConfigResp.Msg
@@ -2195,14 +2196,13 @@ func (s *Service) GetMetricConfig(cId int) (map[string]*models.MetricConfig, err
 				gsConfig.Address = getConfigResp.Data.Address
 			}
 		}
+		log.Debug("get gateway metric config: %v", gsConfig)
 	}(gsConfig)
 	waitLock.Wait()
 
 	reply := make(map[string]*models.MetricConfig)
 	reply["ms"] = msConfig
 	reply["gs"] = gsConfig
-
-	log.Debug("get metric config: {}", reply)
 	return reply, nil
 }
 

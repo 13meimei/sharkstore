@@ -70,23 +70,23 @@ func (p *KvProxy) Insert(req *kvrpcpb.InsertRequest, key []byte) (*kvrpcpb.Inser
 		return nil, nil, err
 	}
 	response := resp.GetInsertResp().GetResp()
-	if response != nil && response.GetCode() == 0  && response.GetAffectedKeys() != uint64(len(req.Rows)) {
+	if response != nil && response.GetCode() == 0 && response.GetAffectedKeys() != uint64(len(req.Rows)) {
 		var nodeId uint64 = 0
 		l, err = p.RangeCache.LocateKey(bo, key)
 		if l != nil {
 			nodeId = l.NodeId
 		}
-		log.Error("nodeId:%d,requst:[%v],respose exception, respose:[%v] ",nodeId,req , response)
-		return nil,nil,ErrAffectRows
+		log.Error("nodeId:%d,request:[%v],response exception, response:[%v] ", nodeId, req, response)
+		return nil, nil, ErrAffectRows
 	}
-	if response == nil || response.GetCode() >0 {
+	if response == nil || response.GetCode() > 0 {
 		var nodeId uint64 = 0
 		l, err = p.RangeCache.LocateKey(bo, key)
 		if l != nil {
 			nodeId = l.NodeId
 		}
-		log.Error("nodeId:%d,requst:[%v],respose exception, respose:[%v] ",nodeId,req , response)
-		return response,nil,ErrInternalError
+		log.Error("nodeId:%d,request:[%v],response exception, response:[%v] ", nodeId, req, response)
+		return response, nil, ErrInternalError
 	}
 	return response, l, nil
 }
