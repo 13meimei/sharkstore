@@ -90,6 +90,8 @@ static int load_rocksdb_config(IniContext *ini_context) {
             load_integer_value_atleast(ini_context, section, "max_background_flushes", 1, 1);
     ds_config.rocksdb_config.max_background_compactions =
             load_integer_value_atleast(ini_context, section, "max_background_compactions", 32, 1);
+    ds_config.rocksdb_config.background_rate_limit =
+            load_bytes_value_ne(ini_context, section, "background_rate_limit", 0);
 
     ds_config.rocksdb_config.disable_auto_compactions =
             (bool)iniGetIntValue(section, "disable_auto_compactions", ini_context, 0);
@@ -117,10 +119,19 @@ static int load_rocksdb_config(IniContext *ini_context) {
     ds_config.rocksdb_config.enable_garbage_collection =
             (bool)iniGetIntValue(section, "enable_garbage_collection",ini_context,  0);
 
+    ds_config.rocksdb_config.blob_gc_percent = load_integer_value_atleast(ini_context, section, "blob_gc_percent", 75, 10);
+    if (ds_config.rocksdb_config.blob_gc_percent > 100) {
+        fprintf(stderr, "invalid rocksdb blob_gc_percent config(%d)", ds_config.rocksdb_config.blob_gc_percent);
+        return -1;
+    }
+
     ds_config.rocksdb_config.ttl = load_integer_value_atleast(ini_context, section, "ttl", 0, 0);
 
     ds_config.rocksdb_config.enable_stats =
             (bool)iniGetIntValue(section, "enable_stats",ini_context, 1);
+
+    ds_config.rocksdb_config.enable_debug_log =
+            (bool)iniGetIntValue(section, "enable_debug_log",ini_context, 0);
 
     return 0;
 }
@@ -142,6 +153,7 @@ void print_rocksdb_config() {
               "\n\ttarget_file_size_multiplier: %d"
               "\n\tmax_background_flushes: %d"
               "\n\tmax_background_compactions: %d"
+              "\n\tbackground_rate_limit: %lu"
               "\n\tdisable_auto_compactions: %d"
               "\n\tread_checksum: %d"
               "\n\tlevel0_file_num_compaction_trigger: %d"
@@ -152,8 +164,10 @@ void print_rocksdb_config() {
               "\n\tstorage_type: %d"
               "\n\tmin_blob_size: %d"
               "\n\tenable_garbage_collection: %d"
+              "\n\tblob_gc_percent: %d"
               "\n\tttl: %d"
               "\n\tenable_stats: %d"
+              "\n\tenable_debug_log: %d"
               ,
               ds_config.rocksdb_config.path,
               ds_config.rocksdb_config.block_cache_size,
@@ -170,6 +184,7 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.target_file_size_multiplier,
               ds_config.rocksdb_config.max_background_flushes,
               ds_config.rocksdb_config.max_background_compactions,
+              ds_config.rocksdb_config.background_rate_limit,
               ds_config.rocksdb_config.disable_auto_compactions,
               ds_config.rocksdb_config.read_checksum,
               ds_config.rocksdb_config.level0_file_num_compaction_trigger,
@@ -180,8 +195,10 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.storage_type,
               ds_config.rocksdb_config.min_blob_size,
               ds_config.rocksdb_config.enable_garbage_collection,
+              ds_config.rocksdb_config.blob_gc_percent,
               ds_config.rocksdb_config.ttl,
-              ds_config.rocksdb_config.enable_stats
+              ds_config.rocksdb_config.enable_stats,
+              ds_config.rocksdb_config.enable_debug_log
               );
 }
 

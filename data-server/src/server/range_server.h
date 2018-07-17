@@ -54,6 +54,7 @@ public:
     void CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) override;
 
 private:
+    void buildDBOptions(rocksdb::Options& ops);
     int OpenDB();
     void CloseDB();
 

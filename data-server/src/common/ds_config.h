@@ -26,6 +26,7 @@ typedef struct ds_config_s {
         int target_file_size_multiplier;
         int max_background_flushes;
         int max_background_compactions;
+        size_t background_rate_limit;
         bool disable_auto_compactions;
         bool read_checksum;
         int level0_file_num_compaction_trigger;
@@ -36,8 +37,10 @@ typedef struct ds_config_s {
         int storage_type;
         int min_blob_size;
         bool enable_garbage_collection;
+        int blob_gc_percent;
         int ttl;
         bool enable_stats;
+        bool enable_debug_log;
     } rocksdb_config;
 
     struct {

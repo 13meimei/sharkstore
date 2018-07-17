@@ -10,6 +10,7 @@
 #include <rocksdb/table.h>
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/utilities/blob_db/blob_db.h>
+#include <rocksdb/rate_limiter.h>
 #include <fastcommon/shared_func.h>
 #include <common/ds_config.h>
 
@@ -158,9 +159,81 @@ void RangeServer::Stop() {
     FLOG_INFO("RangeServer Stop end ...");
 }
 
-int RangeServer::OpenDB() {
+void RangeServer::buildDBOptions(rocksdb::Options& ops) {
     print_rocksdb_config();
 
+    // db log level
+    if (ds_config.rocksdb_config.enable_debug_log) {
+        ops.info_log_level = rocksdb::DEBUG_LEVEL;
+    }
+
+    // db stats
+    if (ds_config.rocksdb_config.enable_stats) {
+        context_->db_stats = rocksdb::CreateDBStatistics();
+        ops.statistics = context_->db_stats;
+    }
+
+    // table options include block_size, block_cache_size, etc
+    rocksdb::BlockBasedTableOptions table_options;
+    table_options.block_size = ds_config.rocksdb_config.block_size;
+    context_->block_cache =
+            rocksdb::NewLRUCache(ds_config.rocksdb_config.block_cache_size);
+    if (ds_config.rocksdb_config.block_cache_size > 0) {
+        table_options.block_cache = context_->block_cache;
+    }
+    if (ds_config.rocksdb_config.cache_index_and_filter_blocks){
+        table_options.cache_index_and_filter_blocks = true;
+    }
+    ops.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
+
+    // row_cache
+    if (ds_config.rocksdb_config.row_cache_size > 0){
+        context_->row_cache =
+                rocksdb::NewLRUCache(ds_config.rocksdb_config.row_cache_size);
+        ops.row_cache = context_->row_cache;
+    }
+
+    ops.max_open_files = ds_config.rocksdb_config.max_open_files;
+    ops.create_if_missing = true;
+    ops.use_fsync = true;
+    ops.use_adaptive_mutex = true;
+    ops.bytes_per_sync = ds_config.rocksdb_config.bytes_per_sync;
+
+    // memtables
+    ops.write_buffer_size = ds_config.rocksdb_config.write_buffer_size;
+    ops.max_write_buffer_number = ds_config.rocksdb_config.max_write_buffer_number;
+    ops.min_write_buffer_number_to_merge =
+            ds_config.rocksdb_config.min_write_buffer_number_to_merge;
+
+    // level & sst file size
+    ops.max_bytes_for_level_base = ds_config.rocksdb_config.max_bytes_for_level_base;
+    ops.max_bytes_for_level_multiplier =
+            ds_config.rocksdb_config.max_bytes_for_level_multiplier;
+    ops.target_file_size_base = ds_config.rocksdb_config.target_file_size_base;
+    ops.target_file_size_multiplier =
+            ds_config.rocksdb_config.target_file_size_multiplier;
+
+    // compactions and flushes
+    if (ds_config.rocksdb_config.disable_auto_compactions) {
+        FLOG_WARN("rocksdb auto compactions is disabled.");
+        ops.disable_auto_compactions = true;
+    }
+    if (ds_config.rocksdb_config.background_rate_limit > 0) {
+        ops.rate_limiter = std::shared_ptr<rocksdb::RateLimiter>(
+                rocksdb::NewGenericRateLimiter(static_cast<int64_t>(ds_config.rocksdb_config.background_rate_limit)));
+    }
+    ops.max_background_flushes = ds_config.rocksdb_config.max_background_flushes;
+    ops.max_background_compactions = ds_config.rocksdb_config.max_background_compactions;
+    ops.level0_file_num_compaction_trigger =
+            ds_config.rocksdb_config.level0_file_num_compaction_trigger;
+
+    // write pause
+    ops.level0_slowdown_writes_trigger =
+            ds_config.rocksdb_config.level0_slowdown_writes_trigger;
+    ops.level0_stop_writes_trigger = ds_config.rocksdb_config.level0_stop_writes_trigger;
+}
+
+int RangeServer::OpenDB() {
     // 创建db的父目录
     auto db_path = JoinFilePath({ds_config.rocksdb_config.path, kDataPathSuffix});
     int ret = MakeDirAll(db_path, 0755);
@@ -170,56 +243,9 @@ int RangeServer::OpenDB() {
         return -1;
     }
 
-    // rocksdb block cache size
-    rocksdb::BlockBasedTableOptions table_options;
-    table_options.block_size = ds_config.rocksdb_config.block_size;
-    context_->block_cache =
-        rocksdb::NewLRUCache(ds_config.rocksdb_config.block_cache_size);
-    if (ds_config.rocksdb_config.block_cache_size > 0) {
-        table_options.block_cache = context_->block_cache;
-    }
-    if (ds_config.rocksdb_config.cache_index_and_filter_blocks){
-        table_options.cache_index_and_filter_blocks = true;
-    }
-
     rocksdb::Options ops;
-    ops.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
-    if (ds_config.rocksdb_config.row_cache_size > 0){
-        context_->row_cache =
-                rocksdb::NewLRUCache(ds_config.rocksdb_config.row_cache_size);
-        ops.row_cache = context_->row_cache;
-    }
-    // stats
-    if (ds_config.rocksdb_config.enable_stats) {
-        context_->db_stats = rocksdb::CreateDBStatistics();
-        ops.statistics = context_->db_stats;
-    }
-    ops.max_open_files = ds_config.rocksdb_config.max_open_files;
-    ops.create_if_missing = true;
-    ops.use_fsync = true;
-    ops.use_adaptive_mutex = true;
-    ops.bytes_per_sync = ds_config.rocksdb_config.bytes_per_sync;
-    ops.write_buffer_size = ds_config.rocksdb_config.write_buffer_size;
-    ops.max_write_buffer_number = ds_config.rocksdb_config.max_write_buffer_number;
-    ops.min_write_buffer_number_to_merge =
-        ds_config.rocksdb_config.min_write_buffer_number_to_merge;
-    ops.max_bytes_for_level_base = ds_config.rocksdb_config.max_bytes_for_level_base;
-    ops.max_bytes_for_level_multiplier =
-        ds_config.rocksdb_config.max_bytes_for_level_multiplier;
-    ops.target_file_size_base = ds_config.rocksdb_config.target_file_size_base;
-    ops.target_file_size_multiplier =
-        ds_config.rocksdb_config.target_file_size_multiplier;
-    if (ds_config.rocksdb_config.disable_auto_compactions) {
-        FLOG_WARN("rocksdb auto compactions is disabled.");
-        ops.disable_auto_compactions = true;
-    }
-    ops.max_background_flushes = ds_config.rocksdb_config.max_background_flushes;
-    ops.max_background_compactions = ds_config.rocksdb_config.max_background_compactions;
-    ops.level0_file_num_compaction_trigger =
-        ds_config.rocksdb_config.level0_file_num_compaction_trigger;
-    ops.level0_slowdown_writes_trigger =
-        ds_config.rocksdb_config.level0_slowdown_writes_trigger;
-    ops.level0_stop_writes_trigger = ds_config.rocksdb_config.level0_stop_writes_trigger;
+    buildDBOptions(ops);
+
     if (ds_config.rocksdb_config.storage_type == 0){
         if (ds_config.rocksdb_config.ttl == 0) {
             auto ret = rocksdb::DB::Open(ops, db_path, &db_);
@@ -244,9 +270,10 @@ int RangeServer::OpenDB() {
             FLOG_ERROR("invalid rocksdb ttl(%d)", ds_config.rocksdb_config.ttl);
             return -1;
         }
-    }else if (ds_config.rocksdb_config.storage_type == 1){
+    } else if (ds_config.rocksdb_config.storage_type == 1) {
         rocksdb::blob_db::BlobDBOptions blobDBOptions = rocksdb::blob_db::BlobDBOptions();
-        blobDBOptions.min_blob_size = ds_config.rocksdb_config.min_blob_size;
+        assert(ds_config.rocksdb_config.min_blob_size >= 0);
+        blobDBOptions.min_blob_size = static_cast<uint64_t>(ds_config.rocksdb_config.min_blob_size);
         blobDBOptions.enable_garbage_collection = ds_config.rocksdb_config.enable_garbage_collection;
         rocksdb::blob_db::BlobDB *blobDB = nullptr;
 
@@ -259,7 +286,7 @@ int RangeServer::OpenDB() {
         } else {
             db_ = blobDB;
         }
-    }else{
+    } else {
         FLOG_ERROR("invalid rocksdb storage_type(%d)", ds_config.rocksdb_config.storage_type);
         return -1;
     }
