@@ -10,6 +10,11 @@ _Pragma("once");
 #include <frame/sf_logger.h>
 #include <mutex>
 #include <memory>
+#include <queue>
+#include <condition_variable>
+#include <vector>
+#include <thread>
+#include <unordered_map>
 
 bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                       std::string &buf);
@@ -148,7 +153,7 @@ typedef std::unordered_map<std::string, nullptr_t> KeySet_;
 typedef std::unordered_map<int64_t, KeySet_> Watcher2Keys_;
 
 struct Watcher{
-    Watcher() = delete;
+    Watcher() {};
     Watcher(common::ProtoMessage* msg, std::string* key) {
         this->msg_ = msg;
         this->key_ = key;
@@ -174,15 +179,15 @@ struct Greater {
 template <class T>
 struct Timer: public std::priority_queue<T> {
 public:
-    std::deque<T>& GetQueue() { return this->c; }
+    std::vector<T>& GetQueue() { return this->c; }
 
-    std::priority_queue<T, std::deque<T>, Greater<T>> timer_;
+    std::priority_queue<T, std::vector<T>, Greater<T>> timer_;
 };
 
 class WatcherSet {
 public:
-    WatcherSet() = default;
-    ~WatcherSet() = default;
+    WatcherSet();
+    ~WatcherSet();
     void AddWatcher(std::string &, common::ProtoMessage*);
     WATCH_CODE DelWatcher(const int64_t &, const std::string &);
     uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , const std::string &);

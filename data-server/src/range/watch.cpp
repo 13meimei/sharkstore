@@ -44,7 +44,7 @@ bool DecodeWatchKey(std::vector<std::string *> &keys, std::string *buf) {
         if (!DecodeBytesAscending(*buf, offset, b)) {
             return false;
         }
-        keys.push_back(b.get());
+        keys.push_back(b);
     }
     return true;
 }
@@ -74,7 +74,7 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
 WatcherSet::WatcherSet() {
     watchers_expire_thread_ = std::thread([this]() {
         while (g_continue_flag) {
-            Watcher* w;
+            Watcher w;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
                 if (timer_.empty()) {
@@ -83,15 +83,16 @@ WatcherSet::WatcherSet() {
                 }
 
                 w = timer_.top();
-                if (timer_cond_.wait_until(lock, std::chrono::milliseconds(w->msg_->expire_time)) ==
+//                std::chrono::milliseconds(w.msg_->expire_time)
+                if (timer_cond_.wait_until(lock, std::chrono::time_point()) == // todo
                     std::cv_status::timeout) {
 
                     // todo send timeout response
 
                     // delete watcher
                     {
-                        auto id = w->msg_->session_id;
-                        auto key = w->key_;
+                        auto id = w.msg_->session_id;
+                        auto key = w.key_;
                         auto wit = watcher_index_.find(id);
                         if (wit == watcher_index_.end()) {
                             continue;
@@ -101,13 +102,13 @@ WatcherSet::WatcherSet() {
                         auto itKeys = keys.find(*key);
 
                         if (itKeys != keys.end()) {
-                            auto itKeyIdx = key_index_.find(key);
+                            auto itKeyIdx = key_index_.find(*key);
 
                             if (itKeyIdx != key_index_.end()) {
                                 auto itSession = itKeyIdx->second.find(id);
 
                                 if (itSession != itKeyIdx->second.end()) {
-                                    itKeyIdx->second.erase(itSession)
+                                    itKeyIdx->second.erase(itSession);
                                 }
                                 key_index_.erase(itKeyIdx);
                             }
@@ -124,7 +125,7 @@ WatcherSet::WatcherSet() {
                 }
             }
         }
-    }
+    });
 }
 
 WatcherSet::~WatcherSet() {
@@ -172,8 +173,9 @@ WATCH_CODE WatcherSet::DelWatcher(const int64_t &id, const std::string &key) {
     std::lock_guard<std::mutex> lock(mutex_);
     timer_cond_.notify_one();
 //   todo timer_.find and del
-    for (auto it: timer_.GetQueue()) {
-        if (it->msg_->session_id == id && (*it.key_) == key) {
+    auto timer_queue = timer_.GetQueue();
+    for (auto it = timer_queue.begin(); it != timer_queue.end(); ++it) {
+        if (it->msg_->session_id == id && *(it->key_) == key) {
             timer_.GetQueue().erase(it);
         }
     }
