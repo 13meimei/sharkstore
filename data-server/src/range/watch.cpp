@@ -1,4 +1,3 @@
-//#include "watch.h"
 #include <common/socket_session.h>
 #include "watch.h"
 #include "range.h"
@@ -83,8 +82,7 @@ WatcherSet::WatcherSet() {
                 }
 
                 w = timer_.top();
-//                std::chrono::milliseconds(w.msg_->expire_time)
-                if (timer_cond_.wait_until(lock, std::chrono::time_point()) == // todo
+                if (timer_cond_.wait_until(lock, w.msg_->expire_time*1ms) == // todo
                     std::cv_status::timeout) {
 
                     // todo send timeout response
@@ -142,7 +140,7 @@ void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
     if (kit0 == key_index_.end()) {
         auto tmpPair = key_index_.emplace(std::make_pair(name, std::make_pair(msg->session_id, msg)));
         if (tmpPair.second) kit0 = tmpPair.first;
-        else FLOG_DEBUG("AddWatcher abnormal key:%s session_id:%lld .", name.data(), msg->session_id);
+        else FLOG_DEBUG("AddWatcher abnormal key:%s session_id:%" PRId64, name.data(), msg->session_id);
     }
 
     if (kit0 != key_index_.end()) {
@@ -155,7 +153,7 @@ void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
         if (wit0 == watcher_index_.end()) {
             auto tmpPair = watcher_index_.emplace(std::make_pair(msg->session_id, std::make_pair(name, nullptr)));
             if (tmpPair.second) wit0 = tmpPair.first;
-            else FLOG_DEBUG("AddWatcher abnormal session_id:%lld key:%s .", msg->session_id, name.data());
+            else FLOG_DEBUG("AddWatcher abnormal session_id:%" PRId64 " key:%s .", msg->session_id, name.data());
         }
 
         if (wit0 != watcher_index_.end()) {
@@ -262,7 +260,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 for (auto i = 0; i < kv->key_size(); i++) {
                     keys.push_back(kv->mutable_key(i));
 
-                    FLOG_DEBUG("range[%"PRIu64"] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
+                    FLOG_DEBUG("range[%" PRIu64"] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
                 }
 
                 if(kv->key_size()) {
@@ -275,7 +273,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                         break;
                     }
                 }
-                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%lld key before:%s after:%s", 
+                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%" PRId64" key before:%s after:%s",
                            meta_.id(), funcName.data(), meta_.table_id(),  keys[0]->data(), db_key.data());
 
                 if (!kv->value().empty()) {
@@ -289,7 +287,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             default:
                 ret = -1;
                 err->set_message("unknown func_id");
-                FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
+                FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
                 break;
         }
         return ret;
@@ -325,7 +323,7 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                     err = new errorpb::Error;
                 }
                 err->set_message("unknown func_id");
-                FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
+                FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
                 break;
         }
         return ret;

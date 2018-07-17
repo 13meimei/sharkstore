@@ -1,6 +1,5 @@
 #include "range.h"
 #include "server/range_server.h"
-#include "watch.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -29,7 +28,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             break;
         }
 
-        FLOG_DEBUG("range[%"PRIu64" %s-%s] WatchGet key:%s", meta_.id(), meta_.start_key().c_str(), meta_.end_key().c_str(), dbKey.c_str());
+        FLOG_DEBUG("range[%" PRIu64" %s-%s] WatchGet key:%s", meta_.id(), meta_.start_key().c_str(), meta_.end_key().c_str(), dbKey.c_str());
         
         auto epoch = req.header().range_epoch();
         bool in_range = KeyInRange(dbKey);
@@ -101,7 +100,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     std::string dbKey{""};
     std::string dbValue("");
     //int64_t version{0};
-    uint64_t minVersion(0);
+    int64_t minVersion(0);
     auto prefix = req.prefix();
 
     FLOG_DEBUG("range[%" PRIu64 "] PureGet begin", meta_.id());
@@ -490,7 +489,7 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
         int32_t idx{0};
         for(auto pMsg : vecProtoMsg) {
             idx++;
-            FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%d/%d)>>>[session][%lld]", 
+            FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                        meta_.id(), key, idx, watchCnt, pMsg->session_id);
 
             resp->set_watchid(pMsg->session_id);
@@ -503,7 +502,7 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
             {
                 //delete watch
                 if (WATCH_OK != DelKeyWatcher(pMsg->session_id, key)) {
-                    FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%d/%d)>>>[session][%lld]", 
+                    FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                            meta_.id(), key, idx, watchCnt, pMsg->session_id);
                 }
             }
