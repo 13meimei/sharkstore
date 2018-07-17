@@ -115,9 +115,9 @@ static int load_rocksdb_config(IniContext *ini_context) {
     ds_config.rocksdb_config.storage_type = load_integer_value_atleast(ini_context, section, "storage_type", 0, 0);
 
     ds_config.rocksdb_config.min_blob_size = load_integer_value_atleast(ini_context, section, "min_blob_size", 0, 0);
-
+    ds_config.rocksdb_config.blob_file_size =  load_bytes_value_ne(ini_context, section, "blob_file_size", 256 * 1024 * 1024UL);
     ds_config.rocksdb_config.enable_garbage_collection =
-            (bool)iniGetIntValue(section, "enable_garbage_collection",ini_context,  0);
+            (bool)iniGetIntValue(section, "enable_garbage_collection", ini_context, 1);
 
     ds_config.rocksdb_config.blob_gc_percent = load_integer_value_atleast(ini_context, section, "blob_gc_percent", 75, 10);
     if (ds_config.rocksdb_config.blob_gc_percent > 100) {
@@ -163,6 +163,7 @@ void print_rocksdb_config() {
               "\n\tcache_index_and_filter_blocks: %d"
               "\n\tstorage_type: %d"
               "\n\tmin_blob_size: %d"
+              "\n\tblob_file_size: %lu"
               "\n\tenable_garbage_collection: %d"
               "\n\tblob_gc_percent: %d"
               "\n\tttl: %d"
@@ -194,6 +195,7 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.cache_index_and_filter_blocks,
               ds_config.rocksdb_config.storage_type,
               ds_config.rocksdb_config.min_blob_size,
+              ds_config.rocksdb_config.blob_file_size,
               ds_config.rocksdb_config.enable_garbage_collection,
               ds_config.rocksdb_config.blob_gc_percent,
               ds_config.rocksdb_config.ttl,

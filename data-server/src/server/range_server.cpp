@@ -271,20 +271,20 @@ int RangeServer::OpenDB() {
             return -1;
         }
     } else if (ds_config.rocksdb_config.storage_type == 1) {
-        rocksdb::blob_db::BlobDBOptions blobDBOptions = rocksdb::blob_db::BlobDBOptions();
+        rocksdb::blob_db::BlobDBOptions bops;
         assert(ds_config.rocksdb_config.min_blob_size >= 0);
-        blobDBOptions.min_blob_size = static_cast<uint64_t>(ds_config.rocksdb_config.min_blob_size);
-        blobDBOptions.enable_garbage_collection = ds_config.rocksdb_config.enable_garbage_collection;
-        rocksdb::blob_db::BlobDB *blobDB = nullptr;
+        bops.min_blob_size = static_cast<uint64_t>(ds_config.rocksdb_config.min_blob_size);
+        bops.enable_garbage_collection = ds_config.rocksdb_config.enable_garbage_collection;
+        bops.blob_file_size = ds_config.rocksdb_config.blob_file_size;
 
-        auto ret = rocksdb::blob_db::BlobDB::Open(ops,blobDBOptions,db_path,&blobDB);
-
+        rocksdb::blob_db::BlobDB *bdb = nullptr;
+        auto ret = rocksdb::blob_db::BlobDB::Open(ops, bops, db_path, &bdb);
         if (!ret.ok()){
             FLOG_ERROR("open rocksdb_blob(%s) failed(%s)", db_path.c_str(),
                        ret.ToString().c_str());
             return -1;
         } else {
-            db_ = blobDB;
+            db_ = bdb;
         }
     } else {
         FLOG_ERROR("invalid rocksdb storage_type(%d)", ds_config.rocksdb_config.storage_type);

@@ -36,6 +36,7 @@ typedef struct ds_config_s {
         bool cache_index_and_filter_blocks;
         int storage_type;
         int min_blob_size;
+        size_t blob_file_size;
         bool enable_garbage_collection;
         int blob_gc_percent;
         int ttl;
