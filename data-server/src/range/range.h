@@ -88,6 +88,7 @@ public:
     void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
     void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
     void UnlockForce(common::ProtoMessage *msg, kvrpcpb::DsUnlockForceRequest &req);
+    void LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req);
 
     // KV
     void RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req);
@@ -114,6 +115,9 @@ public:
     void WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
     void WatchEncodeValue(std::string &value, const uint64_t &version_seq);
     void WatchDecodeValue(std::string &value, uint64_t *version_seq);
+    bool WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
+    bool WatchDeleteSubmit(common::ProtoMessage *msg,
+                            watchpb::DsKvWatchDeleteRequest &req);
 
     void AddKeyWatcher(std::string&, common::ProtoMessage*);
     WATCH_CODE DelKeyWatcher(const int64_t &id, const std::string &key);

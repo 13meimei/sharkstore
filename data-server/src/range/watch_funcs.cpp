@@ -1,26 +1,10 @@
 #include "range.h"
-
 #include "server/range_server.h"
 #include "watch.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace range {
-
-watchpb::DsWatchResponse *Range::WatchGetResp(const std::string &key) {
-    if (is_leader_ && KeyInRange(key)) {
-        auto resp = new watchpb::DsWatchResponse;
-        auto ret = store_->Get(key, resp->mutable_value());
-        if (ret.ok()) {
-            resp->set_code(0);
-        } else {
-            resp->set_code(static_cast<int>(ret.code()));
-        }
-        return resp;
-    }
-
-    return nullptr;
-}
 
 void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     errorpb::Error *err = nullptr;
@@ -41,7 +25,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             break;
         }
 
-        if( 0 != WatchCode::EncodeKv(kFuncWatchGet, meta_, req.req().mutable_kv(), dbKey, err) ) {
+        if( Status::kOk != WatchCode::EncodeKv(funcpb::kFuncWatchGet, meta_, req.mutable_req()->mutable_kv(), dbKey, dbValue, err) ) {
             break;
         }
 
@@ -67,18 +51,18 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
         //decode value and response to client 
         auto resp = ds_resp->mutable_resp();
-        resp->set_WatchId(msg->session_id);
+        resp->set_watchid(msg->session_id);
         resp->set_code(Status::kOk);
         resp->set_code(static_cast<int>(ret.code()));
         
         auto val = std::make_shared<std::string>();
         auto ext = std::make_shared<std::string>();
-        auto evt = resp->mutable_events()->add_events();
-        auto tmpKv = req.req().mutable_kv();
+        auto evt = resp->add_events();
+        auto tmpKv = req.mutable_req()->mutable_kv();
         //decode value
-        WatchCode::DecodeKv(kFuncWatchGet, meta_, tmpKv, dbKey, dbValue, err);
+        WatchCode::DecodeKv(funcpb::kFuncWatchGet, meta_, tmpKv, dbKey, dbValue, err);
 
-        evt->set_type(PUT);
+        evt->set_type(watchpb::PUT);
         evt->set_allocated_kv(tmpKv);
         
     } while (false);
@@ -89,13 +73,13 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     } else {
 
         //add watch if client version is not equal to ds side
-        auto &start_version = req.req().startVersion();
+        auto start_version = req.req().startversion();
         //to do 暂不支持前缀watch
-        auto &prefix = req.req().prefix();
+        auto prefix = req.req().prefix();
 
         //decode version from value
         FLOG_DEBUG("range[%" PRIu64 "] WatchGet [%s]-%s ok.", 
-                   meta_.id(), evt.kv().key(0).data(), evt.kv().value().data());
+                   meta_.id(), dbKey.c_str(), dbValue.c_str());
         if(start_version >= version) {
             //to do add watch
             AddKeyWatcher(dbKey, msg);
@@ -115,10 +99,10 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     auto ds_resp = new watchpb::DsWatchResponse;
     auto header = ds_resp->mutable_header();
     std::string dbKey{""};
-    std::string dbValue{""};
+    std::string dbValue("");
     //int64_t version{0};
     uint64_t minVersion(0);
-    auto prefix = req.req().prefix();
+    auto prefix = req.prefix();
 
     FLOG_DEBUG("range[%" PRIu64 "] PureGet begin", meta_.id());
 
@@ -127,7 +111,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             break;
         }
 
-        auto &key = req.req().kv().key();
+        auto &key = req.kv().key(0);
         if (key.empty()) {
             FLOG_WARN("range[%" PRIu64 "] PureGet error: key empty", meta_.id());
             err = KeyNotInRange(key);
@@ -135,7 +119,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         }
 
         //encode key
-        if( 0 != WatchCode::EncodeKv(kFuncWatchGet, meta_, req.req().mutable_kv(), dbKey, err) ) {
+        if( 0 != WatchCode::EncodeKv(funcpb::kFuncWatchGet, meta_, req.mutable_kv(), dbKey, dbValue, err)) {
             break;
         }
 
@@ -152,7 +136,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
 
         auto resp = ds_resp->mutable_resp();
         auto btime = get_micro_second();
-        Iterator *it = nullptr;
+        storage::Iterator *it = nullptr;
         Status::Code code;
 
         if (prefix) {
@@ -162,10 +146,11 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
 
             for (int i = 0; iterator->Valid() ; ++i) {
                 count++;
-                auto evt = resp->mutable_events()->add_events();
-                auto kv = evt->mutable_kv();
+                auto kv = resp->add_events()->mutable_kv();
+                auto tmpDbValue = iterator.get()->value();
+                
+                WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, tmpDbValue, err);
 
-                WatchCode::DecodeKv(kFuncPureGet, meta_, kv, dbKey, iterator->value());
                 if (minVersion > kv->version()) {
                     minVersion = kv->version();
                 }
@@ -174,12 +159,12 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             }
 
             FLOG_DEBUG("range[%" PRIu64 "] PureGet ok:%d ", meta_.id(), count);
-            code = kOk;
+            code = Status::kOk;
         } else {
-            auto kv = resp->mutable_events()->add_events()->mutable_kv();
+            auto kv = resp->add_events()->mutable_kv();
             auto ret = store_->Get(dbKey, &dbValue);
             //to do decode value version             
-            WatchCode::DecodeKv(kFuncPureGet, meta_, kv, dbKey, dbValue);
+            WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, dbValue, err);
             
             FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s ", meta_.id(), code, ret.ToString().data());
             code = ret.code();
@@ -223,8 +208,8 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
             break;
         }
 
-        auto kv = req.req().mutable_kv();
-        if (kv->empty()) {
+        auto kv = req.mutable_req()->mutable_kv();
+        if (kv->key().empty()) {
             FLOG_WARN("range[%" PRIu64 "] WatchPut error: key empty", meta_.id());
             err = KeyNotInRange("-");
             break;
@@ -233,23 +218,23 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
         version = version_seq_.fetch_add(1);
         //encode key
         kv->set_version(version);
-        if( 0 != WatchCode::EncodeKv(kFuncWatchPut, meta_, kv, dbKey, dbValue, err) ) {
+        if( 0 != WatchCode::EncodeKv(funcpb::kFuncWatchPut, meta_, kv, *dbKey, *dbValue, err) ) {
             break;
         }
         
         //increase key version
         kv->set_version(version);
         kv->clear_key();
-        kv->add_key(dbKey);
-        kv->set_value(dbValue);
+        kv->add_key(*dbKey);
+        kv->set_value(*dbValue);
         
         auto epoch = req.header().range_epoch();
-        bool in_range = KeyInRange(dbKey);
+        bool in_range = KeyInRange(*dbKey);
         bool is_equal = EpochIsEqual(epoch);
 
         if (!in_range) {
             if (is_equal) {
-                err = KeyNotInRange(dbKey);
+                err = KeyNotInRange(*dbKey);
                 break;
             }
         }
@@ -273,9 +258,9 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
 
 void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req) {
     errorpb::Error *err = nullptr;
-    auto dbKey(std::make_shared<std::string>(""));
-    auto dbValue(std::make_shared<std::string>(""));
-    auto extPtr(std::make_shared<std::string>(""));
+    auto dbKey = new std::string("");
+    auto dbValue = new std::string("");
+    auto extPtr = new std::string("");
 
     auto btime = get_micro_second();
     context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
@@ -293,7 +278,7 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
             break;
         }
 
-        auto &kv = req.req().mutable_kv();
+        auto kv = req.mutable_req()->mutable_kv();
 
         if (kv->key_size() < 1) {
             FLOG_WARN("range[%" PRIu64 "] WatchDel error: key empty", meta_.id());
@@ -301,24 +286,24 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
             break;
         }
         
-        if( 0 != WatchCode::EncodeKv(kFuncWatchDel, meta_, kv, dbKey, dbValue, err) ) {
+        if( 0 != WatchCode::EncodeKv(funcpb::kFuncWatchDel, meta_, kv, *dbKey, *dbValue, err) ) {
             break;
         }
 
         auto epoch = req.header().range_epoch();
-        bool in_range = KeyInRange(dbKey);
+        bool in_range = KeyInRange(*dbKey);
         bool is_equal = EpochIsEqual(epoch);
 
         if (!in_range) {
             if (is_equal) {
-                err = KeyNotInRange(dbKey);
+                err = KeyNotInRange(*dbKey);
                 break;
             }
         }
         //set encoding value to request
-        kv->mutable_key()->clear();
-        kv->add_key(std::move(dbKey));
-        kv->set_value(std::move(dbValue));
+        kv->clear_key();
+        kv->add_key(*dbKey);
+        kv->set_value(*dbValue);
 
         if (!WatchDeleteSubmit(msg, req)) {
             err = RaftFailError();
@@ -336,9 +321,9 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
 }
 
 bool Range::WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req) {
-    auto &key = req.req().key();
+    auto &kv = req.req().kv();
 
-    if (is_leader_ && KeyInRange(key)) {
+    if (is_leader_ && KeyInRange(kv.key(0))) {
         
         auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvWatchPut);
@@ -353,9 +338,9 @@ bool Range::WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutReque
 
 bool Range::WatchDeleteSubmit(common::ProtoMessage *msg,
                             watchpb::DsKvWatchDeleteRequest &req) {
-    auto &key = req.req().key();
+    auto &kv = req.req().kv();
 
-    if (is_leader_ && KeyInRange(key)) {
+    if (is_leader_ && KeyInRange(kv.key(0))) {
         auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvWatchDel);
             cmd.set_allocated_kv_watch_del_req(req.release_req());
@@ -411,7 +396,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd) {
     }
 
     //notify watcher
-    ret = WatchNotify(PUT, req.req().kv());
+    ret = WatchNotify(watchpb::PUT, req.kv());
     if (!ret.ok()) {
         FLOG_ERROR("WatchNotify failed, code:%d, msg:%s", ret.code(), ret.ToString().c_str());
     }
@@ -456,7 +441,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd) {
     //notify watcher
     uint64_t version( req.kv().version());
     
-    ret = WatchNotify(DELETE, req.kv());
+    ret = WatchNotify(watchpb::DELETE, req.kv());
     if (!ret.ok()) {
         FLOG_ERROR("WatchNotify failed, code:%d, msg:%s", ret.code(), ret.ToString().c_str());
     }
@@ -464,31 +449,31 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-Status Range::WatchNotify(const EventType evtType, const watchpb::WatchKeyValue& kv) {
+Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv) {
     Status ret;
 
     std::shared_ptr<watchpb::WatchKeyValue> tmpKv = std::make_shared<watchpb::WatchKeyValue>();
     tmpKv->CopyFrom(kv);
 
     std::vector<common::ProtoMessage*> vecProtoMsg;
-    auto &dbKey = tmpKv->key_size()>0?tmpKv->key(0):"NOFOUND";
-    auto &dbValue = tmpKv->value();
+    auto dbKey = tmpKv->key_size()>0?tmpKv->key(0):"NOFOUND";
+    auto dbValue = tmpKv->value();
 
     std::string key{""};
     std::string value{""};
     errorpb::Error *err = nullptr;
 
-    FunctionID funcId;
-    if (PUT == evtType) {
-        funcId = kFuncWatchPut;
-    } else if (DELETE == evtType) {
-        funcId = kFuncWatchDel;
+    funcpb::FunctionID funcId;
+    if (watchpb::PUT == evtType) {
+        funcId = funcpb::kFuncWatchPut;
+    } else if (watchpb::DELETE == evtType) {
+        funcId = funcpb::kFuncWatchDel;
     } else {
-        funcId = kFuncHeartbeat;
+        funcId = funcpb::kFuncHeartbeat;
     }
 
-    if( Status::kOk != WatchCode::DecodeKv(funcId, meta_, tmpKv, dbKey, dbValue, err)) {
-        return Status(kUnknown, err->message(), "");
+    if( Status::kOk != WatchCode::DecodeKv(funcId, meta_, tmpKv.get(), dbKey, dbValue, err)) {
+        return sharkstore::Status(Status::kUnknown, err->message(), "");
     }
     
     uint32_t watchCnt = GetKeyWatchers(vecProtoMsg, dbKey);
@@ -496,23 +481,26 @@ Status Range::WatchNotify(const EventType evtType, const watchpb::WatchKeyValue&
         //to do 遍历watcher 发送通知
         auto ds_resp = new watchpb::DsWatchResponse;
         auto resp = ds_resp->mutable_resp();
-        resp->set_code(kOk);
-        resp->set_watchId(msg->session_id);
+        resp->set_code(Status::kOk);
 
-        auto evt = resp->mutable_events()->add_events();
+        auto evt = resp->add_events();
         evt->set_type(evtType);
-        evt->set_allocated_kv(tmpKv);
+        evt->set_allocated_kv(tmpKv.get());
 
         int32_t idx{0};
-        for(auto &pMsg : vecProtoMsg) {
+        for(auto pMsg : vecProtoMsg) {
             idx++;
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%d/%d)>>>[session][%lld]", 
                        meta_.id(), key, idx, watchCnt, pMsg->session_id);
 
-            if(0 != pMsg->socket->Send(ds_resp)) {
-                FLOG_ERROR("range[%" PRIu64 "] WatchPut-Notify error:[key][%s] (%d/%d)>>>[session][%lld]", 
-                           meta_.id(), key, idx, watchCnt, pMsg->session_id);
-            } else {
+            resp->set_watchid(pMsg->session_id);
+
+            context_->socket_session->Send(pMsg, ds_resp);
+            //if(0 != pMsg->socket->Send(*pMsg)) {
+            //    FLOG_ERROR("range[%" PRIu64 "] WatchPut-Notify error:[key][%s] (%d/%d)>>>[session][%lld]", 
+            //               meta_.id(), key, idx, watchCnt, pMsg->session_id);
+            //} else 
+            {
                 //delete watch
                 if (WATCH_OK != DelKeyWatcher(pMsg->session_id, key)) {
                     FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%d/%d)>>>[session][%lld]", 

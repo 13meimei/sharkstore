@@ -5,116 +5,39 @@ _Pragma("once");
 #include <proto/gen/errorpb.pb.h>
 #include <common/socket_session.h>
 #include <common/ds_encoding.h>
+#include <common/ds_config.h>
+
 #include <frame/sf_logger.h>
 #include <mutex>
 #include <memory>
+
+bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
+                      std::string &buf);
+void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
+void EncodeWatchValue(std::string *buf,
+                      int64_t &version,
+                      const std::string *value,
+                      const std::string *extend);
 
 namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+
 class WatchCode {
 public:
-    WatchCode(){};
-    ~WatchCode(){};
+    WatchCode() {};
+
+    ~WatchCode() {};
 
 public:
     static int16_t EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv,
                             std::string &db_key, std::string &db_value,
-                            errorpb::Error *err) {
-        int16_t ret(0);
-        std::vector<std::string*> keys;
-        std::string funcName("");
-        std::string ext("");
-        keys.clear();
-        db_key.clear();
-
-        switch (funcId) {
-            case funcpb::kFuncWatchGet:
-            case funcpb::kFuncPureGet:
-            case funcpb::kFuncWatchPut:
-            case funcpb::kFuncWatchDel:
-                if (funcId == funcpb::kFuncWatchGet) {
-                    funcName.assign("WatchGet");
-                } else if (funcId == funcpb::kFuncPureGet) {
-                    funcName.assign("PureGet");
-                } else if (funcId == funcpb::kFuncWatchPut) {
-                    funcName.assign("WatchPut");
-                } else {
-                    funcName.assign("WatchDel");
-                }
-
-                for (auto i = 0; i < kv->key_size(); i++) {
-                    keys.push_back(kv->mutable_key(i));
-
-                    //FLOG_DEBUG("range[%"PRIu64"] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
-                }
-
-                if(kv->key_size()) {
-                    EncodeWatchKey(&db_key, meta_.table_id(), keys);
-                } else {
-                    ret = -1;
-                    if (db_key.empty() || kv->key_size() < 1) {
-                        FLOG_WARN("range[%" PRIu64 "] %s error: key empty", meta_.id(), funcName.data());
-                        //err = errorpb::KeyNotInRange(db_key);
-                        break;
-                    }
-                }
-                //FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%lld key before:%s after:%s",
-                //          meta_.id(), funcName.data(), meta_.table_id(),  keys[0]->data(), db_key.data());
-
-                if (!kv->value().empty()) {
-                    EncodeWatchValue(&db_value, kv->version(), &(kv->value()), &ext);
-                }
-//                FLOG_DEBUG("range[%" PRIu64 "] %s info: value before:%s after:%s",
-//                           meta_.id(), funcName.data(), kv->value().data(), db_value.data());
-                break;
-
-            default:
-                ret = -1;
-                err->set_message("unknown func_id");
-                //FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
-                break;
-        }
-        return ret;
-    }
+                            errorpb::Error *err);
 
     static int16_t DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv,
                             std::string &db_key, std::string &db_value,
-                            errorpb::Error *err) {
-        int16_t ret(0);
-        std::vector<std::string*> keys;
-        int64_t version(0);
-        keys.clear();
-
-        auto val = std::make_shared<std::string>("");
-        auto ext = std::make_shared<std::string>("");
-
-        switch (funcId) {
-            case funcpb::kFuncWatchGet:
-            case funcpb::kFuncPureGet:
-            case funcpb::kFuncWatchPut:
-            case funcpb::kFuncWatchDel:
-                //decode value
-                DecodeWatchValue(&version, val.get(), ext.get(), db_value);
-                kv->set_key(0, db_key);
-                kv->set_value(*val);
-                kv->set_version(version);
-                kv->set_ext(*ext);
-                break;
-
-            default:
-                ret = -1;
-                if (err == nullptr) {
-                    err = new errorpb::Error;
-                }
-                err->set_message("unknown func_id");
-                //FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
-                break;
-        }
-        return ret;
-    }
-
+                            errorpb::Error *err);
 };
 
 
