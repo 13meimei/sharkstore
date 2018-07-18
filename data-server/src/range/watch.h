@@ -32,8 +32,9 @@ namespace range {
 
 class WatchCode {
 public:
-    WatchCode(){};
-    ~WatchCode(){};
+    WatchCode() {};
+
+    ~WatchCode() {};
 
 public:
     static int16_t EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv,
@@ -153,29 +154,40 @@ typedef std::unordered_map<std::string, WatcherSet_*> Key2Watchers_;
 typedef std::unordered_map<int64_t, KeySet_*> Watcher2Keys_;
 
 struct Watcher{
-    Watcher() = delete;
+    Watcher() {};
     Watcher(common::ProtoMessage* msg, std::string* key) {
         this->msg_ = msg;
         this->key_ = key;
     }
     ~Watcher() = default;
+    bool operator<(const Watcher& other) const;
+
     common::ProtoMessage* msg_;
     std::string* key_;
 };
 
-/*auto cmp = [](Watcher a, Watcher b) { return a.msg_->expire_time > b.msg_->expire_time; };
-//struct WatcherTimer final: public std::priority_queue {
-struct WatcherTimer final {
-public:
-    std::deque<Watcher> GetQueue() { return this->timer_.c; }
+bool Watcher::operator<(const Watcher& other) const {
+    return msg_->expire_time > other.msg_->expire_time;
+}
 
-    std::priority_queue<Watcher, std::deque<Watcher>, decltype(cmp)> timer_;
+template <class T>
+struct Greater {
+    bool operator()(const T& a, const T& b) {
+        return a < b;
+    }
 };
-*/
+
+template <class T>
+struct Timer: public std::priority_queue<T> {
+public:
+    std::vector<T>& GetQueue() { return this->c; }
+    std::priority_queue<T, std::vector<T>, Greater<T>> timer_;
+};
+
 class WatcherSet {
 public:
-    WatcherSet() {}
-    ~WatcherSet() {}
+    WatcherSet();
+    ~WatcherSet();
     void AddWatcher(std::string &, common::ProtoMessage*);
     WATCH_CODE DelWatcher( int64_t &, std::string &);
     uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , std::string &);
@@ -185,7 +197,7 @@ private:
     Watcher2Keys_ watcher_index_;
     std::mutex mutex_;
 
-//    WatcherTimer timer_;
+    Timer<Watcher> timer_;
     std::condition_variable timer_cond_;
     std::thread watchers_expire_thread_;
 };

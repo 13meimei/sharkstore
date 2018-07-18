@@ -1,4 +1,3 @@
-//#include "watch.h"
 #include <common/socket_session.h>
 #include "watch.h"
 #include "range.h"
@@ -73,7 +72,7 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
 /*WatcherSet::WatcherSet() {
     watchers_expire_thread_ = std::thread([this]() {
         while (g_continue_flag) {
-            Watcher* w;
+            Watcher w;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
                 if (timer_.empty()) {
@@ -82,15 +81,15 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                 }
 
                 w = timer_.top();
-                if (timer_cond_.wait_until(lock, std::chrono::milliseconds(w->msg_->expire_time)) ==
+                if (timer_cond_.wait_until(lock, w.msg_->expire_time*1ms) == // todo
                     std::cv_status::timeout) {
 
                     // todo send timeout response
 
                     // delete watcher
                     {
-                        auto id = w->msg_->session_id;
-                        auto key = w->key_;
+                        auto id = w.msg_->session_id;
+                        auto key = w.key_;
                         auto wit = watcher_index_.find(id);
                         if (wit == watcher_index_.end()) {
                             continue;
@@ -100,13 +99,13 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                         auto itKeys = keys.find(*key);
 
                         if (itKeys != keys.end()) {
-                            auto itKeyIdx = key_index_.find(key);
+                            auto itKeyIdx = key_index_.find(*key);
 
                             if (itKeyIdx != key_index_.end()) {
                                 auto itSession = itKeyIdx->second.find(id);
 
                                 if (itSession != itKeyIdx->second.end()) {
-                                    itKeyIdx->second.erase(itSession)
+                                    itKeyIdx->second.erase(itSession);
                                 }
                                 key_index_.erase(itKeyIdx);
                             }
@@ -123,7 +122,7 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                 }
             }
         }
-    }
+    });
 }
 
 WatcherSet::~WatcherSet() {
@@ -145,7 +144,7 @@ void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
         auto tmpPair = key_index_.emplace(name, val);
 
         if (tmpPair.second) kit0 = tmpPair.first;
-        else FLOG_DEBUG("AddWatcher abnormal key:%s session_id:%ld .", name.data(), msg->session_id);
+        else FLOG_DEBUG("AddWatcher abnormal key:%s session_id:%" PRId64, name.data(), msg->session_id);
     }
 
     if (kit0 != key_index_.end()) {
@@ -161,7 +160,7 @@ void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
 
             auto tmpPair = watcher_index_.emplace(std::make_pair(msg->session_id, val));
             if (tmpPair.second) wit0 = tmpPair.first;
-            else FLOG_DEBUG("AddWatcher abnormal session_id:%ld key:%s .", msg->session_id, name.data());
+            else FLOG_DEBUG("AddWatcher abnormal session_id:%" PRId64 " key:%s .", msg->session_id, name.data());
         }
 
         if (wit0 != watcher_index_.end()) {
@@ -179,8 +178,9 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t &id, std::string &key) {
     std::lock_guard<std::mutex> lock(mutex_);
 /*    timer_cond_.notify_one();
 //   todo timer_.find and del
-    for (auto it: timer_.GetQueue()) {
-        if (it->msg_->session_id == id && (*it.key_) == key) {
+    auto timer_queue = timer_.GetQueue();
+    for (auto it = timer_queue.begin(); it != timer_queue.end(); ++it) {
+        if (it->msg_->session_id == id && *(it->key_) == key) {
             timer_.GetQueue().erase(it);
         }
     }
@@ -268,7 +268,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 for (auto i = 0; i < kv->key_size(); i++) {
                     keys.push_back(kv->mutable_key(i));
 
-                    FLOG_DEBUG("range[%" PRIu64 "] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
+                    FLOG_DEBUG("range[%" PRIu64"] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
                 }
 
                 if(kv->key_size()) {
@@ -281,7 +281,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                         break;
                     }
                 }
-                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%ld key before:%s after:%s", 
+                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%" PRId64" key before:%s after:%s",
                            meta_.id(), funcName.data(), meta_.table_id(),  keys[0]->data(), db_key.data());
 
                 if (!kv->value().empty()) {
