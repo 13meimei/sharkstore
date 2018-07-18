@@ -1445,7 +1445,7 @@ func (c *Cluster) dispatchOne(r *Range) (task *taskpb.Task, over bool) {
 	log.Debug("range[%d] step Task: %v", r.GetId(), tc.String())
 	over, task = tc.Next(c, r)
 	if over {
-		c.taskManager.Remove(tc)
+		c.taskManager.Remove(tc, c)
 	}
 	return task, over
 }
