@@ -186,8 +186,8 @@ public:
 
 class WatcherSet {
 public:
-    WatcherSet(){};
-    ~WatcherSet(){};
+    WatcherSet();
+    ~WatcherSet();
     void AddWatcher(std::string &, common::ProtoMessage*);
     WATCH_CODE DelWatcher( int64_t &, std::string &);
     uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , std::string &);
