@@ -290,6 +290,7 @@ type BenchMarkConfig struct {
 	DB      string `toml:"db,omitempty" json:"db"`
 	Table   string `toml:"table,omitempty" json:"table"`
 	Batch   int    `toml:"batch,omitempty" json:"batch"`
+	Scope   int    `toml:"scope,omitempty" json:"scope"`
 }
 
 func UpdateConfig(addr string) error{
