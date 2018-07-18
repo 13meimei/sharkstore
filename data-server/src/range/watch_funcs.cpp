@@ -490,7 +490,7 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
         for(auto pMsg : vecProtoMsg) {
             idx++;
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                       meta_.id(), key, idx, watchCnt, pMsg->session_id);
+                       meta_.id(), key.c_str(), idx, watchCnt, pMsg->session_id);
 
             resp->set_watchid(pMsg->session_id);
 
@@ -503,7 +503,7 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
                 //delete watch
                 if (WATCH_OK != DelKeyWatcher(pMsg->session_id, key)) {
                     FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                           meta_.id(), key, idx, watchCnt, pMsg->session_id);
+                           meta_.id(), key.c_str(), idx, watchCnt, pMsg->session_id);
                 }
             }
         }
