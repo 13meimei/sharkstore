@@ -29,7 +29,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             break;
         }
 
-        FLOG_DEBUG("range[%"PRIu64" %s-%s] WatchGet key:%s", meta_.id(), meta_.start_key().c_str(), meta_.end_key().c_str(), dbKey.c_str());
+        FLOG_DEBUG("range[%" PRIu64 " %s-%s] WatchGet key:%s", meta_.id(), meta_.start_key().c_str(), meta_.end_key().c_str(), dbKey.c_str());
         
         auto epoch = req.header().range_epoch();
         bool in_range = KeyInRange(dbKey);

@@ -10,7 +10,7 @@ void Range::AddKeyWatcher(std::string &name, common::ProtoMessage *msg) {
     key_watchers_.AddWatcher(name, msg);
 }
 
-WATCH_CODE Range::DelKeyWatcher(const int64_t &id, const std::string &key) {
+WATCH_CODE Range::DelKeyWatcher(int64_t &id, std::string &key) {
     return key_watchers_.DelWatcher(id, key);
 }
 
@@ -38,13 +38,12 @@ bool DecodeWatchKey(std::vector<std::string *> &keys, std::string *buf) {
 
     size_t offset;
     for (offset = 9; offset != buf->length() - 1;) {
-        std::string* b;
-
-        b = new std::string();
+        std::string* b = new std::string();
+        
         if (!DecodeBytesAscending(*buf, offset, b)) {
             return false;
         }
-        keys.push_back(b.get());
+        keys.push_back(b);
     }
     return true;
 }
@@ -71,7 +70,7 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
     return true;
 }
 
-WatcherSet::WatcherSet() {
+/*WatcherSet::WatcherSet() {
     watchers_expire_thread_ = std::thread([this]() {
         while (g_continue_flag) {
             Watcher* w;
@@ -130,37 +129,45 @@ WatcherSet::WatcherSet() {
 WatcherSet::~WatcherSet() {
     watchers_expire_thread_.join();
 }
-
+*/
 void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
     std::lock_guard<std::mutex> lock(mutex_);
-    timer_cond_.notify_one();
-    timer_.push(Watcher(msg, &name));
-
+    /*timer_cond_.notify_one();
+    std::shared_ptr<common::ProtoMessage> msgPtr = std::make_shared<common::protoMessage>(*msg);
+    timer_.push(Watcher(msgPtr.get(), &name));
+    */
     // build key name to watcher session id
     auto kit0 = key_index_.find(name);
     if (kit0 == key_index_.end()) {
-        auto tmpPair = key_index_.emplace(std::make_pair(name, std::make_pair(msg->session_id, msg)));
+        auto val = new WatcherSet_;
+        val->emplace(std::make_pair(msg->session_id, msg));
+
+        auto tmpPair = key_index_.emplace(name, val);
+
         if (tmpPair.second) kit0 = tmpPair.first;
-        else FLOG_DEBUG("AddWatcher abnormal key:%s session_id:%lld .", name.data(), msg->session_id);
+        else FLOG_DEBUG("AddWatcher abnormal key:%s session_id:%ld .", name.data(), msg->session_id);
     }
 
     if (kit0 != key_index_.end()) {
-        auto kit1 = kit0->second.find(msg->session_id);
-        if (kit1 == kit0->second.end()) {
-            kit0->second.emplace(std::make_pair(msg->session_id, msg));
+        auto kit1 = kit0->second->find(msg->session_id);
+        if (kit1 == kit0->second->end()) {
+            kit0->second->emplace(std::make_pair(msg->session_id, msg));
         }
         // build watcher id to key name
         auto wit0 = watcher_index_.find(msg->session_id);
         if (wit0 == watcher_index_.end()) {
-            auto tmpPair = watcher_index_.emplace(std::make_pair(msg->session_id, std::make_pair(name, nullptr)));
+            auto val = new KeySet_;
+            val->emplace(name, 1);
+
+            auto tmpPair = watcher_index_.emplace(std::make_pair(msg->session_id, val));
             if (tmpPair.second) wit0 = tmpPair.first;
-            else FLOG_DEBUG("AddWatcher abnormal session_id:%lld key:%s .", msg->session_id, name.data());
+            else FLOG_DEBUG("AddWatcher abnormal session_id:%ld key:%s .", msg->session_id, name.data());
         }
 
         if (wit0 != watcher_index_.end()) {
-            auto wit1 = wit0->second.find(name);
-            if (wit1 == wit0->second.end()) {
-                wit0->second.emplace(std::make_pair(name, nullptr));
+            auto wit1 = wit0->second->find(name);
+            if (wit1 == wit0->second->end()) {
+                wit0->second->emplace(std::make_pair(name, 2));
             }
         }
     }
@@ -168,48 +175,49 @@ void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
     return;
 }
 
-WATCH_CODE WatcherSet::DelWatcher(const int64_t &id, const std::string &key) {
+WATCH_CODE WatcherSet::DelWatcher(int64_t &id, std::string &key) {
     std::lock_guard<std::mutex> lock(mutex_);
-    timer_cond_.notify_one();
+/*    timer_cond_.notify_one();
 //   todo timer_.find and del
     for (auto it: timer_.GetQueue()) {
         if (it->msg_->session_id == id && (*it.key_) == key) {
             timer_.GetQueue().erase(it);
         }
     }
-
+*/
     //<session:keys>
-    auto wit = watcher_index_.find(id);
+    int64_t tmpSessionId(id);
+    auto wit = watcher_index_.find(tmpSessionId);
     if (wit == watcher_index_.end()) {
         return WATCH_WATCHER_NOT_EXIST;
     }
+    //KeySet_*
+    auto &keys = wit->second; // key map
+    auto itKeys = keys->find(key);
 
-    auto keys = wit->second; // key map
-    auto itKeys = keys.find(key);
-
-    if (itKeys != keys.end()) {
-        auto itKeyIdx = key_index_.find(key);
+    if (itKeys != keys->end()) {
+        auto itKeyIdx = key_index_.find(std::move(key));
 
         if (itKeyIdx != key_index_.end()) {
-            auto itSession = itKeyIdx->second.find(id);
+            auto itSession = itKeyIdx->second->find(std::move(id));
 
-            if (itSession != itKeyIdx->second.end()) {
-                itKeyIdx->second.erase(itSession);
+            if (itSession != itKeyIdx->second->end()) {
+                itKeyIdx->second->erase(itSession);
             }
             key_index_.erase(itKeyIdx);
         }
 
-        keys.erase(itKeys);
+        keys->erase(itKeys);
     }
 
-    if (keys.size() < 1) {
+    if (keys->size() < 1) {
         watcher_index_.erase(wit);
     }
 
     return WATCH_OK;
 }
 
-uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage *> &vec, const std::string &name) {
+uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage *> &vec, std::string &name) {
     std::lock_guard<std::mutex> lock(mutex_);
     timer_cond_.notify_one();
 
@@ -219,12 +227,12 @@ uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage *> &vec, const
     }
 
     auto watchers = kit->second;
-    uint32_t msgSize = static_cast<uint32_t>(watchers.size());
+    uint32_t msgSize = static_cast<uint32_t>(watchers->size());
 
     if (msgSize > 0) {
         vec.resize(msgSize);
 
-        for (auto it = watchers.begin(); it != watchers.end(); ++it) {
+        for (auto it = watchers->begin(); it != watchers->end(); ++it) {
             vec.emplace_back(it->second);
         }
     }
@@ -260,7 +268,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 for (auto i = 0; i < kv->key_size(); i++) {
                     keys.push_back(kv->mutable_key(i));
 
-                    FLOG_DEBUG("range[%"PRIu64"] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
+                    FLOG_DEBUG("range[%" PRIu64 "] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
                 }
 
                 if(kv->key_size()) {
@@ -273,7 +281,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                         break;
                     }
                 }
-                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%lld key before:%s after:%s", 
+                FLOG_DEBUG("range[%" PRIu64 "] %s info: table_id:%ld key before:%s after:%s", 
                            meta_.id(), funcName.data(), meta_.table_id(),  keys[0]->data(), db_key.data());
 
                 if (!kv->value().empty()) {
@@ -287,7 +295,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             default:
                 ret = -1;
                 err->set_message("unknown func_id");
-                FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
+                FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
                 break;
         }
         return ret;
@@ -323,7 +331,7 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                     err = new errorpb::Error;
                 }
                 err->set_message("unknown func_id");
-                FLOG_WARN("range[%" PRIu64 "] %s error: unknown func_id:%d", meta_.id(), funcId);
+                FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
                 break;
         }
         return ret;

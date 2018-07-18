@@ -15,7 +15,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace common {
 
-typedef struct {
+typedef struct ProtoMessage_{
     int64_t session_id;
     int64_t begin_time;
     int64_t expire_time;
@@ -23,6 +23,17 @@ typedef struct {
     ds_header_t header;
     SocketBase *socket;
     std::vector<char> body;
+
+    ProtoMessage_(){};
+    ProtoMessage_( const struct ProtoMessage_ &other ) {
+        this->session_id = other.session_id;
+        this->begin_time = other.begin_time;
+        this->expire_time = other.expire_time;
+        this->msg_id = other.msg_id;
+        this->header = other.header;
+        this->socket = other.socket;
+        this->body.assign(other.body.begin(), other.body.end());
+    }
 } ProtoMessage;
 
 class SocketSession {

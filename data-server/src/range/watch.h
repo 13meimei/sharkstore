@@ -10,6 +10,12 @@ _Pragma("once");
 #include <frame/sf_logger.h>
 #include <mutex>
 #include <memory>
+#include <queue>
+#include <vector>
+#include <functional>
+#include <condition_variable>
+#include <thread>
+#include <unordered_map>
 
 bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                       std::string &buf);
@@ -37,7 +43,7 @@ public:
     static int16_t DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv,
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err);
-
+};
 
 //enum WATCH_CODE {
 //    WATCH_OK = 0,
@@ -141,43 +147,45 @@ enum WATCH_CODE {
 };
 
 typedef std::unordered_map<int64_t, common::ProtoMessage*> WatcherSet_;
-typedef std::unordered_map<std::string, WatcherSet_> Key2Watchers_;
-typedef std::unordered_map<std::string, nullptr_t> KeySet_;
-typedef std::unordered_map<int64_t, KeySet_> Watcher2Keys_;
+typedef std::unordered_map<std::string, int16_t> KeySet_;
+
+typedef std::unordered_map<std::string, WatcherSet_*> Key2Watchers_;
+typedef std::unordered_map<int64_t, KeySet_*> Watcher2Keys_;
 
 struct Watcher{
     Watcher() = delete;
     Watcher(common::ProtoMessage* msg, std::string* key) {
-        this.msg = msg;
-        this.key = key;
+        this->msg_ = msg;
+        this->key_ = key;
     }
     ~Watcher() = default;
     common::ProtoMessage* msg_;
     std::string* key_;
 };
 
-auto cmp = [](Watcher a, Watcher b) { return a.msg_->expire_time > b.msg_->expire_time; };
-struct WatcherTimer final: public std::priority_queue {
+/*auto cmp = [](Watcher a, Watcher b) { return a.msg_->expire_time > b.msg_->expire_time; };
+//struct WatcherTimer final: public std::priority_queue {
+struct WatcherTimer final {
 public:
-    std::deque GetQueue() { return this->c; }
+    std::deque<Watcher> GetQueue() { return this->timer_.c; }
 
     std::priority_queue<Watcher, std::deque<Watcher>, decltype(cmp)> timer_;
 };
-
+*/
 class WatcherSet {
 public:
     WatcherSet() {}
     ~WatcherSet() {}
     void AddWatcher(std::string &, common::ProtoMessage*);
-    WATCH_CODE DelWatcher(const int64_t &, const std::string &);
-    uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , const std::string &);
+    WATCH_CODE DelWatcher( int64_t &, std::string &);
+    uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , std::string &);
 
 private:
     Key2Watchers_ key_index_;
     Watcher2Keys_ watcher_index_;
     std::mutex mutex_;
 
-    WatcherTimer timer_;
+//    WatcherTimer timer_;
     std::condition_variable timer_cond_;
     std::thread watchers_expire_thread_;
 };
