@@ -379,7 +379,7 @@ std::string RowDecoder::DebugString() const {
     std::ostringstream ss;
     ss << "filters: [";
     for (const auto& f : filters_) {
-        ss << f.DebugString();
+        ss << f.ShortDebugString();
     }
     ss << "]";
     return ss.str();
