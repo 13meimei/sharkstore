@@ -166,9 +166,9 @@ struct Watcher{
     std::string* key_;
 };
 
-bool Watcher::operator<(const Watcher& other) const {
+/*bool Watcher::operator<(const Watcher& other) const {
     return msg_->expire_time > other.msg_->expire_time;
-}
+}*/
 
 template <class T>
 struct Greater {

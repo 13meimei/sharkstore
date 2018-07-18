@@ -17,6 +17,10 @@ uint32_t Range::GetKeyWatchers(std::vector<common::ProtoMessage *> &vec, std::st
     return key_watchers_.GetWatchers(vec, name);
 }
 
+bool Watcher::operator<(const Watcher& other) const {
+    return msg_->expire_time > other.msg_->expire_time;
+}
+
 // encode keys into buffer
 void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys) {
     assert(buf != nullptr && buf->length() != 0);
