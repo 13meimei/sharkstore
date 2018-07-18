@@ -136,7 +136,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         auto resp = ds_resp->mutable_resp();
         auto btime = get_micro_second();
         storage::Iterator *it = nullptr;
-        Status::Code code;
+        Status::Code code = Status::kOk;
 
         if (prefix) {
             //need to encode and decode
