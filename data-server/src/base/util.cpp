@@ -195,4 +195,31 @@ void AnnotateThread(pthread_t handle, const char *name) {
 #endif
 }
 
+int ParseBytesValue(const char* str, int64_t* value) {
+    char *end = nullptr;
+    errno = 0;
+    long v = strtol(str, &end, 10);
+    if (errno != 0) {
+        return -1;
+    }
+
+    if (end == NULL || *end == '\0') {
+        *value = v;
+    } else if (*end == 'k' || *end == 'K') {
+        *value = v * 1024;
+    } else if (*end == 'm' || *end == 'M') {
+        *value = v * 1024 * 1024;
+    }  else if (*end == 'g' || *end == 'G') {
+        *value = v * 1024 * 1024 * 1024;
+    }  else if (*end == 't' || *end == 'T') {
+        *value = v * 1024 * 1024 * 1024 * 1024;
+    }  else if (*end == 'p' || *end == 'P') {
+        *value = v * 1024 * 1024 * 1024 * 1024 * 1024;
+    } else {
+        errno = EINVAL;
+        return -1;
+    }
+    return 0;
+}
+
 } /* namespace sharkstore */

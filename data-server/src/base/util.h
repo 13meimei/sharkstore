@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include <sys/types.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -20,5 +21,7 @@ int MakeDirAll(const std::string &path, mode_t mode);
 int RemoveDirAll(const char *name);
 
 void AnnotateThread(pthread_t handle, const char *name);
+
+int ParseBytesValue(const char* str, int64_t* value);
 
 } /* namespace sharkstore */
