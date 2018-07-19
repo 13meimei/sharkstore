@@ -207,6 +207,10 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
             return ApplyKVBatchDelete(cmd);
         case raft_cmdpb::CmdType::KvRangeDel:
             return ApplyKVRangeDelete(cmd);
+        case raft_cmdpb::CmdType::KvWatchPut:
+            return ApplyWatchPut(cmd);
+        case raft_cmdpb::CmdType::KvWatchDel:
+            return ApplyWatchDel(cmd);
         default:
             FLOG_ERROR("range[%" PRIu64 "] Apply cmd type error %s", meta_.id(),
                        CmdType_Name(cmd.cmd_type()).c_str());
@@ -674,6 +678,12 @@ void Range::SendTimeOutError(AsyncContext *context) {
             SendError(context, new kvrpcpb::DsDeleteResponse, err);
             break;
 
+        case raft_cmdpb::CmdType::KvWatchPut:
+            SendError(context, new watchpb::DsKvWatchPutResponse, err);
+            break;
+        case raft_cmdpb::CmdType::KvWatchDel:
+            SendError(context, new watchpb::DsKvWatchDeleteResponse, err);
+            break;
         default:
             FLOG_ERROR("range[%" PRIu64 "] Apply cmd type error %d", meta_.id(),
                        context->cmd_type_);

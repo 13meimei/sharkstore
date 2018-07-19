@@ -73,6 +73,9 @@ message WatchCreateRequest {
     //TTL
     int64 expireAt              = 5;
     bool prefix                 = 6;
+    //longPull timeOut
+    //timeUnit millisecond
+    int64 longPull              = 7;
 }
 
 //watch simple key response

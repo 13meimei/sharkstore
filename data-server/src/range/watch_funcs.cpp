@@ -78,7 +78,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
         //add watch if client version is not equal to ds side
         auto start_version = req.req().startversion();
-
+        msg->expire_time = req.req().longpull();
         //decode version from value
         FLOG_DEBUG("range[%" PRIu64 "] WatchGet [%s]-%s ok.", 
                    meta_.id(), dbKey.c_str(), dbValue.c_str());

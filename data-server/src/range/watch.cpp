@@ -85,7 +85,7 @@ WatcherSet::WatcherSet() {
                 }
 
                 w = timer_.top();
-                auto milli = std::chrono::milliseconds(w.msg_->expire_time*1000);
+                auto milli = std::chrono::milliseconds(w.msg_->expire_time);
                 std::chrono::system_clock::time_point expire( milli);
 
                 if (timer_cond_.wait_until(lock, expire) == // todo
