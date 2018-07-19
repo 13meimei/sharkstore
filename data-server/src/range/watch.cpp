@@ -1,4 +1,5 @@
 #include <common/socket_session.h>
+#include <common/socket_session_impl.h>
 #include "watch.h"
 #include "range.h"
 
@@ -91,7 +92,11 @@ WatcherSet::WatcherSet() {
                 if (timer_cond_.wait_until(lock, expire) == // todo
                     std::cv_status::timeout) {
 
-                    // todo send timeout response
+                    // send timeout response
+                    auto resp = new watchpb::DsWatchResponse;
+                    resp->mutable_resp()->set_code(Status::kTimedOut);
+                    common::SocketSessionImpl session;
+                    session.Send(w.msg_, resp);
 
                     // delete watcher
                     {
