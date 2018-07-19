@@ -5,8 +5,8 @@
 namespace sharkstore {
 namespace dataserver {
 namespace range {
-void Range::AddKeyWatcher(std::string &name, common::ProtoMessage *msg) {
-    key_watchers_.AddWatcher(name, msg);
+int32_t Range::AddKeyWatcher(std::string &name, common::ProtoMessage *msg) {
+    return key_watchers_.AddWatcher(name, msg);
 }
 
 WATCH_CODE Range::DelKeyWatcher(int64_t &id, std::string &key) {
@@ -136,9 +136,14 @@ WatcherSet::~WatcherSet() {
     watchers_expire_thread_.join();
 }
 
-void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
+int32_t WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
     std::lock_guard<std::mutex> lock(mutex_);
     timer_cond_.notify_one();
+
+    if(key_index_.size() >= MAX_WATCHER_SIZE) {
+        FLOG_ERROR("AddWatcher fail:exceed max size(%d) of watcher list", MAX_WATCHER_SIZE);
+        return -1;
+    }
     //std::shared_ptr<common::ProtoMessage> msgPtr = std::make_shared<common::protoMessage>(*msg);
     auto msgPtr = new common::ProtoMessage(*msg); 
     timer_.push(Watcher(msgPtr, &name));
@@ -179,7 +184,7 @@ void WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
         }
     }
 
-    return;
+    return 0;
 }
 
 WATCH_CODE WatcherSet::DelWatcher(int64_t &id, std::string &key) {

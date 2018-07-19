@@ -119,7 +119,7 @@ public:
     bool WatchDeleteSubmit(common::ProtoMessage *msg,
                             watchpb::DsKvWatchDeleteRequest &req);
 
-    void AddKeyWatcher(std::string&, common::ProtoMessage*);
+    int32_t AddKeyWatcher(std::string&, common::ProtoMessage*);
     WATCH_CODE DelKeyWatcher(int64_t &id, std::string &key);
     uint32_t GetKeyWatchers(std::vector<common::ProtoMessage*>&, std::string);
 public:

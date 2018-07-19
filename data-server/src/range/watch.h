@@ -17,6 +17,8 @@ _Pragma("once");
 #include <thread>
 #include <unordered_map>
 
+#define MAX_WATCHER_SIZE 100000
+
 bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                       std::string &buf);
 void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
@@ -188,7 +190,7 @@ class WatcherSet {
 public:
     WatcherSet();
     ~WatcherSet();
-    void AddWatcher(std::string &, common::ProtoMessage*);
+    int32_t AddWatcher(std::string &, common::ProtoMessage*);
     WATCH_CODE DelWatcher( int64_t &, std::string &);
     uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , std::string &);
 
