@@ -71,6 +71,9 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         
     } while (false);
 
+    static int16_t watchFlag{0};
+    watchFlag = 0;
+
     if (err != nullptr) {
         FLOG_WARN("range[%" PRIu64 "] WatchGet error: %s", meta_.id(),
                   err->message().c_str());
@@ -85,11 +88,13 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         if(start_version >= version) {
             //to do add watch
             AddKeyWatcher(dbKey, msg);
+            watchFlag = 1;
         }
     }
-
-    context_->socket_session->SetResponseHeader(req.header(), header, err);
-    context_->socket_session->Send(msg, ds_resp);
+    if(!watchFlag) {
+        context_->socket_session->SetResponseHeader(req.header(), header, err);
+        context_->socket_session->Send(msg, ds_resp);
+    }
 }
 
 void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req) {
@@ -102,6 +107,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     auto header = ds_resp->mutable_header();
     //encode key and value
     std::string dbKey{""};
+    std::string dbKeyEnd{""};
     std::string dbValue("");
     //int64_t version{0};
     int64_t minVersion(0);
@@ -144,8 +150,11 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         Status::Code code = Status::kOk;
 
         if (prefix) {
+            if( 0 != WatchCode::NextComparableBytes(dbKey.data(), dbKey.size(), &dbKeyEnd)) {
+                break;
+            }
             //need to encode and decode
-            std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKey));
+            std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
             uint32_t count{0};
 
             for (int i = 0; iterator->Valid() ; ++i) {

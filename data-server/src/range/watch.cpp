@@ -281,7 +281,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 for (auto i = 0; i < kv->key_size(); i++) {
                     keys.push_back(kv->mutable_key(i));
 
-                    FLOG_DEBUG("range[%" PRIu64"] %s key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
+                    FLOG_DEBUG("range[%" PRIu64"] EncodeKv:(%s) key%d):%s", meta_.id(), funcName.data(), i, kv->mutable_key(i)->data());
                 }
 
                 if(kv->key_size()) {
@@ -348,6 +348,24 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 break;
         }
         return ret;
+}
+
+int16_t  WatchCode::NextComparableBytes(const char *key, const int16_t len, std::string *result) {
+
+    for( auto i = len - 1; i >= 0; i--) {
+
+        uint8_t keyNo = static_cast<uint8_t>(key[i]);
+
+        if( keyNo < 0xff) {
+            keyNo++;
+            *result = key;
+            result[i] = static_cast<char>(keyNo);
+
+            return 0;
+        }
+    }
+
+    return -1;
 }
 
 } //end namespace range
