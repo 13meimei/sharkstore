@@ -1,4 +1,5 @@
 #include <common/socket_session.h>
+#include <common/socket_session_impl.h>
 #include "watch.h"
 #include "range.h"
 
@@ -79,19 +80,23 @@ WatcherSet::WatcherSet() {
             Watcher w;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
-                if (timer_.empty()) {
+                if (timer_.timer_.empty()) {
                     timer_cond_.wait_for(lock, std::chrono::milliseconds(10));
                     continue; // sleep 10ms
                 }
 
-                w = timer_.top();
+                w = timer_.timer_.top();
                 auto milli = std::chrono::milliseconds(w.msg_->expire_time);
                 std::chrono::system_clock::time_point expire( milli);
 
                 if (timer_cond_.wait_until(lock, expire) == // todo
                     std::cv_status::timeout) {
 
-                    // todo send timeout response
+                    // send timeout response
+                    auto resp = new watchpb::DsWatchResponse;
+                    resp->mutable_resp()->set_code(Status::kTimedOut);
+                    common::SocketSessionImpl session;
+                    session.Send(w.msg_, resp);
 
                     // delete watcher
                     {
@@ -125,7 +130,7 @@ WatcherSet::WatcherSet() {
                         }
                     } // del watcher
 
-                    timer_.pop();
+                    timer_.timer_.pop();
                 }
             }
         }
@@ -146,7 +151,7 @@ int32_t WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
     }
     //std::shared_ptr<common::ProtoMessage> msgPtr = std::make_shared<common::protoMessage>(*msg);
     auto msgPtr = new common::ProtoMessage(*msg); 
-    timer_.push(Watcher(msgPtr, &name));
+    timer_.timer_.push(Watcher(msgPtr, &name));
     
     // build key name to watcher session id
     auto kit0 = key_index_.find(name);
@@ -189,15 +194,15 @@ int32_t WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
 
 WATCH_CODE WatcherSet::DelWatcher(int64_t &id, std::string &key) {
     std::lock_guard<std::mutex> lock(mutex_);
-/*    timer_cond_.notify_one();
-//   todo timer_.find and del
+    timer_cond_.notify_one();
+    //  timer_.find and del
     auto timer_queue = timer_.GetQueue();
     for (auto it = timer_queue.begin(); it != timer_queue.end(); ++it) {
         if (it->msg_->session_id == id && *(it->key_) == key) {
             timer_.GetQueue().erase(it);
         }
     }
-*/
+
     //<session:keys>
     int64_t tmpSessionId(id);
     auto wit = watcher_index_.find(tmpSessionId);
