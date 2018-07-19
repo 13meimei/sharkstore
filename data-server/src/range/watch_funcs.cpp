@@ -153,6 +153,8 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             if( 0 != WatchCode::NextComparableBytes(dbKey.data(), dbKey.size(), &dbKeyEnd)) {
                 break;
             }
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet key scope %s---%s", meta_.id(), dbKey.data(), dbKeyEnd.data());
+
             //need to encode and decode
             std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
             uint32_t count{0};
