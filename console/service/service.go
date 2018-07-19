@@ -530,7 +530,7 @@ func (s *Service) InitCluster(cId int, masterUrl string, token string) error {
 	}
 	if initClusterResp.Code != 0 {
 		log.Error("init cluster is failed. err:[%v]", initClusterResp)
-		return fmt.Errorf(initClusterResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: initClusterResp.Msg}
 	}
 	return nil
 }
@@ -561,7 +561,7 @@ func (s *Service) GetNodeViewInfo(cId int) ([]*models.DsNode, error) {
 	}
 	if nodeInfoResp.Code != 0 {
 		log.Error("get node info failed. err:[%v]", nodeInfoResp)
-		return nil, fmt.Errorf(nodeInfoResp.Msg)
+		return nil, common.INTERNAL_ERROR
 	}
 	return nodeInfoResp.Data, nil
 }
@@ -592,7 +592,7 @@ func (s *Service) SetNodeLogOut(clusterId, nodeId int) error {
 	}
 	if nodeLogoutResp.Code != 0 {
 		log.Error("set node logout failed. err:[%v]", nodeLogoutResp)
-		return fmt.Errorf(nodeLogoutResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: nodeLogoutResp.Msg}
 	}
 	return nil
 }
@@ -623,7 +623,7 @@ func (s *Service) SetNodeUpgrade(clusterId, nodeId int) error {
 	}
 	if nodeUpgradeResp.Code != 0 {
 		log.Error("node upgrade failed. err:[%v]", nodeUpgradeResp)
-		return fmt.Errorf(nodeUpgradeResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: nodeUpgradeResp.Msg}
 	}
 	return nil
 }
@@ -655,7 +655,7 @@ func (s *Service) SetNodeLogIn(clusterId, nodeId int) (error) {
 	}
 	if nodeLoginResp.Code != 0 {
 		log.Error("set node login failed. err:[%v]", nodeLoginResp)
-		return fmt.Errorf(nodeLoginResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: nodeLoginResp.Msg}
 	}
 	return nil
 }
@@ -687,7 +687,7 @@ func (s *Service) SetNodeLogLevel(clusterId, nodeId int, logLevel string) (error
 	}
 	if nodeLogLevelResp.Code != 0 {
 		log.Error("set node log level failed. err:[%v]", nodeLogLevelResp)
-		return fmt.Errorf(nodeLogLevelResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: nodeLogLevelResp.Msg}
 	}
 	return nil
 }
@@ -723,7 +723,7 @@ func (s *Service) TaskOperate(clusterId int, operate string, taskIds string) (in
 	}
 	if resp.Code != 0 {
 		log.Error("task get all failed. err:[%v]", resp)
-		return nil, fmt.Errorf(resp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: resp.Msg}
 	}
 	return resp.Data, nil
 }
@@ -757,7 +757,7 @@ func (s *Service) GetPresentTask(clusterId int) (interface{}, error) {
 	}
 	if resp.Code != 0 {
 		log.Error("task get all failed. err:[%v]", resp)
-		return nil, fmt.Errorf(resp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: resp.Msg}
 	}
 	return resp.Data, nil
 }
@@ -793,7 +793,7 @@ func (s *Service) DeletePeer(clusterId int, rangeId, peerId string) (interface{}
 	}
 	if peerDeleteResp.Code != 0 {
 		log.Error("delete node failed. err:[%v]", peerDeleteResp)
-		return nil, fmt.Errorf(peerDeleteResp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: peerDeleteResp.Msg}
 	}
 	return peerDeleteResp.Data, nil
 }
@@ -827,7 +827,7 @@ func (s *Service) AddPeer(clusterId int, rangeId string) error {
 	}
 	if peerAddResp.Code != 0 {
 		log.Error("add peer failed. err:[%v]", peerAddResp)
-		return fmt.Errorf(peerAddResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: peerAddResp.Msg}
 	}
 	return nil
 }
@@ -858,7 +858,7 @@ func (s *Service) DeleteNodes(clusterId int, nodeIds string) error {
 	}
 	if nodeDeleteResp.Code != 0 {
 		log.Error("delete node failed. err:[%v]", nodeDeleteResp)
-		return fmt.Errorf(nodeDeleteResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: nodeDeleteResp.Msg}
 	}
 	return nil
 }
@@ -890,7 +890,7 @@ func (s *Service) GetRangeTopoByNodeId(clusterId, nodeId int) (interface{}, erro
 	}
 	if getRangeTopoOfNodeResp.Code != 0 {
 		log.Error("getting range topology of node[nodeId=%d] failed. err:[%v]", nodeId, getRangeTopoOfNodeResp)
-		return nil, fmt.Errorf(getRangeTopoOfNodeResp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getRangeTopoOfNodeResp.Msg}
 	}
 	return getRangeTopoOfNodeResp.Data, nil
 }
@@ -924,7 +924,7 @@ func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover, au
 	}
 	if clusterToggleSetResp.Code != 0 {
 		log.Error("delete node failed. err:[%v]", clusterToggleSetResp)
-		return fmt.Errorf(clusterToggleSetResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: clusterToggleSetResp.Msg}
 	} else {
 		//改库
 		info.AutoFailoverUnable, _ = strconv.ParseBool(autoFailover)
@@ -932,7 +932,7 @@ func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover, au
 		info.AutoSplitUnable, _ = strconv.ParseBool(autoSplit)
 		log.Debug("start to update database, %v", info)
 		if err := s.insertClusterById(info); err != nil {
-			return fmt.Errorf("更新集群开关失败")
+			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: fmt.Sprintf("更新集群开关失败, %s", err.Error())}
 		}
 	}
 	return nil
@@ -965,7 +965,7 @@ func (s *Service) GetSchedulerAll(clusterId int) (map[string]bool, error) {
 	}
 	if getScheduleResp.Code != 0 {
 		log.Error("get cluster[%d] scheduler failed. err:[%v]", clusterId, getScheduleResp)
-		return nil, fmt.Errorf(getScheduleResp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getScheduleResp.Msg}
 	}
 	return getScheduleResp.Data, nil
 }
@@ -998,7 +998,7 @@ func (s *Service) GetSchedulerDetail(clusterId int, name string) (interface{}, e
 	}
 	if scheduleDetailResp.Code != 0 {
 		log.Error("get cluster[%d] scheduler %s detail failed. err:[%v]", clusterId, name, scheduleDetailResp)
-		return nil, fmt.Errorf(scheduleDetailResp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: scheduleDetailResp.Msg}
 	}
 	return scheduleDetailResp.Data, nil
 }
@@ -1040,7 +1040,7 @@ func (s *Service) AdjustScheduler(clusterId, optType int, scheduler string) (err
 	}
 	if adjustScheduleResp.Code != 0 {
 		log.Error("adjust cluster[%d] schedule, optType:[%s],scheduleName:[%s] err:[%v]", clusterId, optType, scheduler, adjustScheduleResp)
-		return fmt.Errorf(adjustScheduleResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: adjustScheduleResp.Msg}
 	}
 	return nil
 }
@@ -1073,7 +1073,7 @@ func (s *Service) CheckTopology(clusterId int, dbName, tableName string) (error)
 	}
 	if checkTopologyResp.Code != 0 {
 		log.Error("check cluster[%d] topology , dbName:[%s],tableName:[%s] err:[%v]", clusterId, dbName, tableName, checkTopologyResp)
-		return fmt.Errorf(checkTopologyResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: checkTopologyResp.Msg}
 	}
 	return nil
 }
@@ -1107,7 +1107,7 @@ func (s *Service) GetTableTopologyMissing(clusterId int, dbName, tableName strin
 	}
 	if topologyMResp.Code != 0 {
 		log.Error("get cluster[%d] topology , dbName:[%s],tableName:[%s] missing list err:[%v]", clusterId, dbName, tableName, topologyMResp)
-		return nil, fmt.Errorf(topologyMResp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: topologyMResp.Msg}
 	}
 	return topologyMResp.Data, nil
 }
@@ -1142,7 +1142,7 @@ func (s *Service) CreateTopologyRange(clusterId int, dbName, tableName, startKey
 	}
 	if topologyCResp.Code != 0 {
 		log.Error("create cluster[%d] topology missing range failed, param: dbName:[%s],tableName:[%s], err:[%v]", clusterId, dbName, tableName, topologyCResp)
-		return fmt.Errorf(topologyCResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: topologyCResp.Msg}
 	}
 	return nil
 }
@@ -1175,7 +1175,7 @@ func (s *Service) BatchCreateTopologyRange(clusterId int, dbName, tableName stri
 	}
 	if topologyCResp.Code != 0 {
 		log.Error("batch create cluster[%d] topology missing range failed, param: dbName:[%s],tableName:[%s], err:[%v]", clusterId, dbName, tableName, topologyCResp)
-		return fmt.Errorf(topologyCResp.Msg)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: topologyCResp.Msg}
 	}
 	return nil
 }
@@ -1209,7 +1209,7 @@ func (s *Service) GetRangeDuplicate(clusterId int, dbName, tableName string) (in
 	}
 	if getDuplicateResp.Code != 0 {
 		log.Error("get cluster[%d] topology , dbName:[%s],tableName:[%s] range duplicate list err:[%v]", clusterId, dbName, tableName, getDuplicateResp)
-		return nil, fmt.Errorf(getDuplicateResp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getDuplicateResp.Msg}
 	}
 	return getDuplicateResp.Data, nil
 }
@@ -1241,7 +1241,7 @@ func (s *Service) GetClusterTopology(clusterId int) (interface{}, error) {
 	}
 	if getTopologyResp.Code != 0 {
 		log.Error("get cluster[%d] topology list failed, err:[%v]", clusterId, getTopologyResp)
-		return nil, fmt.Errorf(getTopologyResp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getTopologyResp.Msg}
 	}
 	return getTopologyResp.Data, nil
 }
@@ -1273,7 +1273,7 @@ func (s *Service) GetTaskType(clusterId int) ([]string, error) {
 	}
 	if getTaskTypeResp.Code != 0 {
 		log.Error("get cluster[%d] task type failed. err:[%v]", clusterId, getTaskTypeResp)
-		return nil, fmt.Errorf(getTaskTypeResp.Msg)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getTaskTypeResp.Msg}
 	}
 	return getTaskTypeResp.Data, nil
 }
@@ -1920,7 +1920,7 @@ func (s *Service) GetAllSqlApply(userName string, isAdmin bool) ([]*models.SqlAp
 	result := make([]*models.SqlApply, 0)
 	for rows.Next() {
 		info := new(models.SqlApply)
-		if err := rows.Scan(&(info.Id), &(info.DbName),&(info.TableName), &(info.Status), &(info.Applyer), &(info.CreateTime), &(info.Remark)); err != nil {
+		if err := rows.Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.Status), &(info.Applyer), &(info.CreateTime), &(info.Remark)); err != nil {
 			log.Error("db scan is failed. err:[%v]", err)
 			return nil, common.DB_ERROR
 		}
@@ -1952,7 +1952,7 @@ func (s *Service) ApplySql(dbName, tableName, sentence, applyer, remark string, 
 func (s *Service) GetSqlApplyInfo(id string) (*models.SqlApply, error) {
 	info := new(models.SqlApply)
 	if err := s.db.QueryRow(fmt.Sprintf(`SELECT id, db_name, table_name, sentence, status, applyer, create_time, remark FROM %s WHERE id="%s"`, TABLE_NAME_SQL_APPLY, id)).
-		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.Sentence),  &(info.Status),  &(info.Applyer),  &(info.CreateTime), &(info.Remark)); err != nil {
+		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.Sentence), &(info.Status), &(info.Applyer), &(info.CreateTime), &(info.Remark)); err != nil {
 		if err == sql.ErrNoRows {
 			log.Error("db row not exists. applyId:[%d]", id)
 			return nil, nil

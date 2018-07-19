@@ -5,7 +5,6 @@ import (
 	"github.com/gin-contrib/sessions"
 
 	"console/common"
-	"console/right"
 	"console/service"
 	"console/models"
 	"util/log"
@@ -17,9 +16,9 @@ import (
 
 const (
 	REQURI_LOCK_NAMESPACE_GETALL = "/lock/namespace/queryList"
-	REQURI_LOCK_NAMESPACE_APPLY = "/lock/namespace/apply"
-	REQURI_LOCK_CLUSTER_INFO = "/lock/cluster/get"
-	REQURI_LOCK_NAMESPACE_UPDATE= "/lock/namespace/update"
+	REQURI_LOCK_NAMESPACE_APPLY  = "/lock/namespace/apply"
+	REQURI_LOCK_CLUSTER_INFO     = "/lock/cluster/get"
+	REQURI_LOCK_NAMESPACE_UPDATE = "/lock/namespace/update"
 )
 
 /**
@@ -27,11 +26,12 @@ const (
  */
 type LockGetAllNspAction struct {
 }
+
 func NewLockGetAllNspAction() *LockGetAllNspAction {
 	return &LockGetAllNspAction{
 	}
 }
-func (ctrl *LockGetAllNspAction)Execute(c *gin.Context) (interface{}, error) {
+func (ctrl *LockGetAllNspAction) Execute(c *gin.Context) (interface{}, error) {
 	userName := sessions.Default(c).Get("user_name").(string)
 	isAdmin, err := service.NewService().IsAdmin(userName)
 	if err != nil {
@@ -46,15 +46,15 @@ func (ctrl *LockGetAllNspAction)Execute(c *gin.Context) (interface{}, error) {
  */
 type LockNspApplyAction struct {
 }
+
 func NewLockNspApplyAction() *LockNspApplyAction {
-	return &LockNspApplyAction {
+	return &LockNspApplyAction{
 	}
 }
-func (ctrl *LockNspApplyAction)Execute(c *gin.Context) (interface{}, error) {
+func (ctrl *LockNspApplyAction) Execute(c *gin.Context) (interface{}, error) {
 	userName := sessions.Default(c).Get("user_name").(string)
-	user := right.GetCacheUser(userName)
-	if user == nil {
-		return nil, fmt.Errorf("no user cached %v", userName)
+	if len(userName) == 0 {
+		return nil, common.NO_USER
 	}
 	cIdStr := c.PostForm("clusterId")
 	namespace := c.PostForm("namespace")
@@ -80,11 +80,12 @@ func (ctrl *LockNspApplyAction)Execute(c *gin.Context) (interface{}, error) {
  */
 type LockNspUpdateAction struct {
 }
+
 func NewLockNspUpdateAction() *LockNspUpdateAction {
 	return &LockNspUpdateAction{
 	}
 }
-func (ctrl *LockNspUpdateAction)Execute(c *gin.Context) (interface{}, error) {
+func (ctrl *LockNspUpdateAction) Execute(c *gin.Context) (interface{}, error) {
 	cIdStr := c.PostForm("clusterId")
 	if cIdStr == "" {
 		return nil, common.PARSE_PARAM_ERROR
@@ -106,20 +107,20 @@ func (ctrl *LockNspUpdateAction)Execute(c *gin.Context) (interface{}, error) {
 	return nil, nil
 }
 
-
 /**
  * lock cluster 刚上线的时候，锁集群是通过配置的，后期改成获取对应权限的集群列表
  */
 type LockClusterGetAction struct {
 }
+
 func NewLockClusterGetAction() *LockClusterGetAction {
 	return &LockClusterGetAction{
 	}
 }
-func (ctrl *LockClusterGetAction)Execute(c *gin.Context) (interface{}, error) {
+func (ctrl *LockClusterGetAction) Execute(c *gin.Context) (interface{}, error) {
 	log.Debug("get lock cluster info")
 	var clusters []*models.ClusterInfo
-	cluster, err:= service.NewService().GetLockCluster()
+	cluster, err := service.NewService().GetLockCluster()
 	if err != nil {
 		return nil, err
 	}

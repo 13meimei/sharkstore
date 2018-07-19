@@ -168,12 +168,12 @@ func (m *Metric) SlowLogMetric(slowLog string, delay time.Duration) {
 	if uint64(len(slowLogger.slowLog)) < slowLogger.maxSlowLogNum {
 		slowLogger.slowLog = append(slowLogger.slowLog, &statspb.SlowLog{
 			SlowLog: slowLog,
-			Lats:    delay.Seconds(),
+			Lats:    delay.Nanoseconds() / 1000000,
 		})
 	} else {
 		slowLogger.slowLog[index%slowLogger.maxSlowLogNum] = &statspb.SlowLog{
 			SlowLog: slowLog,
-			Lats:    delay.Seconds(),
+			Lats:    delay.Nanoseconds() / 1000000,
 		}
 	}
 

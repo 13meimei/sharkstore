@@ -113,7 +113,7 @@ func (r *Router) StartRouter() *gin.Engine {
 		}
 		c.HTML(http.StatusOK, "sqlapply_list.html", gin.H{
 			"basePath": r.staticRootDir,
-			"admin": 	admin,
+			"admin":    admin,
 		})
 	})
 
@@ -641,7 +641,7 @@ func (r *Router) StartRouter() *gin.Engine {
 		// ----------------api router ---------------------
 		// cluster
 		router.GET(controllers.REQURI_CLUSTER_GETALL, func(c *gin.Context) {
-			handleAction(c, controllers.NewClusterGetAllAction())
+			handleRightAndAction(r, c, controllers.NewClusterGetAllAction())
 		})
 		router.POST(controllers.REQURI_CLUSTER_GETBYID, func(c *gin.Context) {
 			handleAction(c, controllers.NewClusterGetByIdAction())
@@ -829,7 +829,7 @@ func (r *Router) StartRouter() *gin.Engine {
 		handleAction(c, controllers.NewSqlGetAllAction())
 	})
 	router.POST(controllers.REQURI_SQL_APPLY, func(c *gin.Context) {
-		handleAction(c, controllers.NewSqlApplyAction())
+		handleRightAndAction(r, c, controllers.NewSqlApplyAction())
 	})
 	router.GET(controllers.REQURI_SQL_APPLY_DETAIL, func(c *gin.Context) {
 		handleAction(c, controllers.NewSqlApplyGetAction())
@@ -843,7 +843,7 @@ func (r *Router) StartRouter() *gin.Engine {
 		handleAction(c, controllers.NewLockGetAllNspAction())
 	})
 	router.POST(controllers.REQURI_LOCK_NAMESPACE_APPLY, func(c *gin.Context) {
-		handleAction(c, controllers.NewLockNspApplyAction())
+		handleRightAndAction(r, c, controllers.NewLockNspApplyAction())
 	})
 	router.POST(controllers.REQURI_LOCK_NAMESPACE_UPDATE, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockNspUpdateAction())
@@ -913,5 +913,23 @@ func handleAction(c *gin.Context, act controllers.Action) {
 			Msg:  common.OK.Msg,
 			Data: data,
 		})
+	}
+}
+
+func handleRightAndAction(r *Router, c *gin.Context, act controllers.Action) {
+	userName := sessions.Default(c).Get("user_name").(string)
+	if len(userName) == 0 {
+		c.Redirect(http.StatusMovedPermanently, "/logout")
+	}
+
+	userRight, err := r.GetUserCluster(userName)
+	if err != nil || userRight == nil {
+		c.JSON(http.StatusOK, &controllers.Response{
+			Code: common.NO_RIGHT.Code,
+			Msg:  common.NO_RIGHT.Msg,
+		})
+	} else {
+		c.Set("userRight", userRight)
+		handleAction(c, act)
 	}
 }

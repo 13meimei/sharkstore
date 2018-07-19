@@ -35,10 +35,10 @@ var AUTO_INCREMENT_ID string = fmt.Sprintf("$auto_increment_id")
 var PREFIX_TASK string = fmt.Sprintf("schema%stask%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 var PREFIX_REPLICA string = fmt.Sprintf("schema%sreplica%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 var PREFIX_PRE_GC string = fmt.Sprintf("schema%spre_gc%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
-var PREFIX_AUTO_TRANSFER string = "$auto_transfer_%d"
-var PREFIX_AUTO_FAILOVER string = "$auto_failover_%d"
-var PREFIX_AUTO_SPLIT string = "$auto_split_%d"
-var PREFIX_METRIC string = "$metric_send_%d"
+var PREFIX_AUTO_TRANSFER_UNABLE string = fmt.Sprintf("schema%sauto_transfer_unable%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
+var PREFIX_AUTO_FAILOVER_UNABLE string = fmt.Sprintf("schema%sauto_failover_unable%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
+var PREFIX_AUTO_SPLIT_UNABLE string = fmt.Sprintf("schema%sauto_split_unable%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
+var PREFIX_METRIC string = fmt.Sprintf("schema%smetric_send%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 
 type Cluster struct {
 	clusterId uint64
@@ -526,21 +526,21 @@ func (c *Cluster) UpdateAutoScheduleInfo(autoFailoverUnable, autoTransferUnable,
 	}
 	batch := c.store.NewBatch()
 	var key, value []byte
-	key = []byte(fmt.Sprintf(PREFIX_AUTO_TRANSFER, c.clusterId))
+	key = []byte(fmt.Sprintf("%s%d", PREFIX_AUTO_TRANSFER_UNABLE, c.clusterId))
 	if autoTransferUnable {
 		value = uint64ToBytes(uint64(1))
 	} else {
 		value = uint64ToBytes(uint64(0))
 	}
 	batch.Put(key, value)
-	key = []byte(fmt.Sprintf(PREFIX_AUTO_FAILOVER, c.clusterId))
+	key = []byte(fmt.Sprintf("%s%d", PREFIX_AUTO_FAILOVER_UNABLE, c.clusterId))
 	if autoFailoverUnable {
 		value = uint64ToBytes(uint64(1))
 	} else {
 		value = uint64ToBytes(uint64(0))
 	}
 	batch.Put(key, value)
-	key = []byte(fmt.Sprintf(PREFIX_AUTO_SPLIT, c.clusterId))
+	key = []byte(fmt.Sprintf("%s%d", PREFIX_AUTO_SPLIT_UNABLE, c.clusterId))
 	if autoSplitUnable {
 		value = uint64ToBytes(uint64(1))
 	} else {
@@ -620,7 +620,7 @@ func (c *Cluster) GetAllTasks() []*TaskChain {
 
 func (c *Cluster) loadAutoTransfer() error {
 	s := uint64(0)
-	key := fmt.Sprintf(PREFIX_AUTO_TRANSFER, c.clusterId)
+	key := fmt.Sprintf("%s%d", PREFIX_AUTO_TRANSFER_UNABLE, c.clusterId)
 	value, err := c.store.Get([]byte(key))
 	if err != nil {
 		if err == sErr.ErrNotFound {
@@ -645,7 +645,7 @@ func (c *Cluster) loadAutoTransfer() error {
 
 func (c *Cluster) loadAutoFailover() error {
 	s := uint64(0)
-	key := fmt.Sprintf(PREFIX_AUTO_FAILOVER, c.clusterId)
+	key := fmt.Sprintf("%s%d", PREFIX_AUTO_FAILOVER_UNABLE, c.clusterId)
 	value, err := c.store.Get([]byte(key))
 	if err != nil {
 		if err == sErr.ErrNotFound {
@@ -670,7 +670,7 @@ func (c *Cluster) loadAutoFailover() error {
 
 func (c *Cluster) loadAutoSplit() error {
 	s := uint64(0)
-	key := fmt.Sprintf(PREFIX_AUTO_SPLIT, c.clusterId)
+	key := fmt.Sprintf("%s%d", PREFIX_AUTO_SPLIT_UNABLE, c.clusterId)
 	value, err := c.store.Get([]byte(key))
 	if err != nil {
 		if err == sErr.ErrNotFound {
@@ -1445,7 +1445,7 @@ func (c *Cluster) dispatchOne(r *Range) (task *taskpb.Task, over bool) {
 	log.Debug("range[%d] step Task: %v", r.GetId(), tc.String())
 	over, task = tc.Next(c, r)
 	if over {
-		c.taskManager.Remove(tc)
+		c.taskManager.Remove(tc, c)
 	}
 	return task, over
 }

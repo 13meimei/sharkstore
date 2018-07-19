@@ -2094,7 +2094,7 @@ func (service *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request) 
 	cluster := service.cluster
 	task := cluster.taskManager.Find(rangeId)
 	if task.GetID() == taskId {
-		cluster.taskManager.Remove(task)
+		cluster.taskManager.Remove(task, cluster)
 	}
 	log.Info("delete range %v task[%s] success", rangeId, task.String())
 

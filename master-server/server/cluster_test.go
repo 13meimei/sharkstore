@@ -7,6 +7,7 @@ import (
 	"util/deepcopy"
 	"time"
 	"fmt"
+	"util/assert"
 )
 
 var (
@@ -470,29 +471,17 @@ func TestConfig_LoadFromFile(t *testing.T) {
 	cluster := MockCluster(t)
 	defer closeLocalCluster(cluster)
 
-	get(cluster, t)
+	//default false, false, false
+	cluster.loadScheduleSwitch()
+	assert.Equal(t, cluster.autoFailoverUnable, false, "failover")
+	assert.Equal(t, cluster.autoTransferUnable, false, "transfer")
+	assert.Equal(t, cluster.autoSplitUnable, false, "split")
 	cluster.UpdateAutoScheduleInfo(false, true, false)
-	get(cluster, t)
-}
 
-func get(cluster *Cluster, t *testing.T)  {
+	//after update, false, true, false
+	cluster.loadScheduleSwitch()
+	assert.Equal(t, cluster.autoFailoverUnable, false, "failover")
+	assert.Equal(t, cluster.autoTransferUnable, true, "transfer")
+	assert.Equal(t, cluster.autoSplitUnable, false, "split")
 
-	if err := cluster.loadAutoSplit(); err != nil {
-		t.Errorf("error1 %v", err)
-	}
-
-	t.Logf("split %v", cluster.autoSplitUnable)
-
-
-	if err := cluster.loadAutoFailover(); err != nil {
-		t.Errorf("error2 %v", err)
-	}
-
-	t.Logf("failover %v", cluster.autoFailoverUnable)
-
-	if err := cluster.loadAutoTransfer(); err != nil {
-		t.Errorf("error3 %v", err)
-	}
-
-	t.Logf("transfer %v", cluster.autoTransferUnable)
 }
