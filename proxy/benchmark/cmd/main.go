@@ -15,7 +15,6 @@ import (
 	"util/log"
 	"util/gogc"
 	"proxy/gateway-server/server"
-	"encoding/binary"
 	"model/pkg/metapb"
 	"util"
 	"proxy/benchmark/blob_store"
@@ -357,7 +356,8 @@ func correct4BatchDelete(s *server.Server) {
 
 	time.Sleep(20 * time.Minute)
 
-	keyMap := make(map[interface{}]uint8, 0)
+	keyMap := make(map[string]uint8, 0)
+	value := uint8(0)
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < 5; i++ {
@@ -372,8 +372,8 @@ func correct4BatchDelete(s *server.Server) {
 			if err != nil {
 				continue
 			}
-			log.Debug("h:%d, user:%s, key:%v", tempH, u, string(key))
-			keyMap[key] = 0
+			log.Debug("pk: h:%d, user:%s, key:%v", tempH, u, string(key))
+			keyMap[string(key)] = value
 		}
 	}
 
@@ -398,8 +398,7 @@ func getKey(h uint32, userName string)  ([]byte, error) {
 		sqlValue  []byte
 		matchType int
 	}
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, h)
+	bytes := []byte(fmt.Sprintf("%v", h))
 	var prefix []byte
 	var err error
 	if prefix, err = util.EncodePrimaryKey(prefix,
