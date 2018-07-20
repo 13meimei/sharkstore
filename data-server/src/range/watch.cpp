@@ -339,6 +339,8 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             case funcpb::kFuncWatchDel:
                 //decode value
                 DecodeWatchValue(&version, val.get(), ext.get(), db_value);
+                if(kv->key_size() <= 0)
+                    kv->add_key();
                 kv->set_key(0, db_key);
                 kv->set_value(*val);
                 kv->set_version(version);
