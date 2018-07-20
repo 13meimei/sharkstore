@@ -19,6 +19,7 @@ _Pragma("once");
 
 #define MAX_WATCHER_SIZE 100000
 
+bool DecodeWatchKey(std::vector<std::string*>& keys, std::string* buf);
 bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                       std::string &buf);
 void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
