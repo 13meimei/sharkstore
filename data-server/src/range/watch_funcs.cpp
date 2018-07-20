@@ -187,7 +187,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             
             auto ret = store_->Get(dbKey, &dbValue);
             //to do decode value version             
-            FLOG_DEBUG("range[%" PRIu64 "] PureGet:%s---%s  ", meta_.id(), dbKey.c_str(), EncodeToHexString(dbValue).c_str());
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet:%s---%s  ", meta_.id(), EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
             if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, dbValue, err)) {
                 break;
             }
