@@ -187,12 +187,12 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             
             auto ret = store_->Get(dbKey, &dbValue);
             //to do decode value version             
-            FLOG_DEBUG("range[%" PRIu64 "] PureGet:store_->Get(%s, %s)  ", meta_.id(), dbKey.c_str(), dbValue.c_str());
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet:%s---%s  ", meta_.id(), dbKey.c_str(), EncodeToHexString(dbValue).c_str());
             if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, dbValue, err)) {
                 break;
             }
             
-            FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s value:%s ", meta_.id(), code, ret.ToString().data(), EncodeToHexString(kv->value()).c_str());
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s value:%s ", meta_.id(), code, ret.ToString().data(), kv->value().c_str());
             code = ret.code();
         }
         context_->run_status->PushTime(monitor::PrintTag::Store,
@@ -239,6 +239,8 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
             err = KeyNotInRange("-");
             break;
         }
+
+        FLOG_DEBUG("range[%" PRIu64 "] WatchPut key:%s value:%s", meta_.id(), kv->key(0).c_str(), kv->value().c_str());
 
         //encode key
         version = version_seq_.fetch_add(1);
@@ -384,7 +386,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd) {
     auto &req = cmd.kv_watch_put_req();
     auto dbKey = req.kv().key(0);
     auto dbValue = req.kv().value();
-    FLOG_DEBUG("ApplyWatchPut range[%" PRIu64 "] key:%s value:%s", meta_.id(), EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
+    FLOG_DEBUG("ApplyWatchPut range[%" PRIu64 "] dbkey:%s dbvalue:%s", meta_.id(), EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
 
     errorpb::Error *err = nullptr;
 
