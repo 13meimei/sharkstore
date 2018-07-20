@@ -135,10 +135,12 @@ WatcherSet::WatcherSet() {
             }
         }
     });
+    watchers_expire_thread_.detach();
 }
 
 WatcherSet::~WatcherSet() {
-    watchers_expire_thread_.join();
+    //watchers_expire_thread_.join();
+    ;
 }
 
 int32_t WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
