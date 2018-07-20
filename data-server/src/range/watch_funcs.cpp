@@ -192,7 +192,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
                 break;
             }
             
-            FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s ", meta_.id(), code, ret.ToString().data());
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s value:%s ", meta_.id(), code, ret.ToString().data(), EncodeToHexString(kv->value()).c_str());
             code = ret.code();
         }
         context_->run_status->PushTime(monitor::PrintTag::Store,
@@ -283,9 +283,9 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
 
 void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req) {
     errorpb::Error *err = nullptr;
-    auto dbKey = new std::string("");
-    auto dbValue = new std::string("");
-    auto extPtr = new std::string("");
+    auto dbKey = std::make_shared<std::string>();
+    auto dbValue = std::make_shared<std::string>();
+    auto extPtr = std::make_shared<std::string>();
 
     auto btime = get_micro_second();
     context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
@@ -384,6 +384,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd) {
     auto &req = cmd.kv_watch_put_req();
     auto dbKey = req.kv().key(0);
     auto dbValue = req.kv().value();
+    FLOG_DEBUG("ApplyWatchPut range[%" PRIu64 "] key:%s value:%s", meta_.id(), EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
 
     errorpb::Error *err = nullptr;
 
