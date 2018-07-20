@@ -241,6 +241,7 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
         }
 
         //encode key
+        version = version_seq_.fetch_add(1);
         kv->set_version(version);
         if( Status::kOk != WatchCode::EncodeKv(funcpb::kFuncWatchPut, meta_, kv, *dbKey, *dbValue, err) ) {
             break;
@@ -258,7 +259,6 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
         }
 
         //increase key version
-        version = version_seq_.fetch_add(1);
         kv->set_version(version);
         kv->clear_key();
         kv->add_key(*dbKey);

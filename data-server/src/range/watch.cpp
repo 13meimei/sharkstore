@@ -306,9 +306,10 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 if (!kv->value().empty()) {
                     int64_t tmpVersion = kv->version();
                     EncodeWatchValue( &db_value, tmpVersion, kv->mutable_value(), &ext);
+
+                    FLOG_DEBUG("range[%" PRIu64 "] %s info: value before:%s after:%s", 
+                            meta_.id(), funcName.data(), kv->value().data(), db_value.data());
                 }
-                FLOG_DEBUG("range[%" PRIu64 "] %s info: value before:%s after:%s", 
-                           meta_.id(), funcName.data(), kv->value().data(), db_value.data());
                 break;
             
             default:
