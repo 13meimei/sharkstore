@@ -276,7 +276,9 @@ int RangeServer::OpenDB() {
         bops.min_blob_size = static_cast<uint64_t>(ds_config.rocksdb_config.min_blob_size);
         bops.enable_garbage_collection = ds_config.rocksdb_config.enable_garbage_collection;
         bops.blob_file_size = ds_config.rocksdb_config.blob_file_size;
-
+#ifdef BLOB_EXTEND_OPTIONS
+        bops.gc_file_expired_percent = ds_config.rocksdb_config.blob_gc_percent;
+#endif
         rocksdb::blob_db::BlobDB *bdb = nullptr;
         auto ret = rocksdb::blob_db::BlobDB::Open(ops, bops, db_path, &bdb);
         if (!ret.ok()){
