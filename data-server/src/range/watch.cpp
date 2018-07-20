@@ -76,7 +76,7 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
 
 WatcherSet::WatcherSet() {
     watchers_expire_thread_ = std::thread([this]() {
-        while (g_continue_flag) {
+        while (watchers_expire_thread_continue_flag) {
             Watcher w;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
@@ -135,12 +135,11 @@ WatcherSet::WatcherSet() {
             }
         }
     });
-    watchers_expire_thread_.detach();
 }
 
 WatcherSet::~WatcherSet() {
-    //watchers_expire_thread_.join();
-    ;
+    watchers_expire_thread_continue_flag = false;
+    watchers_expire_thread_.join();
 }
 
 int32_t WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {

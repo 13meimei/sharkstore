@@ -204,6 +204,7 @@ private:
     Timer<Watcher> timer_;
     std::condition_variable timer_cond_;
     std::thread watchers_expire_thread_;
+    volatile bool watchers_expire_thread_continue_flag = true;
 };
 
 }  // namespace range
