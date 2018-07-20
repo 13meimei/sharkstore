@@ -133,6 +133,8 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             break;
         }
 
+        FLOG_WARN("range[%" PRIu64 "] PureGet before:%s EncodeKey:%s", meta_.id(), key[0].c_str(), dbKey.c_str());
+
         auto epoch = req.header().range_epoch();
         bool in_range = KeyInRange(dbKey);
         bool is_equal = EpochIsEqual(epoch);
@@ -182,8 +184,10 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             code = Status::kOk;
         } else {
             auto kv = resp->add_events()->mutable_kv();
+            
             auto ret = store_->Get(dbKey, &dbValue);
             //to do decode value version             
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet:store_->Get(%s, %s)  ", meta_.id(), dbKey.c_str(), dbValue.c_str());
             if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, dbValue, err)) {
                 break;
             }
