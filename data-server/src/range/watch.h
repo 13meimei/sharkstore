@@ -171,9 +171,9 @@ struct Watcher{
     std::string* key_;
 };
 
-/*bool Watcher::operator<(const Watcher& other) const {
+bool Watcher::operator<(const Watcher& other) const {
     return msg_->expire_time > other.msg_->expire_time;
-}*/
+}
 
 template <class T>
 struct Greater {
@@ -206,6 +206,7 @@ private:
     std::condition_variable timer_cond_;
     std::thread watchers_expire_thread_;
     volatile bool watchers_expire_thread_continue_flag = true;
+
 };
 
 }  // namespace range
