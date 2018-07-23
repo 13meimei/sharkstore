@@ -19,6 +19,11 @@ _Pragma("once");
 
 #define MAX_WATCHER_SIZE 100000
 
+namespace sharkstore {
+namespace dataserver {
+namespace range {
+
+
 bool DecodeWatchKey(std::vector<std::string*>& keys, std::string* buf);
 bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                       std::string &buf);
@@ -27,11 +32,6 @@ void EncodeWatchValue(std::string *buf,
                       int64_t &version,
                       const std::string *value,
                       const std::string *extend);
-
-namespace sharkstore {
-namespace dataserver {
-namespace range {
-
 
 class WatchCode {
 public:
