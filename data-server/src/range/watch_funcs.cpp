@@ -91,7 +91,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             watchFlag = 1;
         }
     }
-    if(!watchFlag) {
+    if(!watchFlag || err != nullptr) {
         context_->socket_session->SetResponseHeader(req.header(), header, err);
         context_->socket_session->Send(msg, ds_resp);
     }
