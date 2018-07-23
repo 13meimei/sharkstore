@@ -307,6 +307,7 @@ func (c *RangeCache) OnRegionStale(ctx *Context, newRegions []*metapb.Range) err
 		}
 		// TODO new range leader In most cases, it is the same as the original.
 		region.SwitchPeer(ctx.NodeId)
+		log.Warn("regionCache add %v",region)
 		c.insertRegionToCache(region)
 	}
 	return nil

@@ -149,3 +149,52 @@ func EncodePrimaryKey(buf []byte, col *metapb.Column, sval []byte) ([]byte, erro
 		return nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
 	}
 }
+
+
+// EncodePrimaryKey 编码主键列 不编码列ID 保持排序属性
+func DecodePrimaryKey(buf []byte, col *metapb.Column) ([]byte,[]byte, error) {
+	switch col.DataType {
+	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+
+		if col.Unsigned { // 无符号整型
+			buf,v,err:= encoding.DecodeUvarintAscending(buf)
+			return buf,hack.Slice(strconv.FormatUint(v,10)),err
+
+		} else { // 有符号整型
+			buf,v,err:=encoding.DecodeVarintAscending(buf)
+			return buf,hack.Slice(strconv.FormatInt(v,10)),err
+		}
+	case metapb.DataType_Float, metapb.DataType_Double:
+		buf,v,err:= encoding.DecodeFloatAscending(buf)
+		return buf,hack.Slice(fmt.Sprintf("%v",v)),err
+	case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
+		ret := make([]byte,0)
+		return encoding.DecodeBytesAscending(buf,ret)
+	default:
+		return buf,nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
+	}
+}
+
+// EncodePrimaryKey 编码主键列 不编码列ID 保持排序属性
+func DecodePrimaryKey2(buf []byte, col *metapb.Column) ([]byte,interface{}, error) {
+	switch col.DataType {
+	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+
+		if col.Unsigned { // 无符号整型
+			buf,v,err:= encoding.DecodeUvarintAscending(buf)
+			return buf,v,err
+
+		} else { // 有符号整型
+			buf,v,err:=encoding.DecodeVarintAscending(buf)
+			return buf,v,err
+		}
+	case metapb.DataType_Float, metapb.DataType_Double:
+		buf,v,err:= encoding.DecodeFloatAscending(buf)
+		return buf,v,err
+	case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
+		ret := make([]byte,0)
+		return encoding.DecodeBytesAscending(buf,ret)
+	default:
+		return buf,nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
+	}
+}

@@ -11,16 +11,16 @@ import (
 )
 
 func (p *KvProxy) SqlInsert(req *kvrpcpb.InsertRequest, scope *kvrpcpb.Scope) ([]*kvrpcpb.InsertResponse, error) {
-	var key, start, limit []byte
+	//var key, start, limit []byte
 	var resp *kvrpcpb.InsertResponse
 	var resps []*kvrpcpb.InsertResponse
-	var route *KeyLocation
+	//var route *KeyLocation
 	var err error
 
-	start = scope.Start
-	limit = scope.Limit
-	for {
-		if key == nil {
+	start := scope.Start
+	//limit = scope.Limit
+	//for {
+	/*	if key == nil {
 			key = start
 		} else if route != nil {
 			key = route.EndKey
@@ -33,13 +33,14 @@ func (p *KvProxy) SqlInsert(req *kvrpcpb.InsertRequest, scope *kvrpcpb.Scope) ([
 			// must bug
 			log.Error("invalid route, must bug!!!!!!!")
 			return nil, ErrInternalError
-		}
-		resp, route, err = p.Insert(req, key)
+		}*/
+		log.Debug("insert request start key:%v",start)
+		resp, _, err = p.Insert(req, start)
 		if err != nil {
 			return nil, err
 		}
 		resps = append(resps, resp)
-	}
+	//}
 	if len(resps) == 0 {
 		log.Warn("SqlInsert: should not enter into here")
 		resp = &kvrpcpb.InsertResponse{Code: 0, AffectedKeys: 0}
@@ -92,27 +93,35 @@ func (p *KvProxy) Insert(req *kvrpcpb.InsertRequest, key []byte) (*kvrpcpb.Inser
 }
 
 func (p *KvProxy) SqlQuery(req *kvrpcpb.SelectRequest, key []byte) (*kvrpcpb.SelectResponse, *KeyLocation, error) {
-	startTime := time.Now()
-	in := GetRequest()
-	defer PutRequest(in)
-	in.Type = Type_Select
-	in.SelectReq = &kvrpcpb.DsSelectRequest{
-		Header: &kvrpcpb.RequestHeader{},
-		Req:    req,
-	}
-
+	log.Debug("select by route key: %v",key)
 	bo := NewBackoffer(GetMaxBackoff, context.Background())
-	resp, l, err := p.do(bo, in, key)
-	delay := time.Now().Sub(startTime)
-	if err != nil {
-		metric.GsMetric.StoreApiMetric("KvQuery", false, delay)
-	} else {
-		metric.GsMetric.StoreApiMetric("KvQuery", true, delay)
+	var retErr error
+	for i:=0;i<3;i++ {
+		startTime := time.Now()
+		in := GetRequest()
+		defer PutRequest(in)
+		in.Type = Type_Select
+		in.SelectReq = &kvrpcpb.DsSelectRequest{
+			Header: &kvrpcpb.RequestHeader{},
+			Req:    req,
+		}
+		resp, l, err := p.do(bo, in, key)
+		delay := time.Now().Sub(startTime)
+		if err != nil {
+			metric.GsMetric.StoreApiMetric("KvQuery", false, delay)
+		} else {
+			metric.GsMetric.StoreApiMetric("KvQuery", true, delay)
+		}
+		if err != nil {
+			if err == ErrRouteChange {
+				retErr = err
+				continue
+			}
+			return nil, nil, err
+		}
+		return resp.GetSelectResp().GetResp(), l, nil
 	}
-	if err != nil {
-		return nil, nil, err
-	}
-	return resp.GetSelectResp().GetResp(), l, nil
+	return nil, nil, retErr
 }
 
 func (p *KvProxy) SqlDelete(req *kvrpcpb.DeleteRequest, scope *kvrpcpb.Scope) ([]*kvrpcpb.DeleteResponse, error) {
@@ -151,26 +160,36 @@ func (p *KvProxy) SqlDelete(req *kvrpcpb.DeleteRequest, scope *kvrpcpb.Scope) ([
 }
 
 func (p *KvProxy) Delete(req *kvrpcpb.DeleteRequest, key []byte) (*kvrpcpb.DeleteResponse, *KeyLocation, error) {
-	start := time.Now()
-	in := GetRequest()
-	defer PutRequest(in)
-	in.Type = Type_Delete
-	in.DeleteReq = &kvrpcpb.DsDeleteRequest{
-		Header: &kvrpcpb.RequestHeader{},
-		Req:    req,
+	var retErr error
+	for i:=0;i<3;i++{
+		start := time.Now()
+		in := GetRequest()
+		defer PutRequest(in)
+		in.Type = Type_Delete
+		in.DeleteReq = &kvrpcpb.DsDeleteRequest{
+			Header: &kvrpcpb.RequestHeader{},
+			Req:    req,
+		}
+		bo := NewBackoffer(ScannerNextMaxBackoff, context.Background())
+		resp, l, err := p.do(bo, in, key)
+		delay := time.Now().Sub(start)
+		if err != nil {
+			metric.GsMetric.StoreApiMetric("KvDelete", false, delay)
+		} else {
+			metric.GsMetric.StoreApiMetric("KvDelete", true, delay)
+		}
+		if err != nil {
+			if err == ErrRouteChange {
+				log.Info("delete failure ,route change key:%v",key)
+				retErr = err
+				continue
+			}
+			return nil, nil, err
+		}
+		return resp.GetDeleteResp().GetResp(), l, nil
 	}
-	bo := NewBackoffer(ScannerNextMaxBackoff, context.Background())
-	resp, l, err := p.do(bo, in, key)
-	delay := time.Now().Sub(start)
-	if err != nil {
-		metric.GsMetric.StoreApiMetric("KvDelete", false, delay)
-	} else {
-		metric.GsMetric.StoreApiMetric("KvDelete", true, delay)
-	}
-	if err != nil {
-		return nil, nil, err
-	}
-	return resp.GetDeleteResp().GetResp(), l, nil
+	return nil, nil, retErr
+
 }
 
 type KvParisSlice []*kvrpcpb.KeyValue

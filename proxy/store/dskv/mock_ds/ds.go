@@ -16,7 +16,9 @@ import (
 	"model/pkg/errorpb"
 	"proxy/store/localstore/engine"
 	"proxy/store/localstore/goleveldb"
+	commonUtil "util"
 	"os"
+	"util/log"
 )
 
 //启动参数： 端口 CPU数
@@ -56,6 +58,7 @@ type DsRpcServer struct {
 	l           net.Listener
 	rLock       sync.RWMutex
 	rngs        map[uint64]*metapb.Range
+	childRngs   map[uint64]*metapb.Range //store childRange after old range was splited key:old range id; value:new child range
 
 	store       engine.Driver
 	//msAddr      []string
@@ -68,7 +71,9 @@ func NewDsRpcServer(addr string, path string) *DsRpcServer {
 		os.Exit(-1)
 		return nil
 	}
-	return &DsRpcServer{rpcAddr: addr, conns: make(map[uint64]net.Conn), rngs: make(map[uint64]*metapb.Range), store:store}
+	return &DsRpcServer{rpcAddr: addr, conns: make(map[uint64]net.Conn), rngs: make(map[uint64]*metapb.Range),
+			childRngs: make(map[uint64]*metapb.Range),
+			store:store}
 }
 
 func (svr *DsRpcServer) SetRange(r *metapb.Range) {
@@ -76,6 +81,18 @@ func (svr *DsRpcServer) SetRange(r *metapb.Range) {
 	defer svr.rLock.Unlock()
 	if _, find := svr.rngs[r.GetId()]; !find {
 		svr.rngs[r.GetId()] = r
+	}else{
+		svr.rngs[r.GetId()] = r
+	}
+}
+
+func (svr *DsRpcServer) GetRange(id uint64)(*metapb.Range) {
+	svr.rLock.Lock()
+	defer svr.rLock.Unlock()
+	if r, find := svr.rngs[id]; find {
+		return r
+	}else{
+		return nil
 	}
 }
 
@@ -133,6 +150,13 @@ func (svr *DsRpcServer) Start() {
 		fmt.Println("===============new connect,", svr.count)
 		go svr.handleConnection(svr.count, c)
 	}
+}
+
+func (svr *DsRpcServer) RangeSplit(oldRng  *metapb.Range,newRng *metapb.Range){
+
+	svr.SetRange(oldRng)
+	svr.SetRange(newRng)
+	svr.childRngs[oldRng.GetId()] = newRng
 }
 
 func (svr *DsRpcServer) Stop() {
@@ -214,11 +238,40 @@ func (svr *DsRpcServer) insert(msg *dsClient.Message) {
 	var resp *kvrpcpb.DsInsertResponse
 	req := new(kvrpcpb.DsInsertRequest)
 	err := proto.Unmarshal(msg.GetData(), req)
+
+
+
+
 	if err != nil {
-		resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
+		resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "decode insert failed"}}}
 	} else {
-		// TODO insert
-		resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 0, AffectedKeys: uint64(len(req.GetReq().GetRows()))}}
+
+		rangeId := req.Header.GetRangeId()
+		rng :=svr.GetRange(rangeId)
+
+		rngEpoch := req.Header.GetRangeEpoch();
+
+		if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
+			num := 0
+			for _,row := range req.GetReq().Rows {
+				err := svr.store.Put(row.Key,row.Value)
+				if err == nil {
+					num++
+				}
+
+			}
+
+			resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 0, AffectedKeys: uint64(num)}}
+		}else{
+			resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 1, AffectedKeys: uint64(0)}}
+
+			staleErr := &errorpb.Error{
+				StaleEpoch: &errorpb.StaleEpoch{OldRange:rng,NewRange:svr.childRngs[rangeId]},
+			}
+			resp.Header.Error = staleErr
+		}
+
+
 	}
 	data, _ := proto.Marshal(resp)
 	msg.SetMsgType(0x12)
@@ -226,10 +279,98 @@ func (svr *DsRpcServer) insert(msg *dsClient.Message) {
 }
 
 func (svr *DsRpcServer) query(msg *dsClient.Message) {
+	var resp *kvrpcpb.DsSelectResponse
+	req := new(kvrpcpb.DsSelectRequest)
+	err := proto.Unmarshal(msg.GetData(), req)
 
+	if err != nil {
+		resp = &kvrpcpb.DsSelectResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "decode select failed"}}}
+	}else{
+		rngEpoch := req.Header.GetRangeEpoch();
+		rangeId := req.Header.GetRangeId()
+		rng := svr.GetRange(rangeId)
+		if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
+
+
+			it := svr.store.NewIterator(rng.StartKey, rng.EndKey)
+			rows := make([]*kvrpcpb.Row, 0)
+			for it.Next() {
+				fields := make([]byte,0)
+				row := new(kvrpcpb.Row)
+				row.Key = it.Key()
+				pks := rng.PrimaryKeys
+				buf := it.Key()[9:]//drop table prefix
+				var v []byte
+
+				for _,pk := range pks {
+
+					buf,v,_ =commonUtil.DecodePrimaryKey(buf,pk)
+
+					log.Debug("pk v:%v %v ",v,row.Key)
+
+					fields,err =commonUtil.EncodeColumnValue(fields,pk,v)
+					if err != nil{
+						log.Error("encode pk err:%s",err.Error())
+					}
+				}
+				row.Fields = append(fields,it.Value()...)
+				rows = append(rows, row)
+			}
+
+			defer it.Release()
+			resp = &kvrpcpb.DsSelectResponse{Header: &kvrpcpb.ResponseHeader{}}
+			resp.Resp = &kvrpcpb.SelectResponse{}
+			resp.Resp.Rows = rows
+		}else{
+			resp = &kvrpcpb.DsSelectResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.SelectResponse{Code: 1,}}
+
+			staleErr := &errorpb.Error{
+				StaleEpoch: &errorpb.StaleEpoch{OldRange:rng,NewRange:svr.childRngs[rangeId]},
+			}
+			resp.Header.Error = staleErr
+		}
+
+	}
+
+	data, _ := proto.Marshal(resp)
+	msg.SetMsgType(0x12)
+	msg.SetData(data)
 }
 
 func (svr *DsRpcServer) delete(msg *dsClient.Message) {
+	var resp *kvrpcpb.DsDeleteResponse
+	req := new(kvrpcpb.DsDeleteRequest)
+	err := proto.Unmarshal(msg.GetData(), req)
+
+	if err != nil {
+		resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "decode delete failed"}}}
+	}else{
+		rngEpoch := req.Header.GetRangeEpoch();
+		rangeId := req.Header.GetRangeId()
+		rng := svr.GetRange(rangeId)
+		if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
+
+			key := req.Req.GetKey()
+			if key != nil {
+				svr.store.Delete(key)
+			}
+
+			resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{},Resp:&kvrpcpb.DeleteResponse{AffectedKeys:1}}
+
+		}else{
+			resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.DeleteResponse{Code: 1,}}
+
+			staleErr := &errorpb.Error{
+				StaleEpoch: &errorpb.StaleEpoch{OldRange:rng,NewRange:svr.childRngs[rangeId]},
+			}
+			resp.Header.Error = staleErr
+		}
+
+	}
+
+	data, _ := proto.Marshal(resp)
+	msg.SetMsgType(0x12)
+	msg.SetData(data)
 
 }
 
