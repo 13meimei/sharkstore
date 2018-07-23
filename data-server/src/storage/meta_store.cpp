@@ -62,6 +62,38 @@ Status MetaStore::GetNodeID(uint64_t *node_id) {
     }
 }
 
+Status MetaStore::SaveVersionID(const uint64_t &range_id, uint64_t ver_id) {
+    std::string keyRangeVer = kRangeVersionPrefix + std::to_string(range_id);
+
+    auto ret = db_->Put(write_options_, keyRangeVer, std::to_string(ver_id));
+    if (ret.ok()) {
+        return Status::OK();
+    } else {
+        return Status(Status::kIOError, ret.ToString(), "meta save version");
+    }
+}
+
+Status MetaStore::GetVersionID(const uint64_t &range_id, uint64_t *ver_id) {
+    std::string value;
+    std::string keyRangeVer = kRangeVersionPrefix + std::to_string(range_id);
+
+    auto ret = db_->Get(rocksdb::ReadOptions(), keyRangeVer, &value);
+    if (ret.ok()) {
+        try {
+            *ver_id = std::stoull(value);
+        } catch (std::exception &e) {
+            return Status(Status::kCorruption, "invalid version_id",
+                          EncodeToHexString(value));
+        }
+        return Status::OK();
+    } else if (ret.IsNotFound()) {
+        *ver_id = 0;
+        return Status::OK();
+    } else {
+        return Status(Status::kIOError, "meta load version", ret.ToString());
+    }
+}
+
 Status MetaStore::GetAllRange(std::vector<std::string> &meta_ranges) {
     std::shared_ptr<rocksdb::Iterator> it(
         db_->NewIterator(rocksdb::ReadOptions()));

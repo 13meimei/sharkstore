@@ -5,10 +5,9 @@
 #include "base/status.h"
 #include "base/util.h"
 #include "storage/meta_store.h"
-#include "storage/store.h"
+//#include "storage/store.h"
 
-#define DEFAULT_CACHE_SIZE 10000
-static const std::string kRangeVersionKey = "\x05VerID";
+#define DEFAULT_CACHE_SIZE 1
 
 namespace sharkstore {
 
@@ -17,8 +16,8 @@ public:
     IdGenerater() {
         ;
     }
-    IdGenerater(const uint64_t &range_id, const uint32_t &cache, sharkstore::dataserver::storage::Store *store):
-                range_id_(range_id),cache_(cache),store_(store),saveCnt(0) {
+    IdGenerater(const uint64_t &range_id, const uint32_t &cache, sharkstore::dataserver::storage::MetaStore *meta):
+                cache_(cache),range_id_(range_id),store_(meta),saveCnt_(0) {
         init();
     }
 
@@ -30,22 +29,15 @@ public:
     void init() {
         //to do get from rocksdb and save newId to db
         initFlag = false;
-        range_key_ = kRangeVersionKey+std::to_string(range_id_);
 
         Status ret;
-        std::string value("");
-        ret = store_->Get(range_key_, &value);
+        uint64_t tmpSeqId(0);
+
+        ret = store_->GetVersionID(range_id_, &tmpSeqId);
         if(ret.ok()) {
-            seq_ = atoi(value.c_str());
+            seq_.fetch_add(tmpSeqId);
+            seq_end_ += seq_ + cache_;
 
-            if(cache_ <= 0 ) setCache();
-            seq_end_ = seq_ + cache_;
-
-            if( 0 == saveToDb(seq_end_) ) initFlag = true;
-        } else if(ret.code() == Status::kNotFound) {
-            //to do put new value into db
-            seq_end_ = cache_;
-            seq_.fetch_add(1);
             if( 0 == saveToDb(seq_end_) ) initFlag = true;
         } else {
             initFlag = false;
@@ -78,12 +70,12 @@ public:
 
             *id = seq_.fetch_add(1);
 
-            if (*id >= seq_end_) {
-                seq_end_ = *id + cache_;
+            if (static_cast<uint64_t>(*id) >= seq_end_) {
+                seq_end_ = static_cast<uint64_t>(*id) + cache_;
                 ret = saveToDb(seq_end_);
 
                 if (0 == ret) {
-                    saveCnt++;
+                    saveCnt_++;
                 }
             }
 
@@ -106,13 +98,13 @@ public:
         return initFlag;
     }
 private:
-    int16_t saveToDb(const int64_t &futureId) {
-        std::unique_lock<std::mutex> lock(mtx_);
+    int16_t saveToDb(const uint64_t &futureId) {
+        //std::unique_lock<std::mutex> lock(mtx_);
         int16_t retCode(0);
 
-        if (initFlag) {
+        {
             //to do save to rocksdb
-            Status ret = store_->Put(range_key_, std::to_string(futureId));
+            Status ret = store_->SaveVersionID(range_id_, futureId);
             if (!ret.ok()) {
                 setErrMsg( ret.ToString() );
             }
@@ -121,9 +113,6 @@ private:
             } else {
                 retCode = -1;
             }
-        } else {
-            setErrMsg("Generator is not init yet.");
-            retCode = -1;
         }
 
         return retCode;
@@ -134,18 +123,18 @@ private:
     }
 
 private:
-    std::atomic<int64_t> seq_{0};
-    int64_t seq_end_{0};
+    std::atomic<uint64_t> seq_{0};
+    uint64_t seq_end_{0};
     uint32_t cache_{0};
 
     uint64_t range_id_{0};
     std::string range_key_{""};
 
-    sharkstore::dataserver::storage::Store *store_ = nullptr;
+    sharkstore::dataserver::storage::MetaStore *store_ = nullptr;
     
     bool initFlag{false};
     std::string errMsg{""};
-    int32_t saveCnt{0};
+    int64_t saveCnt_{0};
 
     std::mutex mtx_;
 };
