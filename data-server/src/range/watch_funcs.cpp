@@ -243,7 +243,13 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
         FLOG_DEBUG("range[%" PRIu64 "] WatchPut key:%s value:%s", meta_.id(), kv->key(0).c_str(), kv->value().c_str());
 
         //encode key
-        version = version_seq_.fetch_add(1);
+        if( 0 != version_seq_->nextId(&version)) {
+            if (err == nullptr) {
+                err = new errorpb::Error;
+            }
+            err->set_message(version_seq_->getErrMsg());
+            break;
+        }
         kv->set_version(version);
         if( Status::kOk != WatchCode::EncodeKv(funcpb::kFuncWatchPut, meta_, kv, *dbKey, *dbValue, err) ) {
             break;

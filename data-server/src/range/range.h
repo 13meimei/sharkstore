@@ -17,6 +17,7 @@ _Pragma("once");
 #include "base/status.h"
 #include "base/util.h"
 
+#include "common/generator.h"
 #include "common/ds_encoding.h"
 #include "storage/store.h"
 
@@ -343,6 +344,10 @@ public:
     void set_real_size(uint64_t rsize) { real_size_ = rsize; }
     void GetReplica(metapb::Replica *rep);
 
+    void setLeaderFlag(bool flag) {
+        is_leader_ = flag;
+    }
+
 private:
     bool VerifyLeader(errorpb::Error *&err);
     bool CheckWriteable();
@@ -392,7 +397,8 @@ private:
     std::atomic<bool> statis_flag_{false};
     std::atomic<uint64_t> statis_size_{0};
 
-    std::atomic<uint64_t> version_seq_{0};
+    //std::atomic<uint64_t> version_seq_{0};
+    sharkstore::IdGenerator *version_seq_ = nullptr;
 
     typedef std::pair<time_t, uint64_t> tr;
 
