@@ -157,7 +157,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 }
 
 Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
-    LOG_WARN("remove raft[%lu].", id);
+    LOG_WARN("remove raft[%lu]. backup=%d", id, backup);
 
     std::shared_ptr<RaftImpl> r;
     {
@@ -173,17 +173,9 @@ Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
     }
 
     if (r) {
-        // 备份raft日志
-        if (backup) {
-            auto s = r->BackupLog();
-            if (!s.ok()) {
-                return Status(Status::kIOError, "backup raft log", s.ToString());
-            }
-        }
-        // 删除raft日志
-        auto s = r->Destroy();
+        auto s = r->Destroy(backup);
         if (!s.ok()) {
-            return Status(Status::kIOError, "remove raft log", s.ToString());
+            return Status(Status::kIOError, "destroy raft log", s.ToString());
         }
     }
     return Status::OK();

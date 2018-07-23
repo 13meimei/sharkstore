@@ -522,39 +522,27 @@ Status DiskStorage::removeBakups() {
     return Status::OK();
 }
 
-Status DiskStorage::Destroy() {
-    // 删除日志文件
-    Status s;
-    for (auto f : log_files_) {
-        s = f->Destroy();
-        if (!s.ok()) {
-            return s;
+Status DiskStorage::Destroy(bool backup) {
+    bool flag = false;
+    // only destroy once
+    if (destroyed_.compare_exchange_strong(flag, true, std::memory_order_acquire,
+                                           std::memory_order_relaxed)) {
+        if (backup) {
+            std::string bak_path = path_ + ".bak." + std::to_string(time(NULL));
+            int ret = ::rename(path_.c_str(), bak_path.c_str());
+            if (ret != 0) {
+                return Status(Status::kIOError, "rename", strErrno(errno));
+            }
+        } else {
+            int ret = RemoveDirAll(path_.c_str());
+            if (ret != 0) {
+                return Status(Status::kIOError, "RemoveDirAll", strErrno(errno));
+            }
         }
     }
-    // 删除日志备份
-    s = removeBakups();
-    if (!s.ok()) {
-        return s;
-    }
-
-    // 删除meta文件
-    s = meta_file_.Destroy();
-    if (!s.ok()) {
-        return s;
-    }
-
-    // 删除目录
-    int ret = std::remove(path_.c_str());
-    if (ret != 0) {
-        return Status(Status::kIOError, "remove log dir", strErrno(errno));
-    }
-    return s;
+    return Status::OK();
 }
 
-Status DiskStorage::Backup() {
-    // TODO: implement this
-    return Status(Status::kNotSupported, "raft log backup", "");
-}
 
 #ifndef NDEBUG
 void DiskStorage::TEST_Add_Corruption1() {

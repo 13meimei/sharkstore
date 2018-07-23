@@ -502,8 +502,7 @@ Status RaftFsm::TruncateLog(uint64_t index) {
     return storage_->Truncate(index);
 }
 
-Status RaftFsm::DestroyLog() { return storage_->Destroy(); }
-Status RaftFsm::BackupLog() { return storage_->Backup(); }
+Status RaftFsm::DestroyLog(bool backup) { return storage_->Destroy(backup); }
 
 Status RaftFsm::smApply(const EntryPtr& entry) {
     Status s;

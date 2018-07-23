@@ -37,7 +37,7 @@ protected:
 
     void TearDown() override {
         if (storage_ != nullptr) {
-            auto s = storage_->Destroy();
+            auto s = storage_->Destroy(false);
             ASSERT_TRUE(s.ok()) << s.ToString();
             delete storage_;
         }
@@ -279,6 +279,67 @@ TEST_F(StorageTest, KeepCount) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
+TEST_F(StorageTest, Destroy) {
+    uint64_t lo = 1, hi = 100;
+    std::vector<EntryPtr> to_writes;
+    RandomEntries(lo, hi, 256, &to_writes);
+    auto s = storage_->StoreEntries(to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = storage_->Destroy(false);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    struct stat sb;
+    memset(&sb, 0, sizeof(sb));
+    int ret = ::stat(tmp_dir_.c_str(), &sb);
+    ASSERT_EQ(ret, -1);
+    ASSERT_EQ(errno, ENOENT);
+}
+
+TEST_F(StorageTest, DestroyBak) {
+    uint64_t lo = 1, hi = 100;
+    std::vector<EntryPtr> to_writes;
+    RandomEntries(lo, hi, 256, &to_writes);
+    auto s = storage_->StoreEntries(to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    auto start = time(NULL);
+
+    s = storage_->Destroy(true);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    auto end = time(NULL);
+
+    struct stat sb;
+    memset(&sb, 0, sizeof(sb));
+    int ret = ::stat(tmp_dir_.c_str(), &sb);
+    ASSERT_EQ(ret, -1);
+    ASSERT_EQ(errno, ENOENT);
+
+    // find backup path
+    std::string bak_path;
+    for (auto t = start; t <= end; ++t) {
+        std::string path = tmp_dir_ + ".bak." + std::to_string(t);
+        ret = ::stat(path.c_str(), &sb);
+        if (ret == 0) {
+            bak_path = path;
+            break;
+        }
+    }
+    ASSERT_TRUE(!bak_path.empty());
+
+    // load entries from backup
+    DiskStorage bds(1, bak_path, DiskStorage::Options());
+    s = bds.Open();
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    std::vector<EntryPtr > ents;
+    bool compacted = false;
+    s = bds.Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents, &compacted) ;
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+    s = Equal(ents, to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
 #ifndef NDEBUG  // debug模式下才开启
 TEST_F(StorageTest, Corrupt1) {
     uint64_t lo = 1, hi = 100;
@@ -381,120 +442,6 @@ TEST_F(StorageTest, Corrupt2) {
 }
 #endif
 
-// TEST(Recover, TEST) {
-//     auto s1 =
-//         new DiskStorage(1, "/home/jonah/36",
-//         DiskStorage::Options());
-//     auto s = s1 ->Open();
-//     ASSERT_TRUE(s.ok()) << s.ToString();
 
-//     auto s2 = new DiskStorage(1, "/home/jonah/67", DiskStorage::Options());
-//     s = s2 ->Open();
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-
-//     uint64_t first_index = 0;
-//     uint64_t last_index = 0;
-//     pb::HardState hs;
-//     uint64_t term = 0;
-//     bool is_compacted = false;
-
-//     s = s1->FirstIndex(&first_index);
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-//     s = s1->LastIndex(&last_index);
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-//     std::cout << "36: " << first_index << "-" << last_index << std::endl;
-//     s = s1->InitialState(&hs);
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-//     std::cout << "36: term:" << hs.term() << ", commit:" << hs.commit() << std::endl;
-
-//     s = s1->Term(42570, &term, &is_compacted);
-//     std::cout << "36: 42570:" << term << std::endl;
-
-//     std::vector<EntryPtr> ents1;
-//     s = s1->Entries(1, 42579, std::numeric_limits<uint64_t>::max(), &ents1,
-//     &is_compacted);
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-//     ASSERT_EQ(ents1.size(), 42578);
-
-//     s = s2->FirstIndex(&first_index);
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-//     s = s2->LastIndex(&last_index);
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-//     std::cout << "67: " << first_index << "-" << last_index << std::endl;
-//     s = s2->InitialState(&hs);
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-//     std::cout << "67: term:" << hs.term() << ", commit:" << hs.commit() << std::endl;
-//     s = s2->Term(42570, &term, &is_compacted);
-//     std::cout << "67: 42570:" << term << std::endl;
-
-//     std::vector<EntryPtr> ents2;
-//     s = s2->Entries(1, 42579, std::numeric_limits<uint64_t>::max(), &ents2,
-//     &is_compacted);
-//     ASSERT_TRUE(s.ok()) << s.ToString();
-//     ASSERT_EQ(ents2.size(), 42578);
-
-//     // for (size_t i = 0; i < 42579; ++i) {
-//     //     ASSERT_EQ(ents1[i]->index(), i+1) << "wrong s1 index at " << i;
-//     //     ASSERT_EQ(ents2[i]->index(), i+1) << "wrong s2 index at " << i;
-//     //     EXPECT_EQ(ents1[i]->data(), ents2[i]->data()) << "unequal data(" <<
-//     ents1[i]->data() << ", " << ents2[i]->data() << ") at " << i;
-//     //     EXPECT_EQ(ents1[i]->term(), ents2[i]->term()) << "unequal term (" <<
-//     ents1[i]->term() << ", " << ents2[i]->term() << ") at " << i;
-//     // }
-//     for (size_t i = 42500; i < 42578; ++i) {
-//         std::cout << i+1 << ": " << ents1[i]->term() << "-" << ents2[i]->term() << ","
-//             << ents1[i]->type()  << "-" << ents2[i]->type() << std::endl;
-//         raft_cmdpb::Command cmd1;
-//         ASSERT_TRUE(cmd1.ParseFromString(ents1[i]->data()));
-//         std::cout << "cmd1 node: " << cmd1.cmd_id().node_id() << ", seq: " <<
-//         cmd1.cmd_id().seq() << ", type: " <<
-//             CmdType_Name(cmd1.cmd_type()) << ", size: " << ents1[i]->data().size() <<
-//             std::endl;
-
-//         raft_cmdpb::Command cmd2;
-//         ASSERT_TRUE(cmd2.ParseFromString(ents2[i]->data()));
-//         std::cout << "cmd2 node: " << cmd2.cmd_id().node_id() << ", seq: " <<
-//         cmd2.cmd_id().seq() << ", type: " <<
-//             CmdType_Name(cmd2.cmd_type()) << ", size: " << ents2[i]->data().size() <<
-//             std::endl;
-//     }
-// }
-
-// TEST(Recover, TEST) {
-//    DiskStorage::Options ops;
-//    ops.allow_corrupt_startup = false;
-//    auto s1 =
-//        new DiskStorage(1, "/home/jonah/Downloads/log", ops);
-//    auto s = s1 ->Open();
-//    ASSERT_TRUE(s.ok()) << s.ToString();
-//
-//    auto s2 = new DiskStorage(1, "/home/jonah/67", DiskStorage::Options());
-//    s = s2 ->Open();
-//    ASSERT_TRUE(s.ok()) << s.ToString();
-//
-//    uint64_t first_index = 0;
-//    uint64_t last_index = 0;
-//    pb::HardState hs;
-//    uint64_t term = 0;
-//    bool is_compacted = false;
-//
-//    s = s1->FirstIndex(&first_index);
-//    ASSERT_TRUE(s.ok()) << s.ToString();
-//    s = s1->LastIndex(&last_index);
-//    ASSERT_TRUE(s.ok()) << s.ToString();
-//    std::cout << "36: " << first_index << "-" << last_index << std::endl;
-//    s = s1->InitialState(&hs);
-//    ASSERT_TRUE(s.ok()) << s.ToString();
-//    std::cout << "36: term:" << hs.term() << ", commit:" << hs.commit() << std::endl;
-//
-//    std::vector<EntryPtr> ents;
-//    s = s1->Entries(5, 6, 1024000, &ents, &is_compacted);
-//    ASSERT_TRUE(s.ok()) << s.ToString();
-//    ASSERT_FALSE(is_compacted);
-//
-//    std::vector<EntryPtr> ents2{ents[0], ents[0]};
-//    s = s1->StoreEntries(ents2);
-//    ASSERT_TRUE(s.ok()) << s.ToString();
-//}
 
 } /* namespace  */

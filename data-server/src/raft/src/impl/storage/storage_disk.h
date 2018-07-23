@@ -1,5 +1,6 @@
 _Pragma("once");
 
+#include <atomic>
 #include "meta_file.h"
 #include "storage.h"
 
@@ -51,8 +52,7 @@ public:
     void AppliedTo(uint64_t applied) override;
 
     Status Close() override;
-    Status Destroy() override;
-    Status Backup() override;
+    Status Destroy(bool backup = false) override;
 
     size_t FilesCount() const { return log_files_.size(); }
 
@@ -98,6 +98,8 @@ private:
 
     std::vector<LogFile*> log_files_;
     uint64_t last_index_ = 0;
+
+    std::atomic<bool> destroyed_ = {false};
 };
 
 } /* namespace storage */

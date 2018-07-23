@@ -340,12 +340,10 @@ void RaftImpl::truncate(uint64_t index) {
     fsm_->TruncateLog(index);
 }
 
-Status RaftImpl::BackupLog() { return fsm_->BackupLog(); }
-
-Status RaftImpl::Destroy() {
+Status RaftImpl::Destroy(bool backup) {
     LOG_WARN("raft[%llu] destroy log storage", ops_.id);
 
-    return fsm_->DestroyLog();
+    return fsm_->DestroyLog(backup);
 }
 
 }  // namespace impl
