@@ -101,7 +101,10 @@ public:
     void clearErrMsg() noexcept {
         errMsg.assign("");
     }
-
+    
+    bool isInit() {
+        return initFlag;
+    }
 private:
     int16_t saveToDb(const int64_t &futureId) {
         std::unique_lock<std::mutex> lock(mtx_);

@@ -23,6 +23,7 @@ Range::Range(server::ContextServer *context, const metapb::Range &meta)
     node_id_ = context->node_id;
 
     store_ = new storage::Store(meta, context->rocks_db);
+    version_seq_ = new sharkstore::IdGenerater(meta_.id(), DEFAULT_CACHE_SIZE, store_);
 }
 
 Range::~Range() { delete store_; }
