@@ -31,7 +31,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             break;
         }
 
-        FLOG_DEBUG("range[%" PRIu64 " %s-%s] WatchGet key:%s", meta_.id(), meta_.start_key().c_str(), meta_.end_key().c_str(), dbKey.c_str());
+        FLOG_DEBUG("range[%" PRIu64 " %s-%s] WatchGet key:%s", meta_.id(),  EncodeToHexString(meta_.start_key()).c_str(), EncodeToHexString(meta_.end_key()).c_str(), EncodeToHexString(dbKey).c_str());
         
         auto epoch = req.header().range_epoch();
         bool in_range = KeyInRange(dbKey);
@@ -83,8 +83,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         auto start_version = req.req().startversion();
         msg->expire_time = req.req().longpull();
         //decode version from value
-        FLOG_DEBUG("range[%" PRIu64 "] WatchGet [%s]-%s ok.", 
-                   meta_.id(), dbKey.c_str(), dbValue.c_str());
+        FLOG_DEBUG("range[%" PRIu64 "] (%" PRIu64 " >= %" PRIu64 "?) WatchGet [%s]-%s ok.", 
+                   meta_.id(), start_version, version, EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
         if(start_version >= version) {
             //to do add watch
             AddKeyWatcher(dbKey, msg);
