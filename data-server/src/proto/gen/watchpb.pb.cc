@@ -169,6 +169,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchCreateRequest, watchid_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchCreateRequest, expireat_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchCreateRequest, prefix_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchCreateRequest, longpull_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsWatchResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -254,17 +255,17 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 7, -1, sizeof(WatchKeyValue)},
   { 18, -1, sizeof(DsWatchRequest)},
   { 25, -1, sizeof(WatchCreateRequest)},
-  { 36, -1, sizeof(DsWatchResponse)},
-  { 43, -1, sizeof(WatchResponse)},
-  { 51, -1, sizeof(DsKvWatchPutRequest)},
-  { 58, -1, sizeof(DsKvWatchPutResponse)},
-  { 65, -1, sizeof(KvWatchPutRequest)},
-  { 71, -1, sizeof(DsKvWatchDeleteRequest)},
-  { 78, -1, sizeof(DsKvWatchDeleteResponse)},
-  { 85, -1, sizeof(KvWatchDeleteRequest)},
-  { 92, -1, sizeof(KvWatchResponse)},
-  { 98, -1, sizeof(DsKvWatchGetMultiRequest)},
-  { 107, -1, sizeof(DsKvWatchGetMultiResponse)},
+  { 37, -1, sizeof(DsWatchResponse)},
+  { 44, -1, sizeof(WatchResponse)},
+  { 52, -1, sizeof(DsKvWatchPutRequest)},
+  { 59, -1, sizeof(DsKvWatchPutResponse)},
+  { 66, -1, sizeof(KvWatchPutRequest)},
+  { 72, -1, sizeof(DsKvWatchDeleteRequest)},
+  { 79, -1, sizeof(DsKvWatchDeleteResponse)},
+  { 86, -1, sizeof(KvWatchDeleteRequest)},
+  { 93, -1, sizeof(KvWatchResponse)},
+  { 99, -1, sizeof(DsKvWatchGetMultiRequest)},
+  { 108, -1, sizeof(DsKvWatchGetMultiResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -398,43 +399,43 @@ void AddDescriptorsImpl() {
       "\010expireAt\030\005 \001(\004\022\013\n\003ext\030\006 \001(\014\"b\n\016DsWatchR"
       "equest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Request"
       "Header\022(\n\003req\030\002 \001(\0132\033.watchpb.WatchCreat"
-      "eRequest\"\247\001\n\022WatchCreateRequest\022\"\n\002kv\030\001 "
+      "eRequest\"\271\001\n\022WatchCreateRequest\022\"\n\002kv\030\001 "
       "\001(\0132\026.watchpb.WatchKeyValue\022\024\n\014startVers"
       "ion\030\002 \001(\003\022$\n\007filters\030\003 \003(\0162\023.watchpb.Fil"
       "terType\022\017\n\007watchId\030\004 \001(\003\022\020\n\010expireAt\030\005 \001"
-      "(\003\022\016\n\006prefix\030\006 \001(\010\"`\n\017DsWatchResponse\022\'\n"
-      "\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$"
-      "\n\004resp\030\002 \001(\0132\026.watchpb.WatchResponse\"N\n\r"
-      "WatchResponse\022\017\n\007watchId\030\001 \001(\003\022\014\n\004code\030\002"
-      " \001(\005\022\036\n\006events\030\003 \003(\0132\016.watchpb.Event\"f\n\023"
-      "DsKvWatchPutRequest\022&\n\006header\030\001 \001(\0132\026.kv"
-      "rpcpb.RequestHeader\022\'\n\003req\030\002 \001(\0132\032.watch"
-      "pb.KvWatchPutRequest\"g\n\024DsKvWatchPutResp"
-      "onse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseH"
-      "eader\022&\n\004resp\030\002 \001(\0132\030.watchpb.KvWatchRes"
-      "ponse\"7\n\021KvWatchPutRequest\022\"\n\002kv\030\001 \001(\0132\026"
-      ".watchpb.WatchKeyValue\"l\n\026DsKvWatchDelet"
-      "eRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reque"
-      "stHeader\022*\n\003req\030\002 \001(\0132\035.watchpb.KvWatchD"
-      "eleteRequest\"j\n\027DsKvWatchDeleteResponse\022"
-      "\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader"
-      "\022&\n\004resp\030\002 \001(\0132\030.watchpb.KvWatchResponse"
-      "\"J\n\024KvWatchDeleteRequest\022\"\n\002kv\030\001 \001(\0132\026.w"
-      "atchpb.WatchKeyValue\022\016\n\006prefix\030\002 \001(\010\"\037\n\017"
-      "KvWatchResponse\022\014\n\004code\030\001 \001(\005\"\205\001\n\030DsKvWa"
-      "tchGetMultiRequest\022&\n\006header\030\001 \001(\0132\026.kvr"
-      "pcpb.RequestHeader\022\"\n\002kv\030\002 \001(\0132\026.watchpb"
-      ".WatchKeyValue\022\016\n\006prefix\030\003 \001(\010\022\r\n\005limit\030"
-      "\004 \001(\r\"w\n\031DsKvWatchGetMultiResponse\022\'\n\006he"
-      "ader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\014\n\004c"
-      "ode\030\002 \001(\005\022#\n\003kvs\030\003 \003(\0132\026.watchpb.WatchKe"
-      "yValue* \n\tEventType\022\007\n\003PUT\020\000\022\n\n\006DELETE\020\001"
-      "*%\n\nFilterType\022\t\n\005NOPUT\020\000\022\014\n\010NODELETE\020\001B"
-      "#\n!com.tig.shark.common.network.grpcb\006pr"
-      "oto3"
+      "(\003\022\016\n\006prefix\030\006 \001(\010\022\020\n\010longPull\030\007 \001(\003\"`\n\017"
+      "DsWatchResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
+      "b.ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.watchpb"
+      ".WatchResponse\"N\n\rWatchResponse\022\017\n\007watch"
+      "Id\030\001 \001(\003\022\014\n\004code\030\002 \001(\005\022\036\n\006events\030\003 \003(\0132\016"
+      ".watchpb.Event\"f\n\023DsKvWatchPutRequest\022&\n"
+      "\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n"
+      "\003req\030\002 \001(\0132\032.watchpb.KvWatchPutRequest\"g"
+      "\n\024DsKvWatchPutResponse\022\'\n\006header\030\001 \001(\0132\027"
+      ".kvrpcpb.ResponseHeader\022&\n\004resp\030\002 \001(\0132\030."
+      "watchpb.KvWatchResponse\"7\n\021KvWatchPutReq"
+      "uest\022\"\n\002kv\030\001 \001(\0132\026.watchpb.WatchKeyValue"
+      "\"l\n\026DsKvWatchDeleteRequest\022&\n\006header\030\001 \001"
+      "(\0132\026.kvrpcpb.RequestHeader\022*\n\003req\030\002 \001(\0132"
+      "\035.watchpb.KvWatchDeleteRequest\"j\n\027DsKvWa"
+      "tchDeleteResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
+      "cpb.ResponseHeader\022&\n\004resp\030\002 \001(\0132\030.watch"
+      "pb.KvWatchResponse\"J\n\024KvWatchDeleteReque"
+      "st\022\"\n\002kv\030\001 \001(\0132\026.watchpb.WatchKeyValue\022\016"
+      "\n\006prefix\030\002 \001(\010\"\037\n\017KvWatchResponse\022\014\n\004cod"
+      "e\030\001 \001(\005\"\205\001\n\030DsKvWatchGetMultiRequest\022&\n\006"
+      "header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n\002"
+      "kv\030\002 \001(\0132\026.watchpb.WatchKeyValue\022\016\n\006pref"
+      "ix\030\003 \001(\010\022\r\n\005limit\030\004 \001(\r\"w\n\031DsKvWatchGetM"
+      "ultiResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.R"
+      "esponseHeader\022\014\n\004code\030\002 \001(\005\022#\n\003kvs\030\003 \003(\013"
+      "2\026.watchpb.WatchKeyValue* \n\tEventType\022\007\n"
+      "\003PUT\020\000\022\n\n\006DELETE\020\001*%\n\nFilterType\022\t\n\005NOPU"
+      "T\020\000\022\014\n\010NODELETE\020\001B#\n!com.tig.shark.commo"
+      "n.network.grpcb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1644);
+      descriptor, 1662);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "watchpb.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -1877,6 +1878,7 @@ const int WatchCreateRequest::kFiltersFieldNumber;
 const int WatchCreateRequest::kWatchIdFieldNumber;
 const int WatchCreateRequest::kExpireAtFieldNumber;
 const int WatchCreateRequest::kPrefixFieldNumber;
+const int WatchCreateRequest::kLongPullFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 WatchCreateRequest::WatchCreateRequest()
@@ -2067,6 +2069,20 @@ bool WatchCreateRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // int64 longPull = 7;
+      case 7: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &longpull_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -2133,6 +2149,11 @@ void WatchCreateRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(6, this->prefix(), output);
   }
 
+  // int64 longPull = 7;
+  if (this->longpull() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(7, this->longpull(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -2184,6 +2205,11 @@ void WatchCreateRequest::SerializeWithCachedSizes(
   // bool prefix = 6;
   if (this->prefix() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(6, this->prefix(), target);
+  }
+
+  // int64 longPull = 7;
+  if (this->longpull() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(7, this->longpull(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -2250,6 +2276,13 @@ size_t WatchCreateRequest::ByteSizeLong() const {
         this->expireat());
   }
 
+  // int64 longPull = 7;
+  if (this->longpull() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
+        this->longpull());
+  }
+
   // bool prefix = 6;
   if (this->prefix() != 0) {
     total_size += 1 + 1;
@@ -2297,6 +2330,9 @@ void WatchCreateRequest::MergeFrom(const WatchCreateRequest& from) {
   if (from.expireat() != 0) {
     set_expireat(from.expireat());
   }
+  if (from.longpull() != 0) {
+    set_longpull(from.longpull());
+  }
   if (from.prefix() != 0) {
     set_prefix(from.prefix());
   }
@@ -2331,6 +2367,7 @@ void WatchCreateRequest::InternalSwap(WatchCreateRequest* other) {
   swap(startversion_, other->startversion_);
   swap(watchid_, other->watchid_);
   swap(expireat_, other->expireat_);
+  swap(longpull_, other->longpull_);
   swap(prefix_, other->prefix_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
@@ -2468,6 +2505,20 @@ void WatchCreateRequest::set_prefix(bool value) {
   
   prefix_ = value;
   // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.prefix)
+}
+
+// int64 longPull = 7;
+void WatchCreateRequest::clear_longpull() {
+  longpull_ = GOOGLE_LONGLONG(0);
+}
+::google::protobuf::int64 WatchCreateRequest::longpull() const {
+  // @@protoc_insertion_point(field_get:watchpb.WatchCreateRequest.longPull)
+  return longpull_;
+}
+void WatchCreateRequest::set_longpull(::google::protobuf::int64 value) {
+  
+  longpull_ = value;
+  // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.longPull)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

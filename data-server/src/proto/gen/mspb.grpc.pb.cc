@@ -5,14 +5,14 @@
 #include "mspb.pb.h"
 #include "mspb.grpc.pb.h"
 
-#include <grpcpp/impl/codegen/async_stream.h>
-#include <grpcpp/impl/codegen/async_unary_call.h>
-#include <grpcpp/impl/codegen/channel_interface.h>
-#include <grpcpp/impl/codegen/client_unary_call.h>
-#include <grpcpp/impl/codegen/method_handler_impl.h>
-#include <grpcpp/impl/codegen/rpc_service_method.h>
-#include <grpcpp/impl/codegen/service_type.h>
-#include <grpcpp/impl/codegen/sync_stream.h>
+#include <grpc++/impl/codegen/async_stream.h>
+#include <grpc++/impl/codegen/async_unary_call.h>
+#include <grpc++/impl/codegen/channel_interface.h>
+#include <grpc++/impl/codegen/client_unary_call.h>
+#include <grpc++/impl/codegen/method_handler_impl.h>
+#include <grpc++/impl/codegen/rpc_service_method.h>
+#include <grpc++/impl/codegen/service_type.h>
+#include <grpc++/impl/codegen/sync_stream.h>
 namespace mspb {
 
 static const char* MsServer_method_names[] = {
@@ -38,356 +38,279 @@ static const char* MsServer_method_names[] = {
 };
 
 std::unique_ptr< MsServer::Stub> MsServer::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
-  (void)options;
   std::unique_ptr< MsServer::Stub> stub(new MsServer::Stub(channel));
   return stub;
 }
 
 MsServer::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_NodeHeartbeat_(MsServer_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_RangeHeartbeat_(MsServer_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_AskSplit_(MsServer_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_ReportSplit_(MsServer_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_NodeLogin_(MsServer_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetNodeId_(MsServer_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetMSLeader_(MsServer_method_names[6], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetRoute_(MsServer_method_names[7], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetNode_(MsServer_method_names[8], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetDB_(MsServer_method_names[9], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetTable_(MsServer_method_names[10], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetTableById_(MsServer_method_names[11], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetColumns_(MsServer_method_names[12], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetColumnByName_(MsServer_method_names[13], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetColumnById_(MsServer_method_names[14], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_TruncateTable_(MsServer_method_names[15], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_AddColumn_(MsServer_method_names[16], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_CreateDatabase_(MsServer_method_names[17], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_CreateTable_(MsServer_method_names[18], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  : channel_(channel), rpcmethod_NodeHeartbeat_(MsServer_method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_RangeHeartbeat_(MsServer_method_names[1], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_AskSplit_(MsServer_method_names[2], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_ReportSplit_(MsServer_method_names[3], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_NodeLogin_(MsServer_method_names[4], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetNodeId_(MsServer_method_names[5], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetMSLeader_(MsServer_method_names[6], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetRoute_(MsServer_method_names[7], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetNode_(MsServer_method_names[8], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetDB_(MsServer_method_names[9], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetTable_(MsServer_method_names[10], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetTableById_(MsServer_method_names[11], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetColumns_(MsServer_method_names[12], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetColumnByName_(MsServer_method_names[13], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetColumnById_(MsServer_method_names[14], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_TruncateTable_(MsServer_method_names[15], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_AddColumn_(MsServer_method_names[16], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_CreateDatabase_(MsServer_method_names[17], ::grpc::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_CreateTable_(MsServer_method_names[18], ::grpc::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status MsServer::Stub::NodeHeartbeat(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::mspb::NodeHeartbeatResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_NodeHeartbeat_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_NodeHeartbeat_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>* MsServer::Stub::AsyncNodeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::NodeHeartbeatResponse>::Create(channel_.get(), cq, rpcmethod_NodeHeartbeat_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>* MsServer::Stub::PrepareAsyncNodeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::NodeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::NodeHeartbeatResponse>::Create(channel_.get(), cq, rpcmethod_NodeHeartbeat_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::NodeHeartbeatResponse>::Create(channel_.get(), cq, rpcmethod_NodeHeartbeat_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::RangeHeartbeat(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::mspb::RangeHeartbeatResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_RangeHeartbeat_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_RangeHeartbeat_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>* MsServer::Stub::AsyncRangeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::RangeHeartbeatResponse>::Create(channel_.get(), cq, rpcmethod_RangeHeartbeat_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>* MsServer::Stub::PrepareAsyncRangeHeartbeatRaw(::grpc::ClientContext* context, const ::mspb::RangeHeartbeatRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::RangeHeartbeatResponse>::Create(channel_.get(), cq, rpcmethod_RangeHeartbeat_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::RangeHeartbeatResponse>::Create(channel_.get(), cq, rpcmethod_RangeHeartbeat_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::AskSplit(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::mspb::AskSplitResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_AskSplit_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_AskSplit_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>* MsServer::Stub::AsyncAskSplitRaw(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::AskSplitResponse>::Create(channel_.get(), cq, rpcmethod_AskSplit_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>* MsServer::Stub::PrepareAsyncAskSplitRaw(::grpc::ClientContext* context, const ::mspb::AskSplitRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::AskSplitResponse>::Create(channel_.get(), cq, rpcmethod_AskSplit_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::AskSplitResponse>::Create(channel_.get(), cq, rpcmethod_AskSplit_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::ReportSplit(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::mspb::ReportSplitResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_ReportSplit_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_ReportSplit_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>* MsServer::Stub::AsyncReportSplitRaw(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::ReportSplitResponse>::Create(channel_.get(), cq, rpcmethod_ReportSplit_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>* MsServer::Stub::PrepareAsyncReportSplitRaw(::grpc::ClientContext* context, const ::mspb::ReportSplitRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::ReportSplitResponse>::Create(channel_.get(), cq, rpcmethod_ReportSplit_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::ReportSplitResponse>::Create(channel_.get(), cq, rpcmethod_ReportSplit_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::NodeLogin(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::mspb::NodeLoginResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_NodeLogin_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_NodeLogin_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>* MsServer::Stub::AsyncNodeLoginRaw(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::NodeLoginResponse>::Create(channel_.get(), cq, rpcmethod_NodeLogin_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>* MsServer::Stub::PrepareAsyncNodeLoginRaw(::grpc::ClientContext* context, const ::mspb::NodeLoginRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::NodeLoginResponse>::Create(channel_.get(), cq, rpcmethod_NodeLogin_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::NodeLoginResponse>::Create(channel_.get(), cq, rpcmethod_NodeLogin_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetNodeId(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::mspb::GetNodeIdResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetNodeId_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetNodeId_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>* MsServer::Stub::AsyncGetNodeIdRaw(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetNodeIdResponse>::Create(channel_.get(), cq, rpcmethod_GetNodeId_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>* MsServer::Stub::PrepareAsyncGetNodeIdRaw(::grpc::ClientContext* context, const ::mspb::GetNodeIdRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetNodeIdResponse>::Create(channel_.get(), cq, rpcmethod_GetNodeId_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeIdResponse>::Create(channel_.get(), cq, rpcmethod_GetNodeId_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetMSLeader(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::mspb::GetMSLeaderResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetMSLeader_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetMSLeader_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>* MsServer::Stub::AsyncGetMSLeaderRaw(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetMSLeaderResponse>::Create(channel_.get(), cq, rpcmethod_GetMSLeader_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>* MsServer::Stub::PrepareAsyncGetMSLeaderRaw(::grpc::ClientContext* context, const ::mspb::GetMSLeaderRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetMSLeaderResponse>::Create(channel_.get(), cq, rpcmethod_GetMSLeader_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetMSLeaderResponse>::Create(channel_.get(), cq, rpcmethod_GetMSLeader_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetRoute(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::mspb::GetRouteResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetRoute_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetRoute_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>* MsServer::Stub::AsyncGetRouteRaw(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetRouteResponse>::Create(channel_.get(), cq, rpcmethod_GetRoute_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>* MsServer::Stub::PrepareAsyncGetRouteRaw(::grpc::ClientContext* context, const ::mspb::GetRouteRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetRouteResponse>::Create(channel_.get(), cq, rpcmethod_GetRoute_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetRouteResponse>::Create(channel_.get(), cq, rpcmethod_GetRoute_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetNode(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::mspb::GetNodeResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetNode_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetNode_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>* MsServer::Stub::AsyncGetNodeRaw(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetNodeResponse>::Create(channel_.get(), cq, rpcmethod_GetNode_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>* MsServer::Stub::PrepareAsyncGetNodeRaw(::grpc::ClientContext* context, const ::mspb::GetNodeRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetNodeResponse>::Create(channel_.get(), cq, rpcmethod_GetNode_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetNodeResponse>::Create(channel_.get(), cq, rpcmethod_GetNode_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetDB(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::mspb::GetDBResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetDB_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetDB_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>* MsServer::Stub::AsyncGetDBRaw(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetDBResponse>::Create(channel_.get(), cq, rpcmethod_GetDB_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>* MsServer::Stub::PrepareAsyncGetDBRaw(::grpc::ClientContext* context, const ::mspb::GetDBRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetDBResponse>::Create(channel_.get(), cq, rpcmethod_GetDB_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetDBResponse>::Create(channel_.get(), cq, rpcmethod_GetDB_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetTable(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::mspb::GetTableResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetTable_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetTable_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>* MsServer::Stub::AsyncGetTableRaw(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetTableResponse>::Create(channel_.get(), cq, rpcmethod_GetTable_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>* MsServer::Stub::PrepareAsyncGetTableRaw(::grpc::ClientContext* context, const ::mspb::GetTableRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetTableResponse>::Create(channel_.get(), cq, rpcmethod_GetTable_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetTableResponse>::Create(channel_.get(), cq, rpcmethod_GetTable_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetTableById(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::mspb::GetTableByIdResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetTableById_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetTableById_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>* MsServer::Stub::AsyncGetTableByIdRaw(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetTableByIdResponse>::Create(channel_.get(), cq, rpcmethod_GetTableById_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>* MsServer::Stub::PrepareAsyncGetTableByIdRaw(::grpc::ClientContext* context, const ::mspb::GetTableByIdRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetTableByIdResponse>::Create(channel_.get(), cq, rpcmethod_GetTableById_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetTableByIdResponse>::Create(channel_.get(), cq, rpcmethod_GetTableById_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetColumns(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::mspb::GetColumnsResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetColumns_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetColumns_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>* MsServer::Stub::AsyncGetColumnsRaw(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetColumnsResponse>::Create(channel_.get(), cq, rpcmethod_GetColumns_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>* MsServer::Stub::PrepareAsyncGetColumnsRaw(::grpc::ClientContext* context, const ::mspb::GetColumnsRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetColumnsResponse>::Create(channel_.get(), cq, rpcmethod_GetColumns_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnsResponse>::Create(channel_.get(), cq, rpcmethod_GetColumns_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetColumnByName(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::mspb::GetColumnByNameResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetColumnByName_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetColumnByName_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>* MsServer::Stub::AsyncGetColumnByNameRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetColumnByNameResponse>::Create(channel_.get(), cq, rpcmethod_GetColumnByName_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>* MsServer::Stub::PrepareAsyncGetColumnByNameRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByNameRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetColumnByNameResponse>::Create(channel_.get(), cq, rpcmethod_GetColumnByName_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByNameResponse>::Create(channel_.get(), cq, rpcmethod_GetColumnByName_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::GetColumnById(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::mspb::GetColumnByIdResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetColumnById_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_GetColumnById_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>* MsServer::Stub::AsyncGetColumnByIdRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetColumnByIdResponse>::Create(channel_.get(), cq, rpcmethod_GetColumnById_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>* MsServer::Stub::PrepareAsyncGetColumnByIdRaw(::grpc::ClientContext* context, const ::mspb::GetColumnByIdRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::GetColumnByIdResponse>::Create(channel_.get(), cq, rpcmethod_GetColumnById_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::GetColumnByIdResponse>::Create(channel_.get(), cq, rpcmethod_GetColumnById_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::TruncateTable(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::mspb::TruncateTableResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_TruncateTable_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_TruncateTable_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>* MsServer::Stub::AsyncTruncateTableRaw(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::TruncateTableResponse>::Create(channel_.get(), cq, rpcmethod_TruncateTable_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>* MsServer::Stub::PrepareAsyncTruncateTableRaw(::grpc::ClientContext* context, const ::mspb::TruncateTableRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::TruncateTableResponse>::Create(channel_.get(), cq, rpcmethod_TruncateTable_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::TruncateTableResponse>::Create(channel_.get(), cq, rpcmethod_TruncateTable_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::AddColumn(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::mspb::AddColumnResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_AddColumn_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_AddColumn_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>* MsServer::Stub::AsyncAddColumnRaw(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::AddColumnResponse>::Create(channel_.get(), cq, rpcmethod_AddColumn_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>* MsServer::Stub::PrepareAsyncAddColumnRaw(::grpc::ClientContext* context, const ::mspb::AddColumnRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::AddColumnResponse>::Create(channel_.get(), cq, rpcmethod_AddColumn_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::AddColumnResponse>::Create(channel_.get(), cq, rpcmethod_AddColumn_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::CreateDatabase(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::mspb::CreateDatabaseResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_CreateDatabase_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_CreateDatabase_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>* MsServer::Stub::AsyncCreateDatabaseRaw(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::CreateDatabaseResponse>::Create(channel_.get(), cq, rpcmethod_CreateDatabase_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>* MsServer::Stub::PrepareAsyncCreateDatabaseRaw(::grpc::ClientContext* context, const ::mspb::CreateDatabaseRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::CreateDatabaseResponse>::Create(channel_.get(), cq, rpcmethod_CreateDatabase_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::CreateDatabaseResponse>::Create(channel_.get(), cq, rpcmethod_CreateDatabase_, context, request);
 }
 
 ::grpc::Status MsServer::Stub::CreateTable(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::mspb::CreateTableResponse* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_CreateTable_, context, request, response);
+  return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_CreateTable_, context, request, response);
 }
 
 ::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>* MsServer::Stub::AsyncCreateTableRaw(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::CreateTableResponse>::Create(channel_.get(), cq, rpcmethod_CreateTable_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>* MsServer::Stub::PrepareAsyncCreateTableRaw(::grpc::ClientContext* context, const ::mspb::CreateTableRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::mspb::CreateTableResponse>::Create(channel_.get(), cq, rpcmethod_CreateTable_, context, request, false);
+  return ::grpc::ClientAsyncResponseReader< ::mspb::CreateTableResponse>::Create(channel_.get(), cq, rpcmethod_CreateTable_, context, request);
 }
 
 MsServer::Service::Service() {
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[0],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::NodeHeartbeatRequest, ::mspb::NodeHeartbeatResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::NodeHeartbeatRequest, ::mspb::NodeHeartbeatResponse>(
           std::mem_fn(&MsServer::Service::NodeHeartbeat), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[1],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::RangeHeartbeatRequest, ::mspb::RangeHeartbeatResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::RangeHeartbeatRequest, ::mspb::RangeHeartbeatResponse>(
           std::mem_fn(&MsServer::Service::RangeHeartbeat), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[2],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::AskSplitRequest, ::mspb::AskSplitResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::AskSplitRequest, ::mspb::AskSplitResponse>(
           std::mem_fn(&MsServer::Service::AskSplit), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[3],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::ReportSplitRequest, ::mspb::ReportSplitResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::ReportSplitRequest, ::mspb::ReportSplitResponse>(
           std::mem_fn(&MsServer::Service::ReportSplit), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[4],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::NodeLoginRequest, ::mspb::NodeLoginResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::NodeLoginRequest, ::mspb::NodeLoginResponse>(
           std::mem_fn(&MsServer::Service::NodeLogin), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[5],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetNodeIdRequest, ::mspb::GetNodeIdResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetNodeIdRequest, ::mspb::GetNodeIdResponse>(
           std::mem_fn(&MsServer::Service::GetNodeId), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[6],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetMSLeaderRequest, ::mspb::GetMSLeaderResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetMSLeaderRequest, ::mspb::GetMSLeaderResponse>(
           std::mem_fn(&MsServer::Service::GetMSLeader), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[7],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetRouteRequest, ::mspb::GetRouteResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetRouteRequest, ::mspb::GetRouteResponse>(
           std::mem_fn(&MsServer::Service::GetRoute), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[8],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetNodeRequest, ::mspb::GetNodeResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetNodeRequest, ::mspb::GetNodeResponse>(
           std::mem_fn(&MsServer::Service::GetNode), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[9],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetDBRequest, ::mspb::GetDBResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetDBRequest, ::mspb::GetDBResponse>(
           std::mem_fn(&MsServer::Service::GetDB), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[10],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetTableRequest, ::mspb::GetTableResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetTableRequest, ::mspb::GetTableResponse>(
           std::mem_fn(&MsServer::Service::GetTable), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[11],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetTableByIdRequest, ::mspb::GetTableByIdResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetTableByIdRequest, ::mspb::GetTableByIdResponse>(
           std::mem_fn(&MsServer::Service::GetTableById), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[12],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetColumnsRequest, ::mspb::GetColumnsResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetColumnsRequest, ::mspb::GetColumnsResponse>(
           std::mem_fn(&MsServer::Service::GetColumns), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[13],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetColumnByNameRequest, ::mspb::GetColumnByNameResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetColumnByNameRequest, ::mspb::GetColumnByNameResponse>(
           std::mem_fn(&MsServer::Service::GetColumnByName), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[14],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::GetColumnByIdRequest, ::mspb::GetColumnByIdResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::GetColumnByIdRequest, ::mspb::GetColumnByIdResponse>(
           std::mem_fn(&MsServer::Service::GetColumnById), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[15],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::TruncateTableRequest, ::mspb::TruncateTableResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::TruncateTableRequest, ::mspb::TruncateTableResponse>(
           std::mem_fn(&MsServer::Service::TruncateTable), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[16],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::AddColumnRequest, ::mspb::AddColumnResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::AddColumnRequest, ::mspb::AddColumnResponse>(
           std::mem_fn(&MsServer::Service::AddColumn), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[17],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::CreateDatabaseRequest, ::mspb::CreateDatabaseResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::CreateDatabaseRequest, ::mspb::CreateDatabaseResponse>(
           std::mem_fn(&MsServer::Service::CreateDatabase), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
+  AddMethod(new ::grpc::RpcServiceMethod(
       MsServer_method_names[18],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< MsServer::Service, ::mspb::CreateTableRequest, ::mspb::CreateTableResponse>(
+      ::grpc::RpcMethod::NORMAL_RPC,
+      new ::grpc::RpcMethodHandler< MsServer::Service, ::mspb::CreateTableRequest, ::mspb::CreateTableResponse>(
           std::mem_fn(&MsServer::Service::CreateTable), this)));
 }
 

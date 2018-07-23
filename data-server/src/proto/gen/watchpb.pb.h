@@ -640,6 +640,12 @@ class WatchCreateRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::int64 expireat() const;
   void set_expireat(::google::protobuf::int64 value);
 
+  // int64 longPull = 7;
+  void clear_longpull();
+  static const int kLongPullFieldNumber = 7;
+  ::google::protobuf::int64 longpull() const;
+  void set_longpull(::google::protobuf::int64 value);
+
   // bool prefix = 6;
   void clear_prefix();
   static const int kPrefixFieldNumber = 6;
@@ -656,6 +662,7 @@ class WatchCreateRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::int64 startversion_;
   ::google::protobuf::int64 watchid_;
   ::google::protobuf::int64 expireat_;
+  ::google::protobuf::int64 longpull_;
   bool prefix_;
   mutable int _cached_size_;
   friend struct protobuf_watchpb_2eproto::TableStruct;
@@ -2374,6 +2381,20 @@ inline void WatchCreateRequest::set_prefix(bool value) {
   
   prefix_ = value;
   // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.prefix)
+}
+
+// int64 longPull = 7;
+inline void WatchCreateRequest::clear_longpull() {
+  longpull_ = GOOGLE_LONGLONG(0);
+}
+inline ::google::protobuf::int64 WatchCreateRequest::longpull() const {
+  // @@protoc_insertion_point(field_get:watchpb.WatchCreateRequest.longPull)
+  return longpull_;
+}
+inline void WatchCreateRequest::set_longpull(::google::protobuf::int64 value) {
+  
+  longpull_ = value;
+  // @@protoc_insertion_point(field_set:watchpb.WatchCreateRequest.longPull)
 }
 
 // -------------------------------------------------------------------

@@ -23,7 +23,6 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-
 bool DecodeWatchKey(std::vector<std::string*>& keys, std::string* buf);
 bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
                       std::string &buf);
@@ -179,10 +178,9 @@ struct Greater {
 };
 
 template <class T>
-struct Timer: public std::priority_queue<T> {
+struct TimerQueue: public std::priority_queue<T, std::vector<T>, Greater<T>> {
 public:
     std::vector<T>& GetQueue() { return this->c; }
-    std::priority_queue<T, std::vector<T>, Greater<T>> timer_;
 };
 
 class WatcherSet {
@@ -190,7 +188,7 @@ public:
     WatcherSet();
     ~WatcherSet();
     int32_t AddWatcher(std::string &, common::ProtoMessage*);
-    WATCH_CODE DelWatcher( int64_t &, std::string &);
+    WATCH_CODE DelWatcher(int64_t, const std::string &);
     uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , std::string &);
 
 private:
@@ -198,7 +196,7 @@ private:
     Watcher2Keys_ watcher_index_;
     std::mutex mutex_;
 
-    Timer<Watcher> timer_;
+    TimerQueue<Watcher> timer_;
     std::condition_variable timer_cond_;
     std::thread watchers_expire_thread_;
     volatile bool watchers_expire_thread_continue_flag = true;

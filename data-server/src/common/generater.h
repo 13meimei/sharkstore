@@ -123,18 +123,18 @@ private:
     }
 
 private:
-    std::atomic<uint64_t> seq_{0};
-    uint64_t seq_end_{0};
-    uint32_t cache_{0};
+    std::atomic<int64_t> seq_;
+    int64_t seq_end_ = 0;
+    uint32_t cache_ = 0;
 
-    uint64_t range_id_{0};
-    std::string range_key_{""};
+    uint64_t range_id_ = 0;
+    std::string range_key_;
 
     sharkstore::dataserver::storage::MetaStore *store_ = nullptr;
     
-    bool initFlag{false};
-    std::string errMsg{""};
-    int64_t saveCnt_{0};
+    bool initFlag = false;
+    std::string errMsg;
+    int32_t saveCnt = 0;
 
     std::mutex mtx_;
 };
