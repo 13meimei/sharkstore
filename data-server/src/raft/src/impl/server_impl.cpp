@@ -157,6 +157,8 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 }
 
 Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
+    LOG_WARN("remove raft[%lu].", id);
+
     std::shared_ptr<RaftImpl> r;
     {
         std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);

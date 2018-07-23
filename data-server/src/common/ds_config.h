@@ -78,17 +78,11 @@ typedef struct ds_config_s {
     } raft_config;
 
     struct {
-        int cluster_id;
         int interval;
-        int port;
-        char ip_addr[16];
-        char name_space[32];
-        char uri[256];
     } metric_config;
 
     sf_socket_thread_config_t manager_config;  // manager thread config
     sf_socket_thread_config_t worker_config;   // worker thread config
-    sf_socket_thread_config_t client_config;   // metric client config
 } ds_config_t;
 
 extern ds_config_t ds_config;

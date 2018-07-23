@@ -338,53 +338,13 @@ static int load_raft_config(IniContext *ini_context) {
 }
 
 static int load_metric_config(IniContext *ini_context) {
-    char *temp_str;
     char *section = "metric";
 
-    ds_config.metric_config.cluster_id =
-        iniGetIntValue(section, "cluster_id", ini_context, 1);
-    if (ds_config.metric_config.cluster_id <= 0) {
-        ds_config.metric_config.cluster_id = 1;
-    }
-
     ds_config.metric_config.interval =
-        iniGetIntValue(section, "interval", ini_context, 60);
+        iniGetIntValue(section, "interval", ini_context, 10);
     if (ds_config.metric_config.interval <= 0) {
-        ds_config.metric_config.interval = 60;
+        ds_config.metric_config.interval = 10;
     }
-
-    ds_config.metric_config.port = iniGetIntValue(section, "port", ini_context, 8887);
-    if (ds_config.metric_config.port <= 0) {
-        ds_config.metric_config.port = 8887;
-    }
-
-    temp_str = iniGetStrValue(section, "ip_addr", ini_context);
-    if (temp_str != NULL) {
-        snprintf(ds_config.metric_config.ip_addr, sizeof(ds_config.metric_config.ip_addr),
-                 "%s", temp_str);
-    } else {
-        FLOG_ERROR("load metric config error, ip_addr is null");
-        return -1;
-    }
-
-    temp_str = iniGetStrValue(section, "name_space", ini_context);
-    if (temp_str != NULL) {
-        snprintf(ds_config.metric_config.name_space,
-                 sizeof(ds_config.metric_config.name_space), "%s", temp_str);
-    } else {
-        FLOG_ERROR("load metric config error, name_space is null");
-        return -1;
-    }
-
-    temp_str = iniGetStrValue(section, "uri", ini_context);
-    if (temp_str != NULL) {
-        snprintf(ds_config.metric_config.uri, sizeof(ds_config.metric_config.uri), "%s",
-                 temp_str);
-    } else {
-        FLOG_ERROR("load metric config error, uri is null");
-        return -1;
-    }
-
     return 0;
 }
 
@@ -460,12 +420,6 @@ int load_from_conf_file(IniContext *ini_context, const char *filename) {
 
     result =
         sf_load_socket_thread_config(ini_context, "worker", &ds_config.worker_config);
-    if (result != 0) {
-        return result;
-    }
-
-    result =
-        sf_load_socket_thread_config(ini_context, "metric", &ds_config.client_config);
     if (result != 0) {
         return result;
     }
