@@ -5,17 +5,19 @@
 #include "base/status.h"
 #include "base/util.h"
 #include "storage/meta_store.h"
+#include "storage/store.h"
 
 #define DEFAULT_CACHE_SIZE 10000
+static const std::string kRangeVersionKey = "\x05VerID";
 
 namespace sharkstore {
 
 class IdGenerater {
 public:
-    IdGenerater():seq_(0),seq_end_(0),range_id_(0),cache_(DEFAULT_CACHE_SIZE),store_(nullptr),saveCnt(0) {
+    IdGenerater() {
         ;
     }
-    IdGenerater(const uint64_t &range_id, const uint32_t &cache, storage::Store *store):
+    IdGenerater(const uint64_t &range_id, const uint32_t &cache, sharkstore::dataserver::storage::Store *store):
                 range_id_(range_id),cache_(cache),store_(store),saveCnt(0) {
         init();
     }
@@ -53,10 +55,10 @@ public:
         return;
     }
 
-    void setRangeId(const std::string &rangeId) {
+    void setRangeId(const uint64_t &rangeId) {
         range_id_ = rangeId;
     }
-    std::string &getRangeId() {
+    uint64_t &getRangeId() {
         return range_id_;
     }
     void setCache() {
@@ -129,20 +131,20 @@ private:
     }
 
 private:
-    std::atomic<int64_t> seq_;
-    int64_t seq_end_;
-    uint32_t cache_;
+    std::atomic<int64_t> seq_{0};
+    int64_t seq_end_{0};
+    uint32_t cache_{0};
 
-    uint64_t range_id_;
+    uint64_t range_id_{0};
     std::string range_key_{""};
 
-    storage::Store *store_ = nullptr;
+    sharkstore::dataserver::storage::Store *store_ = nullptr;
     
     bool initFlag{false};
     std::string errMsg{""};
-    int32_t saveCnt;
+    int32_t saveCnt{0};
 
-    std::mutext mtx_;
-}
+    std::mutex mtx_;
+};
 
 } //end namespace

@@ -239,7 +239,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchPut(msg);
+        range_server_->WatchPut(msg);
 
         watchpb::DsKvWatchPutResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -276,7 +276,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchPut(msg);
+        range_server_->WatchPut(msg);
 
         watchpb::DsKvWatchPutResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -311,7 +311,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchPut(msg);
+        range_server_->WatchPut(msg);
 
         watchpb::DsKvWatchPutResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -346,7 +346,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchPut(msg);
+        range_server_->WatchPut(msg);
 
         watchpb::DsKvWatchPutResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -389,7 +389,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchPut(msg);
+        range_server_->WatchPut(msg);
 
         watchpb::DsKvWatchPutResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -417,14 +417,14 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01003001:value");
+        ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
 
         // end test watch_get
     }
@@ -446,14 +446,14 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01004001:value");
+        ASSERT_TRUE(resp.resp().events(0).kv().value() == "01004001:value");
 
         // end test watch_get
     }
@@ -475,7 +475,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -508,7 +508,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -544,7 +544,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -580,7 +580,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -623,14 +623,14 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01004001:value");
+        ASSERT_TRUE(resp.resp().events(0).kv().value() == "01004001:value");
 
         // end test watch_get
     }
@@ -651,7 +651,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchDelete(msg);
+        range_server_->WatchDel(msg);
 
         watchpb::DsKvWatchDeleteResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -684,7 +684,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchDelete(msg);
+        range_server_->WatchDel(msg);
 
         watchpb::DsKvWatchDeleteResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -720,7 +720,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchDelete(msg);
+        range_server_->WatchDel(msg);
 
         watchpb::DsKvWatchDeleteResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -756,7 +756,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchDelete(msg);
+        range_server_->WatchDel(msg);
 
         watchpb::DsKvWatchDeleteResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -790,14 +790,14 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01003001:value");
+        ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
 
         // end test watch_get
     }
@@ -824,14 +824,14 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01004001:value");
+        ASSERT_TRUE(resp.resp().events(0).kv().value() == "01004001:value");
 
         // end test watch_get
     }
@@ -858,7 +858,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchDelete(msg);
+        range_server_->WatchDel(msg);
 
         watchpb::DsKvWatchDeleteResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -900,7 +900,7 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchDelete(msg);
+        range_server_->WatchDel(msg);
 
         watchpb::DsKvWatchDeleteResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -927,14 +927,14 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value().empty());
+        ASSERT_TRUE(resp.resp().events(0).kv().value().empty());
 
         // end test watch_get
     }
@@ -956,14 +956,14 @@ TEST_F(WatchTest, watch) {
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->watchGet(msg);
+        range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value().empty());
+        ASSERT_TRUE(resp.resp().events(0).kv().value().empty());
 
         // end test watch_get
     }
