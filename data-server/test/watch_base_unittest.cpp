@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
+#define private public
 
 #include "range/watch.h"
 #include "frame/sf_util.h"
+
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -11,70 +13,75 @@ int main(int argc, char* argv[]) {
 namespace {
 using namespace sharkstore::dataserver;
 
-class TestWatcherSet: private range::WatcherSet {
+class TestWatcherSet: public range::WatcherSet{
 public:
-    bool CheckAddWatcher(std::string& watcher_key, int64_t watcher_id) {
+    void CheckAddWatcher(const std::string& watcher_key, int64_t watcher_id) {
         // in key index
         auto k_idx = key_index_.find(watcher_key);
         ASSERT_TRUE(k_idx != key_index_.end());
 
         auto watchers = k_idx->second;
-        auto watcher_it = watchers.find(watcher_id);
-        ASSERT_TRUE(watcher_it != watchers.end());
+        auto watcher_it = watchers->find(watcher_id);
+        ASSERT_TRUE(watcher_it != watchers->end());
+        (void)watcher_it;
 
         // in watch index
-        auto w_idx = watcher_idx_.find(watcher_id);
-        ASSERT_TRUE(w_idx != watcher_idx_.end());
+        auto w_idx = watcher_index_.find(watcher_id);
+        ASSERT_TRUE(w_idx != watcher_index_.end());
 
         auto keys = w_idx->second;
-        auto key = keys.find(watcher_key);
-        ASSERT_TRUE(key != keys.end());
+        auto key = keys->find(watcher_key);
+        ASSERT_TRUE(key != keys->end());
+        (void)key;
 
         // in timer queue
         auto timer_queue = timer_.GetQueue();
-        for (auto timer_it = timer_queue.begin(); timer_it != timer_queue.end(); ++timer_it) {
-            if (timer_it->second->msg_->session_id == watcher_id && (*timer_it->second->key_) == watcher_key) {
+        std::cout << "timer get queue size: " << timer_queue.size() << std::endl;
+        std::cout << "timer pri queue size: " << timer_.size() << std::endl;
+        auto timer_it = timer_queue.begin();
+        for (; timer_it != timer_queue.end(); ++timer_it) {
+            if (timer_it->msg_->session_id == watcher_id && (*timer_it->key_) == watcher_key) {
                 break;
             }
         }
-        ASSERT_TRUE(timer_it != timer_.timer_.end());
+        ASSERT_TRUE(timer_it != timer_queue.end());
     }
 
-    bool CheckDelWatcher(std::string&, int64_t seesion_id) {
+    void CheckDelWatcher(const std::string& watcher_key, int64_t watcher_id) {
         // not in key index
         auto k_idx = key_index_.find(watcher_key);
         if (k_idx != key_index_.end()) {
             auto watchers = k_idx->second;
-            auto watcher_it = watchers.find(watcher_id);
-            ASSERT_TRUE(watcher_it == watchers.end());
+            auto watcher_it = watchers->find(watcher_id);
+            ASSERT_TRUE(watcher_it == watchers->end());
         }
 
         // not in watch index
-        auto w_idx = watcher_idx_.find(watcher_id);
-        if (w_idx != watcher_idx_.end()) {
+        auto w_idx = watcher_index_.find(watcher_id);
+        if (w_idx != watcher_index_.end()) {
             auto keys = w_idx->second;
-            auto key = keys.find(watcher_key);
-            ASSERT_TRUE(key == keys.end());
+            auto key = keys->find(watcher_key);
+            ASSERT_TRUE(key == keys->end());
         }
 
         // in timer queue
         auto timer_queue = timer_.GetQueue();
-        for (auto timer_it = timer_queue.begin(); timer_it != timer_queue.end(); ++timer_it) {
-            ASSERT_FALSE(timer_it->second->msg_->session_id == watcher_id && (*timer_it->second->key_) == watcher_key);
+        auto timer_it = timer_queue.begin();
+        for (; timer_it != timer_queue.end(); ++timer_it) {
+            ASSERT_FALSE(timer_it->msg_->session_id == watcher_id && (*timer_it->key_) == watcher_key);
         }
-        ASSERT_TRUE(timer_it == timer_.timer_.end());
+        ASSERT_TRUE(timer_it == timer_queue.end());
     }
 };
 
 TEST(TestWatcherSet, Base) {
     TestWatcherSet ws;
 
-    common::ProtoMessage msg = {
-            session_id = 1,
-            begin_time = getticks(), // ms
-            expire_time = getticks()+100000, // 100 s
-            msg_id = 100,
-    };
+    common::ProtoMessage msg;
+    msg.session_id = 1;
+    msg.begin_time = getticks();
+    msg.expire_time = getticks()+3000;
+    msg.msg_id = 100;
 
     std::string key("testkey");
     // add watcher
@@ -84,36 +91,40 @@ TEST(TestWatcherSet, Base) {
     ws.CheckAddWatcher(key, 1);
 
     // del watcher
-    auto del_ret = ws.DelWatcher(key, 1);
-    ASSERT_EQ(0, del_ret);
-
+    auto del_ret = ws.DelWatcher((int64_t)1, key);
+    ASSERT_EQ(0, (int)del_ret);
     ws.CheckDelWatcher(key, 1);
-
 }
 
 TEST(TestTimer, Base) {
     using namespace range;
-    Timer<Watcher> timer;
+    TimerQueue<Watcher> timer;
 
-    common::ProtoMessage m1 = {
-            .expire_time = 10,
-    };
-    auto k1 = new std::string("key1");
+    common::ProtoMessage m1;
+    m1.expire_time = 10;
+    std::string k1("key1");
 
-    common::ProtoMessage m2 = {
-            .expire_time = 5,
-    };
-    auto k2 = new std::string("key2");
-    timer.push(Watcher{&m1, k1});
-    timer.push(Watcher{&m2, k2});
+    common::ProtoMessage m2;
+    m2.expire_time = 5;
+    std::string k2("key2");
+
+    Watcher w1;
+    w1.msg_ = &m1;
+    w1.key_ = &k1;
+    Watcher w2;
+    w2.msg_ = &m2;
+    w2.key_ = &k2;
+    timer.push(w1);
+    timer.push(w2);
 
     auto queue = timer.GetQueue();
     ASSERT_TRUE(queue.size() == 2);
 
     auto i = 0;
-    for (auto it = queue.begin(); it != queue.end(); ++it) {
-        if (i == 0) { ASSERT_TRUE(it->key_ == k2 && it->msg_->expire_time == 5); }
-        if (i == 1) { ASSERT_TRUE(it->key_ == k1 && it->msg_->expire_time == 10); }
+//    for (auto it = queue.begin(); it != queue.end(); ++it) {
+    for (auto it: queue) {
+        if (i == 0) { ASSERT_TRUE(it.key_ == &k2 && it.msg_->expire_time == 5); }
+        if (i == 1) { ASSERT_TRUE(it.key_ == &k1 && it.msg_->expire_time == 10); }
         ++i;
     }
 }
@@ -131,7 +142,7 @@ TEST(TestEncodeDecodeKey, Base) {
     std::vector<std::string*> de_keys;
     DecodeWatchKey(de_keys, &buf);
     ASSERT_TRUE(de_keys.size() == 1);
-    ASSERT_TRUE(*(de_keys[0])->c_str() == "key1");
+    ASSERT_TRUE(*(de_keys[0]) == std::string("key1"));
 }
 
 TEST(TestEncodeDecodeValue, Base) {
@@ -141,12 +152,13 @@ TEST(TestEncodeDecodeValue, Base) {
 //                          const std::string *extend);
 //    bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
 //                          std::string &buf);
+    using namespace range;
     std::string buf;
 
     int64_t ver = 123;
     auto v = std::string("value123");
     auto ext = std::string("extend123");
-    EncodeWatchValue(buf, ver, &v, &ext);
+    EncodeWatchValue(&buf, ver, &v, &ext);
 
     int64_t de_ver;
     std::string de_v;
