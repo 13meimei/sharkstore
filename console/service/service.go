@@ -2242,6 +2242,7 @@ func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]st
 
 	}(respose)
 
+	//todo gw all addr
 	waitLock.Add(1)
 	go func(response map[string]string) {
 		defer waitLock.Done()
