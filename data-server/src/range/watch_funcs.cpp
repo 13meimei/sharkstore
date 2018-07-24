@@ -89,7 +89,12 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
         //add watch if client version is not equal to ds side
         auto start_version = req.req().startversion();
-        msg->expire_time = req.req().longpull();
+        if(req.req().longpull() > 0) {
+            uint64_t expireTime = getticks();
+            expireTime += req.req().longpull(); 
+
+            msg->expire_time = expireTime;
+        }
         //decode version from value
         FLOG_DEBUG("range[%" PRIu64 "] (%" PRIu64 " >= %" PRIu64 "?) WatchGet [%s]-%s ok.", 
                    meta_.id(), start_version, version, EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
@@ -97,6 +102,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             //to do add watch
             AddKeyWatcher(dbKey, msg);
             watchFlag = 1;
+        } else {
+            FLOG_DEBUG("range[%" PRIu64 "] no watcher(%d).", meta_.id(), watchFlag); 
         }
     }
     if(!watchFlag || err != nullptr) {
@@ -444,9 +451,12 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd) {
     }
 
     //notify watcher
-    ret = WatchNotify(watchpb::PUT, req.kv());
-    if (!ret.ok()) {
-        FLOG_ERROR("WatchNotify failed, code:%d, msg:%s", ret.code(), ret.ToString().c_str());
+    std::string errMsg("");
+    int32_t retCnt = WatchNotify(watchpb::PUT, req.kv(), errMsg);
+    if (retCnt < 0) {
+        FLOG_ERROR("WatchNotify failed, ret:%d, msg:%s", retCnt, errMsg.c_str());
+    } else {
+        FLOG_DEBUG("WatchNotify success, count:%d, msg:%s", retCnt, errMsg.c_str());
     }
     
     return ret;
@@ -488,17 +498,21 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd) {
 
     //notify watcher
     uint64_t version( req.kv().version());
-    
-    ret = WatchNotify(watchpb::DELETE, req.kv());
-    if (!ret.ok()) {
-        FLOG_ERROR("WatchNotify failed, code:%d, msg:%s", ret.code(), ret.ToString().c_str());
+    int32_t retCnt(0);
+    std::string errMsg("");
+    retCnt = WatchNotify(watchpb::DELETE, req.kv(), errMsg);
+    if (retCnt < 0) {
+        FLOG_ERROR("WatchNotify failed, ret:%d, msg:%s", retCnt, errMsg.c_str());
+    } else {
+        FLOG_DEBUG("WatchNotify success, count:%d, msg:%s", retCnt, errMsg.c_str());
     }
     
     return ret;
 }
 
-Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv) {
-    Status ret;
+int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, std::string &errMsg) {
+//    Status ret;
+    int32_t idx{0};
 
     std::shared_ptr<watchpb::WatchKeyValue> tmpKv = std::make_shared<watchpb::WatchKeyValue>();
     tmpKv->CopyFrom(kv);
@@ -506,6 +520,11 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
     std::vector<common::ProtoMessage*> vecProtoMsg;
     auto dbKey = tmpKv->key_size()>0?tmpKv->key(0):"NOFOUND";
     auto dbValue = tmpKv->value();
+    
+    if(dbKey == "NOFOUND") {
+        errMsg.assign("WatchNotify--key is empty.");
+        return -1;
+    }
 
     std::string key{""};
     std::string value{""};
@@ -520,9 +539,14 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
         funcId = funcpb::kFuncHeartbeat;
     }
 
+    /*
     if( Status::kOk != WatchCode::DecodeKv(funcId, meta_, tmpKv.get(), dbKey, dbValue, err)) {
-        return sharkstore::Status(Status::kUnknown, err->message(), "");
-    }
+        errMsg.assign("WatchNotify--Decode key:");
+        errMsg.append(dbKey);
+        errMsg.append(" fail.");
+
+        return -1;
+    }*/
     
     uint32_t watchCnt = GetKeyWatchers(vecProtoMsg, dbKey);
     if (watchCnt > 0) {
@@ -535,7 +559,6 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
         evt->set_type(evtType);
         evt->set_allocated_kv(tmpKv.get());
 
-        int32_t idx{0};
         for(auto pMsg : vecProtoMsg) {
             idx++;
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
@@ -544,10 +567,6 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
             resp->set_watchid(pMsg->session_id);
 
             context_->socket_session->Send(pMsg, ds_resp);
-            //if(0 != pMsg->socket->Send(*pMsg)) {
-            //    FLOG_ERROR("range[%" PRIu64 "] WatchPut-Notify error:[key][%s] (%d/%d)>>>[session][%lld]", 
-            //               meta_.id(), key, idx, watchCnt, pMsg->session_id);
-            //} else 
             {
                 //delete watch
                 if (WATCH_OK != DelKeyWatcher(pMsg->session_id, key)) {
@@ -556,9 +575,15 @@ Status Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watch
                 }
             }
         }
+    } else {
+        idx = 0;
+        errMsg.assign("no watcher");
+        FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify key:%s has no watcher.",
+                           meta_.id(), EncodeToHexString(dbKey).c_str());
+
     }
 
-    return ret;
+    return idx;
 
 }
 

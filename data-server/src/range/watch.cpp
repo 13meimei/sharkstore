@@ -94,11 +94,13 @@ WatcherSet::WatcherSet() {
                 if (timer_cond_.wait_until(lock, expire) == // todo
                     std::cv_status::timeout) {
 
-                    std::cout << "wait_until> expire:" << getticks() << std::endl;
+                    FLOG_DEBUG("thread send timeout response.");
                     // send timeout response
                     auto resp = new watchpb::DsWatchResponse;
                     resp->mutable_resp()->set_code(Status::kTimedOut);
                     common::SocketSessionImpl session;
+
+                    FLOG_DEBUG("session_id:%" PRIu64 " msg_id:%" PRIu64 " test.", w.msg_->session_id, w.msg_->msg_id);
                     session.Send(w.msg_, resp);
 
                     // delete watcher
@@ -111,10 +113,10 @@ WatcherSet::WatcherSet() {
                         }
 
                         auto keys = wit->second; // key map
-                        auto itKeys = keys->find(*key);
+                        auto itKeys = keys->find(key);
 
                         if (itKeys != keys->end()) {
-                            auto itKeyIdx = key_index_.find(*key);
+                            auto itKeyIdx = key_index_.find(key);
 
                             if (itKeyIdx != key_index_.end()) {
                                 auto itSession = itKeyIdx->second->find(id);
@@ -143,6 +145,15 @@ WatcherSet::WatcherSet() {
 WatcherSet::~WatcherSet() {
     watchers_expire_thread_continue_flag = false;
     watchers_expire_thread_.join();
+
+    //to do release pointer
+    for(auto it:key_index_) {
+        free(it.second);
+    }
+    //to do release pointer
+    for(auto it:watcher_index_) {
+        free(it.second);
+    }
 }
 
 int32_t WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
@@ -154,8 +165,7 @@ int32_t WatcherSet::AddWatcher(std::string &name, common::ProtoMessage *msg) {
         return -1;
     }
     //std::shared_ptr<common::ProtoMessage> msgPtr = std::make_shared<common::protoMessage>(*msg);
-    auto msgPtr = new common::ProtoMessage(*msg); 
-    timer_.push(Watcher(msgPtr, &name));
+    timer_.push(Watcher(msg, name));
     
     // build key name to watcher session id
     auto kit0 = key_index_.find(name);
@@ -202,7 +212,7 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
     //  timer_.find and del
     auto timer_queue = timer_.GetQueue();
     for (auto it = timer_queue.begin(); it != timer_queue.end(); ++it) {
-        if (it->msg_->session_id == id && *(it->key_) == key) {
+        if (it->msg_->session_id == id && it->key_ == key) {
             timer_.GetQueue().erase(it);
         }
     }
@@ -211,6 +221,7 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
     int64_t tmpSessionId(id);
     auto wit = watcher_index_.find(tmpSessionId);
     if (wit == watcher_index_.end()) {
+        std::cout << "return fail" << std::endl;
         return WATCH_WATCHER_NOT_EXIST;
     }
     //KeySet_*
@@ -218,7 +229,8 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
     auto itKeys = keys->find(key);
 
     if (itKeys != keys->end()) {
-        auto itKeyIdx = key_index_.find(std::move(key));
+        std::cout << "find key:" << key << std::endl;
+        auto itKeyIdx = key_index_.find(key);
 
         if (itKeyIdx != key_index_.end()) {
             auto itSession = itKeyIdx->second->find(std::move(id));
