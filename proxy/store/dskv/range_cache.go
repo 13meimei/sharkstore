@@ -96,6 +96,7 @@ func (c *RangeCache) LocateKey(bo *Backoffer, key []byte) (*KeyLocation, error) 
 	}
 	c.mu.Unlock()
 	r := rs[0]
+	log.Debug("load range key:%v,range:%d [%v-%v] leader:%d",key,r.GetID(),r.StartKey(),r.EndKey(),r.Leader().String())
 	return &KeyLocation{
 		Region:   r.VerID(),
 		StartKey: r.StartKey(),
@@ -307,7 +308,7 @@ func (c *RangeCache) OnRegionStale(ctx *Context, newRegions []*metapb.Range) err
 		}
 		// TODO new range leader In most cases, it is the same as the original.
 		region.SwitchPeer(ctx.NodeId)
-		log.Warn("regionCache add %v",region)
+		log.Info("regionCache add range[%v-%v] %d ",region.StartKey(),region.EndKey(),region.GetID())
 		c.insertRegionToCache(region)
 	}
 	return nil

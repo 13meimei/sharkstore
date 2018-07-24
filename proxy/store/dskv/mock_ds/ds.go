@@ -10,7 +10,6 @@ import (
 	"model/pkg/kvrpcpb"
 	"bufio"
 	"time"
-	"model/pkg/funcpb"
 	"model/pkg/metapb"
 	"model/pkg/schpb"
 	"model/pkg/errorpb"
@@ -19,6 +18,8 @@ import (
 	commonUtil "util"
 	"os"
 	"util/log"
+	"util/encoding"
+	"model/pkg/funcpb"
 )
 
 //启动参数： 端口 CPU数
@@ -66,11 +67,13 @@ type DsRpcServer struct {
 }
 
 func NewDsRpcServer(addr string, path string) *DsRpcServer {
+
 	store, err := goleveldb.NewLevelDBDriver(path)
 	if err != nil {
 		os.Exit(-1)
 		return nil
 	}
+
 	return &DsRpcServer{rpcAddr: addr, conns: make(map[uint64]net.Conn), rngs: make(map[uint64]*metapb.Range),
 			childRngs: make(map[uint64]*metapb.Range),
 			store:store}
@@ -175,6 +178,8 @@ func (svr *DsRpcServer) Stop() {
 	svr.wg.Wait()
 
 	// TODO clear data
+	svr.store.Close()
+
 }
 
 const (
@@ -278,6 +283,9 @@ func (svr *DsRpcServer) insert(msg *dsClient.Message) {
 	msg.SetData(data)
 }
 
+/**
+select all
+ */
 func (svr *DsRpcServer) query(msg *dsClient.Message) {
 	var resp *kvrpcpb.DsSelectResponse
 	req := new(kvrpcpb.DsSelectRequest)
@@ -289,11 +297,13 @@ func (svr *DsRpcServer) query(msg *dsClient.Message) {
 		rngEpoch := req.Header.GetRangeEpoch();
 		rangeId := req.Header.GetRangeId()
 		rng := svr.GetRange(rangeId)
+		log.Info("query range:%d,startKey:%v,endKey:%v",rangeId,rng.StartKey,rng.EndKey)
 		if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
 
 
 			it := svr.store.NewIterator(rng.StartKey, rng.EndKey)
 			rows := make([]*kvrpcpb.Row, 0)
+
 			for it.Next() {
 				fields := make([]byte,0)
 				row := new(kvrpcpb.Row)
@@ -313,7 +323,31 @@ func (svr *DsRpcServer) query(msg *dsClient.Message) {
 						log.Error("encode pk err:%s",err.Error())
 					}
 				}
-				row.Fields = append(fields,it.Value()...)
+				//value可能无序
+				fieldBuf := it.Value()
+				var colId uint32
+				var typ encoding.Type
+				var val []byte
+				var max uint32 = 0
+				filedMap:=make(map[uint32][]byte)
+				for len(fieldBuf) > 0 {
+					filedCodeBuf := make([]byte,0)
+					fieldBuf,colId,val,typ,err =commonUtil.DecodeValue2(fieldBuf)
+					log.Debug("decode field colId:%d,val:%v,type:%d",colId,val,typ)
+					filedCodeBuf,_ = commonUtil.EncodeValue2(filedCodeBuf,colId,typ,val)
+					filedMap[colId]=filedCodeBuf
+					if colId > max {
+						max = colId
+					}
+				}
+
+				for i:=uint32(0);i<=max;i++{
+					if v,ok := filedMap[i];ok{
+						fields = append(fields,v...)
+					}
+				}
+
+				row.Fields = fields
 				rows = append(rows, row)
 			}
 
@@ -337,6 +371,9 @@ func (svr *DsRpcServer) query(msg *dsClient.Message) {
 	msg.SetData(data)
 }
 
+/**
+delete one key or delete all
+ */
 func (svr *DsRpcServer) delete(msg *dsClient.Message) {
 	var resp *kvrpcpb.DsDeleteResponse
 	req := new(kvrpcpb.DsDeleteRequest)
@@ -352,10 +389,31 @@ func (svr *DsRpcServer) delete(msg *dsClient.Message) {
 
 			key := req.Req.GetKey()
 			if key != nil {
-				svr.store.Delete(key)
+				num :=0
+				err:=svr.store.Delete(key)
+				if err != nil {
+					log.Error("delete key:%v err %s",key,err.Error())
+				}else{
+					num++
+				}
+				resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{},Resp:&kvrpcpb.DeleteResponse{AffectedKeys:uint64(num)}}
+			}else{
+				it := svr.store.NewIterator(rng.StartKey, rng.EndKey)
+
+				num :=0
+				for it.Next() {
+					err := svr.store.Delete(it.Key())
+					if err != nil {
+						log.Error("delete key:%v err %s",it.Key(),err.Error())
+					}else{
+						num++
+					}
+
+				}
+				resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{},Resp:&kvrpcpb.DeleteResponse{AffectedKeys:uint64(num)}}
 			}
 
-			resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{},Resp:&kvrpcpb.DeleteResponse{AffectedKeys:1}}
+
 
 		}else{
 			resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.DeleteResponse{Code: 1,}}

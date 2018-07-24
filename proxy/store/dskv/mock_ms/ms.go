@@ -29,6 +29,7 @@ type Cluster struct {
 
 	cli      client.SchClient
 	server   *server.Server
+	grpcServer *grpc.Server
 }
 
 
@@ -75,9 +76,12 @@ func (c *Cluster) Start() {
 	if err = s.Serve(lis); err != nil {
 		log.Fatal("failed to serve: %v", err)
 	}
+	c.grpcServer = s
+
 }
 
 func (c *Cluster) Stop() {
+	c.grpcServer.Stop()
 
 }
 

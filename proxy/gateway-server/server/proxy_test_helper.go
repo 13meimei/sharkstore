@@ -20,6 +20,8 @@ import (
 
 	"golang.org/x/net/context"
 	"util/deepcopy"
+	"os"
+	"util/log"
 )
 
 const testDBName = "testdb"
@@ -110,7 +112,7 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 }
 
 func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs... *metapb.Range) *Proxy {
-
+	log.Info("create Test Proxy2")
 	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
 	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
 	ms.SetDb(db)
@@ -124,6 +126,7 @@ func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs... *metapb.Ran
 	go ms.Start()
 	MockMs = ms
 	time.Sleep(time.Second)
+	destoryDir(dsPath)
 	ds := mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
 	for _,rng := range rngs {
 		rng :=deepcopy.Iface(rng).(*metapb.Range)
@@ -170,6 +173,18 @@ func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs... *metapb.Ran
 	p.wg.Add(1)
 	go p.workMonitor()
 	return p
+}
+func destoryDir(path string) {
+	os.RemoveAll(path)
+}
+
+func CloseMock(p *Proxy){
+	//p.msCli.Close()
+	//p.dsCli.Close()
+	//time.Sleep(time.Second*30)
+	//MockDs.Stop()
+	//MockMs.Stop()
+
 }
 
 func makeTestTable(colInfos []*columnInfo) *metapb.Table {
