@@ -51,24 +51,32 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
-        //decode value and response to client 
-        auto resp = ds_resp->mutable_resp();
-        resp->set_watchid(msg->session_id);
-        resp->set_code(Status::kOk);
-        resp->set_code(static_cast<int>(ret.code()));
-        
-        //auto val = std::make_shared<std::string>();
-        //auto ext = std::make_shared<std::string>();
-        auto evt = resp->add_events();
-        auto tmpKv = req.mutable_req()->mutable_kv();
-        //decode value
-        if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncWatchGet, meta_, tmpKv, dbKey, dbValue, err)) {
-            break;
+        if(ret.ok()) {
+            //decode value and response to client 
+            auto resp = ds_resp->mutable_resp();
+            resp->set_watchid(msg->session_id);
+            //resp->set_code(Status::kOk);
+            resp->set_code(static_cast<int>(ret.code()));
+
+            //auto val = std::make_shared<std::string>();
+            //auto ext = std::make_shared<std::string>();
+            auto evt = resp->add_events();
+            auto tmpKv = req.mutable_req()->mutable_kv();
+            //decode value
+            if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncWatchGet, meta_, tmpKv, dbKey, dbValue, err)) {
+                break;
+            }
+
+            evt->set_type(watchpb::PUT);
+            evt->set_allocated_kv(tmpKv);
+            version = tmpKv->version();
+            FLOG_WARN("range[%" PRIu64 "] WatchGet version: [%" PRIu64 "]", meta_.id(), version);
+        } else {
+            version = 0;
+            FLOG_WARN("range[%" PRIu64 "] WatchGet code_: %s", meta_.id(), ret.ToString().c_str());
         }
 
-        evt->set_type(watchpb::PUT);
-        evt->set_allocated_kv(tmpKv);
-        
+
     } while (false);
 
     static int16_t watchFlag{0};
@@ -103,7 +111,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     auto btime = get_micro_second();
     context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
-    auto ds_resp = new watchpb::DsWatchResponse;
+    auto ds_resp = new watchpb::DsKvWatchGetMultiResponse;
     auto header = ds_resp->mutable_header();
     //encode key and value
     std::string dbKey{""};
@@ -133,7 +141,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             break;
         }
 
-        FLOG_WARN("range[%" PRIu64 "] PureGet before:%s EncodeKey:%s", meta_.id(), key[0].c_str(), dbKey.c_str());
+        FLOG_WARN("range[%" PRIu64 "] PureGet key before:%s after:%s", meta_.id(), key[0].c_str(), EncodeToHexString(dbKey).c_str());
 
         auto epoch = req.header().range_epoch();
         bool in_range = KeyInRange(dbKey);
@@ -146,16 +154,18 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             }
         }
 
-        auto resp = ds_resp->mutable_resp();
+        auto resp = ds_resp;
         auto btime = get_micro_second();
         storage::Iterator *it = nullptr;
         Status::Code code = Status::kOk;
 
         if (prefix) {
-            if( 0 != WatchCode::NextComparableBytes(dbKey.data(), dbKey.size(), &dbKeyEnd)) {
+            dbKeyEnd.assign(dbKey);
+            if( 0 != WatchCode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
+                //to do set error message
                 break;
             }
-            FLOG_DEBUG("range[%" PRIu64 "] PureGet key scope %s---%s", meta_.id(), dbKey.data(), dbKeyEnd.data());
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet key scope %s---%s", meta_.id(), EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbKeyEnd).c_str());
 
             //need to encode and decode
             std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
@@ -163,11 +173,13 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
 
             for (int i = 0; iterator->Valid() ; ++i) {
                 count++;
-                auto kv = resp->add_events()->mutable_kv();
+                auto kv = resp->add_kvs();
                 auto tmpDbValue = iterator.get()->value();
                 
                 if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, tmpDbValue, err)) {
-                    break;
+                    //break;
+                    continue;
+                    FLOG_DEBUG("range[%" PRIu64 "] dbvalue:%s  err:%s", meta_.id(), EncodeToHexString(tmpDbValue).c_str(), err->message().c_str());
                 }
                 //to judge version after decoding value and spliting version from value
                 if (minVersion > kv->version()) {
@@ -183,16 +195,17 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             FLOG_DEBUG("range[%" PRIu64 "] PureGet ok:%d ", meta_.id(), count);
             code = Status::kOk;
         } else {
-            auto kv = resp->add_events()->mutable_kv();
+            auto kv = resp->add_kvs();
             
             auto ret = store_->Get(dbKey, &dbValue);
             //to do decode value version             
             FLOG_DEBUG("range[%" PRIu64 "] PureGet:%s---%s  ", meta_.id(), EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
             if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, dbValue, err)) {
+                FLOG_DEBUG("range[%" PRIu64 "] dbvalue:%s  err:%s", meta_.id(), EncodeToHexString(dbValue).c_str(), err->message().c_str());
                 break;
             }
             
-            FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s value:%s ", meta_.id(), code, ret.ToString().data(), kv->value().c_str());
+            FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s ori-value:%s ", meta_.id(), code, ret.ToString().data(), kv->value().c_str());
             code = ret.code();
         }
         context_->run_status->PushTime(monitor::PrintTag::Store,
@@ -251,6 +264,8 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
             break;
         }
         kv->set_version(version);
+        FLOG_DEBUG("range[%" PRIu64 "] WatchPut key-version[%" PRIu64 "]", meta_.id(), version);
+
         if( Status::kOk != WatchCode::EncodeKv(funcpb::kFuncWatchPut, meta_, kv, *dbKey, *dbValue, err) ) {
             break;
         }

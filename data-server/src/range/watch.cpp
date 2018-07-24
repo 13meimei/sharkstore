@@ -89,9 +89,12 @@ WatcherSet::WatcherSet() {
                 auto milli = std::chrono::milliseconds(w.msg_->expire_time);
                 std::chrono::system_clock::time_point expire( milli);
 
+                std::cout << "wait_until> expire:" << milli.count() << "    now:" << getticks() << std::endl;
+
                 if (timer_cond_.wait_until(lock, expire) == // todo
                     std::cv_status::timeout) {
 
+                    std::cout << "wait_until> expire:" << getticks() << std::endl;
                     // send timeout response
                     auto resp = new watchpb::DsWatchResponse;
                     resp->mutable_resp()->set_code(Status::kTimedOut);
@@ -339,6 +342,9 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             case funcpb::kFuncWatchDel:
                 //decode value
                 DecodeWatchValue(&version, val.get(), ext.get(), db_value);
+                
+                FLOG_WARN("range[%" PRIu64 "] version(decode from value)[%" PRIu64 "]", meta_.id(), version);
+
                 if(kv->key_size() <= 0)
                     kv->add_key();
                 kv->set_key(0, db_key);
@@ -359,7 +365,10 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
         return ret;
 }
 
-int16_t  WatchCode::NextComparableBytes(const char *key, const int16_t len, std::string *result) {
+int16_t  WatchCode::NextComparableBytes(const char *key, const int16_t len, std::string &result) {
+    if(len > 0) {
+        result.resize(len);
+    }
 
     for( auto i = len - 1; i >= 0; i--) {
 
@@ -367,7 +376,7 @@ int16_t  WatchCode::NextComparableBytes(const char *key, const int16_t len, std:
 
         if( keyNo < 0xff) {
             keyNo++;
-            *result = key;
+            //*result = key;
             result[i] = static_cast<char>(keyNo);
 
             return 0;

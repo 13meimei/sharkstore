@@ -6,6 +6,7 @@
 #include "base/util.h"
 #include "storage/meta_store.h"
 //#include "storage/store.h"
+#include <iostream>
 
 #define DEFAULT_CACHE_SIZE 1
 
@@ -37,11 +38,16 @@ public:
         if(ret.ok()) {
             seq_.fetch_add(tmpSeqId);
             seq_end_ += seq_ + cache_;
+            std::cout << ">>>>>>seq_:" << seq_ << "end:" << seq_end_ << "tmpseq:" << tmpSeqId << std::endl;
+            uint64_t tmpId = seq_;
+            FLOG_DEBUG("seq_[%" PRIu64 "] seq_end_[%" PRIu64 "]", tmpId, seq_end_);
 
             if( 0 == saveToDb(seq_end_) ) initFlag = true;
         } else {
             initFlag = false;
             setErrMsg(ret.ToString());
+            uint64_t tmpId = seq_;
+            FLOG_DEBUG("init fail and default value of seq_[%" PRIu64 "] seq_end_[%" PRIu64 "]", tmpId, seq_end_);
         }
 
         return;
@@ -68,7 +74,8 @@ public:
                 id = new int64_t(0L);
             }
 
-            *id = seq_.fetch_add(1);
+            seq_.fetch_add(1);
+            *id = seq_;
 
             if (static_cast<uint64_t>(*id) >= seq_end_) {
                 seq_end_ = static_cast<uint64_t>(*id) + cache_;
@@ -123,18 +130,18 @@ private:
     }
 
 private:
-    std::atomic<int64_t> seq_;
-    int64_t seq_end_ = 0;
+    std::atomic<int64_t> seq_{0};
+    uint64_t seq_end_ = 0;
     uint32_t cache_ = 0;
 
     uint64_t range_id_ = 0;
-    std::string range_key_;
+    std::string range_key_{""};
 
     sharkstore::dataserver::storage::MetaStore *store_ = nullptr;
     
     bool initFlag = false;
     std::string errMsg;
-    int32_t saveCnt = 0;
+    uint32_t saveCnt_ = 0;
 
     std::mutex mtx_;
 };
