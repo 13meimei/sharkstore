@@ -514,15 +514,13 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd) {
 int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, std::string &errMsg) {
 //    Status ret;
     int32_t idx{0};
-
-    std::shared_ptr<watchpb::WatchKeyValue> tmpKv = std::make_shared<watchpb::WatchKeyValue>();
-    tmpKv->CopyFrom(kv);
+    const auto &encodeKv = kv;
 
     std::vector<common::ProtoMessage*> vecProtoMsg;
-    auto dbKey = tmpKv->key_size()>0?tmpKv->key(0):"NOFOUND";
-    auto dbValue = tmpKv->value();
+    auto dbKey = encodeKv.key_size()>0?encodeKv.key(0):"EMPTY-KEY";
+    auto dbValue = encodeKv.value();
     
-    if(dbKey == "NOFOUND") {
+    if(dbKey == "EMPTY-KEY") {
         errMsg.assign("WatchNotify--key is empty.");
         return -1;
     }
@@ -531,23 +529,6 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     std::string value{""};
     errorpb::Error *err = nullptr;
 
-    funcpb::FunctionID funcId;
-    if (watchpb::PUT == evtType) {
-        funcId = funcpb::kFuncWatchPut;
-    } else if (watchpb::DELETE == evtType) {
-        funcId = funcpb::kFuncWatchDel;
-    } else {
-        funcId = funcpb::kFuncHeartbeat;
-    }
-
-    /*
-    if( Status::kOk != WatchCode::DecodeKv(funcId, meta_, tmpKv.get(), dbKey, dbValue, err)) {
-        errMsg.assign("WatchNotify--Decode key:");
-        errMsg.append(dbKey);
-        errMsg.append(" fail.");
-
-        return -1;
-    }*/
     
     uint32_t watchCnt = GetKeyWatchers(vecProtoMsg, dbKey);
     if (watchCnt > 0) {
@@ -558,9 +539,34 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
         auto evt = resp->add_events();
         evt->set_type(evtType);
-        evt->set_allocated_kv(tmpKv.get());
+        //to do decode kv before send
+        auto decodeKv = new watchpb::WatchKeyValue;
+        decodeKv->CopyFrom(encodeKv);
+
+    //    evt->set_allocated_kv(tmpKv.get());
+        funcpb::FunctionID funcId;
+        if (watchpb::PUT == evtType) {
+            funcId = funcpb::kFuncWatchPut;
+        } else if (watchpb::DELETE == evtType) {
+            funcId = funcpb::kFuncWatchDel;
+        } else {
+            funcId = funcpb::kFuncWatchPut;
+        }
+
+        if( Status::kOk != WatchCode::DecodeKv(funcId, meta_, decodeKv, dbKey, dbValue, err)) {
+            errMsg.assign("WatchNotify--Decode key:");
+            errMsg.append(dbKey);
+            errMsg.append(" fail.");
+
+            return -1;
+        }
+        evt->set_allocated_kv(decodeKv);
 
         for(auto pMsg : vecProtoMsg) {
+            if(pMsg == nullptr) {
+                FLOG_WARN("WatchNotify...protoMessage pointer is null,skip notify.");
+                continue;
+            }
             idx++;
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                        meta_.id(), key.c_str(), idx, watchCnt, pMsg->session_id);

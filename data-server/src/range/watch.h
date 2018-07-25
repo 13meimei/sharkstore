@@ -47,7 +47,7 @@ public:
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err);
     
-    static int16_t  NextComparableBytes(const char *key, const int16_t len, std::string &result);
+    static int16_t  NextComparableBytes(const char *key, const int32_t &len, std::string &result);
 };
 
 enum WATCH_CODE {
@@ -95,6 +95,10 @@ public:
     int32_t AddWatcher(std::string &, common::ProtoMessage*);
     WATCH_CODE DelWatcher(int64_t, const std::string &);
     uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , std::string &);
+    
+    uint32_t GetWatcherSize() {
+        return static_cast<uint32_t>(key_index_.size());
+    }
 
 private:
     Key2Watchers_ key_index_;

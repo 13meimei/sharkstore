@@ -6,8 +6,8 @@
 namespace sharkstore {
 namespace dataserver {
 namespace range {
-int32_t Range::AddKeyWatcher(std::string &name, common::ProtoMessage *msg) {
-    return key_watchers_.AddWatcher(name, msg);
+int32_t Range::AddKeyWatcher(std::string &encodeKey, common::ProtoMessage *msg) {
+    return key_watchers_.AddWatcher(encodeKey, msg);
 }
 
 WATCH_CODE Range::DelKeyWatcher(int64_t &id, std::string &key) {
@@ -42,12 +42,12 @@ bool DecodeWatchKey(std::vector<std::string *> &keys, std::string *buf) {
 
     size_t offset;
     for (offset = 9; offset != buf->length() - 1;) {
-        std::string* b = new std::string();
+        std::string* key = new std::string;
         
-        if (!DecodeBytesAscending(*buf, offset, b)) {
+        if (!DecodeBytesAscending(*buf, offset, key)) {
             return false;
         }
-        keys.push_back(b);
+        keys.push_back(key);
     }
     return true;
 }
@@ -110,7 +110,7 @@ WatcherSet::WatcherSet() {
                         FLOG_WARN("session_id:%" PRIu64 " msg_id:%" PRIu64 " show session_id&msg_id.", w.msg_->session_id, w.msg_->msg_id);
                         session.Send(w.msg_, resp);
                     } else {
-                        FLOG_ERROR("msg is null");
+                        FLOG_ERROR("msg is null or session_id is illegal.");
                     }
 
                     // delete watcher
@@ -264,6 +264,8 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
 
 uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage *> &vec, std::string &name) {
     std::lock_guard<std::mutex> lock(mutex_);
+    vec.clear();
+
     timer_cond_.notify_one();
 
     auto kit = key_index_.find(name);
@@ -275,8 +277,6 @@ uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage *> &vec, std::
     uint32_t msgSize = static_cast<uint32_t>(watchers->size());
 
     if (msgSize > 0) {
-        vec.resize(msgSize);
-
         for (auto it = watchers->begin(); it != watchers->end(); ++it) {
             vec.emplace_back(it->second);
         }
@@ -363,14 +363,30 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             case funcpb::kFuncPureGet:
             case funcpb::kFuncWatchPut:
             case funcpb::kFuncWatchDel:
-                //decode value
+                //decode key to kv
+                if(!db_key.empty()) {
+                    std::vector<std::string *> encodeKeys; 
+
+                    if (DecodeWatchKey( encodeKeys, &db_key )) {
+                        kv->clear_key();
+                        for(auto itKey:encodeKeys) {
+                            kv->add_key(*itKey);
+                        }
+                    } 
+                    
+                    //to do free keys
+                    {
+                        for(auto itKey:encodeKeys) {
+                            free(itKey);
+                        }
+                    }
+                }
+
+                //decode value to kv
                 DecodeWatchValue(&version, val.get(), ext.get(), db_value);
                 
                 FLOG_WARN("range[%" PRIu64 "] version(decode from value)[%" PRIu64 "]", meta_.id(), version);
 
-                if(kv->key_size() <= 0)
-                    kv->add_key();
-                kv->set_key(0, db_key);
                 kv->set_value(*val);
                 kv->set_version(version);
                 kv->set_ext(*ext);
@@ -388,7 +404,7 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
         return ret;
 }
 
-int16_t  WatchCode::NextComparableBytes(const char *key, const int16_t len, std::string &result) {
+int16_t  WatchCode::NextComparableBytes(const char *key, const int32_t &len, std::string &result) {
     if(len > 0) {
         result.resize(len);
     }

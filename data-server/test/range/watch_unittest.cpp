@@ -330,7 +330,8 @@ TEST_F(WatchTest, watch) {
     }
 
     {
-        // begin test watch_put (key empty)
+        // begin test watch_put group (key ok)
+        FLOG_DEBUG("watch_put group mode.");
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
@@ -345,7 +346,8 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
-        req.mutable_req()->mutable_kv()->add_key("");
+        req.mutable_req()->mutable_kv()->add_key("01003001");
+        req.mutable_req()->mutable_kv()->add_key("01003002");
         req.mutable_req()->mutable_kv()->set_value("01003001:value");
 
         auto len = req.ByteSizeLong();
@@ -358,8 +360,7 @@ TEST_F(WatchTest, watch) {
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
+        ASSERT_FALSE(resp.header().has_error());
 
         // end test watch_put
     }
@@ -478,7 +479,43 @@ TEST_F(WatchTest, watch) {
 
     }
 
-    std::cout << "pure_get ...prefix ok" << '\n';
+    FLOG_DEBUG("pure_get ...group ok");
+    {
+        // begin test pure_get(ok)
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+        watchpb::DsKvWatchGetMultiRequest req;
+
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_kv()->add_key("01003001");
+        req.mutable_kv()->add_key("01003002");
+        req.mutable_kv()->set_version(0);
+        req.mutable_kv()->set_tableid(1);
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->PureGet(msg);
+
+        watchpb::DsKvWatchGetMultiResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        ASSERT_FALSE(resp.header().has_error());
+        if(resp.kvs_size()) {
+            ;
+            ASSERT_TRUE(resp.kvs(0).value() == "01003001:value");
+        } else {
+            std::cout << "no kvs_size" << std::endl;
+        }
+
+    }
+
+    FLOG_DEBUG("pure_get ...prefix ok");
     {
         // begin test pure_get(ok)
         auto msg = new common::ProtoMessage;
@@ -515,7 +552,7 @@ TEST_F(WatchTest, watch) {
 
     
         // end test watch_get
-    std::cout << "watch_get 0...ok" << '\n';
+    FLOG_DEBUG("watch_get ... ok");
     {
         // begin test watch_get(ok)
         auto msg = new common::ProtoMessage;
@@ -528,6 +565,43 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01003001");
+        req.mutable_req()->mutable_kv()->set_version(0);
+        req.mutable_req()->set_longpull(now+5000);
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->WatchGet(msg);
+
+        watchpb::DsWatchResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        ASSERT_FALSE(resp.header().has_error());
+        if(resp.resp().events_size()) {
+            ;
+            ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
+        }
+
+        // end test watch_get
+    }
+
+
+    FLOG_DEBUG("watch_get group...ok");
+    {
+        // begin test watch_get(ok)
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
+        watchpb::DsWatchRequest req;
+
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_req()->mutable_kv()->add_key("01003001");
+        req.mutable_req()->mutable_kv()->add_key("01003002");
         req.mutable_req()->mutable_kv()->set_version(0);
         req.mutable_req()->set_longpull(now+5000);
 
