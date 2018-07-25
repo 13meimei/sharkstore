@@ -176,6 +176,8 @@ set(SOURCES
     src/monitor/datacacl.cpp
     src/monitor/encodedata.cpp
     src/monitor/rangedata.cpp
+	src/watch/watcher.cpp
+	src/watch/watcher_set.cpp
 )
 
 if (APPLE)
