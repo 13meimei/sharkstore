@@ -187,7 +187,7 @@ TEST_F(WatchTest, watch) {
     {
         // begin test watch_put (no leader)
         auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 0000;
+        msg->expire_time = getticks() + 0;
         watchpb::DsKvWatchPutRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -971,7 +971,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
-        req.mutable_req()->set_longpull(now+5000000);
+        req.mutable_req()->set_longpull(now+5000);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);

@@ -358,8 +358,8 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 FLOG_WARN("range[%" PRIu64 "] version(decode from value)[%" PRIu64 "]", meta_.id(), version);
 
                 if(kv->key_size() <= 0)
-                    kv->add_key();
-                kv->set_key(0, db_key);
+                    kv->add_key(db_key);
+                //kv->set_key(0, db_key);
                 kv->set_value(*val);
                 kv->set_version(version);
                 kv->set_ext(*ext);
