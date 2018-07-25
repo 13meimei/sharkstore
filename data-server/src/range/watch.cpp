@@ -19,7 +19,7 @@ uint32_t Range::GetKeyWatchers(std::vector<common::ProtoMessage *> &vec, std::st
 }
 
 bool Watcher::operator<(const Watcher& other) const {
-    return msg_->expire_time > other.msg_->expire_time;
+    return msg_->expire_time < other.msg_->expire_time;
 }
 
 // encode keys into buffer
@@ -79,20 +79,26 @@ WatcherSet::WatcherSet() {
         while (watchers_expire_thread_continue_flag) {
             Watcher w;
             {
-                std::unique_lock<std::mutex> lock(mutex_);
-                if (timer_.empty()) {
-                    timer_cond_.wait_for(lock, std::chrono::milliseconds(10));
-                    continue; // sleep 10ms
+                {
+                    std::unique_lock<std::mutex> lock(mutex_);
+                    if (timer_.empty()) {
+                        timer_cond_.wait_for(lock, std::chrono::milliseconds(10));
+                        continue; // sleep 10ms
+                    }
+
+                    w = timer_.top();
                 }
 
-                w = timer_.top();
                 auto milli = std::chrono::milliseconds(w.msg_->expire_time);
                 std::chrono::system_clock::time_point expire( milli);
+                
+                {
+                    std::unique_lock<std::mutex> lock(mutex_);
+                    if(timer_cond_.wait_until(lock, expire) != std::cv_status::timeout)
+                        continue;
+                }
 
-                std::cout << "wait_until> expire:" << milli.count() << "    now:" << getticks() << std::endl;
-
-                if (timer_cond_.wait_until(lock, expire) == // todo
-                    std::cv_status::timeout) {
+                do {
 
                     FLOG_DEBUG("thread send timeout response.");
                     // send timeout response
@@ -100,8 +106,12 @@ WatcherSet::WatcherSet() {
                     resp->mutable_resp()->set_code(Status::kTimedOut);
                     common::SocketSessionImpl session;
 
-                    FLOG_DEBUG("session_id:%" PRIu64 " msg_id:%" PRIu64 " test.", w.msg_->session_id, w.msg_->msg_id);
-                    session.Send(w.msg_, resp);
+                    if(w.msg_ && w.msg_->session_id) {
+                        FLOG_WARN("session_id:%" PRIu64 " msg_id:%" PRIu64 " show session_id&msg_id.", w.msg_->session_id, w.msg_->msg_id);
+                        session.Send(w.msg_, resp);
+                    } else {
+                        FLOG_ERROR("msg is null");
+                    }
 
                     // delete watcher
                     {
@@ -109,7 +119,7 @@ WatcherSet::WatcherSet() {
                         auto key = w.key_;
                         auto wit = watcher_index_.find(id);
                         if (wit == watcher_index_.end()) {
-                            continue;
+                            break;
                         }
 
                         auto keys = wit->second; // key map
@@ -135,8 +145,9 @@ WatcherSet::WatcherSet() {
                         }
                     } // del watcher
 
-                    timer_.pop();
-                }
+                } while(false);
+            
+                timer_.pop();
             }
         }
     });
@@ -221,7 +232,6 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
     int64_t tmpSessionId(id);
     auto wit = watcher_index_.find(tmpSessionId);
     if (wit == watcher_index_.end()) {
-        std::cout << "return fail" << std::endl;
         return WATCH_WATCHER_NOT_EXIST;
     }
     //KeySet_*
@@ -229,7 +239,8 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
     auto itKeys = keys->find(key);
 
     if (itKeys != keys->end()) {
-        std::cout << "find key:" << key << std::endl;
+        FLOG_DEBUG("DelWatcher>>>find key:%s ok.", key.c_str());
+
         auto itKeyIdx = key_index_.find(key);
 
         if (itKeyIdx != key_index_.end()) {
@@ -358,8 +369,8 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 FLOG_WARN("range[%" PRIu64 "] version(decode from value)[%" PRIu64 "]", meta_.id(), version);
 
                 if(kv->key_size() <= 0)
-                    kv->add_key(db_key);
-                //kv->set_key(0, db_key);
+                    kv->add_key();
+                kv->set_key(0, db_key);
                 kv->set_value(*val);
                 kv->set_version(version);
                 kv->set_ext(*ext);

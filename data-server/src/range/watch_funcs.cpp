@@ -68,8 +68,9 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             }
 
             evt->set_type(watchpb::PUT);
-            evt->set_allocated_kv(tmpKv);
-            version = tmpKv->version();
+            auto respKv = evt->mutable_kv();
+            respKv->CopyFrom(*tmpKv);
+            version = respKv->version();
             FLOG_WARN("range[%" PRIu64 "] WatchGet version: [%" PRIu64 "]", meta_.id(), version);
         } else {
             version = 0;
