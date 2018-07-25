@@ -24,7 +24,7 @@ enum AdminType {
 }
 
 message AdminRequest {
-    AdminType typ  = 1;
+    AdminType typ = 1;
     AdminAuth auth = 2;
 
     SetConfigRequest set_cfg_req = 10;
