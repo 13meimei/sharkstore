@@ -1,5 +1,7 @@
 #include "send_task.h"
 
+#include <sstream>
+
 namespace sharkstore {
 namespace raft {
 namespace impl {
@@ -154,6 +156,18 @@ void SendSnapTask::Cancel() {
         canceled_ = true;
     }
     cv_.notify_one();
+}
+
+std::string SendSnapTask::Description() const {
+    std::ostringstream ss;
+    ss << "{";
+    ss << "\"id\": " << GetContext().id << ", ";
+    ss << "\"to\": " << GetContext().to<< ", ";
+    ss << "\"term\": " << GetContext().term << ", ";
+    ss << "\"uuid\": " << GetContext().uuid << ",";
+    ss << "\"ack\": " << ack_seq_;
+    ss << "}";
+    return ss.str();
 }
 
 } /* namespace impl */

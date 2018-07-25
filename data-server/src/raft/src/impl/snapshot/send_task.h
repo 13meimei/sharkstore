@@ -49,6 +49,8 @@ public:
     void Cancel() override;
     bool IsCanceled() const { return canceled_; }
 
+    std::string Description() const override;
+
 private:
     void run(SnapResult* result) override;
 
@@ -65,7 +67,7 @@ private:
     transport::Transport* transport_ = nullptr;
     Options opt_;
 
-    int64_t ack_seq_ = 0;
+    std::atomic<int64_t> ack_seq_ = {0};
     bool rejected_ = false;
     std::atomic<bool> canceled_ = {false};
     mutable std::mutex mu_;
