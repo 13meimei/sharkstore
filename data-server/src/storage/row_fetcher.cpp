@@ -56,6 +56,7 @@ Status RowFetcher::nextOneKey(RowResult* result, bool* over) {
 
     std::string buf;
     last_status_ = store_.Get(key_, &buf);
+    iter_count_++;
     if (last_status_.code() == Status::kNotFound) {
         last_status_ = Status::OK();
         *over = true;
