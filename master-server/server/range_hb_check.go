@@ -16,7 +16,7 @@ import (
 	"strconv"
 )
 
-type RegionHbCheckWorker struct {
+type RangeHbCheckWorker struct {
 	name     string
 	ctx      context.Context
 	cancel   context.CancelFunc
@@ -25,18 +25,18 @@ type RegionHbCheckWorker struct {
 
 func NewRangeHbCheckWorker(wm *WorkerManager, interval time.Duration) Worker {
 	ctx, cancel := context.WithCancel(wm.ctx)
-	return &RegionHbCheckWorker{
+	return &RangeHbCheckWorker{
 		name:     rangeHbCheckWorkerName,
 		ctx:      ctx,
 		cancel:   cancel,
 		interval: interval}
 }
 
-func (hb *RegionHbCheckWorker) GetName() string {
+func (hb *RangeHbCheckWorker) GetName() string {
 	return hb.name
 }
 
-func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
+func (hb *RangeHbCheckWorker) Work(cluster *Cluster) {
 	log.Debug("RegionHbCheckWorker: start to check region hb")
 	for _, table := range cluster.workingTables.GetAllTable() {
 		if table.GetStatus() != metapb.TableStatus_TableRunning {
@@ -117,18 +117,18 @@ func (hb *RegionHbCheckWorker) Work(cluster *Cluster) {
 	return
 }
 
-func (hb *RegionHbCheckWorker) AllowWork(cluster *Cluster) bool {
+func (hb *RangeHbCheckWorker) AllowWork(cluster *Cluster) bool {
 	if !cluster.IsLeader() {
 		return false
 	}
 	return true
 }
 
-func (hb *RegionHbCheckWorker) GetInterval() time.Duration {
+func (hb *RangeHbCheckWorker) GetInterval() time.Duration {
 	return hb.interval
 }
 
-func (hb *RegionHbCheckWorker) Stop() {
+func (hb *RangeHbCheckWorker) Stop() {
 	hb.cancel()
 }
 

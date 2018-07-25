@@ -7,7 +7,7 @@ import (
 	"util/log"
 )
 
-func CheckKey(path string, keysMap map[interface{}]uint8) error {
+func CheckKey(path string, keysMap map[string]uint8) error {
 	dirList, err := GetFiles(path)
 	if err != nil {
 		return err
@@ -26,8 +26,9 @@ func CheckKey(path string, keysMap map[interface{}]uint8) error {
 		}
 		records := reader.ReadRecords()
 		for _, r := range records {
-			if _, ok := keysMap[r.key]; ok {
-				log.Warn("still exist key : %v ", string(r.key))
+			if _, ok := keysMap[string(r.key)]; ok {
+				//todo check value
+				log.Warn("still exist key : %v; file: %v", string(r.key), fileName)
 				hit++
 			}
 		}

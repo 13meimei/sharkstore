@@ -117,7 +117,7 @@ func (r *Reader) ReadFooter(footer *BlobLogFooter) {
 }
 
 func (r *Reader) ReadSlice(size uint64) ([]byte, bool) {
-	if uint64(len(r.data)) < size {
+	if uint64(len(r.data)) < (r.nextByte + size){
 		log.Warn("read slice len less than need size %v", size)
 		return nil, false
 	}

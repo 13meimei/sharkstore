@@ -15,10 +15,10 @@ import (
 	"util/log"
 	"util/gogc"
 	"proxy/gateway-server/server"
-	"encoding/binary"
 	"model/pkg/metapb"
 	"util"
 	"proxy/benchmark/blob_store"
+	"sync"
 )
 
 var (
@@ -29,8 +29,12 @@ var (
 	UField      = []string{"user_name"}
 	PField      = []string{"pass_word"}
 
-	tableId uint64 = 23
+	tableId uint64 = 3
 	//tableId uint64 = 209
+
+	//blob db leavel
+	path = "/export/home/admin/source/fbase/src/data-server/build/db/data/blob_dir"
+	//path := "/Users/wumeijun/Documents"
 )
 
 func main() {
@@ -312,52 +316,76 @@ func correctCheck4DelAndInsert(s *server.Server) {
 	}
 }
 
+
 //delete most data, and check the db data at rocksdb level
 func correct4BatchDelete(s *server.Server) {
 	if s.GetCfg().BenchConfig.Scope < 1 || s.GetCfg().BenchConfig.Scope > 16384 {
 		log.Fatal("bench config scope should be between 1 and 16384")
 	}
-	var concurrentC uint32
+	temp := uint32(0)
+	concurrentC := &temp
 	var pkMap map[uint32][]string
 	pkMap = make(map[uint32][]string, s.GetCfg().BenchConfig.Scope)
-	for i := 1; i <= s.GetCfg().BenchConfig.Scope; i++ {
-		h := uint32(i - 1)
-		userNames, err := selectSource(s, h)
-		if err != nil {
-			log.Error("h: %v select user error %v", h, err)
-			atomic.AddUint32(&concurrentC, 1)
-			continue
-		}
-		if len(userNames) == 0 {
-			atomic.AddUint32(&concurrentC, 1)
-			log.Warn("h: %v  no user data", h)
-			continue
-		}
-		pkMap[h] = userNames
-		log.Info("h: %v source data length: %v", h, len(userNames))
 
-		time.Sleep(30 * time.Second)
-		go func() {
-			defer atomic.AddUint32(&concurrentC, 1)
-			deleteByH(s, h, len(userNames))
-		}()
+	var lock sync.Mutex
+
+	threadNum := s.GetCfg().BenchConfig.Threads
+	scope := s.GetCfg().BenchConfig.Scope // 1 ~ 16384
+	increase := scope/threadNum + 1
+	for concur := 0; concur < threadNum; concur++ {
+		start := concur * increase
+		end := start + increase
+		if start >= scope {
+			break
+		}
+		if end > scope {
+			end = scope
+		}
+		log.Info("handle h scope: start: %v, end: %v", start, end)
+		go func(cc *uint32) {
+			for i := start; i < end; i++ {
+				h := uint32(i)
+				userNames, err := selectSource(s, h)
+				if err != nil {
+					log.Error("h: %v select user error %v", h, err)
+					atomic.AddUint32(cc, 1)
+					continue
+				}
+				if len(userNames) == 0 {
+					atomic.AddUint32(cc, 1)
+					log.Warn("h: %v  no user data", h)
+					continue
+				}
+				lock.Lock()
+				pkMap[h] = userNames
+				lock.Unlock()
+				log.Info("h: %v source data length: %v", h, len(userNames))
+
+				time.Sleep(time.Second)
+				go func(cc2 *uint32) {
+					defer atomic.AddUint32(cc2, 1)
+					deleteByH(s, h, len(userNames))
+				}(cc)
+			}
+		}(concurrentC)
 	}
 
 	log.Info("start to wait concurrent finish")
 
 	for {
-		log.Info("loop ============, %v", atomic.LoadUint32(&concurrentC))
-		if int(atomic.LoadUint32(&concurrentC)) == s.GetCfg().BenchConfig.Scope {
+		log.Info("loop ============, %v", atomic.LoadUint32(concurrentC))
+		if int(atomic.LoadUint32(concurrentC)) == s.GetCfg().BenchConfig.Scope {
 			break
 		}
 		time.Sleep(time.Second)
 	}
 
-	log.Info("concurrent %v", concurrentC)
+	log.Info("concurrent %v", atomic.LoadUint32(concurrentC))
 
-	time.Sleep(20 * time.Minute)
+	time.Sleep(10 * time.Minute)
 
-	keyMap := make(map[interface{}]uint8, 0)
+	keyMap := make(map[string]uint8, 0)
+	value := uint8(0)
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < 5; i++ {
@@ -372,34 +400,30 @@ func correct4BatchDelete(s *server.Server) {
 			if err != nil {
 				continue
 			}
-			log.Debug("h:%d, user:%s, key:%v", tempH, u, string(key))
-			keyMap[key] = 0
+			log.Debug("pk: h:%d, user:%s, key:%v", tempH, u, string(key))
+			keyMap[string(key)] = value
 		}
 	}
 
-	//blob db leavel
-	path := "/export/home/admin/source/fbase/src/data-server/build/db/data/blob_dir"
-	//path := "/Users/wumeijun/Documents"
 	currentTime := time.Now()
 	for {
-		if err := blob_store.CheckKey(path, keyMap); err != nil  {
+		if err := blob_store.CheckKey(path, keyMap); err != nil {
 			log.Error("check key after delete error: %v", err)
 		} else {
 			break
 		}
-		time.Sleep(2*time.Minute)
+		time.Sleep(2 * time.Minute)
 	}
 	log.Info("delete from blob_dir elapsed time %v", time.Since(currentTime))
 }
 
-func getKey(h uint32, userName string)  ([]byte, error) {
+func getKey(h uint32, userName string) ([]byte, error) {
 	type Match struct {
 		column    string
 		sqlValue  []byte
 		matchType int
 	}
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, h)
+	bytes := []byte(fmt.Sprintf("%v", h))
 	var prefix []byte
 	var err error
 	if prefix, err = util.EncodePrimaryKey(prefix,
