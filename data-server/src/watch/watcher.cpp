@@ -6,8 +6,19 @@ namespace sharkstore {
 namespace dataserver {
 namespace watch {
 
-Watcher::Watcher(common::ProtoMessage* msg): message_(msg) {
+////////////////////////////////////// watcher //////////////////////////////////////
 
+Watcher::Watcher(uint64_t table_id, const std::vector<Key*> keys, common::ProtoMessage* msg):
+        table_id_(table_id), message_(msg) {
+    for (auto k: keys) {
+        keys_.push_back(std::move(new Key(*k)));
+    }
+}
+
+Watcher::~Watcher() {
+    for (auto k: keys_) {
+        delete k;
+    }
 }
 
 bool Watcher::operator>(const Watcher* other) const {
@@ -77,6 +88,20 @@ void Watcher::EncodeValue(std::string* buf,
     EncodeBytesValue(buf, 3, value->c_str(), value->length());
     EncodeBytesValue(buf, 4, extend->c_str(), extend->length());
 }
+
+////////////////////////////////////// Key watcher //////////////////////////////////////
+//KeyWatcher::KeyWatcher(uint64_t table_id, const Key& key, common::ProtoMessage* msg) {
+//    std::vector<Key*> k;
+//    k.push_back(&key);
+//    Watcher::Watcher(k, msg);
+//    EncodeKey(&key_, table_id, k);
+//}
+
+////////////////////////////////////// prefix watcher //////////////////////////////////////
+
+
+
+
 
 
 } // namespace watch

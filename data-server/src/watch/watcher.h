@@ -4,6 +4,7 @@
 #include <mutex>
 #include <unordered_map>
 
+#include "watch.h"
 #include "common/socket_session.h"
 
 namespace sharkstore {
@@ -13,12 +14,13 @@ namespace watch {
 class Watcher {
 public:
     Watcher() = delete;
-    Watcher(common::ProtoMessage* msg);
-    virtual ~Watcher() = default;
+    Watcher(uint64_t, const std::vector<Key*>, common::ProtoMessage*);
+    ~Watcher();
     bool operator>(const Watcher* other) const;
 
 private:
-    std::string name;
+    uint64_t table_id_;
+    std::vector<std::string*> keys_;
     common::ProtoMessage* message_ = nullptr;
 
     std::mutex          send_lock_;
@@ -32,18 +34,18 @@ public:
     }
 
 public:
-    virtual void Send(google::protobuf::Message* resp);
+    void Send(google::protobuf::Message* resp);
 
-    virtual bool DecodeKey(std::vector<std::string*>& keys,
-                           const std::string& buf);
-    virtual bool DecodeValue(int64_t* version, std::string* value, std::string* extend,
-                             std::string& buf);
-    virtual void EncodeKey(std::string* buf,
-                                uint64_t tableId, const std::vector<std::string*>& keys);
-    virtual void EncodeValue(std::string* buf,
-                          int64_t version,
-                          const std::string* value,
-                          const std::string* extend);
+    bool DecodeKey(std::vector<std::string*>& keys,
+                   const std::string& buf);
+    bool DecodeValue(int64_t* version, std::string* value, std::string* extend,
+                     std::string& buf);
+    void EncodeKey(std::string* buf,
+                   uint64_t tableId, const std::vector<std::string*>& keys);
+    void EncodeValue(std::string* buf,
+                     int64_t version,
+                     const std::string* value,
+                     const std::string* extend);
 
 };
 
@@ -54,14 +56,37 @@ struct Greater {
     }
 };
 
+/*
 class KeyWatcher: public Watcher {
+public:
+    KeyWatcher() = delete;
+    KeyWatcher(const Key&, common::ProtoMessage*);
+    ~KeyWatcher() = default;
 
+private:
+    Key key_;
+
+public:
+    const Key& GetKey();
 };
 
 class PrefixWatcher: public Watcher {
+public:
+    PrefixWatcher() = delete;
+    PrefixWatcher(const std::vector<Prefix>&, common::ProtoMessage*);
+    ~PrefixWatcher() = default;
 
+private:
+    Prefix prefix_;
+
+public:
+    const Prefix& GetPrefix();
 };
+*/
 
+typedef std::shared_ptr<Watcher>        WatcherPtr;
+//typedef std::shared_ptr<KeyWatcher>     KeyWatcherPtr;
+//typedef std::shared_ptr<PrefixWatcher>  PrefixWatcherPtr;
 
 
 } // namespace watch

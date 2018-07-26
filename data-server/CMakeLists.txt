@@ -178,6 +178,7 @@ set(SOURCES
     src/monitor/rangedata.cpp
 	src/watch/watcher.cpp
 	src/watch/watcher_set.cpp
+	src/watch/watch_server.cpp
 )
 
 if (APPLE)

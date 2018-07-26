@@ -15,7 +15,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace watch {
 
-typedef std::shared_ptr<Watcher> WatcherPtr;
+
 
 typedef std::unordered_map<WatcherId, WatcherPtr> KeyWatcherMap;
 typedef std::unordered_map<Key, KeyWatcherMap*> WatcherMap;
@@ -27,6 +27,8 @@ typedef std::unordered_map<WatcherId, WatcherKeyMap*> KeyMap;
 class WatcherSet {
 public:
     WatcherSet();
+    WatcherSet(const WatcherSet&) = delete;
+    WatcherSet& operator=(const WatcherSet&) = delete;
     ~WatcherSet();
 
     WatchCode AddKeyWatcher(const Key&, WatcherPtr&);
