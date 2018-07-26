@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <chrono>
 
 #include "test_util.h"
 #include "base/util.h"
@@ -109,25 +110,12 @@ public:
                           std::to_string(index) + " != "  + std::to_string(expected_->ApplyIndex()));
 
         }
-        std::lock_guard<std::mutex> lock(mu_);
-        finished_ = true;
-        cond_.notify_one();
         return s;
-    }
-
-    void WaitFinished() {
-        std::unique_lock<std::mutex> lock(mu_);
-        while (!finished_) {
-            cond_.wait(lock);
-        }
     }
 
 private:
     std::shared_ptr<TestSnapshot> expected_;
     uint64_t pre_num_ = 0;
-    std::mutex mu_;
-    std::condition_variable cond_;
-    bool finished_ = false;
 };
 
 
@@ -137,6 +125,12 @@ TEST(Snapshot, SendAndApply) {
     const uint64_t kSnapTerm = randomInt();
     const uint64_t kSnapUUID = randomInt();
     const uint64_t kRaftID = randomInt();
+
+    bool send_finished = false, apply_finished = false;
+    uint64_t send_blocks = {0}, apply_blocks = {0};
+    uint64_t send_bytes = {0}, apply_bytes = {0};
+    std::mutex mu;
+    std::condition_variable cond;
 
     auto snap = std::make_shared<TestSnapshot>();
 
@@ -152,16 +146,6 @@ TEST(Snapshot, SendAndApply) {
     auto receiver = std::make_shared<ApplySnapTask>(apply_ctx, sm);
     receiver->SetOptions(ApplySnapTask::Options());
 
-    receiver->SetReporter([&apply_ctx](const SnapContext& ctx, const SnapResult& result) {
-        auto s = testutil::Equal(ctx, apply_ctx);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-        ASSERT_TRUE(result.status.ok()) << result.status.ToString();
-        std::cout << "apply bytes: " << result.bytes_count <<
-                  ", blocks: " << result.blocks_count << std::endl;
-        ASSERT_GT(result.bytes_count, 0);
-        ASSERT_GT(result.blocks_count, 0);
-    });
-
     auto apply_trans = new transport::InProcessTransport(kApplyNodeID);
     auto s = apply_trans->Start("", 1234, [=](MessagePtr& msg) {
         auto s = receiver->RecvData(msg);
@@ -170,6 +154,24 @@ TEST(Snapshot, SendAndApply) {
     ASSERT_TRUE(s.ok()) << s.ToString();
     receiver->SetTransport(apply_trans);
 
+    receiver->SetReporter([&](const SnapContext& ctx, const SnapResult& result) {
+        auto s = testutil::Equal(ctx, apply_ctx);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(result.status.ok()) << result.status.ToString();
+        std::cout << "apply bytes: " << result.bytes_count <<
+                  ", blocks: " << result.blocks_count << std::endl;
+        ASSERT_GT(result.bytes_count, 0);
+        ASSERT_GT(result.blocks_count, 0);
+
+        // notify apply finished
+        {
+            std::lock_guard<std::mutex> lock(mu);
+            apply_blocks = result.blocks_count;
+            apply_bytes = result.bytes_count;
+            apply_finished = true;
+            cond.notify_one();
+        }
+    });
 
     // prepare send task
     SnapContext send_ctx;
@@ -196,7 +198,7 @@ TEST(Snapshot, SendAndApply) {
     });
     sender->SetTransport(send_trans);
 
-    sender->SetReporter([&send_ctx](const SnapContext& ctx, const SnapResult& result) {
+    sender->SetReporter([&](const SnapContext& ctx, const SnapResult& result) {
         auto s = testutil::Equal(ctx, send_ctx);
         ASSERT_TRUE(s.ok()) << s.ToString();
         ASSERT_TRUE(result.status.ok()) << result.status.ToString();
@@ -204,6 +206,15 @@ TEST(Snapshot, SendAndApply) {
         ASSERT_GT(result.blocks_count, 0);
         std::cout << "send bytes: " << result.bytes_count <<
                   ", blocks: " << result.blocks_count << std::endl;
+
+        // notify send finished
+        {
+            std::lock_guard<std::mutex> lock(mu);
+            send_blocks = result.blocks_count;
+            send_bytes = result.bytes_count;
+            send_finished = true;
+            cond.notify_one();
+        }
     });
 
     // start to send
@@ -214,7 +225,17 @@ TEST(Snapshot, SendAndApply) {
     std::thread apply_thr([=] { receiver->Run(); });
     apply_thr.detach();
 
-    sm->WaitFinished();
+    // wait tasks finished
+    auto expire = std::chrono::system_clock::now() + std::chrono::seconds(5);
+    bool ret = false;
+    {
+        std::unique_lock<std::mutex> lock(mu);
+        ret = cond.wait_until(lock, expire, [&]{ return send_finished && apply_finished; });
+    }
+    ASSERT_TRUE(ret) << "wait snapshot finsih timeout";
+
+    ASSERT_EQ(send_blocks, apply_blocks);
+    ASSERT_EQ(send_bytes, apply_bytes);
 
     delete apply_trans;
     delete send_trans;

@@ -78,12 +78,13 @@ void SendSnapTask::run(SnapResult* result) {
         }
 
         // 发送
+        size_t size = msg->ByteSizeLong();
         result->status = conn->Send(msg);
         if (!result->status.ok()) {
             return;
         }
         result->blocks_count += 1;
-        result->bytes_count += msg->ByteSizeLong();
+        result->bytes_count += size;
 
         // 等待ack
         result->status = waitAck(seq, opt_.wait_ack_timeout_secs);
