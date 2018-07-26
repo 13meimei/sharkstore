@@ -1,6 +1,8 @@
 _Pragma("once");
 
 #include <atomic>
+#include <memory>
+
 #include "types.h"
 
 namespace sharkstore {
@@ -24,7 +26,7 @@ public:
     bool IsDispatched() const { return dispatched_; }
     void MarkAsDispatched() { dispatched_ = true; }
 
-    const std::string& ID() { return id_; }
+    const std::string& ID() const { return id_; }
 
     const SnapContext& GetContext() const { return context_; }
 
