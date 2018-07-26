@@ -15,34 +15,43 @@ namespace sharkstore {
 namespace dataserver {
 namespace watch {
 
-// todo watch to shark ptr
-typedef std::unordered_map<WatcherId, Watcher*> KeyWatcherMap;
-typedef std::unordered_map<Key, KeyWatcherMap*> RangeWatcherMap;
-typedef std::unordered_map<RangeId, RangeWatcherMap*> WatcherMap;
-typedef std::priority_queue<Watcher*, std::vector<Watcher*>, Greater<Watcher*>> WatcherQueue;
+typedef std::shared_ptr<Watcher> WatcherPtr;
+
+typedef std::unordered_map<WatcherId, WatcherPtr> KeyWatcherMap;
+typedef std::unordered_map<Key, KeyWatcherMap*> WatcherMap;
+typedef std::priority_queue<WatcherPtr, std::vector<WatcherPtr>, Greater<WatcherPtr>> WatcherQueue;
 
 typedef std::unordered_map<Key, nullptr_t> WatcherKeyMap;
-typedef std::unordered_map<RangeId, WatcherKeyMap*> RangeKeyMap;
-typedef std::unordered_map<WatcherId, RangeKeyMap*> KeyMap;
+typedef std::unordered_map<WatcherId, WatcherKeyMap*> KeyMap;
 
 class WatcherSet {
 public:
     WatcherSet();
     ~WatcherSet();
 
-    bool AddWatcher(RangeId, const Key&, Watcher*);
-    void DelWatcher(RangeId, const Key&, WatcherId);
-    void GetWatchersByKey(RangeId, std::vector<Watcher*>& , const Key&);
+    WatchCode AddKeyWatcher(const Key&, WatcherPtr&);
+    WatchCode DelKeyWatcher(const Key&, WatcherId);
+    WatchCode GetKeyWatchers(std::vector<WatcherPtr>& , const Key&);
+    WatchCode AddPrefixWatcher(const Prefix&, WatcherPtr&);
+    WatchCode DelPrefixWatcher(const Prefix&, WatcherId);
+    WatchCode GetPrefixWatchers(std::vector<WatcherPtr>& , const Prefix&);
 
 private:
-    WatcherMap              watcher_map_;
+    WatcherMap              key_watcher_map_;
     KeyMap                  key_map_;
+    WatcherMap              prefix_watcher_map_;
+    KeyMap                  prefix_map_;
     WatcherQueue            watcher_queue_;
     std::mutex              watcher_mutex_;
 
     std::thread                     watcher_timer_;
     volatile bool                   watcher_timer_continue_flag_ = true;
     std::condition_variable         watcher_expire_cond_;
+
+private:
+    WatchCode AddWatcher(const Key&, WatcherPtr&, WatcherMap&, KeyMap&);
+    WatchCode DelWatcher(const Key&, WatcherId, WatcherMap&, KeyMap&);
+    WatchCode GetWatchers(std::vector<WatcherPtr>& vec, const Key&, WatcherMap&);
 };
 
 

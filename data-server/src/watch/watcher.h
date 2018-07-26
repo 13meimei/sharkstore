@@ -1,6 +1,7 @@
 #ifndef _WATCHER_H_
 #define _WATCHER_H_
 
+#include <mutex>
 #include <unordered_map>
 
 #include "common/socket_session.h"
@@ -25,7 +26,10 @@ private:
 
 public:
     common::ProtoMessage* GetMessage() { return message_; }
-    bool IsSentResponse() { return sent_response_flag; }
+    bool IsSentResponse() {
+        std::lock_guard<std::mutex> lock(send_lock_);
+        return sent_response_flag;
+    }
 
 public:
     virtual void Send(google::protobuf::Message* resp);
@@ -50,7 +54,6 @@ struct Greater {
     }
 };
 
-// todo
 class KeyWatcher: public Watcher {
 
 };

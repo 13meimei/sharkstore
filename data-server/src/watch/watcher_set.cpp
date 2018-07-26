@@ -20,15 +20,13 @@ WatcherSet::WatcherSet() {
             }
 
             // find the first wait watcher
-            Watcher* w_ptr = nullptr;
+            WatcherPtr w_ptr = nullptr;
             while (!watcher_queue_.empty()) {
                 w_ptr = watcher_queue_.top();
                 if (w_ptr->IsSentResponse()) {
                     // repsonse is sent, delete watcher in map and queue
                     // todo delete in map
                     watcher_queue_.pop();
-                    delete w_ptr;
-                    w_ptr = nullptr;
                 } else {
                     break;
                 }
@@ -49,7 +47,6 @@ WatcherSet::WatcherSet() {
                 w_ptr->Send(resp);
                 // todo delete in map
                 watcher_queue_.pop();
-                delete w_ptr;
             }
         }
     });
@@ -61,42 +58,125 @@ WatcherSet::~WatcherSet() {
     // todo leave members' memory alone now, todo free
 }
 
-bool WatcherSet::AddWatcher(RangeId range_id, const Key& key, Watcher* w_ptr) {
+
+// private add/del watcher
+WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& watcher_map_, KeyMap& key_map_) {
     std::lock_guard<std::mutex> lock(watcher_mutex_);
+    watcher_expire_cond_.notify_one();
+
     auto watcher_id = w_ptr->GetMessage()->session_id;
 
     // add to watcher map
-    watcher_map_.emplace(std::make_pair(range_id, new RangeWatcherMap));
-    auto range_watcher_map = watcher_map_.at(range_id);
+    watcher_map_.emplace(std::make_pair(key, new KeyWatcherMap));
+    auto watcher_map = watcher_map_.at(key);
 
-    range_watcher_map->emplace(std::make_pair(key, new KeyWatcherMap));
-    auto key_watcher_map = range_watcher_map->at(key);
-
-    auto ok = key_watcher_map->insert(std::make_pair(watcher_id, w_ptr)).second;
+    auto ok = watcher_map->insert(std::make_pair(watcher_id, w_ptr)).second;
+    WatchCode code;
     if (ok) {
         // add to queue
         watcher_queue_.push(w_ptr);
 
         // add to key map
-        key_map_.emplace(std::make_pair(watcher_id, new RangeKeyMap));
-        auto range_key_map = key_map_.at(watcher_id);
-
-        range_key_map->emplace(std::make_pair(range_id, new WatcherKeyMap));
-        auto watcher_key_map = range_key_map->at(range_id);
+        key_map_.emplace(std::make_pair(watcher_id, new WatcherKeyMap));
+        auto watcher_key_map = key_map_.at(watcher_id);
 
         watcher_key_map->insert(std::make_pair(key, nullptr));
+
+        code = WATCH_OK;
+    } else {
+        code = WATCH_WATCHER_EXIST;
     }
-    return ok;
+    return code;
 }
 
-void WatcherSet::DelWatcher(RangeId range_id, const Key& key, WatcherId watch_id) {
+WatchCode WatcherSet::DelWatcher(const Key& key, WatcherId watcher_id, WatcherMap& watcher_map_, KeyMap& key_map_) {
     std::lock_guard<std::mutex> lock(watcher_mutex_);
+    watcher_expire_cond_.notify_one();
 
+    // XXX del from queue, pop in watcher expire thread
 
+    // del from key map
+    auto key_map_it = key_map_.find(watcher_id);
+    if (key_map_it == key_map_.end()) {
+        return WATCH_WATCHER_NOT_EXIST; // no watcher id in key map
+    }
+    auto& keys = key_map_it->second;
+    auto key_it = keys->find(key);
+    if (key_it == keys->end()) {
+        return WATCH_KEY_NOT_EXIST; // no key in key map
+    }
+
+    // del from watcher map
+    auto watcher_map_it = watcher_map_.find(key);
+    if (watcher_map_it == watcher_map_.end()) {
+        return WATCH_KEY_NOT_EXIST; // no key in watcher map
+    }
+    auto& watchers = watcher_map_it->second;
+    auto watcher_it = watchers->find(watcher_id);
+    if (watcher_it == watchers->end()) {
+        return WATCH_WATCHER_NOT_EXIST; // no watcher id in watcher map
+    }
+
+    // do del from key map
+    keys->erase(key_it);
+    // do del from watcher map
+    watchers->erase(watcher_it);
+
+    if (keys->empty()) {
+       key_map_.erase(key_map_it);
+    }
+    if (watchers->empty()) {
+        watcher_map_.erase(watcher_map_it);
+    }
+
+    return WATCH_OK;
 }
 
-void GetWatchersByKey(RangeId, std::vector<Watcher*>& , const Key&) {
+WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const Key& key, WatcherMap& key_map) {
+    std::lock_guard<std::mutex> lock(watcher_mutex_);
+    watcher_expire_cond_.notify_one();
 
+    auto key_map_it = key_map.find(key);
+    if (key_map_it == key_map.end()) {
+        return WATCH_KEY_NOT_EXIST;
+    }
+
+    auto watchers = key_map_it->second;
+    vec.resize(watchers->size());
+
+    for (auto it = watchers->begin(); it != watchers->end(); ++it) {
+        vec.push_back(it->second);
+    }
+
+    return WATCH_OK;
+}
+
+// key add/del watcher
+WatchCode WatcherSet::AddKeyWatcher(const Key& key, WatcherPtr& w_ptr) {
+    return AddWatcher(key, w_ptr, key_watcher_map_, key_map_);
+}
+
+WatchCode WatcherSet::DelKeyWatcher(const Key& key, WatcherId id) {
+    return DelWatcher(key, id, key_watcher_map_, key_map_);
+}
+
+// key get watchers
+WatchCode WatcherSet::GetKeyWatchers(std::vector<WatcherPtr>& vec, const Key& key) {
+    return GetWatchers(vec, key, key_watcher_map_);
+}
+
+// prefix add/del watcher
+WatchCode WatcherSet::AddPrefixWatcher(const Prefix& prefix, WatcherPtr& w_ptr) {
+    return AddWatcher(prefix, w_ptr, prefix_watcher_map_, prefix_map_);
+}
+
+WatchCode WatcherSet::DelPrefixWatcher(const Prefix& prefix, WatcherId id) {
+    return DelWatcher(prefix, id, prefix_watcher_map_, prefix_map_);
+}
+
+// prefix get watchers
+WatchCode WatcherSet::GetPrefixWatchers(std::vector<WatcherPtr>& vec, const Prefix& prefix) {
+    return GetWatchers(vec, prefix, prefix_watcher_map_);
 }
 
 } // namespace watch
