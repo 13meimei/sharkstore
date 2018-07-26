@@ -1184,7 +1184,7 @@ func TestProxyInsertOneRowWithRangeChange(t *testing.T) {
 	for _, col := range table.Columns {
 		if col.Name == "id" {
 			pkCol = col
-			break;
+			break
 		}
 	}
 	middle, _ := util.EncodePrimaryKey(start, pkCol, []byte(strconv.Itoa(5)));
@@ -1231,7 +1231,7 @@ func TestProxyInsertWithRangeChange(t *testing.T) {
 	for _, col := range table.Columns {
 		if col.Name == "id" {
 			pkCol = col
-			break;
+			break
 		}
 	}
 
@@ -1296,7 +1296,7 @@ func TestSimpleSelect(t *testing.T) {
 		if col.Name == "id" {
 			pkCol = col
 			pks = append(pks, col)
-			break;
+			break
 		}
 	}
 
@@ -1370,7 +1370,7 @@ func TestSelectRoutChange(t *testing.T) {
 		if col.Name == "id" {
 			pkCol = col
 			pks = append(pks, col)
-			break;
+			break
 		}
 	}
 
@@ -1458,7 +1458,7 @@ func TestRowDeleteRoutChange(t *testing.T) {
 		if col.Name == "id" {
 			pkCol = col
 			pks = append(pks, col)
-			break;
+			break
 		}
 	}
 
@@ -1554,7 +1554,7 @@ func TestAllDeleteRoutChange(t *testing.T) {
 		if col.Name == "id" {
 			pkCol = col
 			pks = append(pks, col)
-			break;
+			break
 		}
 	}
 

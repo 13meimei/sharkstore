@@ -234,16 +234,59 @@ func correctCheck4Update(s *server.Server) {
 			go func() {
 				log.Debug("h: %v update data scope between %v and %v", h, start, end)
 				subUserNames := userNames[start:end]
+				rows := make([][]interface{}, 0)
+				keyArray := make([]string, 0)
+				var loop int
 				for i := 0; i < len(subUserNames); i++ {
-					reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields,
-						createRows(h, subUserNames[i], updateMsg, updateMsg))
-					if reply.Code == 0 {
-						atomic.AddInt64(&stat.lastUpdCount, 1)
-						checkElapsedTime(s, h, subUserNames[i], updateMsg)
+					if s.GetCfg().BenchConfig.Batch > 1 {
+						if loop == s.GetCfg().BenchConfig.Batch {
+							log.Info("h: %v start %v end %v, size: %v", h, start, end, len(keyArray))
+							for {
+								reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+								if reply.Code == 0 {
+									atomic.AddInt64(&stat.lastUpdCount, 1)
+									checkElapsedTimeBatch(s, h, keyArray, updateMsg)
+									rows = make([][]interface{}, 0)
+									keyArray = make([]string, 0)
+									loop = 0
+									break
+								} else {
+									atomic.AddInt64(&stat.errUpdCount, 1)
+									log.Warn("h: %v update reply: %v, retry", h, reply)
+								}
+							}
+						}
+						rows = append(rows, createRow(h, subUserNames[i], updateMsg, updateMsg))
+						keyArray = append(keyArray, subUserNames[i])
+						loop++
+						if i == len(subUserNames) - 1 {
+							log.Info("h: %v start %v end %v, size: %v", h, start, end, len(keyArray))
+							for {
+								reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+								if reply.Code == 0 {
+									atomic.AddInt64(&stat.lastUpdCount, 1)
+									checkElapsedTimeBatch(s, h, keyArray, updateMsg)
+									rows = make([][]interface{}, 0)
+									keyArray = make([]string, 0)
+									loop = 0
+									break
+								} else {
+									atomic.AddInt64(&stat.errUpdCount, 1)
+									log.Warn("h: %v update reply: %v, retry", h, reply)
+								}
+							}
+						}
 					} else {
-						atomic.AddInt64(&stat.errUpdCount, 1)
-						i = i - 1
-						log.Warn("h: %v update reply: %v, retry", h, reply)
+						reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields,
+							createRows(h, subUserNames[i], updateMsg, updateMsg))
+						if reply.Code == 0 {
+							atomic.AddInt64(&stat.lastUpdCount, 1)
+							checkElapsedTime(s, h, subUserNames[i], updateMsg)
+						} else {
+							atomic.AddInt64(&stat.errUpdCount, 1)
+							i = i - 1
+							log.Warn("h: %v update reply: %v, retry", h, reply)
+						}
 					}
 				}
 			}()
@@ -299,23 +342,63 @@ func correctCheck4DelAndInsert(s *server.Server) {
 			}
 			go func() {
 				subUserNames := userNames[start:end]
+				rows := make([][]interface{}, 0)
+				keyArray := make([]string, 0)
+				var loop int
 				for i := 0; i < len(subUserNames); i++ {
-					reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields,
-						createRows(h, subUserNames[i], insertMsg, insertMsg))
-					if reply.Code == 0 {
-						atomic.AddInt64(&stat.lastUpdCount, 1)
-						checkElapsedTime(s, h, subUserNames[i], insertMsg)
+					if s.GetCfg().BenchConfig.Batch > 1 {
+						if loop == s.GetCfg().BenchConfig.Batch {
+							for {
+								reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+								if reply.Code == 0 {
+									atomic.AddInt64(&stat.lastUpdCount, 1)
+									checkElapsedTimeBatch(s, h, keyArray, insertMsg)
+									rows = make([][]interface{}, 0)
+									keyArray = make([]string, 0)
+									loop = 0
+									break
+								} else {
+									atomic.AddInt64(&stat.errUpdCount, 1)
+									log.Warn("h: %v insert reply: %v, retry", h, reply)
+								}
+							}
+						}
+						rows = append(rows, createRow(h, subUserNames[i], insertMsg, insertMsg))
+						keyArray = append(keyArray, subUserNames[i])
+						loop++
+						if i == len(subUserNames) - 1 {
+							for {
+								reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+								if reply.Code == 0 {
+									atomic.AddInt64(&stat.lastUpdCount, 1)
+									checkElapsedTimeBatch(s, h, keyArray, insertMsg)
+									rows = make([][]interface{}, 0)
+									keyArray = make([]string, 0)
+									loop = 0
+									break
+								} else {
+									atomic.AddInt64(&stat.errUpdCount, 1)
+									log.Warn("h: %v insert reply: %v, retry", h, reply)
+								}
+							}
+						}
 					} else {
-						atomic.AddInt64(&stat.errUpdCount, 1)
-						i = i - 1
-						log.Warn("h %v update reply: %v, retry", h, reply)
+						reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields,
+							createRows(h, subUserNames[i], insertMsg, insertMsg))
+						if reply.Code == 0 {
+							atomic.AddInt64(&stat.lastUpdCount, 1)
+							checkElapsedTime(s, h, subUserNames[i], insertMsg)
+						} else {
+							atomic.AddInt64(&stat.errUpdCount, 1)
+							i = i - 1
+							log.Warn("h: %v insert reply: %v, retry", h, reply)
+						}
 					}
 				}
 			}()
 		}
 	}
 }
-
 
 //delete most data, and check the db data at rocksdb level
 func correct4BatchDelete(s *server.Server) {
@@ -491,15 +574,58 @@ func selectSource(s *server.Server, h uint32) ([]string, error) {
 	return userNames, nil
 }
 
+func checkElapsedTimeBatch(s *server.Server, h uint32, userNames []string, firstUpdate string) {
+	var pksMult []map[string]interface{}
+		for _, userName := range userNames {
+			pks := make(map[string]interface{})
+			pks["h"] = h
+			pks["user_name"] = userName
+			pksMult = append(pksMult, pks)
+		}
+
+		currentTime := time.Now()
+		flag := 0
+		loop := 0
+		for {
+			loop++
+			selectReply := api.MultSelect(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, PField, pksMult, nil)
+			if selectReply.Code == 0 && len(selectReply.Values) > 0 {
+				if len(selectReply.Values) != len(userNames) {
+					flag = len(selectReply.Values)
+				} else {
+					for _, row := range selectReply.Values {
+						for _, r := range row {
+							passWord := r.(string)
+							if passWord != firstUpdate {
+								flag++
+							}
+						}
+					}
+				}
+				break
+			} else {
+				log.Warn("retry select after update, h: %v, userName: [%v], reply: %v", h, userNames, selectReply)
+			}
+		}
+
+		if flag > 0 {
+			log.Error("multSelect after multUpdate:  update size %v, select size %v, loop: %v", len(userNames), flag, loop)
+		} else {
+			log.Warn("multSelect after multUpdate:  update size %v correct , elapsed time: %v, loop: %v", len(userNames), time.Since(currentTime), loop)
+	}
+}
+
 func checkElapsedTime(s *server.Server, h uint32, userName, firstUpdate string) {
+	pks := make(map[string]interface{})
+	pks["h"] = h
+	pks["user_name"] = userName
+
 	currentTime := time.Now()
 	flag := 0
 	loop := 0
 	for {
 		loop++
-		pks := make(map[string]interface{})
-		pks["h"] = h
-		pks["user_name"] = userName
+
 		selectReply := api.Select(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, PField, pks, nil)
 		if selectReply.Code == 0 && len(selectReply.Values) > 0 {
 			var passWords []string
