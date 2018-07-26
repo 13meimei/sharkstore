@@ -567,21 +567,37 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 FLOG_WARN("WatchNotify...protoMessage pointer is null,skip notify.");
                 continue;
             }
+
             idx++;
+            auto tmpSessionId = pMsg->session_id;
+
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                       meta_.id(), EncodeToHexString(dbKey).c_str(), idx, watchCnt, pMsg->session_id);
+                       meta_.id(), EncodeToHexString(dbKey).c_str(), idx, watchCnt, tmpSessionId);
+            
+            if(tmpSessionId < 1) {
+                FLOG_WARN("range[%" PRIu64 "] WatchNotify warn: session_id is invalid.", meta_.id());
+                continue;
+            }
+            resp->set_watchid(tmpSessionId);
+            
+            auto tmpDsResp = new watchpb::DsWatchResponse;
+            tmpDsResp->CopyFrom(*ds_resp);
 
-            resp->set_watchid(pMsg->session_id);
-
-            context_->socket_session->Send(pMsg, ds_resp);
+            context_->socket_session->Send(pMsg, tmpDsResp);
             {
                 //delete watch
-                if (WATCH_OK != DelKeyWatcher(pMsg->session_id, key)) {
+                if (WATCH_OK != DelKeyWatcher(tmpSessionId, key)) {
                     FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                           meta_.id(), key.c_str(), idx, watchCnt, pMsg->session_id);
+                           meta_.id(), key.c_str(), idx, watchCnt, tmpSessionId);
                 }
             }
         }
+        if(ds_resp != nullptr) {
+            free(ds_resp);
+        }
+        
+        vecProtoMsg.clear();
+
     } else {
         idx = 0;
         errMsg.assign("no watcher");
