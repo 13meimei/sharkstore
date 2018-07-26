@@ -96,7 +96,7 @@ public:
     WATCH_CODE DelWatcher(int64_t, const std::string &);
     uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , std::string &);
     
-    uint32_t GetWatcherSize() {
+    uint64_t GetWatcherSize() {
         return static_cast<uint32_t>(key_index_.size());
     }
 

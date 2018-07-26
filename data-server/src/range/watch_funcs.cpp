@@ -104,7 +104,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             AddKeyWatcher(dbKey, msg);
             watchFlag = 1;
         } else {
-            FLOG_DEBUG("range[%" PRIu64 "] no watcher(%d).", meta_.id(), watchFlag); 
+            FLOG_DEBUG("range[%" PRIu64 "] no watcher(%d) and will send response to client.", meta_.id(), watchFlag); 
         }
     }
     if(!watchFlag || err != nullptr) {
@@ -569,7 +569,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             }
             idx++;
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                       meta_.id(), key.c_str(), idx, watchCnt, pMsg->session_id);
+                       meta_.id(), EncodeToHexString(dbKey).c_str(), idx, watchCnt, pMsg->session_id);
 
             resp->set_watchid(pMsg->session_id);
 

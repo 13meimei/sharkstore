@@ -630,6 +630,7 @@ TEST_F(WatchTest, watch) {
         auto msg1 = new common::ProtoMessage;
        //put first 
         msg1->expire_time = getticks() + 1000;
+        msg1->session_id = 1;
         watchpb::DsKvWatchPutRequest req1;
 
         req1.mutable_header()->set_range_id(2);
@@ -647,6 +648,7 @@ TEST_F(WatchTest, watch) {
         //get next
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(2);
@@ -682,6 +684,7 @@ TEST_F(WatchTest, watch) {
         // begin test watch_get (key empty)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -718,6 +721,7 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -756,6 +760,7 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -794,6 +799,7 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -840,6 +846,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         watchpb::DsWatchRequest req;
+        msg->session_id = 1;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -874,6 +881,7 @@ TEST_F(WatchTest, watch) {
         // begin test watch_delete (key empty)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -908,6 +916,7 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -945,6 +954,7 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -982,6 +992,7 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -1059,6 +1070,7 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(2);
@@ -1096,6 +1108,7 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -1138,9 +1151,10 @@ TEST_F(WatchTest, watch) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsKvWatchDeleteRequest req;
 
-        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->set_range_id(2);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(2);
 
@@ -1165,6 +1179,7 @@ TEST_F(WatchTest, watch) {
         // begin test watch_get(ensure watch delete)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -1195,6 +1210,7 @@ TEST_F(WatchTest, watch) {
         // begin test watch_get (ensure watch delete)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(2);
@@ -1202,7 +1218,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
-        req.mutable_req()->mutable_kv()->set_version(0);
+        req.mutable_req()->mutable_kv()->set_version(5);
         req.mutable_req()->set_longpull(now+5000);
 
         auto len = req.ByteSizeLong();
@@ -1275,4 +1291,5 @@ TEST_F(WatchTest, watch) {
         // end test delete range
     }
     */
+    FLOG_DEBUG("watch_unittest end.");
 }
