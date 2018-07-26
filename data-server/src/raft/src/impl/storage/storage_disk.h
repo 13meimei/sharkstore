@@ -23,6 +23,9 @@ public:
         // 启动时检测到文件损坏是否继续，若是则备份可以正常打开工作
         bool allow_corrupt_startup = false;
 
+        // 创建时在日志开头制造一个空洞日志
+        bool create_with_hole = false;
+
         // 只读模式
         bool readonly = false;
     };
@@ -69,6 +72,7 @@ private:
     static Status checkLogsValidate(const std::map<uint64_t, uint64_t>& logs);
 
     Status initDir();
+    Status initMeta();
     Status listLogs(std::map<uint64_t, uint64_t>* logs);
     Status openLogs();
     Status closeLogs();

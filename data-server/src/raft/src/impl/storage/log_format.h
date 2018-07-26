@@ -21,7 +21,6 @@ static const char* kLogBackupSubStr = ".log.bak.";
 
 std::string makeLogFileName(uint64_t seq, uint64_t index);
 bool parseLogFileName(const std::string& name, uint64_t& seq, uint64_t& index);
-bool isBakLogFile(const std::string& name);
 
 // 固定64字节
 struct Footer {

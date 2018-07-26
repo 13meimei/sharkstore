@@ -32,16 +32,11 @@ Status DiskStorage::Open() {
         return s;
     }
 
-    // 打开meta file
-    s = meta_file_.Open();
+    // 打开meta文件
+    s = initMeta();
     if (!s.ok()) {
         return s;
     }
-    s = meta_file_.Load(&hard_state_, &trunc_meta_);
-    if (!s.ok()) {
-        return s;
-    }
-    applied_ = hard_state_.commit();
 
     // 打开日志文件
     s = openLogs();
@@ -61,6 +56,48 @@ Status DiskStorage::Open() {
     return Status::OK();
 }
 
+Status DiskStorage::initDir() {
+    assert(!path_.empty());
+    int ret = sharkstore::MakeDirAll(path_, 0755);
+    if (ret < 0) {
+        return Status(Status::kIOError, "init directory " + path_, strErrno(errno));
+    }
+    return Status::OK();
+}
+
+Status DiskStorage::initMeta() {
+    // 打开meta file
+    auto s = meta_file_.Open();
+    if (!s.ok()) {
+        return s;
+    }
+
+    s = meta_file_.Load(&hard_state_, &trunc_meta_);
+    if (!s.ok()) {
+        return s;
+    }
+    applied_ = hard_state_.commit();
+
+    // 创建日志空洞, 截断index=1处日志
+    if (ops_.create_with_hole) {
+        if (trunc_meta_.index() > 1) {
+            return Status(Status::kInvalidArgument, "create hole",
+                          std::string("invalid trunc index: ") + trunc_meta_.index());
+        }
+        trunc_meta_.set_index(1);
+        trunc_meta_.set_term(1);
+        s = meta_file_.SaveTruncMeta(trunc_meta_);
+        if (!s.ok()) {
+            return s;
+        }
+        s = meta_file_.Sync();
+        if (!s.ok()) {
+            return s;
+        }
+    }
+    return s;
+}
+
 Status DiskStorage::checkLogsValidate(const std::map<uint64_t, uint64_t>& logs) {
     // 检查日志文件的序号是否连续
     // 检查日志文件的起始index是否有序
@@ -78,15 +115,6 @@ Status DiskStorage::checkLogsValidate(const std::map<uint64_t, uint64_t>& logs) 
         }
         prev_seq = it->first;
         prev_index = it->second;
-    }
-    return Status::OK();
-}
-
-Status DiskStorage::initDir() {
-    assert(!path_.empty());
-    int ret = sharkstore::MakeDirAll(path_, 0755);
-    if (ret < 0) {
-        return Status(Status::kIOError, "init directory " + path_, strErrno(errno));
     }
     return Status::OK();
 }
@@ -487,39 +515,6 @@ Status DiskStorage::Close() {
     auto s = meta_file_.Close();
     if (!s.ok()) return s;
     return closeLogs();
-}
-
-Status DiskStorage::removeBakups() {
-    DIR* dir = ::opendir(path_.c_str());
-    if (NULL == dir) {
-        return Status(Status::kIOError, "remove backups: call opendir", strErrno(errno));
-    }
-    struct dirent* ent = NULL;
-    while (true) {
-        errno = 0;
-        ent = ::readdir(dir);
-        if (NULL == ent) {
-            if (0 == errno) {
-                break;
-            } else {
-                closedir(dir);
-                return Status(Status::kIOError, "call readdir", strErrno(errno));
-            }
-        }
-        // TODO: call stat if d_type is DT_UNKNOWN
-        if ((ent->d_type == DT_REG || ent->d_type == DT_UNKNOWN) &&
-            isBakLogFile(ent->d_name)) {
-            std::string bak_path = JoinFilePath({path_, ent->d_name});
-            if (std::remove(bak_path.c_str()) != 0) {
-                closedir(dir);
-                return Status(Status::kIOError,
-                              std::string("remove log backup ") + bak_path,
-                              strErrno(errno));
-            }
-        }
-    }
-    closedir(dir);
-    return Status::OK();
 }
 
 Status DiskStorage::Destroy(bool backup) {
