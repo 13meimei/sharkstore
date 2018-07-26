@@ -386,11 +386,10 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                         }
                     }
                 }
-
                 //decode value to kv
                 DecodeWatchValue(&version, val.get(), ext.get(), db_value);
                 
-                FLOG_WARN("range[%" PRIu64 "] version(decode from value)[%" PRIu64 "]", meta_.id(), version);
+                FLOG_WARN("range[%" PRIu64 "] version(decode from value)[%" PRIu64 "] key_size:%d  encodevalue:%s", meta_.id(), version, kv->key_size(), (*val).c_str());
 
                 kv->set_value(*val);
                 kv->set_version(version);
