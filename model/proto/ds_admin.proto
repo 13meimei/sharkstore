@@ -16,7 +16,7 @@ enum AdminType {
     UNKNOWN = 0;
     SET_CONFIG = 1;
     GET_CONFIG = 2;
-    GET_STATUS  = 3;
+    GET_INFO = 3;
     FORCE_SPLIT = 4;
     COMPACTION = 5;
     CLEAR_QUEUE = 6; // clear worker queue
@@ -29,7 +29,7 @@ message AdminRequest {
 
     SetConfigRequest set_cfg_req = 10;
     GetConfigRequest get_cfg_req = 11;
-    GetStatusRequest get_status_req = 12;
+    GetInfoRequest get_info_req = 12;
     ForceSplitRequest force_split_req = 13;
     CompactionRequest compaction_req = 14;
     ClearQueueRequest clear_queue_req = 15;
@@ -42,7 +42,7 @@ message AdminResponse {
 
     SetConfigResponse set_cfg_resp = 10;
     GetConfigResponse get_cfg_resp = 11;
-    GetStatusResponse get_status_response = 12;
+    GetInfoResponse get_status_response = 12;
     ForceSplitResponse force_split_resp = 13;
     CompactionResponse compaction_resp = 14;
     ClearQueueResponse clear_queue_resp = 15;
@@ -79,12 +79,12 @@ message GetConfigResponse {
 // eg: rocksdb, rocksdb.cache-usage, 
 //     server, server.version, server.start
 //     raft, raft.{range_id}
-// if path is empty, will return all status info
-message GetStatusRequest {
-    repeated string path = 1; 
+// if path is empty, will return server's status summary
+message GetInfoRequest {
+    string path = 1; 
 }
 
-message GetStatusResponse {
+message GetInfoResponse {
     string data = 1; // json data
 }
 
