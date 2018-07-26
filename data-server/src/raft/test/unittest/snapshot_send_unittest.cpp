@@ -25,14 +25,13 @@ namespace {
 using namespace sharkstore;
 using namespace sharkstore::raft;
 using namespace sharkstore::raft::impl;
-using sharkstore::raft::impl::testutil::randSnapContext;
 
 class TestSnapshot : public Snapshot {
 public:
     TestSnapshot() :
-        applied_(randomInt()),
-        count_(100 + randomInt() % 100),
-        context_(randomString(100 + randomInt() % 100))
+        applied_(static_cast<uint64_t>(randomInt())),
+        count_(static_cast<uint64_t>(100 + randomInt() % 100)),
+        context_(randomString(static_cast<size_t>(100 + randomInt() % 100)))
     {
     }
 
@@ -67,7 +66,7 @@ private:
 class TestStateMachine : public raft::StateMachine {
 public:
     explicit TestStateMachine(std::shared_ptr<TestSnapshot> expected) :
-        expected_(expected) {
+        expected_(std::move(expected)) {
     }
 
     Status Apply(const std::string& cmd, uint64_t index) override  {
@@ -80,7 +79,7 @@ public:
     void OnLeaderChange(uint64_t leader, uint64_t term) override {}
     std::shared_ptr<Snapshot> GetSnapshot() override { return nullptr; }
 
-    Status ApplySnapshotStart(const std::string& context) {
+    Status ApplySnapshotStart(const std::string& context) override {
         if (context != expected_->GetContext()) {
             return Status(Status::kInvalid, "snapshot context",
                           context + " != " + expected_->GetContext());
@@ -88,7 +87,7 @@ public:
         return Status::OK();
     }
 
-    Status ApplySnapshotData(const std::vector<std::string>& datas) {
+    Status ApplySnapshotData(const std::vector<std::string>& datas) override {
         for (const auto& data: datas) {
             auto i = std::strtoul(data.c_str(), NULL, 10);
             if (i != pre_num_ + 1) {
@@ -122,9 +121,9 @@ private:
 TEST(Snapshot, SendAndApply) {
     const uint64_t kSendNodeID = 1;
     const uint64_t kApplyNodeID = 2;
-    const uint64_t kSnapTerm = randomInt();
-    const uint64_t kSnapUUID = randomInt();
-    const uint64_t kRaftID = randomInt();
+    const uint64_t kSnapTerm = static_cast<uint64_t>(randomInt());
+    const uint64_t kSnapUUID = static_cast<uint64_t>(randomInt());
+    const uint64_t kRaftID = static_cast<uint64_t>(randomInt());
 
     bool send_finished = false, apply_finished = false;
     uint64_t send_blocks = {0}, apply_blocks = {0};
