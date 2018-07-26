@@ -56,16 +56,21 @@ void ApplySnapTask::run(SnapResult* result) {
         // 等待接收远端发送数据块
         MessagePtr data;
         result->status = waitNextData(&data);
-        if (!result->status.ok()) return;
-
-        // 应用数据块
-        result->status = applyData(data, over);
-
-        // 给远端发送ACK
-        sendAck(data->snapshot().seq(), !result->status.ok());
         if (!result->status.ok()) {
             return;
         }
+
+        // 应用数据块
+        size_t bytes = data->ByteSizeLong();
+        result->status = applyData(data, over);
+        if (!result->status.ok()) {
+            return;
+        }
+        result->bytes_count += bytes;
+        result->blocks_count++;
+
+        // 给远端发送ACK
+        sendAck(data->snapshot().seq(), !result->status.ok());
     }
 }
 

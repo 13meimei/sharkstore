@@ -30,8 +30,8 @@ namespace impl {
 class SendSnapTask : public SnapTask {
 public:
     struct Options {
-        size_t max_size_per_msg = 0;
-        size_t wait_ack_timeout_secs = 0;
+        size_t max_size_per_msg = 64 * 1024;
+        size_t wait_ack_timeout_secs = 10;
     };
 
     SendSnapTask(const SnapContext& context, pb::SnapshotMeta&& meta,

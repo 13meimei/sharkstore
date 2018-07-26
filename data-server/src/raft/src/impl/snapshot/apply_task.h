@@ -17,7 +17,7 @@ namespace impl {
 class ApplySnapTask : public SnapTask {
 public:
     struct Options {
-        size_t wait_data_timeout_secs = 0;
+        size_t wait_data_timeout_secs = 10;
     };
 
     ApplySnapTask(const SnapContext& context,

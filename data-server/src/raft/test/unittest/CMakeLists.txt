@@ -22,7 +22,8 @@ set (raft_unit_TESTS
     raft_log_unittest.cpp
     raft_types_unittest.cpp
     log_unstable_unittest.cpp
-    snapshot_unittest.cpp
+    snapshot_send_unittest.cpp
+    snapshot_worker_unittest.cpp
 )
 
 ENABLE_TESTING()

@@ -62,7 +62,7 @@ private:
     std::vector<SnapWorker*> all_workers_;
 
     FreeList free_workers_;
-    RunningMap running_tasks_; // for inspect only
+    RunningMap running_tasks_;
 };
 
 } /* namespace impl */
