@@ -48,7 +48,7 @@ protected:
         }
     }
 
-    void SetKeepSize(size_t size) {
+    void LimitMaxLogs(size_t size) {
         ops_.max_log_files = size;
         ReOpen();
     }
@@ -248,7 +248,7 @@ TEST_F(StorageTest, Snapshot) {
 }
 
 TEST_F(StorageTest, KeepCount) {
-    SetKeepSize(3);
+    LimitMaxLogs(3);
     uint64_t lo = 1, hi = 100;
     std::vector<EntryPtr> to_writes;
     RandomEntries(lo, hi, 256, &to_writes);

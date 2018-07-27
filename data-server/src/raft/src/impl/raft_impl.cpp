@@ -303,13 +303,13 @@ void RaftImpl::ReportSnapSendResult(const SnapContext& ctx, const SnapResult& re
 
 void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result) {
     if (result.status.ok()) {
-        LOG_INFO("raft[%llu] apply snapshot[uuid: %lu] to %lu finished. total "
+        LOG_INFO("raft[%llu] apply snapshot[uuid: %lu] from %lu finished. total "
                  "blocks: %d, bytes: %d",
-                 ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
+                 ops_.id, ctx.uuid, ctx.from, result.blocks_count, result.bytes_count);
     } else {
-        LOG_ERROR("raft[%llu] apply snapshot[uuid: %llu] to %lu failed(%s). "
+        LOG_ERROR("raft[%llu] apply snapshot[uuid: %llu] from %lu failed(%s). "
                   "sent blocks: %d, bytes: %d",
-                  ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(),
+                  ops_.id, ctx.uuid, ctx.from, result.status.ToString().c_str(),
                   result.blocks_count, result.bytes_count);
     }
 
