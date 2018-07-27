@@ -114,7 +114,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             FLOG_DEBUG("range[%" PRIu64 "] no watcher(%d) and will send response to client.", meta_.id(), watchFlag); 
         }
     }
-    if(!watchFlag || err != nullptr) {
+    if(!watchFlag && err != nullptr) {
+        FLOG_DEBUG("range[%" PRIu64 "] (%d)send key:%s session_id:%" PRIu64 "...", meta_.id(), watchFlag, EncodeToHexString(dbKey).c_str(), msg->session_id); 
         context_->socket_session->SetResponseHeader(req.header(), header, err);
         context_->socket_session->Send(msg, ds_resp);
     }
@@ -183,14 +184,15 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             FLOG_DEBUG("range[%" PRIu64 "] PureGet key scope %s---%s", meta_.id(), EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbKeyEnd).c_str());
 
             //need to encode and decode
-            std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
+            std::unique_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
             uint32_t count{0};
 
             for (int i = 0; iterator->Valid() ; ++i) {
                 count++;
                 auto kv = resp->add_kvs();
-                auto tmpDbValue = iterator.get()->value();
-                
+                auto tmpDbValue = iterator->value();
+                auto tmpDbKey = iterator->key();
+
                 if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, tmpDbValue, err)) {
                     //break;
                     continue;
@@ -588,7 +590,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             idx++;
             auto tmpSessionId = pMsg->session_id;
 
-            FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
+            FLOG_DEBUG("range[%" PRIu64 "] Watch-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                        meta_.id(), EncodeToHexString(dbKey).c_str(), idx, watchCnt, tmpSessionId);
             
             if(tmpSessionId < 1) {
@@ -604,8 +606,10 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             {
                 //delete watch
                 if (WATCH_OK != DelKeyWatcher(tmpSessionId, key)) {
-                    FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
+                    FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                            meta_.id(), key.c_str(), idx, watchCnt, tmpSessionId);
+                } else {
+                    FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(key).c_str(), tmpSessionId);
                 }
             }
         }
