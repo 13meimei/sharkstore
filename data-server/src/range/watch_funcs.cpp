@@ -544,11 +544,9 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         return -1;
     }
 
-    std::string key{""};
-    std::string value{""};
+    //std::string value{""};
     errorpb::Error *err = nullptr;
 
-    
     uint32_t watchCnt = GetKeyWatchers(vecProtoMsg, dbKey);
     if (watchCnt > 0) {
         //to do 遍历watcher 发送通知
@@ -606,11 +604,11 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 WatchSend(pMsg, tmpDsResp);
                 {
                     //delete watch
-                    if (WATCH_OK != DelKeyWatcher(tmpSessionId, key)) {
+                    if (WATCH_OK != DelKeyWatcher(tmpSessionId, dbKey)) {
                         FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                                meta_.id(), key.c_str(), idx, watchCnt, tmpSessionId);
+                                meta_.id(), EncodeToHexString(dbKey).c_str(), idx, watchCnt, tmpSessionId);
                     } else {
-                        FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(key).c_str(), tmpSessionId);
+                        FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(dbKey).c_str(), tmpSessionId);
                     }
                 }
 

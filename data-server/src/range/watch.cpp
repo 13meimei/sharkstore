@@ -309,7 +309,7 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
 
         keys->erase(itKeys);
     } else {
-        FLOG_DEBUG("DelWatcher>>>find key fail:%s ok.", key.c_str());
+        FLOG_DEBUG("DelWatcher>>>find key fail:%s .", key.c_str());
     }
 
     if (keys->size() < 1) {
