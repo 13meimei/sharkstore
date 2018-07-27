@@ -241,7 +241,7 @@ TEST_F(WatchTest, watch) {
 
         // end test watch_put
     }
-
+/*
     {
         // begin test watch_put (not leader)
 
@@ -359,7 +359,7 @@ TEST_F(WatchTest, watch) {
 
         // end test watch_put
     }
-
+*/
     {
         // begin test watch_put group (key ok)
         FLOG_DEBUG("watch_put group mode.");
@@ -752,7 +752,7 @@ TEST_F(WatchTest, watch) {
         FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
         // end test watch_get
     }
-
+/*
     std::cout << "watch_get ...no leader" << '\n';
     {
         // begin test watch_get (no leader)
@@ -1064,7 +1064,7 @@ TEST_F(WatchTest, watch) {
 
         // end test watch_delete
     }
-
+*/
     /*
     std::cout << "watch_get ...ensure not to be deleted" << '\n';
     {

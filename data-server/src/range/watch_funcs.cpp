@@ -132,12 +132,12 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
 
     FLOG_DEBUG("range[%" PRIu64 "] PureGet begin", meta_.id());
 
+    auto &key = req.kv().key();
     do {
         if (!VerifyLeader(err)) {
             break;
         }
 
-        auto &key = req.kv().key();
         if (key.empty()) {
             FLOG_WARN("range[%" PRIu64 "] PureGet error: key empty", meta_.id());
             err = KeyNotInRange("EmptyKey");
@@ -212,7 +212,9 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
                 FLOG_DEBUG("range[%" PRIu64 "] dbvalue:%s  err:%s", meta_.id(), EncodeToHexString(dbValue).c_str(), err->message().c_str());
                 break;
             }
-            
+            if(kv->key_size() < 1) {
+                kv->add_key(key[0]);
+            } 
             FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s ori-value:%s ", meta_.id(), code, ret.ToString().data(), kv->value().c_str());
             code = ret.code();
         }
