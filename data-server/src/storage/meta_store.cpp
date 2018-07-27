@@ -82,6 +82,23 @@ Status MetaStore::GetAllRange(std::vector<metapb::Range>* range_metas) {
     return Status::OK();
 }
 
+Status MetaStore::GetRange(uint64_t range_id, metapb::Range* meta) {
+    std::string key = kRangeMetaPrefix + std::to_string(range_id);
+
+    std::string value;
+    auto s = db_->Get(rocksdb::ReadOptions(), key, &value);
+    if (s.IsNotFound()) {
+        return Status(Status::kNotFound, "get range", "");
+    } else if (!s.ok()) {
+        return Status(Status::kCorruption, "get range", s.ToString());
+    }
+
+    if (!meta->ParseFromString(value)) {
+        return Status(Status::kCorruption, "parse", EncodeToHex(value));
+    }
+    return Status::OK();
+}
+
 Status MetaStore::AddRange(const metapb::Range& meta) {
     std::string key = kRangeMetaPrefix + std::to_string(meta.id());
     // serialize
