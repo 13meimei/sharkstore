@@ -22,7 +22,7 @@ public:
     explicit MetaStore(const std::string& path);
     ~MetaStore();
 
-    Status Open();
+    Status Open(bool read_only = false);
 
     MetaStore(const MetaStore&) = delete;
     MetaStore& operator=(const MetaStore&) = delete;

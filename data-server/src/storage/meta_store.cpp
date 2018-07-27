@@ -5,7 +5,6 @@
 #include <memory>
 
 #include "base/util.h"
-#include "common/ds_encoding.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -17,7 +16,7 @@ MetaStore::MetaStore(const std::string &path) : path_(path) {
 
 MetaStore::~MetaStore() { delete db_; }
 
-Status MetaStore::Open() {
+Status MetaStore::Open(bool read_only) {
     int ret = MakeDirAll(path_, 0755);
     if (ret != 0) {
         return Status(Status::kIOError, "create meta store directory",
@@ -26,9 +25,14 @@ Status MetaStore::Open() {
 
     rocksdb::Options ops;
     ops.create_if_missing = true;
-    auto s = rocksdb::DB::Open(ops, path_, &db_);
-    if (!s.ok()) {
-        return Status(Status::kIOError, "open meta store db", s.ToString());
+    rocksdb::Status rs;
+    if (read_only) {
+        rs = rocksdb::DB::OpenForReadOnly(ops, path_, &db_);
+    } else {
+        rs = rocksdb::DB::Open(ops, path_, &db_);
+    }
+    if (!rs.ok()) {
+        return Status(Status::kIOError, "open meta store db", rs.ToString());
     }
 
     return Status::OK();
@@ -50,8 +54,7 @@ Status MetaStore::GetNodeID(uint64_t *node_id) {
         try {
             *node_id = std::stoull(value);
         } catch (std::exception &e) {
-            return Status(Status::kCorruption, "invalid node_id",
-                          EncodeToHexString(value));
+            return Status(Status::kCorruption, "invalid node_id", EncodeToHex(value));
         }
         return Status::OK();
     } else if (ret.IsNotFound()) {
@@ -145,8 +148,7 @@ Status MetaStore::LoadApplyIndex(uint64_t range_id, uint64_t *apply_index) {
         try {
             *apply_index = std::stoull(value);
         } catch (std::exception &e) {
-            return Status(Status::kCorruption, "invalid applied",
-                          EncodeToHexString(value));
+            return Status(Status::kCorruption, "invalid applied", EncodeToHex(value));
         }
         return Status::OK();
     } else if (ret.IsNotFound()) {

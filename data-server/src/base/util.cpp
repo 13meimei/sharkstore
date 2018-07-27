@@ -40,6 +40,53 @@ std::string strErrno(int errno_copy) {
 #endif
 }
 
+std::string EncodeToHex(const std::string& src) {
+    std::string result;
+    result.reserve(src.size() * 2);
+    char buf[3];
+    for (std::string::size_type i = 0; i < src.size(); ++i) {
+        snprintf(buf, 3, "%02X", static_cast<unsigned char>(src[i]));
+        result.append(buf, 2);
+    }
+    return result;
+}
+
+// most of the code is from rocksdb
+static int fromHex(char c) {
+    if (c >= 'a' && c <= 'f') {
+        c -= ('a' - 'A');
+    }
+    if (c < '0' || (c > '9' && (c < 'A' || c > 'F'))) {
+        return -1;
+    }
+    if (c <= '9') {
+        return c - '0';
+    }
+    return c - 'A' + 10;
+}
+
+bool DecodeFromHex(const std::string& hex, std::string* result) {
+    auto len = hex.size();
+    if (len % 2 != 0 || result == nullptr) {
+        return false;
+    }
+
+    result->clear();
+    result->reserve(len/2);
+    for (size_t i = 0; i < len; i += 2) {
+        int h1 = fromHex(hex[i]);
+        if (h1 < 0) {
+            return false;
+        }
+        int h2 = fromHex(hex[i+1]);
+        if (h2 < 0) {
+            return false;
+        }
+        result->push_back(static_cast<char>((h1 << 4) | h2));
+    }
+    return true;
+}
+
 std::string SliceSeparate(const std::string &l, const std::string &r, size_t max_len) {
     if (l.empty() || r.empty()) {
         return std::string();
