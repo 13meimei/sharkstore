@@ -41,7 +41,7 @@ bool DecodeWatchKey(std::vector<std::string *> &keys, std::string *buf) {
     assert(keys.size() == 0 && buf->length() > 9);
 
     size_t offset;
-    for (offset = 9; offset != buf->length() - 1;) {
+    for (offset = 9; offset < buf->length() ;) {
         std::string* key = new std::string;
         
         if (!DecodeBytesAscending(*buf, offset, key)) {
@@ -379,7 +379,7 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                             kv->add_key(*itKey);
                         }
                     } else {
-                        FLOG_WARN("range[%" PRIu64 "] DecodeWatchKey exception, key:%s.", meta_.id(), EncodeToHexString(db_key).c_str());
+                        FLOG_WARN("range[%" PRIu64 "] DecodeKey exception, key:%s.", meta_.id(), EncodeToHexString(db_key).c_str());
                     }
                     
                     //to do free keys
