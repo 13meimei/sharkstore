@@ -46,6 +46,7 @@ void SnapWorker::runTask() {
             }
             if (!running_) return;
             task = std::move(task_);
+            task_ = nullptr;
         }
 
         pool_->addRunning(task);

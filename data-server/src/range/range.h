@@ -59,7 +59,7 @@ public:
     Range &operator=(const Range &) = delete;
     Range &operator=(const Range &) volatile = delete;
 
-    Status Initialize(uint64_t leader);
+    Status Initialize(uint64_t leader, bool from_split = false);
     Status Shutdown();
 
     Status Apply(const std::string &cmd, uint64_t index) override;

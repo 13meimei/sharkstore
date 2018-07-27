@@ -32,15 +32,12 @@ Status DiskStorage::Open() {
         return s;
     }
 
-    // 打开meta file
-    s = meta_file_.Open();
+    // 打开meta文件
+    s = initMeta();
     if (!s.ok()) {
         return s;
     }
-    s = meta_file_.Load(&hard_state_, &trunc_meta_);
-    if (!s.ok()) {
-        return s;
-    }
+
     applied_ = hard_state_.commit();
 
     // 打开日志文件
@@ -61,13 +58,63 @@ Status DiskStorage::Open() {
     return Status::OK();
 }
 
+Status DiskStorage::initDir() {
+    assert(!path_.empty());
+    int ret = sharkstore::MakeDirAll(path_, 0755);
+    if (ret < 0) {
+        return Status(Status::kIOError, "init directory " + path_, strErrno(errno));
+    }
+    return Status::OK();
+}
+
+Status DiskStorage::initMeta() {
+    // 打开meta file
+    auto s = meta_file_.Open();
+    if (!s.ok()) {
+        return s;
+    }
+
+    s = meta_file_.Load(&hard_state_, &trunc_meta_);
+    if (!s.ok()) {
+        return s;
+    }
+
+    // 创建日志空洞, 截断index=1处日志
+    if (ops_.create_with_hole) {
+        if (trunc_meta_.index() > 1 || hard_state_.commit() > 1) {
+            std::ostringstream ss;
+            ss << "incompatible trunc index or commit: (" << trunc_meta_.index() << ", ";
+            ss << hard_state_.commit() << ")";
+            return Status(Status::kInvalidArgument, "create hole", ss.str());
+        }
+
+        hard_state_.set_commit(1);
+        s = meta_file_.SaveHardState(hard_state_);
+        if (!s.ok()) {
+            return s;
+        }
+
+        trunc_meta_.set_index(1);
+        trunc_meta_.set_term(1);
+        s = meta_file_.SaveTruncMeta(trunc_meta_);
+        if (!s.ok()) {
+            return s;
+        }
+
+        s = meta_file_.Sync();
+        if (!s.ok()) {
+            return s;
+        }
+    }
+    return s;
+}
+
 Status DiskStorage::checkLogsValidate(const std::map<uint64_t, uint64_t>& logs) {
     // 检查日志文件的序号是否连续
     // 检查日志文件的起始index是否有序
     uint64_t prev_seq = 0;
     uint64_t prev_index = 0;
-    for (std::map<uint64_t, uint64_t>::const_iterator it = logs.cbegin();
-         it != logs.cend(); ++it) {
+    for (auto it = logs.cbegin(); it != logs.cend(); ++it) {
         if (it != logs.cbegin()) {
             if (prev_seq + 1 != it->first || prev_index >= it->second) {
                 std::ostringstream ss;
@@ -78,15 +125,6 @@ Status DiskStorage::checkLogsValidate(const std::map<uint64_t, uint64_t>& logs) 
         }
         prev_seq = it->first;
         prev_index = it->second;
-    }
-    return Status::OK();
-}
-
-Status DiskStorage::initDir() {
-    assert(!path_.empty());
-    int ret = sharkstore::MakeDirAll(path_, 0755);
-    if (ret < 0) {
-        return Status(Status::kIOError, "init directory " + path_, strErrno(errno));
     }
     return Status::OK();
 }
@@ -138,7 +176,7 @@ Status DiskStorage::openLogs() {
     if (!s.ok()) return s;
 
     if (logs.empty()) {
-        LogFile* f = new LogFile(path_, 1, trunc_meta_.index() + 1);
+        auto f = new LogFile(path_, 1, trunc_meta_.index() + 1);
         auto s = f->Open(ops_.allow_corrupt_startup);
         if (!s.ok()) {
             return s;
@@ -147,7 +185,7 @@ Status DiskStorage::openLogs() {
     } else {
         size_t count = 0;
         for (auto it = logs.begin(); it != logs.end(); ++it) {
-            LogFile* f = new LogFile(path_, it->first, it->second);
+            auto f = new LogFile(path_, it->first, it->second);
             auto s = f->Open(ops_.allow_corrupt_startup, count == logs.size() - 1);
             if (!s.ok()) {
                 return s;
@@ -233,7 +271,7 @@ Status DiskStorage::StoreEntries(const std::vector<EntryPtr>& entries) {
     // 检测日志文件个数是否太多需要截断
     if (ops_.max_log_files > 0 && log_files_.size() > ops_.max_log_files &&
         applied_ > kKeepLogCountBeforeApplied) {
-        for (int idx = log_files_.size() - ops_.max_log_files - 1; idx >= 0; --idx) {
+        for (int idx = static_cast<int>(log_files_.size() - ops_.max_log_files - 1); idx >= 0; --idx) {
             // 只截断已经applied的日志
             if (log_files_[idx]->LastIndex() < applied_ - kKeepLogCountBeforeApplied) {
                 s = Truncate(log_files_[idx]->LastIndex());
@@ -319,6 +357,8 @@ Status DiskStorage::Entries(uint64_t lo, uint64_t hi, uint64_t max_size,
     } else if (hi > last_index_ + 1) {
         return Status(Status::kInvalidArgument, "out of bound", std::to_string(hi));
     }
+
+    *is_compacted = false;
 
     uint64_t size = 0;
     Status s;
@@ -487,39 +527,6 @@ Status DiskStorage::Close() {
     auto s = meta_file_.Close();
     if (!s.ok()) return s;
     return closeLogs();
-}
-
-Status DiskStorage::removeBakups() {
-    DIR* dir = ::opendir(path_.c_str());
-    if (NULL == dir) {
-        return Status(Status::kIOError, "remove backups: call opendir", strErrno(errno));
-    }
-    struct dirent* ent = NULL;
-    while (true) {
-        errno = 0;
-        ent = ::readdir(dir);
-        if (NULL == ent) {
-            if (0 == errno) {
-                break;
-            } else {
-                closedir(dir);
-                return Status(Status::kIOError, "call readdir", strErrno(errno));
-            }
-        }
-        // TODO: call stat if d_type is DT_UNKNOWN
-        if ((ent->d_type == DT_REG || ent->d_type == DT_UNKNOWN) &&
-            isBakLogFile(ent->d_name)) {
-            std::string bak_path = JoinFilePath({path_, ent->d_name});
-            if (std::remove(bak_path.c_str()) != 0) {
-                closedir(dir);
-                return Status(Status::kIOError,
-                              std::string("remove log backup ") + bak_path,
-                              strErrno(errno));
-            }
-        }
-    }
-    closedir(dir);
-    return Status::OK();
 }
 
 Status DiskStorage::Destroy(bool backup) {

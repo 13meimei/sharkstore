@@ -3,6 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "test_util.h"
 #include "base/util.h"
 #include "raft/src/impl/snapshot/task.h"
 #include "raft/src/impl/snapshot/worker_pool.h"
@@ -15,6 +16,7 @@ int main(int argc, char* argv[]) {
 namespace {
 
 using sharkstore::randomInt;
+using sharkstore::raft::impl::testutil::randSnapContext;
 using namespace sharkstore::raft;
 using namespace sharkstore::raft::impl;
 
@@ -22,19 +24,9 @@ void reporter(const SnapContext&, const SnapResult&) {}
 
 class TestSnapTask : public SnapTask {
 public:
-    TestSnapTask(): SnapTask(randContext()) {
+    TestSnapTask(): SnapTask(randSnapContext()) {
         SetReporter(reporter);
     }
-
-    static SnapContext randContext() {
-        SnapContext ctx;
-        ctx.id = static_cast<uint64_t>(randomInt());
-        ctx.term = static_cast<uint64_t>(randomInt());
-        ctx.uuid = static_cast<uint64_t>(randomInt());
-        ctx.from = static_cast<uint64_t>(randomInt());
-        ctx.to = static_cast<uint64_t>(randomInt());
-        return ctx;
-    };
 
     void WaitRunning() {
         std::unique_lock<std::mutex> lock(mu_);
@@ -113,6 +105,11 @@ TEST(Snapshot, WorkerPool) {
         t->WaitRunning();
     }
     ASSERT_EQ(pool.RunningsCount(), n);
+
+    // get running tasks
+    std::vector<SnapTaskPtr> runnings;
+    pool.GetRunningTasks(&runnings);
+    ASSERT_EQ(runnings.size(), n);
 
     // finish one
     tasks.back()->Finish();

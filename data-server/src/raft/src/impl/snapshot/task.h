@@ -51,6 +51,7 @@ protected:
 private:
     const SnapContext context_;
     const std::string id_; // unique task id
+
     std::atomic<bool> dispatched_ = {false};
     SnapReporter reporter_;
 };

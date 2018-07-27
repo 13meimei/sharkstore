@@ -56,6 +56,13 @@ SnapWorkerPool::SnapWorkerPool(const std::string& name, size_t size) {
 }
 
 SnapWorkerPool::~SnapWorkerPool() {
+    // cancel running tasks
+    std::vector<SnapTaskPtr> tasks;
+    running_tasks_.GetAll(&tasks);
+    for (auto t : tasks) {
+        t->Cancel();
+    }
+
     for (auto w : all_workers_) {
         delete w;
     }
