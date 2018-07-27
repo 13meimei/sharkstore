@@ -7,14 +7,14 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 int32_t Range::AddKeyWatcher(std::string &encodeKey, common::ProtoMessage *msg) {
-    return key_watchers_.AddWatcher(encodeKey, msg);
+    return key_watchers_.AddWatcher(encodeKey, (WatchProtoMsg*)msg);
 }
 
 WATCH_CODE Range::DelKeyWatcher(int64_t &id, std::string &key) {
     return key_watchers_.DelWatcher(id, key);
 }
 
-uint32_t Range::GetKeyWatchers(std::vector<common::ProtoMessage *> &vec, std::string encodeKey) {
+uint32_t Range::GetKeyWatchers(std::vector<WatchProtoMsg *> &vec, std::string encodeKey) {
     return key_watchers_.GetWatchers(vec, encodeKey);
 }
 
@@ -77,7 +77,8 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
 WatcherSet::WatcherSet() {
     watchers_expire_thread_ = std::thread([this]() {
         while (watchers_expire_thread_continue_flag) {
-            Watcher w;
+            std::shared_ptr<Watcher> watcher;
+
             {
                 {
                     std::unique_lock<std::mutex> lock(mutex_);
@@ -86,12 +87,12 @@ WatcherSet::WatcherSet() {
                         continue; // sleep 10ms
                     }
 
-                    w = timer_.top();
+                    watcher = timer_.top();
                 }
 
-                FLOG_DEBUG("Notify success, wait for expire. current session_id:%" PRIu64 ".", w.msg_->session_id);
+                FLOG_DEBUG("Notify success, wait for expire. current session_id:%" PRIu64 ".", watcher->msg_->session_id);
 
-                auto milli = std::chrono::milliseconds(w.msg_->expire_time);
+                auto milli = std::chrono::milliseconds(watcher->msg_->expire_time);
                 std::chrono::system_clock::time_point expire( milli);
                 
                 {
@@ -100,53 +101,53 @@ WatcherSet::WatcherSet() {
                         continue;
                 }
 
-                FLOG_DEBUG("Notify success, expired. current session_id:%" PRIu64 ".", w.msg_->session_id);
+                FLOG_DEBUG("Notify success, expired. current session_id:%" PRIu64 ".", watcher->msg_->session_id);
                 do {
 
                     FLOG_DEBUG("thread send timeout response.");
                     // send timeout response
                     auto resp = new watchpb::DsWatchResponse;
                     resp->mutable_resp()->set_code(Status::kTimedOut);
-                    common::SocketSessionImpl session;
+                    //common::SocketSessionImpl session;
 
-                    if(w.msg_ && w.msg_->session_id) {
-                        FLOG_WARN("session_id:%" PRIu64 " msg_id:%" PRIu64 " show session_id&msg_id.", w.msg_->session_id, w.msg_->msg_id);
-                        session.Send(w.msg_, resp);
-                    } else {
-                        FLOG_ERROR("msg is null or session_id is illegal.");
-                    }
+                    if(watcher->msg_->session_id) {
+                        FLOG_WARN("session_id:%" PRIu64 " msg_id:%" PRIu64 " show session_id&msg_id.", watcher->msg_->session_id, watcher->msg_->msg_id);
+                        
+                        std::unique_lock<std::mutex> lock(mutex_);
+                        watcher->Send(watcher->msg_, resp);
 
-                    // delete watcher
-                    {
-                        auto id = w.msg_->session_id;
-                        auto key = w.key_;
-                        auto wit = watcher_index_.find(id);
-                        if (wit == watcher_index_.end()) {
-                            break;
-                        }
-
-                        auto keys = wit->second; // key map
-                        auto itKeys = keys->find(key);
-
-                        if (itKeys != keys->end()) {
-                            auto itKeyIdx = key_index_.find(key);
-
-                            if (itKeyIdx != key_index_.end()) {
-                                auto itSession = itKeyIdx->second->find(id);
-
-                                if (itSession != itKeyIdx->second->end()) {
-                                    itKeyIdx->second->erase(itSession);
-                                }
-                                key_index_.erase(itKeyIdx);
+                        // delete watcher
+                        {
+                            auto id = watcher->msg_->session_id;
+                            auto key = watcher->key_;
+                            auto wit = watcher_index_.find(id);
+                            if (wit == watcher_index_.end()) {
+                                break;
                             }
 
-                            keys->erase(itKeys);
-                        }
+                            auto keys = wit->second; // key map
+                            auto itKeys = keys->find(key);
 
-                        if (keys->size() < 1) {
-                            watcher_index_.erase(wit);
-                        }
-                    } // del watcher
+                            if (itKeys != keys->end()) {
+                                auto itKeyIdx = key_index_.find(key);
+
+                                if (itKeyIdx != key_index_.end()) {
+                                    auto itSession = itKeyIdx->second->find(id);
+
+                                    if (itSession != itKeyIdx->second->end()) {
+                                        itKeyIdx->second->erase(itSession);
+                                    }
+                                    key_index_.erase(itKeyIdx);
+                                }
+
+                                keys->erase(itKeys);
+                            }
+
+                            if (keys->size() < 1) {
+                                watcher_index_.erase(wit);
+                            }
+                        } //end del watcher
+                    }//end Send
 
                 } while(false);
             
@@ -170,7 +171,7 @@ WatcherSet::~WatcherSet() {
     }
 }
 
-int32_t WatcherSet::AddWatcher(std::string &encodeKey, common::ProtoMessage *msg) {
+int32_t WatcherSet::AddWatcher(std::string &encodeKey, WatchProtoMsg *msg) {
     std::lock_guard<std::mutex> lock(mutex_);
 
     if(key_index_.size() >= MAX_WATCHER_SIZE) {
@@ -183,7 +184,7 @@ int32_t WatcherSet::AddWatcher(std::string &encodeKey, common::ProtoMessage *msg
     auto kit0 = key_index_.find(encodeKey);
     if (kit0 == key_index_.end()) {
         auto val = new WatcherSet_;
-        val->emplace(std::make_pair(msg->session_id, msg));
+        val->emplace(std::make_pair(msg->session_id, (WatchProtoMsg*)msg ));
 
         auto tmpPair = key_index_.emplace(encodeKey, val);
 
@@ -194,7 +195,7 @@ int32_t WatcherSet::AddWatcher(std::string &encodeKey, common::ProtoMessage *msg
     if (kit0 != key_index_.end()) {
         auto kit1 = kit0->second->find(msg->session_id);
         if (kit1 == kit0->second->end()) {
-            kit0->second->emplace(std::make_pair(msg->session_id, msg));
+            kit0->second->emplace(std::make_pair(msg->session_id, (WatchProtoMsg*)msg));
         }
         // build watcher id to key 
         auto wit0 = watcher_index_.find(msg->session_id);
@@ -216,7 +217,7 @@ int32_t WatcherSet::AddWatcher(std::string &encodeKey, common::ProtoMessage *msg
     }
     FLOG_DEBUG("AddWatcher success(%" PRIu64"). key:%s session_id:%" PRIu64 ".", GetWatcherSize(), EncodeToHexString(encodeKey).c_str(), msg->session_id);
 
-    timer_.push(Watcher(msg, encodeKey));
+    timer_.push(std::make_shared<Watcher>(msg, encodeKey));
     timer_cond_.notify_one();
 
     return 0;
@@ -228,7 +229,7 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
     //  timer_.find and del
     auto timer_queue = timer_.GetQueue();
     for (auto it = timer_queue.begin(); it != timer_queue.end(); ++it) {
-        if (it->msg_->session_id == id && it->key_ == key) {
+        if (it->get()->msg_->session_id == id && it->get()->key_ == key) {
             timer_.GetQueue().erase(it);
         }
     }
@@ -267,7 +268,7 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
     return WATCH_OK;
 }
 
-uint32_t WatcherSet::GetWatchers(std::vector<common::ProtoMessage *> &vec, std::string &encodeKey) {
+uint32_t WatcherSet::GetWatchers(std::vector<WatchProtoMsg *> &vec, std::string &encodeKey) {
     std::lock_guard<std::mutex> lock(mutex_);
     vec.clear();
 

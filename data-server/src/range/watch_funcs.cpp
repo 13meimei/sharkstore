@@ -106,7 +106,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         //decode version from value
         FLOG_DEBUG("range[%" PRIu64 "] (%" PRIu64 " >= %" PRIu64 "?) WatchGet [%s]-%s ok.", 
                    meta_.id(), start_version, version, EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
-        if(start_version >= version) {
+        if(start_version >= version || start_version == 0L) {
             //to do add watch
             AddKeyWatcher(dbKey, msg);
             watchFlag = 1;
@@ -535,7 +535,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     int32_t idx{0};
     const auto &encodeKv = kv;
 
-    std::vector<common::ProtoMessage*> vecProtoMsg;
+    std::vector<WatchProtoMsg*> vecProtoMsg;
     auto dbKey = encodeKv.key_size()>0?encodeKv.key(0):"EMPTY-KEY";
     auto dbValue = encodeKv.value();
     
@@ -599,20 +599,23 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             }
             resp->set_watchid(tmpSessionId);
             
-            auto tmpDsResp = new watchpb::DsWatchResponse;
-            tmpDsResp->CopyFrom(*ds_resp);
-
-            context_->socket_session->Send(pMsg, tmpDsResp);
-            {
-                //delete watch
-                if (WATCH_OK != DelKeyWatcher(tmpSessionId, key)) {
-                    FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                           meta_.id(), key.c_str(), idx, watchCnt, tmpSessionId);
-                } else {
-                    FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(key).c_str(), tmpSessionId);
+            //auto tmpDsResp = new watchpb::DsWatchResponse;
+            //tmpDsResp->CopyFrom(*ds_resp);
+            auto tmpDsResp = ds_resp;
+            do {
+                context_->socket_session->Send(pMsg, tmpDsResp);
+                {
+                    //delete watch
+                    if (WATCH_OK != DelKeyWatcher(tmpSessionId, key)) {
+                        FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
+                                meta_.id(), key.c_str(), idx, watchCnt, tmpSessionId);
+                    } else {
+                        FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(key).c_str(), tmpSessionId);
+                    }
                 }
-            }
-        }
+            } while(false);
+        } //end notify
+
         if(ds_resp != nullptr) {
             free(ds_resp);
         }

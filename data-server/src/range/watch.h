@@ -6,6 +6,7 @@ _Pragma("once");
 #include <common/socket_session.h>
 #include <common/ds_encoding.h>
 #include <common/ds_config.h>
+#include <common/ds_proto.h>
 
 #include <frame/sf_logger.h>
 #include <mutex>
@@ -16,6 +17,7 @@ _Pragma("once");
 #include <condition_variable>
 #include <thread>
 #include <unordered_map>
+
 
 #define MAX_WATCHER_SIZE 100000
 
@@ -56,23 +58,107 @@ enum WATCH_CODE {
     WATCH_WATCHER_NOT_EXIST = -2
 };
 
-typedef std::unordered_map<int64_t, common::ProtoMessage*> WatcherSet_;
+class WatchProtoMsg: public common::ProtoMessage {
+public:
+    /*WatchProtoMsg(){};
+    ~WatchProtoMsg(){};
+
+    WatchProtoMsg(const WatchProtoMsg &) = delete;
+    WatchProtoMsg &operator=(const WatchProtoMsg &) = delete;
+    WatchProtoMsg &operator=(const WatchProtoMsg &) volatile = delete;
+    */
+public:
+    bool getFlag() {
+        return send_flag_;
+    }
+
+    void setFlag() {
+        send_flag_ = true;
+    }
+
+private:
+    bool send_flag_ = false;
+
+};
+
+typedef std::unordered_map<int64_t, WatchProtoMsg *> WatcherSet_;
 typedef std::unordered_map<std::string, int16_t> KeySet_;
 
 typedef std::unordered_map<std::string, WatcherSet_*> Key2Watchers_;
 typedef std::unordered_map<int64_t, KeySet_*> Watcher2Keys_;
 
-struct Watcher{
+//timer queue class
+class Watcher{
+public:
     Watcher() {};
-    Watcher(common::ProtoMessage* msg, std::string key) {
-        this->msg_ = msg;
+    Watcher(WatchProtoMsg* msg, const std::string &key) {
+        this->msg_ = std::make_shared<WatchProtoMsg>(*msg);
         this->key_ = key;
     }
-    ~Watcher() = default;
+    ~Watcher() {
+        if(msg_->getFlag()) {
+            ;
+        }
+    }
     bool operator<(const Watcher& other) const;
 
-    common::ProtoMessage* msg_;
+    bool Send(std::shared_ptr<WatchProtoMsg> msg, google::protobuf::Message* resp) {
+        // // 分配回应内存
+        size_t body_len = resp == nullptr ? 0 : resp->ByteSizeLong();
+        size_t data_len = header_size + body_len;
+
+        response_buff_t *response = new_response_buff(data_len);
+
+        // 填充应答头部
+        ds_header_t header;
+        header.magic_number = DS_PROTO_MAGIC_NUMBER;
+        header.body_len = body_len;
+        header.msg_id = msg->header.msg_id;
+        header.version = DS_PROTO_VERSION_CURRENT;
+        header.msg_type = DS_PROTO_FID_RPC_RESP;
+        header.func_id = msg->header.func_id;
+        header.proto_type = msg->header.proto_type;
+
+        ds_serialize_header(&header, (ds_proto_header_t *)(response->buff));
+
+        response->session_id  = msg->session_id;
+        response->msg_id      = header.msg_id;
+        response->begin_time  = msg->begin_time;
+        response->expire_time = msg->expire_time;
+        response->buff_len    = data_len;
+
+        std::lock_guard<std::mutex> lock(mutex_);
+        if(msg->getFlag()) {
+            FLOG_DEBUG("Already sended, session_id[%" PRIu64 "]", msg->session_id);
+            return false;
+        }
+
+        do {
+            if (resp != nullptr) {
+                char *data = response->buff + header_size;
+                if (!resp->SerializeToArray(data, body_len)) {
+                    FLOG_ERROR("serialize response failed, func_id: %d", header.func_id);
+                    delete_response_buff(response);
+                    break;
+                }
+            }
+
+            //处理完成，socket send
+            msg->socket->Send(response);
+
+        } while (false);
+
+        msg->setFlag();
+        return true;
+        //delete msg;
+        //delete resp;
+    }
+
+public:
+    std::shared_ptr<WatchProtoMsg> msg_;
     std::string key_;
+
+    std::mutex mutex_;
 };
 
 template <class T>
@@ -88,13 +174,14 @@ public:
     std::vector<T>& GetQueue() { return this->c; }
 };
 
+//base class
 class WatcherSet {
 public:
     WatcherSet();
     ~WatcherSet();
-    int32_t AddWatcher(std::string &, common::ProtoMessage*);
+    int32_t AddWatcher(std::string &, WatchProtoMsg*);
     WATCH_CODE DelWatcher(int64_t, const std::string &);
-    uint32_t GetWatchers(std::vector<common::ProtoMessage*>& , std::string &);
+    uint32_t GetWatchers(std::vector<WatchProtoMsg*>& , std::string &);
     
     uint64_t GetWatcherSize() {
         return static_cast<uint32_t>(key_index_.size());
@@ -105,7 +192,7 @@ private:
     Watcher2Keys_ watcher_index_;
     std::mutex mutex_;
 
-    TimerQueue<Watcher> timer_;
+    TimerQueue<std::shared_ptr<Watcher>> timer_;
     std::condition_variable timer_cond_;
     std::thread watchers_expire_thread_;
     volatile bool watchers_expire_thread_continue_flag = true;

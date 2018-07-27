@@ -122,7 +122,7 @@ public:
 
     int32_t AddKeyWatcher(std::string&, common::ProtoMessage*);
     WATCH_CODE DelKeyWatcher(int64_t &id, std::string &key);
-    uint32_t GetKeyWatchers(std::vector<common::ProtoMessage*>&, std::string);
+    uint32_t GetKeyWatchers(std::vector<WatchProtoMsg *>&, std::string);
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
     kvrpcpb::SelectResponse *SelectResp(const kvrpcpb::DsSelectRequest &req);
