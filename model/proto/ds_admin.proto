@@ -21,6 +21,7 @@ enum AdminType {
     COMPACTION = 5;
     CLEAR_QUEUE = 6; // clear worker queue
     GET_PENDINGS = 7; // pending user requests
+    FLUSH_DB = 8;
 }
 
 message AdminRequest {
@@ -34,6 +35,7 @@ message AdminRequest {
     CompactionRequest compaction_req = 14;
     ClearQueueRequest clear_queue_req = 15;
     GetPendingsRequest get_pendings_req = 16;
+    FlushDBRequest flush_db_req = 17;
 }
 
 message AdminResponse {
@@ -47,6 +49,7 @@ message AdminResponse {
     CompactionResponse compaction_resp = 14;
     ClearQueueResponse clear_queue_resp = 15;
     GetPendingsResponse get_pendings_resp = 16;
+    FlushDBResponse flush_db_resp = 17;
 }
 
 
@@ -136,4 +139,12 @@ message GetPendingsRequest {
 
 message GetPendingsResponse {
     string desc = 1; // description in json
+}
+
+
+message FlushDBRequest {
+    bool wait = 1;   // If true, the flush will wait until the flush is done.
+}
+
+message FlushDBResponse {
 }
