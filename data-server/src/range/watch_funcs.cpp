@@ -616,10 +616,6 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             } while(false);
         } //end notify
 
-        if(ds_resp != nullptr) {
-            free(ds_resp);
-        }
-        
         vecProtoMsg.clear();
 
     } else {
