@@ -34,6 +34,7 @@ void EncodeWatchValue(std::string *buf,
                       const std::string *value,
                       const std::string *extend);
 
+void WatchSend(common::ProtoMessage *msg, google::protobuf::Message *resp);
 class WatchCode {
 public:
     WatchCode() {};

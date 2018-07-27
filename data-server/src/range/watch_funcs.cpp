@@ -603,7 +603,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             tmpDsResp->CopyFrom(*ds_resp);
             //auto tmpDsResp = ds_resp;
             do {
-                context_->socket_session->Send(pMsg, tmpDsResp);
+                WatchSend(pMsg, tmpDsResp);
                 {
                     //delete watch
                     if (WATCH_OK != DelKeyWatcher(tmpSessionId, key)) {
@@ -613,10 +613,17 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                         FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(key).c_str(), tmpSessionId);
                     }
                 }
+
+                if(tmpDsResp != nullptr) delete pMsg;
+
             } while(false);
         } //end notify
+
         if( ds_resp != nullptr ) {
             delete ds_resp;
+        }
+        for(auto it:vecProtoMsg) {
+            delete it;
         }
 
         vecProtoMsg.clear();

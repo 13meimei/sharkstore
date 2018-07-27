@@ -74,6 +74,48 @@ bool DecodeWatchValue(int64_t *version, std::string *value, std::string *extend,
     return true;
 }
 
+void WatchSend(common::ProtoMessage *msg, google::protobuf::Message *resp) {
+    // // 分配回应内存
+    size_t body_len = resp == nullptr ? 0 : resp->ByteSizeLong();
+    size_t data_len = header_size + body_len;
+
+    response_buff_t *response = new_response_buff(data_len);
+
+    // 填充应答头部
+    ds_header_t header;
+    header.magic_number = DS_PROTO_MAGIC_NUMBER;
+    header.body_len = body_len;
+    header.msg_id = msg->header.msg_id;
+    header.version = DS_PROTO_VERSION_CURRENT;
+    header.msg_type = DS_PROTO_FID_RPC_RESP;
+    header.func_id = msg->header.func_id;
+    header.proto_type = msg->header.proto_type;
+
+    ds_serialize_header(&header, (ds_proto_header_t *)(response->buff));
+
+    response->session_id  = msg->session_id;
+    response->msg_id      = header.msg_id;
+    response->begin_time  = msg->begin_time;
+    response->expire_time = msg->expire_time;
+    response->buff_len    = data_len;
+
+    do {
+        if (resp != nullptr) {
+            char *data = response->buff + header_size;
+            if (!resp->SerializeToArray(data, body_len)) {
+                FLOG_ERROR("serialize response failed, func_id: %d", header.func_id);
+                delete_response_buff(response);
+                break;
+            }
+        }
+
+        //处理完成，socket send
+        msg->socket->Send(response);
+
+    } while (false);
+
+}
+
 WatcherSet::WatcherSet() {
     watchers_expire_thread_ = std::thread([this]() {
         while (watchers_expire_thread_continue_flag) {
@@ -214,8 +256,13 @@ int32_t WatcherSet::AddWatcher(std::string &encodeKey, WatchProtoMsg *msg) {
                 wit0->second->emplace(std::make_pair(encodeKey, 2));
             }
         }
+
+        FLOG_DEBUG("AddWatcher success(%" PRIu64"). key:%s session_id:%" PRIu64 ".", GetWatcherSize(), EncodeToHexString(encodeKey).c_str(), msg->session_id);
+
+    } else {
+        FLOG_DEBUG("AddWatcher fail(%" PRIu64"). key:%s session_id:%" PRIu64 ".", GetWatcherSize(), EncodeToHexString(encodeKey).c_str(), msg->session_id);
     }
-    FLOG_DEBUG("AddWatcher success(%" PRIu64"). key:%s session_id:%" PRIu64 ".", GetWatcherSize(), EncodeToHexString(encodeKey).c_str(), msg->session_id);
+
 
     timer_.push(std::make_shared<Watcher>(msg, encodeKey));
     timer_cond_.notify_one();
@@ -244,6 +291,8 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
     auto &keys = wit->second; // key map
     auto itKeys = keys->find(key);
 
+    //key_index_
+
     if (itKeys != keys->end()) {
         FLOG_DEBUG("DelWatcher>>>find key:%s ok.", key.c_str());
 
@@ -259,10 +308,13 @@ WATCH_CODE WatcherSet::DelWatcher(int64_t id, const std::string &key) {
         }
 
         keys->erase(itKeys);
+    } else {
+        FLOG_DEBUG("DelWatcher>>>find key fail:%s ok.", key.c_str());
     }
 
     if (keys->size() < 1) {
         watcher_index_.erase(wit);
+        FLOG_DEBUG("DelWatcher session[%" PRIu64 "]", tmpSessionId);
     }
 
     return WATCH_OK;
