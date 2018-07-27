@@ -19,6 +19,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
     //to do 暂不支持前缀watch
     auto prefix = req.req().prefix();
+    auto key = req.req().kv().key();
 
     FLOG_DEBUG("range[%" PRIu64 "] WatchGet begin", meta_.id());
 
@@ -70,6 +71,12 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             evt->set_type(watchpb::PUT);
             auto respKv = evt->mutable_kv();
             respKv->CopyFrom(*tmpKv);
+
+            if(respKv->key_size() < 1) {
+                for(auto it:key) {
+                    respKv->add_key(it);
+                }
+            }
             version = respKv->version();
             FLOG_WARN("range[%" PRIu64 "] WatchGet version: [%" PRIu64 "]", meta_.id(), version);
         } else {
@@ -196,6 +203,12 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
                 if(maxVersion < kv->version()) {
                     maxVersion = kv->version();
                 }
+                
+                if( kv->key_size() < 1 ) {
+                    for (auto it:key) {
+                        kv->add_key(it);
+                    }
+                }
 
                 iterator->Next();
             }
@@ -213,7 +226,9 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
                 break;
             }
             if(kv->key_size() < 1) {
-                kv->add_key(key[0]);
+                for (auto it:key) {
+                    kv->add_key(it);
+                }
             } 
             FLOG_DEBUG("range[%" PRIu64 "] PureGet code:%d msg:%s ori-value:%s ", meta_.id(), code, ret.ToString().data(), kv->value().c_str());
             code = ret.code();
