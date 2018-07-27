@@ -35,7 +35,7 @@ std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf
     std::string key("");
     auto buf = new std::string(encodeBuf);
 
-    if(DecodeWatchKey(vec, buf)) {
+    DecodeWatchKey(vec, buf);
 
         if(grpFlag) {
             for(auto it:vec) {
@@ -45,11 +45,11 @@ std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf
             key.assign(*vec[0]);
         }
 
-    } else {
-        FLOG_DEBUG("DecodeWatchKey exception(%d), %s", int(vec.size()), EncodeToHexString(encodeBuf).c_str());
-    }
+    
+   //     FLOG_DEBUG("DecodeWatchKey exception(%d), %s", int(vec.size()), EncodeToHexString(*buf).c_str());
+    
 
-    if(vec.size() > 0)
+    if(vec.size() > 0 && key.empty())
         key.assign(*vec[0]);
 
     FLOG_DEBUG("DecodeKey: %s", key.c_str());
@@ -142,11 +142,11 @@ metapb::Range *genRange2() {
     std::string k1("01004"), k2("01005");
 
     keys.push_back(&k1);
-    EncodeWatchKey(&keyStart, 1, keys);
+    EncodeWatchKey(&keyStart, 2, keys);
     keys.clear();
     keys.push_back(&k2);
 
-    EncodeWatchKey(&keyEnd, 1, keys);
+    EncodeWatchKey(&keyEnd, 2, keys);
     meta->set_id(2);
     //meta->set_start_key("01004");
     //meta->set_end_key("01005");
@@ -508,6 +508,7 @@ TEST_F(WatchTest, watch) {
             std::cout << "no kvs_size" << std::endl;
         }
 
+        FLOG_DEBUG("pure_get response: %s", resp.DebugString().c_str());
     }
 
     FLOG_DEBUG("pure_get ...group ok");
@@ -544,6 +545,7 @@ TEST_F(WatchTest, watch) {
             std::cout << "no kvs_size" << std::endl;
         }
 
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
     }
 
     FLOG_DEBUG("pure_get ...prefix ok");
@@ -579,6 +581,7 @@ TEST_F(WatchTest, watch) {
         } else {
             FLOG_DEBUG("no kvs_size");
         }
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
     }
 
     
@@ -615,6 +618,7 @@ TEST_F(WatchTest, watch) {
             ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
         }
 
+        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
         // end test watch_get
     }
 
@@ -652,6 +656,7 @@ TEST_F(WatchTest, watch) {
             ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
         }
 
+        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
         // end test watch_get
     }
 
@@ -711,6 +716,7 @@ TEST_F(WatchTest, watch) {
             ASSERT_TRUE(resp.resp().events(0).kv().value() == "01004001:value");
         }
 
+        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
         // end test watch_get
     }
 
@@ -742,6 +748,8 @@ TEST_F(WatchTest, watch) {
 
         ASSERT_TRUE(resp.header().has_error());
         ASSERT_TRUE(resp.header().error().has_key_not_in_range());
+        
+        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
         // end test watch_get
     }
 
@@ -781,6 +789,7 @@ TEST_F(WatchTest, watch) {
         ASSERT_FALSE(resp.header().error().not_leader().has_leader());
         ASSERT_TRUE(resp.header().error().message() == "no leader");
 
+        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
         // end test watch_get
     }
 
@@ -820,6 +829,7 @@ TEST_F(WatchTest, watch) {
         ASSERT_TRUE(resp.header().error().not_leader().has_leader());
         ASSERT_TRUE(resp.header().error().not_leader().leader().node_id() == 2);
 
+        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
         // end test watch_get
     }
 
@@ -857,6 +867,7 @@ TEST_F(WatchTest, watch) {
         ASSERT_TRUE(resp.header().has_error());
         ASSERT_TRUE(resp.header().error().has_key_not_in_range());
 
+         FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
         // end test watch_get
     }
 

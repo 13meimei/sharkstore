@@ -360,6 +360,7 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
         int64_t version(0);
         keys.clear();
         
+        FLOG_WARN("range[%" PRIu64 "] DecodeKv dbKey:%s dbValue:%s", meta_.id(), EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
         auto val = std::make_shared<std::string>("");
         auto ext = std::make_shared<std::string>("");
 
@@ -377,7 +378,9 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                         for(auto itKey:encodeKeys) {
                             kv->add_key(*itKey);
                         }
-                    } 
+                    } else {
+                        FLOG_WARN("range[%" PRIu64 "] DecodeWatchKey exception, key:%s.", meta_.id(), EncodeToHexString(db_key).c_str());
+                    }
                     
                     //to do free keys
                     {
