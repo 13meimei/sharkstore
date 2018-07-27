@@ -42,7 +42,7 @@ public:
                    const std::string& buf);
     bool DecodeValue(int64_t* version, std::string* value, std::string* extend,
                      std::string& buf);
-    static void EncodeKey(std::string* buf,
+    void EncodeKey(std::string* buf,
                    uint64_t tableId, const std::vector<std::string*>& keys);
     void EncodeValue(std::string* buf,
                      int64_t version,
