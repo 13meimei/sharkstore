@@ -19,15 +19,17 @@ public:
     bool operator>(const Watcher* other) const;
 
 private:
-    uint64_t table_id_;
-    std::vector<std::string*> keys_;
-    common::ProtoMessage* message_ = nullptr;
+    uint64_t                    table_id_;
+    std::vector<std::string*>   keys_;
+    common::ProtoMessage*       message_ = nullptr;
 
     std::mutex          send_lock_;
     volatile bool       sent_response_flag = false;
 
 public:
-    common::ProtoMessage* GetMessage() { return message_; }
+    uint64_t GetTableId() { return table_id_; }
+    const std::vector<std::string*>& GetKeys() { return keys_; }
+    const common::ProtoMessage* GetMessage() { return message_; }
     bool IsSentResponse() {
         std::lock_guard<std::mutex> lock(send_lock_);
         return sent_response_flag;
@@ -40,7 +42,7 @@ public:
                    const std::string& buf);
     bool DecodeValue(int64_t* version, std::string* value, std::string* extend,
                      std::string& buf);
-    void EncodeKey(std::string* buf,
+    static void EncodeKey(std::string* buf,
                    uint64_t tableId, const std::vector<std::string*>& keys);
     void EncodeValue(std::string* buf,
                      int64_t version,
