@@ -599,9 +599,9 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             }
             resp->set_watchid(tmpSessionId);
             
-            //auto tmpDsResp = new watchpb::DsWatchResponse;
-            //tmpDsResp->CopyFrom(*ds_resp);
-            auto tmpDsResp = ds_resp;
+            auto tmpDsResp = new watchpb::DsWatchResponse;
+            tmpDsResp->CopyFrom(*ds_resp);
+            //auto tmpDsResp = ds_resp;
             do {
                 context_->socket_session->Send(pMsg, tmpDsResp);
                 {
@@ -615,6 +615,9 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 }
             } while(false);
         } //end notify
+        if( ds_resp != nullptr ) {
+            delete ds_resp;
+        }
 
         vecProtoMsg.clear();
 
