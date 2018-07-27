@@ -84,7 +84,7 @@ static int load_rocksdb_config(IniContext *ini_context) {
     ds_config.rocksdb_config.target_file_size_base =
             load_bytes_value_ne(ini_context, section, "target_file_size_base", 128 << 20);
     ds_config.rocksdb_config.target_file_size_multiplier =
-            load_integer_value_atleast(ini_context, section, "target_file_size_multiplier", 1, 0);
+            load_integer_value_atleast(ini_context, section, "target_file_size_multiplier", 1, 1);
 
     ds_config.rocksdb_config.max_background_flushes =
             load_integer_value_atleast(ini_context, section, "max_background_flushes", 2, 1);
@@ -278,8 +278,6 @@ static int load_raft_config(IniContext *ini_context) {
     static const uint16_t kDefaultPort = 6182;
     static const size_t kDefaultLogFileSize = 1024 * 1024 * 16;
     static const size_t kDefaultMaxLogFiles = 5;
-    size_t log_file_size = 0;
-    size_t max_log_files = 0;
 
     char *temp_str;
     char *section = "raft";
@@ -297,44 +295,69 @@ static int load_raft_config(IniContext *ini_context) {
         strcpy(ds_config.raft_config.log_path, "/tmp/ds/raft");
     }
 
-    log_file_size =
-        iniGetIntValue(section, "log_file_size", ini_context, kDefaultLogFileSize);
-    if (log_file_size == 0) {
-        log_file_size = kDefaultLogFileSize;
-    }
-    ds_config.raft_config.log_file_size = log_file_size;
+    ds_config.raft_config.log_file_size = load_bytes_value_ne(
+            ini_context, section, "log_file_size", kDefaultLogFileSize);
 
-    max_log_files =
-        iniGetIntValue(section, "max_log_files", ini_context, kDefaultMaxLogFiles);
-    if (max_log_files == 0) {
-        max_log_files = kDefaultMaxLogFiles;
-    }
-    ds_config.raft_config.max_log_files = max_log_files;
+    ds_config.raft_config.max_log_files = (size_t)load_integer_value_atleast(
+            ini_context, section, "max_log_files", kDefaultMaxLogFiles, 2);
 
     ds_config.raft_config.allow_log_corrupt =
          iniGetIntValue(section, "allow_log_corrupt", ini_context, 1);
 
-    ds_config.raft_config.consensus_threads =
-        iniGetIntValue(section, "consensus_threads", ini_context, 4);
-    ds_config.raft_config.consensus_queue =
-        iniGetIntValue(section, "consensus_queue", ini_context, 100000);
+    ds_config.raft_config.consensus_threads = (size_t)load_integer_value_atleast(
+            ini_context, section, "consensus_threads", 4, 1);
+    ds_config.raft_config.consensus_queue = (size_t)load_integer_value_atleast(
+            ini_context, section , "consensus_queue", 100000, 100);
 
-    ds_config.raft_config.apply_threads =
-        iniGetIntValue(section, "apply_threads", ini_context, 4);
-    ds_config.raft_config.apply_queue =
-        iniGetIntValue(section, "apply_queue", ini_context, 100000);
+    ds_config.raft_config.apply_threads = (size_t)load_integer_value_atleast(
+            ini_context, section, "apply_threads", 4, 1);
+    ds_config.raft_config.apply_queue = (size_t)load_integer_value_atleast(
+            ini_context, section, "apply_queue", 100000, 100);
 
-    ds_config.raft_config.transport_send_threads =
-        iniGetIntValue(section, "transport_send_threads", ini_context, 4);
-    ds_config.raft_config.transport_recv_threads =
-        iniGetIntValue(section, "transport_recv_threads", ini_context, 4);
-    ds_config.raft_config.tick_interval_ms =
-        iniGetIntValue(section, "tick_interval", ini_context, 500);
+    ds_config.raft_config.transport_send_threads = (size_t)load_integer_value_atleast(
+            ini_context, section, "transport_send_threads", 4, 1);
+    ds_config.raft_config.transport_recv_threads = (size_t)load_integer_value_atleast(
+            ini_context, section, "transport_recv_threads", 4, 1);
+
+    ds_config.raft_config.tick_interval_ms = (size_t)load_integer_value_atleast(
+           ini_context, section, "tick_interval", 500, 100);
 
     ds_config.raft_config.max_msg_size =
         load_bytes_value_ne(ini_context, section, "max_msg_size", 1024 * 1024);
 
     return 0;
+}
+
+void print_raft_config() {
+    FLOG_INFO("raft configs: "
+              "\n\tport: %d"
+              "\n\tpath: %s"
+              "\n\tlog_file_size: %lu"
+              "\n\tmax_log_files: %lu"
+              "\n\tallow_log_corrupt: %d"
+              "\n\tconsensus_threads: %lu"
+              "\n\tconsensus_queue: %lu"
+              "\n\tapply_threads: %lu"
+              "\n\tapply_queue: %lu"
+              "\n\tsend_threads: %lu"
+              "\n\trecv_threads: %lu"
+              "\n\ttick_interval_ms: %lu"
+              "\n\tmax_msg_size: %lu"
+              ,
+              ds_config.raft_config.port,
+              ds_config.raft_config.log_path,
+              ds_config.raft_config.log_file_size,
+              ds_config.raft_config.max_log_files,
+              ds_config.raft_config.allow_log_corrupt,
+              ds_config.raft_config.consensus_threads,
+              ds_config.raft_config.consensus_queue,
+              ds_config.raft_config.apply_threads,
+              ds_config.raft_config.apply_queue,
+              ds_config.raft_config.transport_send_threads,
+              ds_config.raft_config.transport_recv_threads,
+              ds_config.raft_config.tick_interval_ms,
+              ds_config.raft_config.max_msg_size
+    );
 }
 
 static int load_metric_config(IniContext *ini_context) {

@@ -74,6 +74,8 @@ DataServer::~DataServer() {
 }
 
 bool DataServer::startRaftServer() {
+    print_raft_config();
+
     raft::SetLogger(new RaftLogger());
 
     // 初始化 raft server
