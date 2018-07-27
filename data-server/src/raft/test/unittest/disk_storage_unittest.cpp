@@ -24,6 +24,9 @@ protected:
         ASSERT_TRUE(tmp != NULL);
         tmp_dir_ = tmp;
 
+        ops_.log_file_size = 1024;
+        ops_.allow_corrupt_startup = true;
+
         Open();
     }
 
@@ -31,6 +34,8 @@ protected:
         auto s = storage_->Close();
         ASSERT_TRUE(s.ok()) << s.ToString();
         delete storage_;
+
+        ops_.create_with_hole = false;
 
         Open();
     }
@@ -44,25 +49,29 @@ protected:
     }
 
     void SetKeepSize(size_t size) {
-        keep_size_ = size;
+        ops_.max_log_files = size;
         ReOpen();
     }
 
 private:
     void Open() {
-        DiskStorage::Options ops;
-        ops.log_file_size = 1024;
-        ops.max_log_files = keep_size_;
-        ops.allow_corrupt_startup = true;
-        storage_ = new DiskStorage(1, tmp_dir_, ops);
+        storage_ = new DiskStorage(1, tmp_dir_, ops_);
         auto s = storage_->Open();
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
 
 protected:
     std::string tmp_dir_;
-    size_t keep_size_ = std::numeric_limits<size_t>::max();
+    DiskStorage::Options ops_; // open options
     DiskStorage* storage_;
+};
+
+class StorageHoleTest : public StorageTest {
+protected:
+    void SetUp() override {
+        ops_.create_with_hole = true;
+        StorageTest::SetUp();
+    }
 };
 
 TEST_F(StorageTest, LogEntry) {
@@ -89,7 +98,7 @@ TEST_F(StorageTest, LogEntry) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     // 测试term接口
-    for (uint64_t i = lo; i < lo; ++i) {
+    for (uint64_t i = lo; i < hi; ++i) {
         uint64_t term = 0;
         bool compacted = false;
         s = storage_->Term(i, &term, &compacted);
@@ -144,7 +153,7 @@ TEST_F(StorageTest, LogEntry) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     // 测试term接口
-    for (uint64_t i = lo; i < lo; ++i) {
+    for (uint64_t i = lo; i < hi; ++i) {
         uint64_t term = 0;
         bool compacted = false;
         s = storage_->Term(i, &term, &compacted);
@@ -441,6 +450,120 @@ TEST_F(StorageTest, Corrupt2) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 }
 #endif
+
+TEST_F(StorageHoleTest, CreateHole) {
+    uint64_t index = 0;
+    auto s = storage_->FirstIndex(&index);
+    ASSERT_EQ(index, 2);
+    s = storage_->LastIndex(&index);
+    ASSERT_EQ(index, 1);
+
+    std::vector<EntryPtr> ents;
+    bool compacted = false;
+    s = storage_->Entries(1, 100, std::numeric_limits<uint64_t>::max(), &ents,
+                          &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_TRUE(compacted);
+
+    const uint64_t lo = 2, hi = 100;
+    std::vector<EntryPtr> to_writes;
+    RandomEntries(lo, hi, 256, &to_writes);
+    s = storage_->StoreEntries(to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    index = 0;
+    s = storage_->FirstIndex(&index);
+    ASSERT_EQ(index, lo);
+    s = storage_->LastIndex(&index);
+    ASSERT_EQ(index, hi - 1);
+
+    // 读取全部
+    ents.clear();
+    compacted = false;
+    s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
+                          &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+    s = Equal(ents, to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // 测试term接口
+    for (uint64_t i = lo; i < hi; ++i) {
+        uint64_t term = 0;
+        bool compacted = false;
+        s = storage_->Term(i, &term, &compacted);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(compacted);
+        ASSERT_EQ(term, to_writes[i - lo]->term());
+    }
+
+    // 带maxsize
+    ents.clear();
+    s = storage_->Entries(lo, hi,
+                          to_writes[0]->ByteSizeLong() + to_writes[1]->ByteSizeLong(),
+                          &ents, &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+    std::vector<EntryPtr> ents2(to_writes.begin(), to_writes.begin() + 2);
+    s = Equal(ents, ents2);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // 至少一条
+    ents.clear();
+    s = storage_->Entries(lo, hi, 1, &ents, &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+    s = Equal(ents, std::vector<EntryPtr>{to_writes[0]});
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // 读取被截断的日志
+    ents.clear();
+    s = storage_->Entries(0, hi, std::numeric_limits<uint64_t>::max(), &ents, &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_TRUE(compacted);
+    ASSERT_TRUE(ents.empty());
+
+    // 关闭重新打开
+    ReOpen();
+
+    // 测试起始index
+    s = storage_->FirstIndex(&index);
+    ASSERT_EQ(index, lo);
+    s = storage_->LastIndex(&index);
+    ASSERT_EQ(index, hi - 1);
+
+    // 读取全部日志
+    ents.clear();
+    compacted = false;
+    s = storage_->Entries(lo, hi, std::numeric_limits<uint64_t>::max(), &ents,
+                          &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+    s = Equal(ents, to_writes);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // 测试term接口
+    for (uint64_t i = lo; i < hi; ++i) {
+        uint64_t term = 0;
+        bool compacted = false;
+        s = storage_->Term(i, &term, &compacted);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(compacted);
+        ASSERT_EQ(term, to_writes[i - lo]->term());
+    }
+
+    // 带maxsize
+    ents.clear();
+    s = storage_->Entries(lo, hi,
+                          to_writes[0]->ByteSizeLong() + to_writes[1]->ByteSizeLong(),
+                          &ents, &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+    std::vector<EntryPtr> ents3(to_writes.begin(), to_writes.begin() + 2);
+    s = Equal(ents, ents3);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
 
 
 

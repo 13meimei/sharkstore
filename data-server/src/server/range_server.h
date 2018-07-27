@@ -110,7 +110,7 @@ private:  // admin
     void GetPeerInfo(common::ProtoMessage *msg);
     void SetLogLevel(common::ProtoMessage *msg);
 
-    Status CreateRange(const metapb::Range &range, uint64_t leader = 0);
+    Status CreateRange(const metapb::Range &range, uint64_t leader = 0, bool from_split = false);
     int DeleteRange(uint64_t range_id);
     int CloseRange(uint64_t range_id);
     int OfflineRange(uint64_t range_id);

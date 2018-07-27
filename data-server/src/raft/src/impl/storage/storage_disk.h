@@ -76,7 +76,6 @@ private:
     Status listLogs(std::map<uint64_t, uint64_t>* logs);
     Status openLogs();
     Status closeLogs();
-    Status removeBakups();  // 删除备份的日志文件
 
     // 截断旧日志
     Status truncateOld(uint64_t index);

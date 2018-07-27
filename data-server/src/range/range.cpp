@@ -28,7 +28,7 @@ Range::Range(server::ContextServer *context, const metapb::Range &meta)
 
 Range::~Range() { delete store_; }
 
-Status Range::Initialize(uint64_t leader) {
+Status Range::Initialize(uint64_t leader, bool from_split) {
     // 加载apply位置
     auto s = context_->meta_store->LoadApplyIndex(id_, &apply_index_);
     if (!s.ok()) {
@@ -43,7 +43,10 @@ Status Range::Initialize(uint64_t leader) {
     options.statemachine = shared_from_this();
     options.log_file_size = ds_config.raft_config.log_file_size;
     options.max_log_files = ds_config.raft_config.max_log_files;
-    options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt;
+    options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt > 0;
+    if (from_split) {
+        options.create_with_hole = true;
+    }
     options.storage_path = JoinFilePath(std::vector<std::string>{
         std::string(ds_config.raft_config.log_path), std::to_string(meta_.table_id()),
         std::to_string(id_)});
