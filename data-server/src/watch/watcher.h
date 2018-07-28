@@ -14,8 +14,8 @@ namespace watch {
 class Watcher {
 public:
     Watcher() = delete;
-    Watcher(uint64_t, const std::vector<Key*>, common::ProtoMessage*);
-    ~Watcher();
+    Watcher(uint64_t, const std::vector<Key*>&, common::ProtoMessage*);
+    virtual ~Watcher();
     bool operator>(const Watcher* other) const;
 
 private:
@@ -36,7 +36,7 @@ public:
     }
 
 public:
-    void Send(google::protobuf::Message* resp);
+    virtual void Send(google::protobuf::Message* resp);
 
     bool DecodeKey(std::vector<std::string*>& keys,
                    const std::string& buf);

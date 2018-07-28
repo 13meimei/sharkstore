@@ -8,7 +8,7 @@ namespace watch {
 
 ////////////////////////////////////// watcher //////////////////////////////////////
 
-Watcher::Watcher(uint64_t table_id, const std::vector<Key*> keys, common::ProtoMessage* msg):
+Watcher::Watcher(uint64_t table_id, const std::vector<Key*>& keys, common::ProtoMessage* msg):
         table_id_(table_id), message_(msg) {
     for (auto k: keys) {
         keys_.push_back(std::move(new Key(*k)));

@@ -30,8 +30,7 @@ WatcherSet* WatchServer::GetWatcherSet_(const Key& key) {
 WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr) {
     std::string encode_key;
 
-    auto w = w_ptr.get();
-    w->EncodeKey(&encode_key, w->GetTableId(), w->GetKeys());
+    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
     return ws->AddKeyWatcher(encode_key, w_ptr);
@@ -40,8 +39,7 @@ WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr) {
 WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr) {
     std::string encode_key;
 
-    auto w = w_ptr.get();
-    w->EncodeKey(&encode_key, w->GetTableId(), w->GetKeys());
+    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
     return ws->AddPrefixWatcher(encode_key, w_ptr);
@@ -50,21 +48,19 @@ WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr) {
 WatchCode WatchServer::DelKeyWatcher(WatcherPtr& w_ptr) {
     std::string encode_key;
 
-    auto w = w_ptr.get();
-    w->EncodeKey(&encode_key, w->GetTableId(), w->GetKeys());
+    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
-    return ws->DelKeyWatcher(encode_key, w->GetMessage()->session_id);
+    return ws->DelKeyWatcher(encode_key, w_ptr->GetMessage()->session_id);
 }
 
 WatchCode WatchServer::DelPrefixWatcher(WatcherPtr& w_ptr) {
     std::string encode_key;
 
-    auto w = w_ptr.get();
-    w->EncodeKey(&encode_key, w->GetTableId(), w->GetKeys());
+    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
-    return ws->DelPrefixWatcher(encode_key, w->GetMessage()->session_id);
+    return ws->DelPrefixWatcher(encode_key, w_ptr->GetMessage()->session_id);
 }
 
 WatchCode WatchServer::GetKeyWatchers(std::vector<WatcherPtr>& w_ptr_vec, const Key& key) {

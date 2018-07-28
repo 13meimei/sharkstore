@@ -40,6 +40,7 @@ foreach(testfile ${TESTS})
 endforeach(testfile ${TESTS})
 
 add_subdirectory(range)
+add_subdirectory(watch)
 
 if (BUILD_NET)
     add_subdirectory(net)
