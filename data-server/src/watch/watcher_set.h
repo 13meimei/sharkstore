@@ -19,10 +19,16 @@ namespace watch {
 
 typedef std::unordered_map<WatcherId, WatcherPtr> KeyWatcherMap;
 typedef std::unordered_map<Key, KeyWatcherMap*> WatcherMap;
-typedef std::priority_queue<WatcherPtr, std::vector<WatcherPtr>, Greater<WatcherPtr>> WatcherQueue;
 
 typedef std::unordered_map<Key, nullptr_t> WatcherKeyMap;
 typedef std::unordered_map<WatcherId, WatcherKeyMap*> KeyMap;
+
+template <typename T>
+struct PriorityQueue: public std::priority_queue<T, std::vector<T>, Greater<T>> {
+    const std::vector<T>& GetQueue() {
+        return this->c;
+    }
+};
 
 class WatcherSet {
 public:
@@ -43,7 +49,7 @@ private:
     KeyMap                  key_map_;
     WatcherMap              prefix_watcher_map_;
     KeyMap                  prefix_map_;
-    WatcherQueue            watcher_queue_;
+    PriorityQueue<WatcherPtr>   watcher_queue_;
     std::mutex              watcher_mutex_;
 
     std::thread                     watcher_timer_;
