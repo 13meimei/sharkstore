@@ -47,7 +47,7 @@ public:
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err);
     
-    static int16_t  NextComparableBytes(const char *key, const int16_t len, std::string &result);
+    static int16_t  NextComparableBytes(const char *key, const int32_t &len, std::string &result);
 };
 
 enum WATCH_CODE {
