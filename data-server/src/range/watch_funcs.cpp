@@ -620,9 +620,9 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         if( ds_resp != nullptr ) {
             delete ds_resp;
         }
-        for(auto it:vecProtoMsg) {
+        /*for(auto it:vecProtoMsg) {
             delete it;
-        }
+        }*/
 
         vecProtoMsg.clear();
 
