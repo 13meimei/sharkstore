@@ -115,7 +115,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             FLOG_DEBUG("range[%" PRIu64 "] no watcher(%d).", meta_.id(), watchFlag); 
         }
     }
-    if(!watchFlag || err != nullptr) {
+    if(!watchFlag && err != nullptr) {
         context_->socket_session->SetResponseHeader(req.header(), header, err);
         context_->socket_session->Send(msg, ds_resp);
     }
@@ -563,13 +563,6 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     auto watchCnt = notify_watcher_vec.size();
     if (watchCnt > 0) {
         //to do 遍历watcher 发送通知
-        auto ds_resp = new watchpb::DsWatchResponse;
-        auto resp = ds_resp->mutable_resp();
-        resp->set_code(Status::kOk);
-
-        auto evt = resp->add_events();
-        evt->set_type(evtType);
-        evt->set_allocated_kv(tmpKv.get());
 
         for(auto w: notify_watcher_vec) {
             auto w_id = w->GetMessage()->session_id;
@@ -577,15 +570,51 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                        meta_.id(), key.c_str(), idx, watchCnt, w_id);
 
+            if(w_id < 1) {
+                FLOG_WARN("range[%" PRIu64 "] WatchNotify warn: session_id is invalid.", meta_.id());
+                continue;
+            }
+
+            auto ds_resp = new watchpb::DsWatchResponse;
+            auto resp = ds_resp->mutable_resp();
+            resp->set_code(Status::kOk);
+
+            auto evt = resp->add_events();
+
+            auto decodeKv = new watchpb::WatchKeyValue;
+            decodeKv->CopyFrom(*(tmpKv.get()));
+
+            //    evt->set_allocated_kv(tmpKv.get());
+            funcpb::FunctionID funcId;
+            if (watchpb::PUT == evtType) {
+                funcId = funcpb::kFuncWatchPut;
+            } else if (watchpb::DELETE == evtType) {
+                funcId = funcpb::kFuncWatchDel;
+            } else {
+                funcId = funcpb::kFuncWatchPut;
+            }
+
+            if( Status::kOk != WatchCode::DecodeKv(funcId, meta_, decodeKv, dbKey, dbValue, err)) {
+                errMsg.assign("WatchNotify--Decode key:");
+                errMsg.append(dbKey);
+                errMsg.append(" fail.");
+
+                return -1;
+            }
+            evt->set_allocated_kv(decodeKv);
+            evt->set_type(evtType);
+
             resp->set_watchid(w_id);
 
-            context_->socket_session->Send(w->GetMessage(), ds_resp);
+            w->Send(ds_resp);
             {
                 //delete watch
                 if (watch_server->DelKeyWatcher(w)) {
 //                WATCH_OK != DelKeyWatcher(w_id, key)
                     FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                           meta_.id(), key.c_str(), idx, watchCnt, w_id);
+                           meta_.id(), EncodeToHexString(dbKey).c_str(), idx, watchCnt, w_id);
+                } else {
+                    FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(dbKey).c_str(), w_id);
                 }
             }
         }

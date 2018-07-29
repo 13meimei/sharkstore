@@ -9,7 +9,7 @@ set (test_MOCK_LIBS
 set (TESTS
     ddl_unittest.cpp
     raw_unittest.cpp
-#   watch_unittest.cpp
+    watch_unittest.cpp
 )
 
 foreach(f IN LISTS TESTS)
