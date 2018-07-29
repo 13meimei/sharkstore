@@ -1,5 +1,7 @@
 #include "range.h"
 #include "server/range_server.h"
+#include "watch.h"
+#include "watch/watcher.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -100,7 +102,14 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
                    meta_.id(), start_version, version, EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
         if(start_version >= version) {
             //to do add watch
-            AddKeyWatcher(dbKey, msg);
+            auto watch_server = context_->range_server->watch_server_;
+            auto kv = req.mutable_req()->mutable_kv();
+            std::vector<watch::Key*> keys;
+            for (auto i = 0; i < kv->key_size(); i++) {
+                keys.push_back(kv->mutable_key(i));
+            }
+            auto w_ptr = std::make_shared<watch::Watcher>(meta_.table_id(), keys, msg);
+            watch_server->AddKeyWatcher(w_ptr);
             watchFlag = 1;
         } else {
             FLOG_DEBUG("range[%" PRIu64 "] no watcher(%d).", meta_.id(), watchFlag); 
@@ -517,7 +526,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     std::shared_ptr<watchpb::WatchKeyValue> tmpKv = std::make_shared<watchpb::WatchKeyValue>();
     tmpKv->CopyFrom(kv);
 
-    std::vector<common::ProtoMessage*> vecProtoMsg;
+    std::vector<watch::WatcherPtr> notify_watcher_vec;
     auto dbKey = tmpKv->key_size()>0?tmpKv->key(0):"NOFOUND";
     auto dbValue = tmpKv->value();
     
@@ -547,8 +556,11 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
         return -1;
     }*/
-    
-    uint32_t watchCnt = GetKeyWatchers(vecProtoMsg, dbKey);
+
+
+    auto watch_server = context_->range_server->watch_server_;
+    watch_server->GetKeyWatchers(notify_watcher_vec, dbKey);
+    auto watchCnt = notify_watcher_vec.size();
     if (watchCnt > 0) {
         //to do 遍历watcher 发送通知
         auto ds_resp = new watchpb::DsWatchResponse;
@@ -559,19 +571,21 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         evt->set_type(evtType);
         evt->set_allocated_kv(tmpKv.get());
 
-        for(auto pMsg : vecProtoMsg) {
+        for(auto w: notify_watcher_vec) {
+            auto w_id = w->GetMessage()->session_id;
             idx++;
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                       meta_.id(), key.c_str(), idx, watchCnt, pMsg->session_id);
+                       meta_.id(), key.c_str(), idx, watchCnt, w_id);
 
-            resp->set_watchid(pMsg->session_id);
+            resp->set_watchid(w_id);
 
-            context_->socket_session->Send(pMsg, ds_resp);
+            context_->socket_session->Send(w->GetMessage(), ds_resp);
             {
                 //delete watch
-                if (WATCH_OK != DelKeyWatcher(pMsg->session_id, key)) {
+                if (watch_server->DelKeyWatcher(w)) {
+//                WATCH_OK != DelKeyWatcher(w_id, key)
                     FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
-                           meta_.id(), key.c_str(), idx, watchCnt, pMsg->session_id);
+                           meta_.id(), key.c_str(), idx, watchCnt, w_id);
                 }
             }
         }

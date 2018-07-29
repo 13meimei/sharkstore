@@ -20,6 +20,7 @@
 #include "storage/meta_store.h"
 
 #include "context_server.h"
+#include "watch/watch_server.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -147,6 +148,9 @@ private:
 
     ContextServer *context_ = nullptr;
     range_status_t *range_status_ = nullptr;
+
+public:
+    watch::WatchServer* watch_server_;
 };
 
 }  // namespace server

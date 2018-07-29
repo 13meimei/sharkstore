@@ -76,6 +76,7 @@ int RangeServer::Init(ContextServer *context) {
         return -1;
     }
 
+    watch_server_ = new watch::WatchServer(8);
     FLOG_INFO("RangeServer Init end ...");
 
     return 0;

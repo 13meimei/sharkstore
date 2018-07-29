@@ -29,7 +29,7 @@ private:
 public:
     uint64_t GetTableId() { return table_id_; }
     const std::vector<std::string*>& GetKeys() { return keys_; }
-    const common::ProtoMessage* GetMessage() { return message_; }
+    common::ProtoMessage* GetMessage() { return message_; }
     bool IsSentResponse() {
         std::lock_guard<std::mutex> lock(send_lock_);
         return sent_response_flag;

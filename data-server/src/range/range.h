@@ -374,7 +374,6 @@ private:
     errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
 
 private:
-    WatcherSet key_watchers_;
     int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, std::string &errMsg);
 
 private:
