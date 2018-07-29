@@ -142,11 +142,11 @@ metapb::Range *genRange2() {
     std::string k1("01004"), k2("01005");
 
     keys.push_back(&k1);
-    EncodeWatchKey(&keyStart, 2, keys);
+    EncodeWatchKey(&keyStart, 1, keys);
     keys.clear();
     keys.push_back(&k2);
 
-    EncodeWatchKey(&keyEnd, 2, keys);
+    EncodeWatchKey(&keyEnd, 1, keys);
     meta->set_id(2);
     //meta->set_start_key("01004");
     //meta->set_end_key("01005");
@@ -487,9 +487,9 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_kv()->add_key("01003001");
-        req.mutable_kv()->set_version(0);
+        req.mutable_kv()->set_version(-1);
         req.mutable_kv()->set_tableid(1);
-
+        
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
@@ -524,7 +524,7 @@ TEST_F(WatchTest, watch) {
 
         req.mutable_kv()->add_key("01003001");
         req.mutable_kv()->add_key("01003002");
-        req.mutable_kv()->set_version(0);
+        req.mutable_kv()->set_version(-1);
         req.mutable_kv()->set_tableid(1);
 
         auto len = req.ByteSizeLong();
@@ -560,7 +560,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_kv()->add_key("01003001");
-        req.mutable_kv()->set_version(0);
+        req.mutable_kv()->set_version(-1);
         req.mutable_kv()->set_tableid(1);
         req.set_prefix(true);
 
@@ -599,8 +599,9 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->mutable_kv()->set_version(0);
+        req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_startversion(-1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -637,8 +638,10 @@ TEST_F(WatchTest, watch) {
 
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->add_key("01003002");
-        req.mutable_req()->mutable_kv()->set_version(0);
+        req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now+5000);
+
+        req.mutable_req()->set_startversion(-1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -696,8 +699,9 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
-        req.mutable_req()->mutable_kv()->set_version(0);
+        req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_startversion(-1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -733,8 +737,9 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("");
-        req.mutable_req()->mutable_kv()->set_version(0);
+        req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_startversion(-1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -1127,6 +1132,7 @@ TEST_F(WatchTest, watch) {
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
         req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_startversion(-1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -1138,7 +1144,7 @@ TEST_F(WatchTest, watch) {
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        ASSERT_FALSE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().has_error());
         if(resp.resp().events_size())
             ASSERT_TRUE(resp.resp().events(0).kv().value() == "01004001:value");
 
@@ -1202,11 +1208,11 @@ TEST_F(WatchTest, watch) {
         msg->session_id = 1;
         watchpb::DsKvWatchDeleteRequest req;
 
-        req.mutable_header()->set_range_id(2);
+        req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(2);
 
-        req.mutable_req()->mutable_kv()->add_key("01004001");
+        req.mutable_req()->mutable_kv()->add_key("01003001");
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -1266,7 +1272,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
-        req.mutable_req()->mutable_kv()->set_version(5);
+        req.mutable_req()->mutable_kv()->set_version(1);
         req.mutable_req()->set_longpull(now+5000);
 
         auto len = req.ByteSizeLong();
