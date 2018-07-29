@@ -142,7 +142,7 @@ WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const Key& key, 
     }
 
     auto watchers = key_map_it->second;
-    vec.resize(watchers->size());
+    //vec.resize(watchers->size());
 
     for (auto it = watchers->begin(); it != watchers->end(); ++it) {
         vec.push_back(it->second);
