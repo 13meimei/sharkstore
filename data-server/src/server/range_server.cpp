@@ -531,8 +531,7 @@ int RangeServer::DeleteRange(uint64_t range_id) {
 
         rng = it->second;
 
-        rng->Shutdown();
-        auto s = rng->Truncate();
+        auto s = rng->Destroy();
         if (!s.ok()) {
             FLOG_INFO("delete range[%" PRIu64 "] truncate failed.", range_id);
             return -1;

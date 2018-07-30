@@ -213,7 +213,7 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 
 	// Stale term
 	if req.GetTerm() < rng.Term {
-		log.Warn("range[%v] stale %v", rng.Range, r)
+		log.Warn("range[%v] stale term(%d < %d)", rng.GetId(), req.GetTerm(), rng.Term)
 		return
 	} else if req.GetTerm() > rng.Term {
 		saveCache = true

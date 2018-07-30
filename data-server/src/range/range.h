@@ -305,7 +305,7 @@ public:
     void ResetStatisSize();
     void Heartbeat();
 
-    Status Truncate();
+    Status Destroy();
 
     // get private member
 public:

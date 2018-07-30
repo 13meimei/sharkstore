@@ -384,8 +384,19 @@ bool Range::SaveMeta(const metapb::Range &meta) {
     return true;
 }
 
-Status Range::Truncate() {
-    auto s = store_->Truncate();
+Status Range::Destroy() {
+    valid_ = false;
+
+    ClearExpiredContext();
+
+    // 销毁raft
+    auto s = context_->raft_server->DestoryRaft(id_);
+    if (!s.ok()) {
+        FLOG_WARN("range[%" PRIu64 "] remove raft failed: %s", id_, s.ToString().c_str());
+    }
+    raft_.reset();
+
+    s = store_->Truncate();
     if (!s.ok()) {
         FLOG_ERROR("Range %" PRIu64 " truncate store fail: %s", id_, s.ToString().c_str());
         return s;
