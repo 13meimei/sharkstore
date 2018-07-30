@@ -539,25 +539,6 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     std::string value{""};
     errorpb::Error *err = nullptr;
 
-    funcpb::FunctionID funcId;
-    if (watchpb::PUT == evtType) {
-        funcId = funcpb::kFuncWatchPut;
-    } else if (watchpb::DELETE == evtType) {
-        funcId = funcpb::kFuncWatchDel;
-    } else {
-        funcId = funcpb::kFuncHeartbeat;
-    }
-
-    /*
-    if( Status::kOk != WatchCode::DecodeKv(funcId, meta_, tmpKv.get(), dbKey, dbValue, err)) {
-        errMsg.assign("WatchNotify--Decode key:");
-        errMsg.append(dbKey);
-        errMsg.append(" fail.");
-
-        return -1;
-    }*/
-
-
     auto watch_server = context_->range_server->watch_server_;
     watch_server->GetKeyWatchers(notify_watcher_vec, dbKey);
     auto watchCnt = notify_watcher_vec.size();
