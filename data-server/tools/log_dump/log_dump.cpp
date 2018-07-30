@@ -49,9 +49,10 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void dumpLogs(DiskStorage &ds, const DumpOptions& ops, uint64_t frist_index) {
+void dumpLogs(DiskStorage &ds, const DumpOptions& ops, uint64_t frist_index, uint64_t last_index) {
     uint64_t lo = std::max(frist_index, ops.start);
-    uint64_t hi = lo + ops.count;
+    uint64_t count = std::max(ops.count, static_cast<uint64_t>(1));
+    uint64_t hi = std::min(last_index + 1, lo + count);
     std::vector<EntryPtr> ents;
     bool compact = false;
     auto s = ds.Entries(lo, hi, std::numeric_limits<std::uint64_t>::max(), &ents, &compact);
@@ -81,7 +82,7 @@ void dumpLogs(DiskStorage &ds, const DumpOptions& ops, uint64_t frist_index) {
                 break;
             }
             default:
-                std::cout << "<Invalid Entry Type: " << static_cast<int>(e->type()) << std::endl;
+                std::cout << "\t<Invalid Entry Type: " << static_cast<int>(e->type()) << ">"<< std::endl;
         }
         std::cout << std::endl;
     }
@@ -130,10 +131,22 @@ void dump(const std::string& path, const DumpOptions& ops) {
         ::exit(EXIT_FAILURE);
     }
     std::cout << "Last Index: \t" << last_index << std::endl;
+
+    // dump trunc meta
+    if (first_index > 1) {
+        uint64_t term = 0;
+        bool compacted = false;
+        s = ds.Term(first_index-1, &term, &compacted);
+        if (!s.ok()) {
+            std::cerr << "Load entry(" << first_index-1 << "'s term failed: " << s.ToString() << std::endl;
+            ::exit(EXIT_FAILURE);
+        }
+        std::cout << "Trunc Term: \t" << term << ", " << std::boolalpha << compacted << std::endl;
+    }
     std::cout << std::endl;
 
-    if (ops.count > 0 ) {
-        dumpLogs(ds, ops, first_index);
+    if (ops.count != 0 || ops.start != 0) {
+        dumpLogs(ds, ops, first_index, last_index);
     }
 
     ds.Close();
