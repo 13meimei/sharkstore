@@ -148,7 +148,8 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
     assert(r != nullptr);
     {
         std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);
-        all_rafts_.emplace(ops.id, r);
+        auto it = all_rafts_.emplace(ops.id, r);
+        assert(it.second);
         creating_rafts_.erase(ops.id);
     }
     *raft = std::static_pointer_cast<Raft>(r);
@@ -168,7 +169,12 @@ Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
             r->Stop();
             all_rafts_.erase(it);
         } else {
-            return Status(Status::kNotFound, "remove raft", std::to_string(id));
+            auto it_cr = creating_rafts_.find(id);
+            if (it_cr != creating_rafts_.end()) { // in creating
+                return Status(Status::kBusy, "remove raft", "raft is in creating");
+            } else {
+                return Status(Status::kNotFound, "remove raft", std::to_string(id));
+            }
         }
     }
 
