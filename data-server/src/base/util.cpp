@@ -142,6 +142,19 @@ std::string JoinFilePath(const std::vector<std::string> &strs) {
     return ret;
 }
 
+int CheckDirExist(const std::string& path) {
+    struct stat sb;
+    memset(&sb, 0, sizeof(sb));
+    int ret = ::stat(path.c_str(), &sb);
+    if (ret != 0) {
+        return ret;
+    } else if (!S_ISDIR(sb.st_mode)) {
+        errno = ENOTDIR;
+        return -1;
+    }
+    return 0;
+}
+
 int MakeDirAll(const std::string &path, mode_t mode) {
     struct stat sb;
     memset(&sb, 0, sizeof(sb));

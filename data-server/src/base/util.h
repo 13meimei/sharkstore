@@ -20,6 +20,7 @@ std::string SliceSeparate(const std::string &l, const std::string &r, size_t max
 
 std::string JoinFilePath(const std::vector<std::string> &strs);
 
+int CheckDirExist(const std::string& path);
 int MakeDirAll(const std::string &path, mode_t mode);
 int RemoveDirAll(const char *name);
 

@@ -60,7 +60,7 @@ Status DiskStorage::Open() {
 
 Status DiskStorage::initDir() {
     assert(!path_.empty());
-    int ret = sharkstore::MakeDirAll(path_, 0755);
+    int ret = ops_.readonly ? CheckDirExist(path_) : MakeDirAll(path_, 0755);
     if (ret < 0) {
         return Status(Status::kIOError, "init directory " + path_, strErrno(errno));
     }
@@ -69,7 +69,7 @@ Status DiskStorage::initDir() {
 
 Status DiskStorage::initMeta() {
     // 打开meta file
-    auto s = meta_file_.Open();
+    auto s = meta_file_.Open(ops_.readonly);
     if (!s.ok()) {
         return s;
     }
@@ -80,7 +80,7 @@ Status DiskStorage::initMeta() {
     }
 
     // 创建日志空洞, 截断index=1处日志
-    if (ops_.create_with_hole) {
+    if (!ops_.readonly && ops_.create_with_hole) {
         if (trunc_meta_.index() > 1 || hard_state_.commit() > 1) {
             std::ostringstream ss;
             ss << "incompatible trunc index or commit: (" << trunc_meta_.index() << ", ";
@@ -176,8 +176,11 @@ Status DiskStorage::openLogs() {
     if (!s.ok()) return s;
 
     if (logs.empty()) {
+        if (ops_.readonly) {
+            return Status(Status::kCorruption, "open logs", "no log file");
+        }
         auto f = new LogFile(path_, 1, trunc_meta_.index() + 1);
-        auto s = f->Open(ops_.allow_corrupt_startup);
+        s = f->Open(ops_.allow_corrupt_startup);
         if (!s.ok()) {
             return s;
         }
@@ -185,8 +188,8 @@ Status DiskStorage::openLogs() {
     } else {
         size_t count = 0;
         for (auto it = logs.begin(); it != logs.end(); ++it) {
-            auto f = new LogFile(path_, it->first, it->second);
-            auto s = f->Open(ops_.allow_corrupt_startup, count == logs.size() - 1);
+            auto f = new LogFile(path_, it->first, it->second, ops_.readonly);
+            s = f->Open(ops_.allow_corrupt_startup, count == logs.size() - 1);
             if (!s.ok()) {
                 return s;
             } else {
@@ -210,13 +213,21 @@ Status DiskStorage::closeLogs() {
 }
 
 Status DiskStorage::StoreHardState(const pb::HardState& hs) {
+    if (ops_.readonly) {
+        return Status(Status::kNotSupported, "store hard state", "read only");
+    }
+
     // 持久化
     auto s = meta_file_.SaveHardState(hs);
     if (!s.ok()) return s;
     // 更新内存
     hard_state_ = hs;
-    // TODO: sync?
-    return Status::OK();
+
+    if (ops_.always_sync) {
+        return meta_file_.Sync();
+    } else {
+        return Status::OK();
+    }
 }
 
 Status DiskStorage::InitialState(pb::HardState* hs) const {
@@ -266,6 +277,14 @@ Status DiskStorage::load(uint64_t index, EntryPtr* e) const {
 }
 
 Status DiskStorage::StoreEntries(const std::vector<EntryPtr>& entries) {
+    if (ops_.readonly) {
+        return Status(Status::kNotSupported, "store entries", "read only");
+    }
+
+    if (entries.empty()) {
+        return Status::OK();
+    }
+
     Status s;
 
     // 检测日志文件个数是否太多需要截断
@@ -282,25 +301,21 @@ Status DiskStorage::StoreEntries(const std::vector<EntryPtr>& entries) {
             }
         }
     }
-
-    if (entries.empty()) return Status::OK();
-
     // 检查参数的index是否是递增加1的
     for (size_t i = 1; i < entries.size(); ++i) {
         if (entries[i]->index() != entries[i - 1]->index() + 1) {
-            return Status(Status::kInvalidArgument, "StoreEntries",
-                          std::string("discontinuous index between ") +
-                              std::to_string(entries[i]->index()) + " and " +
-                              std::to_string(entries[i - 1]->index()) + " at " +
-                              std::to_string(i - 1));
+            std::ostringstream ss;
+            ss << "discontinuous index (" << entries[i]->index() << "-";
+            ss << entries[i - 1]->index() << ") at input entries index " << i-1;
+            return Status(Status::kInvalidArgument, "StoreEntries", ss.str());
         }
     }
 
     if (entries[0]->index() > last_index_ + 1) {  // 不连续
-        return Status(Status::kInvalidArgument,
-                      std::string("append log index(") +
-                          std::to_string(entries[0]->index()) + ") out of bound",
-                      std::string("current last is ") + std::to_string(last_index_));
+        std::ostringstream ss;
+        ss << "append log index " << entries[0]->index() << " out of bound: ";
+        ss << "current last index is " << last_index_;
+        return Status(Status::kInvalidArgument, "store entries", ss.str());
     } else if (entries[0]->index() <= last_index_) {
         // 有冲突
         s = truncateNew(entries[0]->index());
@@ -315,11 +330,17 @@ Status DiskStorage::StoreEntries(const std::vector<EntryPtr>& entries) {
             return s;
         }
     }
+    // flush
     s = log_files_.back()->Flush();
     if (!s.ok()) {
         return s;
     }
-    return Status::OK();
+    // sync
+    if (ops_.always_sync) {
+        return log_files_.back()->Sync();
+    } else {
+        return Status::OK();
+    }
 }
 
 Status DiskStorage::Term(uint64_t index, uint64_t* term, bool* is_compacted) const {
@@ -447,6 +468,10 @@ Status DiskStorage::truncateAll() {
 }
 
 Status DiskStorage::Truncate(uint64_t index) {
+    if (ops_.readonly) {
+        return Status(Status::kNotSupported, "truncate", "read only");
+    }
+
     // 未被应用的，不能截断
     if (index > applied_) {
         return Status(Status::kInvalidArgument, "try to truncate not applied logs",
@@ -492,6 +517,10 @@ Status DiskStorage::Truncate(uint64_t index) {
 }
 
 Status DiskStorage::ApplySnapshot(const pb::SnapshotMeta& meta) {
+    if (ops_.readonly) {
+        return Status(Status::kNotSupported, "apply snapshot", "read only");
+    }
+
     // 更新持久化HardState
     hard_state_.set_commit(meta.index());
     auto s = meta_file_.SaveHardState(hard_state_);
@@ -530,6 +559,10 @@ Status DiskStorage::Close() {
 }
 
 Status DiskStorage::Destroy(bool backup) {
+    if (ops_.readonly) {
+        return Status(Status::kNotSupported, "destroy", "read only");
+    }
+
     bool flag = false;
     // only destroy once
     if (destroyed_.compare_exchange_strong(flag, true, std::memory_order_acquire,
@@ -566,11 +599,6 @@ void DiskStorage::TEST_Add_Corruption3() {
     // TODO:
 }
 #endif
-
-Status DiskStorage::CheckCorrupt() {
-    // TODO:
-    return Status(Status::kNotSupported);
-}
 
 } /* namespace storage */
 } /* namespace impl */

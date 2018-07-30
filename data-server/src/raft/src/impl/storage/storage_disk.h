@@ -26,7 +26,10 @@ public:
         // 创建时在日志开头制造一个空洞日志
         bool create_with_hole = false;
 
-        // 只读模式
+        // 每次操作都执行sync
+        bool always_sync = false;
+
+        // 只读模式打开
         bool readonly = false;
     };
 
@@ -65,8 +68,6 @@ public:
     void TEST_Add_Corruption2();
     void TEST_Add_Corruption3();
 #endif
-
-    Status CheckCorrupt();
 
 private:
     static Status checkLogsValidate(const std::map<uint64_t, uint64_t>& logs);
