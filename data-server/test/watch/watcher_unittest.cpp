@@ -3,9 +3,13 @@
 #define private public
 #include "watch/watcher.h"
 #include "watch/watcher_set.h"
+#include "watch/watch_server.h"
 #include "frame/sf_util.h"
+#include "fastcommon/logger.h"
 
 int main(int argc, char* argv[]) {
+    log_init2();
+
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
@@ -126,6 +130,11 @@ public:
 
 };
 
+class TestWatchServer: public WatchServer {
+public:
+    TestWatchServer():WatchServer(3) {}
+};
+
 TEST(TestWatcher, EncodeAndDecode) {
     std::vector<Key*> keys;
     keys.push_back(new Key("k1"));
@@ -205,6 +214,13 @@ TEST(TestWatcherSet, AddAndDelKeyWatcher) {
 
     ws.DelKeyWatcher(encode_key2, w_p2->GetMessage()->session_id);
     ws.CheckDelKeywatcher(w_ptr2, false);
+}
+
+TEST(TestWatchServer, GetWatcherSet) {
+    TestWatchServer test_watch_server;
+    ASSERT_TRUE(test_watch_server.GetWatcherSet_(Key("a")) != nullptr);
+    ASSERT_TRUE(test_watch_server.GetWatcherSet_(Key("b")) != nullptr);
+    ASSERT_TRUE(test_watch_server.GetWatcherSet_(Key("c")) != nullptr);
 }
 
 } // namespace

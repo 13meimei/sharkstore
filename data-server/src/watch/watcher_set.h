@@ -50,7 +50,8 @@ private:
     WatcherMap              prefix_watcher_map_;
     KeyMap                  prefix_map_;
     PriorityQueue<WatcherPtr>   watcher_queue_;
-    std::mutex              watcher_mutex_;
+    std::mutex              watcher_map_mutex_;
+    std::mutex              watcher_queue_mutex_;
 
     std::thread                     watcher_timer_;
     volatile bool                   watcher_timer_continue_flag_ = true;
