@@ -392,7 +392,7 @@ Status Range::Destroy() {
     // 销毁raft
     auto s = context_->raft_server->DestroyRaft(id_);
     if (!s.ok()) {
-        FLOG_WARN("range[%" PRIu64 "] remove raft failed: %s", id_, s.ToString().c_str());
+        FLOG_WARN("range[%" PRIu64 "] destroy raft failed: %s", id_, s.ToString().c_str());
     }
     raft_.reset();
 
