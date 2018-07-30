@@ -15,6 +15,13 @@ Watcher::Watcher(uint64_t table_id, const std::vector<Key*>& keys, common::Proto
     }
 }
 
+Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<Key*>& keys, common::ProtoMessage* msg):
+        type_(type), table_id_(table_id), message_(msg) {
+    for (auto k: keys) {
+        keys_.push_back(std::move(new Key(*k)));
+    }
+}
+
 Watcher::~Watcher() {
     /*for (auto k: keys_) {
         delete k;

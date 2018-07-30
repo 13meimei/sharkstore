@@ -15,6 +15,7 @@ class Watcher {
 public:
     Watcher() = delete;
     Watcher(uint64_t, const std::vector<Key*>&, common::ProtoMessage*);
+    Watcher(WatchType, uint64_t, const std::vector<Key*>&, common::ProtoMessage*);
     virtual ~Watcher();
     bool operator>(const Watcher* other) const;
 
@@ -22,6 +23,7 @@ private:
     uint64_t                    table_id_;
     std::vector<std::string*>   keys_;
     common::ProtoMessage*       message_ = nullptr;
+    WatchType                   type_ = WATCH_KEY;
 
     std::mutex          send_lock_;
     volatile bool       sent_response_flag = false;
@@ -30,6 +32,7 @@ public:
     uint64_t GetTableId() { return table_id_; }
     const std::vector<std::string*>& GetKeys() { return keys_; }
     common::ProtoMessage* GetMessage() { return message_; }
+    int GetType() { return type_; }
     bool IsSentResponse() {
         std::lock_guard<std::mutex> lock(send_lock_);
         return sent_response_flag;

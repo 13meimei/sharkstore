@@ -28,7 +28,11 @@ WatcherSet::WatcherSet() {
                     // delete in map
                     Key encode_key;
                     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
-                    DelKeyWatcher(encode_key, w_ptr->GetMessage()->session_id);// todo del prefix in map
+                    if (w_ptr->GetType() == WATCH_KEY) {
+                        DelKeyWatcher(encode_key, w_ptr->GetMessage()->session_id);
+                    } else {
+                        DelPrefixWatcher(encode_key, w_ptr->GetMessage()->session_id);
+                    }
 
                     watcher_queue_.pop();
                     w_ptr = nullptr;
@@ -55,7 +59,11 @@ WatcherSet::WatcherSet() {
                 // delete in map
                 Key encode_key;
                 w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
-                DelKeyWatcher(encode_key, w_ptr->GetMessage()->session_id);// todo del prefix in map
+                if (w_ptr->GetType() == WATCH_KEY) {
+                    DelKeyWatcher(encode_key, w_ptr->GetMessage()->session_id);
+                } else {
+                    DelPrefixWatcher(encode_key, w_ptr->GetMessage()->session_id);
+                }
 
                 watcher_queue_.pop();
 

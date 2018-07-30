@@ -1,5 +1,6 @@
 
 #include "watch_server.h"
+#include "frame/sf_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -28,6 +29,8 @@ WatcherSet* WatchServer::GetWatcherSet_(const Key& key) {
 }
 
 WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr) {
+    FLOG_DEBUG("watch server add key watcher: session id [%" PRIu64 "]", w_ptr->GetMessage()->session_id);
+    assert(w_ptr->GetType() == WATCH_KEY);
     std::string encode_key;
 
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
@@ -37,6 +40,8 @@ WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr) {
 }
 
 WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr) {
+    FLOG_DEBUG("watch server add prefix watcher: session id [%" PRIu64 "]", w_ptr->GetMessage()->session_id);
+    assert(w_ptr->GetType() == WATCH_PREFIX);
     std::string encode_key;
 
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
@@ -46,6 +51,8 @@ WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr) {
 }
 
 WatchCode WatchServer::DelKeyWatcher(WatcherPtr& w_ptr) {
+    FLOG_DEBUG("watch server del key watcher: session id [%" PRIu64 "]", w_ptr->GetMessage()->session_id);
+    assert(w_ptr->GetType() == WATCH_Key);
     std::string encode_key;
 
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
@@ -55,6 +62,8 @@ WatchCode WatchServer::DelKeyWatcher(WatcherPtr& w_ptr) {
 }
 
 WatchCode WatchServer::DelPrefixWatcher(WatcherPtr& w_ptr) {
+    FLOG_DEBUG("watch server del prefix watcher: session id [%" PRIu64 "]", w_ptr->GetMessage()->session_id);
+    assert(w_ptr->GetType() == WATCH_PREFIX);
     std::string encode_key;
 
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
@@ -64,12 +73,14 @@ WatchCode WatchServer::DelPrefixWatcher(WatcherPtr& w_ptr) {
 }
 
 WatchCode WatchServer::GetKeyWatchers(std::vector<WatcherPtr>& w_ptr_vec, const Key& key) {
+    FLOG_DEBUG("watch server get key watchers: key [%s]", key);
     assert(w_ptr_vec.size() == 0);
     auto ws = GetWatcherSet_(key);
     return ws->GetKeyWatchers(w_ptr_vec, key);
 }
 
 WatchCode WatchServer::GetPrefixWatchers(std::vector<WatcherPtr>& w_ptr_vec, const Prefix& prefix) {
+    FLOG_DEBUG("watch server get prefix watchers: key [%s]", prefix);
     assert(w_ptr_vec.size() == 0);
     auto ws = GetWatcherSet_(prefix);
     return ws->GetPrefixWatchers(w_ptr_vec, prefix);

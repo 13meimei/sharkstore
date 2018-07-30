@@ -18,6 +18,11 @@ enum WatchCode {
     WATCH_WATCHER_NOT_EXIST,
 };
 
+enum WatchType {
+    WATCH_KEY = 0,
+    WATCH_PREFIX
+};
+
 }
 }
 }
