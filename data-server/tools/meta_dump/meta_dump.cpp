@@ -1,6 +1,5 @@
-#include <iostream>
-
 #include <getopt.h>
+#include <iostream>
 
 #include "storage/meta_store.h"
 
@@ -15,7 +14,7 @@ void print_usage(char *name);
 void dump(const std::string&, const DumpOptions&);
 
 int main(int argc, char *argv[]) {
-    static struct option longopts[] = {
+    struct option longopts[] = {
             { "path",    required_argument,  NULL,   'p' },
             { "range",   optional_argument,  NULL,   'r' },
             { "all",     no_argument,        NULL,   'a' },
@@ -23,7 +22,7 @@ int main(int argc, char *argv[]) {
             { NULL,      0,                  NULL,    0  }
     };
 
-    int ch;
+    int ch = 0;
     std::string path;
     DumpOptions ops;
     while ((ch = getopt_long(argc, argv, "p:r:", longopts, NULL)) != -1) {
@@ -110,6 +109,7 @@ void dump(const std::string& path, const DumpOptions& ops) {
     }
     std::cout << "Path: \t"  << path << std::endl;
     std::cout << "NodeID: \t" << node_id << std::endl;
+    std::cout << std::endl;
 
     if (ops.dump_all_ranges) {
         dumpAllRanges(store);

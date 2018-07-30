@@ -19,6 +19,8 @@ set(log_dump_SRCS
 add_executable(log_dump ${log_dump_SRCS})
 set (log_dump_DEPS
     sharkstore-raft
+    sharkstore-proto
+    sharkstore-base
     ${PROTOBUF_LIBRARY}
     pthread
 )

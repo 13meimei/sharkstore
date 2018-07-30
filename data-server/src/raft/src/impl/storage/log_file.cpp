@@ -463,8 +463,8 @@ Status LogFile::Truncate(uint64_t index) {
 #ifndef NDEBUG
 void LogFile::TEST_Append_RandomData() {
     std::string data = randomString(10);
-    int ret = ::write(fd_, data.data(), data.length());
-    assert(ret == static_cast<int>(data.length()));
+    auto ret = ::write(fd_, data.data(), data.length());
+    assert(ret == static_cast<ssize_t>(data.length()));
     file_size_ += data.size();
 }
 
