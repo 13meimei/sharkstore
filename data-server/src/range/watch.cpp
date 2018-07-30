@@ -43,7 +43,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                            kv->mutable_key(i)->data());
             }
 
-            watch::Watcher w(meta_.table_id(), keys, nullptr);
+            watch::Watcher w(meta_.table_id(), keys);
 
             if (kv->key_size()) {
                 w.EncodeKey(&db_key, meta_.table_id(), keys);
@@ -124,7 +124,7 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                                kv->mutable_key(i)->data());
                 }
 
-                watch::Watcher w(meta_.table_id(), keys, nullptr);
+                watch::Watcher w(meta_.table_id(), keys);
 
 
                 if (kv->key_size()) {
@@ -186,7 +186,7 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             case funcpb::kFuncWatchPut:
             case funcpb::kFuncWatchDel: {
                 std::vector<std::string *> encodeKeys;
-                watch::Watcher w(meta_.table_id(), encodeKeys, nullptr);
+                watch::Watcher w(meta_.table_id(), encodeKeys);
 
                 //decode key to kv
                 if (!db_key.empty()) {

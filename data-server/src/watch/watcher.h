@@ -16,6 +16,7 @@ public:
     Watcher() = delete;
     Watcher(uint64_t, const std::vector<Key*>&, common::ProtoMessage*);
     Watcher(WatchType, uint64_t, const std::vector<Key*>&, common::ProtoMessage*);
+    Watcher(uint64_t, const std::vector<Key*>&);
     virtual ~Watcher();
     bool operator>(const Watcher* other) const;
 
