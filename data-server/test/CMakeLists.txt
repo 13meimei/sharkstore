@@ -28,7 +28,6 @@ set (TESTS
     status_unittest.cpp
     store_unittest.cpp
     util_unittest.cpp
-    watch_base_unittest.cpp
     test_server_base.cpp
 )
 

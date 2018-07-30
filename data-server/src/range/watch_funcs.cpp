@@ -546,7 +546,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         //to do 遍历watcher 发送通知
 
         for(auto w: notify_watcher_vec) {
-            auto w_id = w->GetMessage()->session_id;
+            auto w_id = w->GetWatcherId();
             idx++;
             FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                        meta_.id(), key.c_str(), idx, watchCnt, w_id);

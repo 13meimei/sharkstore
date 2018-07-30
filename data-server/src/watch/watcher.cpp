@@ -9,14 +9,14 @@ namespace watch {
 ////////////////////////////////////// watcher //////////////////////////////////////
 
 Watcher::Watcher(uint64_t table_id, const std::vector<Key*>& keys, common::ProtoMessage* msg):
-        table_id_(table_id), message_(msg) {
+        table_id_(table_id), message_(msg), watcher_id_(msg->session_id), expire_time_(msg->expire_time) {
     for (auto k: keys) {
         keys_.push_back(std::move(new Key(*k)));
     }
 }
 
 Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<Key*>& keys, common::ProtoMessage* msg):
-        type_(type), table_id_(table_id), message_(msg) {
+        type_(type), table_id_(table_id), message_(msg), watcher_id_(msg->session_id), expire_time_(msg->expire_time) {
     for (auto k: keys) {
         keys_.push_back(std::move(new Key(*k)));
     }
