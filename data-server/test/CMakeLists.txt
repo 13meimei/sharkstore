@@ -2,6 +2,7 @@ set(test_MOCK_SOURCES
     mock/raft_mock.cpp
     mock/raft_server_mock.cpp
     mock/socket_session_mock.cpp
+    mock/master_server.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/test)
@@ -27,6 +28,7 @@ set (TESTS
     status_unittest.cpp
     store_unittest.cpp
     util_unittest.cpp
+    test_server_base.cpp
 )
 
 foreach(testfile ${TESTS})

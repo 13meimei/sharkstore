@@ -38,7 +38,7 @@ public:
         if(ret.ok()) {
             seq_.fetch_add(tmpSeqId);
             seq_end_ += seq_ + cache_;
-            std::cout << ">>>>>>seq_:" << seq_ << "end:" << seq_end_ << "tmpseq:" << tmpSeqId << std::endl;
+            //std::cout << ">>>>>>seq_:" << seq_ << "end:" << seq_end_ << "tmpseq:" << tmpSeqId << std::endl;
             uint64_t tmpId = seq_;
             FLOG_DEBUG("seq_[%" PRIu64 "] seq_end_[%" PRIu64 "]", tmpId, seq_end_);
 

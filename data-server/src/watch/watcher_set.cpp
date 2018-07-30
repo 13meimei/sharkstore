@@ -3,6 +3,7 @@
 #include "range/range.h"
 #include "watcher_set.h"
 #include "common/socket_session_impl.h"
+#include "frame/sf_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -11,12 +12,12 @@ namespace watch {
 WatcherSet::WatcherSet() {
     watcher_timer_ = std::thread([this]() {
         while (watcher_timer_continue_flag_) {
-            std::unique_lock<std::mutex> lock(watcher_mutex_);
+            std::unique_lock<std::mutex> lock(watcher_queue_mutex_);
 
             // watcher queue is empty, sleep 10ms
             if (watcher_queue_.empty()) {
-                watcher_expire_cond_.wait_for(lock, std::chrono::milliseconds(10));
-                continue;
+//                watcher_expire_cond_.wait_for(lock, std::chrono::milliseconds(10));
+                watcher_expire_cond_.wait(lock);
             }
 
             // find the first wait watcher
@@ -76,6 +77,10 @@ WatcherSet::WatcherSet() {
 
 WatcherSet::~WatcherSet() {
     watcher_timer_continue_flag_ = false;
+    {
+        std::unique_lock<std::mutex> lock(watcher_queue_mutex_);
+        watcher_expire_cond_.notify_one();
+    }
     watcher_timer_.join();
     // todo leave members' memory alone now, todo free
 }
@@ -83,8 +88,8 @@ WatcherSet::~WatcherSet() {
 
 // private add/del watcher
 WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& watcher_map_, KeyMap& key_map_) {
-    std::lock_guard<std::mutex> lock(watcher_mutex_);
-    watcher_expire_cond_.notify_one();
+    std::unique_lock<std::mutex> lock_queue(watcher_queue_mutex_);
+    std::lock_guard<std::mutex> lock_map(watcher_map_mutex_);
 
     auto watcher_id = w_ptr->GetMessage()->session_id;
 
@@ -96,6 +101,7 @@ WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& 
     WatchCode code;
     if (ok) {
         // add to queue
+        watcher_expire_cond_.notify_one();
         watcher_queue_.push(w_ptr);
 
         // add to key map
@@ -118,8 +124,7 @@ WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& 
 }
 
 WatchCode WatcherSet::DelWatcher(const Key& key, WatcherId watcher_id, WatcherMap& watcher_map_, KeyMap& key_map_) {
-    std::lock_guard<std::mutex> lock(watcher_mutex_);
-    watcher_expire_cond_.notify_one();
+    std::lock_guard<std::mutex> lock(watcher_map_mutex_);
 
     // XXX del from queue, pop in watcher expire thread
 
@@ -172,8 +177,7 @@ WatchCode WatcherSet::DelWatcher(const Key& key, WatcherId watcher_id, WatcherMa
 }
 
 WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const Key& key, WatcherMap& key_map) {
-    std::lock_guard<std::mutex> lock(watcher_mutex_);
-    watcher_expire_cond_.notify_one();
+    std::lock_guard<std::mutex> lock(watcher_map_mutex_);
 
     auto key_map_it = key_map.find(key);
     if (key_map_it == key_map.end()) {

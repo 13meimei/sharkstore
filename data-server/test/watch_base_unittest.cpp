@@ -128,23 +128,26 @@ TEST(TestTimer, Base) {
         ++i;
     }
 }
-/*
+
 TEST(TestEncodeDecodeKey, Base) {
 //    void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
 //    bool DecodeWatchKey(std::vector<std::string*>& keys, std::string* buf);
     using namespace range;
-    std::string buf;
+    std::string  *buf = new std::string;
     uint64_t table_id = 1;
     std::vector<std::string*> keys;
-    keys.push_back(new std::string("key1"));
-    EncodeWatchKey(&buf, 1, keys);
-
+    //key:01004001 value:01004001:value
+    keys.push_back(new std::string("01004001"));
+    EncodeWatchKey(buf, 1, keys);
+   
+    std::cout << EncodeToHexString(*buf).c_str() << std::endl;
+   
     std::vector<std::string*> de_keys;
-    DecodeWatchKey(de_keys, &buf);
+    DecodeWatchKey(de_keys, buf);
     ASSERT_TRUE(de_keys.size() == 1);
-    ASSERT_TRUE(*(de_keys[0]) == std::string("key1"));
+    ASSERT_TRUE(*(de_keys[0]) == std::string("01004001"));
 }
-
+/*
 TEST(TestEncodeDecodeValue, Base) {
 //    void EncodeWatchValue(std::string *buf,
 //                          int64_t &version,

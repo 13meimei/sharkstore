@@ -73,14 +73,14 @@ WatchCode WatchServer::DelPrefixWatcher(WatcherPtr& w_ptr) {
 }
 
 WatchCode WatchServer::GetKeyWatchers(std::vector<WatcherPtr>& w_ptr_vec, const Key& key) {
-    FLOG_DEBUG("watch server get key watchers: key [%s]", key);
+    FLOG_DEBUG("watch server get key watchers: key [%s]", key.c_str());
     assert(w_ptr_vec.size() == 0);
     auto ws = GetWatcherSet_(key);
     return ws->GetKeyWatchers(w_ptr_vec, key);
 }
 
 WatchCode WatchServer::GetPrefixWatchers(std::vector<WatcherPtr>& w_ptr_vec, const Prefix& prefix) {
-    FLOG_DEBUG("watch server get prefix watchers: key [%s]", prefix);
+    FLOG_DEBUG("watch server get prefix watchers: key [%s]", prefix.c_str());
     assert(w_ptr_vec.size() == 0);
     auto ws = GetWatcherSet_(prefix);
     return ws->GetPrefixWatchers(w_ptr_vec, prefix);

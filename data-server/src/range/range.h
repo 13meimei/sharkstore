@@ -114,15 +114,10 @@ public:
     void PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
     void WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
     void WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
-    void WatchEncodeValue(std::string &value, const uint64_t &version_seq);
-    void WatchDecodeValue(std::string &value, uint64_t *version_seq);
     bool WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
     bool WatchDeleteSubmit(common::ProtoMessage *msg,
                             watchpb::DsKvWatchDeleteRequest &req);
 
-    int32_t AddKeyWatcher(std::string&, common::ProtoMessage*);
-    WATCH_CODE DelKeyWatcher(int64_t &id, std::string &key);
-    uint32_t GetKeyWatchers(std::vector<common::ProtoMessage*>&, std::string);
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
     kvrpcpb::SelectResponse *SelectResp(const kvrpcpb::DsSelectRequest &req);

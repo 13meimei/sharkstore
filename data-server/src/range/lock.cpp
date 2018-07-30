@@ -28,11 +28,11 @@ kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
         return nullptr;
     }
 
-    if (getticks() - req->update_time() > DEFAULT_LOCK_DELETE_TIME_MILLSEC) {
+    /*if (getticks() - req->update_time() > DEFAULT_LOCK_DELETE_TIME_MILLSEC) {
         FLOG_WARN("key[%s] deteled last update time %ld > 3s",
                   EncodeToHexString(key).c_str(), req->update_time());
         return nullptr;
-    }
+    }*/
 
     FLOG_DEBUG("lock get parse: key[%s] val[%s]",
                EncodeToHexString(key).c_str(), req->DebugString().c_str());
