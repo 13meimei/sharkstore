@@ -46,15 +46,15 @@
 #include "frame/sf_socket_buff.h"
 #include "frame/sf_status.h"
 #include "frame/sf_util.h"
-
-
+#include <thread>
+#include "mock/master_server.h"
 
 using sharkstore::dataserver::server::GetVersionInfo;
 
 
 
 int main() {
-
+    std::thread ms(mspb::startMSRPC);
     sf_set_proto_header_size(sizeof(ds_proto_header_t));
     sf_regist_body_length_callback(ds_get_body_length);
     sf_regist_load_config_callback(load_from_conf_file);
@@ -65,7 +65,8 @@ int main() {
     sf_regist_user_destroy_callback(ds_user_destroy_callback);
 
     sf_service_run_test(confStr.c_str());
-
+    std::cout<<"prepare ms detach"<<std::endl;
+    ms.detach();
     return 0;
 }
 

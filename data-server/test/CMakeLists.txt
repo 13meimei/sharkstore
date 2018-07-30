@@ -2,6 +2,7 @@ set(test_MOCK_SOURCES
     mock/raft_mock.cpp
     mock/raft_server_mock.cpp
     mock/socket_session_mock.cpp
+    mock/master_server.cpp
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/test)
