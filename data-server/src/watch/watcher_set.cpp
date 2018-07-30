@@ -36,10 +36,10 @@ WatcherSet::WatcherSet() {
                     }
 
                     watcher_queue_.pop();
-                    w_ptr = nullptr;
 
                     FLOG_INFO("watcher is sent response, timer queue pop : session_id:[%" PRIu64 "] key: [%s]",
                                w_ptr->GetWatcherId(), encode_key.c_str());
+                    w_ptr = nullptr;
                 } else {
                     break;
                 }
