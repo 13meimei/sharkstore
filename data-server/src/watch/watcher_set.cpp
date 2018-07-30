@@ -34,7 +34,7 @@ WatcherSet::WatcherSet() {
                     w_ptr = nullptr;
 
                     FLOG_INFO("watcher is sent response, timer queue pop : session_id:[%" PRIu64 "] key: [%s]",
-                               w_ptr->GetMessage()->session_id, encode_key);
+                               w_ptr->GetMessage()->session_id, encode_key.c_str());
                 } else {
                     break;
                 }
@@ -60,7 +60,7 @@ WatcherSet::WatcherSet() {
                 watcher_queue_.pop();
 
                 FLOG_INFO("watcher expire timeout, timer queue pop: session_id:[%" PRIu64 "] key: [%s]",
-                           w_ptr->GetMessage()->session_id, encode_key);
+                           w_ptr->GetMessage()->session_id, encode_key.c_str());
             }
         }
     });
@@ -99,12 +99,12 @@ WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& 
         code = WATCH_OK;
 
         FLOG_INFO("watcher add success: session_id:[%" PRIu64 "] key: [%s]",
-                  w_ptr->GetMessage()->session_id, key);
+                  w_ptr->GetMessage()->session_id, key.c_str());
     } else {
         code = WATCH_WATCHER_EXIST;
 
         FLOG_WARN("watcher add failed: session_id:[%" PRIu64 "] key: [%s]",
-                  w_ptr->GetMessage()->session_id, key);
+                  w_ptr->GetMessage()->session_id, key.c_str());
     }
     return code;
 }
@@ -119,14 +119,14 @@ WatchCode WatcherSet::DelWatcher(const Key& key, WatcherId watcher_id, WatcherMa
     auto key_map_it = key_map_.find(watcher_id);
     if (key_map_it == key_map_.end()) {
         FLOG_WARN("watcher del failed, watcher id is not existed in key map: session_id:[%" PRIu64 "] key: [%s]",
-                  watcher_id, key);
+                  watcher_id, key.c_str());
         return WATCH_WATCHER_NOT_EXIST; // no watcher id in key map
     }
     auto& keys = key_map_it->second;
     auto key_it = keys->find(key);
     if (key_it == keys->end()) {
         FLOG_WARN("watcher del failed, key is not existed in key map: session_id:[%" PRIu64 "] key: [%s]",
-                  watcher_id, key);
+                  watcher_id, key.c_str());
         return WATCH_KEY_NOT_EXIST; // no key in key map
     }
 
@@ -134,14 +134,14 @@ WatchCode WatcherSet::DelWatcher(const Key& key, WatcherId watcher_id, WatcherMa
     auto watcher_map_it = watcher_map_.find(key);
     if (watcher_map_it == watcher_map_.end()) {
         FLOG_WARN("watcher del failed, key is not existed in watcher map: session_id:[%" PRIu64 "] key: [%s]",
-                  watcher_id, key);
+                  watcher_id, key.c_str());
         return WATCH_KEY_NOT_EXIST; // no key in watcher map
     }
     auto& watchers = watcher_map_it->second;
     auto watcher_it = watchers->find(watcher_id);
     if (watcher_it == watchers->end()) {
         FLOG_WARN("watcher del failed, watcher id is not existed in watcher map: session_id:[%" PRIu64 "] key: [%s]",
-                  watcher_id, key);
+                  watcher_id, key.c_str());
         return WATCH_WATCHER_NOT_EXIST; // no watcher id in watcher map
     }
 
@@ -158,7 +158,7 @@ WatchCode WatcherSet::DelWatcher(const Key& key, WatcherId watcher_id, WatcherMa
     }
 
     FLOG_INFO("watcher del success: session_id:[%" PRIu64 "] key: [%s]",
-              watcher_id, key);
+              watcher_id, key.c_str());
 
     return WATCH_OK;
 }
@@ -169,7 +169,7 @@ WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const Key& key, 
 
     auto key_map_it = key_map.find(key);
     if (key_map_it == key_map.end()) {
-        FLOG_WARN("watcher get failed, key is not existed in key map: key: [%s]", key);
+        FLOG_WARN("watcher get failed, key is not existed in key map: key: [%s]", key.c_str());
         return WATCH_KEY_NOT_EXIST;
     }
 
@@ -178,7 +178,7 @@ WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const Key& key, 
         vec.push_back(it->second);
     }
 
-    FLOG_WARN("watcher get success: key: [%s]", key);
+    FLOG_WARN("watcher get success: key: [%s]", key.c_str());
     return WATCH_OK;
 }
 
