@@ -265,17 +265,6 @@ Status DiskStorage::save(const EntryPtr& e) {
     return Status::OK();
 }
 
-LogFile* DiskStorage::locate(uint64_t index) const {
-    // TODO: binary search
-    auto it = std::find_if(log_files_.rbegin(), log_files_.rend(),
-                           [index](LogFile* f) { return f->Index() <= index; });
-    return *it;
-}
-
-Status DiskStorage::load(uint64_t index, EntryPtr* e) const {
-    return locate(index)->Get(index, e);
-}
-
 Status DiskStorage::StoreEntries(const std::vector<EntryPtr>& entries) {
     if (ops_.readonly) {
         return Status(Status::kNotSupported, "store entries", "read only");
@@ -287,20 +276,27 @@ Status DiskStorage::StoreEntries(const std::vector<EntryPtr>& entries) {
 
     Status s;
 
-    // 检测日志文件个数是否太多需要截断
-    if (ops_.max_log_files > 0 && log_files_.size() > ops_.max_log_files &&
-        applied_ > kKeepLogCountBeforeApplied) {
+    // 如果文件个数超出ops.max_log_files，处理截断逻辑
+    bool need_truncate = ops_.max_log_files > 0 && log_files_.size() > ops_.max_log_files &&
+            applied_ > kKeepLogCountBeforeApplied;
+    if (need_truncate) {
+        uint64_t truncate_index = 0;
+        // 查找截断位置，跳过最后面的max_log_files个文件，从后往前找
         for (int idx = static_cast<int>(log_files_.size() - ops_.max_log_files - 1); idx >= 0; --idx) {
             // 只截断已经applied的日志
             if (log_files_[idx]->LastIndex() < applied_ - kKeepLogCountBeforeApplied) {
-                s = Truncate(log_files_[idx]->LastIndex());
-                if (!s.ok()) {
-                    return Status(Status::kIOError, "truncate log file", s.ToString());
-                }
+                truncate_index = log_files_[idx]->LastIndex();
                 break;
             }
         }
+        if (truncate_index != 0) {
+            s = Truncate(truncate_index);
+            if (!s.ok()) {
+                return Status(Status::kIOError, "truncate log file", s.ToString());
+            }
+        }
     }
+
     // 检查参数的index是否是递增加1的
     for (size_t i = 1; i < entries.size(); ++i) {
         if (entries[i]->index() != entries[i - 1]->index() + 1) {
@@ -356,7 +352,12 @@ Status DiskStorage::Term(uint64_t index, uint64_t* term, bool* is_compacted) con
         return Status(Status::kInvalidArgument, "out of bound", std::to_string(index));
     } else {
         *is_compacted = false;
-        return locate(index)->Term(index, term);
+        auto it = std::lower_bound(log_files_.cbegin(), log_files_.cend(), index,
+                                   [](LogFile* f, uint64_t index) { return f->LastIndex() < index; });
+        if (it == log_files_.cend()) {
+            return Status(Status::kNotFound, "locate term log file", std::to_string(index));
+        }
+        return (*it)->Term(index, term);
     }
 }
 
@@ -381,12 +382,28 @@ Status DiskStorage::Entries(uint64_t lo, uint64_t hi, uint64_t max_size,
 
     *is_compacted = false;
 
+    // search start file
+    auto it = std::lower_bound(log_files_.cbegin(), log_files_.cend(), lo,
+            [](LogFile* f, uint64_t index) { return f->LastIndex() < index; });
+    if (it == log_files_.cend()) {
+        return Status(Status::kNotFound, "locate file", std::to_string(lo));
+    }
+
     uint64_t size = 0;
     Status s;
     for (uint64_t index = lo; index < hi; ++index) {
+        auto f = *it;
+        if (index > f->LastIndex()) {
+            ++it; // switch next file
+            if (it == log_files_.cend()) {
+                break;
+            } else {
+                f = *it;
+            }
+        }
+
         EntryPtr e;
-        // TODO: 定位文件只需要一次
-        s = load(index, &e);
+        s = f->Get(index, &e);
         if (!s.ok()) return s;
         size += e->ByteSizeLong();
         if (size > max_size) {

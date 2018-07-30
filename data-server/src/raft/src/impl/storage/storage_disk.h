@@ -87,8 +87,6 @@ private:
 
     Status tryRotate();
     Status save(const EntryPtr& e);
-    LogFile* locate(uint64_t index) const;
-    Status load(uint64_t index, EntryPtr* e) const;
 
 private:
     const uint64_t id_ = 0;

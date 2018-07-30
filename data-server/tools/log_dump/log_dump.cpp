@@ -157,8 +157,8 @@ void print_usage(char *name) {
 
     std::cout << "Usage: " << std::endl;
     std::cout << "\t--path=<log path>: required, raft log directory path" << std::endl;
-    std::cout << "\t--start=<start log index>: optional, dump log entry start from" << std::endl;
-    std::cout << "\t--count=<entries number>: optional, dump how many log entries (from <start>)" << std::endl;
+    std::cout << "\t--start=<start log index>: optional, dump log entry start from, default: <FirstIndex>" << std::endl;
+    std::cout << "\t--count=<entries number>: optional, dump how many log entries (from <start>), default: 1" << std::endl;
 
     std::cout << std::endl;
 }
