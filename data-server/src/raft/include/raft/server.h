@@ -29,7 +29,7 @@ public:
 
     // 销毁raft，同时会清空所属日志文件
     // backup如果为true清空之前会进行备份
-    virtual Status DestoryRaft(uint64_t id, bool backup = false) = 0;
+    virtual Status DestroyRaft(uint64_t id, bool backup = false) = 0;
 
     virtual std::shared_ptr<Raft> FindRaft(uint64_t id) const = 0;
 

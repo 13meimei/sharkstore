@@ -158,7 +158,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 }
 
 Status RaftServerImpl::RemoveRaft(uint64_t id) {
-    LOG_WARN("raft raft[%lu]", id);
+    LOG_WARN("remove raft[%lu]", id);
 
     std::shared_ptr<RaftImpl> r;
     {
@@ -181,7 +181,7 @@ Status RaftServerImpl::RemoveRaft(uint64_t id) {
     return Status::OK();
 }
 
-Status RaftServerImpl::DestoryRaft(uint64_t id, bool backup) {
+Status RaftServerImpl::DestroyRaft(uint64_t id, bool backup) {
     LOG_WARN("destory raft[%lu]. backup=%d", id, backup);
 
     std::shared_ptr<RaftImpl> r;

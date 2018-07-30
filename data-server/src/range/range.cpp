@@ -390,7 +390,7 @@ Status Range::Destroy() {
     ClearExpiredContext();
 
     // 销毁raft
-    auto s = context_->raft_server->DestoryRaft(id_);
+    auto s = context_->raft_server->DestroyRaft(id_);
     if (!s.ok()) {
         FLOG_WARN("range[%" PRIu64 "] remove raft failed: %s", id_, s.ToString().c_str());
     }

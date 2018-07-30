@@ -36,7 +36,7 @@ public:
 
     Status CreateRaft(const RaftOptions&, std::shared_ptr<Raft>* raft) override;
     Status RemoveRaft(uint64_t id) override;
-    Status DestoryRaft(uint64_t id, bool backup = false) override;
+    Status DestroyRaft(uint64_t id, bool backup = false) override;
     std::shared_ptr<Raft> FindRaft(uint64_t id) const override;
 
     void GetStatus(ServerStatus* status) const override;
