@@ -20,6 +20,7 @@ public:
     ProtoMessage *GetProtoMessage(const void *data) override;
 
     void Send(ProtoMessage *msg, google::protobuf::Message* resp) override;
+    void WatchSend(ProtoMessage *msg, google::protobuf::Message *resp);
 
     bool GetMessage(const char *data, size_t size,
             google::protobuf::Message* req) override;
