@@ -30,16 +30,16 @@ WatcherSet::WatcherSet() {
                     Key encode_key;
                     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
                     if (w_ptr->GetType() == WATCH_KEY) {
-                        DelKeyWatcher(encode_key, w_ptr->GetMessage()->session_id);
+                        DelKeyWatcher(encode_key, w_ptr->GetWatcherId());
                     } else {
-                        DelPrefixWatcher(encode_key, w_ptr->GetMessage()->session_id);
+                        DelPrefixWatcher(encode_key, w_ptr->GetWatcherId());
                     }
 
                     watcher_queue_.pop();
-                    w_ptr = nullptr;
 
                     FLOG_INFO("watcher is sent response, timer queue pop : session_id:[%" PRIu64 "] key: [%s]",
-                               w_ptr->GetMessage()->session_id, encode_key.c_str());
+                               w_ptr->GetWatcherId(), encode_key.c_str());
+                    w_ptr = nullptr;
                 } else {
                     break;
                 }
@@ -48,7 +48,7 @@ WatcherSet::WatcherSet() {
                 continue; // no valid watcher wait in queue
             }
 
-            auto mill_sec = std::chrono::milliseconds(w_ptr->GetMessage()->expire_time);
+            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime());
             std::chrono::system_clock::time_point expire(mill_sec);
 
             if (watcher_expire_cond_.wait_until(lock, expire) == std::cv_status::timeout) {
@@ -61,15 +61,15 @@ WatcherSet::WatcherSet() {
                 Key encode_key;
                 w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
                 if (w_ptr->GetType() == WATCH_KEY) {
-                    DelKeyWatcher(encode_key, w_ptr->GetMessage()->session_id);
+                    DelKeyWatcher(encode_key, w_ptr->GetWatcherId());
                 } else {
-                    DelPrefixWatcher(encode_key, w_ptr->GetMessage()->session_id);
+                    DelPrefixWatcher(encode_key, w_ptr->GetWatcherId());
                 }
 
                 watcher_queue_.pop();
 
                 FLOG_INFO("watcher expire timeout, timer queue pop: session_id:[%" PRIu64 "] key: [%s]",
-                           w_ptr->GetMessage()->session_id, encode_key.c_str());
+                           w_ptr->GetWatcherId(), encode_key.c_str());
             }
         }
     });
@@ -91,7 +91,7 @@ WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& 
     std::unique_lock<std::mutex> lock_queue(watcher_queue_mutex_);
     std::lock_guard<std::mutex> lock_map(watcher_map_mutex_);
 
-    auto watcher_id = w_ptr->GetMessage()->session_id;
+    auto watcher_id = w_ptr->GetWatcherId();
 
     // add to watcher map
     watcher_map_.emplace(std::make_pair(key, new KeyWatcherMap));
@@ -113,12 +113,12 @@ WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& 
         code = WATCH_OK;
 
         FLOG_INFO("watcher add success: session_id:[%" PRIu64 "] key: [%s]",
-                  w_ptr->GetMessage()->session_id, key.c_str());
+                  w_ptr->GetWatcherId(), key.c_str());
     } else {
         code = WATCH_WATCHER_EXIST;
 
         FLOG_WARN("watcher add failed: session_id:[%" PRIu64 "] key: [%s]",
-                  w_ptr->GetMessage()->session_id, key.c_str());
+                  w_ptr->GetWatcherId(), key.c_str());
     }
     return code;
 }

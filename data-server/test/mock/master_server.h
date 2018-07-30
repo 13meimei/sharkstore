@@ -11,6 +11,7 @@
 #include <grpc++/server_context.h>
 
 #include "proto/gen/mspb.grpc.pb.h"
+
 namespace mspb{
     class master_server:public MsServer::Service {
         ::grpc::Status NodeLogin(::grpc::ServerContext* context, const ::mspb::NodeLoginRequest* request, ::mspb::NodeLoginResponse* response);
