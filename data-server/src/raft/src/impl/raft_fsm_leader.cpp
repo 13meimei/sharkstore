@@ -261,7 +261,7 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
     }
 
     // 需要发快照
-    if (pr.next() < fi || !ts.ok() || !es.ok()) {
+    if (pr.next() < fi || !ts.ok() || !es.ok() || pr.next() <= 1) {
         LOG_INFO("raft[%llu] need snapshot to %llu[next:%llu], fi:%llu, log "
                  "error:%s-%s",
                  id_, to, pr.next(), fi, ts.ToString().c_str(), es.ToString().c_str());
