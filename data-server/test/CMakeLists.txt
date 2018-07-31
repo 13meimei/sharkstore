@@ -7,6 +7,7 @@ set(test_helper_SRCS
     helper/gen/test.pb.cc
     helper/table.cpp
     helper/util.cpp
+    helper/query_builder.cpp
 )
 
 add_library(shark-test-helper SHARED ${test_helper_SRCS})

@@ -6,7 +6,7 @@ _Pragma("once");
 
 namespace sharkstore {
 namespace test {
-namespace helper  {
+namespace helper {
 
 class Table {
 public:
@@ -18,8 +18,8 @@ public:
     std::string GetName() const { return meta_.name(); }
 
     std::vector<metapb::Column> GetPKs() const;
-
     std::vector<metapb::Column> GetAllColumns() const;
+    std::vector<metapb::Column> GetNonPkColumns() const;
     metapb::Column GetColumn(uint64_t id) const;
     metapb::Column GetColumn(const std::string& name) const;
 
@@ -37,5 +37,5 @@ std::unique_ptr<Table> CreateUserTable();
 std::unique_ptr<Table> CreateHashUserTable();
 
 } /* namespace helper */
-} /* namespace test  */
+} /* namespace test */
 } /* namespace sharkstore */

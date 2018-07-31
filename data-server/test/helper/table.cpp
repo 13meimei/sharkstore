@@ -25,6 +25,14 @@ std::vector<metapb::Column> Table::GetPKs() const {
     return cols;
 }
 
+std::vector<metapb::Column> Table::GetNonPkColumns() const {
+    std::vector<metapb::Column> cols;
+    for (const auto& col : meta_.columns()) {
+        if (col.primary_key() == 0) cols.push_back(col);
+    }
+    return cols;
+}
+
 std::vector<metapb::Column> Table::GetAllColumns() const {
     std::vector<metapb::Column> cols;
     for (const auto& col : meta_.columns()) {
@@ -32,6 +40,7 @@ std::vector<metapb::Column> Table::GetAllColumns() const {
     }
     return cols;
 }
+
 
 metapb::Column Table::GetColumn(uint64_t id) const {
     auto it = std::find_if(meta_.columns().cbegin(), meta_.columns().cend(),
@@ -87,5 +96,5 @@ std::unique_ptr<Table> CreateHashUserTable() {
 }
 
 } /* namespace helper */
-} /* namespace test  */
+} /* namespace test */
 } /* namespace sharkstore */

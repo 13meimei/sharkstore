@@ -77,7 +77,10 @@ TEST_F(StoreTest, KeyValue) {
     ASSERT_EQ(s.code(), sharkstore::Status::kNotFound);
 }
 
-TEST_F(StoreTest, Insert) {
+TEST_F(StoreTest, SQL) {
+    // select empty db
+    {
+    }
 }
 
 
