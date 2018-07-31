@@ -4,6 +4,8 @@
 #include "base/util.h"
 #include "storage/store.h"
 
+#include "helper/util.h"
+
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
@@ -11,25 +13,14 @@ int main(int argc, char* argv[]) {
 
 namespace {
 
+using namespace sharkstore::test::helper;
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::storage;
 
 class StoreTest : public ::testing::Test {
 protected:
-    StoreTest() : db_(nullptr), store_(nullptr) {}
-
-    metapb::Range createMeta() {
-        metapb::Range meta;
-        meta.set_id(1);
-        meta.set_start_key(std::string("\x00", 1));
-        meta.set_end_key("\xff");
-        meta.mutable_range_epoch()->set_version(1);
-        meta.mutable_range_epoch()->set_conf_ver(1);
-
-        return meta;
-    }
-
     void SetUp() override {
+        // open rocksdb
         char path[] = "/tmp/sharkstore_ds_store_test_XXXXXX";
         char* tmp = mkdtemp(path);
         ASSERT_TRUE(tmp != NULL);
@@ -41,7 +32,12 @@ protected:
         auto s = rocksdb::DB::Open(ops, tmp, &db_);
         ASSERT_TRUE(s.ok());
 
-        meta_ = createMeta();
+        // create table;
+        table_ = CreateAccountTable();
+
+        // make meta
+        meta_ = MakeRangeMeta(table_.get());
+
         store_ = new Store(meta_, db_);
     }
 
@@ -56,6 +52,7 @@ protected:
 protected:
     std::string tmp_dir_;
     rocksdb::DB* db_ = nullptr;
+    std::unique_ptr<Table> table_;
     metapb::Range meta_;
     Store* store_ = nullptr;
 };
@@ -79,5 +76,10 @@ TEST_F(StoreTest, KeyValue) {
     ASSERT_FALSE(s.ok());
     ASSERT_EQ(s.code(), sharkstore::Status::kNotFound);
 }
+
+TEST_F(StoreTest, Insert) {
+}
+
+
 
 } /* namespace  */

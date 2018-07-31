@@ -5,6 +5,8 @@ set(test_helper_SRCS
     helper/mock/raft_server_mock.cpp
     helper/mock/socket_session_mock.cpp
     helper/gen/test.pb.cc
+    helper/table.cpp
+    helper/util.cpp
 )
 
 add_library(shark-test-helper SHARED ${test_helper_SRCS})
