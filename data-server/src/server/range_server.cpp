@@ -90,7 +90,7 @@ int RangeServer::Start() {
     auto handle = range_heartbeat_.native_handle();
     AnnotateThread(handle, "range_hb");
 
-    char name[16];
+    char name[32] = {'\0'};
     for (int i = 0; i < ds_config.range_config.worker_threads; i++) {
         worker_.emplace_back([this] {
             uint64_t range_id = 0;
@@ -119,7 +119,7 @@ int RangeServer::Start() {
         });
 
         auto handle = worker_[i].native_handle();
-        sprintf(name, "statis:%d", i);
+        snprintf(name, 32, "statis:%d", i);
         AnnotateThread(handle, name);
     }
 

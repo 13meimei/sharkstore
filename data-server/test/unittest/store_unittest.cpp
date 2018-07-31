@@ -18,6 +18,17 @@ class StoreTest : public ::testing::Test {
 protected:
     StoreTest() : db_(nullptr), store_(nullptr) {}
 
+    metapb::Range createMeta() {
+        metapb::Range meta;
+        meta.set_id(1);
+        meta.set_start_key(std::string("\x00", 1));
+        meta.set_end_key("\xff");
+        meta.mutable_range_epoch()->set_version(1);
+        meta.mutable_range_epoch()->set_conf_ver(1);
+
+        return meta;
+    }
+
     void SetUp() override {
         char path[] = "/tmp/sharkstore_ds_store_test_XXXXXX";
         char* tmp = mkdtemp(path);
@@ -30,11 +41,8 @@ protected:
         auto s = rocksdb::DB::Open(ops, tmp, &db_);
         ASSERT_TRUE(s.ok());
 
-        metapb::Range meta;
-        meta.set_id(1);
-        meta.set_start_key(std::string("\x00", 1));
-        meta.set_end_key("\xff");
-        store_ = new Store(meta, db_);
+        meta_ = createMeta();
+        store_ = new Store(meta_, db_);
     }
 
     void TearDown() override {
@@ -47,8 +55,9 @@ protected:
 
 protected:
     std::string tmp_dir_;
-    rocksdb::DB* db_;
-    Store* store_;
+    rocksdb::DB* db_ = nullptr;
+    metapb::Range meta_;
+    Store* store_ = nullptr;
 };
 
 TEST_F(StoreTest, KeyValue) {

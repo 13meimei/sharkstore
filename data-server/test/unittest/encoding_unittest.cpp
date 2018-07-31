@@ -26,15 +26,6 @@ std::string toHex(const std::string& str) {
     return result;
 }
 
-//TEST(Encoding, AA) {
-//    std::string buf("\x01\x00\x00\x00\x00\x00\x01\x9c\xe4\x89", 10);
-//    size_t pos = 9;
-//    uint64_t value = 0;
-//    bool ret = DecodeUvarintAscending(buf, pos, &value);
-//    ASSERT_TRUE(ret);
-//    std::cout << value << std::endl;
-//}
-
 TEST(Encoding, NonSortingUVariant) {
     auto testFunc = [](uint64_t num, const std::string& expected_buf) {
         std::string buf;
