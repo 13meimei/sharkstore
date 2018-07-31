@@ -14,6 +14,77 @@ int main(int argc, char* argv[]) {
     return RUN_ALL_TESTS();
 }
 
+enum TestCode {
+    TEST_OK = 0,
+    TEST_ERR,
+    TEST_TIMEOUT,
+};
+
+class TestWatchConnection {
+public:
+    TestWatchConnection() = delete;
+    TestWatchConnection(int timeout): timeout_(timeout) {
+        assert(socketpair(AF_UNIX, SOCK_STREAM, 0, sock_) != -1);
+    }
+
+public:
+    TestCode ClientRead() {
+        std::cout << "client read ... " << std::endl;
+        return Read(0);
+    }
+    TestCode ServerRead() {
+        std::cout << "server read ... " << std::endl;
+        return Read(1);
+    }
+    void ClientWrite() {
+        std::cout << "client write ... " << std::endl;
+        return Write(0);
+    }
+    void ServerWrite() {
+        std::cout << "server write ... " << std::endl;
+        return Write(1);
+    }
+
+private:
+    TestCode Read(int role) {
+        assert(role == 0 || role == 1); // 0 = client; 1 = server;
+        auto ep_fd = epoll_create(1);
+
+        struct epoll_event ev;
+        ev.data.fd = sock_[role];
+        ev.events = EPOLLIN;
+        assert(epoll_ctl(ep_fd, EPOLL_CTL_ADD, sock_[role], &ev) == 0);
+
+        auto max_events = 1;
+        struct epoll_event events[max_events];
+        auto n = epoll_wait(ep_fd, events, max_events, timeout_);
+
+        if (n == 0) {
+            return TEST_TIMEOUT;
+        }
+
+        assert(events[0].data.fd == sock_[role]);
+        auto readn = read(sock_[role], read_char, 8);
+        assert(readn == 3 && strcmp(read_char, "abc") == 0);
+
+        close(ep_fd);
+        return TEST_OK;
+    }
+
+    void Write(int role) {
+        assert(role == 0 || role == 1); // 0 = client; 1 = server;
+        memcpy(write_char, "abc", 3);
+        auto writen = write(sock_[role], write_char, strlen(write_char));
+        ASSERT_TRUE(writen == 3);
+    }
+
+private:
+    int timeout_;
+    int sock_[2];
+    char read_char[8] = {0};
+    char write_char[8] = {0};
+};
+
 namespace {
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::watch;
@@ -32,10 +103,15 @@ public:
 typedef std::shared_ptr<TestWatcher> TestWatcherPtr;
 
 void TestWatcher::Send(google::protobuf::Message* resp) {
+    (void)resp; // not used
     std::lock_guard<std::mutex> lock(send_lock_);
     if (sent_response_flag) {
         return;
     }
+
+    auto conn = reinterpret_cast<TestWatchConnection*>(message_);
+    conn->ServerWrite();
+
     sent_response_flag = true;
 }
 
@@ -219,11 +295,19 @@ TEST(TestWatcherSet, AddAndDelKeyWatcher) {
     ws.CheckDelKeywatcher(w_ptr2, false);
 }
 
-TEST(TestWatchServer, GetWatcherSet) {
-    TestWatchServer test_watch_server;
-    ASSERT_TRUE(test_watch_server.GetWatcherSet_(Key("a")) != nullptr);
-    ASSERT_TRUE(test_watch_server.GetWatcherSet_(Key("b")) != nullptr);
-    ASSERT_TRUE(test_watch_server.GetWatcherSet_(Key("c")) != nullptr);
+TEST(TestWatchServer, SimulateInteractive) {
+    TestWatchServer server;
+
+    std::vector<Key*> keys0;
+    keys0.push_back(new Key("k0.1"));
+    keys0.push_back(new Key("k0.2"));
+    keys0.push_back(new Key("k0.10"));
+
+    auto conn0 = new TestWatchConnection(3000); // 3s
+    auto w_ptr0 = std::make_shared<TestWatcher>(keys0, reinterpret_cast<common::ProtoMessage*>(conn0));
+    WatcherPtr w_p0 = std::static_pointer_cast<Watcher>(w_ptr0);
+    server.AddKeyWatcher(w_p0);
+    ASSERT_TRUE(conn0->ClientRead() == TEST_TIMEOUT);
 }
 
 } // namespace
