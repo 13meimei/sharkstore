@@ -44,7 +44,7 @@ public:
     void CheckAddKeyWatcher(TestWatcherPtr& w_ptr) {
         Key encode_key;
         w_ptr->EncodeKey(&encode_key, g_table_id, w_ptr->GetKeys());
-        auto watcher_id = w_ptr->GetMessage()->session_id;
+        auto watcher_id = w_ptr->GetWatcherId();
 
         // check key map
         auto watcher_id_it = key_map_.find(watcher_id);
@@ -72,7 +72,7 @@ public:
         for (; it != watcher_queue.end(); ++it) {
             Key tmp_key;
             auto w_p = it->get();
-            WatcherId tmp_id = w_p->GetMessage()->session_id;
+            WatcherId tmp_id = w_p->GetWatcherId();
 
             w_p->EncodeKey(&tmp_key, g_table_id, w_p->GetKeys());
             if (tmp_key == encode_key && tmp_id == watcher_id) {
@@ -87,7 +87,7 @@ public:
     void CheckDelKeywatcher(TestWatcherPtr& w_ptr, bool is_sent_response) {
         Key encode_key;
         w_ptr->EncodeKey(&encode_key, g_table_id, w_ptr->GetKeys());
-        auto watcher_id = w_ptr->GetMessage()->session_id;
+        auto watcher_id = w_ptr->GetWatcherId();
 
         // check key map
         auto watcher_id_it = key_map_.find(watcher_id);
@@ -115,7 +115,7 @@ public:
         for (; it != watcher_queue.end(); ++it) {
             Key tmp_key;
             auto w_p = it->get();
-            WatcherId tmp_id = w_p->GetMessage()->session_id;
+            WatcherId tmp_id = w_p->GetWatcherId();
 
             w_p->EncodeKey(&tmp_key, g_table_id, w_p->GetKeys());
             if (tmp_key == encode_key && tmp_id == watcher_id) {
@@ -192,8 +192,11 @@ TEST(TestWatcherSet, AddAndDelKeyWatcher) {
 
     TestWatcherSet ws;
     WatcherPtr w_p0 = std::static_pointer_cast<Watcher>(w_ptr0);
+    w_p0->SetWatcherId(0);
     WatcherPtr w_p1 = std::static_pointer_cast<Watcher>(w_ptr1);
+    w_p1->SetWatcherId(1);
     WatcherPtr w_p2 = std::static_pointer_cast<Watcher>(w_ptr2);
+    w_p2->SetWatcherId(2);
 
     // test add
     ws.AddKeyWatcher(encode_key0, w_p0);
@@ -206,13 +209,13 @@ TEST(TestWatcherSet, AddAndDelKeyWatcher) {
     ws.CheckAddKeyWatcher(w_ptr2);
 
     // test del
-    ws.DelKeyWatcher(encode_key0, w_p0->GetMessage()->session_id);
+    ws.DelKeyWatcher(encode_key0, w_p0->GetWatcherId());
     ws.CheckDelKeywatcher(w_ptr0, false);
 
-    ws.DelKeyWatcher(encode_key1, w_p1->GetMessage()->session_id);
+    ws.DelKeyWatcher(encode_key1, w_p1->GetWatcherId());
     ws.CheckDelKeywatcher(w_ptr1, false);
 
-    ws.DelKeyWatcher(encode_key2, w_p2->GetMessage()->session_id);
+    ws.DelKeyWatcher(encode_key2, w_p2->GetWatcherId());
     ws.CheckDelKeywatcher(w_ptr2, false);
 }
 

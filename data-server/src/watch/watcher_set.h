@@ -52,6 +52,8 @@ private:
     PriorityQueue<WatcherPtr>   watcher_queue_;
     std::mutex              watcher_map_mutex_;
     std::mutex              watcher_queue_mutex_;
+    std::atomic<WatcherId>  watcher_id_ ;
+
 
     std::thread                     watcher_timer_;
     volatile bool                   watcher_timer_continue_flag_ = true;
@@ -61,6 +63,9 @@ private:
     WatchCode AddWatcher(const Key&, WatcherPtr&, WatcherMap&, KeyMap&);
     WatchCode DelWatcher(const Key&, WatcherId, WatcherMap&, KeyMap&);
     WatchCode GetWatchers(std::vector<WatcherPtr>& vec, const Key&, WatcherMap&);
+
+public:
+    WatcherId GenWatcherId() { return watcher_id_.fetch_add(1, std::memory_order_relaxed); }
 };
 
 

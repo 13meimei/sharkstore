@@ -590,9 +590,14 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             w->Send(ds_resp);
             {
                 //delete watch
-                if (watch_server->DelKeyWatcher(w)) {
-//                WATCH_OK != DelKeyWatcher(w_id, key)
-                    FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
+                watch::WatchCode del_ret;
+                if (w->GetType() == watch::WATCH_KEY) {
+                    del_ret = watch_server->DelKeyWatcher(w);
+                } else {
+                    del_ret = watch_server->DelPrefixWatcher(w);
+                }
+                if (del_ret) {
+                    FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                            meta_.id(), EncodeToHexString(dbKey).c_str(), idx, watchCnt, w_id);
                 } else {
                     FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(dbKey).c_str(), w_id);

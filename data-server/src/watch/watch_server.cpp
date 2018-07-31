@@ -36,6 +36,7 @@ WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr) {
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
+    w_ptr->SetWatcherId(ws->GenWatcherId());
     return ws->AddKeyWatcher(encode_key, w_ptr);
 }
 
@@ -47,6 +48,7 @@ WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr) {
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
+    w_ptr->SetWatcherId(ws->GenWatcherId());
     return ws->AddPrefixWatcher(encode_key, w_ptr);
 }
 

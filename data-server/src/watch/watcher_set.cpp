@@ -190,7 +190,7 @@ WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const Key& key, 
         vec.push_back(it->second);
     }
 
-    FLOG_WARN("watcher get success: key: [%s]", key.c_str());
+    FLOG_INFO("watcher get success: key: [%s]", key.c_str());
     return WATCH_OK;
 }
 
