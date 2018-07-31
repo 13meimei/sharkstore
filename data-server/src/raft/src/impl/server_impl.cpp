@@ -150,6 +150,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
         std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);
         auto it = all_rafts_.emplace(ops.id, r);
         assert(it.second);
+        (void)it;
         creating_rafts_.erase(ops.id);
     }
     *raft = std::static_pointer_cast<Raft>(r);

@@ -175,7 +175,7 @@ set(SOURCES
     src/master/client.cpp
     src/master/connection.cpp
     src/master/rpc_types.cpp
-    src/master/worker.cpp
+    src/master/worker_impl.cpp
     src/monitor/isystemstatus.cpp
     src/monitor/datacacl.cpp
     src/monitor/encodedata.cpp
