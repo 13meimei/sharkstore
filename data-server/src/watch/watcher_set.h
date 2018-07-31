@@ -52,7 +52,7 @@ private:
     PriorityQueue<WatcherPtr>   watcher_queue_;
     std::mutex              watcher_map_mutex_;
     std::mutex              watcher_queue_mutex_;
-    std::atomic<WatcherId>  watcher_id_ ;
+    std::atomic<WatcherId>  watcher_id_ = {0};
 
 
     std::thread                     watcher_timer_;

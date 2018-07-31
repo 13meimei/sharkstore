@@ -35,7 +35,6 @@ _Pragma("once");
 #include "server/context_server.h"
 #include "server/run_status.h"
 #include "watch.h"
-#include "watch/watcher_set.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -163,8 +162,6 @@ private:
         kvrpcpb::RequestHeader *request_header = nullptr;
 
         uint64_t submit_time = 0;
-
-        watch::WatcherSet watcher_set_;
     };
 
     AsyncContext *AddContext(uint64_t id, raft_cmdpb::CmdType type,
