@@ -1,15 +1,16 @@
-#include "table.h"
+_Pragma("once");
 
 #include "proto/gen/kvrpcpb.pb.h"
+
+#include "table.h"
 
 namespace sharkstore {
 namespace test {
 namespace helper {
 
-
 class SelectRequestBuilder {
 public:
-    explicit SelectRequestBuilder(Table *t) : table_(t) {}
+    explicit SelectRequestBuilder(Table *t);
 
     // select one row
     void SetKey(const std::vector<std::string>& all_pk_values);
@@ -21,7 +22,8 @@ public:
     // select field list
     void AddField(const std::string& col_name);
     void AddAllFields(); // select *
-    void AddAggreFunc(const std::string& func_name);
+    std::vector<metapb::Column> AddRandomFields(size_t size = 0);
+    void AddAggreFunc(const std::string& func_name, const std::string& col_name);
 
     // select where filter
     void AddMatch(const std::string& col, kvrpcpb::MatchType type, const std::string& val);
@@ -39,7 +41,7 @@ private:
 
 class DeleteRequestBuilder {
 public:
-    explicit DeleteRequestBuilder(Table *t) : table_(t) {}
+    explicit DeleteRequestBuilder(Table *t);
 
     // delete one row
     void SetKey(const std::vector<std::string>& all_pk_values);

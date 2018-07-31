@@ -6,8 +6,9 @@ set(test_helper_SRCS
     helper/mock/socket_session_mock.cpp
     helper/gen/test.pb.cc
     helper/table.cpp
-    helper/util.cpp
+    helper/helper_util.cpp
     helper/query_builder.cpp
+    helper/query_parser.cpp
 )
 
 add_library(shark-test-helper SHARED ${test_helper_SRCS})

@@ -18,6 +18,8 @@ void EncodePrimaryKey(std::string *buf, const metapb::Column& col, const std::st
 // append encoded non-pk value to buf
 void EncodeColumnValue(std::string *buf, const metapb::Column& col, const std::string& val);
 
+void DecodeColumnValue(const std::string& buf, size_t& offset, const metapb::Column& col, std::string *val);
+
 } /* namespace helper */
 } /* namespace test */
 } /* namespace sharkstore */

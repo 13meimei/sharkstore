@@ -1,10 +1,13 @@
 #include "query_builder.h"
 
-#include "util.h"
+#include "base/util.h"
+#include "helper_util.h"
 
 namespace sharkstore {
 namespace test {
 namespace helper {
+
+using sharkstore::randomInt;
 
 static std::string buildKey(Table *table, const std::vector<std::string>& values) {
     auto pks = table->GetPKs();
@@ -46,6 +49,11 @@ static std::pair<std::string, std::string> buildScope(Table *table,
 }
 
 
+SelectRequestBuilder::SelectRequestBuilder(Table *t) : table_(t) {
+    // default select all scope
+    SetScope({}, {});
+}
+
 void SelectRequestBuilder::SetKey(const std::vector<std::string>& all_pk_values) {
     req_.set_key(buildKey(table_, all_pk_values));
 }
@@ -72,10 +80,29 @@ void SelectRequestBuilder::AddAllFields() {
     }
 }
 
-void SelectRequestBuilder::AddAggreFunc(const std::string& func_name) {
+std::vector<metapb::Column> SelectRequestBuilder::AddRandomFields(size_t size) {
+    std::vector<metapb::Column> field_lists;
+    auto cols = table_->GetAllColumns();
+    if (size == 0) {
+        size = 1 + (sharkstore::randomInt() % cols.size()) * 2;
+    }
+    for (size_t i = 0; i < size; ++i) {
+        auto idx = sharkstore::randomInt() % cols.size();
+        auto f = req_.add_field_list();
+        f->set_typ(kvrpcpb::SelectField_Type_Column);
+        f->mutable_column()->CopyFrom(cols[idx]);
+        field_lists.push_back(cols[idx]);
+    }
+    return field_lists;
+}
+
+void SelectRequestBuilder::AddAggreFunc(const std::string& func_name, const std::string& col_name) {
     auto f = req_.add_field_list();
     f->set_typ(kvrpcpb::SelectField_Type_AggreFunction);
     f->mutable_aggre_func()->assign(func_name);
+    if (!col_name.empty()) {
+        f->mutable_column()->CopyFrom(table_->GetColumn(col_name));
+    }
 }
 
 void SelectRequestBuilder::AddMatch(const std::string& col, kvrpcpb::MatchType type, const std::string& val) {
@@ -91,6 +118,10 @@ void SelectRequestBuilder::AddLimit(uint64_t count, uint64_t offset) {
 }
 
 
+DeleteRequestBuilder::DeleteRequestBuilder(Table *t) : table_(t) {
+    // default: delete all scope
+    SetScope({}, {});
+}
 
 // delete one row
 void DeleteRequestBuilder::SetKey(const std::vector<std::string>& all_pk_values) {

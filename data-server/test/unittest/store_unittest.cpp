@@ -4,7 +4,10 @@
 #include "base/util.h"
 #include "storage/store.h"
 
-#include "helper/util.h"
+
+#include "helper/query_builder.h"
+#include "helper/query_parser.h"
+#include "helper/helper_util.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -77,12 +80,58 @@ TEST_F(StoreTest, KeyValue) {
     ASSERT_EQ(s.code(), sharkstore::Status::kNotFound);
 }
 
-TEST_F(StoreTest, SQL) {
-    // select empty db
+TEST_F(StoreTest, SelectEmpty) {
+    // all fields
     {
+        SelectRequestBuilder builder(table_.get());
+        builder.AddAllFields();
+        auto req = builder.Build();
+        kvrpcpb::SelectResponse resp;
+        auto s = store_->Select(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(resp.code(), 0);
+        ASSERT_EQ(resp.rows_size(), 0);
+    }
+    // random
+    {
+        for (int i = 0; i < 100; ++i) {
+            SelectRequestBuilder builder(table_.get());
+            builder.AddRandomFields();
+            auto req = builder.Build();
+            kvrpcpb::SelectResponse resp;
+            auto s = store_->Select(req, &resp);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            ASSERT_EQ(resp.code(), 0);
+            ASSERT_EQ(resp.rows_size(), 0);
+        }
+    }
+    // select count
+    {
+        SelectRequestBuilder builder(table_.get());
+        builder.AddAggreFunc("count", "");
+        auto req = builder.Build();
+        kvrpcpb::SelectResponse resp;
+        auto s = store_->Select(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(resp.code(), 0);
+        ASSERT_EQ(resp.rows_size(), 1);
+
+        std::cout << resp.DebugString() << std::endl;
+
+        SelectResultParser parser(req, resp);
+        auto row = parser.GetRows();
+        ASSERT_EQ(row.size(), 1);
+        ASSERT_EQ(row[0].size(), 1);
+        ASSERT_EQ(row[0][0], "0");
+
+
+
+
     }
 }
 
+TEST_F(StoreTest, SQL) {
+}
 
 
 } /* namespace  */

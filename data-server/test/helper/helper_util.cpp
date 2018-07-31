@@ -1,4 +1,4 @@
-#include "util.h"
+#include "helper_util.h"
 
 #include "common/ds_encoding.h"
 
@@ -102,6 +102,47 @@ void EncodeColumnValue(std::string *buf, const metapb::Column& col, const std::s
         case metapb::Date:
         case metapb::TimeStamp: {
             EncodeBytesValue(buf, static_cast<uint32_t>(col.id()), val.c_str(), val.size());
+            break;
+        }
+
+        default:
+            throw std::runtime_error(std::string("EncodeColumnValue: invalid column data type: ") +
+                                     std::to_string(static_cast<int>(col.data_type())));
+    }
+}
+
+void DecodeColumnValue(const std::string& buf, size_t& offset, const metapb::Column& col, std::string *val) {
+    uint32_t col_id = 0;
+    EncodeType enc_type;
+    DecodeValueTag(buf, offset, &col_id, &enc_type);
+    switch (col.data_type()) {
+        case metapb::Tinyint:
+        case metapb::Smallint:
+        case metapb::Int:
+        case metapb::BigInt: {
+            int64_t i = 0;
+            DecodeIntValue(buf, offset, &i);
+            if (col.unsigned_()) {
+                *val = std::to_string(static_cast<uint64_t>(i));
+            } else {
+                *val = std::to_string(i);
+            }
+            break;
+        }
+
+        case metapb::Float:
+        case metapb::Double: {
+            double d = 0.0;
+            DecodeFloatValue(buf, offset, &d);
+            *val = std::to_string(d);
+            break;
+        }
+
+        case metapb::Varchar:
+        case metapb::Binary:
+        case metapb::Date:
+        case metapb::TimeStamp: {
+            DecodeBytesValue(buf, offset, val);
             break;
         }
 
