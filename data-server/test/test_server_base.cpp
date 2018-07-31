@@ -103,7 +103,7 @@ int test_createRange(){
 }
 
 int main() {
-    std::thread ds(test_startDS());
+//    std::thread ds(test_startDS());
 
 
     //start master
@@ -113,7 +113,7 @@ int main() {
     test_createRange();
     ms.join();
     FLOG_INFO("ms exit....");
-    ds.join();
+    //ds.join();
     return 0;
 }
 

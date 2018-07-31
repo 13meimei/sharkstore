@@ -7,6 +7,7 @@
 #include "frame/sf_util.h"
 #include "fastcommon/logger.h"
 
+
 int main(int argc, char* argv[]) {
     log_init2();
 
@@ -23,13 +24,14 @@ const uint64_t g_table_id = 123;
 class TestWatcher: public Watcher {
 public:
     TestWatcher() = delete;
-    TestWatcher(const std::vector<Key*>& keys, common::ProtoMessage* message): Watcher(g_table_id, keys, message) {
+    TestWatcher(const std::vector<WatcherKey*>& keys, common::ProtoMessage* message): Watcher(g_table_id, keys, 0, message) {
     }
     ~TestWatcher() = default;
 
     void Send(google::protobuf::Message* resp) override;
 };
 typedef std::shared_ptr<TestWatcher> TestWatcherPtr;
+typedef std::string Key;
 
 void TestWatcher::Send(google::protobuf::Message* resp) {
     std::lock_guard<std::mutex> lock(send_lock_);
@@ -42,7 +44,7 @@ void TestWatcher::Send(google::protobuf::Message* resp) {
 class TestWatcherSet: public WatcherSet {
 public:
     void CheckAddKeyWatcher(TestWatcherPtr& w_ptr) {
-        Key encode_key;
+        WatcherKey encode_key;
         w_ptr->EncodeKey(&encode_key, g_table_id, w_ptr->GetKeys());
         auto watcher_id = w_ptr->GetMessage()->session_id;
 
@@ -60,9 +62,9 @@ public:
         auto key_watcher_it = key_watcher_map_.find(encode_key);
         ASSERT_TRUE(key_watcher_it != key_watcher_map_.end());
 
-        auto key_watcher_map = key_watcher_it->second;
-        auto watcher_it = key_watcher_map->find(watcher_id);
-        ASSERT_TRUE(watcher_it != key_watcher_map->end());
+        auto key_watcher_map = key_watcher_it->second->mapKeyWatcher;
+        auto watcher_it = key_watcher_map.find(watcher_id);
+        ASSERT_TRUE(watcher_it != key_watcher_map.end());
         std::cout << "check add watcher map ok: session id: [" <<
                   watcher_id << "] key: [" << encode_key << "]" << std::endl;
 
@@ -70,7 +72,7 @@ public:
         auto watcher_queue = watcher_queue_.GetQueue();
         auto it = watcher_queue.begin();
         for (; it != watcher_queue.end(); ++it) {
-            Key tmp_key;
+            WatcherKey tmp_key;
             auto w_p = it->get();
             WatcherId tmp_id = w_p->GetMessage()->session_id;
 
@@ -85,7 +87,7 @@ public:
     }
 
     void CheckDelKeywatcher(TestWatcherPtr& w_ptr, bool is_sent_response) {
-        Key encode_key;
+        WatcherKey encode_key;
         w_ptr->EncodeKey(&encode_key, g_table_id, w_ptr->GetKeys());
         auto watcher_id = w_ptr->GetMessage()->session_id;
 
@@ -102,9 +104,9 @@ public:
         // check watcher map
         auto key_watcher_it = key_watcher_map_.find(encode_key);
         if (key_watcher_it != key_watcher_map_.end()) {
-            auto key_watcher_map = key_watcher_it->second;
-            auto watcher_it = key_watcher_map->find(watcher_id);
-            ASSERT_TRUE(watcher_it == key_watcher_map->end());
+            auto key_watcher_map = key_watcher_it->second->mapKeyWatcher;
+            auto watcher_it = key_watcher_map.find(watcher_id);
+            ASSERT_TRUE(watcher_it == key_watcher_map.end());
             std::cout << "check del watcher map ok: session id: [" <<
                       watcher_id << "] key: [" << encode_key << "]" << std::endl;
         }
@@ -113,7 +115,7 @@ public:
         auto watcher_queue = watcher_queue_.GetQueue();
         auto it = watcher_queue.begin();
         for (; it != watcher_queue.end(); ++it) {
-            Key tmp_key;
+            WatcherKey tmp_key;
             auto w_p = it->get();
             WatcherId tmp_id = w_p->GetMessage()->session_id;
 
@@ -146,7 +148,7 @@ TEST(TestWatcher, EncodeAndDecode) {
     TestWatcher w(keys, message);
 
     // test encode and decode key
-    Key encode_key;
+    WatcherKey encode_key;
     w.EncodeKey(&encode_key, g_table_id, w.GetKeys());
 
     std::vector<Key*> decode_keys;

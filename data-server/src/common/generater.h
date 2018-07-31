@@ -40,14 +40,14 @@ public:
             seq_end_ += seq_ + cache_;
             //std::cout << ">>>>>>seq_:" << seq_ << "end:" << seq_end_ << "tmpseq:" << tmpSeqId << std::endl;
             uint64_t tmpId = seq_;
-            FLOG_DEBUG("seq_[%" PRIu64 "] seq_end_[%" PRIu64 "]", tmpId, seq_end_);
+            //FLOG_DEBUG("seq_[%" PRIu64 "] seq_end_[%" PRIu64 "]", tmpId, seq_end_);
 
             if( 0 == saveToDb(seq_end_) ) initFlag = true;
         } else {
             initFlag = false;
             setErrMsg(ret.ToString());
             uint64_t tmpId = seq_;
-            FLOG_DEBUG("init fail and default value of seq_[%" PRIu64 "] seq_end_[%" PRIu64 "]", tmpId, seq_end_);
+            //FLOG_DEBUG("init fail and default value of seq_[%" PRIu64 "] seq_end_[%" PRIu64 "]", tmpId, seq_end_);
         }
 
         return;

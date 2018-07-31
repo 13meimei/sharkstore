@@ -37,7 +37,7 @@ std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf
     std::string key("");
     auto buf = new std::string(encodeBuf);
 
-    watch::Watcher watcher(1, vec, nullptr);
+    watch::Watcher watcher(1, vec);
     watcher.DecodeKey(vec, encodeBuf);
 
         if(grpFlag) {
@@ -109,12 +109,12 @@ metapb::Range *genRange1() {
     std::string k1("01003"), k2("01004");
 
     keys.push_back(&k1);
-    watch::Watcher watcher1(1, keys, nullptr);
+    watch::Watcher watcher1(1, keys);
     watcher1.EncodeKey(&keyStart, 1, keys);
 
     keys.clear();
     keys.push_back(&k2);
-    watch::Watcher watcher2(1, keys, nullptr);
+    watch::Watcher watcher2(1, keys);
     watcher2.EncodeKey(&keyEnd, 1, keys);
 
     meta->set_id(1);
@@ -150,12 +150,12 @@ metapb::Range *genRange2() {
     std::string k1("01004"), k2("01005");
 
     keys.push_back(&k1);
-    watch::Watcher watcher1(1, keys, nullptr);
+    watch::Watcher watcher1(1, keys);
     watcher1.EncodeKey(&keyStart, 1, keys);
 
     keys.clear();
     keys.push_back(&k2);
-    watch::Watcher watcher2(1, keys, nullptr);
+    watch::Watcher watcher2(1, keys);
     watcher2.EncodeKey(&keyEnd, 1, keys);
 
     meta->set_id(2);

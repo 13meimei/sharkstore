@@ -1,6 +1,7 @@
 
 #include "watch_server.h"
 #include "frame/sf_logger.h"
+#include "common/ds_encoding.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -23,7 +24,7 @@ WatchServer::~WatchServer() {
     }
 }
 
-WatcherSet* WatchServer::GetWatcherSet_(const Key& key) {
+WatcherSet* WatchServer::GetWatcherSet_(const WatcherKey& key) {
     std::size_t hash = std::hash<std::string>{}(key);
     return watcher_set_list[hash % watcher_set_count_];
 }
@@ -35,8 +36,8 @@ WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr) {
 
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
-    auto ws = GetWatcherSet_(encode_key);
-    return ws->AddKeyWatcher(encode_key, w_ptr);
+    auto wset = GetWatcherSet_(encode_key);
+    return wset->AddKeyWatcher(encode_key, w_ptr);
 }
 
 WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr) {
@@ -52,7 +53,7 @@ WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr) {
 
 WatchCode WatchServer::DelKeyWatcher(WatcherPtr& w_ptr) {
     FLOG_DEBUG("watch server del key watcher: session id [%" PRIu64 "]", w_ptr->GetWatcherId());
-    assert(w_ptr->GetType() == WATCH_Key);
+    assert(w_ptr->GetType() == WATCH_KEY);
     std::string encode_key;
 
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
@@ -72,8 +73,8 @@ WatchCode WatchServer::DelPrefixWatcher(WatcherPtr& w_ptr) {
     return ws->DelPrefixWatcher(encode_key, w_ptr->GetWatcherId());
 }
 
-WatchCode WatchServer::GetKeyWatchers(std::vector<WatcherPtr>& w_ptr_vec, const Key& key) {
-    FLOG_DEBUG("watch server get key watchers: key [%s]", key.c_str());
+WatchCode WatchServer::GetKeyWatchers(std::vector<WatcherPtr>& w_ptr_vec, const WatcherKey& key) {
+    FLOG_DEBUG("watch server get key watchers: key [%s]", EncodeToHexString(key).c_str());
     assert(w_ptr_vec.size() == 0);
     auto ws = GetWatcherSet_(key);
     return ws->GetKeyWatchers(w_ptr_vec, key);

@@ -14,15 +14,16 @@ namespace watch {
 class Watcher {
 public:
     Watcher() = delete;
-    Watcher(uint64_t, const std::vector<Key*>&, common::ProtoMessage*);
-    Watcher(WatchType, uint64_t, const std::vector<Key*>&, common::ProtoMessage*);
-    Watcher(uint64_t, const std::vector<Key*>&);
+    Watcher(uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, common::ProtoMessage*);
+    Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, common::ProtoMessage*);
+    Watcher(uint64_t, const std::vector<WatcherKey*>&);
     virtual ~Watcher();
     bool operator>(const Watcher* other) const;
 
 private:
     uint64_t                    table_id_;
     std::vector<std::string*>   keys_;
+    uint64_t                    key_version_ = 0;
     common::ProtoMessage*       message_ = nullptr;
     WatchType                   type_ = WATCH_KEY;
     WatcherId                   watcher_id_;
@@ -42,7 +43,12 @@ public:
         std::lock_guard<std::mutex> lock(send_lock_);
         return sent_response_flag;
     }
-
+    uint64_t getKeyVersion() const {
+        return key_version_;
+    }
+    int64_t getSessionId() const{
+        return message_->session_id;
+    }
 public:
     virtual void Send(google::protobuf::Message* resp);
 
