@@ -8,7 +8,7 @@ namespace watch {
 typedef int64_t WatcherId; // socket session id
 typedef int64_t RangeId;
 typedef std::string WatcherKey;
-typedef std::string Prefix;
+typedef std::string PrefixKey;
 
 enum WatchCode {
     WATCH_OK = 0,

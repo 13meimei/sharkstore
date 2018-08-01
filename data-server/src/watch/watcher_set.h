@@ -44,10 +44,10 @@ public:
 
     WatchCode AddKeyWatcher(const WatcherKey&, WatcherPtr&);
     WatchCode DelKeyWatcher(const WatcherKey&, WatcherId);
-    WatchCode GetKeyWatchers(std::vector<WatcherPtr>& , const WatcherKey&);
-    WatchCode AddPrefixWatcher(const Prefix&, WatcherPtr&);
-    WatchCode DelPrefixWatcher(const Prefix&, WatcherId);
-    WatchCode GetPrefixWatchers(std::vector<WatcherPtr>& , const Prefix&);
+    WatchCode GetKeyWatchers(std::vector<WatcherPtr>& , const WatcherKey&, const int64_t &version);
+    WatchCode AddPrefixWatcher(const PrefixKey&, WatcherPtr&);
+    WatchCode DelPrefixWatcher(const PrefixKey&, WatcherId);
+    WatchCode GetPrefixWatchers(std::vector<WatcherPtr>& , const PrefixKey&, const int64_t &version);
     bool ChgGlobalVersion(const uint64_t &ver) noexcept {
         if(ver <= global_version_)
             return false;
@@ -86,7 +86,7 @@ private:
 private:
     WatchCode AddWatcher(const WatcherKey&, WatcherPtr&, WatcherMap&, KeyMap&);
     WatchCode DelWatcher(const WatcherKey&, WatcherId, WatcherMap&, KeyMap&);
-    WatchCode GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey&, WatcherMap&);
+    WatchCode GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey&, WatcherMap&, WatcherValue *watcherVal);
 
 public:
     WatcherId GenWatcherId() { return watcher_id_.fetch_add(1, std::memory_order_relaxed); }

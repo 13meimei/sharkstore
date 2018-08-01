@@ -98,38 +98,45 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
     ChgGlobalVersion(currKeyVer);
 
     // to do add to watcher map
-    watcher_map_.emplace(std::make_pair(key, new WatcherValue));
-    auto watcherVal = watcher_map_.at(key);
+    decltype(watcher_map_.begin()->second) watcherVal = nullptr;
+    auto itWatcher = watcher_map_.find(key);
 
-    if( currKeyVer > watcherVal->key_version_) {
+    if(itWatcher == watcher_map_.end()) {
+        auto retPair = watcher_map_.emplace(std::make_pair(key, new WatcherValue));
+        watcherVal = retPair.first->second;
+    } else {
+        watcherVal = itWatcher->second;
+    }
+
+    if( currKeyVer >= watcherVal->key_version_) {
         watcherVal->key_version_ = currKeyVer;
     } else {
-        FLOG_WARN("watcher add skip: session_id:[%" PRIu64 "] key: [%s] current version[%" PRIu64 "] watcher version[%" PRIu64 "]",
+        FLOG_WARN("watcher add skip: watcher_id:[%" PRIu64 "] key: [%s] current version[%" PRIu64 "] watcher version[%" PRIu64 "]",
                   w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), currKeyVer, watcherVal->key_version_);
 
         return WATCH_WATCHER_NOT_NEED;
     }
 
-    auto ret = watcherVal->mapKeyWatcher.insert(std::make_pair(watcher_id, w_ptr)).second;
+    auto ret = watcherVal->mapKeyWatcher.emplace(std::make_pair(watcher_id, w_ptr)).second;
     if (ret) {
         // add to queue
         watcher_expire_cond_.notify_one();
         watcher_queue_.push(w_ptr);
 
         // add to key map
-        key_map_.emplace(std::make_pair(watcher_id, new WatcherKeyMap));
-        auto watcher_key_map = key_map_.at(watcher_id);
+        auto retPair = key_map_.emplace(std::make_pair(watcher_id, new WatcherKeyMap));
+        auto mapKeySession = retPair.first->second;
 
-        watcher_key_map->insert(std::make_pair(key, w_ptr->getSessionId()));
+        mapKeySession->insert(std::make_pair(key, w_ptr->getSessionId()));
 
         code = WATCH_OK;
 
-        FLOG_INFO("watcher add success: session_id:[%" PRIu64 "] key: [%s]",
+        FLOG_INFO("watcher add success: watcher_id:[%" PRIu64 "] key: [%s]",
                   w_ptr->GetWatcherId(), EncodeToHexString(key).c_str());
     } else {
         code = WATCH_WATCHER_EXIST;
 
-        FLOG_WARN("watcher add failed: session_id:[%" PRIu64 "] key: [%s]",
+        FLOG_WARN("watcher add failed: watcher_id:[%" PRIu64 "] key: [%s]",
                   w_ptr->GetWatcherId(), EncodeToHexString(key).c_str());
     }
     return code;
@@ -145,14 +152,25 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
     if (key_map_it == key_map_.end()) {
         FLOG_WARN("watcher del failed, watcher id is not existed in key map: session_id:[%" PRIu64 "] key: [%s]",
                   watcher_id, EncodeToHexString(key).c_str());
-        return WATCH_WATCHER_NOT_EXIST; // no watcher id in key map
-    }
-    auto& keys = key_map_it->second;
-    auto key_it = keys->find(key);
-    if (key_it == keys->end()) {
-        FLOG_WARN("watcher del failed, key is not existed in key map: session_id:[%" PRIu64 "] key: [%s]",
-                  watcher_id, EncodeToHexString(key).c_str());
-        return WATCH_KEY_NOT_EXIST; // no key in key map
+        //return WATCH_WATCHER_NOT_EXIST; // no watcher id in key map
+    } else {
+        auto &keys = key_map_it->second;
+        auto key_it = keys->find(key);
+        if (key_it == keys->end()) {
+            FLOG_WARN("watcher del failed, key is not existed in key map: session_id:[%"
+                              PRIu64
+                              "] key: [%s]",
+                      watcher_id, EncodeToHexString(key).c_str());
+            return WATCH_KEY_NOT_EXIST; // no key in key map
+        }
+
+        // do del from key map
+        keys->erase(key_it);
+
+        //erase key:watchid
+        if (keys->empty()) {
+            key_map_.erase(key_map_it);
+        }
     }
 
     // del from watcher map
@@ -160,55 +178,67 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
     if (watcher_map_it == watcher_map_.end()) {
         FLOG_WARN("watcher del failed, key is not existed in watcher map: session_id:[%" PRIu64 "] key: [%s]",
                   watcher_id, EncodeToHexString(key).c_str());
-        return WATCH_KEY_NOT_EXIST; // no key in watcher map
-    }
-    auto& watchers = watcher_map_it->second;
-    auto watcher_it = watchers->mapKeyWatcher.find(watcher_id);
-    if (watcher_it == watchers->mapKeyWatcher.end()) {
-        FLOG_WARN("watcher del failed, watcher id is not existed in watcher map: session_id:[%" PRIu64 "] key: [%s]",
-                  watcher_id, EncodeToHexString(key).c_str());
-        return WATCH_WATCHER_NOT_EXIST; // no watcher id in watcher map
+        //return WATCH_KEY_NOT_EXIST; // no key in watcher map
+    } else {
+        auto &watchers = watcher_map_it->second;
+        auto watcher_it = watchers->mapKeyWatcher.find(watcher_id);
+        if (watcher_it == watchers->mapKeyWatcher.end()) {
+            FLOG_WARN("watcher del failed, watcher id is not existed in watcher map: session_id:[%"
+                              PRIu64
+                              "] key: [%s]",
+                      watcher_id, EncodeToHexString(key).c_str());
+            //return WATCH_WATCHER_NOT_EXIST; // no watcher id in watcher map
+        } else {
+            // do del from watcher map
+            watchers->mapKeyWatcher.erase(watcher_it);
+        }
     }
 
-    // do del from key map
-    keys->erase(key_it);
-    // do del from watcher map
-    watchers->mapKeyWatcher.erase(watcher_it);
-
-    if (keys->empty()) {
-       key_map_.erase(key_map_it);
-    }
     /*
     if (watchers->mapKeyWatcher.empty()) {
         watcher_map_.erase(watcher_map_it);
     }*/
 
-    FLOG_INFO("watcher del success: session_id:[%" PRIu64 "] key: [%s]",
+    FLOG_INFO("watcher del end: session_id:[%" PRIu64 "] key: [%s]",
               watcher_id, EncodeToHexString(key).c_str());
 
     return WATCH_OK;
 }
 
-WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey& key, WatcherMap& watcherMap) {
+WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey& key, WatcherMap& watcherMap, WatcherValue *watcherValue) {
     std::lock_guard<std::mutex> lock(watcher_map_mutex_);
 
-    auto key_map_it = watcherMap.find(key);
-    if (key_map_it == watcherMap.end()) {
+    auto itWatcherVal = watcherMap.find(key);
+    if (itWatcherVal == watcherMap.end()) {
         FLOG_WARN("watcher get failed, key is not existed in key map: key: [%s]", EncodeToHexString(key).c_str());
         return WATCH_KEY_NOT_EXIST;
     }
 
     //watcherId:watchPtr
-    auto watchers = key_map_it->second;
-    for (auto it = watchers->mapKeyWatcher.begin(); it != watchers->mapKeyWatcher.end(); ++it) {
+    auto watchers = itWatcherVal->second;
+    if(itWatcherVal->second->key_version_ < watcherValue->key_version_) {
+        itWatcherVal->second->key_version_ = watcherValue->key_version_;
+    }
+
+    if(watchers->mapKeyWatcher.size() > 0) {
+        watchers->mapKeyWatcher.swap(watcherValue->mapKeyWatcher);
+
+        FLOG_INFO("watcher get success: key: [%s]", EncodeToHexString(key).c_str());
+        return WATCH_OK;
+    }
+
+    FLOG_INFO("watcher get fail: key: [%s] no watcher.", EncodeToHexString(key).c_str());
+    return WATCH_WATCHER_NOT_EXIST;
+
+
+    /*for (auto it = watchers->mapKeyWatcher.begin(); it != watchers->mapKeyWatcher.end(); ++it) {
         //decltype(watchers->mapKeyWatcher)::value_type val;
         //WatcherPtr val;
         //std::swap(val,it->second);
         vec.push_back(it->second);
-    }
+    }*/
 
-    FLOG_INFO("watcher get success: key: [%s]", EncodeToHexString(key).c_str());
-    return WATCH_OK;
+
 }
 
 // key add/del watcher
@@ -221,22 +251,57 @@ WatchCode WatcherSet::DelKeyWatcher(const WatcherKey& key, WatcherId id) {
 }
 
 // key get watchers
-WatchCode WatcherSet::GetKeyWatchers(std::vector<WatcherPtr>& vec, const WatcherKey& key) {
-    return GetWatchers(vec, key, key_watcher_map_);
+WatchCode WatcherSet::GetKeyWatchers(std::vector<WatcherPtr>& vec, const WatcherKey& key, const int64_t &version) {
+    auto watcherVal = new WatcherValue;
+    //auto mapKeyWatcher = new KeyWatcherMap;
+    watcherVal->key_version_ = version;
+
+    auto retCode = GetWatchers(vec, key, key_watcher_map_, watcherVal);
+    if( WATCH_OK == retCode) {
+
+        for(auto it:watcherVal->mapKeyWatcher) {
+            vec.push_back(it.second);
+        }
+
+        delete (watcherVal);
+        watcherVal = nullptr;
+    }
+
+    if(watcherVal != nullptr)
+        delete(watcherVal);
+
+    return retCode;
 }
 
 // prefix add/del watcher
-WatchCode WatcherSet::AddPrefixWatcher(const Prefix& prefix, WatcherPtr& w_ptr) {
+WatchCode WatcherSet::AddPrefixWatcher(const PrefixKey& prefix, WatcherPtr& w_ptr) {
     return AddWatcher(prefix, w_ptr, prefix_watcher_map_, prefix_map_);
 }
 
-WatchCode WatcherSet::DelPrefixWatcher(const Prefix& prefix, WatcherId id) {
+WatchCode WatcherSet::DelPrefixWatcher(const PrefixKey& prefix, WatcherId id) {
     return DelWatcher(prefix, id, prefix_watcher_map_, prefix_map_);
 }
 
 // prefix get watchers
-WatchCode WatcherSet::GetPrefixWatchers(std::vector<WatcherPtr>& vec, const Prefix& prefix) {
-    return GetWatchers(vec, prefix, prefix_watcher_map_);
+WatchCode WatcherSet::GetPrefixWatchers(std::vector<WatcherPtr>& vec, const PrefixKey& prefix, const int64_t &version) {
+    auto watcherVal = new WatcherValue;
+    watcherVal->key_version_ = version;
+
+    auto retCode = GetWatchers(vec, prefix, prefix_watcher_map_, watcherVal);
+        if( WATCH_OK == retCode) {
+
+            for(auto it:(watcherVal->mapKeyWatcher)) {
+                vec.push_back(it.second);
+            }
+
+            delete (watcherVal);
+            watcherVal = nullptr;
+        }
+
+        if(watcherVal != nullptr)
+            delete(watcherVal);
+
+        return retCode;
 }
 
 } // namespace watch
