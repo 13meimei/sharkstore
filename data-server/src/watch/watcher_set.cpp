@@ -94,8 +94,13 @@ WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& 
     auto watcher_id = w_ptr->GetWatcherId();
 
     // add to watcher map
-    watcher_map_.emplace(std::make_pair(key, new KeyWatcherMap));
-    auto watcher_map = watcher_map_.at(key);
+    KeyWatcherMap* watcher_map = nullptr;
+
+    auto watcher_map_it = watcher_map_.find(key);
+    if (watcher_map_it == watcher_map_.end()) {
+        watcher_map_it = watcher_map_.insert(std::make_pair(key, new KeyWatcherMap())).first;
+    }
+    watcher_map = watcher_map_it->second;
 
     auto ok = watcher_map->insert(std::make_pair(watcher_id, w_ptr)).second;
     WatchCode code;
@@ -105,8 +110,12 @@ WatchCode WatcherSet::AddWatcher(const Key& key, WatcherPtr& w_ptr, WatcherMap& 
         watcher_queue_.push(w_ptr);
 
         // add to key map
-        key_map_.emplace(std::make_pair(watcher_id, new WatcherKeyMap));
-        auto watcher_key_map = key_map_.at(watcher_id);
+        WatcherKeyMap* watcher_key_map = nullptr;
+        auto key_map_it = key_map_.find(watcher_id);
+        if (key_map_it == key_map_.end()) {
+            key_map_it = key_map_.insert(std::make_pair(watcher_id, new WatcherKeyMap())).first;
+        }
+        watcher_key_map = key_map_it->second;
 
         watcher_key_map->insert(std::make_pair(key, nullptr));
 

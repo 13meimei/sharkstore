@@ -14,17 +14,30 @@ int main(int argc, char* argv[]) {
     return RUN_ALL_TESTS();
 }
 
+namespace {
+using namespace sharkstore::dataserver;
+using namespace sharkstore::dataserver::watch;
+
 enum TestCode {
     TEST_OK = 0,
     TEST_ERR,
     TEST_TIMEOUT,
 };
 
-class TestWatchConnection {
+class TestWatchConnection: public common::ProtoMessage {
 public:
     TestWatchConnection() = delete;
-    TestWatchConnection(int timeout): timeout_(timeout) {
-        assert(socketpair(AF_UNIX, SOCK_STREAM, 0, sock_) != -1);
+    explicit TestWatchConnection(int timeout): timeout_(timeout), ProtoMessage_(timeout-1000) {
+        auto ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sock_);
+        assert(ret == 0);
+        /*
+        char *write_buf = "A";
+        char read_buf[2] = {0};
+
+        write(sock_[1], write_buf, 1);
+        read(sock_[0], read_buf, 1);
+        printf("test buf: %s\n", read_buf);
+        */
     }
 
 public:
@@ -48,6 +61,16 @@ public:
 private:
     TestCode Read(int role) {
         assert(role == 0 || role == 1); // 0 = client; 1 = server;
+
+        std::unique_lock<std::mutex> mutex(mutex_);
+
+        std::cv_status wait_status;
+        wait_status = cond_.wait_for(mutex, std::chrono::milliseconds(timeout_)) ;
+        if (wait_status == std::cv_status::timeout) {
+            return TEST_TIMEOUT;
+        }
+
+        /*
         auto ep_fd = epoll_create(1);
 
         struct epoll_event ev;
@@ -57,25 +80,38 @@ private:
 
         auto max_events = 1;
         struct epoll_event events[max_events];
+        std::cout << "epoll <" << std::endl;
         auto n = epoll_wait(ep_fd, events, max_events, timeout_);
+        std::cout << ">" << std::endl;
 
         if (n == 0) {
             return TEST_TIMEOUT;
         }
 
         assert(events[0].data.fd == sock_[role]);
-        auto readn = read(sock_[role], read_char, 8);
+         */
+        std::cout << "read" << std::endl;
+        auto readn = read(sock_[role], read_char, 3);
+        std::cout << "read sock: " << role << " buf: " << read_char<< " readn: " << readn << std::endl;
         assert(readn == 3 && strcmp(read_char, "abc") == 0);
 
+        /*
         close(ep_fd);
+         */
         return TEST_OK;
     }
 
     void Write(int role) {
         assert(role == 0 || role == 1); // 0 = client; 1 = server;
+
+        std::unique_lock<std::mutex> mutex(mutex_);
         memcpy(write_char, "abc", 3);
+
         auto writen = write(sock_[role], write_char, strlen(write_char));
+        std::cout << "write sock: " << role << " buf: " << write_char << " nwrite: " << writen << std::endl;
         ASSERT_TRUE(writen == 3);
+
+        cond_.notify_one();
     }
 
 private:
@@ -83,18 +119,17 @@ private:
     int sock_[2];
     char read_char[8] = {0};
     char write_char[8] = {0};
+    std::mutex mutex_;
+    std::condition_variable cond_;
 };
 
-namespace {
-using namespace sharkstore::dataserver;
-using namespace sharkstore::dataserver::watch;
 
 const uint64_t g_table_id = 123;
 
 class TestWatcher: public Watcher {
 public:
     TestWatcher() = delete;
-    TestWatcher(const std::vector<Key*>& keys, common::ProtoMessage* message): Watcher(g_table_id, keys, message) {
+    TestWatcher(const std::vector<Key*>& keys, TestWatchConnection* message): Watcher(g_table_id, keys, message) {
     }
     ~TestWatcher() = default;
 
@@ -103,14 +138,16 @@ public:
 typedef std::shared_ptr<TestWatcher> TestWatcherPtr;
 
 void TestWatcher::Send(google::protobuf::Message* resp) {
-    (void)resp; // not used
+    (void) resp; // not used
     std::lock_guard<std::mutex> lock(send_lock_);
     if (sent_response_flag) {
         return;
     }
 
-    auto conn = reinterpret_cast<TestWatchConnection*>(message_);
-    conn->ServerWrite();
+    auto conn = dynamic_cast<TestWatchConnection*>(message_);
+    if (conn) {
+        conn->ServerWrite();
+    }
 
     sent_response_flag = true;
 }
@@ -217,7 +254,7 @@ TEST(TestWatcher, EncodeAndDecode) {
     keys.push_back(new Key("k2"));
     keys.push_back(new Key("k10"));
 
-    common::ProtoMessage* message = new common::ProtoMessage();
+    auto* message = new TestWatchConnection(2000);
 
     TestWatcher w(keys, message);
 
@@ -247,13 +284,13 @@ TEST(TestWatcherSet, AddAndDelKeyWatcher) {
     keys1.push_back(new Key("k1.2"));
     keys1.push_back(new Key("k1.10"));
 
-    common::ProtoMessage* msg0 = new common::ProtoMessage();
-    msg0->session_id = 1;
-    msg0->expire_time = getticks()+3000;
+    auto* msg0 = new TestWatchConnection(2000);
+//    msg0->session_id = 1;
+//    msg0->expire_time = getticks()+3000;
 
-    common::ProtoMessage* msg1 = new common::ProtoMessage();
-    msg1->session_id = 2;
-    msg1->expire_time = getticks()+3000;
+    auto* msg1 = new TestWatchConnection(2000);
+//    msg1->session_id = 2;
+//    msg1->expire_time = getticks()+3000;
 
     TestWatcherPtr w_ptr0 = std::make_shared<TestWatcher>(keys0, msg0);
     TestWatcherPtr w_ptr1 = std::make_shared<TestWatcher>(keys0, msg1);
@@ -303,11 +340,34 @@ TEST(TestWatchServer, SimulateInteractive) {
     keys0.push_back(new Key("k0.2"));
     keys0.push_back(new Key("k0.10"));
 
-    auto conn0 = new TestWatchConnection(3000); // 3s
-    auto w_ptr0 = std::make_shared<TestWatcher>(keys0, reinterpret_cast<common::ProtoMessage*>(conn0));
+    auto conn0 = new TestWatchConnection(5000); // read timeout 5s
+
+    /*
+    // test timeout
+//    conn0->ServerWrite();
+    ASSERT_TRUE(conn0->ClientRead() == TEST_TIMEOUT); // no server write, timeout
+     */
+
+    auto w_ptr0 = std::make_shared<TestWatcher>(keys0, conn0);
     WatcherPtr w_p0 = std::static_pointer_cast<Watcher>(w_ptr0);
     server.AddKeyWatcher(w_p0);
-    ASSERT_TRUE(conn0->ClientRead() == TEST_TIMEOUT);
+    ASSERT_TRUE(conn0->ClientRead() != TEST_TIMEOUT);
+
+    int i = 0;
+    int N = 1000;
+    std::thread th[N];
+    for (; i < N; i++) {
+        th[i] = std::thread([&]() {
+            auto conn = new TestWatchConnection(5000); // read timeout 5s
+            auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
+            WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
+            server.AddKeyWatcher(w_p);
+            ASSERT_TRUE(conn->ClientRead() != TEST_TIMEOUT);
+        });
+    }
+    for (i = 0; i < N; i++) {
+        th[i].join();
+    }
 }
 
 } // namespace
