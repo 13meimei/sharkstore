@@ -95,6 +95,13 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
     auto watcher_id = w_ptr->GetWatcherId();
     auto currKeyVer = w_ptr->getKeyVersion();
 
+    // add to watcher map
+    auto watcher_map_it = watcher_map_.find(key);
+    if (watcher_map_it == watcher_map_.end()) {
+        watcher_map_it = watcher_map_.insert(std::make_pair(key, new WatcherValue())).first;
+    }
+    auto& watcher_map = watcher_map_it->second->mapKeyWatcher;
+
     ChgGlobalVersion(currKeyVer);
 
     // to do add to watcher map
@@ -124,6 +131,13 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         watcher_queue_.push(w_ptr);
 
         // add to key map
+        WatcherKeyMap* watcher_key_map = nullptr;
+        auto key_map_it = key_map_.find(watcher_id);
+        if (key_map_it == key_map_.end()) {
+            key_map_it = key_map_.insert(std::make_pair(watcher_id, new WatcherKeyMap())).first;
+        }
+        watcher_key_map = key_map_it->second;
+
         auto retPair = key_map_.emplace(std::make_pair(watcher_id, new WatcherKeyMap));
         auto mapKeySession = retPair.first->second;
 

@@ -11,6 +11,7 @@
 
 #include "ds_proto.h"
 #include "socket_base.h"
+#include "frame/sf_util.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -26,7 +27,8 @@ typedef struct ProtoMessage_{
     std::vector<char> body;
 
     ProtoMessage_(){};
-    ~ProtoMessage_(){};
+    explicit ProtoMessage_(int64_t expire): expire_time(getticks()+expire) {};
+    virtual ~ProtoMessage_(){};
     ProtoMessage_( const struct ProtoMessage_ &other ) {
         this->session_id = other.session_id;
         this->begin_time = other.begin_time;
