@@ -8,12 +8,11 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-/*
-int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv,
+int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, const watchpb::WatchKeyValue &kv,
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err) {
     int16_t ret(0);
-    std::vector<std::string *> keys;
+    std::vector<std::string*> keys;
     std::string funcName("");
     std::string ext("");
     keys.clear();
@@ -34,22 +33,23 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                 funcName.assign("WatchDel");
             }
 
-            for (auto i = 0; i < kv->key_size(); i++) {
-                keys.push_back(kv->mutable_key(i));
+            for (auto i = 0; i < kv.key_size(); i++) {
+                keys.push_back(new std::string(kv.key(i)));
 
                 FLOG_DEBUG("range[%"
                                    PRIu64
                                    "] EncodeKv:(%s) key%d):%s", meta_.id(), funcName.data(), i,
-                           kv->mutable_key(i)->data());
+                           kv.key(i).data());
             }
 
             watch::Watcher w(meta_.table_id(), keys);
 
-            if (kv->key_size()) {
+
+            if (kv.key_size()) {
                 w.EncodeKey(&db_key, meta_.table_id(), keys);
             } else {
                 ret = -1;
-                if (db_key.empty() || kv->key_size() < 1) {
+                if (db_key.empty() || kv.key_size() < 1) {
                     FLOG_WARN("range[%"
                                       PRIu64
                                       "] %s error: key empty", meta_.id(), funcName.data());
@@ -65,107 +65,25 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                        meta_.id(), funcName.data(), meta_.table_id(), keys[0]->data(),
                        EncodeToHexString(db_key).c_str());
 
-            if (!kv->value().empty()) {
-                int64_t tmpVersion = kv->version();
-                w.EncodeValue(&db_value, tmpVersion, kv->mutable_value(), &ext);
+            if (!kv.value().empty()) {
+                int64_t tmpVersion = kv.version();
+                w.EncodeValue(&db_value, tmpVersion, &kv.value(), &ext);
 
                 FLOG_DEBUG("range[%"
                                    PRIu64
                                    "] %s info: value before:%s after:%s",
-                           meta_.id(), funcName.data(), kv->value().data(), EncodeToHexString(db_value).c_str());
+                           meta_.id(), funcName.data(), kv.value().data(), EncodeToHexString(db_value).c_str());
             }
             break;
         }
-
         default:
             ret = -1;
             err->set_message("unknown func_id");
-            FLOG_WARN("range[%"
-                              PRIu64
-                              "] error: unknown func_id:%d", meta_.id(), funcId);
+            FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
             break;
-
     }
     return ret;
 }
-*/
-
-int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv, 
-                            std::string &db_key, std::string &db_value,
-                            errorpb::Error *err) {
-        int16_t ret(0);
-        std::vector<std::string*> keys;
-        std::string funcName("");
-        std::string ext("");
-        keys.clear();
-        db_key.clear();
-
-        switch (funcId) {
-            case funcpb::kFuncWatchGet:
-            case funcpb::kFuncPureGet:
-            case funcpb::kFuncWatchPut:
-            case funcpb::kFuncWatchDel: {
-                if (funcId == funcpb::kFuncWatchGet) {
-                    funcName.assign("WatchGet");
-                } else if (funcId == funcpb::kFuncPureGet) {
-                    funcName.assign("PureGet");
-                } else if (funcId == funcpb::kFuncWatchPut) {
-                    funcName.assign("WatchPut");
-                } else {
-                    funcName.assign("WatchDel");
-                }
-
-                for (auto i = 0; i < kv->key_size(); i++) {
-                    keys.push_back(kv->mutable_key(i));
-
-                    FLOG_DEBUG("range[%"
-                                       PRIu64
-                                       "] EncodeKv:(%s) key%d):%s", meta_.id(), funcName.data(), i,
-                               kv->mutable_key(i)->data());
-                }
-
-                watch::Watcher w(meta_.table_id(), keys);
-
-
-                if (kv->key_size()) {
-                    w.EncodeKey(&db_key, meta_.table_id(), keys);
-                } else {
-                    ret = -1;
-                    if (db_key.empty() || kv->key_size() < 1) {
-                        FLOG_WARN("range[%"
-                                          PRIu64
-                                          "] %s error: key empty", meta_.id(), funcName.data());
-                        //err = errorpb::KeyNotInRange(db_key);
-                        break;
-                    }
-                }
-                FLOG_DEBUG("range[%"
-                                   PRIu64
-                                   "] %s info: table_id:%"
-                                   PRId64
-                                   " key before:%s after:%s",
-                           meta_.id(), funcName.data(), meta_.table_id(), keys[0]->data(),
-                           EncodeToHexString(db_key).c_str());
-
-                if (!kv->value().empty()) {
-                    int64_t tmpVersion = kv->version();
-                    w.EncodeValue(&db_value, tmpVersion, kv->mutable_value(), &ext);
-
-                    FLOG_DEBUG("range[%"
-                                       PRIu64
-                                       "] %s info: value before:%s after:%s",
-                               meta_.id(), funcName.data(), kv->value().data(), EncodeToHexString(db_value).c_str());
-                }
-                break;
-            }
-            default:
-                ret = -1;
-                err->set_message("unknown func_id");
-                FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
-                break;
-        }
-        return ret;
-    }
 
 
 int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv, 

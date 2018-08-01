@@ -39,7 +39,7 @@ public:
     ~WatchCode() {};
 
 public:
-    static int16_t EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv,
+    static int16_t EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, const watchpb::WatchKeyValue &kv,
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err);
 
