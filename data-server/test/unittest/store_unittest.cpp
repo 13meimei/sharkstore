@@ -182,6 +182,90 @@ TEST_F(StoreTest, SelectFields) {
     }
 }
 
+TEST_F(StoreTest, SelectScope) {
+    std::vector<std::vector<std::string>> rows;
+    for (int i = 1; i <= 100; ++i) {
+        std::vector<std::string> row;
+        row.push_back(std::to_string(i));
+
+        char name[32] = {'\0'};
+        snprintf(name, 32, "user-%04d", i);
+        row.push_back(name);
+
+        row.push_back(std::to_string(100 + i));
+        rows.push_back(std::move(row));
+    }
+    // insert some data
+    auto s = testInsert(rows);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // scope: [2-4)
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.SetScope({"2"}, {"4"});
+            },
+            {rows[1], rows[2]}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // scope: [2-
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.SetScope({"2"}, {});
+            },
+            {rows.cbegin() + 1, rows.cend()}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // scope: -4)
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.SetScope({}, {"4"});
+            },
+            {rows[0], rows[1], rows[2]}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
+TEST_F(StoreTest, SelectLimit) {
+    std::vector<std::vector<std::string>> rows;
+    for (int i = 1; i <= 100; ++i) {
+        std::vector<std::string> row;
+        row.push_back(std::to_string(i));
+
+        char name[32] = {'\0'};
+        snprintf(name, 32, "user-%04d", i);
+        row.push_back(name);
+
+        row.push_back(std::to_string(100 + i));
+        rows.push_back(std::move(row));
+    }
+    // insert some data
+    auto s = testInsert(rows);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.AddLimit(3);
+            },
+            {rows[0], rows[1], rows[2]}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.AddLimit(3, 1);
+            },
+            {rows[1], rows[2], rows[3]}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
 TEST_F(StoreTest, SelectWhere) {
     std::vector<std::vector<std::string>> rows;
     for (int i = 1; i <= 100; ++i) {
@@ -493,7 +577,10 @@ TEST_F(StoreTest, SelectAggreMore) {
     }
 }
 
-TEST_F(StoreTest, SQLDelete) {
+TEST_F(StoreTest, DeleteBasic) {
+}
+
+TEST_F(StoreTest, DeleteWhere) {
 }
 
 

@@ -181,12 +181,9 @@ Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
         s = f.Next(r.get(), &over);
         if (s.ok() && !over) {
             ++all;
-            if (count > limit) {
-                break;
-            }
             if (all > offset) {
                 addRow(req, resp, *r);
-                ++count;
+                if (++count >= limit) break;
             }
         }
     }
