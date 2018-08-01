@@ -25,7 +25,7 @@ protected:
     Status testInsert(const std::vector<std::vector<std::string>> &rows);
 
     Status testDelete(const std::function<void(DeleteRequestBuilder&)>& build_func,
-                      uint64_t affected);
+                      uint64_t expected_affected);
 
 protected:
     std::unique_ptr<Table> table_;

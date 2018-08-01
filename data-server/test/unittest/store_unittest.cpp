@@ -17,6 +17,26 @@ using namespace sharkstore::dataserver;
 class StoreTest : public StoreTestFixture {
 public:
     StoreTest() : StoreTestFixture(CreateAccountTable()) {}
+
+    void InsertSomeRows() {
+        for (int i = 1; i <= 100; ++i) {
+            std::vector<std::string> row;
+            row.push_back(std::to_string(i));
+
+            char name[32] = {'\0'};
+            snprintf(name, 32, "user-%04d", i);
+            row.emplace_back(name);
+
+            row.push_back(std::to_string(100 + i));
+            rows_.push_back(std::move(row));
+        }
+        auto s = testInsert(rows_);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+protected:
+    // inserted rows
+    std::vector<std::vector<std::string>> rows_;
 };
 
 TEST_F(StoreTest, KeyValue) {
@@ -90,20 +110,7 @@ TEST_F(StoreTest, SelectEmpty) {
 }
 
 TEST_F(StoreTest, SelectFields) {
-    // make test rows
-    std::vector<std::vector<std::string>> rows;
-    for (int i = 1; i <= 100; ++i) {
-        std::vector<std::string> row;
-        row.push_back(std::to_string(i));
-        row.push_back(std::string("user-") + std::to_string(i));
-        row.push_back(std::to_string(100 + i));
-        rows.push_back(std::move(row));
-    }
-    // insert some data
-    {
-        auto s = testInsert(rows);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-    }
+    InsertSomeRows();
 
     // select all rows
     {
@@ -111,20 +118,20 @@ TEST_F(StoreTest, SelectFields) {
                 [](SelectRequestBuilder& b) {
                     b.AddAllFields();
                 },
-                rows
+                rows_
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
 
     // Select one row per loop, all fields
     {
-        for (size_t i = 0; i < rows.size(); ++i) {
+        for (size_t i = 0; i < rows_.size(); ++i) {
             auto s = testSelect(
-                    [&rows, i](SelectRequestBuilder& b) {
+                    [this, i](SelectRequestBuilder& b) {
                         b.AddAllFields();
-                        b.SetKey({rows[i][0]});
+                        b.SetKey({rows_[i][0]});
                     },
-                    {rows[i]}
+                    {rows_[i]}
             );
             ASSERT_TRUE(s.ok()) << s.ToString();
         }
@@ -132,35 +139,35 @@ TEST_F(StoreTest, SelectFields) {
 
     // one filed
     {
-        for (size_t i = 0; i < rows.size(); ++i) {
+        for (size_t i = 0; i < rows_.size(); ++i) {
             auto s = testSelect(
-                    [&rows, i](SelectRequestBuilder& b) {
+                    [this, i](SelectRequestBuilder& b) {
                         b.AddField("id");
-                        b.SetKey({rows[i][0]});
+                        b.SetKey({rows_[i][0]});
                     },
-                    {{rows[i][0]}}
+                    {{rows_[i][0]}}
             );
             ASSERT_TRUE(s.ok()) << s.ToString();
         }
 
-        for (size_t i = 0; i < rows.size(); ++i) {
+        for (size_t i = 0; i < rows_.size(); ++i) {
             auto s = testSelect(
-                    [&rows, i](SelectRequestBuilder& b) {
+                    [this, i](SelectRequestBuilder& b) {
                         b.AddField("name");
-                        b.SetKey({rows[i][0]});
+                        b.SetKey({rows_[i][0]});
                     },
-                    {{rows[i][1]}}
+                    {{rows_[i][1]}}
             );
             ASSERT_TRUE(s.ok()) << s.ToString();
         }
 
-        for (size_t i = 0; i < rows.size(); ++i) {
+        for (size_t i = 0; i < rows_.size(); ++i) {
             auto s = testSelect(
-                    [&rows, i](SelectRequestBuilder& b) {
+                    [this, i](SelectRequestBuilder& b) {
                         b.AddField("balance");
-                        b.SetKey({rows[i][0]});
+                        b.SetKey({rows_[i][0]});
                     },
-                    {{rows[i][2]}}
+                    {{rows_[i][2]}}
             );
             ASSERT_TRUE(s.ok()) << s.ToString();
         }
@@ -168,14 +175,14 @@ TEST_F(StoreTest, SelectFields) {
 
     // no pk fileds
     {
-        for (size_t i = 0; i < rows.size(); ++i) {
+        for (size_t i = 0; i < rows_.size(); ++i) {
             auto s = testSelect(
-                    [&rows, i](SelectRequestBuilder& b) {
+                    [this, i](SelectRequestBuilder& b) {
                         b.AddField("name");
                         b.AddField("balance");
-                        b.SetKey({rows[i][0]});
+                        b.SetKey({rows_[i][0]});
                     },
-                    {{rows[i][1], rows[i][2]}}
+                    {{rows_[i][1], rows_[i][2]}}
             );
             ASSERT_TRUE(s.ok()) << s.ToString();
         }
@@ -183,29 +190,15 @@ TEST_F(StoreTest, SelectFields) {
 }
 
 TEST_F(StoreTest, SelectScope) {
-    std::vector<std::vector<std::string>> rows;
-    for (int i = 1; i <= 100; ++i) {
-        std::vector<std::string> row;
-        row.push_back(std::to_string(i));
-
-        char name[32] = {'\0'};
-        snprintf(name, 32, "user-%04d", i);
-        row.push_back(name);
-
-        row.push_back(std::to_string(100 + i));
-        rows.push_back(std::move(row));
-    }
-    // insert some data
-    auto s = testInsert(rows);
-    ASSERT_TRUE(s.ok()) << s.ToString();
+    InsertSomeRows();
 
     // scope: [2-4)
-    s = testSelect(
+    auto s = testSelect(
             [](SelectRequestBuilder& b) {
                 b.AddAllFields();
                 b.SetScope({"2"}, {"4"});
             },
-            {rows[1], rows[2]}
+            {rows_[1], rows_[2]}
     );
     ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -215,7 +208,7 @@ TEST_F(StoreTest, SelectScope) {
                 b.AddAllFields();
                 b.SetScope({"2"}, {});
             },
-            {rows.cbegin() + 1, rows.cend()}
+            {rows_.cbegin() + 1, rows_.cend()}
     );
     ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -225,34 +218,20 @@ TEST_F(StoreTest, SelectScope) {
                 b.AddAllFields();
                 b.SetScope({}, {"4"});
             },
-            {rows[0], rows[1], rows[2]}
+            {rows_[0], rows_[1], rows_[2]}
     );
     ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
 TEST_F(StoreTest, SelectLimit) {
-    std::vector<std::vector<std::string>> rows;
-    for (int i = 1; i <= 100; ++i) {
-        std::vector<std::string> row;
-        row.push_back(std::to_string(i));
+    InsertSomeRows();
 
-        char name[32] = {'\0'};
-        snprintf(name, 32, "user-%04d", i);
-        row.push_back(name);
-
-        row.push_back(std::to_string(100 + i));
-        rows.push_back(std::move(row));
-    }
-    // insert some data
-    auto s = testInsert(rows);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-
-    s = testSelect(
+    auto s = testSelect(
             [](SelectRequestBuilder& b) {
                 b.AddAllFields();
                 b.AddLimit(3);
             },
-            {rows[0], rows[1], rows[2]}
+            {rows_[0], rows_[1], rows_[2]}
     );
     ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -261,30 +240,13 @@ TEST_F(StoreTest, SelectLimit) {
                 b.AddAllFields();
                 b.AddLimit(3, 1);
             },
-            {rows[1], rows[2], rows[3]}
+            {rows_[1], rows_[2], rows_[3]}
     );
     ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
 TEST_F(StoreTest, SelectWhere) {
-    std::vector<std::vector<std::string>> rows;
-    for (int i = 1; i <= 100; ++i) {
-        std::vector<std::string> row;
-        row.push_back(std::to_string(i));
-
-        char name[32] = {'\0'};
-        snprintf(name, 32, "user-%04d", i);
-        row.push_back(name);
-
-        row.push_back(std::to_string(100 + i));
-        rows.push_back(std::move(row));
-    }
-
-    // insert some data
-    {
-        auto s = testInsert(rows);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-    }
+    InsertSomeRows();
 
     // select * where id
     {
@@ -294,7 +256,7 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddAllFields();
                     b.AddMatch("id", kvrpcpb::Equal, "1");
                 },
-                {rows[0]}
+                {rows_[0]}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -304,7 +266,7 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddAllFields();
                     b.AddMatch("id", kvrpcpb::NotEqual, "1");
                 },
-                {rows.cbegin() + 1, rows.cend()}
+                {rows_.cbegin() + 1, rows_.cend()}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -314,7 +276,7 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddAllFields();
                     b.AddMatch("id", kvrpcpb::Less, "3");
                 },
-                {rows[0], rows[1]}
+                {rows_[0], rows_[1]}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -324,7 +286,7 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddAllFields();
                     b.AddMatch("id", kvrpcpb::LessOrEqual, "2");
                 },
-                {rows[0], rows[1]}
+                {rows_[0], rows_[1]}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -334,7 +296,7 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddAllFields();
                     b.AddMatch("id", kvrpcpb::Larger, "2");
                 },
-                {rows.cbegin() + 2, rows.cend()}
+                {rows_.cbegin() + 2, rows_.cend()}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -344,7 +306,7 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddAllFields();
                     b.AddMatch("id", kvrpcpb::LargerOrEqual, "2");
                 },
-                {rows.cbegin() + 1, rows.cend()}
+                {rows_.cbegin() + 1, rows_.cend()}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -355,7 +317,7 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddMatch("id", kvrpcpb::Larger, "1");
                     b.AddMatch("id", kvrpcpb::Less, "4");
                 },
-                {rows[1], rows[2]}
+                {rows_[1], rows_[2]}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
 
@@ -378,7 +340,7 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddAllFields();
                     b.AddMatch("name", kvrpcpb::Larger, "user-0002");
                 },
-                {rows.cbegin() + 2, rows.cend()}
+                {rows_.cbegin() + 2, rows_.cend()}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
@@ -389,28 +351,14 @@ TEST_F(StoreTest, SelectWhere) {
                     b.AddAllFields();
                     b.AddMatch("balance", kvrpcpb::Less, "103");
                 },
-                {rows[0], rows[1]}
+                {rows_[0], rows_[1]}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
 }
 
 TEST_F(StoreTest, SelectAggreCount) {
-    // make test rows
-    std::vector<std::vector<std::string>> rows;
-    for (int i = 1; i <= 100; ++i) {
-        std::vector<std::string> row;
-        row.push_back(std::to_string(i));
-        row.push_back(std::string("user-") + std::to_string(i));
-        row.push_back(std::to_string(100 + i));
-        rows.push_back(std::move(row));
-    }
-
-    // insert some data
-    {
-        auto s = testInsert(rows);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-    }
+    InsertSomeRows();
 
     // select count(*)
     {
@@ -418,17 +366,17 @@ TEST_F(StoreTest, SelectAggreCount) {
                 [](SelectRequestBuilder& b) {
                     b.AddAggreFunc("count", "");
                 },
-                {{std::to_string(rows.size())}}
+                {{std::to_string(rows_.size())}}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
 
     // select count(*) where id = {id}
     {
-        for (size_t i = 0; i < rows.size(); ++i) {
+        for (size_t i = 0; i < rows_.size(); ++i) {
             auto s = testSelect(
-                    [&rows, i](SelectRequestBuilder& b) {
-                        b.SetKey({rows[i][0]});
+                    [this, i](SelectRequestBuilder& b) {
+                        b.SetKey({rows_[i][0]});
                         b.AddAggreFunc("count", "");
                     },
                     {{"1"}}
@@ -464,7 +412,7 @@ TEST_F(StoreTest, SelectAggreCount) {
                     b.AddAggreFunc("count", "");
                     b.AddMatch("id", kvrpcpb::NotEqual, "1");
                 },
-                {{std::to_string(rows.size() - 1)}}
+                {{std::to_string(rows_.size() - 1)}}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
@@ -484,28 +432,14 @@ TEST_F(StoreTest, SelectAggreCount) {
                     b.AddAggreFunc("count", "");
                     b.AddMatch("id", kvrpcpb::Larger, "5");
                 },
-                {{std::to_string(rows.size() - 5)}}
+                {{std::to_string(rows_.size() - 5)}}
         );
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
 }
 
 TEST_F(StoreTest, SelectAggreMore) {
-    // make test rows
-    std::vector<std::vector<std::string>> rows;
-    for (int i = 1; i <= 100; ++i) {
-        std::vector<std::string> row;
-        row.push_back(std::to_string(i));
-        row.push_back(std::string("user-") + std::to_string(i));
-        row.push_back(std::to_string(100 + i));
-        rows.push_back(std::move(row));
-    }
-
-    // insert some data
-    {
-        auto s = testInsert(rows);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-    }
+    InsertSomeRows();
 
     // select aggre id
     {
@@ -578,9 +512,116 @@ TEST_F(StoreTest, SelectAggreMore) {
 }
 
 TEST_F(StoreTest, DeleteBasic) {
+    InsertSomeRows();
+
+    // delete 1
+    auto s = testDelete(
+            [](DeleteRequestBuilder& b) {
+                b.SetKey({"1"});
+            },
+            1
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+            },
+            {rows_.cbegin() + 1, rows_.cend()}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+
+    // delete scope
+    s = testDelete(
+            [](DeleteRequestBuilder& b) {
+                b.SetScope({"2"}, {"5"});
+            },
+            3
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+            },
+            {rows_.cbegin() + 4, rows_.cend()}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+
+    // delete all
+    s = testDelete(
+            [](DeleteRequestBuilder& b) {
+            },
+            rows_.size() - 4
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+            },
+            {});
+    ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
 TEST_F(StoreTest, DeleteWhere) {
+    InsertSomeRows();
+
+    sharkstore::Status s;
+
+    // delete id == 1
+    s = testDelete(
+            [](DeleteRequestBuilder& b) {
+                b.AddMatch("id", kvrpcpb::Equal, "1");
+            },
+            1
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+            },
+            {rows_.cbegin() + 1, rows_.cend()}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+
+    // delete name == "user-0002"
+    s = testDelete(
+            [](DeleteRequestBuilder& b) {
+                b.AddMatch("name", kvrpcpb::Equal, "user-0002");
+            },
+            1
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+            },
+            {rows_.cbegin() + 2, rows_.cend()}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    // delete balance < 100 + 5
+    s = testDelete(
+            [](DeleteRequestBuilder& b) {
+                b.AddMatch("balance", kvrpcpb::Less, "105");
+            },
+            2
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+            },
+            {rows_.cbegin() + 4, rows_.cend()}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
 
