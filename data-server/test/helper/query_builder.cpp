@@ -179,6 +179,16 @@ void InsertRequestBuilder::AddRow(const std::vector<std::string>& values) {
     kv->set_value(std::move(value));
 }
 
+void InsertRequestBuilder::AddRows(const std::vector<std::vector<std::string>>& rows) {
+    for (const auto& row: rows) {
+        AddRow(row);
+    }
+}
+
+void InsertRequestBuilder::SetCheckDuplicate() {
+    req_.set_check_duplicate(true);
+}
+
 
 } /* namespace helper */
 } /* namespace test */

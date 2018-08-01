@@ -66,6 +66,8 @@ public:
     explicit InsertRequestBuilder(Table *t);
 
     void AddRow(const std::vector<std::string>& values);
+    void AddRows(const std::vector<std::vector<std::string>>& rows);
+    void SetCheckDuplicate();
 
     kvrpcpb::InsertRequest Build() { return std::move(req_); }
 

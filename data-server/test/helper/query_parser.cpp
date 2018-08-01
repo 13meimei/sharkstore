@@ -1,5 +1,6 @@
 #include "query_parser.h"
 
+#include <sstream>
 #include "helper_util.h"
 
 namespace sharkstore {
@@ -34,6 +35,52 @@ SelectResultParser::SelectResultParser(const kvrpcpb::SelectRequest& req,
     }
 }
 
+static std::string ToDebugString(const std::vector<std::vector<std::string>>& rows) {
+    std::ostringstream ss;
+    ss << "[\n" ;
+    for (const auto& row: rows) {
+        ss << " { ";
+        for (size_t i = 0; i < row.size(); ++i) {
+            ss << row[i];
+            if (i != row.size() - 1) {
+                ss << ", ";
+            }
+        }
+        ss << " }\n";
+    }
+    ss << "]" ;
+    auto s = ss.str();
+    return s;
+}
+
+Status SelectResultParser::Match(
+        const std::vector<std::vector<std::string>>& expected_rows) const {
+    bool matched = true;
+    do {
+        if (expected_rows.size() != rows_.size()) {
+            matched = false;
+            break;
+        }
+
+        for (size_t i = 0; i < rows_.size(); ++i) {
+            if (rows_[i] != expected_rows[i]) {
+                matched = false;
+                break;
+            }
+        }
+    } while(0);
+
+    if (matched) {
+        return Status::OK();
+    } else {
+        std::ostringstream ss;
+        ss << "\nexpected: \n";
+        ss <<  ToDebugString(expected_rows);
+        ss << "\nactual: \n";
+        ss << ToDebugString(rows_);
+        return Status(Status::kUnknown, "mismatch", ss.str());
+    }
+}
 
 } /* namespace helper */
 } /* namespace test */

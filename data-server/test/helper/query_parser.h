@@ -1,5 +1,6 @@
 _Pragma("once");
 
+#include "base/status.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "table.h"
 
@@ -19,6 +20,8 @@ public:
     const std::vector<std::string>& GetKeys() const {
         return keys_;
     }
+
+    Status Match(const std::vector<std::vector<std::string>>& expected_rows) const;
 
 private:
     std::vector<std::vector<std::string>> rows_;

@@ -1,13 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "base/status.h"
 #include "base/util.h"
-#include "storage/store.h"
-
-
-#include "helper/query_builder.h"
-#include "helper/query_parser.h"
-#include "helper/helper_util.h"
+#include "helper/store_test_fixture.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -18,46 +12,11 @@ namespace {
 
 using namespace sharkstore::test::helper;
 using namespace sharkstore::dataserver;
-using namespace sharkstore::dataserver::storage;
 
-class StoreTest : public ::testing::Test {
-protected:
-    void SetUp() override {
-        // open rocksdb
-        char path[] = "/tmp/sharkstore_ds_store_test_XXXXXX";
-        char* tmp = mkdtemp(path);
-        ASSERT_TRUE(tmp != NULL);
-        tmp_dir_ = tmp;
-
-        rocksdb::Options ops;
-        ops.create_if_missing = true;
-        ops.error_if_exists = true;
-        auto s = rocksdb::DB::Open(ops, tmp, &db_);
-        ASSERT_TRUE(s.ok());
-
-        // create table;
-        table_ = CreateAccountTable();
-
-        // make meta
-        meta_ = MakeRangeMeta(table_.get());
-
-        store_ = new Store(meta_, db_);
-    }
-
-    void TearDown() override {
-        delete store_;
-        delete db_;
-        if (!tmp_dir_.empty()) {
-            DestroyDB(tmp_dir_, rocksdb::Options());
-        }
-    }
-
-protected:
-    std::string tmp_dir_;
-    rocksdb::DB* db_ = nullptr;
-    std::unique_ptr<Table> table_;
-    metapb::Range meta_;
-    Store* store_ = nullptr;
+// test base the account table
+class StoreTest : public StoreTestFixture {
+public:
+    StoreTest() : StoreTestFixture(CreateAccountTable()) {}
 };
 
 TEST_F(StoreTest, KeyValue) {
@@ -80,57 +39,81 @@ TEST_F(StoreTest, KeyValue) {
     ASSERT_EQ(s.code(), sharkstore::Status::kNotFound);
 }
 
-TEST_F(StoreTest, SelectEmpty) {
+TEST_F(StoreTest, EmptySelect) {
     // all fields
-    {
-        SelectRequestBuilder builder(table_.get());
-        builder.AddAllFields();
-        auto req = builder.Build();
-        kvrpcpb::SelectResponse resp;
-        auto s = store_->Select(req, &resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-        ASSERT_EQ(resp.code(), 0);
-        ASSERT_EQ(resp.rows_size(), 0);
-    }
+    auto s = testSelect(
+            [](SelectRequestBuilder& b) { b.AddAllFields(); },
+            {});
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
     // random
-    {
-        for (int i = 0; i < 100; ++i) {
-            SelectRequestBuilder builder(table_.get());
-            builder.AddRandomFields();
-            auto req = builder.Build();
-            kvrpcpb::SelectResponse resp;
-            auto s = store_->Select(req, &resp);
-            ASSERT_TRUE(s.ok()) << s.ToString();
-            ASSERT_EQ(resp.code(), 0);
-            ASSERT_EQ(resp.rows_size(), 0);
-        }
-    }
-    // select count
-    {
-        SelectRequestBuilder builder(table_.get());
-        builder.AddAggreFunc("count", "");
-        auto req = builder.Build();
-        kvrpcpb::SelectResponse resp;
-        auto s = store_->Select(req, &resp);
+    for (int i = 0; i < 100; ++i) {
+        auto s = testSelect(
+                [](SelectRequestBuilder& b) { b.AddRandomFields(); },
+                {});
         ASSERT_TRUE(s.ok()) << s.ToString();
-        ASSERT_EQ(resp.code(), 0);
-        ASSERT_EQ(resp.rows_size(), 1);
+    }
 
-        std::cout << resp.DebugString() << std::endl;
+    // select count
+    s = testSelect(
+            [](SelectRequestBuilder& b) { b.AddAggreFunc("count", ""); },
+            {{"0"}});
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
 
-        SelectResultParser parser(req, resp);
-        auto row = parser.GetRows();
-        ASSERT_EQ(row.size(), 1);
-        ASSERT_EQ(row[0].size(), 1);
-        ASSERT_EQ(row[0][0], "0");
+TEST_F(StoreTest, Insert) {
+    // one
+    auto s = testInsert({{"1", "user1", "1.1"}});
+    ASSERT_TRUE(s.ok()) << s.ToString();
 
-
-
-
+    // multi
+    {
+        std::vector<std::vector<std::string>> rows;
+        for (int i = 0; i < 100; ++i) {
+            rows.push_back({std::to_string(i), "user", "1.1"});
+        }
+        auto s = testInsert(rows);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+    // insert check duplicate
+    {
+        InsertRequestBuilder builder(table_.get());
+        builder.AddRow({"1", "user1", "1.1"});
+        builder.SetCheckDuplicate();
+        auto req = builder.Build();
+        uint64_t affected = 0;
+        auto s = store_->Insert(req, &affected);
+        ASSERT_FALSE(s.ok());
+        ASSERT_EQ(s.code(), sharkstore::Status::kDuplicate);
+        ASSERT_EQ(affected, 0);
     }
 }
 
-TEST_F(StoreTest, SQL) {
+TEST_F(StoreTest, MoreSelect) {
+    // make test rows
+    std::vector<std::vector<std::string>> rows;
+    for (int i = 0; i < 100; ++i) {
+        std::vector<std::string> row;
+        row.push_back(std::to_string(i));
+        row.push_back(std::string("user-") + std::to_string(i));
+        row.push_back(std::to_string(i) + "." + std::to_string(5));
+        rows.push_back(std::move(row));
+    }
+
+    // insert some data
+    {
+        auto s = testInsert(rows);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+    // Select one row per loop
+    {
+        for (size_t i = 0; i < rows.size(); ++i) {
+        }
+    }
+}
+
+TEST_F(StoreTest, SQLDelete) {
 }
 
 

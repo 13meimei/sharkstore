@@ -5,17 +5,18 @@ set(test_helper_SRCS
     helper/mock/raft_server_mock.cpp
     helper/mock/socket_session_mock.cpp
     helper/gen/test.pb.cc
-    helper/table.cpp
     helper/helper_util.cpp
     helper/query_builder.cpp
     helper/query_parser.cpp
+    helper/store_test_fixture.cpp
+    helper/table.cpp
 )
 
 add_library(shark-test-helper SHARED ${test_helper_SRCS})
 
 set (test_DEPEND_LIBS
-    sharkstore-ds-shared
     shark-test-helper
+    sharkstore-ds-shared
     ${GTEST_LIBRARY}
     ${depend_LIBRARYS}
 )
