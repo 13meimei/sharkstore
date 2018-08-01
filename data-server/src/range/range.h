@@ -110,6 +110,8 @@ public:
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
 
     //KV watch series
+    Status GetAndResp(const common::ProtoMessage *, watchpb::DsWatchRequest &, std::string &,
+                      std::string &, watchpb::DsWatchResponse *, uint64_t &, errorpb::Error *);
     void WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req);
     void PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
     void WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
@@ -219,7 +221,7 @@ private:
     int64_t checkMaxCount(int64_t maxCount) {
         if (maxCount <= 0) maxCount = std::numeric_limits<int64_t>::max();
         if (maxCount > max_count_) {
-            FLOG_WARN("%ld exceeded maxCount(%ld)", maxCount, max_count_);
+            //FLOG_WARN("%ld exceeded maxCount(%ld)", maxCount, max_count_);
             maxCount = max_count_;
         }
         return maxCount;
@@ -275,7 +277,7 @@ private:
                         errorpb::Error *err) {
         std::unique_ptr<AsyncContext> context(ReleaseContext(cmd.cmd_id().seq()));
         if (context == nullptr) {
-            FLOG_ERROR("Apply cmd id %" PRIu64 " not found", cmd.cmd_id().seq());
+            //FLOG_ERROR("Apply cmd id %" PRIu64 " not found", cmd.cmd_id().seq());
 
             if (err != nullptr) {
                 delete err;
@@ -289,17 +291,17 @@ private:
         auto etime = get_micro_second();
         auto take = etime - context->proto_message->begin_time;
         if (take > kTimeTakeWarnThresoldUSec) {
-            FLOG_WARN("range[%lu] %s takes too long(%ld ms), sid=%ld, msgid=%ld",
+            /*FLOG_WARN("range[%lu] %s takes too long(%ld ms), sid=%ld, msgid=%ld",
                       meta_.id(),
                       funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(
                                                   context->proto_message->header.func_id))
                           .c_str(),
                       take / 1000, context->proto_message->session_id,
-                      context->proto_message->header.msg_id);
+                      context->proto_message->header.msg_id);*/
         }
 
-        FLOG_DEBUG("range[%lu] response msgid=%ld.", meta_.id(),
-                   context->proto_message->header.msg_id);
+        /*FLOG_DEBUG("range[%lu] response msgid=%ld.", meta_.id(),
+                   context->proto_message->header.msg_id);*/
 
         response->mutable_resp()->set_code(code);
 

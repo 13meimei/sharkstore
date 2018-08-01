@@ -27,15 +27,15 @@ public:
     WatchCode DelKeyWatcher(WatcherPtr&);
     WatchCode DelPrefixWatcher(WatcherPtr&);
 
-    WatchCode GetKeyWatchers(std::vector<WatcherPtr>&, const Key&);
-    WatchCode GetPrefixWatchers(std::vector<WatcherPtr>&, const Prefix &);
-private:
-    uint64_t                    watcher_set_count_ = WATCHER_SET_COUNT_MIN;
-    std::mutex                  mutex_;
-    std::vector<WatcherSet*>    watcher_set_list;
+    WatchCode GetKeyWatchers(std::vector<WatcherPtr>&, const WatcherKey&, const int64_t &version);
+    WatchCode GetPrefixWatchers(std::vector<WatcherPtr>&, const PrefixKey &, const int64_t &version);
 
 private:
-    WatcherSet* GetWatcherSet_(const Key&);
+    uint64_t                    watcher_set_count_ = WATCHER_SET_COUNT_MIN;
+    std::vector<WatcherSet*>    watcher_set_list;
+
+public:
+    WatcherSet* GetWatcherSet_(const WatcherKey&);
 };
 
 

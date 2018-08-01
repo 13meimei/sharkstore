@@ -7,6 +7,7 @@
 #include "frame/sf_socket_buff.h"
 #include "proto/gen/errorpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
+#include "proto/gen/watchpb.pb.h"
 
 #include "ds_proto.h"
 #include "socket_base.h"

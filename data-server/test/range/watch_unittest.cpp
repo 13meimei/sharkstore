@@ -37,7 +37,7 @@ std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf
     std::string key("");
     auto buf = new std::string(encodeBuf);
 
-    watch::Watcher watcher(1, vec, nullptr);
+    watch::Watcher watcher(1, vec);
     watcher.DecodeKey(vec, encodeBuf);
 
         if(grpFlag) {
@@ -109,12 +109,12 @@ metapb::Range *genRange1() {
     std::string k1("01003"), k2("01004");
 
     keys.push_back(&k1);
-    watch::Watcher watcher1(1, keys, nullptr);
+    watch::Watcher watcher1(1, keys);
     watcher1.EncodeKey(&keyStart, 1, keys);
 
     keys.clear();
     keys.push_back(&k2);
-    watch::Watcher watcher2(1, keys, nullptr);
+    watch::Watcher watcher2(1, keys);
     watcher2.EncodeKey(&keyEnd, 1, keys);
 
     meta->set_id(1);
@@ -150,12 +150,12 @@ metapb::Range *genRange2() {
     std::string k1("01004"), k2("01005");
 
     keys.push_back(&k1);
-    watch::Watcher watcher1(1, keys, nullptr);
+    watch::Watcher watcher1(1, keys);
     watcher1.EncodeKey(&keyStart, 1, keys);
 
     keys.clear();
     keys.push_back(&k2);
-    watch::Watcher watcher2(1, keys, nullptr);
+    watch::Watcher watcher2(1, keys);
     watcher2.EncodeKey(&keyEnd, 1, keys);
 
     meta->set_id(2);
@@ -221,13 +221,15 @@ TEST_F(WatchTest, watch) {
         // end test create range
     }
 
+    int64_t cnt(10000);
+    while (cnt-- > 0 ) {
     {
         // begin test watch_put (no leader)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         watchpb::DsKvWatchPutRequest req;
 
-        range_server_->ranges_[1]->setLeaderFlag(true);
+        //range_server_->ranges_[1]->setLeaderFlag(true);
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
@@ -244,9 +246,12 @@ TEST_F(WatchTest, watch) {
         watchpb::DsKvWatchPutResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
+        
+        if(resp.header().has_error()) {
+            FLOG_WARN("has error:%s", resp.header().error().message().c_str());
+        }
+        EXPECT_TRUE(resp.header().has_error());
+        EXPECT_TRUE(resp.header().error().has_not_leader());
         //ASSERT_FALSE(resp.header().error().not_leader().has_leader());
         //ASSERT_TRUE(resp.header().error().message() == "no leader");
 
@@ -416,7 +421,7 @@ TEST_F(WatchTest, watch) {
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 0;
+        msg->expire_time = getticks() + 100;
         watchpb::DsKvWatchPutRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -612,7 +617,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now+5000);
-        req.mutable_req()->set_startversion(-1);
+        req.mutable_req()->set_startversion(100000);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -652,7 +657,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now+5000);
 
-        req.mutable_req()->set_startversion(-1);
+        req.mutable_req()->set_startversion(100000);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -712,7 +717,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_req()->mutable_kv()->add_key("01004001");
         req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now+5000);
-        req.mutable_req()->set_startversion(-1);
+        req.mutable_req()->set_startversion(100000);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -750,7 +755,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_req()->mutable_kv()->add_key("");
         req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now+5000);
-        req.mutable_req()->set_startversion(-1);
+        req.mutable_req()->set_startversion(100000);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -1143,7 +1148,7 @@ TEST_F(WatchTest, watch) {
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
         req.mutable_req()->set_longpull(now+5000);
-        req.mutable_req()->set_startversion(-1);
+        req.mutable_req()->set_startversion(100);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -1357,4 +1362,8 @@ TEST_F(WatchTest, watch) {
     }
     */
     FLOG_DEBUG("watch_unittest end.");
+
+  }
 }
+
+
