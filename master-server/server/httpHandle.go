@@ -229,11 +229,10 @@ func (service *Server) handleDatabaseCreate(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if _, err := service.cluster.CreateDatabase(dbName, dbProperties); err != nil {
+	database, err := service.cluster.CreateDatabase(dbName, dbProperties)
+	if err != nil {
 		if err == ErrDupDatabase {
 			log.Warn("create database[%s] repeat", dbName)
-
-			return
 		} else {
 			log.Error("http create database: %v", err)
 			reply.Code = HTTP_ERROR
@@ -242,6 +241,7 @@ func (service *Server) handleDatabaseCreate(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	log.Info("create database[%s] success", dbName)
+	reply.Data = deepcopy.Iface(database.DataBase).(*metapb.DataBase)
 	return
 }
 
@@ -263,7 +263,6 @@ func (service *Server) handleTableCreate(w http.ResponseWriter, r *http.Request)
 		reply.Message = "table name has letter '-'"
 		return
 	}
-	tName = strings.ToLower(tName)
 	rangeKeysNumStr := r.FormValue(HTTP_RANGEKEYS_NUM)
 	rangeKeysStart := r.FormValue(HTTP_RANGEKEYS_START)
 	rangeKeysEnd := r.FormValue(HTTP_RANGEKEYS_END)
@@ -326,18 +325,19 @@ func (service *Server) handleTableCreate(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
-	_, err = service.cluster.CreateTable(dbName, tName, columns, regxs, pkDupCheck != "false", sliceKeys)
+	table, err := service.cluster.CreateTable(dbName, tName, columns, regxs, pkDupCheck != "false", sliceKeys)
 	if err != nil {
 		if err == ErrDupTable {
 			log.Warn("http create table repeat %s", tName)
+		} else {
+			log.Error("http create table: %v", err)
+			reply.Code = HTTP_ERROR
+			reply.Message = err.Error()
 			return
 		}
-		log.Error("http create table: %v", err)
-		reply.Code = HTTP_ERROR
-		reply.Message = err.Error()
-		return
 	}
 	log.Info("create table[%s:%s]", dbName, tName)
+	reply.Data = deepcopy.Iface(table.Table).(*metapb.Table)
 	return
 }
 
@@ -1508,9 +1508,15 @@ var (
 		&metapb.Column{Name: "remark", DataType: metapb.DataType_Varchar}}
 
 	fbase_lock_nsp = []*metapb.Column{
-		&metapb.Column{Name: "namespace", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
-		&metapb.Column{Name: "cluster_id", DataType: metapb.DataType_BigInt, PrimaryKey: 1},
+		&metapb.Column{Name: "id", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
+		&metapb.Column{Name: "db_name", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "table_name", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "cluster_id", DataType: metapb.DataType_BigInt},
+		&metapb.Column{Name: "db_id", DataType: metapb.DataType_BigInt},
+		&metapb.Column{Name: "table_id", DataType: metapb.DataType_BigInt},
+		&metapb.Column{Name: "status", DataType: metapb.DataType_Tinyint},
 		&metapb.Column{Name: "applyer", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "auditor", DataType: metapb.DataType_Varchar},
 		&metapb.Column{Name: "create_time", DataType: metapb.DataType_TimeStamp}}
 
 	metric_server = []*metapb.Column{
@@ -1673,12 +1679,26 @@ func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Re
 	return
 }
 
-/////////////////////////////////////// TODDO ///////////////////////////////////////////////
-
-// TODO
 func (service *Server) handleDatabaseDelete(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
+	dbName := r.FormValue(HTTP_DB_NAME)
+
+	if dbName == "" {
+		log.Error("http delete database: %s", http_error_parameter_not_enough)
+		reply.Code = HTTP_ERROR_PARAMETER_NOT_ENOUGH
+		reply.Message = http_error_parameter_not_enough
+		return
+	}
+
+	if err := service.cluster.DeleteDatabase(dbName); err != nil {
+		log.Error("http create database: %v", err)
+		reply.Code = HTTP_ERROR
+		reply.Message = err.Error()
+		return
+	}
+	log.Info("create database[%s] success", dbName)
+	return
 }
 
 func (service *Server) handleTableDelete(w http.ResponseWriter, r *http.Request) {

@@ -616,8 +616,7 @@ func (dt *DeleteTableWorker) Work(cluster *Cluster) {
 			ranges := cluster.GetTableAllRanges(table.GetId())
 			if len(ranges) == 0 {
 				log.Info("table id[%v] name[%v] ranges is empty", table.GetId(), table.GetName())
-				key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
-				if err := cluster.store.Delete(key); err != nil {
+				if err := cluster.deleteTable(table.GetId()); err != nil {
 					log.Error("MS worker delete expired table:[%s][%d] from store is failed.",
 						table.GetName(), table.GetId())
 					return

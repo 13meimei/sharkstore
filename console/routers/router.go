@@ -118,14 +118,46 @@ func (r *Router) StartRouter() *gin.Engine {
 	})
 
 	router.GET("/page/lock/viewNamespace", func(c *gin.Context) {
+		userName, ok := sessions.Default(c).Get("user_name").(string)
+		if !ok {
+			c.Redirect(http.StatusMovedPermanently, "/logout")
+		}
+		admin := "none"
+		user, err := r.GetUserCluster(userName)
+		if err == nil {
+			for _, r := range user.Right {
+				if r == 1 {
+					admin = ""
+					break
+				}
+			}
+		}
 		c.HTML(http.StatusOK, "locknsp_list.html", gin.H{
 			"basePath": r.staticRootDir,
+			"admin":    admin,
 		})
 	})
 
 	router.GET("/page/lock/applyNamespace", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "locknsp_apply.html", gin.H{
 			"basePath": r.staticRootDir,
+		})
+	})
+
+	router.GET("/page/lock/viewLock", func(c *gin.Context) {
+		cid := c.Query("clusterId")
+		dbName := c.Query("dbName")
+		tableName := c.Query("tableName")
+		if cid == "" || dbName == "" || tableName == "" {
+			html404(c)
+			return
+		}
+
+		c.HTML(http.StatusOK, "lock_list.html", gin.H{
+			"basePath":  r.staticRootDir,
+			"clusterId": cid,
+			"dbName":    dbName,
+			"tableName": tableName,
 		})
 	})
 
@@ -668,6 +700,9 @@ func (r *Router) StartRouter() *gin.Engine {
 		router.POST(controllers.REQURL_META_CREATEDB, func(c *gin.Context) {
 			handleAction(c, controllers.NewCreateDbAction())
 		})
+		router.POST(controllers.REQURL_META_DELETEDB, func(c *gin.Context) {
+			handleAction(c, controllers.NewDeleteDbAction())
+		})
 		router.POST(controllers.REQURL_META_GETALLDB, func(c *gin.Context) {
 			handleAction(c, controllers.NewGetAllDbAction())
 		})
@@ -829,7 +864,7 @@ func (r *Router) StartRouter() *gin.Engine {
 		handleAction(c, controllers.NewSqlGetAllAction())
 	})
 	router.POST(controllers.REQURI_SQL_APPLY, func(c *gin.Context) {
-		handleRightAndAction(r, c, controllers.NewSqlApplyAction())
+		handleAction(c, controllers.NewSqlApplyAction())
 	})
 	router.GET(controllers.REQURI_SQL_APPLY_DETAIL, func(c *gin.Context) {
 		handleAction(c, controllers.NewSqlApplyGetAction())
@@ -843,13 +878,28 @@ func (r *Router) StartRouter() *gin.Engine {
 		handleAction(c, controllers.NewLockGetAllNspAction())
 	})
 	router.POST(controllers.REQURI_LOCK_NAMESPACE_APPLY, func(c *gin.Context) {
-		handleRightAndAction(r, c, controllers.NewLockNspApplyAction())
+		handleAction(c, controllers.NewLockNspApplyAction())
+	})
+	router.POST(controllers.REQURI_LOCK_NAMESPACE_AUDIT, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockNspAuditAction())
 	})
 	router.POST(controllers.REQURI_LOCK_NAMESPACE_UPDATE, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockNspUpdateAction())
 	})
+	router.POST(controllers.REQURI_LOCK_NAMESPACE_DELETE, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockNspDeleteAction())
+	})
 	router.GET(controllers.REQURI_LOCK_CLUSTER_INFO, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockClusterGetAction())
+	})
+	router.GET(controllers.REQURI_LOCK_LOCK_GETALL, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockGetAllAction())
+	})
+	router.POST(controllers.REQURI_LOCK_LOCK_FORCEUNLOCK, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockForceUnLockAction())
+	})
+	router.POST(controllers.REQURI_LOCK_CLIENT_TOKEN, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockClientGetTokenAction())
 	})
 
 	//metric

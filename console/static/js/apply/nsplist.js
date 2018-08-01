@@ -1,94 +1,320 @@
-/**
- * lock Namespace申请列表展示
- */
-var app = angular.module('nspApplyInfo', []);
-//lock申请数据获取
-app.controller('applyList', function($rootScope, $scope, $http, $timeout) {
-	 $http.get('/lock/namespace/queryList').success(function(data){
-	 	if(data.code === 0){
-			$scope.applyList = data.data;
-		 }else {
-			swal("获取lock namespace列表失败", data.msg, "error");
-		 }
-	 });
-    //能看到，就能修改
-    $scope.updateOwner = function(namespace){
-        swal({
-                title: "编辑",
-                text: "修改所属人",
-                type: "input",
-                showCancelButton: true,
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "执行",
-                closeOnConfirm: false
-            },
-            function (inputValue) {
-                if(!inputValue){
-                    swal("请先录入该namespace的所属人！");
-                    return
+(function () {
+    /**
+     * lock Namespace申请列表展示
+     */
+    //lock申请数据获取
+    $('#nspApplyLists').bootstrapTable({
+        url: "/lock/namespace/queryList",
+        search: true,
+        pagination: true,
+        showRefresh: true,
+        pageNumber: 1,
+        pageSize: 10,
+        pageList: [10, 25, 50, 100],
+//          sidePagination: "server",
+        showColumns: true,
+        iconSize: 'outline',
+        toolbar: '#nspApplyListsToolbar',
+        height: 500,
+        icons: {
+            refresh: 'glyphicon-repeat'
+        },
+        columns: [
+            {field: '', checkbox: true, align: 'center'},
+            {field: 'db_name', title: '库名', align: 'center'},
+            {field: 'table_name', title: '表名', align: 'center'},
+            {field: 'cluster_id', title: '集群Id', align: 'center'},
+            {field: 'applyer', title: '申请人', align: 'center'},
+            {
+                field: 'create_time', title: '申请时间', align: 'center',
+                formatter: function (value, row, index) {
+                    //调用下面方法进行时间戳格式化
+                    return formatDate((new Date(value * 1000)), "yyyy-MM-dd hh:mm:ss");
                 }
-                $.ajax({
-                    url:"/lock/namespace/update",
-                    type:"post",
-                    contentType:"application/x-www-form-urlencoded; charset=UTF-8",
-                    dataType:"json",
-                    data:{
-                        namespace:namespace.namespace,
-                        clusterId:namespace.cluster_id,
-						applyer:inputValue
-                    },
-                    success: function(data){
-                        if(data.code === 0){
-                            swal("更新成功!", data.msg, "success");
-                            window.location.href = "/page/lock/viewNamespace";
-                        }else {
-                            swal("更新失败", data.msg, "error");
-                        }
-                    },
-                    error: function(res){
-                        swal("更新namespace的所属人失败", res, "error");
+            },
+            {
+                field: 'status', title: '状态', align: 'center',
+                formatter: function (value, row, index) {
+                    if (value == 1) {
+                        return "待审核";
                     }
-                });
-            });
-    };
-    $scope.viewCluster = function(namespace){
-        $.ajax({
-            url:"/cluster/getById",
-            type:"post",
-            contentType:"application/x-www-form-urlencoded; charset=UTF-8",
-            dataType:"json",
-            data:{
-                clusterId:namespace.cluster_id
-            },
-            success: function(data){
-                if(data.code === 0){
-                    var innerhtml = "<table><tr><td>集群id：</td><td>" + data.data.id + "</td></tr>" +
-                        "<tr><td>集群名：</td><td>" + data.data.name + "</td></tr>" +
-                        // "<tr><td>lock访问地址：</td><td>data.data.id</td></tr>" +
-                        "</table>"
-                    swal({
-                        title: "集群详情",
-                        text: innerhtml,
-                        html: true,
-                        showCancelButton: false
-                    });
-                }else {
-                    swal("查询失败", data.msg, "error");
+                    if (value == 2) {
+                        return "通过并创建";
+                    }
+                    if (value == 3) {
+                        return "驳回";
+                    }
                 }
             },
-            error: function(res){
-                swal("查询失败", res, "error");
+            {
+                field: '操作', title: '操作', align: 'center',
+                formatter: function (value, row, index) {
+                    var buttonS = "<button id=\"updateOwner\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"修改负责人\" onclick=\"updateOwner('" + row.id + "');\">修改负责人</button>&nbsp;&nbsp;" +
+                        "<button id=\"viewCluster\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"集群详情\" onclick=\"viewCluster('" + row.cluster_id + "');\">集群详情</button>&nbsp;&nbsp;";
+                    if(row.status == 2) {
+                        buttonS = buttonS +
+                            "<button id=\"viewLock\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"lock详情\" onclick=\"viewLock('" + row.db_name + "','" + row.table_name + "','" + row.cluster_id + "');\">lock详情</button>&nbsp;&nbsp;" +
+                            "<button id=\"viewToken\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看token\" onclick=\"viewToken('" + row.db_id + "','" + row.table_id + "');\">token详情</button>";
+                    }
+                    return  buttonS;
+                }
             }
+        ]
+    });
+})(document, window, jQuery);
+
+//能看到记录，就能修改
+function updateOwner(applyId) {
+    swal({
+            title: "编辑",
+            text: "修改所属人",
+            type: "input",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false
+        },
+        function (inputValue) {
+            if (!inputValue) {
+                swal("请先录入该namespace的所属人！");
+                return
+            }
+            $.ajax({
+                url: "/lock/namespace/update",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    id: applyId,
+                    applyer: inputValue
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("更新成功!", data.msg, "success");
+                        window.location.href = "/page/lock/viewNamespace";
+                    } else {
+                        swal("更新失败", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("更新namespace的所属人失败", res, "error");
+                }
+            });
         });
-    };
-    $scope.viewLock = function(namespace){
-		//todo
-    };
+}
 
-});
+function viewCluster(clusterId) {
+    $.ajax({
+        url: "/cluster/getById",
+        type: "post",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        dataType: "json",
+        data: {
+            clusterId: clusterId
+        },
+        success: function (data) {
+            if (data.code === 0) {
+                var innerhtml = "<table><tr><td>集群id：</td><td>" + data.data.id + "</td></tr>" +
+                    "<tr><td>集群名：</td><td>" + data.data.name + "</td></tr>" +
+                    // "<tr><td>lock访问地址：</td><td>data.data.id</td></tr>" +
+                    "</table>"
+                swal({
+                    title: "集群详情",
+                    text: innerhtml,
+                    html: true,
+                    showCancelButton: false
+                });
+            } else {
+                swal("查询失败", data.msg, "error");
+            }
+        },
+        error: function (res) {
+            swal("查询失败", res, "error");
+        }
+    });
+}
 
+function viewLock(dbName, tableName, clusterId) {
+    window.location.href = "/page/lock/viewLock?clusterId=" + clusterId + "&dbName=" + dbName + "&tableName=" + tableName;
+}
+
+
+function viewToken(dbId, tableId) {
+    $.ajax({
+        url: "/lock/client/getToken",
+        type: "post",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        dataType: "json",
+        data: {
+            "dbId": dbId,
+            "tableId": tableId
+        },
+        success: function (data) {
+            if (data.code === 0) {
+                swal("客户端token", data.data, "success");
+            } else {
+                swal("获取token失败！", data.msg, "warning");
+            }
+        },
+        error: function (res) {
+            swal("获取token失败！", "请联系管理员!", "error");
+        }
+    });
+}
+
+//审批
+function auditNsp() {
+    var selectedApplyRows = $('#nspApplyLists').bootstrapTable('getSelections');
+    if (selectedApplyRows.length == 0) {
+        swal("审批申请", "请选择要审批的申请记录", "error");
+        return;
+    }
+    var ids = [];
+    for (var i = 0; i < selectedApplyRows.length; i++) {
+        if (selectedApplyRows[i].status != 1) {
+            swal("审批申请", "请选择待审核状态的申请记录", "error");
+            return;
+        }
+        ids.push(selectedApplyRows[i].id);
+    }
+    if (ids.length == 0) {
+        return;
+    }
+    swal({
+            title: "审批操作",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "通过",
+            closeOnConfirm: false
+        },
+        function () {
+            $.ajax({
+                url: "/lock/namespace/audit",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "ids": JSON.stringify(ids),
+                    "status": 2
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("审批成功！", "审批成功!", "success");
+                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/lock/namespace/queryList'});
+                    } else {
+                        swal("审批失败！", data.message, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("审批失败！", "请联系管理员!", "error");
+                }
+            });
+        });
+}
+
+//驳回，支持批量
+function rejectNsp() {
+    var selectedApplyRows = $('#nspApplyLists').bootstrapTable('getSelections');
+    if (selectedApplyRows.length == 0) {
+        swal("驳回申请", "请选择要驳回的申请记录", "error");
+        return;
+    }
+    var ids = [];
+    for (var i = 0; i < selectedApplyRows.length; i++) {
+        if (selectedApplyRows[i].status > 1) {
+            swal("驳回申请", "请选择待审核状态的申请记录", "error");
+            return;
+        }
+        ids.push(selectedApplyRows[i].id);
+    }
+    if (ids.length == 0) {
+        return
+    }
+    swal({
+            title: "驳回操作",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "驳回",
+            closeOnConfirm: false
+        },
+        function () {
+            $.ajax({
+                url: "/lock/namespace/audit",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "ids": JSON.stringify(ids),
+                    "status": 3
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("驳回成功！", "驳回成功!", "success");
+                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/lock/namespace/queryList'});
+                    } else {
+                        swal("驳回失败！", data.message, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("驳回失败！", "请联系管理员!", "error");
+                }
+            });
+        });
+}
 
 //lock namespace apply
-function applyNamespace(){
-    window.location.href="/page/lock/applyNamespace";
+function applyNsp() {
+    window.location.href = "/page/lock/applyNamespace";
+}
+
+//能看到，就能删除，支持批量【只能删除未审批的】
+function deleteNsp() {
+    var selectedApplyRows = $('#nspApplyLists').bootstrapTable('getSelections');
+    if (selectedApplyRows.length == 0) {
+        swal("驳回申请", "请选择要驳回的申请记录", "error");
+        return;
+    }
+    var ids = [];
+    for (var i = 0; i < selectedApplyRows.length; i++) {
+        if (selectedApplyRows[i].status == 2) {
+            swal("删除", "请选择待审核、驳回状态的记录操作", "error");
+            return;
+        }
+        ids.push(selectedApplyRows[i].id);
+    }
+    if (ids.length == 0) {
+        return;
+    }
+    swal({
+            title: "删除操作",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "确认",
+            closeOnConfirm: false
+        },
+        function () {
+            $.ajax({
+                url: "/lock/namespace/delete",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "ids": JSON.stringify(ids)
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("删除成功！", data.msg, "success");
+                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/lock/namespace/queryList'});
+                    } else {
+                        swal("删除失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("删除失败！", "请联系管理员!", "error");
+                }
+            });
+        });
 }
