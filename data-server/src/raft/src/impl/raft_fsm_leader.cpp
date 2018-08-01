@@ -261,7 +261,7 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
     }
 
     // 需要发快照
-    if (pr.next() < fi || !ts.ok() || !es.ok() || pr.next() <= 1) {
+    if (pr.next() < fi || !ts.ok() || !es.ok()) {
         LOG_INFO("raft[%llu] need snapshot to %llu[next:%llu], fi:%llu, log "
                  "error:%s-%s",
                  id_, to, pr.next(), fi, ts.ToString().c_str(), es.ToString().c_str());
@@ -275,7 +275,6 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
             sending_snap_ = newSendSnapTask(to, &snap_index);
             pr.becomeSnapshot(snap_index);
         }
-
     } else {
         MessagePtr msg(new pb::Message);
         msg->set_type(pb::APPEND_ENTRIES_REQUEST);
