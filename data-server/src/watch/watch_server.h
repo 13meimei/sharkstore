@@ -21,8 +21,8 @@ public:
     WatchServer& operator=(const WatchServer&) = delete;
     ~WatchServer();
 
-    WatchCode AddKeyWatcher(WatcherPtr&);
-    WatchCode AddPrefixWatcher(WatcherPtr&);
+    WatchCode AddKeyWatcher(WatcherPtr&, storage::Store *);
+    WatchCode AddPrefixWatcher(WatcherPtr&, storage::Store *);
 
     WatchCode DelKeyWatcher(WatcherPtr&);
     WatchCode DelPrefixWatcher(WatcherPtr&);

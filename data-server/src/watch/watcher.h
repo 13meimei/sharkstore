@@ -7,6 +7,7 @@
 
 #include "watch.h"
 #include "common/socket_session.h"
+#include "storage/store.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -24,7 +25,7 @@ public:
 private:
     uint64_t                    table_id_;
     std::vector<std::string*>   keys_;
-    uint64_t                    key_version_ = 0;
+    int64_t                    key_version_ = 0;
     common::ProtoMessage*       message_ = nullptr;
     WatchType                   type_ = WATCH_KEY;
     WatcherId                   watcher_id_;
@@ -45,7 +46,7 @@ public:
         std::lock_guard<std::mutex> lock(send_lock_);
         return sent_response_flag;
     }
-    uint64_t getKeyVersion() const {
+    int64_t getKeyVersion() const {
         return key_version_;
     }
     int64_t getSessionId() const{
@@ -56,11 +57,11 @@ public:
 
     bool DecodeKey(std::vector<std::string*>& keys,
                    const std::string& buf);
-    bool DecodeValue(int64_t* version, std::string* value, std::string* extend,
+    static bool DecodeValue(int64_t* version, std::string* value, std::string* extend,
                      std::string& buf);
     void EncodeKey(std::string* buf,
                    uint64_t tableId, const std::vector<std::string*>& keys);
-    void EncodeValue(std::string* buf,
+    static void EncodeValue(std::string* buf,
                      int64_t version,
                      const std::string* value,
                      const std::string* extend);

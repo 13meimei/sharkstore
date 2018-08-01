@@ -221,7 +221,7 @@ TEST_F(WatchTest, watch) {
         // end test create range
     }
 
-    int64_t cnt(10000);
+    int64_t cnt(3);
     while (cnt-- > 0 ) {
     {
         // begin test watch_put (no leader)
@@ -1134,8 +1134,8 @@ TEST_F(WatchTest, watch) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
+        //raft->ops_.leader = 1;
+        //range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;

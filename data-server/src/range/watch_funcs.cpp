@@ -82,12 +82,12 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             }
         }
 
-        auto btime = get_micro_second();
+        //auto btime = get_micro_second();
         //get from rocksdb
         //auto ret = store_->Get(dbKey, &dbValue);
-        auto ret = GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, err);
-        context_->run_status->PushTime(monitor::PrintTag::Store,
-                                       get_micro_second() - btime);
+        //auto ret = GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, err);
+        //context_->run_status->PushTime(monitor::PrintTag::Store,
+        //                               get_micro_second() - btime);
 
 
     } while (false);
@@ -115,8 +115,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         }
 
         //decode version from value
-        FLOG_DEBUG("range[%" PRIu64 "] (%" PRIu64 " >= %" PRIu64 "?) WatchGet [%s]-%s ok.", 
-                   meta_.id(), clientVersion, dbVersion, EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
+        //FLOG_DEBUG("range[%" PRIu64 "] (%" PRIu64 " >= %" PRIu64 "?) WatchGet [%s]-%s ok.",
+        //           meta_.id(), clientVersion, dbVersion, EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
         if(uint64_t(clientVersion) >= dbVersion) {
             //to do add watch
             auto watch_server = context_->range_server->watch_server_;
@@ -128,12 +128,15 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
             auto w_ptr = std::make_shared<watch::Watcher>(meta_.table_id(), keys, clientVersion, msg);
 
-            auto wcode = watch_server->AddKeyWatcher(w_ptr);
+            auto wcode = watch_server->AddKeyWatcher(w_ptr, store_);
             if(watch::WATCH_OK == wcode) {
                 return;
             } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
+                auto btime = get_micro_second();
                 //to do get from db again
                 GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, err);
+                context_->run_status->PushTime(monitor::PrintTag::Store,
+                                               get_micro_second() - btime);
             } else {
                 FLOG_WARN("range[%" PRIu64 "] add watcher exception(%d).", meta_.id(), static_cast<int>(wcode));
             }

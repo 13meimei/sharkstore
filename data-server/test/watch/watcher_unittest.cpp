@@ -6,7 +6,7 @@
 #include "watch/watch_server.h"
 #include "frame/sf_util.h"
 #include "fastcommon/logger.h"
-
+#include "storage/store.h"
 
 int main(int argc, char* argv[]) {
     log_init2();
@@ -314,13 +314,13 @@ TEST(TestWatcherSet, AddAndDelKeyWatcher) {
     w_p2->SetWatcherId(2);
 
     // test add
-    ws.AddKeyWatcher(encode_key0, w_p0);
+    ws.AddKeyWatcher(encode_key0, w_p0, nullptr);
     ws.CheckAddKeyWatcher(w_ptr0);
 
-    ws.AddKeyWatcher(encode_key1, w_p1);
+    ws.AddKeyWatcher(encode_key1, w_p1, nullptr);
     ws.CheckAddKeyWatcher(w_ptr1);
 
-    ws.AddKeyWatcher(encode_key2, w_p2);
+    ws.AddKeyWatcher(encode_key2, w_p2, nullptr);
     ws.CheckAddKeyWatcher(w_ptr2);
 
     // test del
@@ -352,7 +352,7 @@ TEST(TestWatchServer, SimulateInteractive) {
 
     auto w_ptr0 = std::make_shared<TestWatcher>(keys0, conn0);
     WatcherPtr w_p0 = std::static_pointer_cast<Watcher>(w_ptr0);
-    server.AddKeyWatcher(w_p0);
+    server.AddKeyWatcher(w_p0, nullptr);
     ASSERT_TRUE(conn0->ClientRead() != TEST_TIMEOUT);
 
     int i = 0;
@@ -363,7 +363,7 @@ TEST(TestWatchServer, SimulateInteractive) {
             auto conn = new TestWatchConnection(5000); // read timeout 5s
             auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
             WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
-            server.AddKeyWatcher(w_p);
+            server.AddKeyWatcher(w_p, nullptr);
             ASSERT_TRUE(conn->ClientRead() != TEST_TIMEOUT);
         });
     }
