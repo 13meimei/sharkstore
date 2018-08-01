@@ -212,12 +212,16 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 	}
 
 	// Stale term
-	if req.GetTerm() < rng.Term {
-		log.Warn("range[%v] stale term(%d < %d)", rng.GetId(), req.GetTerm(), rng.Term)
-		return
-	} else if req.GetTerm() > rng.Term {
-		saveCache = true
-		log.Info("range[%d] term change from %d to %d", rng.GetId(), rng.Term, req.GetTerm())
+	// req.GetTerm() != 0: backward compatible
+	// TODO: remove req.GetTerm() != 0
+	if req.GetTerm() != 0 {
+		if req.GetTerm() < rng.Term {
+			log.Warn("range[%v] stale term(%d < %d)", rng.GetId(), req.GetTerm(), rng.Term)
+			return
+		} else if req.GetTerm() > rng.Term {
+			saveCache = true
+			log.Info("range[%d] term change from %d to %d", rng.GetId(), rng.Term, req.GetTerm())
+		}
 	}
 
 	if r.GetRangeEpoch().GetVersion() > rng.GetRangeEpoch().GetVersion() {
