@@ -74,7 +74,7 @@ std::unique_ptr<Table> CreateAccountTable() {
     std::unique_ptr<Table> t(new Table("account", 1));
     t->AddColumn("id", metapb::BigInt, true);
     t->AddColumn("name", metapb::Varchar);
-    t->AddColumn("balance", metapb::Double);
+    t->AddColumn("balance", metapb::BigInt);
     return t;
 }
 

@@ -112,9 +112,6 @@ void EncodeColumnValue(std::string *buf, const metapb::Column& col, const std::s
 }
 
 void DecodeColumnValue(const std::string& buf, size_t& offset, const metapb::Column& col, std::string *val) {
-    uint32_t col_id = 0;
-    EncodeType enc_type;
-    DecodeValueTag(buf, offset, &col_id, &enc_type);
     switch (col.data_type()) {
         case metapb::Tinyint:
         case metapb::Smallint:
