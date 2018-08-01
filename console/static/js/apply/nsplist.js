@@ -5,19 +5,33 @@
     //lock申请数据获取
     $('#nspApplyLists').bootstrapTable({
         url: "/lock/namespace/queryList",
-        search: true,
-        pagination: true,
-        showRefresh: true,
-        pageNumber: 1,
-        pageSize: 10,
-        pageList: [10, 25, 50, 100],
-//          sidePagination: "server",
-        showColumns: true,
+        striped: true,      //是否显示行间隔色
+        cache: false,       //是否使用缓存，默认为true（*）
+        // search: true,       //是否显示表格搜索
+        pagination: true,   //是否显示分页（*）
+        pageNumber: 1,      //初始化加载第一页，默认第一页,并记录
+        pageSize: 10,       //每页的记录行数（*）
+        pageList: [10, 25, 50, 100],//可供选择的每页的行数（*）
+        sidePagination: "server",//分页方式：client客户端分页，server服务端分页（*）
+        clickToSelect: true,
+        // showColumns: true,  //是否显示所有的列（选择显示的列）
+        // showRefresh: true,  //是否显示刷新按钮
         iconSize: 'outline',
         toolbar: '#nspApplyListsToolbar',
         height: 500,
         icons: {
             refresh: 'glyphicon-repeat'
+        },
+        // 得到查询的参数
+        queryParams: function (params) {
+            //这里的键的名字和控制器的变量名必须一直，这边改动，控制器也需要改成一样的
+            var temp = {
+                rows: params.limit,                         //页面大小
+                page: (params.offset / params.limit) + 1,   //页码
+                sort: params.sort,      //排序列名
+                sortOrder: params.order //排位命令（desc，asc）
+            };
+            return temp;
         },
         columns: [
             {field: '', checkbox: true, align: 'center'},
@@ -51,15 +65,29 @@
                 formatter: function (value, row, index) {
                     var buttonS = "<button id=\"updateOwner\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"修改负责人\" onclick=\"updateOwner('" + row.id + "');\">修改负责人</button>&nbsp;&nbsp;" +
                         "<button id=\"viewCluster\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"集群详情\" onclick=\"viewCluster('" + row.cluster_id + "');\">集群详情</button>&nbsp;&nbsp;";
-                    if(row.status == 2) {
+                    if (row.status == 2) {
                         buttonS = buttonS +
                             "<button id=\"viewLock\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"lock详情\" onclick=\"viewLock('" + row.db_name + "','" + row.table_name + "','" + row.cluster_id + "');\">lock详情</button>&nbsp;&nbsp;" +
                             "<button id=\"viewToken\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看token\" onclick=\"viewToken('" + row.db_id + "','" + row.table_id + "');\">token详情</button>";
                     }
-                    return  buttonS;
+                    return buttonS;
                 }
             }
-        ]
+        ],
+        responseHandler: function (res) {
+            if (res.code === 0) {
+                return {
+                    "total": res.data.total,//总页数
+                    "rows": res.data.data   //数据
+                };
+            } else {
+                swal("失败", res.msg, "error");
+                return {
+                    "total": 0,//总页数
+                    "rows": res.data   //数据
+                };
+            }
+        }
     });
 })(document, window, jQuery);
 

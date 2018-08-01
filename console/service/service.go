@@ -1953,31 +1953,51 @@ func (s *Service) IsAdmin(userName string) (bool, error) {
 }
 
 //=============sql apply start==============
-func (s *Service) GetAllSqlApply(userName string, isAdmin bool) ([]*models.SqlApply, error) {
-	var sql string
-	if isAdmin {
-		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s order by create_time desc`, TABLE_NAME_SQL_APPLY)
-	} else {
-		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s where applyer = "%s" order by create_time desc`, TABLE_NAME_SQL_APPLY, userName)
+func (s *Service) GetAllSqlApply(userName string, isAdmin bool, pageInfo *models.PagerInfo) (int, []*models.SqlApply, error) {
+	selectSql := fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s`, TABLE_NAME_SQL_APPLY)
+	countSql := fmt.Sprintf(`select count(*) from %s`, TABLE_NAME_SQL_APPLY)
+	if !isAdmin {
+		selectSql = fmt.Sprintf(`%s where applyer = "%s"`, selectSql, userName)
+		countSql = fmt.Sprintf(`%s where applyer = "%s"`, countSql, userName)
 	}
-	log.Debug("get all sql apply records:  %s", sql)
-
-	rows, err := s.db.Query(sql)
-	if err != nil {
-		log.Error("db select is failed. err:[%v]", err)
-		return nil, common.DB_ERROR
-	}
-	result := make([]*models.SqlApply, 0)
-	for rows.Next() {
-		info := new(models.SqlApply)
-		if err := rows.Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.Status), &(info.Applyer), &(info.CreateTime), &(info.Remark)); err != nil {
-			log.Error("db scan is failed. err:[%v]", err)
-			return nil, common.DB_ERROR
+	if pageInfo != nil {
+		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
+			selectSql = fmt.Sprintf(`%s order by "%s" "%s"`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
+		} else {
+			selectSql = fmt.Sprintf(`%s order by create_time desc`, selectSql)
 		}
-		result = append(result, info)
+		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+			selectSql = fmt.Sprintf(`%s limit %d, %d`, selectSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+		}
 	}
-	return result, nil
 
+	log.Debug("get all sql apply records:  %s", selectSql)
+	var totalRecord int
+	if err := s.db.QueryRow(countSql).
+		Scan(&(totalRecord)); err != nil {
+		log.Error("db select is failed. err:[%v]", err)
+		return 0, nil, common.DB_ERROR
+	}
+	if totalRecord > 0 {
+		rows, err := s.db.Query(selectSql)
+		if err != nil {
+			log.Error("db select is failed. err:[%v]", err)
+			return 0, nil, common.DB_ERROR
+		}
+		result := make([]*models.SqlApply, 0)
+		for rows.Next() {
+			info := new(models.SqlApply)
+			if err := rows.Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.Status), &(info.Applyer), &(info.CreateTime), &(info.Remark)); err != nil {
+				log.Error("db scan is failed. err:[%v]", err)
+				return 0, nil, common.DB_ERROR
+			}
+			result = append(result, info)
+		}
+		return totalRecord, result, nil
+	} else {
+		return totalRecord, nil, nil
+	}
 }
 
 func (s *Service) ApplySql(dbName, tableName, sentence, applyer, remark string, cTime int64) error {
@@ -2036,31 +2056,54 @@ func (s *Service) AuditSql(ids []string, status int, auditor string) error {
 //=============sql apply end==============
 
 //=============lock start==============
-func (s *Service) GetAllNamespace(userName string, isAdmin bool) ([]*models.NamespaceApply, error) {
-	var sql string
-	if isAdmin {
-		sql = fmt.Sprintf(`select id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time from %s`, TABLE_NAME_LOCK_NSP)
-	} else {
-		sql = fmt.Sprintf(`select id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time from %s where applyer = "%s" `, TABLE_NAME_LOCK_NSP, userName)
-	}
-	log.Debug("get all apply lock namespace: %s", sql)
+func (s *Service) GetAllNamespace(userName string, isAdmin bool, pageInfo *models.PagerInfo) (int, []*models.NamespaceApply, error) {
+	selectSql := fmt.Sprintf(`select id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time from %s`, TABLE_NAME_LOCK_NSP)
+	countSql := fmt.Sprintf(`select count(*) from %s`, TABLE_NAME_LOCK_NSP)
 
-	rows, err := s.db.Query(sql)
-	if err != nil {
-		log.Error("db select is failed. err:[%v]", err)
-		return nil, common.DB_ERROR
+	if !isAdmin {
+		selectSql = fmt.Sprintf(`%s where applyer = "%s"`, selectSql, userName)
+		countSql = fmt.Sprintf(`%s where applyer = "%s"`, countSql, userName)
 	}
-	result := make([]*models.NamespaceApply, 0)
-	for rows.Next() {
-		info := new(models.NamespaceApply)
-		if err := rows.Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.DbId),
-			&(info.TableId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
-			log.Error("db scan is failed. err:[%v]", err)
-			return nil, common.DB_ERROR
+
+	if pageInfo != nil {
+		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
+			selectSql = fmt.Sprintf(`%s order by "%s" "%s"`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
+		} else {
+			selectSql = fmt.Sprintf(`%s order by create_time desc`, selectSql)
 		}
-		result = append(result, info)
+		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+			selectSql = fmt.Sprintf(`%s limit %d, %d`, selectSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+		}
 	}
-	return result, nil
+	log.Debug("get all apply lock namespace: %s", selectSql)
+
+	var totalRecord int
+	if err := s.db.QueryRow(countSql).
+		Scan(&(totalRecord)); err != nil {
+		log.Error("db queryrow is failed. err:[%v]", err)
+		return 0, nil, common.DB_ERROR
+	}
+	if totalRecord > 0 {
+		rows, err := s.db.Query(selectSql)
+		if err != nil {
+			log.Error("db select is failed. err:[%v]", err)
+			return 0, nil, common.DB_ERROR
+		}
+		result := make([]*models.NamespaceApply, 0)
+		for rows.Next() {
+			info := new(models.NamespaceApply)
+			if err := rows.Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.DbId),
+				&(info.TableId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
+				log.Error("db scan is failed. err:[%v]", err)
+				return 0, nil, common.DB_ERROR
+			}
+			result = append(result, info)
+		}
+		return totalRecord, result, nil
+	} else {
+		return totalRecord, nil, nil
+	}
 }
 
 func (s *Service) GetNamespaceById(applyId string) (*models.NamespaceApply, error) {
@@ -2250,7 +2293,7 @@ func (s *Service) GetLockCluster() (*models.ClusterInfo, error) {
 }
 
 //go by http command
-func (s *Service) GetAllLock(clusterId int, dbName, tableName string) ([]*models.LockInfo, error) {
+func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.LockInfo, error) {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return nil, err
@@ -2261,15 +2304,37 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string) ([]*models
 
 	log.Debug("get all lock list under clusterId:%v dbName:%v tableName:%v", clusterId, dbName, tableName)
 
-	var reply models.Reply
+	filter := new(models.Filter_)
+	if pageInfo != nil {
+		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
+			var descFlag bool
+			switch pageInfo.SortOrder {
+			case "asc":
+				descFlag = true
+			default:
+				descFlag = false
+			}
+			order := &models.Order{By: pageInfo.SortName, Desc: descFlag}
+			filter.Order = []*models.Order{order}
+		} else {
+			order := &models.Order{By: "create_time", Desc: true}
+			filter.Order = []*models.Order{order}
+		}
+		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+			filter.Limit = &models.Limit_{Offset: uint64(pageInfo.GetPageOffset()), RowCount: uint64(pageInfo.GetPageSize())}
+		}
+	}
+
 	setQueryRep := &models.Query{
 		DatabaseName: dbName,
 		TableName:    tableName,
 		Command: &models.Command{
-			Type:  "get",
-			Field: []string{"lock_key", "lock_value", "lock_id", "expired_time", "upd_time", "delete_flag", "creator"},
+			Type:   "get",
+			Field:  []string{"lock_key", "lock_value", "lock_id", "expired_time", "upd_time", "delete_flag", "creator"},
+			Filter: filter,
 		},
 	}
+	var reply models.Reply
 	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
 		return nil, err
 	}
@@ -2335,8 +2400,8 @@ func (s *Service) ComputeClientToken(dbId, tableId int) string {
 	log.Info("compute client token %v", namespace)
 	encryptStr := createToken(namespace)
 	var buf bytes.Buffer
-	for i:=0; i< len(encryptStr)/4; i++ {
-		buf.WriteString(string(encryptStr[i * 4]))
+	for i := 0; i < len(encryptStr)/4; i++ {
+		buf.WriteString(string(encryptStr[i*4]))
 	}
 	return buf.String()
 }

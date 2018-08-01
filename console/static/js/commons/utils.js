@@ -1,6 +1,6 @@
-function hasText(text){
+function hasText(text) {
     var result = true;
-    if(typeof text == "undefined" || text == null || $.trim(text) == ""){
+    if (typeof text == "undefined" || text == null || $.trim(text) == "") {
         result = false;
     }
     return result;
@@ -36,4 +36,13 @@ function formatDate(date, format) {
     return format.replace(/([a-z])(\1)*/ig, function (m) {
         return cfg[m];
     });
+}
+
+function preId(id) {
+    return id.indexOf('#') == -1 ? '#' + id : id;
+}
+
+function parseIntById(id) {
+    var text = $(preId(id)).val();
+    return hasText(text) ? parseInt(text) : 1;
 }

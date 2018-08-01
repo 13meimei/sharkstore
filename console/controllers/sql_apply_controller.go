@@ -38,7 +38,21 @@ func (ctrl *SqlGetAllAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.NO_USER
 	}
 	log.Debug("user [%v] get sql apply list, isAdmin: %v", userName, isAdmin)
-	return service.NewService().GetAllSqlApply(userName, isAdmin)
+	pageInfo, err := common.GetPagerInfo(c)
+	if err != nil {
+		return nil, err
+	}
+	log.Info("page %v", pageInfo)
+	totalRecord, sqlApplyList, err := service.NewService().GetAllSqlApply(userName, isAdmin, pageInfo)
+	if err != nil {
+		log.Warn("get sql apply list error, %v", err)
+		return nil, err
+	}
+	pageData := new(PageData)
+	pageData.Total = totalRecord
+	pageData.Data = sqlApplyList
+	log.Info("get sql apply list, %v", pageData)
+	return pageData, nil
 }
 
 /**

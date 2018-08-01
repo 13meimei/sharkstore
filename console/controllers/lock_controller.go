@@ -22,9 +22,9 @@ const (
 	REQURI_LOCK_NAMESPACE_UPDATE = "/lock/namespace/update"
 	REQURI_LOCK_NAMESPACE_DELETE = "/lock/namespace/delete"
 	REQURI_LOCK_LOCK_GETALL      = "/lock/lock/queryList"
-	REQURI_LOCK_LOCK_FORCEUNLOCK      = "/lock/lock/forceUnLock"
+	REQURI_LOCK_LOCK_FORCEUNLOCK = "/lock/lock/forceUnLock"
 
-	REQURI_LOCK_CLIENT_TOKEN      = "/lock/client/getToken"
+	REQURI_LOCK_CLIENT_TOKEN = "/lock/client/getToken"
 )
 
 /**
@@ -44,7 +44,20 @@ func (ctrl *LockGetAllNspAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.NO_USER
 	}
 	log.Debug("user [%v] get lock namespace apply list, isAdmin: %v", userName, isAdmin)
-	return service.NewService().GetAllNamespace(userName, isAdmin)
+	pageInfo, err := common.GetPagerInfo(c)
+	if err != nil {
+		return nil, err
+	}
+	totalRecord, namespaceList, err := service.NewService().GetAllNamespace(userName, isAdmin, pageInfo)
+	if err != nil {
+		log.Warn("get namespace list error, %v", err)
+		return nil, err
+	}
+
+	pageData := new(PageData)
+	pageData.Total = totalRecord
+	pageData.Data = namespaceList
+	return pageData, nil
 }
 
 /**
@@ -220,7 +233,23 @@ func (ctrl *LockGetAllAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
 	log.Debug("get lock detail list: clusterId %v, dbName %v, tableName %v", cId, dbName, tableName)
-	return service.NewService().GetAllLock(cId, dbName, tableName)
+
+	pageInfo, err := common.GetPagerInfo(c)
+	if err != nil {
+		return nil, err
+	}
+	lockList, err := service.NewService().GetAllLock(cId, dbName, tableName, pageInfo)
+	if err != nil {
+		log.Warn("get namespace list error, %v", err)
+		return nil, err
+	}
+
+	pageData := new(PageData)
+	pageData.Total = len(lockList) //由于http方式不支持count，所以，只能迭代取
+	pageData.Data = lockList
+	pageData.PageIndex = pageInfo.PageIndex
+	pageData.PageSize = pageInfo.PageSize
+	return pageData, nil
 }
 
 /**
@@ -238,7 +267,7 @@ func (ctrl *LockForceUnLockAction) Execute(c *gin.Context) (interface{}, error) 
 	dbName := c.PostForm("dbName")
 	tableName := c.PostForm("tableName")
 	key := c.PostForm("key")
-	if "" == cIdStr || "" == dbName || "" == tableName || "" == key{
+	if "" == cIdStr || "" == dbName || "" == tableName || "" == key {
 		return nil, common.PARSE_PARAM_ERROR
 	}
 	cId, err := strconv.Atoi(cIdStr)
