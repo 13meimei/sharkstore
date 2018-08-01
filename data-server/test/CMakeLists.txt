@@ -8,6 +8,7 @@ set(test_helper_SRCS
     helper/helper_util.cpp
     helper/query_builder.cpp
     helper/query_parser.cpp
+    helper/range_test_fixture.cpp
     helper/store_test_fixture.cpp
     helper/table.cpp
 )
@@ -29,8 +30,8 @@ set(test_SRCS
     unittest/meta_store_unittest.cpp
     unittest/monitor_unittest.cpp
     unittest/range_ddl_unittest.cpp
-    unittest/range_dml_unittest.cpp
     unittest/range_raw_unittest.cpp
+    unittest/range_sql_unittest.cpp
     unittest/row_decoder_unittest.cpp
     unittest/status_unittest.cpp
     unittest/store_unittest.cpp
