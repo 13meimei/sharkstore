@@ -30,13 +30,16 @@ WatcherSet* WatchServer::GetWatcherSet_(const WatcherKey& key) {
 }
 
 WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr) {
-    FLOG_DEBUG("watch server add key watcher: session id [%" PRIu64 "]", w_ptr->GetWatcherId());
-    assert(w_ptr->GetType() == WATCH_KEY);
+    int64_t msgSessionId(w_ptr->GetWatcherId());
     std::string encode_key;
-
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto wset = GetWatcherSet_(encode_key);
+    w_ptr->SetWatcherId(wset->GenWatcherId());
+
+    FLOG_DEBUG("watch server ready to add key watcher: session id [%" PRIu64 "] watch_id[%" PRIu64 "] key:%s", msgSessionId, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
+    assert(w_ptr->GetType() == WATCH_KEY);
+
     return wset->AddKeyWatcher(encode_key, w_ptr);
 }
 
@@ -48,6 +51,7 @@ WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr) {
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
+    w_ptr->SetWatcherId(ws->GenWatcherId());
     return ws->AddPrefixWatcher(encode_key, w_ptr);
 }
 

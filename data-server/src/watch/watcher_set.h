@@ -19,7 +19,7 @@ namespace watch {
 
 typedef std::unordered_map<WatcherId, WatcherPtr> KeyWatcherMap;
 typedef struct WatcherValue_ {
-    uint16_t key_version_;
+    uint16_t key_version_{0};
     KeyWatcherMap mapKeyWatcher;
 }WatcherValue;
 //typedef std::unordered_map<Key, KeyWatcherMap*> WatcherMap;
@@ -76,6 +76,8 @@ private:
     PriorityQueue<WatcherPtr>   watcher_queue_;
     std::mutex              watcher_map_mutex_;
     std::mutex              watcher_queue_mutex_;
+    std::atomic<WatcherId>  watcher_id_ = {0};
+
 
     std::thread                     watcher_timer_;
     volatile bool                   watcher_timer_continue_flag_ = true;
@@ -85,6 +87,9 @@ private:
     WatchCode AddWatcher(const WatcherKey&, WatcherPtr&, WatcherMap&, KeyMap&);
     WatchCode DelWatcher(const WatcherKey&, WatcherId, WatcherMap&, KeyMap&);
     WatchCode GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey&, WatcherMap&);
+
+public:
+    WatcherId GenWatcherId() { return watcher_id_.fetch_add(1, std::memory_order_relaxed); }
 };
 
 

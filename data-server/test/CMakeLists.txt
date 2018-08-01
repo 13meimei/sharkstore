@@ -28,7 +28,7 @@ set (TESTS
     status_unittest.cpp
     store_unittest.cpp
     util_unittest.cpp
-    test_server_base.cpp
+#    test_server_base.cpp
 )
 
 foreach(testfile ${TESTS})

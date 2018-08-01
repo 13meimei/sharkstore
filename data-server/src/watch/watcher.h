@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <unordered_map>
+#include <atomic>
 
 #include "watch.h"
 #include "common/socket_session.h"
@@ -37,6 +38,7 @@ public:
     const std::vector<std::string*>& GetKeys() { return keys_; }
     common::ProtoMessage* GetMessage() { return message_; }
     int GetType() { return type_; }
+    void SetWatcherId(WatcherId id) { watcher_id_ = id; }
     WatcherId GetWatcherId() { return watcher_id_; }
     int64_t GetExpireTime() { return expire_time_; }
     bool IsSentResponse() {
