@@ -16,8 +16,8 @@ WatcherSet::WatcherSet() {
 
             // watcher queue is empty, sleep 10ms
             if (watcher_queue_.empty()) {
-//                watcher_expire_cond_.wait_for(lock, std::chrono::milliseconds(10));
-                watcher_expire_cond_.wait(lock);
+                watcher_expire_cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                //watcher_expire_cond_.wait(lock);
             }
 
             // find the first wait watcher

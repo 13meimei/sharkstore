@@ -18,8 +18,11 @@
 #include "range/range.h"
 
 #include "watch/watcher.h"
+#include "common/socket_base.h"
 
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
+
+
 
 int main(int argc, char *argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -31,6 +34,16 @@ char level[8] = "debug";
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
 using namespace sharkstore::dataserver::storage;
+
+class SocketBaseMock: public common::SocketBase {
+
+public:
+    virtual int Send(response_buff_t *response) {
+        FLOG_DEBUG("Send mock...%s", response->buff);
+        return 0;
+    }
+};
+
 
 std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf) {
     std::vector<std::string *> vec;
@@ -68,6 +81,11 @@ protected:
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
 
+        sf_socket_thread_config_t config;
+        sf_socket_status_t status = {0};
+
+        socket_.Init(&config, &status);
+
         range_server_ = new server::RangeServer;
 
         context_ = new server::ContextServer;
@@ -96,6 +114,7 @@ protected:
     server::ContextServer *context_;
     server::RangeServer *range_server_;
     int64_t now;
+    SocketBaseMock socket_;
 };
 
 metapb::Range *genRange1() {
@@ -608,6 +627,8 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
+
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -646,6 +667,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -686,6 +708,7 @@ TEST_F(WatchTest, watch) {
        //put first 
         msg1->expire_time = getticks() + 1000;
         msg1->session_id = 1;
+        msg1->socket = &socket_;
         watchpb::DsKvWatchPutRequest req1;
 
         req1.mutable_header()->set_range_id(2);
@@ -708,6 +731,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(2);
@@ -746,6 +770,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -1140,6 +1165,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(2);
@@ -1179,6 +1205,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -1222,6 +1249,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -1250,6 +1278,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -1281,6 +1310,7 @@ TEST_F(WatchTest, watch) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(2);

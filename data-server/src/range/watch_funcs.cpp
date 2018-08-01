@@ -103,7 +103,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     }
 
     //process watcher
-    if (true) {
+
 
         //add watch if client version is not equal to ds side
         auto clientVersion = req.req().startversion();
@@ -114,10 +114,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             msg->expire_time = expireTime;
         }
 
-        //decode version from value
-        //FLOG_DEBUG("range[%" PRIu64 "] (%" PRIu64 " >= %" PRIu64 "?) WatchGet [%s]-%s ok.",
-        //           meta_.id(), clientVersion, dbVersion, EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbValue).c_str());
-        if(uint64_t(clientVersion) >= dbVersion) {
+
+
             //to do add watch
             auto watch_server = context_->range_server->watch_server_;
             std::vector<watch::WatcherKey*> keys;
@@ -138,15 +136,11 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
                 context_->run_status->PushTime(monitor::PrintTag::Store,
                                                get_micro_second() - btime);
             } else {
-                FLOG_WARN("range[%" PRIu64 "] add watcher exception(%d).", meta_.id(), static_cast<int>(wcode));
+                FLOG_ERROR("range[%" PRIu64 "] add watcher exception(%d).", meta_.id(), static_cast<int>(wcode));
             }
             //watch_server->WatchServerUnlock(1);
-        }
-    }
 
-    context_->socket_session->SetResponseHeader(req.header(), header, err);
-    context_->socket_session->Send(msg, ds_resp);
-
+    w_ptr->Send(ds_resp);
     return;
 }
 
@@ -627,7 +621,8 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                        meta_.id(), key.c_str(), idx, uint32_t(watchCnt), w_id);
 
             if(w_id < 1) {
-                FLOG_WARN("range[%" PRIu64 "] WatchNotify warn: watch_id is invalid.", meta_.id());
+                FLOG_ERROR("range[%" PRIu64 "] WatchNotify warn: watch_id is invalid.", meta_.id());
+                free(w->GetMessage());
                 continue;
             }
 
@@ -644,7 +639,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 errMsg.assign("WatchNotify--Decode key:");
                 errMsg.append(dbKey);
                 errMsg.append(" fail.");
-
+                free(w->GetMessage());
                 return -1;
             }
 
@@ -653,8 +648,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
             resp->set_watchid(w_id);
 
-            context_->socket_session->Send(w->GetMessage(), ds_resp);
-            //w->Send(ds_resp);
+            w->Send(ds_resp);
             {
                 //delete watch
                 watch::WatchCode del_ret;
