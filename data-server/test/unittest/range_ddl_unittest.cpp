@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
-#include "cpp_permission.h"
-
 #include <fastcommon/shared_func.h>
+#include "helper/cpp_permission.h"
 
 #include "base/status.h"
 #include "base/util.h"
@@ -11,11 +10,10 @@
 #include "server/range_server.h"
 #include "server/run_status.h"
 #include "storage/store.h"
-
 #include "proto/gen/schpb.pb.h"
 
-#include "raft_server_mock.h"
-#include "socket_session_mock.h"
+#include "helper/mock/raft_server_mock.h"
+#include "helper/mock/socket_session_mock.h"
 
 int main(int argc, char *argv[]) {
     testing::InitGoogleTest(&argc, argv);

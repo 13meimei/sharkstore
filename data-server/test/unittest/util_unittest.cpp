@@ -15,17 +15,50 @@ namespace {
 
 using namespace sharkstore;
 
-TEST(STATUS, Basic) {
-    int times = 100;
+TEST(Util, Hex) {
+    std::string str;
+    for (int i = 0; i <= 0xFF; ++i) {
+        str.push_back(static_cast<char>(i));
+    }
+    std::string expected_hex;
+    for (int i = 0; i <= 0xFF; ++i) {
+        char buf[3];
+        snprintf(buf, 3, "%02X", static_cast<unsigned char>(i));
+        expected_hex.append(buf, 2);
+    }
+    std::string hex = EncodeToHex(str);
+    ASSERT_EQ(hex, expected_hex);
+    std::cout << "hex: " << hex << std::endl;
 
+    std::string decoded_str;
+    auto ret = DecodeFromHex(hex, &decoded_str);
+    ASSERT_TRUE(ret);
+    ASSERT_EQ(decoded_str, str);
+
+    ret = DecodeFromHex(hex + "a", &decoded_str);
+    ASSERT_FALSE(ret);
+
+    ret = DecodeFromHex(hex, nullptr);
+    ASSERT_FALSE(ret);
+
+    for (int i = 0; i < 100; ++i) {
+        std::string str = randomString(randomInt() % 100 + 100);
+        std::string hex = EncodeToHex(str);
+        std::string str2;
+        auto ret = DecodeFromHex(hex, &str2);
+        ASSERT_EQ(str2, str);
+    }
+}
+
+
+TEST(Util, SliceSeparate) {
+    int times = 50;
     int err = 0;
     while (times--) {
         std::string pre = randomString(randomInt() % 10 + 10);
         std::vector<std::string> keys;
 
-        int len = randomInt() % 10000;
-        if (len < 4) continue;
-
+        int len = 4 + randomInt() % 100;
         for (int i=0; i<len; i++) {
             keys.push_back(pre+randomString(randomInt() % 500));
         }
@@ -48,8 +81,6 @@ TEST(STATUS, Basic) {
                 break;
             }
         }
-
-
         ASSERT_GE(sp, sk) << "\nsk:" << sk << "\nlk:" << lk << "\nrk:" << rk << "\nek:" << ek << std::endl;
         ASSERT_LE(sp, ek) << "\nsk:" << sk << "\nlk:" << lk << "\nrk:" << rk << "\nek:" << ek << std::endl;
     }

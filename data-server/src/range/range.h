@@ -65,7 +65,6 @@ public:
     Status Apply(const std::string &cmd, uint64_t index) override;
     Status ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) override;
 
-    // TODO:
     void OnReplicateError(const std::string &cmd, const Status &status) override {};
 
     void OnLeaderChange(uint64_t leader, uint64_t term) override;
@@ -305,7 +304,7 @@ public:
     void ResetStatisSize();
     void Heartbeat();
 
-    Status Truncate();
+    Status Destroy();
 
     // get private member
 public:

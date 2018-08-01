@@ -1,24 +1,21 @@
 #include <gtest/gtest.h>
-#include "cpp_permission.h"
-
 #include <fastcommon/shared_func.h>
 
-#include "frame/sf_util.h"
+#include "helper/cpp_permission.h"
 
+#include "frame/sf_util.h"
 #include "base/status.h"
 #include "base/util.h"
-
 #include "common/ds_config.h"
-#include "socket_session_mock.h"
-#include "raft_server_mock.h"
-
 #include "range/range.h"
 #include "storage/store.h"
 #include "server/range_server.h"
 #include "server/run_status.h"
-
 #include "proto/gen/schpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
+
+#include "helper/mock/socket_session_mock.h"
+#include "helper/mock/raft_server_mock.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -36,8 +33,8 @@ protected:
         log_init2();
         set_log_level(level);
 
-        strcpy(ds_config.db_path, "/tmp/sharkstore_ds_store_test_");
-        strcat(ds_config.db_path, std::to_string(getticks()).c_str());
+        strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
+        strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
 
         range_server_ = new server::RangeServer;
 
@@ -53,7 +50,7 @@ protected:
     }
 
     void TearDown() override {
-        DestroyDB(ds_config.db_path, rocksdb::Options());
+        DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
 
         delete context_->range_server;
         delete context_->socket_session;
@@ -124,8 +121,8 @@ TEST_F(RawTest, Raw) {
 
         ASSERT_TRUE(range_server_->find(1) != nullptr);
 
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 1) << metas.size();
         //end test create range
@@ -146,8 +143,8 @@ TEST_F(RawTest, Raw) {
 
         ASSERT_TRUE(range_server_->find(2) != nullptr);
 
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 2) << metas.size();
         //end test create range
@@ -158,7 +155,7 @@ TEST_F(RawTest, Raw) {
         //begin test insert (no leader)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvInsertRequest req;
+        kvrpcpb::DsInsertRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -180,7 +177,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Insert(msg);
 
-        kvrpcpb::DsKvInsertResponse resp;
+        kvrpcpb::DsInsertResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -198,11 +195,11 @@ TEST_F(RawTest, Raw) {
         //set leader
         auto raft = static_cast<RaftMock*> (range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 2;
-        range_server_->ranges_[1]->is_leader = false;
+        range_server_->ranges_[1]->is_leader_ = false;
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvInsertRequest req;
+        kvrpcpb::DsInsertRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -225,7 +222,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Insert(msg);
 
-        kvrpcpb::DsKvInsertResponse resp;
+        kvrpcpb::DsInsertResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -243,11 +240,11 @@ TEST_F(RawTest, Raw) {
         //set leader
         auto raft = static_cast<RaftMock*> (range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 1;
-        range_server_->ranges_[1]->is_leader = true;
+        range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvInsertRequest req;
+        kvrpcpb::DsInsertRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -285,11 +282,11 @@ TEST_F(RawTest, Raw) {
         //set leader
         auto raft = static_cast<RaftMock*> (range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 1;
-        range_server_->ranges_[1]->is_leader = true;
+        range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvInsertRequest req;
+        kvrpcpb::DsInsertRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -311,7 +308,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Insert(msg);
 
-        kvrpcpb::DsKvInsertResponse resp;
+        kvrpcpb::DsInsertResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -327,11 +324,11 @@ TEST_F(RawTest, Raw) {
         //set leader
         auto raft = static_cast<RaftMock*> (range_server_->ranges_[2]->raft_.get());
         raft->ops_.leader = 1;
-        range_server_->ranges_[2]->is_leader = true;
+        range_server_->ranges_[2]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvInsertRequest req;
+        kvrpcpb::DsInsertRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -353,7 +350,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Insert(msg);
 
-        kvrpcpb::DsKvInsertResponse resp;
+        kvrpcpb::DsInsertResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -367,7 +364,7 @@ TEST_F(RawTest, Raw) {
         //begin test select(ok key query)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvSelectRequest req;
+        kvrpcpb::DsSelectRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -381,7 +378,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Select(msg);
 
-        kvrpcpb::DsKvSelectResponse resp;
+        kvrpcpb::DsSelectResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -396,7 +393,7 @@ TEST_F(RawTest, Raw) {
         //begin test select(ok scope query)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvSelectRequest req;
+        kvrpcpb::DsSelectRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -411,7 +408,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Select(msg);
 
-        kvrpcpb::DsKvSelectResponse resp;
+        kvrpcpb::DsSelectResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -427,11 +424,11 @@ TEST_F(RawTest, Raw) {
         //set leader
         auto raft = static_cast<RaftMock*> (range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 0;
-        range_server_->ranges_[1]->is_leader = false;
+        range_server_->ranges_[1]->is_leader_ = false;
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvSelectRequest req;
+        kvrpcpb::DsSelectRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -445,7 +442,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Select(msg);
 
-        kvrpcpb::DsKvSelectResponse resp;
+        kvrpcpb::DsSelectResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -463,11 +460,11 @@ TEST_F(RawTest, Raw) {
         //set leader
         auto raft = static_cast<RaftMock*> (range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 2;
-        range_server_->ranges_[1]->is_leader = true;
+        range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvSelectRequest req;
+        kvrpcpb::DsSelectRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -481,7 +478,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Select(msg);
 
-        kvrpcpb::DsKvSelectResponse resp;
+        kvrpcpb::DsSelectResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -499,7 +496,7 @@ TEST_F(RawTest, Raw) {
         //set leader
         auto raft = static_cast<RaftMock*> (range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 1;
-        range_server_->ranges_[1]->is_leader = true;
+        range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
@@ -517,7 +514,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Select(msg);
 
-        kvrpcpb::DsKvSelectResponse resp;
+        kvrpcpb::DsSelectResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -535,18 +532,18 @@ TEST_F(RawTest, Raw) {
         {
             auto raft = static_cast<RaftMock*> (range_server_->ranges_[1]->raft_.get());
             raft->ops_.leader = 1;
-            range_server_->ranges_[1]->is_leader = true;
+            range_server_->ranges_[1]->is_leader_ = true;
         }
 
         {
             auto raft = static_cast<RaftMock*> (range_server_->ranges_[2]->raft_.get());
             raft->ops_.leader = 1;
-            range_server_->ranges_[2]->is_leader = true;
+            range_server_->ranges_[2]->is_leader_ = true;
         }
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvSelectRequest req;
+        kvrpcpb::DsSelectRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -560,7 +557,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Select(msg);
 
-        kvrpcpb::DsKvSelectResponse resp;
+        kvrpcpb::DsSelectResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -574,7 +571,7 @@ TEST_F(RawTest, Raw) {
         //begin test select(scope query stale epoch)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvSelectRequest req;
+        kvrpcpb::DsSelectRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -589,7 +586,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Select(msg);
 
-        kvrpcpb::DsKvSelectResponse resp;
+        kvrpcpb::DsSelectResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -607,18 +604,18 @@ TEST_F(RawTest, Raw) {
         {
             auto raft = static_cast<RaftMock*> (range_server_->ranges_[1]->raft_.get());
             raft->ops_.leader = 1;
-            range_server_->ranges_[1]->is_leader = true;
+            range_server_->ranges_[1]->is_leader_ = true;
         }
 
         {
             auto raft = static_cast<RaftMock*> (range_server_->ranges_[2]->raft_.get());
             raft->ops_.leader = 1;
-            range_server_->ranges_[2]->is_leader = true;
+            range_server_->ranges_[2]->is_leader_ = true;
         }
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsKvSelectRequest req;
+        kvrpcpb::DsSelectRequest req;
 
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
@@ -632,7 +629,7 @@ TEST_F(RawTest, Raw) {
 
         range_server_->Select(msg);
 
-        kvrpcpb::DsKvSelectResponse resp;
+        kvrpcpb::DsSelectResponse resp;
         auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
@@ -972,8 +969,8 @@ TEST_F(RawTest, Raw) {
         ASSERT_FALSE(resp.header().has_error());
 
         //test meta_store
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 1) << metas.size();
         //end test delete range
@@ -998,8 +995,8 @@ TEST_F(RawTest, Raw) {
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         //test meta_store
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
         ASSERT_TRUE(metas.size() == 0) << metas.size();
         //end test delete range
     }

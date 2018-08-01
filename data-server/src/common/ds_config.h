@@ -94,6 +94,7 @@ extern "C" {
 int load_from_conf_file(IniContext *ini_context, const char *filename);
 
 void print_rocksdb_config();
+void print_raft_config();
 
 #ifdef __cplusplus
 }

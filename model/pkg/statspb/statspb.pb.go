@@ -40,12 +40,13 @@ import (
 	"math"
 
 	proto "github.com/golang/protobuf/proto"
+
+	_ "github.com/gogo/protobuf/gogoproto"
+
+	mspb "model/pkg/mspb"
+
+	binary "encoding/binary"
 )
-
-import _ "github.com/gogo/protobuf/gogoproto"
-import mspb "model/pkg/mspb"
-
-import binary "encoding/binary"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal

@@ -87,6 +87,19 @@ TEST_F(StorageTest, LogEntry) {
     s = storage_->LastIndex(&index);
     ASSERT_EQ(index, 99);
 
+    // 一条一条取
+    for (uint64_t index = lo; index < hi; ++index) {
+        std::vector<EntryPtr> ents;
+        bool compacted = false;
+        s = storage_->Entries(index, index + 1, std::numeric_limits<uint64_t>::max(),
+                &ents, &compacted);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(compacted);
+        ASSERT_EQ(ents.size(), 1);
+        s = Equal(ents[0], to_writes[index-lo]);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
     // 读取全部
     std::vector<EntryPtr> ents;
     bool compacted = false;

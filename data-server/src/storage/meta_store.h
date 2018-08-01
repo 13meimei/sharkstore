@@ -22,7 +22,7 @@ public:
     explicit MetaStore(const std::string& path);
     ~MetaStore();
 
-    Status Open();
+    Status Open(bool read_only = false);
 
     MetaStore(const MetaStore&) = delete;
     MetaStore& operator=(const MetaStore&) = delete;
@@ -32,6 +32,7 @@ public:
     Status GetNodeID(uint64_t* node_id);
 
     Status GetAllRange(std::vector<metapb::Range>* range_metas);
+    Status GetRange(uint64_t range_id, metapb::Range* meta);
     Status AddRange(const metapb::Range& meta);
     Status BatchAddRange(const std::vector<metapb::Range>& range_metas);
     Status DelRange(uint64_t range_id);

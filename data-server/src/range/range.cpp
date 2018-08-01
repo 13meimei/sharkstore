@@ -35,6 +35,15 @@ Status Range::Initialize(uint64_t leader, bool from_split) {
         return Status(Status::kCorruption, "load applied", s.ToString());
     }
 
+    // set apply index = 1 (1 means the split operation)
+    if (from_split && apply_index_ == 0) {
+        apply_index_ = 1;
+        s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
+        if (!s.ok()) {
+            return Status(Status::kCorruption, "save applied", s.ToString());
+        }
+    }
+
     // 初始化raft
     raft::RaftOptions options;
     options.id = id_;
@@ -375,8 +384,19 @@ bool Range::SaveMeta(const metapb::Range &meta) {
     return true;
 }
 
-Status Range::Truncate() {
-    auto s = store_->Truncate();
+Status Range::Destroy() {
+    valid_ = false;
+
+    ClearExpiredContext();
+
+    // 销毁raft
+    auto s = context_->raft_server->DestroyRaft(id_);
+    if (!s.ok()) {
+        FLOG_WARN("range[%" PRIu64 "] destroy raft failed: %s", id_, s.ToString().c_str());
+    }
+    raft_.reset();
+
+    s = store_->Truncate();
     if (!s.ok()) {
         FLOG_ERROR("Range %" PRIu64 " truncate store fail: %s", id_, s.ToString().c_str());
         return s;

@@ -148,7 +148,9 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
     assert(r != nullptr);
     {
         std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);
-        all_rafts_.emplace(ops.id, r);
+        auto it = all_rafts_.emplace(ops.id, r);
+        assert(it.second);
+        (void)it;
         creating_rafts_.erase(ops.id);
     }
     *raft = std::static_pointer_cast<Raft>(r);
@@ -156,8 +158,8 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
     return Status::OK();
 }
 
-Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
-    LOG_WARN("remove raft[%lu]. backup=%d", id, backup);
+Status RaftServerImpl::RemoveRaft(uint64_t id) {
+    LOG_WARN("remove raft[%lu]", id);
 
     std::shared_ptr<RaftImpl> r;
     {
@@ -168,7 +170,36 @@ Status RaftServerImpl::RemoveRaft(uint64_t id, bool backup) {
             r->Stop();
             all_rafts_.erase(it);
         } else {
-            return Status(Status::kNotFound, "remove raft", std::to_string(id));
+            auto it_cr = creating_rafts_.find(id);
+            if (it_cr != creating_rafts_.end()) { // in creating
+                return Status(Status::kBusy, "remove raft", "raft is in creating");
+            } else {
+                return Status(Status::kNotFound, "remove raft", std::to_string(id));
+            }
+        }
+    }
+
+    return Status::OK();
+}
+
+Status RaftServerImpl::DestroyRaft(uint64_t id, bool backup) {
+    LOG_WARN("destory raft[%lu]. backup=%d", id, backup);
+
+    std::shared_ptr<RaftImpl> r;
+    {
+        std::unique_lock<sharkstore::shared_mutex> lock(rafts_mu_);
+        auto it = all_rafts_.find(id);
+        if (it != all_rafts_.end()) {
+            r = it->second;
+            r->Stop();
+            all_rafts_.erase(it);
+        } else {
+            auto it_cr = creating_rafts_.find(id);
+            if (it_cr != creating_rafts_.end()) { // in creating
+                return Status(Status::kBusy, "destory raft", "raft is in creating");
+            } else {
+                return Status(Status::kNotFound, "destory raft", std::to_string(id));
+            }
         }
     }
 

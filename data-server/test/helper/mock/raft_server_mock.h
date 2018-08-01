@@ -13,7 +13,9 @@ public:
 
     virtual Status CreateRaft(const RaftOptions&, std::shared_ptr<Raft>* raft);
 
-    virtual Status RemoveRaft(uint64_t id, bool bakup) { return Status::OK(); }
+    virtual Status RemoveRaft(uint64_t id) override { return Status::OK(); }
+
+    virtual Status DestroyRaft(uint64_t id, bool backup) override { return Status::OK(); }
 
     virtual std::shared_ptr<Raft> FindRaft(uint64_t id) const {
         return std::shared_ptr<Raft>(nullptr);
