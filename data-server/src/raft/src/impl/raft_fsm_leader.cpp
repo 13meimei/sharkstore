@@ -317,9 +317,8 @@ void RaftFsm::appendEntry(const std::vector<EntryPtr>& ents) {
 
 static uint64_t unixNano() {
     auto now = std::chrono::system_clock::now();
-    return std::chrono::time_point_cast<std::chrono::nanoseconds>(now)
-        .time_since_epoch()
-        .count();
+    auto count = std::chrono::time_point_cast<std::chrono::nanoseconds>(now).time_since_epoch().count();
+    return static_cast<uint64_t>(count);
 }
 
 std::shared_ptr<SendSnapTask> RaftFsm::newSendSnapTask(uint64_t to,
