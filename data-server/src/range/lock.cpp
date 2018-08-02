@@ -103,7 +103,7 @@ kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
     ret->set_id(lock_id);
     ret->set_delete_time(expired_time);
     ret->set_update_time(update_time);
-    ret->set_delete_flag(delete_flag ? true : false);
+    ret->set_delete_flag(delete_flag);
     ret->set_by(creator);
 
     if (ret->delete_time() > 0 && ret->delete_time() <= getticks()) {
@@ -218,7 +218,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
         const std::string& lock_id = req.value().id();
         int64_t expired_time = req.value().delete_time();
         int64_t update_time = req.value().update_time();
-        int64_t delete_flag = req.value().delete_flag() ? 1 : 0;
+        int64_t delete_flag = req.value().delete_flag();
         const std::string& creator = req.value().by();
 
         lock::EncodeValue(&value_buf,
@@ -352,7 +352,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         const std::string& lock_id = val->id();
         int64_t expired_time = val->delete_time();
         int64_t update_time = val->update_time();
-        int64_t delete_flag = val->delete_flag() ? 1 : 0;
+        int64_t delete_flag = val->delete_flag();
         const std::string& creator = req.by();
 
         lock::EncodeValue(&value_buf,
@@ -565,7 +565,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         // do not really delete until the deleted time
-        val->set_delete_flag(true);
+        val->set_delete_flag(1);
 
 
         std::string value_buf;
@@ -573,7 +573,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         const std::string& lock_id = val->id();
         int64_t expired_time = val->delete_time();
         int64_t update_time = val->update_time();
-        int64_t delete_flag = val->delete_flag() ? 1 : 0;
+        int64_t delete_flag = val->delete_flag();
         const std::string& creator = req.by();
 
         lock::EncodeValue(&value_buf,
