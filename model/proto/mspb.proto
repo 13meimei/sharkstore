@@ -74,12 +74,12 @@ message RangeHeartbeatRequest {
     metapb.Range range                    = 2;
     // leader
     metapb.Peer leader                    = 3;
-    // leader term
-    uint64 term                           = 4;
-    // replica status
-    repeated PeerStatus peers_status      = 5;
     // range metric stats
     RangeStats stats                      = 6;
+    // leader term
+    uint64 term                           = 7;
+    // replica status
+    repeated PeerStatus peers_status      = 8;
 }
 
 message RangeHeartbeatResponse {

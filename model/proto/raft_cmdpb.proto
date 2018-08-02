@@ -102,8 +102,8 @@ message Command {
     kvrpcpb.KvBatchDeleteRequest    kv_batch_del_req         = 18;
     kvrpcpb.KvRangeDeleteRequest    kv_range_del_req         = 19;
 	  
-	  watchpb.KvWatchPutRequest       kv_watch_put_req         = 20;
-	  watchpb.KvWatchDeleteRequest    kv_watch_del_req         = 21;
+	watchpb.KvWatchPutRequest       kv_watch_put_req         = 20;
+	watchpb.KvWatchDeleteRequest    kv_watch_del_req         = 21;
 	  
     SplitRequest                      admin_split_req        = 30;
     MergeRequest                      admin_merge_req        = 31;

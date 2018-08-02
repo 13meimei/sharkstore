@@ -7,6 +7,7 @@ _Pragma("once");
 #include <rocksdb/db.h>
 
 #include "base/status.h"
+#include "proto/gen/metapb.pb.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -22,7 +23,7 @@ public:
     explicit MetaStore(const std::string& path);
     ~MetaStore();
 
-    Status Open();
+    Status Open(bool read_only = false);
 
     MetaStore(const MetaStore&) = delete;
     MetaStore& operator=(const MetaStore&) = delete;
@@ -34,11 +35,11 @@ public:
     Status SaveVersionID(const uint64_t &range_id, uint64_t ver_id);
     Status GetVersionID(const uint64_t &range_id, uint64_t* ver_id);
 
-    Status GetAllRange(std::vector<std::string>& meta_ranges);
-    Status AddRange(uint64_t range_id, std::string& meta);
+    Status GetAllRange(std::vector<metapb::Range>* range_metas);
+    Status GetRange(uint64_t range_id, metapb::Range* meta);
+    Status AddRange(const metapb::Range& meta);
+    Status BatchAddRange(const std::vector<metapb::Range>& range_metas);
     Status DelRange(uint64_t range_id);
-
-    Status BatchAddRange(std::map<uint64_t, std::string> ranges);
 
     Status SaveApplyIndex(uint64_t range_id, uint64_t apply_index);
     Status LoadApplyIndex(uint64_t range_id, uint64_t* apply_index);

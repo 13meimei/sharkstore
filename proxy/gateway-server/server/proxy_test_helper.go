@@ -19,11 +19,19 @@ import (
 	"proxy/store/dskv/mock_ds"
 
 	"golang.org/x/net/context"
+	"util/deepcopy"
+	"os"
+	"util/log"
 )
 
 const testDBName = "testdb"
 const testTableName = "testTable"
-const dsPath = "/tmp/data"
+const dsPath = "/tmp/sharkstore/data"
+const logPath = "/tmp/sharkstore/logs"
+
+var MockDs *mock_ds.DsRpcServer
+var MockMs *mock_ms.Cluster
+
 
 type columnInfo struct {
 	name       string
@@ -47,7 +55,8 @@ func bytesPrefix(prefix []byte) ([]byte, []byte) {
 }
 
 // 创建一个只处理一个表的Proxy
-func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng *metapb.Range) *Proxy {
+func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) *Proxy {
+	rng :=deepcopy.Iface(rng_).(*metapb.Range)
 	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
 	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
 	ms.SetDb(db)
@@ -55,10 +64,12 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng *metapb.Range) *
 	ms.SetNode(node)
 	ms.SetRange(rng)
 	go ms.Start()
+	MockMs = ms
 	time.Sleep(time.Second)
 	ds := mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
 	ds.SetRange(rng)
 	go ds.Start()
+	MockDs = ds
 	time.Sleep(time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -100,30 +111,81 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng *metapb.Range) *
 	return p
 }
 
-//func newDsTestProxy(columns []*columnInfo, ranges []*util.Range) *Proxy {
-//	table := makeTestTable(columns)
-//
-//	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-//	port := uint16(rnd.Intn(5000) + 18000)
-//
-//	mc := gmock.NewMasterCli(table, ranges, port)
-//	dc := client.NewRPCClient()
-//
-//	ctx, cancel := context.WithCancel(context.Background())
-//	p := &Proxy{
-//		msCli:   mc,
-//		dsCli:   dc,
-//		router:  NewRouter(mc),
-//		config: &Config{MaxLimit: DefaultMaxRawCount,
-//			GrpcInitWinSize: 1024 * 1024 * 10,
-//			GrpcPoolSize:    1,
-//		},
-//		clock:      hlc.NewClock(hlc.UnixNano, 0),
-//		ctx:        ctx,
-//		cancel:     cancel,
-//	}
-//	return p
-//}
+func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs... *metapb.Range) *Proxy {
+	log.Info("create Test Proxy2")
+	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
+	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
+	ms.SetDb(db)
+	ms.SetTable(table)
+	ms.SetNode(node)
+	for _,rng := range rngs {
+		rng :=deepcopy.Iface(rng).(*metapb.Range)
+		ms.SetRange(rng)
+	}
+
+	go ms.Start()
+	MockMs = ms
+	time.Sleep(time.Second)
+	destoryDir(dsPath)
+	ds := mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
+	for _,rng := range rngs {
+		rng :=deepcopy.Iface(rng).(*metapb.Range)
+		ds.SetRange(rng)
+	}
+	go ds.Start()
+	MockDs = ds
+	time.Sleep(time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	var taskQueues []chan Task
+	for i := 0; i < int(1); i++ {
+		queue := make(chan Task, 1)
+		taskQueues = append(taskQueues, queue)
+	}
+	cli, err := msClient.NewClient([]string{"127.0.0.1:8887"})
+	if err != nil {
+		return nil
+	}
+	p := &Proxy{
+		msCli:   cli,
+		dsCli:   dsClient.NewRPCClient(),
+		router:  NewRouter(cli),
+		config: &Config{MaxLimit: DefaultMaxRawCount,
+			Performance: PerformConfig{
+				GrpcInitWinSize: 1024 * 1024 * 10,
+				GrpcPoolSize:    1,
+			},
+		},
+		clock:      hlc.NewClock(hlc.UnixNano, 0),
+		ctx:        ctx,
+		cancel:     cancel,
+
+		maxWorkNum: 1,
+		taskQueues: taskQueues, // XXX otherwise insert submit devide 0 panic
+		workRecover: make(chan int, 1), // insert task wait need this
+	}
+
+	// task wait need workMonitor
+	for i, queue := range taskQueues {
+		p.wg.Add(1)
+		go p.work(i, queue)
+	}
+	p.wg.Add(1)
+	go p.workMonitor()
+	return p
+}
+func destoryDir(path string) {
+	os.RemoveAll(path)
+}
+
+func CloseMock(p *Proxy){
+	//p.msCli.Close()
+	//p.dsCli.Close()
+	//time.Sleep(time.Second*30)
+	//MockDs.Stop()
+	//MockMs.Stop()
+
+}
 
 func makeTestTable(colInfos []*columnInfo) *metapb.Table {
 	columns := make([]*metapb.Column, 0, len(colInfos))

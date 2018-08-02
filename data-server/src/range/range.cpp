@@ -19,34 +19,47 @@ static const int kDownPeerThresholdSecs = 50;
 static const uint64_t kStopWriteFsUsagePercent = 92;
 
 Range::Range(server::ContextServer *context, const metapb::Range &meta)
-    : context_(context), meta_(meta) {
-    node_id_ = context->node_id;
-
+    : context_(context),
+      node_id_(context_->node_id),
+      id_(meta.id()),
+      meta_(meta) {
     store_ = new storage::Store(meta, context->rocks_db);
     version_seq_ = new sharkstore::IdGenerater(meta_.id(), DEFAULT_CACHE_SIZE, context->meta_store);
 }
 
 Range::~Range() { delete store_; }
 
-Status Range::Initialize(range_status_t *status, uint64_t leader) {
+Status Range::Initialize(uint64_t leader, bool from_split) {
     // 加载apply位置
-    auto s = context_->meta_store->LoadApplyIndex(meta_.id(), &apply_index_);
+    auto s = context_->meta_store->LoadApplyIndex(id_, &apply_index_);
     if (!s.ok()) {
         return Status(Status::kCorruption, "load applied", s.ToString());
     }
 
+    // set apply index = 1 (1 means the split operation)
+    if (from_split && apply_index_ == 0) {
+        apply_index_ = 1;
+        s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
+        if (!s.ok()) {
+            return Status(Status::kCorruption, "save applied", s.ToString());
+        }
+    }
+
     // 初始化raft
     raft::RaftOptions options;
-    options.id = meta_.id();
+    options.id = id_;
     options.leader = leader;
     options.applied = apply_index_;
     options.statemachine = shared_from_this();
     options.log_file_size = ds_config.raft_config.log_file_size;
     options.max_log_files = ds_config.raft_config.max_log_files;
-    options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt;
+    options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt > 0;
+    if (from_split) {
+        options.create_with_hole = true;
+    }
     options.storage_path = JoinFilePath(std::vector<std::string>{
         std::string(ds_config.raft_config.log_path), std::to_string(meta_.table_id()),
-        std::to_string(meta_.id())});
+        std::to_string(id_)});
     // meta_.peers
     // 有可能有多个，如果该range的副本数量在master上有多个，通过该字段下发已经有的副本
     const auto &peers = meta_.peers();
@@ -63,7 +76,6 @@ Status Range::Initialize(range_status_t *status, uint64_t leader) {
         options.term = 1;
     }
 
-    range_status_ = status;
     // create raft group
     s = context_->raft_server->CreateRaft(options, &raft_);
     if (!s.ok()) {
@@ -81,12 +93,10 @@ Status Range::Shutdown() {
     valid_ = false;
 
     // 删除raft
-    auto s = context_->raft_server->RemoveRaft(meta_.id());
+    auto s = context_->raft_server->RemoveRaft(id_);
     if (!s.ok()) {
-        FLOG_WARN("range[%" PRIu64 "] remove raft failed: %s", meta_.id(),
-                  s.ToString().c_str());
+        FLOG_WARN("range[%" PRIu64 "] remove raft failed: %s", id_, s.ToString().c_str());
     }
-
     raft_.reset();
 
     ClearExpiredContext();
@@ -95,8 +105,7 @@ Status Range::Shutdown() {
 
 void Range::Heartbeat() {
     if (PushHeartBeatMessage()) {
-        context_->range_server->LeaderQueuePush(
-            meta_.id(), ds_config.hb_config.range_interval * 1000 + getticks());
+        context_->range_server->LeaderQueuePush(id_, ds_config.hb_config.range_interval * 1000 + getticks());
     }
 
     // clear async apply expired task
@@ -110,7 +119,7 @@ bool Range::PushHeartBeatMessage() {
 
     FLOG_DEBUG("range[%" PRIu64 "] heartbeat. epoch[%" PRIu64 " : %" PRIu64
                "], key range[%s - %s]",
-               meta_.id(), meta_.range_epoch().version(), meta_.range_epoch().conf_ver(),
+               id_, meta_.range_epoch().version(), meta_.range_epoch().conf_ver(),
                EncodeToHexString(meta_.start_key()).c_str(),
                EncodeToHexString(meta_.end_key()).c_str());
 
@@ -125,8 +134,7 @@ bool Range::PushHeartBeatMessage() {
     // 设置leader
     auto leader_peer = req.mutable_leader();
     if (!FindPeerByNodeID(node_id_, leader_peer)) {
-        FLOG_ERROR("range[%" PRIu64 "] heartbeat not found leader: %" PRIu64, meta_.id(),
-                   node_id_);
+        FLOG_ERROR("range[%" PRIu64 "] heartbeat not found leader: %" PRIu64, id_, node_id_);
         return false;
     }
 
@@ -134,7 +142,7 @@ bool Range::PushHeartBeatMessage() {
     raft_->GetStatus(&rs);
     if (rs.leader != node_id_) {
         FLOG_ERROR("range[%" PRIu64 "] heartbeat raft say not leader, leader=%" PRIu64,
-                   meta_.id(), rs.leader);
+                   id_, rs.leader);
         return false;
     }
     // 设置leader term
@@ -146,7 +154,7 @@ bool Range::PushHeartBeatMessage() {
         auto peer = peer_status->mutable_peer();
         if (!FindPeerByNodeID(pr.first, peer)) {
             FLOG_ERROR("range[%" PRIu64 "] heartbeat not found peer: %" PRIu64,
-                       meta_.id(), pr.first);
+                       id_, pr.first);
             continue;
         }
 
@@ -213,8 +221,7 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
         case raft_cmdpb::CmdType::KvWatchDel:
             return ApplyWatchDel(cmd);
         default:
-            FLOG_ERROR("range[%" PRIu64 "] Apply cmd type error %s", meta_.id(),
-                       CmdType_Name(cmd.cmd_type()).c_str());
+            FLOG_ERROR("range[%" PRIu64 "] Apply cmd type error %s", id_, CmdType_Name(cmd.cmd_type()).c_str());
             return Status(Status::kNotSupported, "cmd type not supported", "");
     }
 }
@@ -226,7 +233,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     context_->socket_session->GetMessage(cmd.data(), cmd.size(), &raft_cmd);
 
     if (!valid_) {
-        FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
+        FLOG_ERROR("range[%" PRIu64 "] is invalid!", id_);
         DelContext(raft_cmd.cmd_id().seq());
         return Status(Status::kInvalid, "range is invalid", "");
     }
@@ -246,10 +253,9 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     }
 
     apply_index_ = index;
-    auto s = context_->meta_store->SaveApplyIndex(meta_.id(), apply_index_);
+    auto s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
     if (!s.ok()) {
-        FLOG_ERROR("range[%" PRIu64 "] save apply index error %s", meta_.id(),
-                   s.ToString().c_str());
+        FLOG_ERROR("range[%" PRIu64 "] save apply index error %s", id_, s.ToString().c_str());
         return s;
     }
 
@@ -257,7 +263,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     auto elapsed_usec =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     if (elapsed_usec > kTimeTakeWarnThresoldUSec) {
-        FLOG_WARN("range[%lu] apply takes too long(%ld ms), type: %s.", meta_.id(),
+        FLOG_WARN("range[%lu] apply takes too long(%ld ms), type: %s.", id_,
                   elapsed_usec / 1000,
                   raft_cmdpb::CmdType_Name(raft_cmd.cmd_type()).c_str());
     }
@@ -279,10 +285,10 @@ Status Range::Submit(const raft_cmdpb::Command &cmd) {
 }
 
 void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
-    FLOG_INFO("range[%" PRIu64 "] Leader Change to Node %" PRIu64, meta_.id(), leader);
+    FLOG_INFO("range[%" PRIu64 "] Leader Change to Node %" PRIu64, id_, leader);
 
     if (!valid_) {
-        FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
+        FLOG_ERROR("range[%" PRIu64 "] is invalid!", id_);
         return;
     }
 
@@ -292,20 +298,14 @@ void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
 
             store_->ResetMetric();
 
-            context_->range_server->LeaderQueuePush(meta_.id(), getticks());
-            range_status_->range_leader_count++;
-
-            context_->run_status->PushRange(monitor::RangeTag::LeaderCount,
-                                            range_status_->range_leader_count);
+            context_->range_server->LeaderQueuePush(id_, getticks());
+            context_->run_status->IncrLeaderCount();
         }
 
     } else {
         if (is_leader_) {
             is_leader_ = false;
-            range_status_->range_leader_count--;
-
-            context_->run_status->PushRange(monitor::RangeTag::LeaderCount,
-                                            range_status_->range_leader_count);
+            context_->run_status->DecrLeaderCount();
         }
     }
 }
@@ -323,10 +323,10 @@ std::shared_ptr<raft::Snapshot> Range::GetSnapshot() {
 }
 
 Status Range::ApplySnapshotStart(const std::string &context) {
-    FLOG_INFO("Range %" PRIu64 " apply snapshot begin", meta_.id());
+    FLOG_INFO("Range %" PRIu64 " apply snapshot begin", id_);
 
     if (!valid_) {
-        FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
+        FLOG_ERROR("range[%" PRIu64 "] is invalid!", id_);
         return Status(Status::kInvalid, "range is invalid", "");
     }
 
@@ -353,7 +353,7 @@ Status Range::ApplySnapshotStart(const std::string &context) {
 
 Status Range::ApplySnapshotData(const std::vector<std::string> &datas) {
     if (!valid_) {
-        FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
+        FLOG_ERROR("range[%" PRIu64 "] is invalid!", id_);
         return Status(Status::kInvalid, "range is invalid", "");
     }
 
@@ -361,18 +361,18 @@ Status Range::ApplySnapshotData(const std::vector<std::string> &datas) {
 }
 
 Status Range::ApplySnapshotFinish(uint64_t index) {
-    FLOG_INFO("Range %" PRIu64 " finish apply snapshot. index:%lu", meta_.id(), index);
+    FLOG_INFO("Range %" PRIu64 " finish apply snapshot. index:%lu", id_, index);
 
     if (!valid_) {
-        FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
+        FLOG_ERROR("range[%" PRIu64 "] is invalid!", id_);
         return Status(Status::kInvalid, "range is invalid", "");
     }
 
     apply_index_ = index;
-    auto s = context_->meta_store->SaveApplyIndex(meta_.id(), index);
+    auto s = context_->meta_store->SaveApplyIndex(id_, index);
     if (!s.ok()) {
         FLOG_ERROR("range[%" PRIu64 "] save snapshot applied index failed(%s)!",
-                   meta_.id(), s.ToString().c_str());
+                   id_, s.ToString().c_str());
         return s;
     } else {
         return Status::OK();
@@ -380,56 +380,57 @@ Status Range::ApplySnapshotFinish(uint64_t index) {
 }
 
 bool Range::SaveMeta(const metapb::Range &meta) {
-    std::string value;
-    if (!meta.SerializeToString(&value)) {
-        FLOG_ERROR("save range mate seriaize failed");
-        return false;
-    }
-
     auto ms = context_->range_server->meta_store();
-    auto ret = ms->AddRange(meta_.id(), value);
+    auto ret = ms->AddRange(meta);
     if (!ret.ok()) {
         FLOG_ERROR("save range meta failed");
         return false;
     }
-
     return true;
 }
 
-Status Range::Truncate() {
-    auto s = store_->Truncate();
+Status Range::Destroy() {
+    valid_ = false;
+
+    ClearExpiredContext();
+
+    // 销毁raft
+    auto s = context_->raft_server->DestroyRaft(id_);
     if (!s.ok()) {
-        FLOG_ERROR("Range %" PRIu64 " truncate store fail: %s", meta_.id(),
-                   s.ToString().c_str());
+        FLOG_WARN("range[%" PRIu64 "] destroy raft failed: %s", id_, s.ToString().c_str());
+    }
+    raft_.reset();
+
+    s = store_->Truncate();
+    if (!s.ok()) {
+        FLOG_ERROR("Range %" PRIu64 " truncate store fail: %s", id_, s.ToString().c_str());
         return s;
     }
-    s = context_->meta_store->DeleteApplyIndex(meta_.id());
+    s = context_->meta_store->DeleteApplyIndex(id_);
     if (!s.ok()) {
-        FLOG_ERROR("Range %" PRIu64 " truncate delete apply fail: %s", meta_.id(),
-                   s.ToString().c_str());
+        FLOG_ERROR("Range %" PRIu64 " truncate delete apply fail: %s", id_, s.ToString().c_str());
     }
     return s;
 }
 
 void Range::TransferLeader() {
     if (!valid_) {
-        FLOG_ERROR("range[%" PRIu64 "] is invalid!", meta_.id());
+        FLOG_ERROR("range[%" PRIu64 "] is invalid!", id_);
         return;
     }
 
-    FLOG_INFO("range[%" PRIu64 "] receive TransferLeader, try to leader.", meta_.id());
+    FLOG_INFO("range[%" PRIu64 "] receive TransferLeader, try to leader.", id_);
 
     auto s = raft_->TryToLeader();
     if (!s.ok()) {
-        FLOG_ERROR("Range %" PRIu64 " TransferLeader fail, %s", meta_.id(),
-                   s.ToString().c_str());
+        FLOG_ERROR("Range %" PRIu64 " TransferLeader fail, %s", id_, s.ToString().c_str());
     }
 }
 
 void Range::GetPeerInfo(raft::RaftStatus *raft_status) { raft_->GetStatus(raft_status); }
 
 void Range::GetReplica(metapb::Replica *rep) {
-    rep->set_range_id(meta_.id());
+    rep->set_range_id(id_);
     rep->set_start_key(meta_.start_key());
     rep->set_end_key(meta_.end_key());
     auto peer = new metapb::Peer;
@@ -454,11 +455,11 @@ bool Range::VerifyLeader(errorpb::Error *&err) {
 }
 
 bool Range::CheckWriteable() {
-    if (server::RunStatus::fs_usage_percent_ >= kStopWriteFsUsagePercent) {
+    auto percent = context_->run_status->GetFilesystemUsedPercent();
+    if (percent > kStopWriteFsUsagePercent) {
         FLOG_ERROR("range[%lu] filesystem usage percent(%lu > %lu) limit "
                    "reached, reject write request",
-                   meta_.id(), server::RunStatus::fs_usage_percent_.load(),
-                   kStopWriteFsUsagePercent);
+                   id_, percent, kStopWriteFsUsagePercent);
         return false;
     } else {
         return true;
@@ -469,7 +470,7 @@ bool Range::KeyInRange(const std::string &key) {
     if (key < meta_.start_key()) {
         FLOG_WARN("key: %s less than start_key:%s, out of range %" PRIu64,
                   EncodeToHexString(key).c_str(),
-                  EncodeToHexString(meta_.start_key()).c_str(), meta_.id());
+                  EncodeToHexString(meta_.start_key()).c_str(), id_);
         return false;
     }
 
@@ -477,7 +478,7 @@ bool Range::KeyInRange(const std::string &key) {
     if (key >= meta_.end_key()) {
         FLOG_WARN("key: %s greater than end_key:%s, out of range %" PRIu64,
                   EncodeToHexString(key).c_str(),
-                  EncodeToHexString(meta_.end_key()).c_str(), meta_.id());
+                  EncodeToHexString(meta_.end_key()).c_str(), id_);
         return false;
     }
 
@@ -590,7 +591,7 @@ errorpb::Error *Range::NoLeaderError() {
     errorpb::Error *err = new errorpb::Error;
 
     err->set_message("no leader");
-    err->mutable_not_leader()->set_range_id(meta_.id());
+    err->mutable_not_leader()->set_range_id(id_);
     err->mutable_not_leader()->set_allocated_epoch(
         new metapb::RangeEpoch(meta_.range_epoch()));
 
@@ -601,7 +602,7 @@ errorpb::Error *Range::NotLeaderError(metapb::Peer &&peer) {
     errorpb::Error *err = new errorpb::Error;
 
     err->set_message("not leader");
-    err->mutable_not_leader()->set_range_id(meta_.id());
+    err->mutable_not_leader()->set_range_id(id_);
     err->mutable_not_leader()->set_allocated_epoch(
         new metapb::RangeEpoch(meta_.range_epoch()));
     err->mutable_not_leader()->set_allocated_leader(new metapb::Peer(std::move(peer)));
@@ -613,7 +614,7 @@ errorpb::Error *Range::KeyNotInRange(const std::string &key) {
     errorpb::Error *err = new errorpb::Error;
 
     err->set_message("key not in range");
-    err->mutable_key_not_in_range()->set_range_id(meta_.id());
+    err->mutable_key_not_in_range()->set_range_id(id_);
     err->mutable_key_not_in_range()->set_key(key);
     err->mutable_key_not_in_range()->set_start_key(meta_.start_key());
 
@@ -660,7 +661,7 @@ errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
 }
 
 void Range::SendTimeOutError(AsyncContext *context) {
-    FLOG_WARN("range[%lu] deal %s timeout. sid=%ld, msgid=%ld", meta_.id(),
+    FLOG_WARN("range[%lu] deal %s timeout. sid=%ld, msgid=%ld", id_,
               raft_cmdpb::CmdType_Name(context->cmd_type_).c_str(),
               context->proto_message->session_id, context->proto_message->msg_id);
 
@@ -686,8 +687,7 @@ void Range::SendTimeOutError(AsyncContext *context) {
             SendError(context, new watchpb::DsKvWatchDeleteResponse, err);
             break;
         default:
-            FLOG_ERROR("range[%" PRIu64 "] Apply cmd type error %d", meta_.id(),
-                       context->cmd_type_);
+            FLOG_ERROR("range[%" PRIu64 "] Apply cmd type error %d", id_, context->cmd_type_);
             delete err;
     }
 

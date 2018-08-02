@@ -46,6 +46,7 @@ public:
     storage::MetaStore *meta_store() { return meta_store_; }
     metapb::Range *GetRangeMeta(uint64_t range_id);
 
+    size_t GetRangesSize() const;
     std::shared_ptr<range::Range> find(uint64_t range_id);
 
     void OnNodeHeartbeatResp(const mspb::NodeHeartbeatResponse &) override;
@@ -54,9 +55,12 @@ public:
     void CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) override;
 
 private:
+    void buildDBOptions(rocksdb::Options& ops);
     int OpenDB();
     void CloseDB();
-    int Recover(std::vector<std::string> &metas);
+
+    Status recover(const metapb::Range& meta);
+    int recover(const std::vector<metapb::Range> &metas);
 
     void RawGet(common::ProtoMessage *msg);
     void RawPut(common::ProtoMessage *msg);
@@ -110,7 +114,6 @@ public:
 private:  // admin
     void CreateRange(common::ProtoMessage *msg);
     void DeleteRange(common::ProtoMessage *msg);
-    void UpdateRange(common::ProtoMessage *msg);
     void OfflineRange(common::ProtoMessage *msg);
     void ReplaceRange(common::ProtoMessage *msg);
 
@@ -118,7 +121,7 @@ private:  // admin
     void GetPeerInfo(common::ProtoMessage *msg);
     void SetLogLevel(common::ProtoMessage *msg);
 
-    Status CreateRange(const metapb::Range &range, uint64_t leader = 0);
+    Status CreateRange(const metapb::Range &range, uint64_t leader = 0, bool from_split = false);
     int DeleteRange(uint64_t range_id);
     int CloseRange(uint64_t range_id);
     int OfflineRange(uint64_t range_id);
@@ -126,7 +129,7 @@ private:  // admin
     void Heartbeat();
 
 private:
-    shared_mutex rw_lock_;
+    mutable shared_mutex rw_lock_;
     std::unordered_map<int64_t, std::shared_ptr<range::Range>> ranges_;
 
     std::mutex statis_mutex_;
@@ -147,7 +150,6 @@ private:
     storage::MetaStore *meta_store_ = nullptr;
 
     ContextServer *context_ = nullptr;
-    range_status_t *range_status_ = nullptr;
 
 public:
     watch::WatchServer* watch_server_;

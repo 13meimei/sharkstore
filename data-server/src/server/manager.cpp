@@ -34,7 +34,6 @@ int Manager::Init(ContextServer *context) {
     socket_server_.set_send_done(ds_send_done_callback);
 
     context_ = context;
-    g_status.manager_socket_status = &manager_status_;
 
     FLOG_INFO("Manager Init end ...");
     return 0;

@@ -41,6 +41,13 @@ else()
 endif()
 MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
+OPTION(BLOB_EXTEND_OPTIONS "Enable blob extend options" OFF)
+MESSAGE(STATUS BLOB_EXTEND_OPTIONS=${BLOB_EXTEND_OPTIONS})
+if(BLOB_EXTEND_OPTIONS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBLOB_EXTEND_OPTIONS")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBLOB_EXTEND_OPTIONS")
+endif()
+
 # use gcov
 OPTION (ENABLE_COVERAGE "Use gcov" OFF)
 MESSAGE(STATUS ENABLE_COVERAGE=${ENABLE_COVERAGE})
@@ -67,7 +74,6 @@ endif()
 
 message(STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
 message(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
-
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
@@ -171,7 +177,7 @@ set(SOURCES
     src/master/client.cpp
     src/master/connection.cpp
     src/master/rpc_types.cpp
-    src/master/worker.cpp
+    src/master/worker_impl.cpp
     src/monitor/isystemstatus.cpp
     src/monitor/datacacl.cpp
     src/monitor/encodedata.cpp
@@ -196,7 +202,6 @@ add_subdirectory(src/common)
 add_subdirectory(src/frame)
 add_subdirectory(src/proto)
 add_subdirectory(src/raft)
-add_subdirectory(src/tool)
 
 OPTION (BUILD_NET "build sharkstore net" OFF)
 MESSAGE(STATUS BUILD_NET=${BUILD_NET})
@@ -205,12 +210,12 @@ if (BUILD_NET)
 endif()
 
 set (depend_LIBRARYS
-    sharkstore-base
-    sharkstore-proto 
+    sharkstore-proto
     sharkstore-raft
     sharkstore-common
     sharkstore-frame
     sharkstore-lkqueue
+    sharkstore-base
     ${PROTOBUF_LIBRARY}
     ${GRPC_LIB}
     ${GRPC_CPP_LIB}
@@ -252,4 +257,11 @@ if (BUILD_TEST)
     include_directories(${GTEST_INCLUDE_DIRS})
     add_library(sharkstore-ds-shared SHARED ${SOURCES})
     add_subdirectory(test)
+endif()
+
+
+OPTION(BUILD_TOOL "build sharstore tools" OFF)
+MESSAGE(STATUS BUILD_TOOL=${BUILD_TOOL})
+if (BUILD_TOOL)
+    add_subdirectory(tools)
 endif()
