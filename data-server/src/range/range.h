@@ -372,6 +372,17 @@ private:
 
 private:
     int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, std::string &errMsg);
+    int64_t getVersion(errorpb::Error *err) const {
+        int64_t  version{0};
+        if( 0 != version_seq_->nextId(&version)) {
+            if (err == nullptr) {
+                err = new errorpb::Error;
+            }
+            err->set_message(version_seq_->getErrMsg());
+        }
+
+        return version;
+    }
 
 private:
     static const int kTimeTakeWarnThresoldUSec = 1000000;

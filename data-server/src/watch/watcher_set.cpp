@@ -119,7 +119,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         }
 
-        FLOG_DEBUG("AddWatcher db version[%" PRId64 "], key: %s", EncodeToHexString(key).c_str());
+        FLOG_DEBUG("AddWatcher db version[%" PRId64 "], key: %s", version, EncodeToHexString(key).c_str());
         auto v = new WatcherValue;
         v->key_version_ = version;
         watcher_map_it = key_watchers.insert(std::make_pair(key, v)).first;
