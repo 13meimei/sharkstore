@@ -1199,23 +1199,23 @@ void RangeServer::OnRangeHeartbeatResp(const mspb::RangeHeartbeatResponse &resp)
             // TODO
             break;
         case taskpb::TaskType::RangeDelete:
-            FLOG_DEBUG("RangeHeartbeat task RangeDelete. range id: %" PRIu64,
+            FLOG_INFO("RangeHeartbeat task RangeDelete. range id: %" PRIu64,
                        resp.range_id());
             DeleteRange(resp.range_id());
             break;
         case taskpb::TaskType::RangeLeaderTransfer:
-            FLOG_DEBUG("RangeHeartbeat task RangeLeaderTransfer. range id: %" PRIu64,
+            FLOG_INFO("RangeHeartbeat task RangeLeaderTransfer. range id: %" PRIu64,
                        resp.range_id());
             // TODO
             // master undefinded
             break;
         case taskpb::TaskType::RangeAddPeer:
-            FLOG_DEBUG("RangeHeartbeat task RangeAddPeer. range id: %" PRIu64,
+            FLOG_INFO("RangeHeartbeat task RangeAddPeer. range id: %" PRIu64,
                        resp.range_id());
             range->AddPeer(resp.task().range_add_peer().peer());
             break;
         case taskpb::TaskType::RangeDelPeer:
-            FLOG_DEBUG("RangeHeartbeat task RangeDelPeer. range id: %" PRIu64,
+            FLOG_INFO("RangeHeartbeat task RangeDelPeer. range id: %" PRIu64,
                        resp.range_id());
             range->DelPeer(resp.task().range_del_peer().peer());
             break;

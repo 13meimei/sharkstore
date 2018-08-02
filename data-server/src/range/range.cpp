@@ -343,6 +343,9 @@ Status Range::ApplySnapshotStart(const std::string &context) {
     if (!SaveMeta(ctx.meta())) {
         return Status(Status::kIOError, "save range meta", "");
     }
+
+    FLOG_INFO("range[%" PRIu64 "] meta update to %s", id_, ctx.meta().ShortDebugString().c_str());
+
     return Status::OK();
 }
 
@@ -492,11 +495,7 @@ bool Range::KeyInRange(const std::string &key, errorpb::Error *&err) {
 bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch) {
     sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
 
-    if (meta_.range_epoch().version() == epoch.version()) {
-        return true;
-    }
-
-    return false;
+    return meta_.range_epoch().version() == epoch.version();
 }
 
 bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&err) {
@@ -504,7 +503,6 @@ bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&err) 
         err = StaleEpochError(epoch);
         return false;
     }
-
     return true;
 }
 

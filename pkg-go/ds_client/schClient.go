@@ -1,12 +1,13 @@
 package client
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 
 	"model/pkg/metapb"
-	"util/log"
 	"model/pkg/schpb"
+	"util/log"
+
 	"golang.org/x/net/context"
 )
 
@@ -17,7 +18,7 @@ type SchClient interface {
 	Close() error
 	// SendKVReq sends kv request.
 	CreateRange(addr string, r *metapb.Range) error
-	DeleteRange(addr string, rangeId uint64) error
+	DeleteRange(addr string, rangeId uint64, peer_id uint64) error
 	TransferLeader(addr string, rangeId uint64) error
 	UpdateRange(addr string, r *metapb.Range) error
 	GetPeerInfo(addr string, rangeId uint64) (*schpb.GetPeerInfoResponse, error)
@@ -30,7 +31,7 @@ type SchRpcClient struct {
 	pool *ResourcePool
 }
 
-func NewSchRPCClient(opts ...int) (SchClient) {
+func NewSchRPCClient(opts ...int) SchClient {
 	var size int
 	if len(opts) == 0 {
 		size = DefaultPoolSize
@@ -59,7 +60,7 @@ func (c *SchRpcClient) CreateRange(addr string, r *metapb.Range) error {
 	}
 	req := &schpb.CreateRangeRequest{
 		Header: &schpb.RequestHeader{},
-		Range: r,
+		Range:  r,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
 	defer cancel()
@@ -86,12 +87,15 @@ func (c *SchRpcClient) DeleteRange(addr string, rangeId uint64) error {
 		return err
 	}
 	req := &schpb.DeleteRangeRequest{
-		Header: &schpb.RequestHeader{},
+		Header:  &schpb.RequestHeader{},
 		RangeId: rangeId,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
 	defer cancel()
 	resp, err := conn.DeleteRange(ctx, req)
+	if err != nil {
+		return err
+	}
 	staleRangeErr := resp.GetHeader().GetError().GetStaleRange()
 	if staleRangeErr != nil {
 		return fmt.Errorf("stale range %v", staleRangeErr.GetRange())
@@ -109,7 +113,7 @@ func (c *SchRpcClient) TransferLeader(addr string, rangeId uint64) error {
 		return err
 	}
 	req := &schpb.TransferRangeLeaderRequest{
-		Header: &schpb.RequestHeader{},
+		Header:  &schpb.RequestHeader{},
 		RangeId: rangeId,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
@@ -125,7 +129,7 @@ func (c *SchRpcClient) UpdateRange(addr string, r *metapb.Range) error {
 	}
 	req := &schpb.UpdateRangeRequest{
 		Header: &schpb.RequestHeader{},
-		Range: r,
+		Range:  r,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
 	defer cancel()
@@ -143,7 +147,7 @@ func (c *SchRpcClient) GetPeerInfo(addr string, rangeId uint64) (*schpb.GetPeerI
 		return nil, err
 	}
 	req := &schpb.GetPeerInfoRequest{
-		Header: &schpb.RequestHeader{},
+		Header:  &schpb.RequestHeader{},
 		RangeId: rangeId,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
@@ -162,7 +166,7 @@ func (c *SchRpcClient) SetNodeLogLevel(addr string, level string) error {
 	}
 	req := &schpb.SetNodeLogLevelRequest{
 		Header: &schpb.RequestHeader{},
-		Level: level,
+		Level:  level,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
 	defer cancel()
@@ -170,7 +174,7 @@ func (c *SchRpcClient) SetNodeLogLevel(addr string, level string) error {
 	if err != nil {
 		return err
 	}
-	return  nil
+	return nil
 }
 
 func (c *SchRpcClient) OffLineRange(addr string, rangeId uint64) error {
@@ -179,7 +183,7 @@ func (c *SchRpcClient) OffLineRange(addr string, rangeId uint64) error {
 		return err
 	}
 	req := &schpb.OfflineRangeRequest{
-		Header: &schpb.RequestHeader{},
+		Header:  &schpb.RequestHeader{},
 		RangeId: rangeId,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
@@ -197,9 +201,9 @@ func (c *SchRpcClient) ReplaceRange(addr string, oldRangeId uint64, newRange *me
 		return err
 	}
 	req := &schpb.ReplaceRangeRequest{
-		Header: &schpb.RequestHeader{},
+		Header:     &schpb.RequestHeader{},
 		OldRangeId: oldRangeId,
-		NewRange: 	newRange,
+		NewRange:   newRange,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
 	defer cancel()
@@ -216,4 +220,3 @@ func (c *SchRpcClient) getConn(addr string) (RpcClient, error) {
 	}
 	return c.pool.GetConn(addr)
 }
-
