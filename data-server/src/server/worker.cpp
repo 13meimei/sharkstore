@@ -33,7 +33,6 @@ int Worker::Init(ContextServer *context) {
     socket_server_.set_send_done(ds_send_done_callback);
 
     context_ = context;
-    g_status.worker_socket_status = &worker_status_;
 
     FLOG_INFO("Worker Init end ...");
     return 0;
@@ -83,20 +82,20 @@ int Worker::Start() {
     StartWorker(fast_worker_, fast_queue_, ds_config.fast_worker_num);
 
     int i = 0;
-    char fast_name[16];
+    char fast_name[32] = {'\0'};
     for (auto &work : fast_worker_) {
         auto handle = work.native_handle();
-        sprintf(fast_name, "fast_worker:%d", i++);
+        snprintf(fast_name, 32, "fast_worker:%d", i++);
         AnnotateThread(handle, fast_name);
     }
     // start slow worker
     StartWorker(slow_worker_, slow_queue_, ds_config.slow_worker_num);
 
-    char slow_name[16];
+    char slow_name[32] = {'\0'};
     i = 0;
     for (auto &work : slow_worker_) {
         auto handle = work.native_handle();
-        sprintf(slow_name, "slow_worker:%d", i++);
+        snprintf(slow_name, 32, "slow_worker:%d", i++);
         AnnotateThread(handle, slow_name);
     }
 

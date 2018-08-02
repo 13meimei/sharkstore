@@ -28,7 +28,7 @@
 #include "frame/sf_util.h"
 #include "frame/sf_logger.h"
 
-#include "./gen/test.pb.h"
+#include "helper/gen/test.pb.h"
 
 sf_socket_thread_config_t config;
 sf_socket_status_t status = {0};

@@ -121,7 +121,7 @@ func (gw *MessageGateway) wait() {
 		case msg := <-gw.messages:
 			mailTo := gw.receiver.GetMailList(msg.ClusterId, msg.Level)
 			smsTo := gw.receiver.GetSmsList(msg.ClusterId, msg.Level)
-			log.Info("message: %v, mail to: %v, sms to: %v", msg, mailTo, smsTo)
+			log.Debug("message: %v, mail to: %v, sms to: %v", msg, mailTo, smsTo)
 			if err := gw.send(msg.Title, msg.Content, mailTo, smsTo); err != nil {
 				log.Error("alarm message send: %v", err)
 			}

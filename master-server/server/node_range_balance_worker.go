@@ -53,7 +53,7 @@ func (w *balanceNodeRangeWorker) Work(cluster *Cluster) {
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to balance region and remove peer, region:[%v], old peer:[%v], old node:[%v], new node:[%v]",
 		rng.GetId(), oldPeer.GetId(), oldPeer.GetNodeId(), targetNodeId)
-	tc := NewTransferPeerTasks(id, rng, "balance-range-tranfer", oldPeer)
+	tc := NewTransferPeerTasks(id, rng, "balance-range-transfer", oldPeer)
 	// TODO: check return
 	cluster.taskManager.Add(tc)
 	return

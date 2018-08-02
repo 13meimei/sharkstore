@@ -4,12 +4,13 @@ import (
 	"testing"
 	"fmt"
 	"os"
-	"model/pkg/mspb"
-	"model/pkg/metapb"
 	"sync"
-	"util/deepcopy"
 	"time"
 	"math/rand"
+
+	"model/pkg/mspb"
+	"model/pkg/metapb"
+	"util/deepcopy"
 )
 
 var wg sync.WaitGroup  //定义一个同步等待的组
@@ -224,7 +225,7 @@ func addRangeForRangeBalance(cluster *Cluster, rangeSize int, t *testing.T) {
 func addPeersBalance(cluster *Cluster, rng *Range, t *testing.T) {
 	for index := 0; index < cluster.opt.GetMaxReplicas(); index++ {
 		peers := rng.GetPeers()
-		newPeer, err := cluster.allocPeerAndSelectNode(rng)
+		newPeer, err := cluster.allocPeerAndSelectNode(rng, false)
 		if err != nil {
 			t.Errorf("errr: %v", err)
 			continue
@@ -241,7 +242,7 @@ func addPeersRandom(cluster *Cluster) []*metapb.Peer {
 	var peers []*metapb.Peer
 	nodes := cluster.GetAllNode()
 	for index := 0; index < cluster.opt.GetMaxReplicas(); index++ {
-		newPeer, _ := cluster.allocPeer(nodes[rand.Intn(len(nodes))].GetId())
+		newPeer, _ := cluster.allocPeer(nodes[rand.Intn(len(nodes))].GetId(), false)
 		peers = append(peers, newPeer)
 	}
 	return peers

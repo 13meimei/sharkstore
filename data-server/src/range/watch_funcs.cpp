@@ -13,29 +13,35 @@ Status Range::GetAndResp( const common::ProtoMessage *msg, watchpb::DsWatchReque
     version = 0;
     Status ret = store_->Get(key, &val);
 
+    auto resp = dsResp->mutable_resp();
+    auto evt = resp->add_events();
+
+    resp->set_watchid(msg->session_id);
+    resp->set_code(static_cast<int>(ret.code()));
+
+    auto userKv = new watchpb::WatchKeyValue;
+    userKv->CopyFrom(req.req().kv());
+
     if(ret.ok()) {
-        //decode value and response to client
-        auto resp = dsResp->mutable_resp();
-        resp->set_watchid(msg->session_id);
-        resp->set_code(static_cast<int>(ret.code()));
-
-        auto evt = resp->add_events();
-        auto tmpKv = new watchpb::WatchKeyValue;
-        tmpKv->CopyFrom(req.req().kv());
-
         //decode value
-        if(Status::kOk == WatchCode::DecodeKv(funcpb::kFuncWatchGet, meta_, tmpKv, key, val, err)) {
+        if(Status::kOk == WatchCode::DecodeKv(funcpb::kFuncWatchGet, meta_, userKv, key, val, err)) {
             evt->set_type(watchpb::PUT);
-            evt->set_allocated_kv(tmpKv);
-            version = tmpKv->version();
-            FLOG_WARN("range[%" PRIu64 "] WatchGet db_version: [%" PRIu64 "]", meta_.id(), version);
+            evt->set_allocated_kv(userKv);
+            version = userKv->version();
+
+            FLOG_INFO("range[%" PRIu64 "] GetAndResp db_version: [%" PRIu64 "]", meta_.id(), version);
         } else {
+            FLOG_WARN("range[%" PRIu64 "] GetAndResp db_version: [%" PRIu64 "]", meta_.id(), version);
             ret = Status(Status::kInvalid);
         }
     } else {
-        version = 0;
-        //err->set_message(std::move(ret.ToString()));
-        FLOG_WARN("range[%" PRIu64 "] WatchGet code_: %s   key:%s", meta_.id(), ret.ToString().c_str(), EncodeToHexString(key).c_str());
+        //consume version returning to user
+        version = getVersion(err);
+        evt->set_type(watchpb::DELETE);
+        userKv->set_version(version);
+
+        FLOG_INFO("range[%" PRIu64 "] GetAndResp code_: %s  version[%" PRId64 "]  key:%s", meta_.id(),
+                  ret.ToString().c_str(), version, EncodeToHexString(key).c_str());
     }
 
     return ret;
@@ -102,43 +108,38 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         return;
     }
 
-    //process watcher
+    //add watch if client version is not equal to ds side
+    auto clientVersion = req.req().startversion();
+    if(req.req().longpull() > 0) {
+        uint64_t expireTime = getticks();
+        expireTime += req.req().longpull();
 
+        msg->expire_time = expireTime;
+    }
 
-        //add watch if client version is not equal to ds side
-        auto clientVersion = req.req().startversion();
-        if(req.req().longpull() > 0) {
-            uint64_t expireTime = getticks();
-            expireTime += req.req().longpull(); 
+    //to do add watch
+    auto watch_server = context_->range_server->watch_server_;
+    std::vector<watch::WatcherKey*> keys;
 
-            msg->expire_time = expireTime;
-        }
+    for (auto i = 0; i < tmpKv.key_size(); i++) {
+        keys.push_back(new watch::WatcherKey(tmpKv.key(i)));
+    }
 
+    auto w_ptr = std::make_shared<watch::Watcher>(meta_.table_id(), keys, clientVersion, msg);
 
-
-            //to do add watch
-            auto watch_server = context_->range_server->watch_server_;
-            std::vector<watch::WatcherKey*> keys;
-
-            for (auto i = 0; i < tmpKv.key_size(); i++) {
-                keys.push_back(new watch::WatcherKey(tmpKv.key(i)));
-            }
-
-            auto w_ptr = std::make_shared<watch::Watcher>(meta_.table_id(), keys, clientVersion, msg);
-
-            auto wcode = watch_server->AddKeyWatcher(w_ptr, store_);
-            if(watch::WATCH_OK == wcode) {
-                return;
-            } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
-                auto btime = get_micro_second();
-                //to do get from db again
-                GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, err);
-                context_->run_status->PushTime(monitor::PrintTag::Store,
-                                               get_micro_second() - btime);
-            } else {
-                FLOG_ERROR("range[%" PRIu64 "] add watcher exception(%d).", meta_.id(), static_cast<int>(wcode));
-            }
-            //watch_server->WatchServerUnlock(1);
+    auto wcode = watch_server->AddKeyWatcher(w_ptr, store_);
+    if(watch::WATCH_OK == wcode) {
+        return;
+    } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
+        auto btime = get_micro_second();
+        //to do get from db again
+        GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, err);
+        context_->run_status->PushTime(monitor::PrintTag::Store,
+                                       get_micro_second() - btime);
+    } else {
+        FLOG_ERROR("range[%" PRIu64 "] add watcher exception(%d).", meta_.id(), static_cast<int>(wcode));
+    }
+    //watch_server->WatchServerUnlock(1);
 
     w_ptr->Send(ds_resp);
     return;
@@ -658,7 +659,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                     del_ret = watch_server->DelPrefixWatcher(w);
                 }
                 if (del_ret) {
-                    FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify DelWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
+                    FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
                            meta_.id(), EncodeToHexString(dbKey).c_str(), idx, uint32_t(watchCnt), w_id);
                 } else {
                     FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(dbKey).c_str(), w_id);
@@ -668,7 +669,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     } else {
         idx = 0;
         errMsg.assign("no watcher");
-        FLOG_WARN("range[%" PRIu64 "] WatchPut-Notify key:%s has no watcher.",
+        FLOG_WARN("range[%" PRIu64 "] Watch-Notify key:%s has no watcher.",
                            meta_.id(), EncodeToHexString(dbKey).c_str());
 
     }

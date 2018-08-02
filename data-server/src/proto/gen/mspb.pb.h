@@ -858,10 +858,10 @@ class RangeHeartbeatRequest : public ::google::protobuf::Message /* @@protoc_ins
 
   // accessors -------------------------------------------------------
 
-  // repeated .mspb.PeerStatus peers_status = 5;
+  // repeated .mspb.PeerStatus peers_status = 8;
   int peers_status_size() const;
   void clear_peers_status();
-  static const int kPeersStatusFieldNumber = 5;
+  static const int kPeersStatusFieldNumber = 8;
   const ::mspb::PeerStatus& peers_status(int index) const;
   ::mspb::PeerStatus* mutable_peers_status(int index);
   ::mspb::PeerStatus* add_peers_status();
@@ -906,9 +906,9 @@ class RangeHeartbeatRequest : public ::google::protobuf::Message /* @@protoc_ins
   ::mspb::RangeStats* release_stats();
   void set_allocated_stats(::mspb::RangeStats* stats);
 
-  // uint64 term = 4;
+  // uint64 term = 7;
   void clear_term();
-  static const int kTermFieldNumber = 4;
+  static const int kTermFieldNumber = 7;
   ::google::protobuf::uint64 term() const;
   void set_term(::google::protobuf::uint64 value);
 
@@ -6251,50 +6251,6 @@ inline void RangeHeartbeatRequest::set_allocated_leader(::metapb::Peer* leader) 
   // @@protoc_insertion_point(field_set_allocated:mspb.RangeHeartbeatRequest.leader)
 }
 
-// uint64 term = 4;
-inline void RangeHeartbeatRequest::clear_term() {
-  term_ = GOOGLE_ULONGLONG(0);
-}
-inline ::google::protobuf::uint64 RangeHeartbeatRequest::term() const {
-  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.term)
-  return term_;
-}
-inline void RangeHeartbeatRequest::set_term(::google::protobuf::uint64 value) {
-  
-  term_ = value;
-  // @@protoc_insertion_point(field_set:mspb.RangeHeartbeatRequest.term)
-}
-
-// repeated .mspb.PeerStatus peers_status = 5;
-inline int RangeHeartbeatRequest::peers_status_size() const {
-  return peers_status_.size();
-}
-inline void RangeHeartbeatRequest::clear_peers_status() {
-  peers_status_.Clear();
-}
-inline const ::mspb::PeerStatus& RangeHeartbeatRequest::peers_status(int index) const {
-  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.peers_status)
-  return peers_status_.Get(index);
-}
-inline ::mspb::PeerStatus* RangeHeartbeatRequest::mutable_peers_status(int index) {
-  // @@protoc_insertion_point(field_mutable:mspb.RangeHeartbeatRequest.peers_status)
-  return peers_status_.Mutable(index);
-}
-inline ::mspb::PeerStatus* RangeHeartbeatRequest::add_peers_status() {
-  // @@protoc_insertion_point(field_add:mspb.RangeHeartbeatRequest.peers_status)
-  return peers_status_.Add();
-}
-inline ::google::protobuf::RepeatedPtrField< ::mspb::PeerStatus >*
-RangeHeartbeatRequest::mutable_peers_status() {
-  // @@protoc_insertion_point(field_mutable_list:mspb.RangeHeartbeatRequest.peers_status)
-  return &peers_status_;
-}
-inline const ::google::protobuf::RepeatedPtrField< ::mspb::PeerStatus >&
-RangeHeartbeatRequest::peers_status() const {
-  // @@protoc_insertion_point(field_list:mspb.RangeHeartbeatRequest.peers_status)
-  return peers_status_;
-}
-
 // .mspb.RangeStats stats = 6;
 inline bool RangeHeartbeatRequest::has_stats() const {
   return this != internal_default_instance() && stats_ != NULL;
@@ -6333,6 +6289,50 @@ inline void RangeHeartbeatRequest::set_allocated_stats(::mspb::RangeStats* stats
     
   }
   // @@protoc_insertion_point(field_set_allocated:mspb.RangeHeartbeatRequest.stats)
+}
+
+// uint64 term = 7;
+inline void RangeHeartbeatRequest::clear_term() {
+  term_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 RangeHeartbeatRequest::term() const {
+  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.term)
+  return term_;
+}
+inline void RangeHeartbeatRequest::set_term(::google::protobuf::uint64 value) {
+  
+  term_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RangeHeartbeatRequest.term)
+}
+
+// repeated .mspb.PeerStatus peers_status = 8;
+inline int RangeHeartbeatRequest::peers_status_size() const {
+  return peers_status_.size();
+}
+inline void RangeHeartbeatRequest::clear_peers_status() {
+  peers_status_.Clear();
+}
+inline const ::mspb::PeerStatus& RangeHeartbeatRequest::peers_status(int index) const {
+  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.peers_status)
+  return peers_status_.Get(index);
+}
+inline ::mspb::PeerStatus* RangeHeartbeatRequest::mutable_peers_status(int index) {
+  // @@protoc_insertion_point(field_mutable:mspb.RangeHeartbeatRequest.peers_status)
+  return peers_status_.Mutable(index);
+}
+inline ::mspb::PeerStatus* RangeHeartbeatRequest::add_peers_status() {
+  // @@protoc_insertion_point(field_add:mspb.RangeHeartbeatRequest.peers_status)
+  return peers_status_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::mspb::PeerStatus >*
+RangeHeartbeatRequest::mutable_peers_status() {
+  // @@protoc_insertion_point(field_mutable_list:mspb.RangeHeartbeatRequest.peers_status)
+  return &peers_status_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::mspb::PeerStatus >&
+RangeHeartbeatRequest::peers_status() const {
+  // @@protoc_insertion_point(field_list:mspb.RangeHeartbeatRequest.peers_status)
+  return peers_status_;
 }
 
 // -------------------------------------------------------------------

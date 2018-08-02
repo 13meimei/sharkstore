@@ -26,6 +26,7 @@ typedef struct ds_config_s {
         int target_file_size_multiplier;
         int max_background_flushes;
         int max_background_compactions;
+        size_t background_rate_limit;
         bool disable_auto_compactions;
         bool read_checksum;
         int level0_file_num_compaction_trigger;
@@ -35,8 +36,12 @@ typedef struct ds_config_s {
         bool cache_index_and_filter_blocks;
         int storage_type;
         int min_blob_size;
+        size_t blob_file_size;
         bool enable_garbage_collection;
+        int blob_gc_percent;
         int ttl;
+        bool enable_stats;
+        bool enable_debug_log;
     } rocksdb_config;
 
     struct {
@@ -47,7 +52,8 @@ typedef struct ds_config_s {
     } hb_config;
 
     struct {
-        int recover_skip_fail;
+        bool recover_skip_fail;
+        int recover_concurrency;
         uint64_t check_size;
         uint64_t split_size;
         uint64_t max_size;
@@ -72,17 +78,11 @@ typedef struct ds_config_s {
     } raft_config;
 
     struct {
-        int cluster_id;
         int interval;
-        int port;
-        char ip_addr[16];
-        char name_space[32];
-        char uri[256];
     } metric_config;
 
     sf_socket_thread_config_t manager_config;  // manager thread config
     sf_socket_thread_config_t worker_config;   // worker thread config
-    sf_socket_thread_config_t client_config;   // metric client config
 } ds_config_t;
 
 extern ds_config_t ds_config;
@@ -94,6 +94,7 @@ extern "C" {
 int load_from_conf_file(IniContext *ini_context, const char *filename);
 
 void print_rocksdb_config();
+void print_raft_config();
 
 #ifdef __cplusplus
 }

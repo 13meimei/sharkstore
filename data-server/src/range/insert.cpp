@@ -11,11 +11,10 @@ void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    btime - msg->begin_time);
 
-    FLOG_DEBUG("range[%" PRIu64 "] Insert begin", meta_.id());
+    FLOG_DEBUG("range[%" PRIu64 "] Insert begin", id_);
 
     if (!VerifyLeader(err)) {
-        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsInsertResponse;
         return SendError(msg, req.header(), resp, err);
@@ -29,8 +28,7 @@ void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
 
     auto epoch = req.header().range_epoch();
     if (!EpochIsEqual(epoch, err)) {
-        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsInsertResponse;
         return SendError(msg, req.header(), resp, err);
@@ -40,8 +38,7 @@ void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
         cmd.set_allocated_insert_req(req.release_req());
     });
     if (!ret.ok()) {
-        FLOG_ERROR("range[%" PRIu64 "] Insert raft submit error: %s",
-                   meta_.id(), ret.ToString().c_str());
+        FLOG_ERROR("range[%" PRIu64 "] Insert raft submit error: %s", id_, ret.ToString().c_str());
 
         auto resp = new kvrpcpb::DsInsertResponse;
         SendError(msg, req.header(), resp, RaftFailError());
@@ -54,15 +51,14 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
 
     errorpb::Error *err = nullptr;
 
-    FLOG_DEBUG("Range %" PRIu64 " ApplyInsert begin", meta_.id());
+    FLOG_DEBUG("Range %" PRIu64 " ApplyInsert begin", id_);
 
     auto &req = cmd.insert_req();
     do {
         auto epoch = cmd.verify_epoch();
 
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  ApplyInsert error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("Range %" PRIu64 "  ApplyInsert error: %s", id_, err->message().c_str());
             break;
         }
 

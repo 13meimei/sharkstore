@@ -27,8 +27,7 @@ void Range::AddPeer(const metapb::Peer &peer) {
     raft::ConfChange cch;
 
     if (FindPeerByNodeID(peer.node_id())) {
-        FLOG_WARN("Range %" PRIu64 " AddPeer NodeId: %" PRIu64 " existed", meta_.id(),
-                  peer.node_id());
+        FLOG_WARN("Range %" PRIu64 " AddPeer NodeId: %" PRIu64 " existed", id_, peer.node_id());
         return;
     }
 
@@ -53,7 +52,7 @@ void Range::AddPeer(const metapb::Peer &peer) {
 
     FLOG_INFO("Range %" PRIu64 " AddPeer NodeId: %" PRIu64 " version:%" PRIu64
               " conf_ver:%" PRIu64,
-              meta_.id(), peer.node_id(), meta_.range_epoch().version(),
+              id_, peer.node_id(), meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 }
 
@@ -64,7 +63,7 @@ void Range::DelPeer(const metapb::Peer &peer) {
     if (!FindPeerByNodeID(peer.node_id(), &old_peer) || old_peer.id() != peer.id()) {
         FLOG_WARN("Range %" PRIu64 " DelPeer NodeId: %" PRIu64 " peer:%" PRIu64
                   " info mismatch, Current Peer NodeId: %" PRIu64 " peer: %" PRIu64,
-                  meta_.id(), peer.node_id(), peer.id(), old_peer.node_id(), old_peer.id());
+                  id_, peer.node_id(), peer.id(), old_peer.node_id(), old_peer.id());
         return;
     }
 
@@ -89,7 +88,7 @@ void Range::DelPeer(const metapb::Peer &peer) {
 
     FLOG_INFO("Range %" PRIu64 " DelPeer NodeId: %" PRIu64 " version:%" PRIu64
               " conf_ver:%" PRIu64,
-              meta_.id(), peer.node_id(), meta_.range_epoch().version(),
+              id_, peer.node_id(), meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 }
 
@@ -112,10 +111,9 @@ Status Range::ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) {
     if (!ret.ok()) return ret;
 
     apply_index_ = index;
-    auto s = context_->meta_store->SaveApplyIndex(meta_.id(), apply_index_);
+    auto s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
     if (!s.ok()) {
-        FLOG_ERROR("range[%" PRIu64 "] save apply index error %s", meta_.id(),
-                   s.ToString().c_str());
+        FLOG_ERROR("range[%" PRIu64 "] save apply index error %s", id_, s.ToString().c_str());
         return s;
     }
     return Status::OK();
@@ -124,7 +122,7 @@ Status Range::ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) {
 Status Range::ApplyAddPeer(const raft::ConfChange &cc) {
     FLOG_INFO("Range %" PRIu64 " ApplyAddPeer NodeId: %" PRIu64 " Begin, version:%" PRIu64
               " conf_ver:%" PRIu64,
-              meta_.id(), cc.peer.node_id, meta_.range_epoch().version(),
+              id_, cc.peer.node_id, meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 
     raft_cmdpb::PeerTask pt;
@@ -132,20 +130,20 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc) {
     if (!context_->socket_session->GetMessage(cc.context.c_str(), cc.context.size(),
                                               &pt)) {
         FLOG_ERROR("Range %" PRIu64 " ApplyAddPeer NodeId: %" PRIu64 " deserialize fail",
-                   meta_.id(), cc.peer.node_id);
+                   id_, cc.peer.node_id);
         return Status(Status::kInvalidArgument, "context deserialize fail", "");
     }
 
     if (pt.verify_epoch().conf_ver() < meta_.range_epoch().conf_ver()) {
         FLOG_INFO("Range %" PRIu64 " ApplyAddPeer NodeId: %" PRIu64
                   " epoch stale, verify: %" PRIu64 ", cur: %" PRIu64,
-                  meta_.id(), cc.peer.node_id, pt.verify_epoch().conf_ver(),
+                  id_, cc.peer.node_id, pt.verify_epoch().conf_ver(),
                   meta_.range_epoch().conf_ver());
         return Status::OK();
     } else if (pt.verify_epoch().conf_ver() > meta_.range_epoch().conf_ver()) {
         FLOG_ERROR("Range %" PRIu64 " ApplyAddPeer NodeId: %" PRIu64
                    " epoch stale, verify: %" PRIu64 ", cur: %" PRIu64,
-                   meta_.id(), cc.peer.node_id, pt.verify_epoch().conf_ver(),
+                   id_, cc.peer.node_id, pt.verify_epoch().conf_ver(),
                    meta_.range_epoch().conf_ver());
         return Status(Status::kStaleEpoch, "stale epoch", "");
     }
@@ -156,7 +154,7 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc) {
 
         if (findPeerByNodeID(meta_, cc.peer.node_id)) {
             FLOG_WARN("Range %" PRIu64 " ApplyAddPeer NodeId: %" PRIu64 " is existed",
-                      meta_.id(), cc.peer.node_id);
+                      id_, cc.peer.node_id);
             return Status::OK();
         }
 
@@ -175,7 +173,7 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc) {
 
     FLOG_INFO("Range %" PRIu64 " ApplyAddPeer NodeId: %" PRIu64 " End, version:%" PRIu64
               " conf_ver:%" PRIu64,
-              meta_.id(), cc.peer.node_id, meta_.range_epoch().version(),
+              id_, cc.peer.node_id, meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 
     return Status::OK();
@@ -184,7 +182,7 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc) {
 Status Range::ApplyDelPeer(const raft::ConfChange &cc) {
     FLOG_INFO("Range %" PRIu64 " ApplyDelPeer NodeId:%" PRIu64 " Begin, version:%" PRIu64
               " conf_ver:%" PRIu64,
-              meta_.id(), cc.peer.node_id, meta_.range_epoch().version(),
+              id_, cc.peer.node_id, meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 
     raft_cmdpb::PeerTask pt;
@@ -192,20 +190,20 @@ Status Range::ApplyDelPeer(const raft::ConfChange &cc) {
     if (!context_->socket_session->GetMessage(cc.context.c_str(), cc.context.size(),
                                               &pt)) {
         FLOG_ERROR("Range %" PRIu64 " ApplyDelPeer NodeId: %" PRIu64 " deserialize fail",
-                   meta_.id(), cc.peer.node_id);
+                   id_, cc.peer.node_id);
         return Status(Status::kInvalidArgument, "context deserialize fail", "");
     }
 
     if (pt.verify_epoch().conf_ver() < meta_.range_epoch().conf_ver()) {
         FLOG_INFO("Range %" PRIu64 " ApplyDelPeer NodeId: %" PRIu64
                   " epoch stale, verify: %" PRIu64 ", cur: %" PRIu64,
-                  meta_.id(), cc.peer.node_id, pt.verify_epoch().conf_ver(),
+                  id_, cc.peer.node_id, pt.verify_epoch().conf_ver(),
                   meta_.range_epoch().conf_ver());
         return Status::OK();
     } else if (pt.verify_epoch().conf_ver() > meta_.range_epoch().conf_ver()) {
         FLOG_ERROR("Range %" PRIu64 " ApplyDelPeer NodeId: %" PRIu64
                    " epoch stale, verify: %" PRIu64 ", cur: %" PRIu64,
-                   meta_.id(), cc.peer.node_id, pt.verify_epoch().conf_ver(),
+                   id_, cc.peer.node_id, pt.verify_epoch().conf_ver(),
                    meta_.range_epoch().conf_ver());
         return Status(Status::kStaleEpoch, "stale epoch", "");
     }
@@ -226,13 +224,12 @@ Status Range::ApplyDelPeer(const raft::ConfChange &cc) {
         // send Heartbeat message
         PushHeartBeatMessage();
     } else {
-        FLOG_WARN("Range %" PRIu64 " ApplyDelPeer Not Found NodeId: %" PRIu64, meta_.id(),
-                  cc.peer.node_id);
+        FLOG_WARN("Range %" PRIu64 " ApplyDelPeer Not Found NodeId: %" PRIu64, id_, cc.peer.node_id);
     }
 
     FLOG_INFO("Range %" PRIu64 " ApplyDelPeer NodeId: %" PRIu64 " End, version:%" PRIu64
               " conf_ver:%" PRIu64,
-              meta_.id(), cc.peer.node_id, meta_.range_epoch().version(),
+              id_, cc.peer.node_id, meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 
     return Status::OK();
@@ -253,7 +250,7 @@ static bool promotePeer(const raft::Peer &peer, metapb::Range &meta) {
 Status Range::ApplyPromotePeer(const raft::ConfChange &cc) {
     FLOG_INFO("Range %" PRIu64 " ApplyPromotePeer NodeId:%" PRIu64
               " Begin, version:%" PRIu64 " conf_ver:%" PRIu64,
-              meta_.id(), cc.peer.node_id, meta_.range_epoch().version(),
+              id_, cc.peer.node_id, meta_.range_epoch().version(),
               meta_.range_epoch().conf_ver());
 
     bool is_modify = false;
@@ -270,13 +267,13 @@ Status Range::ApplyPromotePeer(const raft::ConfChange &cc) {
 
     if (is_modify) {
         FLOG_INFO("Range %" PRIu64 " ApplyPromotePeer NodeId:%" PRIu64 " Successfully.",
-                  meta_.id(), cc.peer.node_id);
+                  id_, cc.peer.node_id);
 
         PushHeartBeatMessage();
     } else {
         FLOG_WARN("Range %" PRIu64 " ApplyPromotePeer NodeId:%" PRIu64
                   " failed(maybe already promoted or doesn't exist)",
-                  meta_.id(), cc.peer.node_id);
+                  id_, cc.peer.node_id);
     }
     return Status::OK();
 }

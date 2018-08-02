@@ -176,7 +176,7 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 		}
 		resp.KvRangeDelResp = _resp
 	default:
-		return nil, false, errors.New("invalid request")
+		return nil, false, ErrInternalError
 	}
 	return resp, false, nil
 
@@ -292,9 +292,9 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 	var addr string
 	var timeout time.Duration
 	var reqHeader *kvrpcpb.RequestHeader
-	var pErr *errorpb.Error
+	//var pErr *errorpb.Error
 	metricLoop := 0
-	for {
+	//for {
 		metricLoop++
 
 		l, err = p.RangeCache.LocateKey(bo, key)
@@ -307,7 +307,7 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 			log.Error("locate node=%d failed, err=%v", l.NodeId, err)
 			return
 		}
-		log.Debug("key: %v, addr: %v", string(key), addr)
+		log.Debug("send request key: %v, addr: %v", key, addr)
 		timeout, reqHeader, err = p.prepare(l, req)
 		if err != nil {
 			log.Error("prepare request[%v] failed, err=%v", req, err)
@@ -332,7 +332,7 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 			return
 		}
 
-		pErr, err = resp.GetErr()
+		/*pErr, err = resp.GetErr()
 		if err != nil {
 			return
 		}
@@ -341,11 +341,12 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 			if err != nil {
 				return
 			}
-			continue
+			//range 拓扑改变了，记录可能有部分已经超出范围了，需要重新组织request的记录，这里不能进行直接重试
+			//continue
 		}
 		// 请求成功
-		return
-	}
+		return*/
+	//}
 
 	return
 }
@@ -393,7 +394,9 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 			if err != nil {
 				//可能gateway没有拿到最新的拓扑
 				p.RangeCache.DropRegion(ctx.VID)
-				return false, err
+				return false, ErrRouteChange
+			}else {
+				return false,ErrRouteChange
 			}
 		} else {
 			// update leader
@@ -408,8 +411,8 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 			ctx.NodeId = notLeader.GetLeader().GetNodeId()
 		}
 
-		retry = true
-		return
+		//retry = true
+		return false,ErrRouteChange
 	}
 
 	if staleEpoch := rangeErr.GetStaleEpoch(); staleEpoch != nil {
@@ -426,7 +429,10 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 			log.Error("DS bug for stale epoch, ctx: %s, %s", ctx.RequestHeader.String(), ctx.NodeAddr)
 		}
 		err = p.RangeCache.OnRegionStale(ctx, ranges)
-		return false, err
+		if err != nil {
+			return false, err
+		}
+		return false, ErrRouteChange
 	}
 	if rangeErr.GetServerIsBusy() != nil {
 		log.Warn("ds reports `ServerIsBusy`, reason: %s, ctx: %s, retry later %s",
