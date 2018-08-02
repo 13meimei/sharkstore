@@ -174,20 +174,16 @@ Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
     bool over = false;
     uint64_t count = 0;
     uint64_t all = 0;
-    uint64_t limit =
-        req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
+    uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
     uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
     while (!over && s.ok()) {
         over = false;
         s = f.Next(r.get(), &over);
         if (s.ok() && !over) {
             ++all;
-            if (count > limit) {
-                break;
-            }
             if (all > offset) {
                 addRow(req, resp, *r);
-                ++count;
+                if (++count >= limit) break;
             }
         }
     }

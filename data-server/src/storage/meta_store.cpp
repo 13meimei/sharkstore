@@ -5,7 +5,6 @@
 #include <memory>
 
 #include "base/util.h"
-#include "common/ds_encoding.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -17,7 +16,7 @@ MetaStore::MetaStore(const std::string &path) : path_(path) {
 
 MetaStore::~MetaStore() { delete db_; }
 
-Status MetaStore::Open() {
+Status MetaStore::Open(bool read_only) {
     int ret = MakeDirAll(path_, 0755);
     if (ret != 0) {
         return Status(Status::kIOError, "create meta store directory",
@@ -26,9 +25,14 @@ Status MetaStore::Open() {
 
     rocksdb::Options ops;
     ops.create_if_missing = true;
-    auto s = rocksdb::DB::Open(ops, path_, &db_);
-    if (!s.ok()) {
-        return Status(Status::kIOError, "open meta store db", s.ToString());
+    rocksdb::Status rs;
+    if (read_only) {
+        rs = rocksdb::DB::OpenForReadOnly(ops, path_, &db_);
+    } else {
+        rs = rocksdb::DB::Open(ops, path_, &db_);
+    }
+    if (!rs.ok()) {
+        return Status(Status::kIOError, "open meta store db", rs.ToString());
     }
 
     return Status::OK();
@@ -50,8 +54,7 @@ Status MetaStore::GetNodeID(uint64_t *node_id) {
         try {
             *node_id = std::stoull(value);
         } catch (std::exception &e) {
-            return Status(Status::kCorruption, "invalid node_id",
-                          EncodeToHexString(value));
+            return Status(Status::kCorruption, "invalid node_id", EncodeToHex(value));
         }
         return Status::OK();
     } else if (ret.IsNotFound()) {
@@ -82,8 +85,7 @@ Status MetaStore::GetVersionID(const uint64_t &range_id, uint64_t *ver_id) {
         try {
             *ver_id = std::stoull(value);
         } catch (std::exception &e) {
-            return Status(Status::kCorruption, "invalid version_id",
-                          EncodeToHexString(value));
+            return Status(Status::kCorruption, "invalid version_id", EncodeToHex(value));
         }
         return Status::OK();
     } else if (ret.IsNotFound()) {
@@ -94,57 +96,85 @@ Status MetaStore::GetVersionID(const uint64_t &range_id, uint64_t *ver_id) {
     }
 }
 
-Status MetaStore::GetAllRange(std::vector<std::string> &meta_ranges) {
-    std::shared_ptr<rocksdb::Iterator> it(
-        db_->NewIterator(rocksdb::ReadOptions()));
-
-    for (it->Seek(kRangeMetaPrefix);
-         it->Valid() && it->key().starts_with(kRangeMetaPrefix); it->Next()) {
-        meta_ranges.push_back(std::move(it->value().ToString()));
+Status MetaStore::GetAllRange(std::vector<metapb::Range>* range_metas) {
+    std::unique_ptr<rocksdb::Iterator> it(db_->NewIterator(rocksdb::ReadOptions()));
+    it->Seek(kRangeMetaPrefix);
+    while (it->Valid() && it->key().starts_with(kRangeMetaPrefix)) {
+        metapb::Range rng;
+        if (!rng.ParseFromArray(it->value().data(), static_cast<int>(it->value().size()))) {
+            return Status(Status::kCorruption, "parse", it->value().ToString(true));
+        }
+        range_metas->push_back(std::move(rng));
+        it->Next();
     }
-
-    if (it->status().ok()) {
-        return Status::OK();
+    if (!it->status().ok()) {
+        return Status(Status::kIOError, "iterator", it->status().ToString());
     }
-    return Status(Status::kIOError, it->status().ToString(), "");
+    return Status::OK();
 }
 
-Status MetaStore::AddRange(uint64_t range_id, std::string &meta) {
+Status MetaStore::GetRange(uint64_t range_id, metapb::Range* meta) {
     std::string key = kRangeMetaPrefix + std::to_string(range_id);
 
-    rocksdb::Status ret = db_->Put(write_options_, key, meta);
-    if (ret.ok()) {
-        return Status::OK();
+    std::string value;
+    auto s = db_->Get(rocksdb::ReadOptions(), key, &value);
+    if (s.IsNotFound()) {
+        return Status(Status::kNotFound, "get range", "");
+    } else if (!s.ok()) {
+        return Status(Status::kCorruption, "get range", s.ToString());
     }
-    return Status(Status::kIOError, ret.ToString(), "put meta");
+
+    if (!meta->ParseFromString(value)) {
+        return Status(Status::kCorruption, "parse", EncodeToHex(value));
+    }
+    return Status::OK();
+}
+
+Status MetaStore::AddRange(const metapb::Range& meta) {
+    std::string key = kRangeMetaPrefix + std::to_string(meta.id());
+    // serialize
+    std::string value;
+    if (!meta.SerializeToString(&value)) {
+        return Status(Status::kCorruption, "serialize", meta.DebugString());
+    }
+    // put into db
+    rocksdb::Status ret = db_->Put(write_options_, key, value);
+    if (!ret.ok()) {
+        return Status(Status::kIOError, "put", ret.ToString());
+    }
+    return Status::OK();
+}
+
+Status MetaStore::BatchAddRange(const std::vector<metapb::Range>& range_metas) {
+    rocksdb::WriteBatch batch;
+    for (const auto& meta: range_metas) {
+        std::string value;
+        if (!meta.SerializeToString(&value)) {
+            return Status(Status::kCorruption, "serialize", meta.DebugString());
+        }
+        std::string key = kRangeMetaPrefix + std::to_string(meta.id());
+        batch.Put(key, value);
+    }
+
+    rocksdb::WriteOptions wops;
+    wops.sync = true;
+    rocksdb::Status ret = db_->Write(wops, &batch);
+    if (!ret.ok()) {
+        return Status(Status::kIOError, "batch write", ret.ToString());
+    }
+    return Status::OK();
 }
 
 Status MetaStore::DelRange(uint64_t range_id) {
     std::string key = kRangeMetaPrefix + std::to_string(range_id);
-
     rocksdb::Status ret = db_->Delete(write_options_, key);
     if (ret.ok()) {
         return Status::OK();
     } else if (ret.IsNotFound()) {
-        return Status(Status::kNotFound);
-    } else {
-        return Status(Status::kIOError, ret.ToString(), "");
-    }
-}
-
-Status MetaStore::BatchAddRange(std::map<uint64_t, std::string> ranges) {
-    rocksdb::WriteBatch bw;
-    for (auto &it : ranges) {
-        std::string key = kRangeMetaPrefix + std::to_string(it.first);
-        bw.Put(key, it.second);
-    }
-
-    rocksdb::Status ret = db_->Write(write_options_, &bw);
-
-    if (ret.ok()) {
         return Status::OK();
+    } else {
+        return Status(Status::kIOError, "delete range meta", ret.ToString());
     }
-    return Status(Status::kIOError, ret.ToString(), "");
 }
 
 Status MetaStore::SaveApplyIndex(uint64_t range_id, uint64_t apply_index) {
@@ -166,8 +196,7 @@ Status MetaStore::LoadApplyIndex(uint64_t range_id, uint64_t *apply_index) {
         try {
             *apply_index = std::stoull(value);
         } catch (std::exception &e) {
-            return Status(Status::kCorruption, "invalid applied",
-                          EncodeToHexString(value));
+            return Status(Status::kCorruption, "invalid applied", EncodeToHex(value));
         }
         return Status::OK();
     } else if (ret.IsNotFound()) {

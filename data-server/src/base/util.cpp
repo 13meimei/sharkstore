@@ -40,6 +40,53 @@ std::string strErrno(int errno_copy) {
 #endif
 }
 
+std::string EncodeToHex(const std::string& src) {
+    std::string result;
+    result.reserve(src.size() * 2);
+    char buf[3];
+    for (std::string::size_type i = 0; i < src.size(); ++i) {
+        snprintf(buf, 3, "%02X", static_cast<unsigned char>(src[i]));
+        result.append(buf, 2);
+    }
+    return result;
+}
+
+// most of the code is from rocksdb
+static int fromHex(char c) {
+    if (c >= 'a' && c <= 'f') {
+        c -= ('a' - 'A');
+    }
+    if (c < '0' || (c > '9' && (c < 'A' || c > 'F'))) {
+        return -1;
+    }
+    if (c <= '9') {
+        return c - '0';
+    }
+    return c - 'A' + 10;
+}
+
+bool DecodeFromHex(const std::string& hex, std::string* result) {
+    auto len = hex.size();
+    if (len % 2 != 0 || result == nullptr) {
+        return false;
+    }
+
+    result->clear();
+    result->reserve(len/2);
+    for (size_t i = 0; i < len; i += 2) {
+        int h1 = fromHex(hex[i]);
+        if (h1 < 0) {
+            return false;
+        }
+        int h2 = fromHex(hex[i+1]);
+        if (h2 < 0) {
+            return false;
+        }
+        result->push_back(static_cast<char>((h1 << 4) | h2));
+    }
+    return true;
+}
+
 std::string SliceSeparate(const std::string &l, const std::string &r, size_t max_len) {
     if (l.empty() || r.empty()) {
         return std::string();
@@ -93,6 +140,19 @@ std::string JoinFilePath(const std::vector<std::string> &strs) {
         ret += strs[i];
     }
     return ret;
+}
+
+int CheckDirExist(const std::string& path) {
+    struct stat sb;
+    memset(&sb, 0, sizeof(sb));
+    int ret = ::stat(path.c_str(), &sb);
+    if (ret != 0) {
+        return ret;
+    } else if (!S_ISDIR(sb.st_mode)) {
+        errno = ENOTDIR;
+        return -1;
+    }
+    return 0;
 }
 
 int MakeDirAll(const std::string &path, mode_t mode) {
@@ -193,6 +253,33 @@ void AnnotateThread(pthread_t handle, const char *name) {
     pthread_setname_np(handle, name);
 #endif
 #endif
+}
+
+int ParseBytesValue(const char* str, int64_t* value) {
+    char *end = nullptr;
+    errno = 0;
+    long v = strtol(str, &end, 10);
+    if (errno != 0) {
+        return -1;
+    }
+
+    if (end == NULL || *end == '\0') {
+        *value = v;
+    } else if (*end == 'k' || *end == 'K') {
+        *value = v * 1024;
+    } else if (*end == 'm' || *end == 'M') {
+        *value = v * 1024 * 1024;
+    }  else if (*end == 'g' || *end == 'G') {
+        *value = v * 1024 * 1024 * 1024;
+    }  else if (*end == 't' || *end == 'T') {
+        *value = v * 1024 * 1024 * 1024 * 1024;
+    }  else if (*end == 'p' || *end == 'P') {
+        *value = v * 1024 * 1024 * 1024 * 1024 * 1024;
+    } else {
+        errno = EINVAL;
+        return -1;
+    }
+    return 0;
 }
 
 } /* namespace sharkstore */

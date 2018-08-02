@@ -14,6 +14,7 @@ import (
 
 const (
 	REQURL_META_CREATEDB = "/metadata/createDb"
+	REQURL_META_DELETEDB = "/metadata/deleteDb"
 	REQURL_META_GETALLDB = "/metadata/dbDataGetAll"
 	REQURL_META_GETALLDBVIEW = "/metadata/dbDataGetAllViewPage"
 	REQURL_META_CREATETABLE = "/metadata/createTable"
@@ -48,7 +49,29 @@ func (ctrl *CreateDbAction)Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
 
-	return nil, service.NewService().CreateDb(cId, dbName)
+	return service.NewService().CreateDb(cId, dbName)
+}
+
+/**
+ * 删除db
+ */
+type DeleteDbAction struct {
+}
+func NewDeleteDbAction() *DeleteDbAction {
+	return &DeleteDbAction{
+	}
+}
+func (dtrl *DeleteDbAction)Execute(c *gin.Context) (interface{}, error) {
+	dbName := c.PostForm("dbName")
+	cIdStr := c.PostForm("clusterId")
+	if dbName == "" || cIdStr == ""{
+		return nil, common.PARSE_PARAM_ERROR
+	}
+	cId, err := strconv.Atoi(cIdStr)
+	if err != nil {
+		return nil, common.PARAM_FORMAT_ERROR
+	}
+	return nil, service.NewService().DeleteDb(cId, dbName)
 }
 
 /**
@@ -180,7 +203,7 @@ func (ctrl *CreateTableAction)Execute(c *gin.Context) (interface{}, error) {
 	}
 	//log.Debug("regxsJsonArray:%v", regxsJsonArray)
 
-	return nil, service.NewService().CreateTable(cId, dbName, tableName, policy, rangeKeys, &columnJsonArray, &regxsJsonArray)
+	return service.NewService().CreateTable(cId, dbName, tableName, policy, rangeKeys, &columnJsonArray, &regxsJsonArray)
 }
 
 /**

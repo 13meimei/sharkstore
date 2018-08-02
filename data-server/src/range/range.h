@@ -62,15 +62,13 @@ public:
     Range &operator=(const Range &) = delete;
     Range &operator=(const Range &) volatile = delete;
 
-    Status Initialize(range_status_t *status, uint64_t leader);
+    Status Initialize(uint64_t leader, bool from_split = false);
     Status Shutdown();
 
     Status Apply(const std::string &cmd, uint64_t index) override;
     Status ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) override;
 
-    void OnReplicateError(const std::string &cmd, const Status &status) override{
-        // TODO
-    };
+    void OnReplicateError(const std::string &cmd, const Status &status) override {};
 
     void OnLeaderChange(uint64_t leader, uint64_t term) override;
 
@@ -291,17 +289,12 @@ private:
         auto etime = get_micro_second();
         auto take = etime - context->proto_message->begin_time;
         if (take > kTimeTakeWarnThresoldUSec) {
-            /*FLOG_WARN("range[%lu] %s takes too long(%ld ms), sid=%ld, msgid=%ld",
-                      meta_.id(),
-                      funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(
-                                                  context->proto_message->header.func_id))
-                          .c_str(),
-                      take / 1000, context->proto_message->session_id,
-                      context->proto_message->header.msg_id);*/
+            auto method = funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(context->proto_message->header.func_id));
+            FLOG_WARN("range[%lu] %s takes too long(%ld ms), sid=%ld, msgid=%ld", id_, method.c_str(), take / 1000,
+                      context->proto_message->session_id, context->proto_message->header.msg_id);
         }
 
-        /*FLOG_DEBUG("range[%lu] response msgid=%ld.", meta_.id(),
-                   context->proto_message->header.msg_id);*/
+        FLOG_DEBUG("range[%lu] response msgid=%ld.", id_, context->proto_message->header.msg_id);
 
         response->mutable_resp()->set_code(code);
 
@@ -329,7 +322,7 @@ public:
     void ResetStatisSize();
     void Heartbeat();
 
-    Status Truncate();
+    Status Destroy();
 
     // get private member
 public:
@@ -374,41 +367,36 @@ private:
     int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, std::string &errMsg);
 
 private:
-    static const int kTimeTakeWarnThresoldUSec = 1000000;
-    static const int kOpsInfoThresold = 3000;
-    static const int kOpsWarnThresold = 5000;
+    static const int kTimeTakeWarnThresoldUSec = 500000;
 
     server::ContextServer *context_ = nullptr;
+    const uint64_t node_id_ = 0;
+    const uint64_t id_ = 0;
 
-    uint64_t node_id_ = 0;
+    metapb::Range meta_;
+    shared_mutex meta_lock_;
+
+    std::atomic<bool> valid_ = { true };
 
     uint64_t apply_index_ = 0;
-    uint64_t split_range_id_ = 0;
-
     std::atomic<bool> is_leader_ = {false};
-    volatile bool valid_ = true;
 
     uint64_t real_size_ = 0;
-
-    std::atomic<bool> statis_flag_{false};
-    std::atomic<uint64_t> statis_size_{0};
+    std::atomic<bool> statis_flag_ = {false};
+    std::atomic<uint64_t> statis_size_ = {0};
+    uint64_t split_range_id_ = 0;
 
     //std::atomic<uint64_t> version_seq_{0};
     sharkstore::IdGenerater *version_seq_ = nullptr;
 
     typedef std::pair<time_t, uint64_t> tr;
-
-    std::mutex submit_mutex_;
     std::atomic<uint64_t> submit_seq_{1};
     std::unordered_map<uint64_t, AsyncContext *> submit_map_;
     std::priority_queue<tr, std::vector<tr>, std::greater<tr>> submit_queue_;
+    std::mutex submit_mutex_;
 
-    shared_mutex meta_lock_;
-    metapb::Range meta_;
     storage::Store *store_ = nullptr;
     std::shared_ptr<raft::Raft> raft_ = nullptr;
-
-    range_status_t *range_status_ = nullptr;
 
     int64_t max_count_ = 1000;
 };

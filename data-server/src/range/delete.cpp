@@ -38,7 +38,7 @@ void Range::Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
     auto btime = get_micro_second();
     context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
-    FLOG_DEBUG("range[%" PRIu64 "] Delete begin", meta_.id());
+    FLOG_DEBUG("range[%" PRIu64 "] Delete begin", id_);
 
     if (!CheckWriteable()) {
         auto resp = new kvrpcpb::DsKvDeleteResponse;
@@ -84,8 +84,7 @@ void Range::Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] Delete error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] Delete error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvDeleteResponse;
         return SendError(msg, req.header(), resp, err);
@@ -107,14 +106,12 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
             auto epoch = cmd.verify_epoch();
 
             if (!EpochIsEqual(epoch, err)) {
-                FLOG_WARN("Range %" PRIu64 "  ApplyDelete error: %s", meta_.id(),
-                          err->message().c_str());
+                FLOG_WARN("Range %" PRIu64 "  ApplyDelete error: %s", id_, err->message().c_str());
                 break;
             }
         } else {
             if (!KeyInRange(key, err)) {
-                FLOG_WARN("range[%" PRIu64 "] ApplyDelete error: %s", meta_.id(),
-                          err->message().c_str());
+                FLOG_WARN("range[%" PRIu64 "] ApplyDelete error: %s", id_, err->message().c_str());
                 break;
             }
         }

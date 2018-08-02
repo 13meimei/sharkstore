@@ -113,19 +113,89 @@ func (r *Router) StartRouter() *gin.Engine {
 		}
 		c.HTML(http.StatusOK, "sqlapply_list.html", gin.H{
 			"basePath": r.staticRootDir,
-			"admin": 	admin,
+			"admin":    admin,
 		})
 	})
 
 	router.GET("/page/lock/viewNamespace", func(c *gin.Context) {
+		userName, ok := sessions.Default(c).Get("user_name").(string)
+		if !ok {
+			c.Redirect(http.StatusMovedPermanently, "/logout")
+		}
+		admin := "none"
+		user, err := r.GetUserCluster(userName)
+		if err == nil {
+			for _, r := range user.Right {
+				if r == 1 {
+					admin = ""
+					break
+				}
+			}
+		}
 		c.HTML(http.StatusOK, "locknsp_list.html", gin.H{
 			"basePath": r.staticRootDir,
+			"admin":    admin,
 		})
 	})
 
 	router.GET("/page/lock/applyNamespace", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "locknsp_apply.html", gin.H{
 			"basePath": r.staticRootDir,
+		})
+	})
+
+	router.GET("/page/lock/viewLock", func(c *gin.Context) {
+		cid := c.Query("clusterId")
+		dbName := c.Query("dbName")
+		tableName := c.Query("tableName")
+		if cid == "" || dbName == "" || tableName == "" {
+			html404(c)
+			return
+		}
+
+		c.HTML(http.StatusOK, "lock_list.html", gin.H{
+			"basePath":  r.staticRootDir,
+			"clusterId": cid,
+			"dbName":    dbName,
+			"tableName": tableName,
+		})
+	})
+
+	router.GET("/page/configure/viewNamespace", func(c *gin.Context) {
+		userName, ok := sessions.Default(c).Get("user_name").(string)
+		if !ok {
+			c.Redirect(http.StatusMovedPermanently, "/logout")
+		}
+		admin := "none"
+		user, err := r.GetUserCluster(userName)
+		if err == nil {
+			for _, r := range user.Right {
+				if r == 1 {
+					admin = ""
+					break
+				}
+			}
+		}
+		c.HTML(http.StatusOK, "configurensp_list.html", gin.H{
+			"basePath": r.staticRootDir,
+			"admin":    admin,
+		})
+	})
+
+	router.GET("/page/configure/viewList", func(c *gin.Context) {
+		cid := c.Query("clusterId")
+		dbName := c.Query("dbName")
+		tableName := c.Query("tableName")
+		if cid == "" || dbName == "" || tableName == "" {
+			html404(c)
+			return
+		}
+
+		c.HTML(http.StatusOK, "configure_list.html", gin.H{
+			"basePath":  r.staticRootDir,
+			"clusterId": cid,
+			"dbName":    dbName,
+			"tableName": tableName,
 		})
 	})
 
@@ -641,7 +711,7 @@ func (r *Router) StartRouter() *gin.Engine {
 		// ----------------api router ---------------------
 		// cluster
 		router.GET(controllers.REQURI_CLUSTER_GETALL, func(c *gin.Context) {
-			handleAction(c, controllers.NewClusterGetAllAction())
+			handleRightAndAction(r, c, controllers.NewClusterGetAllAction())
 		})
 		router.POST(controllers.REQURI_CLUSTER_GETBYID, func(c *gin.Context) {
 			handleAction(c, controllers.NewClusterGetByIdAction())
@@ -660,13 +730,18 @@ func (r *Router) StartRouter() *gin.Engine {
 		router.POST(controllers.REQURI_MASTER_All, func(c *gin.Context) {
 			handleAction(c, controllers.NewMasterAllAction())
 		})
-
+		router.POST(controllers.REQURI_MASTER_LEADER, func(c *gin.Context) {
+			handleAction(c, controllers.NewMasterLeaderAction())
+		})
 		router.POST(controllers.REQURI_MASTER_LOGLEVEL_UPDATE, func(c *gin.Context) {
 			handleAction(c, controllers.NewMasterLogLevelUpdate())
 		})
 		// metadata
 		router.POST(controllers.REQURL_META_CREATEDB, func(c *gin.Context) {
 			handleAction(c, controllers.NewCreateDbAction())
+		})
+		router.POST(controllers.REQURL_META_DELETEDB, func(c *gin.Context) {
+			handleAction(c, controllers.NewDeleteDbAction())
 		})
 		router.POST(controllers.REQURL_META_GETALLDB, func(c *gin.Context) {
 			handleAction(c, controllers.NewGetAllDbAction())
@@ -845,11 +920,55 @@ func (r *Router) StartRouter() *gin.Engine {
 	router.POST(controllers.REQURI_LOCK_NAMESPACE_APPLY, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockNspApplyAction())
 	})
+	router.POST(controllers.REQURI_LOCK_NAMESPACE_AUDIT, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockNspAuditAction())
+	})
 	router.POST(controllers.REQURI_LOCK_NAMESPACE_UPDATE, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockNspUpdateAction())
 	})
-	router.GET(controllers.REQURI_LOCK_CLUSTER_INFO, func(c *gin.Context) {
-		handleAction(c, controllers.NewLockClusterGetAction())
+	router.POST(controllers.REQURI_LOCK_NAMESPACE_DELETE, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockNspDeleteAction())
+	})
+	router.GET(controllers.REQURI_LOCK_CLUSTER_LIST, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockClusterListGetAction())
+	})
+	router.POST(controllers.REQURI_LOCK_CLUSTER_INFO, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockClusterInfoGetAction())
+	})
+	router.GET(controllers.REQURI_LOCK_LOCK_GETALL, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockGetAllAction())
+	})
+	router.POST(controllers.REQURI_LOCK_LOCK_FORCEUNLOCK, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockForceUnLockAction())
+	})
+	router.POST(controllers.REQURI_LOCK_CLIENT_TOKEN, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockClientGetTokenAction())
+	})
+
+	//configure
+	router.GET(controllers.REQURI_CONFIGURE_NAMESPACE_GETALL, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureGetAllNspAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_NAMESPACE_APPLY, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureNspApplyAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_NAMESPACE_AUDIT, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureNspAuditAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_NAMESPACE_UPDATE, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureNspUpdateAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_NAMESPACE_DELETE, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureNspDeleteAction())
+	})
+	router.GET(controllers.REQURI_CONFIGURE_CLUSTER_LIST, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureClusterListGetAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_CLUSTER_INFO, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureClusterInfoGetAction())
+	})
+	router.GET(controllers.REQURI_CONFIGURE_GETALL, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureGetAllAction())
 	})
 
 	//metric
@@ -913,5 +1032,23 @@ func handleAction(c *gin.Context, act controllers.Action) {
 			Msg:  common.OK.Msg,
 			Data: data,
 		})
+	}
+}
+
+func handleRightAndAction(r *Router, c *gin.Context, act controllers.Action) {
+	userName := sessions.Default(c).Get("user_name").(string)
+	if len(userName) == 0 {
+		c.Redirect(http.StatusMovedPermanently, "/logout")
+	}
+
+	userRight, err := r.GetUserCluster(userName)
+	if err != nil || userRight == nil {
+		c.JSON(http.StatusOK, &controllers.Response{
+			Code: common.NO_RIGHT.Code,
+			Msg:  common.NO_RIGHT.Msg,
+		})
+	} else {
+		c.Set("userRight", userRight)
+		handleAction(c, act)
 	}
 }

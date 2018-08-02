@@ -49,21 +49,18 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
 
     do {
         if (!VerifyLeader(err)) {
-            FLOG_WARN("range[%" PRIu64 "] Lock error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] Lock error: %s", id_, err->message().c_str());
             break;
         }
 
         if (!KeyInRange(key, err)) {
-            FLOG_WARN("range[%" PRIu64 "] Lock error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] Lock error: %s", id_, err->message().c_str());
             break;
         }
 
         auto epoch = req.header().range_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("range[%" PRIu64 "] Lock error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] Lock error: %s", id_, err->message().c_str());
             break;
         }
 
@@ -73,8 +70,7 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
         });
 
         if (!ret.ok()) {
-            FLOG_ERROR("range[%" PRIu64 "] Lock raft submit error: %s",
-                       meta_.id(), ret.ToString().c_str());
+            FLOG_ERROR("range[%" PRIu64 "] Lock raft submit error: %s", id_, ret.ToString().c_str());
 
             err = RaftFailError();
         }
@@ -96,8 +92,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
     do {
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  ApplyLock error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("Range %" PRIu64 "  ApplyLock error: %s", id_, err->message().c_str());
             resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
             resp->mutable_resp()->set_error(err->message());
             break;
@@ -108,7 +103,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
             if (val->delete_flag()) {
                 FLOG_WARN("Range %" PRIu64
                           "  ApplyLock error: lock [%s] is force unlocked",
-                          meta_.id(), req.key().c_str());
+                          id_, req.key().c_str());
                 resp->mutable_resp()->set_code(LOCK_IS_FORCE_UNLOCKED);
                 resp->mutable_resp()->set_error("be force unlocked");
                 resp->mutable_resp()->set_value(val->value());
@@ -118,7 +113,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
             if (req.value().id() != val->id()) {
                 FLOG_WARN("Range %" PRIu64
                           "  ApplyLock error: lock [%s] is existed",
-                          meta_.id(), req.key().c_str());
+                          id_, req.key().c_str());
                 resp->mutable_resp()->set_code(LOCK_EXISTED);
                 resp->mutable_resp()->set_error("already locked");
                 resp->mutable_resp()->set_value(val->value());
@@ -151,7 +146,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
         delete val;
 
         FLOG_INFO("Range %" PRIu64 "  ApplyLock: lock [%s] is locked by %s",
-                  meta_.id(), req.key().c_str(), req.by().c_str());
+                  id_, req.key().c_str(), req.by().c_str());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
@@ -174,21 +169,18 @@ void Range::LockUpdate(common::ProtoMessage *msg,
 
     do {
         if (!VerifyLeader(err)) {
-            FLOG_WARN("range[%" PRIu64 "] LockUpdate error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] LockUpdate error: %s", id_, err->message().c_str());
             break;
         }
 
         if (!KeyInRange(key, err)) {
-            FLOG_WARN("range[%" PRIu64 "] LockUpdate error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] LockUpdate error: %s", id_, err->message().c_str());
             break;
         }
 
         auto epoch = req.header().range_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("range[%" PRIu64 "] LockUpdate error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("range[%" PRIu64 "] LockUpdate error: %s", id_, err->message().c_str());
             break;
         }
 
@@ -198,8 +190,7 @@ void Range::LockUpdate(common::ProtoMessage *msg,
         });
 
         if (!ret.ok()) {
-            FLOG_ERROR("range[%" PRIu64 "] LockUpdate raft submit error: %s",
-                       meta_.id(), ret.ToString().c_str());
+            FLOG_ERROR("range[%" PRIu64 "] LockUpdate raft submit error: %s", id_, ret.ToString().c_str());
 
             err = RaftFailError();
         }
@@ -222,7 +213,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             FLOG_WARN("Range %" PRIu64 "  ApplyLockUpdate error: %s",
-                      meta_.id(), err->message().c_str());
+                      id_, err->message().c_str());
             resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
             resp->mutable_resp()->set_error(err->message());
             break;
@@ -277,7 +268,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         delete val;
 
         FLOG_INFO("Range %" PRIu64 "  ApplyLockUpdate: lock [%s] is update",
-                  meta_.id(), req.key().c_str());
+                  id_, req.key().c_str());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
@@ -310,15 +301,13 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
             cmd.set_allocated_unlock_req(req.release_req());
         });
         if (!ret.ok()) {
-            FLOG_ERROR("range[%" PRIu64 "] Unlock raft submit error: %s",
-                       meta_.id(), ret.ToString().c_str());
+            FLOG_ERROR("range[%" PRIu64 "] Unlock raft submit error: %s", id_, ret.ToString().c_str());
             err = RaftFailError();
         }
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] Unlock error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] Unlock error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsUnlockResponse;
         SendError(msg, req.header(), resp, err);
@@ -336,8 +325,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
     do {
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  ApplyUnlock error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("Range %" PRIu64 "  ApplyUnlock error: %s", id_, err->message().c_str());
             resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
             resp->mutable_resp()->set_error(err->message());
             break;
@@ -347,7 +335,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
         if (val == nullptr) {
             FLOG_WARN("Range %" PRIu64
                       "  ApplyUnlock error: lock [%s] is not existed",
-                      meta_.id(), req.key().c_str());
+                      id_, req.key().c_str());
             resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
             resp->mutable_resp()->set_error("not exist");
             break;
@@ -365,7 +353,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
         if (req.id() != val->id()) {
             FLOG_WARN("Range %" PRIu64
                       "  ApplyUnlock error: lock [%s] not locked with id %s",
-                      meta_.id(), req.key().c_str(), req.id().c_str());
+                      id_, req.key().c_str(), req.id().c_str());
             resp->mutable_resp()->set_code(LOCK_ID_MISMATCHED);
             resp->mutable_resp()->set_error("wrong id: " + val->id());
             resp->mutable_resp()->set_value(val->value());
@@ -388,7 +376,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
         delete val;
 
         FLOG_INFO("Range %" PRIu64 "  ApplyUnlock: lock [%s] is unlock by %s",
-                  meta_.id(), req.key().c_str(), req.by().c_str());
+                  id_, req.key().c_str(), req.by().c_str());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
@@ -422,14 +410,13 @@ void Range::UnlockForce(common::ProtoMessage *msg,
         });
         if (!ret.ok()) {
             FLOG_ERROR("range[%" PRIu64 "] UnlockForce raft submit error: %s",
-                       meta_.id(), ret.ToString().c_str());
+                       id_, ret.ToString().c_str());
             err = RaftFailError();
         }
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] UnlockForce error: %s", meta_.id(),
-                  err->message().c_str());
+        FLOG_WARN("range[%" PRIu64 "] UnlockForce error: %s", id_, err->message().c_str());
 
         auto resp = new kvrpcpb::DsUnlockForceResponse;
         SendError(msg, req.header(), resp, err);
@@ -446,8 +433,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     do {
         auto epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  UnlockForce error: %s", meta_.id(),
-                      err->message().c_str());
+            FLOG_WARN("Range %" PRIu64 "  UnlockForce error: %s", id_, err->message().c_str());
             resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
             resp->mutable_resp()->set_error(err->message());
             break;
@@ -457,7 +443,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         if (val == nullptr) {
             FLOG_WARN("Range %" PRIu64
                       "  ApplyUnlockForce error: lock [%s] is not existed",
-                      meta_.id(), req.key().c_str());
+                      id_, req.key().c_str());
             resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
             resp->mutable_resp()->set_error("not exist");
             break;
@@ -489,7 +475,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
 
         FLOG_INFO("Range %" PRIu64
                   "  ApplyUnlockForce: lock [%s] is force unlocked by %s",
-                  meta_.id(), req.key().c_str(), req.by().c_str());
+                  id_, req.key().c_str(), req.by().c_str());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {

@@ -8,7 +8,7 @@
 
 #include "version.h"
 #include "manager.h"
-#include "master/worker.h"
+#include "master/worker_impl.h"
 #include "node_address.h"
 #include "raft_logger.h"
 #include "range_server.h"
@@ -37,7 +37,7 @@ DataServer::DataServer() {
         }
     }
     context_->master_worker =
-        new master::Worker(ms_addrs, ds_config.hb_config.node_interval);
+        new master::WorkerImpl(ms_addrs, ds_config.hb_config.node_interval);
 }
 
 DataServer::~DataServer() {
@@ -73,6 +73,8 @@ DataServer::~DataServer() {
 }
 
 bool DataServer::startRaftServer() {
+    print_raft_config();
+
     raft::SetLogger(new RaftLogger());
 
     // 初始化 raft server
@@ -113,10 +115,12 @@ int DataServer::Init() {
     // GetNodeId from master server
     bool clearup = false;
     uint64_t node_id = 0;
-    auto s = context_->master_worker->GetNodeId(
-        ds_config.raft_config.port, ds_config.worker_config.port,
-        ds_config.manager_config.port, version, &node_id, &clearup);
-
+    mspb::GetNodeIdRequest req;
+    req.set_server_port(static_cast<uint32_t>(ds_config.worker_config.port));
+    req.set_raft_port(static_cast<uint32_t>(ds_config.raft_config.port));
+    req.set_http_port(static_cast<uint32_t>(ds_config.manager_config.port));
+    req.set_version(version);
+    auto s = context_->master_worker->GetNodeId(req, &node_id, &clearup);
     if (!s.ok()) {
         FLOG_ERROR("GetNodeId failed. %s", s.ToString().c_str());
         return -1;

@@ -5,7 +5,6 @@ import (
 	"github.com/gin-contrib/sessions"
 
 	"console/common"
-	"console/right"
 	"console/service"
 	"util/log"
 
@@ -16,10 +15,10 @@ import (
 )
 
 const (
-	REQURI_SQL_GETALL = "/sql/queryApplyList"
-	REQURI_SQL_APPLY = "/sql/apply"
+	REQURI_SQL_GETALL       = "/sql/queryApplyList"
+	REQURI_SQL_APPLY        = "/sql/apply"
 	REQURI_SQL_APPLY_DETAIL = "/sql/apply/detail"
-	REQURI_SQL_APPLY_AUDIT = "/sql/audit"
+	REQURI_SQL_APPLY_AUDIT  = "/sql/audit"
 )
 
 /**
@@ -27,18 +26,33 @@ const (
  */
 type SqlGetAllAction struct {
 }
+
 func NewSqlGetAllAction() *SqlGetAllAction {
 	return &SqlGetAllAction{
 	}
 }
-func (ctrl *SqlGetAllAction)Execute(c *gin.Context) (interface{}, error) {
+func (ctrl *SqlGetAllAction) Execute(c *gin.Context) (interface{}, error) {
 	userName := sessions.Default(c).Get("user_name").(string)
 	isAdmin, err := service.NewService().IsAdmin(userName)
 	if err != nil {
-		return nil, fmt.Errorf("query user right failed %v", userName)
+		return nil, common.NO_USER
 	}
 	log.Debug("user [%v] get sql apply list, isAdmin: %v", userName, isAdmin)
-	return service.NewService().GetAllSqlApply(userName, isAdmin)
+	pageInfo, err := common.GetPagerInfo(c)
+	if err != nil {
+		return nil, err
+	}
+	log.Info("page %v", pageInfo)
+	totalRecord, sqlApplyList, err := service.NewService().GetAllSqlApply(userName, isAdmin, pageInfo)
+	if err != nil {
+		log.Warn("get sql apply list error, %v", err)
+		return nil, err
+	}
+	pageData := new(PageData)
+	pageData.Total = totalRecord
+	pageData.Data = sqlApplyList
+	log.Info("get sql apply list, %v", pageData)
+	return pageData, nil
 }
 
 /**
@@ -46,15 +60,15 @@ func (ctrl *SqlGetAllAction)Execute(c *gin.Context) (interface{}, error) {
  */
 type SqlApplyAction struct {
 }
+
 func NewSqlApplyAction() *SqlApplyAction {
-	return &SqlApplyAction {
+	return &SqlApplyAction{
 	}
 }
-func (ctrl *SqlApplyAction)Execute(c *gin.Context) (interface{}, error) {
+func (ctrl *SqlApplyAction) Execute(c *gin.Context) (interface{}, error) {
 	userName := sessions.Default(c).Get("user_name").(string)
-	user := right.GetCacheUser(userName)
-	if user == nil {
-		return nil, fmt.Errorf("no user cached %v", userName)
+	if len(userName) == 0 {
+		return nil, common.NO_USER
 	}
 	dbName := c.PostForm("dbName")
 	tableName := c.PostForm("tableName")
@@ -79,11 +93,12 @@ func (ctrl *SqlApplyAction)Execute(c *gin.Context) (interface{}, error) {
  */
 type SqlApplyGetAction struct {
 }
+
 func NewSqlApplyGetAction() *SqlApplyGetAction {
 	return &SqlApplyGetAction{
 	}
 }
-func (ctrl *SqlApplyGetAction)Execute(c *gin.Context) (interface{}, error) {
+func (ctrl *SqlApplyGetAction) Execute(c *gin.Context) (interface{}, error) {
 	id := c.Query("id")
 	if id == "" {
 		return nil, common.PARSE_PARAM_ERROR
@@ -93,24 +108,24 @@ func (ctrl *SqlApplyGetAction)Execute(c *gin.Context) (interface{}, error) {
 	return service.NewService().GetSqlApplyInfo(id)
 }
 
-
 /**
  * 审批sql
  */
 type SqlAuditAction struct {
 }
+
 func NewSqlAuditAction() *SqlAuditAction {
-	return &SqlAuditAction {
+	return &SqlAuditAction{
 	}
 }
-func (ctrl *SqlAuditAction)Execute(c *gin.Context) (interface{}, error) {
+func (ctrl *SqlAuditAction) Execute(c *gin.Context) (interface{}, error) {
 	ids := c.PostForm("ids")
 	status := c.PostForm("status")
 	if ids == "" || status == "" {
 		return nil, common.PARSE_PARAM_ERROR
 	}
 
-	log.Debug("audit sql apply, ids:%v, status:%v.",  ids, status)
+	log.Debug("audit sql apply, ids:%v, status:%v.", ids, status)
 	var idArray []string
 	if err := json.Unmarshal([]byte(ids), &idArray); err != nil {
 		return nil, common.PARSE_PARAM_ERROR
@@ -122,7 +137,7 @@ func (ctrl *SqlAuditAction)Execute(c *gin.Context) (interface{}, error) {
 
 	userName := sessions.Default(c).Get("user_name").(string)
 	isAdmin, err := service.NewService().IsAdmin(userName)
-	if err != nil  {
+	if err != nil {
 		return nil, fmt.Errorf("query user right failed %v", userName)
 	}
 

@@ -373,9 +373,9 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, header_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, range_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, leader_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, stats_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, term_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, peers_status_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatRequest, stats_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RangeHeartbeatResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1065,9 +1065,9 @@ void AddDescriptorsImpl() {
       "ate_size\030\005 \001(\004\"\317\001\n\025RangeHeartbeatRequest"
       "\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022\034\n"
       "\005range\030\002 \001(\0132\r.metapb.Range\022\034\n\006leader\030\003 "
-      "\001(\0132\014.metapb.Peer\022\014\n\004term\030\004 \001(\004\022&\n\014peers"
-      "_status\030\005 \003(\0132\020.mspb.PeerStatus\022\037\n\005stats"
-      "\030\006 \001(\0132\020.mspb.RangeStats\"\262\001\n\026RangeHeartb"
+      "\001(\0132\014.metapb.Peer\022\037\n\005stats\030\006 \001(\0132\020.mspb."
+      "RangeStats\022\014\n\004term\030\007 \001(\004\022&\n\014peers_status"
+      "\030\010 \003(\0132\020.mspb.PeerStatus\"\262\001\n\026RangeHeartb"
       "eatResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respo"
       "nseHeader\022\020\n\010range_id\030\002 \001(\004\022!\n\005epoch\030\003 \001"
       "(\0132\022.metapb.RangeEpoch\022!\n\013target_peer\030\004 "
@@ -3272,9 +3272,9 @@ void RangeStats::set_approximate_size(::google::protobuf::uint64 value) {
 const int RangeHeartbeatRequest::kHeaderFieldNumber;
 const int RangeHeartbeatRequest::kRangeFieldNumber;
 const int RangeHeartbeatRequest::kLeaderFieldNumber;
+const int RangeHeartbeatRequest::kStatsFieldNumber;
 const int RangeHeartbeatRequest::kTermFieldNumber;
 const int RangeHeartbeatRequest::kPeersStatusFieldNumber;
-const int RangeHeartbeatRequest::kStatsFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 RangeHeartbeatRequest::RangeHeartbeatRequest()
@@ -3430,10 +3430,22 @@ bool RangeHeartbeatRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // uint64 term = 4;
-      case 4: {
+      // .mspb.RangeStats stats = 6;
+      case 6: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_stats()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 term = 7;
+      case 7: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
@@ -3444,24 +3456,12 @@ bool RangeHeartbeatRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .mspb.PeerStatus peers_status = 5;
-      case 5: {
+      // repeated .mspb.PeerStatus peers_status = 8;
+      case 8: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(66u /* 66 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                 input, add_peers_status()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // .mspb.RangeStats stats = 6;
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_stats()));
         } else {
           goto handle_unusual;
         }
@@ -3512,22 +3512,22 @@ void RangeHeartbeatRequest::SerializeWithCachedSizes(
       3, *this->leader_, output);
   }
 
-  // uint64 term = 4;
-  if (this->term() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(4, this->term(), output);
-  }
-
-  // repeated .mspb.PeerStatus peers_status = 5;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->peers_status_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      5, this->peers_status(static_cast<int>(i)), output);
-  }
-
   // .mspb.RangeStats stats = 6;
   if (this->has_stats()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       6, *this->stats_, output);
+  }
+
+  // uint64 term = 7;
+  if (this->term() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(7, this->term(), output);
+  }
+
+  // repeated .mspb.PeerStatus peers_status = 8;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->peers_status_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      8, this->peers_status(static_cast<int>(i)), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -3565,24 +3565,24 @@ void RangeHeartbeatRequest::SerializeWithCachedSizes(
         3, *this->leader_, deterministic, target);
   }
 
-  // uint64 term = 4;
-  if (this->term() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(4, this->term(), target);
-  }
-
-  // repeated .mspb.PeerStatus peers_status = 5;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->peers_status_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageNoVirtualToArray(
-        5, this->peers_status(static_cast<int>(i)), deterministic, target);
-  }
-
   // .mspb.RangeStats stats = 6;
   if (this->has_stats()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         6, *this->stats_, deterministic, target);
+  }
+
+  // uint64 term = 7;
+  if (this->term() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(7, this->term(), target);
+  }
+
+  // repeated .mspb.PeerStatus peers_status = 8;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->peers_status_size()); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        8, this->peers_status(static_cast<int>(i)), deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -3602,7 +3602,7 @@ size_t RangeHeartbeatRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // repeated .mspb.PeerStatus peers_status = 5;
+  // repeated .mspb.PeerStatus peers_status = 8;
   {
     unsigned int count = static_cast<unsigned int>(this->peers_status_size());
     total_size += 1UL * count;
@@ -3641,7 +3641,7 @@ size_t RangeHeartbeatRequest::ByteSizeLong() const {
         *this->stats_);
   }
 
-  // uint64 term = 4;
+  // uint64 term = 7;
   if (this->term() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt64Size(
@@ -3857,50 +3857,6 @@ void RangeHeartbeatRequest::set_allocated_leader(::metapb::Peer* leader) {
   // @@protoc_insertion_point(field_set_allocated:mspb.RangeHeartbeatRequest.leader)
 }
 
-// uint64 term = 4;
-void RangeHeartbeatRequest::clear_term() {
-  term_ = GOOGLE_ULONGLONG(0);
-}
-::google::protobuf::uint64 RangeHeartbeatRequest::term() const {
-  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.term)
-  return term_;
-}
-void RangeHeartbeatRequest::set_term(::google::protobuf::uint64 value) {
-  
-  term_ = value;
-  // @@protoc_insertion_point(field_set:mspb.RangeHeartbeatRequest.term)
-}
-
-// repeated .mspb.PeerStatus peers_status = 5;
-int RangeHeartbeatRequest::peers_status_size() const {
-  return peers_status_.size();
-}
-void RangeHeartbeatRequest::clear_peers_status() {
-  peers_status_.Clear();
-}
-const ::mspb::PeerStatus& RangeHeartbeatRequest::peers_status(int index) const {
-  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.peers_status)
-  return peers_status_.Get(index);
-}
-::mspb::PeerStatus* RangeHeartbeatRequest::mutable_peers_status(int index) {
-  // @@protoc_insertion_point(field_mutable:mspb.RangeHeartbeatRequest.peers_status)
-  return peers_status_.Mutable(index);
-}
-::mspb::PeerStatus* RangeHeartbeatRequest::add_peers_status() {
-  // @@protoc_insertion_point(field_add:mspb.RangeHeartbeatRequest.peers_status)
-  return peers_status_.Add();
-}
-::google::protobuf::RepeatedPtrField< ::mspb::PeerStatus >*
-RangeHeartbeatRequest::mutable_peers_status() {
-  // @@protoc_insertion_point(field_mutable_list:mspb.RangeHeartbeatRequest.peers_status)
-  return &peers_status_;
-}
-const ::google::protobuf::RepeatedPtrField< ::mspb::PeerStatus >&
-RangeHeartbeatRequest::peers_status() const {
-  // @@protoc_insertion_point(field_list:mspb.RangeHeartbeatRequest.peers_status)
-  return peers_status_;
-}
-
 // .mspb.RangeStats stats = 6;
 bool RangeHeartbeatRequest::has_stats() const {
   return this != internal_default_instance() && stats_ != NULL;
@@ -3939,6 +3895,50 @@ void RangeHeartbeatRequest::set_allocated_stats(::mspb::RangeStats* stats) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:mspb.RangeHeartbeatRequest.stats)
+}
+
+// uint64 term = 7;
+void RangeHeartbeatRequest::clear_term() {
+  term_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 RangeHeartbeatRequest::term() const {
+  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.term)
+  return term_;
+}
+void RangeHeartbeatRequest::set_term(::google::protobuf::uint64 value) {
+  
+  term_ = value;
+  // @@protoc_insertion_point(field_set:mspb.RangeHeartbeatRequest.term)
+}
+
+// repeated .mspb.PeerStatus peers_status = 8;
+int RangeHeartbeatRequest::peers_status_size() const {
+  return peers_status_.size();
+}
+void RangeHeartbeatRequest::clear_peers_status() {
+  peers_status_.Clear();
+}
+const ::mspb::PeerStatus& RangeHeartbeatRequest::peers_status(int index) const {
+  // @@protoc_insertion_point(field_get:mspb.RangeHeartbeatRequest.peers_status)
+  return peers_status_.Get(index);
+}
+::mspb::PeerStatus* RangeHeartbeatRequest::mutable_peers_status(int index) {
+  // @@protoc_insertion_point(field_mutable:mspb.RangeHeartbeatRequest.peers_status)
+  return peers_status_.Mutable(index);
+}
+::mspb::PeerStatus* RangeHeartbeatRequest::add_peers_status() {
+  // @@protoc_insertion_point(field_add:mspb.RangeHeartbeatRequest.peers_status)
+  return peers_status_.Add();
+}
+::google::protobuf::RepeatedPtrField< ::mspb::PeerStatus >*
+RangeHeartbeatRequest::mutable_peers_status() {
+  // @@protoc_insertion_point(field_mutable_list:mspb.RangeHeartbeatRequest.peers_status)
+  return &peers_status_;
+}
+const ::google::protobuf::RepeatedPtrField< ::mspb::PeerStatus >&
+RangeHeartbeatRequest::peers_status() const {
+  // @@protoc_insertion_point(field_list:mspb.RangeHeartbeatRequest.peers_status)
+  return peers_status_;
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
