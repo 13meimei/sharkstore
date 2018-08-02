@@ -53,6 +53,35 @@ func (api *SharkStoreApi) Select(s *Server, dbName string, tableName string, fie
 	return api.execute(s, dbName, tableName, query)
 }
 
+func (api *SharkStoreApi) MultSelect(s *Server, dbName string, tableName string, fields []string, pkMults []map[string]interface{}, limit_ *Limit_) *Reply {
+	andMult := make([][]*And, 0)
+	for _, pks := range pkMults {
+		ands := make([]*And, 0)
+		for k, v := range pks {
+			and := &And{
+				Field:  &Field_{Column: k, Value: v},
+				Relate: "=",
+			}
+			ands = append(ands, and)
+		}
+		andMult = append(andMult, ands)
+	}
+
+	cmd := &Command{
+		Type:  "get",
+		Field: fields,
+		PKs: andMult,
+	}
+	if limit_ != nil {
+		cmd.Filter.Limit = limit_
+	}
+	query := &Query{
+		Command: cmd,
+	}
+
+	return api.execute(s, dbName, tableName, query)
+}
+
 func (api *SharkStoreApi) Delete(s *Server, dbName string, tableName string, fields []string, pks map[string]interface{}) *Reply {
 	ands := make([]*And, 0)
 	for k, v := range pks {

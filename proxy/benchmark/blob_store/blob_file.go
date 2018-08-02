@@ -143,3 +143,11 @@ func (record *BlobLogRecord) DecodeHeaderFrom(src []byte) error {
 
 	return nil
 }
+
+func (record *BlobLogRecord) GetKey() []byte {
+	return record.key
+}
+
+func (record *BlobLogRecord) GetVaule() []byte {
+	return record.value
+}
