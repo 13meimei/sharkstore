@@ -35,7 +35,7 @@ Status Range::GetAndResp( const common::ProtoMessage *msg, watchpb::DsWatchReque
     } else {
         version = 0;
         //err->set_message(std::move(ret.ToString()));
-        FLOG_WARN("range[%" PRIu64 "] WatchGet code_: %s", meta_.id(), ret.ToString().c_str());
+        FLOG_WARN("range[%" PRIu64 "] WatchGet code_: %s   key:%s", meta_.id(), ret.ToString().c_str(), EncodeToHexString(key).c_str());
     }
 
     return ret;

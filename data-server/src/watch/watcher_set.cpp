@@ -119,14 +119,14 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         }
 
-
+        FLOG_DEBUG("AddWatcher db version[%" PRId64 "], key: %s", EncodeToHexString(key).c_str());
         auto v = new WatcherValue;
         v->key_version_ = version;
         watcher_map_it = key_watchers.insert(std::make_pair(key, v)).first;
     }
     auto& watcher_map = watcher_map_it->second->mapKeyWatcher;
 
-     if( currKeyVer != watcher_map_it->second->key_version_) {
+     if( currKeyVer != watcher_map_it->second->key_version_ && currKeyVer != 0) {
 
          if(currKeyVer > watcher_map_it->second->key_version_) {
              FLOG_ERROR("watcher add skip: watcher_id:[%" PRIu64 "] key: [%s] current version[%" PRIu64 "] watcher version[%" PRIu64 "]",
@@ -141,6 +141,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                                "]",
                        w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), currKeyVer,
                        watcher_map_it->second->key_version_);
+
          }
          return WATCH_WATCHER_NOT_NEED;
      }
