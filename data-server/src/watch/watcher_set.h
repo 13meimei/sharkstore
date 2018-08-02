@@ -19,7 +19,7 @@ namespace watch {
 
 typedef std::unordered_map<WatcherId, WatcherPtr> KeyWatcherMap;
 typedef struct WatcherValue_ {
-    uint16_t key_version_{0};
+    int64_t key_version_{0};
     KeyWatcherMap mapKeyWatcher;
 }WatcherValue;
 //typedef std::unordered_map<Key, KeyWatcherMap*> WatcherMap;
@@ -42,10 +42,10 @@ public:
     WatcherSet& operator=(const WatcherSet&) = delete;
     ~WatcherSet();
 
-    WatchCode AddKeyWatcher(const WatcherKey&, WatcherPtr&);
+    WatchCode AddKeyWatcher(const WatcherKey&, WatcherPtr&, storage::Store *);
     WatchCode DelKeyWatcher(const WatcherKey&, WatcherId);
     WatchCode GetKeyWatchers(std::vector<WatcherPtr>& , const WatcherKey&, const int64_t &version);
-    WatchCode AddPrefixWatcher(const PrefixKey&, WatcherPtr&);
+    WatchCode AddPrefixWatcher(const PrefixKey&, WatcherPtr&, storage::Store *);
     WatchCode DelPrefixWatcher(const PrefixKey&, WatcherId);
     WatchCode GetPrefixWatchers(std::vector<WatcherPtr>& , const PrefixKey&, const int64_t &version);
     bool ChgGlobalVersion(const uint64_t &ver) noexcept {
@@ -84,7 +84,7 @@ private:
     std::condition_variable         watcher_expire_cond_;
     uint64_t                global_version_{0};
 private:
-    WatchCode AddWatcher(const WatcherKey&, WatcherPtr&, WatcherMap&, KeyMap&);
+    WatchCode AddWatcher(const WatcherKey&, WatcherPtr&, WatcherMap&, KeyMap&, storage::Store *);
     WatchCode DelWatcher(const WatcherKey&, WatcherId, WatcherMap&, KeyMap&);
     WatchCode GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey&, WatcherMap&, WatcherValue *watcherVal);
 

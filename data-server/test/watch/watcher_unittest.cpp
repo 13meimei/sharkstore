@@ -6,7 +6,7 @@
 #include "watch/watch_server.h"
 #include "frame/sf_util.h"
 #include "fastcommon/logger.h"
-
+#include "storage/store.h"
 
 int main(int argc, char* argv[]) {
     log_init2();
@@ -338,13 +338,13 @@ TEST(TestWatcherSet, AddAndDelKeyWatcher) {
     w_p2->SetWatcherId(2);
 
     // test add
-    ws.AddKeyWatcher(encode_key0, w_p0);
+    ws.AddKeyWatcher(encode_key0, w_p0, nullptr);
     ws.CheckAddKeyWatcher(w_ptr0);
 
-    ws.AddKeyWatcher(encode_key1, w_p1);
+    ws.AddKeyWatcher(encode_key1, w_p1, nullptr);
     ws.CheckAddKeyWatcher(w_ptr1);
 
-    ws.AddKeyWatcher(encode_key2, w_p2);
+    ws.AddKeyWatcher(encode_key2, w_p2, nullptr);
     ws.CheckAddKeyWatcher(w_ptr2);
 
     // test del

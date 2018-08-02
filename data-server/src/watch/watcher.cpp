@@ -16,7 +16,7 @@ Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const 
 }
 
 Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, common::ProtoMessage* msg):
-        type_(type), table_id_(table_id), key_version_(version), message_(msg), watcher_id_(msg->session_id), expire_time_(msg->expire_time) {
+        table_id_(table_id), key_version_(version), message_(msg), type_(type), watcher_id_(msg->session_id), expire_time_(msg->expire_time) {
     for (auto k: keys) {
         keys_.push_back(std::move(new WatcherKey(*k)));
     }
