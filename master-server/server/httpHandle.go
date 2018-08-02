@@ -1519,6 +1519,18 @@ var (
 		&metapb.Column{Name: "auditor", DataType: metapb.DataType_Varchar},
 		&metapb.Column{Name: "create_time", DataType: metapb.DataType_TimeStamp}}
 
+	fbase_configure_nsp = []*metapb.Column{
+		&metapb.Column{Name: "id", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
+		&metapb.Column{Name: "db_name", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "table_name", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "cluster_id", DataType: metapb.DataType_BigInt},
+		&metapb.Column{Name: "db_id", DataType: metapb.DataType_BigInt},
+		&metapb.Column{Name: "table_id", DataType: metapb.DataType_BigInt},
+		&metapb.Column{Name: "status", DataType: metapb.DataType_Tinyint},
+		&metapb.Column{Name: "applyer", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "auditor", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "create_time", DataType: metapb.DataType_TimeStamp}}
+
 	metric_server = []*metapb.Column{
 		&metapb.Column{Name: "addr", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
 	}
@@ -1661,6 +1673,15 @@ func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Re
 		log.Warn("create table %s %s failed, err %v", fbase, "fbase_lock_nsp", err)
 		reply.Code = HTTP_ERROR
 		reply.Message = fmt.Errorf("createTable fbase_lock_nsp err: %v", err).Error()
+		return
+	}
+	//configure namespace
+	parseColumn(fbase_configure_nsp)
+	_, err = cluster.CreateTable(fbase, "fbase_configure_nsp", fbase_configure_nsp, nil, false, nil)
+	if err != nil {
+		log.Warn("create table %s %s failed, err %v", fbase, "fbase_configure_nsp", err)
+		reply.Code = HTTP_ERROR
+		reply.Message = fmt.Errorf("createTable fbase_configure_nsp err: %v", err).Error()
 		return
 	}
 

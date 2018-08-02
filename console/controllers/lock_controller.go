@@ -47,9 +47,9 @@ func (ctrl *LockGetAllNspAction) Execute(c *gin.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	totalRecord, namespaceList, err := service.NewService().GetAllNamespace(userName, isAdmin, pageInfo)
+	totalRecord, namespaceList, err := service.NewService().GetAllLockNsp(userName, isAdmin, pageInfo)
 	if err != nil {
-		log.Warn("get namespace list error, %v", err)
+		log.Warn("get lock namespace list error, %v", err)
 		return nil, err
 	}
 
@@ -86,7 +86,7 @@ func (ctrl *LockNspApplyAction) Execute(c *gin.Context) (interface{}, error) {
 	}
 
 	log.Debug("apply lock dbName:%v, tableName: %v, applyer:%v, cluserId:%v.", dbName, tableName, userName, cId)
-	err = service.NewService().ApplyLockNamespace(cId, dbName, tableName, userName, time.Now().Unix())
+	err = service.NewService().ApplyLockNsp(cId, dbName, tableName, userName, time.Now().Unix())
 	if err != nil {
 		return nil, err
 	}
@@ -131,11 +131,7 @@ func (ctrl *LockNspAuditAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.NO_RIGHT
 	}
 
-	err = service.NewService().AuditLockNsp(idArray, statusI, userName)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+	return nil, service.NewService().AuditLockNsp(idArray, statusI, userName)
 }
 
 /**
@@ -233,7 +229,7 @@ func (ctrl *LockGetAllAction) Execute(c *gin.Context) (interface{}, error) {
 	}
 	lockList, err := service.NewService().GetAllLock(cId, dbName, tableName, pageInfo)
 	if err != nil {
-		log.Warn("get namespace list error, %v", err)
+		log.Warn("get lock detail list error, %v", err)
 		return nil, err
 	}
 
@@ -272,7 +268,7 @@ func (ctrl *LockForceUnLockAction) Execute(c *gin.Context) (interface{}, error) 
 }
 
 /**
- * lock 强制解锁
+ * lock 生成token
  */
 type LockClientGetTokenAction struct {
 }

@@ -61,7 +61,7 @@ function getCluster() {
 function applyLockNsp() {
     var clusterId = $("#clusterSelect").val();
     if (!hasText(clusterId)) {
-        swal("请选择对应的集群信息，如果集群列表，请联系开发人员")
+        swal("请选择对应的集群信息，如无可选集群列表，请联系开发人员")
         return
     }
     var dbName = $("#dbName").val();

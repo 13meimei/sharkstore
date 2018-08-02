@@ -1,10 +1,9 @@
 (function () {
     /**
-     * lock Namespace申请列表展示
+     * configure Namespace申请列表展示
      */
-    //lock申请数据获取
     $('#nspApplyLists').bootstrapTable({
-        url: "/lock/namespace/queryList",
+        url: "/configure/namespace/queryList",
         striped: true,      //是否显示行间隔色
         cache: false,       //是否使用缓存，默认为true（*）
         // search: true,       //是否显示表格搜索
@@ -67,8 +66,7 @@
                         "<button id=\"viewCluster\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"集群详情\" onclick=\"viewCluster('" + row.cluster_id + "');\">集群详情</button>&nbsp;&nbsp;";
                     if (row.status == 2) {
                         buttonS = buttonS +
-                            "<button id=\"viewLock\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"lock详情\" onclick=\"viewLock('" + row.db_name + "','" + row.table_name + "','" + row.cluster_id + "');\">lock详情</button>&nbsp;&nbsp;" +
-                            "<button id=\"viewToken\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看token\" onclick=\"viewToken('" + row.db_id + "','" + row.table_id + "');\">token详情</button>";
+                            "<button id=\"viewConfigure\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"配置详情\" onclick=\"viewConfigure('" + row.db_name + "','" + row.table_name + "','" + row.cluster_id + "');\">配置详情</button>";
                     }
                     return buttonS;
                 }
@@ -108,7 +106,7 @@ function updateOwner(applyId) {
                 return
             }
             $.ajax({
-                url: "/lock/namespace/update",
+                url: "/configure/namespace/update",
                 type: "post",
                 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                 dataType: "json",
@@ -119,7 +117,7 @@ function updateOwner(applyId) {
                 success: function (data) {
                     if (data.code === 0) {
                         swal("更新成功!", data.msg, "success");
-                        window.location.href = "/page/lock/viewNamespace";
+                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/configure/namespace/queryList'});
                     } else {
                         swal("更新失败", data.msg, "error");
                     }
@@ -133,7 +131,7 @@ function updateOwner(applyId) {
 
 function viewCluster(clusterId) {
     $.ajax({
-        url: "/lock/cluster/getInfo",
+        url: "/configure/cluster/getInfo",
         type: "post",
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         dataType: "json",
@@ -144,7 +142,7 @@ function viewCluster(clusterId) {
             if (data.code === 0) {
                 var innerhtml = "<table><tr><td>集群id：</td><td>" + data.data.id + "</td></tr>" +
                     "<tr><td>集群名：</td><td>" + data.data.name + "</td></tr>" +
-                    "<tr><td>lock访问地址：</td><td>" + data.data.master_url + "</td></tr>" +
+                    "<tr><td>访问地址：</td><td>" + data.data.master_url + "</td></tr>" +
                     "</table>"
                 swal({
                     title: "集群详情",
@@ -162,32 +160,8 @@ function viewCluster(clusterId) {
     });
 }
 
-function viewLock(dbName, tableName, clusterId) {
-    window.location.href = "/page/lock/viewLock?clusterId=" + clusterId + "&dbName=" + dbName + "&tableName=" + tableName;
-}
-
-
-function viewToken(dbId, tableId) {
-    $.ajax({
-        url: "/lock/client/getToken",
-        type: "post",
-        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-        dataType: "json",
-        data: {
-            "dbId": dbId,
-            "tableId": tableId
-        },
-        success: function (data) {
-            if (data.code === 0) {
-                swal("客户端token", data.data, "success");
-            } else {
-                swal("获取token失败！", data.msg, "warning");
-            }
-        },
-        error: function (res) {
-            swal("获取token失败！", "请联系管理员!", "error");
-        }
-    });
+function viewConfigure(dbName, tableName, clusterId) {
+    window.location.href = "/page/configure/viewList?clusterId=" + clusterId + "&dbName=" + dbName + "&tableName=" + tableName;
 }
 
 //审批
@@ -218,7 +192,7 @@ function auditNsp() {
         },
         function () {
             $.ajax({
-                url: "/lock/namespace/audit",
+                url: "/configure/namespace/audit",
                 type: "post",
                 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                 dataType: "json",
@@ -229,7 +203,7 @@ function auditNsp() {
                 success: function (data) {
                     if (data.code === 0) {
                         swal("审批成功！", "审批成功!", "success");
-                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/lock/namespace/queryList'});
+                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/configure/namespace/queryList'});
                     } else {
                         swal("审批失败！", data.message, "error");
                     }
@@ -269,7 +243,7 @@ function rejectNsp() {
         },
         function () {
             $.ajax({
-                url: "/lock/namespace/audit",
+                url: "/configure/namespace/audit",
                 type: "post",
                 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                 dataType: "json",
@@ -280,7 +254,7 @@ function rejectNsp() {
                 success: function (data) {
                     if (data.code === 0) {
                         swal("驳回成功！", "驳回成功!", "success");
-                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/lock/namespace/queryList'});
+                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/configure/namespace/queryList'});
                     } else {
                         swal("驳回失败！", data.message, "error");
                     }
@@ -292,9 +266,85 @@ function rejectNsp() {
         });
 }
 
-//lock namespace apply
+//configure namespace apply
 function applyNsp() {
-    window.location.href = "/page/lock/applyNamespace";
+    $("#dbName").val("");
+    $("#tableName").val("");
+    getCluster();
+    $("#saveButton").attr("style", "");
+    $('#nspApplyModal').modal('show');
+}
+
+function saveApply() {
+    var clusterId = $("#clusterSelect").val();
+    if (!hasText(clusterId)) {
+        swal("请选择对应的集群信息，如果可选集群列表，请联系开发人员")
+        return
+    }
+    var dbName = $("#dbName").val();
+    var tableName = $("#tableName").val();
+    if (!hasText(dbName) || !hasText(tableName)) {
+        swal("申请", "请先填写库名、表名", "error");
+        return
+    }
+    swal({
+        title: "申请配置 namespace?",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#DD6B55",
+        confirmButtonText: "确认",
+        closeOnConfirm: false
+    }, function () {
+        //执行ajax提交
+        $.ajax({
+            url: "/configure/namespace/apply",
+            type: "post",
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            dataType: "json",
+            data: {
+                dbName: dbName,
+                tableName: tableName,
+                clusterId: clusterId
+            },
+            success: function (data) {
+                if (data.code === 0) {
+                    swal("申请成功!", data.msg, "success");
+                    $('#nspApplyModal').modal('hide');
+                    $('#nspApplyLists').bootstrapTable('refresh', {url: '/configure/namespace/queryList'});
+                } else {
+                    swal("申请失败", data.msg, "error");
+                }
+            },
+            error: function (res) {
+                swal("申请配置 namespace失败", res, "error");
+            }
+        });
+    });
+}
+
+function getCluster() {
+    $('#clusterSelect').empty();
+    $.ajax({
+        url: "/configure/cluster/getList",
+        type: "get",
+        success: function (data) {
+            if (data.code === 0) {
+                if (data.data.length > 0) {
+                    var option;
+                    for (var i = 0; i < data.data.length; i++) {
+                        option = $("<option>").val(data.data[i].id).text(data.data[i].name);
+                    }
+                    $('#clusterSelect').append(option);
+                }
+            } else {
+                swal("获取集群列表失败", data.msg, "error");
+            }
+        },
+        error: function (res) {
+            swal("获取集群列表失败", res, "error");
+        }
+    });
+
 }
 
 //能看到，就能删除，支持批量【只能删除未审批的】
@@ -325,7 +375,7 @@ function deleteNsp() {
         },
         function () {
             $.ajax({
-                url: "/lock/namespace/delete",
+                url: "/configure/namespace/delete",
                 type: "post",
                 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                 dataType: "json",
@@ -335,7 +385,7 @@ function deleteNsp() {
                 success: function (data) {
                     if (data.code === 0) {
                         swal("删除成功！", data.msg, "success");
-                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/lock/namespace/queryList'});
+                        $('#nspApplyLists').bootstrapTable('refresh', {url: '/configure/namespace/queryList'});
                     } else {
                         swal("删除失败！", data.msg, "error");
                     }

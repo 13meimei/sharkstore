@@ -272,6 +272,20 @@ CREATE TABLE IF NOT EXISTS `fbase_lock_nsp` (
 	  PRIMARY KEY (`id`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `fbase_configure_nsp` (
+    `id`          varchar(64) NOT NULL,
+    `db_name`     varchar(64) NOT NULL,
+    `table_name`  varchar(64) NOT NULL,
+    `cluster_id`  bigint(20) NOT NULL,
+    `db_id`       bigint(20),
+    `table_id`    bigint(20),
+    `status`      tinyint(1)  Not null COMMENT '1：待审核， 2：通过，3：驳回，',
+    `applyer`     varchar(64) NOT NULL,
+    `auditor`     varchar(64),
+    `create_time` bigint(20) NOT NULL,
+	  PRIMARY KEY (`id`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE IF NOT EXISTS `range_stats` (
     `cluster_id`  bigint(20) NOT NULL,
     `range_id`  bigint(20) NOT NULL,

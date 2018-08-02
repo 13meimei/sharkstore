@@ -26,11 +26,22 @@ type SqlApply struct {
 }
 
 type LockInfo struct {
-	LockKey     string `json:"lock_key"`
-	LockValue   string `json:"lock_value"`
+	K     string `json:"k"`
+	V   string `json:"v"`
 	LockId      string `json:"lock_id"`
 	ExpiredTime int64  `json:"expired_time"`
 	UpdTime     int64  `json:"upd_time"`
 	DeleteFlag  int8   `json:"delete_flag"`
 	Creator     string `json:"creator"`
+}
+
+type ConfigureInfo struct {
+	K          string `json:"k"`
+	V          string `json:"v"`
+	Version    string `json:"version"`
+	Extend     string `json:"extend"`
+	CreateTime int64  `json:"create_time"`
+	UpdTime    int64  `json:"upd_time"`
+	DeleteFlag int8   `json:"delete_flag"`
+	Creator    string `json:"creator"`
 }

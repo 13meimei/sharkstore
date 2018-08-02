@@ -161,6 +161,44 @@ func (r *Router) StartRouter() *gin.Engine {
 		})
 	})
 
+	router.GET("/page/configure/viewNamespace", func(c *gin.Context) {
+		userName, ok := sessions.Default(c).Get("user_name").(string)
+		if !ok {
+			c.Redirect(http.StatusMovedPermanently, "/logout")
+		}
+		admin := "none"
+		user, err := r.GetUserCluster(userName)
+		if err == nil {
+			for _, r := range user.Right {
+				if r == 1 {
+					admin = ""
+					break
+				}
+			}
+		}
+		c.HTML(http.StatusOK, "configurensp_list.html", gin.H{
+			"basePath": r.staticRootDir,
+			"admin":    admin,
+		})
+	})
+
+	router.GET("/page/configure/viewList", func(c *gin.Context) {
+		cid := c.Query("clusterId")
+		dbName := c.Query("dbName")
+		tableName := c.Query("tableName")
+		if cid == "" || dbName == "" || tableName == "" {
+			html404(c)
+			return
+		}
+
+		c.HTML(http.StatusOK, "configure_list.html", gin.H{
+			"basePath":  r.staticRootDir,
+			"clusterId": cid,
+			"dbName":    dbName,
+			"tableName": tableName,
+		})
+	})
+
 	group := router.Group("/", right.GetPrivilege(r.db))
 	{
 		group.GET("/page/cluster/viewCluster", func(c *gin.Context) {
@@ -905,6 +943,32 @@ func (r *Router) StartRouter() *gin.Engine {
 	})
 	router.POST(controllers.REQURI_LOCK_CLIENT_TOKEN, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockClientGetTokenAction())
+	})
+
+	//configure
+	router.GET(controllers.REQURI_CONFIGURE_NAMESPACE_GETALL, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureGetAllNspAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_NAMESPACE_APPLY, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureNspApplyAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_NAMESPACE_AUDIT, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureNspAuditAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_NAMESPACE_UPDATE, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureNspUpdateAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_NAMESPACE_DELETE, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureNspDeleteAction())
+	})
+	router.GET(controllers.REQURI_CONFIGURE_CLUSTER_LIST, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureClusterListGetAction())
+	})
+	router.POST(controllers.REQURI_CONFIGURE_CLUSTER_INFO, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureClusterInfoGetAction())
+	})
+	router.GET(controllers.REQURI_CONFIGURE_GETALL, func(c *gin.Context) {
+		handleAction(c, controllers.NewConfigureGetAllAction())
 	})
 
 	//metric
