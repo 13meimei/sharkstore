@@ -39,6 +39,8 @@ type Config struct {
 
 	//lock cluster
 	LockClusterId	   int
+	//configure cluster
+	ConfigureClusterId	   int
 
 	// log
 	ProjectLogDir      string
@@ -98,6 +100,10 @@ Usage:
 	if c.LockClusterId, found = config.Config.Int("lock.cluster.id"); !found {
 		log.Warn("Config lock.cluster.id not specified")
 		c.LockClusterId = 0
+	}
+	if c.ConfigureClusterId, found = config.Config.Int("configure.cluster.id"); !found {
+		log.Warn("Config configure.cluster.id not specified")
+		c.ConfigureClusterId = 0
 	}
 	if c.ProjectLogDir, found = config.Config.String("log.dir"); !found {
 		log.Panic("Config log.dir not specified")
