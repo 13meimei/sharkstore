@@ -692,7 +692,9 @@ func (r *Router) StartRouter() *gin.Engine {
 		router.POST(controllers.REQURI_MASTER_All, func(c *gin.Context) {
 			handleAction(c, controllers.NewMasterAllAction())
 		})
-
+		router.POST(controllers.REQURI_MASTER_LEADER, func(c *gin.Context) {
+			handleAction(c, controllers.NewMasterLeaderAction())
+		})
 		router.POST(controllers.REQURI_MASTER_LOGLEVEL_UPDATE, func(c *gin.Context) {
 			handleAction(c, controllers.NewMasterLogLevelUpdate())
 		})
@@ -889,8 +891,11 @@ func (r *Router) StartRouter() *gin.Engine {
 	router.POST(controllers.REQURI_LOCK_NAMESPACE_DELETE, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockNspDeleteAction())
 	})
-	router.GET(controllers.REQURI_LOCK_CLUSTER_INFO, func(c *gin.Context) {
-		handleAction(c, controllers.NewLockClusterGetAction())
+	router.GET(controllers.REQURI_LOCK_CLUSTER_LIST, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockClusterListGetAction())
+	})
+	router.POST(controllers.REQURI_LOCK_CLUSTER_INFO, func(c *gin.Context) {
+		handleAction(c, controllers.NewLockClusterInfoGetAction())
 	})
 	router.GET(controllers.REQURI_LOCK_LOCK_GETALL, func(c *gin.Context) {
 		handleAction(c, controllers.NewLockGetAllAction())

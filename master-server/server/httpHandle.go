@@ -579,7 +579,7 @@ func (service *Server) handleMasterGetLeader(w http.ResponseWriter, r *http.Requ
 		reply.Message = http_error_cluster_has_no_leader
 		return
 	}
-	reply.Data = point.WebManageAddr
+	reply.Data = deepcopy.Iface(point).(*Peer)
 }
 
 func (service *Server) handleMasterGetAll(w http.ResponseWriter, r *http.Request) {

@@ -6,7 +6,6 @@ import (
 
 	"console/common"
 	"console/service"
-	"console/models"
 	"util/log"
 
 	"strconv"
@@ -18,13 +17,13 @@ const (
 	REQURI_LOCK_NAMESPACE_GETALL = "/lock/namespace/queryList"
 	REQURI_LOCK_NAMESPACE_APPLY  = "/lock/namespace/apply"
 	REQURI_LOCK_NAMESPACE_AUDIT  = "/lock/namespace/audit"
-	REQURI_LOCK_CLUSTER_INFO     = "/lock/cluster/get"
+	REQURI_LOCK_CLUSTER_LIST     = "/lock/cluster/getList"
+	REQURI_LOCK_CLUSTER_INFO     = "/lock/cluster/getInfo"
 	REQURI_LOCK_NAMESPACE_UPDATE = "/lock/namespace/update"
 	REQURI_LOCK_NAMESPACE_DELETE = "/lock/namespace/delete"
 	REQURI_LOCK_LOCK_GETALL      = "/lock/lock/queryList"
 	REQURI_LOCK_LOCK_FORCEUNLOCK = "/lock/lock/forceUnLock"
-
-	REQURI_LOCK_CLIENT_TOKEN = "/lock/client/getToken"
+	REQURI_LOCK_CLIENT_TOKEN     = "/lock/client/getToken"
 )
 
 /**
@@ -193,22 +192,16 @@ func (ctrl *LockNspDeleteAction) Execute(c *gin.Context) (interface{}, error) {
 /**
  * lock cluster 刚上线的时候，锁集群是通过配置的，后期改成获取对应权限的集群列表
  */
-type LockClusterGetAction struct {
+type LockClusterListGetAction struct {
 }
 
-func NewLockClusterGetAction() *LockClusterGetAction {
-	return &LockClusterGetAction{
+func NewLockClusterListGetAction() *LockClusterListGetAction {
+	return &LockClusterListGetAction{
 	}
 }
-func (ctrl *LockClusterGetAction) Execute(c *gin.Context) (interface{}, error) {
-	log.Debug("get lock cluster info")
-	var clusters []*models.ClusterInfo
-	cluster, err := service.NewService().GetLockCluster()
-	if err != nil {
-		return nil, err
-	}
-	clusters = append(clusters, cluster)
-	return clusters, nil
+func (ctrl *LockClusterListGetAction) Execute(c *gin.Context) (interface{}, error) {
+	log.Debug("get lock cluster list")
+	return service.NewService().GetLockClusterList()
 }
 
 /**
@@ -299,6 +292,26 @@ func (ctrl *LockClientGetTokenAction) Execute(c *gin.Context) (interface{}, erro
 	if err1 != nil || err2 != nil {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
-	log.Debug("comput token: dbId %v, tableId %v", dbId, tableId)
+	log.Debug("compute token: dbId %v, tableId %v", dbId, tableId)
 	return service.NewService().ComputeClientToken(dbId, tableId), nil
+}
+
+type LockClusterInfoGetAction struct {
+}
+
+func NewLockClusterInfoGetAction() *LockClusterInfoGetAction {
+	return &LockClusterInfoGetAction{
+	}
+}
+func (ctrl *LockClusterInfoGetAction) Execute(c *gin.Context) (interface{}, error) {
+	log.Debug("get lock cluster info")
+	cIdStr := c.PostForm("clusterId")
+	if "" == cIdStr {
+		return nil, common.PARSE_PARAM_ERROR
+	}
+	cId, err := strconv.Atoi(cIdStr)
+	if err != nil {
+		return nil, common.PARAM_FORMAT_ERROR
+	}
+	return service.NewService().GetClusterInfo(cId)
 }

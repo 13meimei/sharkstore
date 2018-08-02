@@ -133,7 +133,7 @@ function updateOwner(applyId) {
 
 function viewCluster(clusterId) {
     $.ajax({
-        url: "/cluster/getById",
+        url: "/lock/cluster/getInfo",
         type: "post",
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         dataType: "json",
@@ -144,7 +144,7 @@ function viewCluster(clusterId) {
             if (data.code === 0) {
                 var innerhtml = "<table><tr><td>集群id：</td><td>" + data.data.id + "</td></tr>" +
                     "<tr><td>集群名：</td><td>" + data.data.name + "</td></tr>" +
-                    // "<tr><td>lock访问地址：</td><td>data.data.id</td></tr>" +
+                    "<tr><td>lock访问地址：</td><td>" + data.data.master_url + "</td></tr>" +
                     "</table>"
                 swal({
                     title: "集群详情",

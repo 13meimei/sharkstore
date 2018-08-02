@@ -36,7 +36,7 @@ $(function () {
 function getCluster() {
     $('#clusterSelect').empty();
     $.ajax({
-        url: "/lock/cluster/get",
+        url: "/lock/cluster/getList",
         type: "get",
         success: function (data) {
             if (data.code === 0) {

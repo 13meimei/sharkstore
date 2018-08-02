@@ -532,7 +532,7 @@ func (s *Service) GetMasterAll(cId int, token string) (*models.Member, error) {
 	return masterNodesResp.Data, nil
 }
 
-func (s *Service) GetMasterLeader(cId int, token string) (interface{}, error) {
+func (s *Service) GetMasterLeader(cId int, token string) (*models.MsNode, error) {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
 		return nil, err
@@ -548,11 +548,11 @@ func (s *Service) GetMasterLeader(cId int, token string) (interface{}, error) {
 	reqParams["s"] = sign
 
 	var masterLeaderResp = struct {
-		Code int         `json:"code"`
-		Msg  string      `json:"message"`
-		Data interface{} `json:"data"`
+		Code int            `json:"code"`
+		Msg  string         `json:"message"`
+		Data *models.MsNode `json:"data"`
 	}{}
-	if err := sendGetReq(info.MasterUrl, "manage/master/getleader", reqParams, &masterLeaderResp); err != nil {
+	if err := sendGetReq(info.MasterUrl, "/manage/master/getleader", reqParams, &masterLeaderResp); err != nil {
 		return nil, err
 	}
 	if masterLeaderResp.Code != 0 {
@@ -2195,8 +2195,8 @@ func (s *Service) ApplyLockNamespace(cId int, dbName, tableName, applyer string,
 		return err
 	}
 
-	nsp := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, cluster_id, status, applyer, auditor, create_time) 
-		values ("%s", "%s", "%s", %d, %d, "%s", "%s", %d)`,
+	nsp := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time) 
+		values ("%s", "%s", "%s", %d, 0, 0, %d, "%s", "%s", %d)`,
 		TABLE_NAME_LOCK_NSP, fmt.Sprintf("%s", id), dbName, tableName, cId, STATUS_APPLY, applyer, "", cTime)
 	_, err = s.execSql(nsp)
 	if err != nil {
@@ -2253,8 +2253,8 @@ func (s *Service) UpdateLockNsp(applyId, applyer string) error {
 	if err != nil {
 		return err
 	}
-	nspSql := fmt.Sprintf(`Insert into %s (id, db_name, table_name, cluster_id, status, applyer, auditor, create_time) values ("%s", "%s", "%s", %d, %d, "%s", "%s", %d)`,
-		TABLE_NAME_LOCK_NSP, applyId, applyInfo.DbName, applyInfo.TableName, applyInfo.ClusterId,
+	nspSql := fmt.Sprintf(`Insert into %s (id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time) values ("%s", "%s", "%s", %d, %d, %d, %d, "%s", "%s", %d)`,
+		TABLE_NAME_LOCK_NSP, applyId, applyInfo.DbName, applyInfo.TableName, applyInfo.ClusterId, applyInfo.DbId, applyInfo.TableId,
 		applyInfo.Status, applyer, applyInfo.Auditor, applyInfo.CreateTime)
 	rowsAffected, err := s.execSql(nspSql)
 	if err != nil {
@@ -2280,7 +2280,7 @@ func (s *Service) DeleteLockNsp(ids []string) error {
 	return nil
 }
 
-func (s *Service) GetLockCluster() (*models.ClusterInfo, error) {
+func (s *Service) GetLockClusterList() ([]*models.ClusterInfo, error) {
 	clusterId := s.config.LockClusterId
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
@@ -2289,7 +2289,9 @@ func (s *Service) GetLockCluster() (*models.ClusterInfo, error) {
 	if info == nil {
 		return nil, common.CLUSTER_NOTEXISTS_ERROR
 	}
-	return info, nil
+	var clusters []*models.ClusterInfo
+	clusters = append(clusters, info)
+	return clusters, nil
 }
 
 //go by http command
@@ -2398,12 +2400,7 @@ func (s *Service) ForceUnLock(clusterId int, dbName, tableName, key string) erro
 func (s *Service) ComputeClientToken(dbId, tableId int) string {
 	namespace := fmt.Sprintf("%s%d-%d", LOCK_CLIENT_NAMESPACE_PREFIX, dbId, tableId)
 	log.Info("compute client token %v", namespace)
-	encryptStr := createToken(namespace)
-	var buf bytes.Buffer
-	for i := 0; i < len(encryptStr)/4; i++ {
-		buf.WriteString(string(encryptStr[i*4]))
-	}
-	return buf.String()
+	return createToken(namespace)
 }
 
 func createToken(namespace string) string {
@@ -2416,7 +2413,12 @@ func createToken(namespace string) string {
 		}
 		source = buf.String()
 	}
-	return encrypt(source)
+	encryptStr := encrypt(source)
+	var buf bytes.Buffer
+	for i := 0; i < len(encryptStr)/4; i++ {
+		buf.WriteString(string(encryptStr[i*4]))
+	}
+	return buf.String()
 }
 
 func encrypt(source string) string {
@@ -2431,6 +2433,39 @@ func encrpytMd5(source []byte) string {
 	h := md5.New()
 	h.Write(source)
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (s *Service) GetClusterInfo(clusterId int) (*models.ClusterInfo, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+	clusterInfo := &models.ClusterInfo{Id: info.Id, Name:info.Name}
+	var msNode *models.MsNode
+	msNode, err = s.GetMasterLeader(clusterId, info.ClusterToken)
+	if err != nil {
+		log.Warn("get lock cluster rpc port error, %v", err)
+		return clusterInfo, nil
+	}
+	log.Info("get master config port from http method, %v", msNode)
+	if info.MasterUrl == "" {
+		info.MasterUrl = msNode.RpcServerAddr
+	} else {
+		var urlArray, urlArray2 []string
+		if strings.HasPrefix(info.MasterUrl, "http://") {
+			urlArray = strings.Split(info.MasterUrl[7:], ":")
+		} else {
+			urlArray = strings.Split(info.MasterUrl, ":")
+		}
+		urlArray2 = strings.Split(msNode.RpcServerAddr, ":")
+		if len(urlArray) == 2 && len(urlArray2) == 2 {
+			clusterInfo.MasterUrl = fmt.Sprintf("%s:%s", urlArray[0], urlArray2[1])
+		}
+	}
+	return clusterInfo, nil
 }
 
 //=============lock end================
