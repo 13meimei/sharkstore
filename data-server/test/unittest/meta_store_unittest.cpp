@@ -44,23 +44,6 @@ protected:
     MetaStore *store_;
 };
 
-// TEST(Meta, Dump) {
-//    rocksdb::DB *db = nullptr;
-//    rocksdb::Options ops;
-////    auto s = rocksdb::DB::OpenForReadOnly(rocksdb::Options(),
-///"/home/jonah/meta", &db);
-//    auto s = rocksdb::DB::OpenForReadOnly(rocksdb::Options(),
-//    "/home/jonah/test/sharkstore/d1/db/meta", &db);
-//    ASSERT_TRUE(s.ok()) << s.ToString();
-//    auto it = db->NewIterator(rocksdb::ReadOptions());
-//    it->SeekToFirst();
-//    while (it->Valid()) {
-//        std::cout << "key: " <<
-//        EncodeToHexString(it->key().ToString().substr(0, 1))
-//                  <<  "-" <<it->key().ToString().substr(1) << std::endl;
-//        it->Next();
-//    }
-//}
 TEST_F(MetaStoreTest, NodeID) {
     uint64_t node = sharkstore::randomInt();
     auto s = store_->SaveNodeID(node);

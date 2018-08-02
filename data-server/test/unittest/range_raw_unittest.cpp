@@ -13,6 +13,7 @@
 #include "server/run_status.h"
 #include "storage/store.h"
 
+#include "helper/table.h"
 #include "helper/mock/raft_server_mock.h"
 #include "helper/mock/socket_session_mock.h"
 
@@ -23,6 +24,7 @@ int main(int argc, char *argv[]) {
 
 char level[8] = "debug";
 
+using namespace sharkstore::test::helper;
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::storage;
 
@@ -34,6 +36,7 @@ protected:
 
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
+        ds_config.range_config.recover_concurrency = 1;
 
         range_server_ = new server::RangeServer;
 
@@ -82,6 +85,12 @@ metapb::Range *genRange1() {
     peer->set_id(2);
     peer->set_node_id(2);
 
+    auto pks = CreateAccountTable()->GetPKs();
+    for (const auto& pk : pks) {
+        auto p = meta->add_primary_keys();
+        p->CopyFrom(pk);
+    }
+
     return meta;
 }
 
@@ -99,6 +108,12 @@ metapb::Range *genRange2() {
     auto peer = meta->add_peers();
     peer->set_id(1);
     peer->set_node_id(1);
+
+    auto pks = CreateAccountTable()->GetPKs();
+    for (const auto& pk : pks) {
+        auto p = meta->add_primary_keys();
+        p->CopyFrom(pk);
+    }
 
     return meta;
 }

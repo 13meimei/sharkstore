@@ -212,8 +212,8 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 	}
 
 	// Stale term
-	// req.GetTerm() != 0: backward compatible
-	// TODO: remove req.GetTerm() != 0
+	// req.GetTerm() != 0: for backward compatible
+	// TODO: remove req.GetTerm() != 0 in the future
 	if req.GetTerm() != 0 {
 		if req.GetTerm() < rng.Term {
 			log.Warn("range[%v] stale term(%d < %d)", rng.GetId(), req.GetTerm(), rng.Term)
