@@ -617,8 +617,8 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         for(auto w: vecNotifyWatcher) {
             auto w_id = w->GetWatcherId();
             idx++;
-            FLOG_DEBUG("range[%" PRIu64 "] WatchPut-Notify[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
-                       meta_.id(), key.c_str(), idx, uint32_t(watchCnt), w_id);
+            FLOG_DEBUG("range[%" PRIu64 "] Watch-Notify(%d)[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
+                       meta_.id(), funcId, key.c_str(), idx, uint32_t(watchCnt), w_id);
 
             if(w_id < 1) {
                 FLOG_ERROR("range[%" PRIu64 "] WatchNotify warn: watch_id is invalid.", meta_.id());
