@@ -18,7 +18,7 @@ type SchClient interface {
 	Close() error
 	// SendKVReq sends kv request.
 	CreateRange(addr string, r *metapb.Range) error
-	DeleteRange(addr string, rangeId uint64, peer_id uint64) error
+	DeleteRange(addr string, rangeId uint64) error
 	TransferLeader(addr string, rangeId uint64) error
 	UpdateRange(addr string, r *metapb.Range) error
 	GetPeerInfo(addr string, rangeId uint64) (*schpb.GetPeerInfoResponse, error)
