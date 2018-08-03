@@ -8,7 +8,7 @@ namespace range {
 namespace lock {
 bool DecodeKey(std::string& key,
                const std::string& buf) {
-    assert(keys.size() == 0 && buf.length() > 9);
+    assert(buf.length() > 9);
 
     size_t offset;
     for (offset = 9; offset < buf.length();) {
@@ -26,8 +26,7 @@ bool DecodeValue(std::string* value,
                  int64_t* delete_flag,
                  std::string* creator,
                  std::string& buf) {
-    assert(version != nullptr && value != nullptr && extend != nullptr &&
-           buf.length() != 0);
+    assert( value != nullptr &&  buf.length() == 0);
 
     size_t offset = 0;
     if (!DecodeBytesValue(buf, offset, value)) return false; // varchar    v
@@ -41,8 +40,7 @@ bool DecodeValue(std::string* value,
 
 void EncodeKey(std::string* buf,
                uint64_t tableId, const std::string* key) {
-    assert(buf != nullptr && buf->length() != 0);
-    assert(keys.size() != 0);
+    assert(buf != nullptr && buf->length() == 0);
 
     buf->push_back(static_cast<char>(1));
     EncodeUint64Ascending(buf, tableId); // column 1

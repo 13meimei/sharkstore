@@ -80,7 +80,7 @@ bool Watcher::DecodeValue(int64_t* version, std::string* value, std::string* ext
 
 void Watcher::EncodeKey(std::string* buf,
                uint64_t tableId, const std::vector<std::string*>& keys) {
-    assert(buf != nullptr && buf->length() != 0);
+    assert(buf != nullptr && buf->length() == 0);
     assert(keys.size() != 0);
 
     buf->push_back(static_cast<char>(1));
