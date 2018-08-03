@@ -42,8 +42,8 @@
             <td style="vertical-align:middle; text-align:center;">{{table.id}}</td>
             <td style="vertical-align:middle; text-align:center;">{{table.db_name}}</td>
             <td style="vertical-align:middle; text-align:center;">{{table.name}}</td>
-            <td style="vertical-align:middle; text-align:center;">{{table.status}}</td>
-            <td style="vertical-align:middle; text-align:center;">{{table.create_time * 1000 | date:'yyyy-MM-dd HH:mm:ss' }} </td>
+            <td style="vertical-align:middle; text-align:center;">{{table.status | tableStatus}}</td>
+            <td style="vertical-align:middle; text-align:center;">{{table.create_time * 1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td>
             <!--<td style="vertical-align:middle; text-align:center;">
                 <div class="switchbtn" ng-class="{'switchbtn-on':!table.autoShardingUnable}" ng-click="toggleAutoMigrate(table, 'autoShardingUnable')">
                     <div class="switchbtn-inside"></div>
