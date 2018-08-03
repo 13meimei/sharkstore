@@ -9302,6 +9302,12 @@ class LockRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::timestamp::Timestamp* release_timestamp();
   void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
 
+  // uint64 table_id = 20;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 20;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:kvrpcpb.LockRequest)
  private:
 
@@ -9309,6 +9315,7 @@ class LockRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::kvrpcpb::LockValue* value_;
   ::timestamp::Timestamp* timestamp_;
+  ::google::protobuf::uint64 table_id_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -10053,6 +10060,12 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::int64 update_time() const;
   void set_update_time(::google::protobuf::int64 value);
 
+  // uint64 table_id = 20;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 20;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:kvrpcpb.LockUpdateRequest)
  private:
 
@@ -10063,6 +10076,7 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::internal::ArenaStringPtr by_;
   ::timestamp::Timestamp* timestamp_;
   ::google::protobuf::int64 update_time_;
+  ::google::protobuf::uint64 table_id_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -10420,6 +10434,12 @@ class UnlockRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::timestamp::Timestamp* release_timestamp();
   void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
 
+  // uint64 table_id = 20;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 20;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:kvrpcpb.UnlockRequest)
  private:
 
@@ -10428,6 +10448,7 @@ class UnlockRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::ArenaStringPtr id_;
   ::google::protobuf::internal::ArenaStringPtr by_;
   ::timestamp::Timestamp* timestamp_;
+  ::google::protobuf::uint64 table_id_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -10771,6 +10792,12 @@ class UnlockForceRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::timestamp::Timestamp* release_timestamp();
   void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
 
+  // uint64 table_id = 20;
+  void clear_table_id();
+  static const int kTableIdFieldNumber = 20;
+  ::google::protobuf::uint64 table_id() const;
+  void set_table_id(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:kvrpcpb.UnlockForceRequest)
  private:
 
@@ -10778,6 +10805,7 @@ class UnlockForceRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::google::protobuf::internal::ArenaStringPtr by_;
   ::timestamp::Timestamp* timestamp_;
+  ::google::protobuf::uint64 table_id_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -17938,6 +17966,20 @@ inline void LockRequest::set_allocated_timestamp(::timestamp::Timestamp* timesta
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockRequest.timestamp)
 }
 
+// uint64 table_id = 20;
+inline void LockRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 LockRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockRequest.table_id)
+  return table_id_;
+}
+inline void LockRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockRequest.table_id)
+}
+
 // -------------------------------------------------------------------
 
 // DsLockRequest
@@ -18698,6 +18740,20 @@ inline void LockUpdateRequest::set_allocated_by(::std::string* by) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockUpdateRequest.by)
 }
 
+// uint64 table_id = 20;
+inline void LockUpdateRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 LockUpdateRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockUpdateRequest.table_id)
+  return table_id_;
+}
+inline void LockUpdateRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockUpdateRequest.table_id)
+}
+
 // -------------------------------------------------------------------
 
 // DsLockUpdateRequest
@@ -19069,6 +19125,20 @@ inline void UnlockRequest::set_allocated_by(::std::string* by) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UnlockRequest.by)
 }
 
+// uint64 table_id = 20;
+inline void UnlockRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 UnlockRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UnlockRequest.table_id)
+  return table_id_;
+}
+inline void UnlockRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.UnlockRequest.table_id)
+}
+
 // -------------------------------------------------------------------
 
 // DsUnlockRequest
@@ -19385,6 +19455,20 @@ inline void UnlockForceRequest::set_allocated_by(::std::string* by) {
   }
   by_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), by);
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UnlockForceRequest.by)
+}
+
+// uint64 table_id = 20;
+inline void UnlockForceRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 UnlockForceRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UnlockForceRequest.table_id)
+  return table_id_;
+}
+inline void UnlockForceRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.UnlockForceRequest.table_id)
 }
 
 // -------------------------------------------------------------------

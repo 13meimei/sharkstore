@@ -6,18 +6,15 @@ namespace dataserver {
 namespace range {
 
 namespace lock {
-bool DecodeKey(std::vector<std::string*>& keys,
+bool DecodeKey(std::string& key,
                const std::string& buf) {
     assert(keys.size() == 0 && buf.length() > 9);
 
     size_t offset;
     for (offset = 9; offset < buf.length();) {
-        std::string* b = new std::string();
-
-        if (!DecodeBytesAscending(buf, offset, b)) {
+        if (!DecodeBytesAscending(buf, offset, &key)) {
             return false;
         }
-        keys.push_back(b);
     }
     return true;
 }
@@ -43,7 +40,7 @@ bool DecodeValue(std::string* value,
 }
 
 void EncodeKey(std::string* buf,
-               uint64_t tableId, const std::vector<std::string*>& keys) {
+               uint64_t tableId, const std::string* key) {
     assert(buf != nullptr && buf->length() != 0);
     assert(keys.size() != 0);
 
@@ -51,9 +48,7 @@ void EncodeKey(std::string* buf,
     EncodeUint64Ascending(buf, tableId); // column 1
     assert(buf->length() == 9);
 
-    for (auto key : keys) {
-        EncodeBytesAscending(buf, key->c_str(), key->length());
-    }
+    EncodeBytesAscending(buf, key->c_str(), key->length());
 }
 
 void EncodeValue(std::string* buf,
@@ -128,7 +123,12 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
-    auto &key = req.req().key();
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    req.mutable_req()->set_key(encode_key);
+
+    auto& key = req.req().key();
+
     errorpb::Error *err = nullptr;
 
     do {
@@ -259,6 +259,10 @@ void Range::LockUpdate(common::ProtoMessage *msg,
     FLOG_DEBUG("lock update: %s", req.DebugString().c_str());
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
+
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    req.mutable_req()->set_key(encode_key);
 
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
@@ -393,6 +397,10 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    req.mutable_req()->set_key(encode_key);
+
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
     do {
@@ -500,6 +508,10 @@ void Range::UnlockForce(common::ProtoMessage *msg,
     FLOG_DEBUG("unlock force: %s", req.DebugString().c_str());
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
+
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    req.mutable_req()->set_key(encode_key);
 
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
