@@ -48,10 +48,10 @@ WatcherSet::WatcherSet() {
                 continue; // no valid watcher wait in queue
             }
 
-            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime());
+            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime() / 1000);
             std::chrono::system_clock::time_point expire(mill_sec);
 
-            int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time};
+            int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time / 1000};
 
             if (watcher_expire_cond_.wait_until(lock, expire) == std::cv_status::timeout) {
                 auto excBegin = getticks();
