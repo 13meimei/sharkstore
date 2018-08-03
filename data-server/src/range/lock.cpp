@@ -6,6 +6,7 @@ namespace dataserver {
 namespace range {
 
 namespace lock {
+
 bool DecodeKey(std::string& key,
                const std::string& buf) {
     assert(buf.length() > 9);
@@ -647,6 +648,57 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         delete err;
     }
     return ret;
+}
+
+void Range::LockWatch(common::ProtoMessage *msg,
+                        watchpb::DsKvWatchGetMultiRequest &req) {
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, meta_.table_id(), &req.kv().key()[0]);
+    FLOG_INFO("Range %" PRIu64" LockWatch: lock watch key[%s] encode[%s]",
+              id_, req.kv().key()[0].c_str(), EncodeToHexString(encode_key).c_str());
+
+    errorpb::Error *err = nullptr;
+    do {
+        if (!VerifyLeader(err)) {
+            break;
+        }
+        if (!KeyInRange(encode_key, err)) {
+            break;
+        }
+
+        auto val = LockGet(encode_key);
+        if (val == nullptr) {
+            FLOG_WARN("LockWatch error: lock encode key [%s] is not existed",
+                      EncodeToHexString(encode_key).c_str());
+            err->set_message("lock is not existed");
+            break;
+        }
+        if (val->delete_flag()) {
+            FLOG_WARN("LockWatch error: lock [%s] is force unlocked",
+                      EncodeToHexString(encode_key).c_str());
+            err->set_message("lock is force unlocked");
+            break;
+        }
+
+        std::vector<watch::Key*> keys;
+        keys.push_back(std::move(new watch::Key(req.kv().key()[0])));
+
+        auto w_ptr = std::make_shared<watch::Watcher>(meta_.table_id(), keys, 0, msg);
+        auto w_code = context_->range_server->watch_server_->AddKeyWatcher(w_ptr, store_);
+        if (w_code != watch::WATCH_OK) {
+            FLOG_WARN("LockWatch error: lock [%s] add key watcher failed",
+                      EncodeToHexString(encode_key).c_str());
+            err->set_message("add key watcher failed");
+            break;
+        }
+    } while (false);
+
+    if (err != nullptr) {
+        FLOG_WARN("range[%" PRIu64 "] LockWatch error: %s", id_, err->message().c_str());
+
+        auto resp = new watchpb::DsKvWatchGetMultiResponse;
+        SendError(msg, req.header(), resp, err);
+    }
 }
 
 void Range::LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req) {
