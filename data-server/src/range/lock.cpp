@@ -124,7 +124,7 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
                                    get_micro_second() - msg->begin_time);
 
     std::string encode_key;
-    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    lock::EncodeKey(&encode_key, meta_.table_id(), &req.req().key());
     req.mutable_req()->set_key(encode_key);
 
     auto& key = req.req().key();
@@ -261,7 +261,7 @@ void Range::LockUpdate(common::ProtoMessage *msg,
                                    get_micro_second() - msg->begin_time);
 
     std::string encode_key;
-    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    lock::EncodeKey(&encode_key, meta_.table_id(), &req.req().key());
     req.mutable_req()->set_key(encode_key);
 
     auto &key = req.req().key();
@@ -398,7 +398,7 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
                                    get_micro_second() - msg->begin_time);
 
     std::string encode_key;
-    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    lock::EncodeKey(&encode_key, meta_.table_id(), &req.req().key());
     req.mutable_req()->set_key(encode_key);
 
     auto &key = req.req().key();
@@ -526,7 +526,7 @@ void Range::UnlockForce(common::ProtoMessage *msg,
                                    get_micro_second() - msg->begin_time);
 
     std::string encode_key;
-    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    lock::EncodeKey(&encode_key, meta_.table_id(), &req.req().key());
     req.mutable_req()->set_key(encode_key);
 
     auto &key = req.req().key();

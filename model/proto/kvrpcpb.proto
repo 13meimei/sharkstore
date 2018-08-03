@@ -503,7 +503,6 @@ message LockRequest {
     bytes key               = 1;
     LockValue value         = 2;
     timestamp.Timestamp timestamp  = 10;
-    uint64 table_id                = 20;
 }
 
 message DsLockRequest {
@@ -540,7 +539,6 @@ message LockUpdateRequest {
     bytes update_value      = 6;
     timestamp.Timestamp timestamp  = 10;
     string by               = 11;
-    uint64 table_id                = 20;
 }
 
 message DsLockUpdateRequest {
@@ -558,7 +556,6 @@ message UnlockRequest {
     string id               = 3;
     timestamp.Timestamp timestamp  = 10;
     string by               = 11;
-    uint64 table_id                = 20;
 }
 
 message DsUnlockRequest {
@@ -575,7 +572,6 @@ message UnlockForceRequest {
     bytes key               = 1;
     timestamp.Timestamp timestamp  = 10;
     string by               = 11;
-    uint64 table_id                = 20;
 }
 
 message DsUnlockForceRequest {
