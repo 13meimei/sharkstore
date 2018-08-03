@@ -81,7 +81,6 @@ public:
     void GetPeerInfo(raft::RaftStatus *raft_status);
 
     // lock
-    bool LockExist(const std::string &key);
     kvrpcpb::LockValue *LockGet(const std::string &key);
     void Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req);
     void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);

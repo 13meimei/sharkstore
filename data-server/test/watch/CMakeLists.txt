@@ -7,7 +7,7 @@ set (test_MOCK_LIBS
 )
 
 set (TESTS
-	watcher_unittest.cpp
+	#watcher_unittest.cpp
 )
 
 foreach(f IN LISTS TESTS)

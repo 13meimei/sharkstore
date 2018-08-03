@@ -1164,6 +1164,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, delete_time_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, update_time_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, delete_flag_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, by_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1172,7 +1173,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockRequest, key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockRequest, value_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockRequest, timestamp_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockRequest, by_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockRequest, table_id_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsLockRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1220,6 +1221,8 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockUpdateRequest, update_time_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockUpdateRequest, update_value_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockUpdateRequest, timestamp_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockUpdateRequest, by_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockUpdateRequest, table_id_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsLockUpdateRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1243,6 +1246,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UnlockRequest, id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UnlockRequest, timestamp_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UnlockRequest, by_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UnlockRequest, table_id_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUnlockRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1265,6 +1269,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UnlockForceRequest, key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UnlockForceRequest, timestamp_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UnlockForceRequest, by_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UnlockForceRequest, table_id_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUnlockForceRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1379,24 +1384,24 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 533, -1, sizeof(DsKvRangeDeleteRequest)},
   { 540, -1, sizeof(DsKvRangeDeleteResponse)},
   { 547, -1, sizeof(LockValue)},
-  { 557, -1, sizeof(LockRequest)},
-  { 566, -1, sizeof(DsLockRequest)},
-  { 573, -1, sizeof(LockResponse)},
-  { 582, -1, sizeof(LockInfo)},
-  { 589, -1, sizeof(LockScanResponse)},
-  { 596, -1, sizeof(DsLockResponse)},
-  { 603, -1, sizeof(LockUpdateRequest)},
-  { 613, -1, sizeof(DsLockUpdateRequest)},
-  { 620, -1, sizeof(DsLockUpdateResponse)},
-  { 627, -1, sizeof(UnlockRequest)},
-  { 636, -1, sizeof(DsUnlockRequest)},
-  { 643, -1, sizeof(DsUnlockResponse)},
-  { 650, -1, sizeof(UnlockForceRequest)},
-  { 658, -1, sizeof(DsUnlockForceRequest)},
-  { 665, -1, sizeof(DsUnlockForceResponse)},
-  { 672, -1, sizeof(LockScanRequest)},
-  { 680, -1, sizeof(DsLockScanRequest)},
-  { 687, -1, sizeof(DsLockScanResponse)},
+  { 558, -1, sizeof(LockRequest)},
+  { 567, -1, sizeof(DsLockRequest)},
+  { 574, -1, sizeof(LockResponse)},
+  { 583, -1, sizeof(LockInfo)},
+  { 590, -1, sizeof(LockScanResponse)},
+  { 597, -1, sizeof(DsLockResponse)},
+  { 604, -1, sizeof(LockUpdateRequest)},
+  { 616, -1, sizeof(DsLockUpdateRequest)},
+  { 623, -1, sizeof(DsLockUpdateResponse)},
+  { 630, -1, sizeof(UnlockRequest)},
+  { 640, -1, sizeof(DsUnlockRequest)},
+  { 647, -1, sizeof(DsUnlockResponse)},
+  { 654, -1, sizeof(UnlockForceRequest)},
+  { 663, -1, sizeof(DsUnlockForceRequest)},
+  { 670, -1, sizeof(DsUnlockForceResponse)},
+  { 677, -1, sizeof(LockScanRequest)},
+  { 685, -1, sizeof(DsLockScanRequest)},
+  { 692, -1, sizeof(DsLockScanResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -2089,63 +2094,66 @@ void AddDescriptorsImpl() {
       "angeDeleteRequest\"p\n\027DsKvRangeDeleteResp"
       "onse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseH"
       "eader\022,\n\004resp\030\002 \001(\0132\036.kvrpcpb.KvRangeDel"
-      "eteResponse\"e\n\tLockValue\022\r\n\005value\030\002 \001(\014\022"
+      "eteResponse\"q\n\tLockValue\022\r\n\005value\030\002 \001(\014\022"
       "\n\n\002id\030\003 \001(\t\022\023\n\013delete_time\030\004 \001(\003\022\023\n\013upda"
-      "te_time\030\005 \001(\003\022\023\n\013delete_flag\030\006 \001(\010\"r\n\013Lo"
-      "ckRequest\022\013\n\003key\030\001 \001(\014\022!\n\005value\030\002 \001(\0132\022."
-      "kvrpcpb.LockValue\022\'\n\ttimestamp\030\n \001(\0132\024.t"
-      "imestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"Z\n\rDsLock"
-      "Request\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reques"
-      "tHeader\022!\n\003req\030\002 \001(\0132\024.kvrpcpb.LockReque"
-      "st\"O\n\014LockResponse\022\014\n\004code\030\001 \001(\003\022\r\n\005erro"
-      "r\030\002 \001(\t\022\r\n\005value\030\003 \001(\014\022\023\n\013update_time\030\004 "
-      "\001(\003\":\n\010LockInfo\022\013\n\003key\030\001 \001(\014\022!\n\005value\030\002 "
-      "\001(\0132\022.kvrpcpb.LockValue\"E\n\020LockScanRespo"
-      "nse\022\037\n\004info\030\001 \003(\0132\021.kvrpcpb.LockInfo\022\020\n\010"
-      "last_key\030\002 \001(\014\"^\n\016DsLockResponse\022\'\n\006head"
-      "er\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004res"
-      "p\030\002 \001(\0132\025.kvrpcpb.LockResponse\"\200\001\n\021LockU"
-      "pdateRequest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\023\n"
-      "\013update_time\030\005 \001(\003\022\024\n\014update_value\030\006 \001(\014"
-      "\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Timestam"
-      "p\"f\n\023DsLockUpdateRequest\022&\n\006header\030\001 \001(\013"
-      "2\026.kvrpcpb.RequestHeader\022\'\n\003req\030\002 \001(\0132\032."
-      "kvrpcpb.LockUpdateRequest\"d\n\024DsLockUpdat"
-      "eResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Resp"
-      "onseHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockR"
-      "esponse\"]\n\rUnlockRequest\022\013\n\003key\030\001 \001(\014\022\n\n"
-      "\002id\030\003 \001(\t\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp"
-      ".Timestamp\022\n\n\002by\030\013 \001(\t\"^\n\017DsUnlockReques"
-      "t\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeade"
-      "r\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.UnlockRequest\"`"
-      "\n\020DsUnlockResponse\022\'\n\006header\030\001 \001(\0132\027.kvr"
-      "pcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.kvrp"
-      "cpb.LockResponse\"V\n\022UnlockForceRequest\022\013"
-      "\n\003key\030\001 \001(\014\022\'\n\ttimestamp\030\n \001(\0132\024.timesta"
-      "mp.Timestamp\022\n\n\002by\030\013 \001(\t\"h\n\024DsUnlockForc"
-      "eRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reque"
-      "stHeader\022(\n\003req\030\002 \001(\0132\033.kvrpcpb.UnlockFo"
-      "rceRequest\"e\n\025DsUnlockForceResponse\022\'\n\006h"
-      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004"
-      "resp\030\002 \001(\0132\025.kvrpcpb.LockResponse\">\n\017Loc"
-      "kScanRequest\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001"
-      "(\014\022\r\n\005count\030\003 \001(\r\"b\n\021DsLockScanRequest\022&"
-      "\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022%"
-      "\n\003req\030\002 \001(\0132\030.kvrpcpb.LockScanRequest\"f\n"
-      "\022DsLockScanResponse\022\'\n\006header\030\001 \001(\0132\027.kv"
-      "rpcpb.ResponseHeader\022\'\n\004resp\030\002 \001(\0132\031.kvr"
-      "pcpb.LockScanResponse*;\n\013ExecuteType\022\017\n\013"
-      "ExecInvalid\020\000\022\013\n\007ExecPut\020\001\022\016\n\nExecDelete"
-      "\020\002*k\n\tMatchType\022\013\n\007Invalid\020\000\022\t\n\005Equal\020\001\022"
-      "\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022\017\n\013LessOrEqual\020\004"
-      "\022\n\n\006Larger\020\005\022\021\n\rLargerOrEqual\020\006*Z\n\tExist"
-      "Case\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_NotExists\020\001\022\r"
-      "\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020\003\022\014\n\010EC_Forc"
-      "e\020\004*B\n\tOperation\022\016\n\nOP_Invalid\020\000\022\n\n\006OP_S"
-      "et\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Get\020\003b\006proto3"
+      "te_time\030\005 \001(\003\022\023\n\013delete_flag\030\006 \001(\003\022\n\n\002by"
+      "\030\007 \001(\t\"x\n\013LockRequest\022\013\n\003key\030\001 \001(\014\022!\n\005va"
+      "lue\030\002 \001(\0132\022.kvrpcpb.LockValue\022\'\n\ttimesta"
+      "mp\030\n \001(\0132\024.timestamp.Timestamp\022\020\n\010table_"
+      "id\030\024 \001(\004\"Z\n\rDsLockRequest\022&\n\006header\030\001 \001("
+      "\0132\026.kvrpcpb.RequestHeader\022!\n\003req\030\002 \001(\0132\024"
+      ".kvrpcpb.LockRequest\"O\n\014LockResponse\022\014\n\004"
+      "code\030\001 \001(\003\022\r\n\005error\030\002 \001(\t\022\r\n\005value\030\003 \001(\014"
+      "\022\023\n\013update_time\030\004 \001(\003\":\n\010LockInfo\022\013\n\003key"
+      "\030\001 \001(\014\022!\n\005value\030\002 \001(\0132\022.kvrpcpb.LockValu"
+      "e\"E\n\020LockScanResponse\022\037\n\004info\030\001 \003(\0132\021.kv"
+      "rpcpb.LockInfo\022\020\n\010last_key\030\002 \001(\014\"^\n\016DsLo"
+      "ckResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Res"
+      "ponseHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.Lock"
+      "Response\"\236\001\n\021LockUpdateRequest\022\013\n\003key\030\001 "
+      "\001(\014\022\n\n\002id\030\003 \001(\t\022\023\n\013update_time\030\005 \001(\003\022\024\n\014"
+      "update_value\030\006 \001(\014\022\'\n\ttimestamp\030\n \001(\0132\024."
+      "timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\022\020\n\010table"
+      "_id\030\024 \001(\004\"f\n\023DsLockUpdateRequest\022&\n\006head"
+      "er\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n\003req\030"
+      "\002 \001(\0132\032.kvrpcpb.LockUpdateRequest\"d\n\024DsL"
+      "ockUpdateResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
+      "cpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpc"
+      "pb.LockResponse\"o\n\rUnlockRequest\022\013\n\003key\030"
+      "\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\'\n\ttimestamp\030\n \001(\0132\024.t"
+      "imestamp.Timestamp\022\n\n\002by\030\013 \001(\t\022\020\n\010table_"
+      "id\030\024 \001(\004\"^\n\017DsUnlockRequest\022&\n\006header\030\001 "
+      "\001(\0132\026.kvrpcpb.RequestHeader\022#\n\003req\030\002 \001(\013"
+      "2\026.kvrpcpb.UnlockRequest\"`\n\020DsUnlockResp"
+      "onse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseH"
+      "eader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockRespon"
+      "se\"h\n\022UnlockForceRequest\022\013\n\003key\030\001 \001(\014\022\'\n"
+      "\ttimestamp\030\n \001(\0132\024.timestamp.Timestamp\022\n"
+      "\n\002by\030\013 \001(\t\022\020\n\010table_id\030\024 \001(\004\"h\n\024DsUnlock"
+      "ForceRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.R"
+      "equestHeader\022(\n\003req\030\002 \001(\0132\033.kvrpcpb.Unlo"
+      "ckForceRequest\"e\n\025DsUnlockForceResponse\022"
+      "\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader"
+      "\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockResponse\">\n"
+      "\017LockScanRequest\022\r\n\005start\030\001 \001(\014\022\r\n\005limit"
+      "\030\002 \001(\014\022\r\n\005count\030\003 \001(\r\"b\n\021DsLockScanReque"
+      "st\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHead"
+      "er\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.LockScanReques"
+      "t\"f\n\022DsLockScanResponse\022\'\n\006header\030\001 \001(\0132"
+      "\027.kvrpcpb.ResponseHeader\022\'\n\004resp\030\002 \001(\0132\031"
+      ".kvrpcpb.LockScanResponse*;\n\013ExecuteType"
+      "\022\017\n\013ExecInvalid\020\000\022\013\n\007ExecPut\020\001\022\016\n\nExecDe"
+      "lete\020\002*k\n\tMatchType\022\013\n\007Invalid\020\000\022\t\n\005Equa"
+      "l\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022\017\n\013LessOrEqu"
+      "al\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOrEqual\020\006*Z\n\tE"
+      "xistCase\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_NotExists"
+      "\020\001\022\r\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020\003\022\014\n\010EC_"
+      "Force\020\004*B\n\tOperation\022\016\n\nOP_Invalid\020\000\022\n\n\006"
+      "OP_Set\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Get\020\003b\006pro"
+      "to3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 8719);
+      descriptor, 8803);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "kvrpcpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -31044,6 +31052,7 @@ const int LockValue::kIdFieldNumber;
 const int LockValue::kDeleteTimeFieldNumber;
 const int LockValue::kUpdateTimeFieldNumber;
 const int LockValue::kDeleteFlagFieldNumber;
+const int LockValue::kByFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 LockValue::LockValue()
@@ -31067,6 +31076,10 @@ LockValue::LockValue(const LockValue& from)
   if (from.id().size() > 0) {
     id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.id_);
   }
+  by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.by().size() > 0) {
+    by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
+  }
   ::memcpy(&delete_time_, &from.delete_time_,
     static_cast<size_t>(reinterpret_cast<char*>(&delete_flag_) -
     reinterpret_cast<char*>(&delete_time_)) + sizeof(delete_flag_));
@@ -31076,6 +31089,7 @@ LockValue::LockValue(const LockValue& from)
 void LockValue::SharedCtor() {
   value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&delete_time_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&delete_flag_) -
       reinterpret_cast<char*>(&delete_time_)) + sizeof(delete_flag_));
@@ -31090,6 +31104,7 @@ LockValue::~LockValue() {
 void LockValue::SharedDtor() {
   value_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  by_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void LockValue::SetCachedSize(int size) const {
@@ -31123,6 +31138,7 @@ void LockValue::Clear() {
 
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  by_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&delete_time_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&delete_flag_) -
       reinterpret_cast<char*>(&delete_time_)) + sizeof(delete_flag_));
@@ -31195,14 +31211,30 @@ bool LockValue::MergePartialFromCodedStream(
         break;
       }
 
-      // bool delete_flag = 6;
+      // int64 delete_flag = 6;
       case 6: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &delete_flag_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string by = 7;
+      case 7: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(58u /* 58 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_by()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->by().data(), static_cast<int>(this->by().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "kvrpcpb.LockValue.by"));
         } else {
           goto handle_unusual;
         }
@@ -31261,9 +31293,19 @@ void LockValue::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->update_time(), output);
   }
 
-  // bool delete_flag = 6;
+  // int64 delete_flag = 6;
   if (this->delete_flag() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(6, this->delete_flag(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(6, this->delete_flag(), output);
+  }
+
+  // string by = 7;
+  if (this->by().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->by().data(), static_cast<int>(this->by().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "kvrpcpb.LockValue.by");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      7, this->by(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -31308,9 +31350,20 @@ void LockValue::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(5, this->update_time(), target);
   }
 
-  // bool delete_flag = 6;
+  // int64 delete_flag = 6;
   if (this->delete_flag() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(6, this->delete_flag(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(6, this->delete_flag(), target);
+  }
+
+  // string by = 7;
+  if (this->by().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->by().data(), static_cast<int>(this->by().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "kvrpcpb.LockValue.by");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        7, this->by(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -31344,6 +31397,13 @@ size_t LockValue::ByteSizeLong() const {
         this->id());
   }
 
+  // string by = 7;
+  if (this->by().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->by());
+  }
+
   // int64 delete_time = 4;
   if (this->delete_time() != 0) {
     total_size += 1 +
@@ -31358,9 +31418,11 @@ size_t LockValue::ByteSizeLong() const {
         this->update_time());
   }
 
-  // bool delete_flag = 6;
+  // int64 delete_flag = 6;
   if (this->delete_flag() != 0) {
-    total_size += 1 + 1;
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
+        this->delete_flag());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -31400,6 +31462,10 @@ void LockValue::MergeFrom(const LockValue& from) {
 
     id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.id_);
   }
+  if (from.by().size() > 0) {
+
+    by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
+  }
   if (from.delete_time() != 0) {
     set_delete_time(from.delete_time());
   }
@@ -31437,6 +31503,7 @@ void LockValue::InternalSwap(LockValue* other) {
   using std::swap;
   value_.Swap(&other->value_);
   id_.Swap(&other->id_);
+  by_.Swap(&other->by_);
   swap(delete_time_, other->delete_time_);
   swap(update_time_, other->update_time_);
   swap(delete_flag_, other->delete_flag_);
@@ -31586,18 +31653,71 @@ void LockValue::set_update_time(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.LockValue.update_time)
 }
 
-// bool delete_flag = 6;
+// int64 delete_flag = 6;
 void LockValue::clear_delete_flag() {
-  delete_flag_ = false;
+  delete_flag_ = GOOGLE_LONGLONG(0);
 }
-bool LockValue::delete_flag() const {
+::google::protobuf::int64 LockValue::delete_flag() const {
   // @@protoc_insertion_point(field_get:kvrpcpb.LockValue.delete_flag)
   return delete_flag_;
 }
-void LockValue::set_delete_flag(bool value) {
+void LockValue::set_delete_flag(::google::protobuf::int64 value) {
   
   delete_flag_ = value;
   // @@protoc_insertion_point(field_set:kvrpcpb.LockValue.delete_flag)
+}
+
+// string by = 7;
+void LockValue::clear_by() {
+  by_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& LockValue::by() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockValue.by)
+  return by_.GetNoArena();
+}
+void LockValue::set_by(const ::std::string& value) {
+  
+  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockValue.by)
+}
+#if LANG_CXX11
+void LockValue::set_by(::std::string&& value) {
+  
+  by_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:kvrpcpb.LockValue.by)
+}
+#endif
+void LockValue::set_by(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:kvrpcpb.LockValue.by)
+}
+void LockValue::set_by(const char* value, size_t size) {
+  
+  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.LockValue.by)
+}
+::std::string* LockValue::mutable_by() {
+  
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.LockValue.by)
+  return by_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* LockValue::release_by() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.LockValue.by)
+  
+  return by_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void LockValue::set_allocated_by(::std::string* by) {
+  if (by != NULL) {
+    
+  } else {
+    
+  }
+  by_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), by);
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockValue.by)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -31608,7 +31728,7 @@ void LockValue::set_delete_flag(bool value) {
 const int LockRequest::kKeyFieldNumber;
 const int LockRequest::kValueFieldNumber;
 const int LockRequest::kTimestampFieldNumber;
-const int LockRequest::kByFieldNumber;
+const int LockRequest::kTableIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 LockRequest::LockRequest()
@@ -31628,10 +31748,6 @@ LockRequest::LockRequest(const LockRequest& from)
   if (from.key().size() > 0) {
     key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
   }
-  by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.by().size() > 0) {
-    by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
-  }
   if (from.has_value()) {
     value_ = new ::kvrpcpb::LockValue(*from.value_);
   } else {
@@ -31642,15 +31758,15 @@ LockRequest::LockRequest(const LockRequest& from)
   } else {
     timestamp_ = NULL;
   }
+  table_id_ = from.table_id_;
   // @@protoc_insertion_point(copy_constructor:kvrpcpb.LockRequest)
 }
 
 void LockRequest::SharedCtor() {
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&value_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&timestamp_) -
-      reinterpret_cast<char*>(&value_)) + sizeof(timestamp_));
+      reinterpret_cast<char*>(&table_id_) -
+      reinterpret_cast<char*>(&value_)) + sizeof(table_id_));
   _cached_size_ = 0;
 }
 
@@ -31661,7 +31777,6 @@ LockRequest::~LockRequest() {
 
 void LockRequest::SharedDtor() {
   key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  by_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete value_;
   if (this != internal_default_instance()) delete timestamp_;
 }
@@ -31696,7 +31811,6 @@ void LockRequest::Clear() {
   (void) cached_has_bits;
 
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  by_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && value_ != NULL) {
     delete value_;
   }
@@ -31705,6 +31819,7 @@ void LockRequest::Clear() {
     delete timestamp_;
   }
   timestamp_ = NULL;
+  table_id_ = GOOGLE_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -31714,7 +31829,7 @@ bool LockRequest::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:kvrpcpb.LockRequest)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(16383u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
@@ -31754,16 +31869,14 @@ bool LockRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // string by = 11;
-      case 11: {
+      // uint64 table_id = 20;
+      case 20: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(90u /* 90 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_by()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->by().data(), static_cast<int>(this->by().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "kvrpcpb.LockRequest.by"));
+            static_cast< ::google::protobuf::uint8>(160u /* 160 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &table_id_)));
         } else {
           goto handle_unusual;
         }
@@ -31814,14 +31927,9 @@ void LockRequest::SerializeWithCachedSizes(
       10, *this->timestamp_, output);
   }
 
-  // string by = 11;
-  if (this->by().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->by().data(), static_cast<int>(this->by().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "kvrpcpb.LockRequest.by");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      11, this->by(), output);
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(20, this->table_id(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -31859,15 +31967,9 @@ void LockRequest::SerializeWithCachedSizes(
         10, *this->timestamp_, deterministic, target);
   }
 
-  // string by = 11;
-  if (this->by().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->by().data(), static_cast<int>(this->by().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "kvrpcpb.LockRequest.by");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        11, this->by(), target);
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(20, this->table_id(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -31894,13 +31996,6 @@ size_t LockRequest::ByteSizeLong() const {
         this->key());
   }
 
-  // string by = 11;
-  if (this->by().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->by());
-  }
-
   // .kvrpcpb.LockValue value = 2;
   if (this->has_value()) {
     total_size += 1 +
@@ -31913,6 +32008,13 @@ size_t LockRequest::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->timestamp_);
+  }
+
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    total_size += 2 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->table_id());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -31948,15 +32050,14 @@ void LockRequest::MergeFrom(const LockRequest& from) {
 
     key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
   }
-  if (from.by().size() > 0) {
-
-    by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
-  }
   if (from.has_value()) {
     mutable_value()->::kvrpcpb::LockValue::MergeFrom(from.value());
   }
   if (from.has_timestamp()) {
     mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+  }
+  if (from.table_id() != 0) {
+    set_table_id(from.table_id());
   }
 }
 
@@ -31985,9 +32086,9 @@ void LockRequest::Swap(LockRequest* other) {
 void LockRequest::InternalSwap(LockRequest* other) {
   using std::swap;
   key_.Swap(&other->key_);
-  by_.Swap(&other->by_);
   swap(value_, other->value_);
   swap(timestamp_, other->timestamp_);
+  swap(table_id_, other->table_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -32133,57 +32234,18 @@ void LockRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockRequest.timestamp)
 }
 
-// string by = 11;
-void LockRequest::clear_by() {
-  by_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// uint64 table_id = 20;
+void LockRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
 }
-const ::std::string& LockRequest::by() const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.LockRequest.by)
-  return by_.GetNoArena();
+::google::protobuf::uint64 LockRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockRequest.table_id)
+  return table_id_;
 }
-void LockRequest::set_by(const ::std::string& value) {
+void LockRequest::set_table_id(::google::protobuf::uint64 value) {
   
-  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:kvrpcpb.LockRequest.by)
-}
-#if LANG_CXX11
-void LockRequest::set_by(::std::string&& value) {
-  
-  by_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:kvrpcpb.LockRequest.by)
-}
-#endif
-void LockRequest::set_by(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:kvrpcpb.LockRequest.by)
-}
-void LockRequest::set_by(const char* value, size_t size) {
-  
-  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.LockRequest.by)
-}
-::std::string* LockRequest::mutable_by() {
-  
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.LockRequest.by)
-  return by_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-::std::string* LockRequest::release_by() {
-  // @@protoc_insertion_point(field_release:kvrpcpb.LockRequest.by)
-  
-  return by_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-void LockRequest::set_allocated_by(::std::string* by) {
-  if (by != NULL) {
-    
-  } else {
-    
-  }
-  by_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), by);
-  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockRequest.by)
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockRequest.table_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -34229,6 +34291,8 @@ const int LockUpdateRequest::kIdFieldNumber;
 const int LockUpdateRequest::kUpdateTimeFieldNumber;
 const int LockUpdateRequest::kUpdateValueFieldNumber;
 const int LockUpdateRequest::kTimestampFieldNumber;
+const int LockUpdateRequest::kByFieldNumber;
+const int LockUpdateRequest::kTableIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 LockUpdateRequest::LockUpdateRequest()
@@ -34256,12 +34320,18 @@ LockUpdateRequest::LockUpdateRequest(const LockUpdateRequest& from)
   if (from.update_value().size() > 0) {
     update_value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.update_value_);
   }
+  by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.by().size() > 0) {
+    by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
+  }
   if (from.has_timestamp()) {
     timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
-  update_time_ = from.update_time_;
+  ::memcpy(&update_time_, &from.update_time_,
+    static_cast<size_t>(reinterpret_cast<char*>(&table_id_) -
+    reinterpret_cast<char*>(&update_time_)) + sizeof(table_id_));
   // @@protoc_insertion_point(copy_constructor:kvrpcpb.LockUpdateRequest)
 }
 
@@ -34269,9 +34339,10 @@ void LockUpdateRequest::SharedCtor() {
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   update_value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&timestamp_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&update_time_) -
-      reinterpret_cast<char*>(&timestamp_)) + sizeof(update_time_));
+      reinterpret_cast<char*>(&table_id_) -
+      reinterpret_cast<char*>(&timestamp_)) + sizeof(table_id_));
   _cached_size_ = 0;
 }
 
@@ -34284,6 +34355,7 @@ void LockUpdateRequest::SharedDtor() {
   key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   update_value_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  by_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete timestamp_;
 }
 
@@ -34319,11 +34391,14 @@ void LockUpdateRequest::Clear() {
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   update_value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  by_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) {
     delete timestamp_;
   }
   timestamp_ = NULL;
-  update_time_ = GOOGLE_LONGLONG(0);
+  ::memset(&update_time_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&table_id_) -
+      reinterpret_cast<char*>(&update_time_)) + sizeof(table_id_));
   _internal_metadata_.Clear();
 }
 
@@ -34333,7 +34408,7 @@ bool LockUpdateRequest::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:kvrpcpb.LockUpdateRequest)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(16383u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
@@ -34403,6 +34478,36 @@ bool LockUpdateRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // string by = 11;
+      case 11: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(90u /* 90 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_by()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->by().data(), static_cast<int>(this->by().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "kvrpcpb.LockUpdateRequest.by"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 table_id = 20;
+      case 20: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(160u /* 160 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &table_id_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -34462,6 +34567,21 @@ void LockUpdateRequest::SerializeWithCachedSizes(
       10, *this->timestamp_, output);
   }
 
+  // string by = 11;
+  if (this->by().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->by().data(), static_cast<int>(this->by().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "kvrpcpb.LockUpdateRequest.by");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      11, this->by(), output);
+  }
+
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(20, this->table_id(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -34513,6 +34633,22 @@ void LockUpdateRequest::SerializeWithCachedSizes(
         10, *this->timestamp_, deterministic, target);
   }
 
+  // string by = 11;
+  if (this->by().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->by().data(), static_cast<int>(this->by().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "kvrpcpb.LockUpdateRequest.by");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        11, this->by(), target);
+  }
+
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(20, this->table_id(), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -34551,6 +34687,13 @@ size_t LockUpdateRequest::ByteSizeLong() const {
         this->update_value());
   }
 
+  // string by = 11;
+  if (this->by().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->by());
+  }
+
   // .timestamp.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     total_size += 1 +
@@ -34563,6 +34706,13 @@ size_t LockUpdateRequest::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int64Size(
         this->update_time());
+  }
+
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    total_size += 2 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->table_id());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -34606,11 +34756,18 @@ void LockUpdateRequest::MergeFrom(const LockUpdateRequest& from) {
 
     update_value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.update_value_);
   }
+  if (from.by().size() > 0) {
+
+    by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
+  }
   if (from.has_timestamp()) {
     mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
   }
   if (from.update_time() != 0) {
     set_update_time(from.update_time());
+  }
+  if (from.table_id() != 0) {
+    set_table_id(from.table_id());
   }
 }
 
@@ -34641,8 +34798,10 @@ void LockUpdateRequest::InternalSwap(LockUpdateRequest* other) {
   key_.Swap(&other->key_);
   id_.Swap(&other->id_);
   update_value_.Swap(&other->update_value_);
+  by_.Swap(&other->by_);
   swap(timestamp_, other->timestamp_);
   swap(update_time_, other->update_time_);
+  swap(table_id_, other->table_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -34866,6 +35025,73 @@ void LockUpdateRequest::set_allocated_timestamp(::timestamp::Timestamp* timestam
     
   }
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockUpdateRequest.timestamp)
+}
+
+// string by = 11;
+void LockUpdateRequest::clear_by() {
+  by_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& LockUpdateRequest::by() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockUpdateRequest.by)
+  return by_.GetNoArena();
+}
+void LockUpdateRequest::set_by(const ::std::string& value) {
+  
+  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockUpdateRequest.by)
+}
+#if LANG_CXX11
+void LockUpdateRequest::set_by(::std::string&& value) {
+  
+  by_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:kvrpcpb.LockUpdateRequest.by)
+}
+#endif
+void LockUpdateRequest::set_by(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:kvrpcpb.LockUpdateRequest.by)
+}
+void LockUpdateRequest::set_by(const char* value, size_t size) {
+  
+  by_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.LockUpdateRequest.by)
+}
+::std::string* LockUpdateRequest::mutable_by() {
+  
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.LockUpdateRequest.by)
+  return by_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* LockUpdateRequest::release_by() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.LockUpdateRequest.by)
+  
+  return by_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void LockUpdateRequest::set_allocated_by(::std::string* by) {
+  if (by != NULL) {
+    
+  } else {
+    
+  }
+  by_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), by);
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockUpdateRequest.by)
+}
+
+// uint64 table_id = 20;
+void LockUpdateRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 LockUpdateRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockUpdateRequest.table_id)
+  return table_id_;
+}
+void LockUpdateRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockUpdateRequest.table_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -35633,6 +35859,7 @@ const int UnlockRequest::kKeyFieldNumber;
 const int UnlockRequest::kIdFieldNumber;
 const int UnlockRequest::kTimestampFieldNumber;
 const int UnlockRequest::kByFieldNumber;
+const int UnlockRequest::kTableIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 UnlockRequest::UnlockRequest()
@@ -35665,6 +35892,7 @@ UnlockRequest::UnlockRequest(const UnlockRequest& from)
   } else {
     timestamp_ = NULL;
   }
+  table_id_ = from.table_id_;
   // @@protoc_insertion_point(copy_constructor:kvrpcpb.UnlockRequest)
 }
 
@@ -35672,7 +35900,9 @@ void UnlockRequest::SharedCtor() {
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  timestamp_ = NULL;
+  ::memset(&timestamp_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&table_id_) -
+      reinterpret_cast<char*>(&timestamp_)) + sizeof(table_id_));
   _cached_size_ = 0;
 }
 
@@ -35724,6 +35954,7 @@ void UnlockRequest::Clear() {
     delete timestamp_;
   }
   timestamp_ = NULL;
+  table_id_ = GOOGLE_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -35733,7 +35964,7 @@ bool UnlockRequest::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:kvrpcpb.UnlockRequest)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(16383u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
@@ -35787,6 +36018,20 @@ bool UnlockRequest::MergePartialFromCodedStream(
             this->by().data(), static_cast<int>(this->by().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
             "kvrpcpb.UnlockRequest.by"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 table_id = 20;
+      case 20: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(160u /* 160 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &table_id_)));
         } else {
           goto handle_unusual;
         }
@@ -35851,6 +36096,11 @@ void UnlockRequest::SerializeWithCachedSizes(
       11, this->by(), output);
   }
 
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(20, this->table_id(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -35901,6 +36151,11 @@ void UnlockRequest::SerializeWithCachedSizes(
         11, this->by(), target);
   }
 
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(20, this->table_id(), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -35944,6 +36199,13 @@ size_t UnlockRequest::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->timestamp_);
+  }
+
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    total_size += 2 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->table_id());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -35990,6 +36252,9 @@ void UnlockRequest::MergeFrom(const UnlockRequest& from) {
   if (from.has_timestamp()) {
     mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
   }
+  if (from.table_id() != 0) {
+    set_table_id(from.table_id());
+  }
 }
 
 void UnlockRequest::CopyFrom(const ::google::protobuf::Message& from) {
@@ -36020,6 +36285,7 @@ void UnlockRequest::InternalSwap(UnlockRequest* other) {
   id_.Swap(&other->id_);
   by_.Swap(&other->by_);
   swap(timestamp_, other->timestamp_);
+  swap(table_id_, other->table_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -36229,6 +36495,20 @@ void UnlockRequest::set_allocated_by(::std::string* by) {
   }
   by_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), by);
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UnlockRequest.by)
+}
+
+// uint64 table_id = 20;
+void UnlockRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 UnlockRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UnlockRequest.table_id)
+  return table_id_;
+}
+void UnlockRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.UnlockRequest.table_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -36995,6 +37275,7 @@ void DsUnlockResponse::set_allocated_resp(::kvrpcpb::LockResponse* resp) {
 const int UnlockForceRequest::kKeyFieldNumber;
 const int UnlockForceRequest::kTimestampFieldNumber;
 const int UnlockForceRequest::kByFieldNumber;
+const int UnlockForceRequest::kTableIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 UnlockForceRequest::UnlockForceRequest()
@@ -37023,13 +37304,16 @@ UnlockForceRequest::UnlockForceRequest(const UnlockForceRequest& from)
   } else {
     timestamp_ = NULL;
   }
+  table_id_ = from.table_id_;
   // @@protoc_insertion_point(copy_constructor:kvrpcpb.UnlockForceRequest)
 }
 
 void UnlockForceRequest::SharedCtor() {
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  timestamp_ = NULL;
+  ::memset(&timestamp_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&table_id_) -
+      reinterpret_cast<char*>(&timestamp_)) + sizeof(table_id_));
   _cached_size_ = 0;
 }
 
@@ -37079,6 +37363,7 @@ void UnlockForceRequest::Clear() {
     delete timestamp_;
   }
   timestamp_ = NULL;
+  table_id_ = GOOGLE_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -37088,7 +37373,7 @@ bool UnlockForceRequest::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:kvrpcpb.UnlockForceRequest)
   for (;;) {
-    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(16383u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
@@ -37126,6 +37411,20 @@ bool UnlockForceRequest::MergePartialFromCodedStream(
             this->by().data(), static_cast<int>(this->by().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
             "kvrpcpb.UnlockForceRequest.by"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 table_id = 20;
+      case 20: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(160u /* 160 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &table_id_)));
         } else {
           goto handle_unusual;
         }
@@ -37180,6 +37479,11 @@ void UnlockForceRequest::SerializeWithCachedSizes(
       11, this->by(), output);
   }
 
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(20, this->table_id(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -37219,6 +37523,11 @@ void UnlockForceRequest::SerializeWithCachedSizes(
         11, this->by(), target);
   }
 
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(20, this->table_id(), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -37255,6 +37564,13 @@ size_t UnlockForceRequest::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->timestamp_);
+  }
+
+  // uint64 table_id = 20;
+  if (this->table_id() != 0) {
+    total_size += 2 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->table_id());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -37297,6 +37613,9 @@ void UnlockForceRequest::MergeFrom(const UnlockForceRequest& from) {
   if (from.has_timestamp()) {
     mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
   }
+  if (from.table_id() != 0) {
+    set_table_id(from.table_id());
+  }
 }
 
 void UnlockForceRequest::CopyFrom(const ::google::protobuf::Message& from) {
@@ -37326,6 +37645,7 @@ void UnlockForceRequest::InternalSwap(UnlockForceRequest* other) {
   key_.Swap(&other->key_);
   by_.Swap(&other->by_);
   swap(timestamp_, other->timestamp_);
+  swap(table_id_, other->table_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -37482,6 +37802,20 @@ void UnlockForceRequest::set_allocated_by(::std::string* by) {
   }
   by_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), by);
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UnlockForceRequest.by)
+}
+
+// uint64 table_id = 20;
+void UnlockForceRequest::clear_table_id() {
+  table_id_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 UnlockForceRequest::table_id() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UnlockForceRequest.table_id)
+  return table_id_;
+}
+void UnlockForceRequest::set_table_id(::google::protobuf::uint64 value) {
+  
+  table_id_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.UnlockForceRequest.table_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

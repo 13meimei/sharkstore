@@ -82,6 +82,7 @@ private:
     void LockUpdate(common::ProtoMessage *msg);
     void Unlock(common::ProtoMessage *msg);
     void UnlockForce(common::ProtoMessage *msg);
+    void LockWatch(common::ProtoMessage *msg);
 
     void KVSet(common::ProtoMessage *msg);
     void KVGet(common::ProtoMessage *msg);

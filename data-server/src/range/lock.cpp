@@ -5,38 +5,117 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+namespace lock {
+bool DecodeKey(std::string& key,
+               const std::string& buf) {
+    assert(keys.size() == 0 && buf.length() > 9);
+
+    size_t offset;
+    for (offset = 9; offset < buf.length();) {
+        if (!DecodeBytesAscending(buf, offset, &key)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool DecodeValue(std::string* value,
+                 std::string* lock_id,
+                 int64_t* expired_time,
+                 int64_t* update_time,
+                 int64_t* delete_flag,
+                 std::string* creator,
+                 std::string& buf) {
+    assert(version != nullptr && value != nullptr && extend != nullptr &&
+           buf.length() != 0);
+
+    size_t offset = 0;
+    if (!DecodeBytesValue(buf, offset, value)) return false; // varchar    v
+    if (!DecodeBytesValue(buf, offset, lock_id)) return false; // varchar    lock_id
+    if (!DecodeIntValue(buf, offset, expired_time)) return false; // bigint     expired_time
+    if (!DecodeIntValue(buf, offset, update_time)) return false; // bigint     upd_time
+    if (!DecodeIntValue(buf, offset, delete_flag)) return false; // int        delete_flag
+    if (!DecodeBytesValue(buf, offset, creator)) return false; // varchar    creator
+    return true;
+}
+
+void EncodeKey(std::string* buf,
+               uint64_t tableId, const std::string* key) {
+    assert(buf != nullptr && buf->length() != 0);
+    assert(keys.size() != 0);
+
+    buf->push_back(static_cast<char>(1));
+    EncodeUint64Ascending(buf, tableId); // column 1
+    assert(buf->length() == 9);
+
+    EncodeBytesAscending(buf, key->c_str(), key->length());
+}
+
+void EncodeValue(std::string* buf,
+                 const std::string* value,
+                 const std::string* lock_id,
+                 int64_t expired_time,
+                 int64_t update_time,
+                 int64_t delete_flag,
+                 const std::string* creator) {
+    assert(buf != nullptr);
+
+    EncodeBytesValue(buf, 2, value->c_str(), value->length());              // varchar    v
+    EncodeBytesValue(buf, 3, lock_id->c_str(), lock_id->length());  // varchar    lock_id
+    EncodeIntValue(buf, 4, expired_time);                           // bigint     expired_time
+    EncodeIntValue(buf, 5, update_time);                            // bigint     upd_time
+    EncodeIntValue(buf, 6, delete_flag);                            // int        delete_flag
+    EncodeBytesValue(buf, 7, creator->c_str(), creator->length());  // varchar    creator
+}
+
+} // namespace lock
+
 kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
     FLOG_DEBUG("lock get: key[%s]", EncodeToHexString(key).c_str());
     std::string val;
-    auto ret = store_->Get(key, &val);
-    if (!ret.ok()) {
+    if (!store_->Get(key, &val).ok()) {
         FLOG_WARN("lock get: no key[%s]", EncodeToHexString(key).c_str());
         return nullptr;
     }
 
     FLOG_DEBUG("lock get ok: key[%s] val[%s]", EncodeToHexString(key).c_str(),
                EncodeToHexString(val).c_str());
-    auto req = new (kvrpcpb::LockValue);
-    if (!req->ParseFromString(val)) {
-        FLOG_WARN("key[%s] value parse failed", EncodeToHexString(key).c_str());
+
+    std::string value;
+    std::string lock_id;
+    int64_t expired_time;
+    int64_t update_time;
+    int64_t delete_flag;
+    std::string creator;
+    if (!lock::DecodeValue(&value, &lock_id, &expired_time, &update_time, &delete_flag, &creator,
+                                 val)) {
+        FLOG_WARN("lock get: decode value failed, key[%s]", EncodeToHexString(key).c_str());
         return nullptr;
     }
 
-    if (req->delete_time() > 0 && req->delete_time() <= getticks()) {
+    auto ret = new kvrpcpb::LockValue;
+    ret->set_value(value);
+    ret->set_id(lock_id);
+    ret->set_delete_time(expired_time);
+    ret->set_update_time(update_time);
+    ret->set_delete_flag(delete_flag);
+    ret->set_by(creator);
+
+    if (ret->delete_time() > 0 && ret->delete_time() <= getticks()) {
         FLOG_WARN("key[%s] deteled at time %ld", EncodeToHexString(key).c_str(),
-                  req->delete_time());
+                  ret->delete_time());
         return nullptr;
     }
 
-    /*if (getticks() - req->update_time() > DEFAULT_LOCK_DELETE_TIME_MILLSEC) {
+    /*if (getticks() - ret->update_time() > DEFAULT_LOCK_DELETE_TIME_MILLSEC) {
         FLOG_WARN("key[%s] deteled last update time %ld > 3s",
-                  EncodeToHexString(key).c_str(), req->update_time());
+                  EncodeToHexString(key).c_str(), ret->update_time());
         return nullptr;
     }*/
 
     FLOG_DEBUG("lock get parse: key[%s] val[%s]",
-               EncodeToHexString(key).c_str(), req->DebugString().c_str());
-    return req;
+               EncodeToHexString(key).c_str(), ret->DebugString().c_str());
+    return ret;
 }
 
 void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
@@ -44,7 +123,12 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
-    auto &key = req.req().key();
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    req.mutable_req()->set_key(encode_key);
+
+    auto& key = req.req().key();
+
     errorpb::Error *err = nullptr;
 
     do {
@@ -128,7 +212,19 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
             req.mutable_value()->set_delete_time(req.value().delete_time() +
                                                  getticks());
         }
-        ret = store_->Put(req.key(), req.value().SerializeAsString());
+
+        std::string value_buf;
+        const std::string& value = req.value().value();
+        const std::string& lock_id = req.value().id();
+        int64_t expired_time = req.value().delete_time();
+        int64_t update_time = req.value().update_time();
+        int64_t delete_flag = req.value().delete_flag();
+        const std::string& creator = req.value().by();
+
+        lock::EncodeValue(&value_buf,
+                          &value, &lock_id, expired_time, update_time, delete_flag, &creator);
+        ret = store_->Put(req.key(), value_buf);
+
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
@@ -146,7 +242,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
         delete val;
 
         FLOG_INFO("Range %" PRIu64 "  ApplyLock: lock [%s] is locked by %s",
-                  id_, req.key().c_str(), req.by().c_str());
+                  meta_.id(), req.key().c_str(), req.value().by().c_str());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
@@ -163,6 +259,10 @@ void Range::LockUpdate(common::ProtoMessage *msg,
     FLOG_DEBUG("lock update: %s", req.DebugString().c_str());
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
+
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    req.mutable_req()->set_key(encode_key);
 
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
@@ -250,7 +350,18 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         }
 
         auto btime = get_micro_second();
-        ret = store_->Put(req.key(), val->SerializeAsString());
+
+        std::string value_buf;
+        const std::string& value = val->value();
+        const std::string& lock_id = val->id();
+        int64_t expired_time = val->delete_time();
+        int64_t update_time = val->update_time();
+        int64_t delete_flag = val->delete_flag();
+        const std::string& creator = req.by();
+
+        lock::EncodeValue(&value_buf,
+                          &value, &lock_id, expired_time, update_time, delete_flag, &creator);
+        ret = store_->Put(req.key(), value_buf);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
@@ -285,6 +396,10 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
     FLOG_DEBUG("unlock: %s", req.DebugString().c_str());
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
+
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    req.mutable_req()->set_key(encode_key);
 
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
@@ -394,6 +509,10 @@ void Range::UnlockForce(common::ProtoMessage *msg,
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, req.req().table_id(), &req.req().key());
+    req.mutable_req()->set_key(encode_key);
+
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
     do {
@@ -458,8 +577,21 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         // do not really delete until the deleted time
-        val->set_delete_flag(true);
-        ret = store_->Put(req.key(), val->SerializeAsString());
+        val->set_delete_flag(1);
+
+
+        std::string value_buf;
+        const std::string& value = val->value();
+        const std::string& lock_id = val->id();
+        int64_t expired_time = val->delete_time();
+        int64_t update_time = val->update_time();
+        int64_t delete_flag = val->delete_flag();
+        const std::string& creator = req.by();
+
+        lock::EncodeValue(&value_buf,
+                          &value, &lock_id, expired_time, update_time, delete_flag, &creator);
+        ret = store_->Put(req.key(), value_buf);
+
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
