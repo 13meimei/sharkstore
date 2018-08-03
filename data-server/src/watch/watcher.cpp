@@ -2,6 +2,8 @@
 #include "common/socket_session_impl.h"
 #include "common/ds_encoding.h"
 
+#include "frame/sf_logger.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace watch {
@@ -33,16 +35,23 @@ Watcher::~Watcher() {
         delete k;
     }*/
 }
-
+/*
 bool Watcher::operator>(const Watcher* other) const {
     return this->message_->expire_time > other->message_->expire_time;
-}
+}*/
 
 void Watcher::Send(google::protobuf::Message* resp) {
     std::lock_guard<std::mutex> lock(send_lock_);
     if (sent_response_flag) {
         return;
     }
+
+    uint32_t take_time = get_micro_second() - message_->begin_time;
+
+    FLOG_DEBUG("before send, session_id: %" PRId64 ",task msgid: %" PRId64
+               " execute take time: %d us",
+               message_->session_id, message_->msg_id, take_time);
+
 
     common::SocketSessionImpl session;
     session.Send(message_, resp);

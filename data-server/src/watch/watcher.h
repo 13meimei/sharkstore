@@ -20,7 +20,7 @@ public:
     Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, common::ProtoMessage*);
     Watcher(uint64_t, const std::vector<WatcherKey*>&);
     virtual ~Watcher();
-    bool operator>(const Watcher* other) const;
+    //bool operator>(const Watcher* other) const;
 
 private:
     uint64_t                    table_id_;

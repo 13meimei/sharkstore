@@ -48,10 +48,13 @@ WatcherSet::WatcherSet() {
                 continue; // no valid watcher wait in queue
             }
 
-            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime());
+            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime() / 1000);
             std::chrono::system_clock::time_point expire(mill_sec);
 
+            int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time / 1000};
+
             if (watcher_expire_cond_.wait_until(lock, expire) == std::cv_status::timeout) {
+                auto excBegin = getticks();
                 // send timeout response
                 auto resp = new watchpb::DsWatchResponse;
                 resp->mutable_resp()->set_code(Status::kTimedOut);
@@ -67,6 +70,13 @@ WatcherSet::WatcherSet() {
                 }
 
                 watcher_queue_.pop();
+
+                auto excEnd = getticks();
+                //auto take_time = excEnd - waitBeginTime;
+
+                FLOG_DEBUG("wait_until....session_id: %" PRId64 ",task msgid: %" PRId64
+                                   " execute take time: %" PRId64 " ms,wait time:%" PRId64 ,
+                           w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id, excEnd-excBegin,excBegin-waitBeginTime);
 
                 FLOG_INFO("watcher expire timeout, timer queue pop: session_id:[%" PRIu64 "] key: [%s]",
                            w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
