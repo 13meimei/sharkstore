@@ -606,11 +606,8 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         //    evt->set_allocated_kv(tmpKv.get());
         funcpb::FunctionID funcId;
 
-        if (watchpb::PUT == evtType) {
-            funcId = funcpb::kFuncWatchPut;
-        } else if (watchpb::DELETE == evtType) {
+        if (watchpb::DELETE == evtType) {
             funcId = funcpb::kFuncWatchDel;
-
         } else {
             funcId = funcpb::kFuncWatchPut;
         }

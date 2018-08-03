@@ -492,6 +492,22 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
 
         FLOG_INFO("Range %" PRIu64 "  ApplyUnlock: lock [%s] is unlock by %s",
                   id_, req.key().c_str(), req.by().c_str());
+
+        std::string decode_key;
+        auto decode_ret = lock::DecodeKey(decode_key, req.key());
+        if (!decode_ret) {
+            FLOG_ERROR("ApplyUnlock decode lock key [%s] failed", EncodeToHexString(req.key()).c_str());
+        }
+
+        std::string err_msg;
+        watchpb::WatchKeyValue watch_kv;
+        watch_kv.set_key(0, decode_key);
+        auto retCnt = WatchNotify(watchpb::DELETE, watch_kv, err_msg);
+        if (retCnt < 0) {
+            FLOG_ERROR("ApplyUnlock WatchNotify failed, ret:%d, msg:%s", retCnt, err_msg.c_str());
+        } else {
+            FLOG_DEBUG("ApplyUnlock WatchNotify success, count:%d, msg:%s", retCnt, err_msg.c_str());
+        }
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
@@ -608,6 +624,22 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         FLOG_INFO("Range %" PRIu64
                   "  ApplyUnlockForce: lock [%s] is force unlocked by %s",
                   id_, req.key().c_str(), req.by().c_str());
+
+        std::string decode_key;
+        auto decode_ret = lock::DecodeKey(decode_key, req.key());
+        if (!decode_ret) {
+            FLOG_ERROR("ApplyUnlockForce decode lock key [%s] failed", EncodeToHexString(req.key()).c_str());
+        }
+
+        std::string err_msg;
+        watchpb::WatchKeyValue watch_kv;
+        watch_kv.set_key(0, decode_key);
+        auto retCnt = WatchNotify(watchpb::DELETE, watch_kv, err_msg);
+        if (retCnt < 0) {
+            FLOG_ERROR("ApplyUnlockForce WatchNotify failed, ret:%d, msg:%s", retCnt, err_msg.c_str());
+        } else {
+            FLOG_DEBUG("ApplyUnlockForce WatchNotify success, count:%d, msg:%s", retCnt, err_msg.c_str());
+        }
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
