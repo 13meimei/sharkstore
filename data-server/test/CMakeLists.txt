@@ -53,6 +53,7 @@ foreach(testfile ${test_SRCS})
 endforeach(testfile ${TESTS})
 
 #add_subdirectory(watch)
+add_subdirectory(range)
 
 if (BUILD_NET)
     add_subdirectory(net)

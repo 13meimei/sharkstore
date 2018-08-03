@@ -10,6 +10,10 @@ set (TESTS
     ddl_unittest.cpp
     raw_unittest.cpp
     watch_unittest.cpp
+    watch_unittest_get.cpp
+    watch_unittest_put.cpp
+    watch_unittest_del.cpp
+    watch_unittest_watch.cpp
 )
 
 foreach(f IN LISTS TESTS)

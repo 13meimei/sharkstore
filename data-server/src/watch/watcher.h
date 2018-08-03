@@ -55,11 +55,11 @@ public:
 public:
     virtual void Send(google::protobuf::Message* resp);
 
-    bool DecodeKey(std::vector<std::string*>& keys,
+    static bool DecodeKey(std::vector<std::string*>& keys,
                    const std::string& buf);
     static bool DecodeValue(int64_t* version, std::string* value, std::string* extend,
                      std::string& buf);
-    void EncodeKey(std::string* buf,
+    static void EncodeKey(std::string* buf,
                    uint64_t tableId, const std::vector<std::string*>& keys);
     static void EncodeValue(std::string* buf,
                      int64_t version,

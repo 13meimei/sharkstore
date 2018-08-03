@@ -32,7 +32,7 @@ public:
         initFlag = false;
 
         Status ret;
-        uint64_t tmpSeqId(0);
+        int64_t tmpSeqId(0);
 
         ret = store_->GetVersionID(range_id_, &tmpSeqId);
         if(ret.ok()) {
@@ -46,7 +46,7 @@ public:
         } else {
             initFlag = false;
             setErrMsg(ret.ToString());
-            uint64_t tmpId = seq_;
+            int64_t tmpId = seq_;
             //FLOG_DEBUG("init fail and default value of seq_[%" PRIu64 "] seq_end_[%" PRIu64 "]", tmpId, seq_end_);
         }
 
@@ -64,6 +64,30 @@ public:
     }
     void setCache(const uint32_t &cacheNum) {
         cache_ = cacheNum;
+    }
+
+    int16_t currentId(int64_t *id ) {
+        int16_t ret(0);
+
+        if (initFlag) {
+            if (id == nullptr) {
+                id = new int64_t(0L);
+            }
+
+            auto retSts = store_->GetVersionID(range_id_, id);
+            if(!retSts.ok()) {
+                *id = 0;
+                ret = -1;
+                setErrMsg( "Generator getVersionID failure." );
+            }
+
+        } else {
+            *id = 0;
+            ret = -1;
+            setErrMsg( "Generator is not init yet or encournter init failure." );
+        }
+
+        return ret;
     }
 
     int16_t nextId(int64_t *id ) {
