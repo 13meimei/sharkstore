@@ -54,6 +54,7 @@ WatcherSet::WatcherSet() {
             int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time};
 
             if (watcher_expire_cond_.wait_until(lock, expire) == std::cv_status::timeout) {
+                auto excBegin = getticks();
                 // send timeout response
                 auto resp = new watchpb::DsWatchResponse;
                 resp->mutable_resp()->set_code(Status::kTimedOut);
@@ -70,12 +71,12 @@ WatcherSet::WatcherSet() {
 
                 watcher_queue_.pop();
 
-
-                uint32_t take_time = get_micro_second() - waitBeginTime;
+                auto excEnd = getticks();
+                //auto take_time = excEnd - waitBeginTime;
 
                 FLOG_DEBUG("wait_until....session_id: %" PRId64 ",task msgid: %" PRId64
-                                   " execute take time: %d us",
-                           w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id, take_time);
+                                   " execute take time: %" PRId64 " ms,wait time:%" PRId64 ,
+                           w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id, excEnd-excBegin,excBegin-waitBeginTime);
 
                 FLOG_INFO("watcher expire timeout, timer queue pop: session_id:[%" PRIu64 "] key: [%s]",
                            w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
