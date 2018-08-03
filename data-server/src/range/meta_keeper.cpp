@@ -1,5 +1,8 @@
 #include "meta_keeper.h"
 
+#include <mutex>
+#include <sstream>
+
 namespace sharkstore {
 namespace dataserver {
 namespace range {
@@ -14,6 +17,11 @@ metapb::Range MetaKeeper::Get() const {
     return result;
 }
 
+void MetaKeeper::Get(metapb::Range *out) const {
+    std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
+    out->CopyFrom(meta_);
+}
+
 void MetaKeeper::Set(const metapb::Range& to) {
     std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
     meta_ = to;
@@ -24,30 +32,50 @@ void MetaKeeper::Set(metapb::Range&& to) {
     meta_ = std::move(to);
 }
 
+void MetaKeeper::GetEpoch(metapb::RangeEpoch* epoch) const {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+    epoch->CopyFrom(meta_.range_epoch());
+}
+
 uint64_t MetaKeeper::GetConfVer() const {
     sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
-    return meta_.range_epoch()->conf_ver();
+    return meta_.range_epoch().conf_ver();
 }
 
 uint64_t MetaKeeper::GetVersion() const {
     sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
-    return meta_.range_epoch()->version();
+    return meta_.range_epoch().version();
 }
 
-Status MetaKeeper::verifyConfVer(uint64_t conf_ver) {
-    uint64_t current_ver = meta_.range_epoch().conf_ver();
-    if (conf_ver == current_ver) {
+uint64_t MetaKeeper::GetTableID() const {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+    return meta_.table_id();
+}
+
+std::string MetaKeeper::GetStartKey() const {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+    return meta_.start_key();
+}
+
+std::string MetaKeeper::GetEndKey() const {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+    return meta_.end_key();
+}
+
+Status MetaKeeper::verifyConfVer(uint64_t conf_ver) const {
+    uint64_t current = meta_.range_epoch().conf_ver();
+    if (conf_ver == current) {
         return Status::OK();
     }
 
     std::ostringstream ss;
-    ss << "current is: " << current_ver;
+    ss << "current is: " << current;
     ss << ", to verify is: " << conf_ver;
 
-    if (ver < current_ver) {
+    if (conf_ver < current) {
         return Status(Status::kStaleEpoch, "conf ver", ss.str());
     } else {
-        assert(conf_ver != current_ver);
+        assert(conf_ver != current);
         return Status(Status::kInvalidArgument, "conf ver", ss.str());
     }
 }
@@ -82,32 +110,53 @@ Status MetaKeeper::DelPeer(const metapb::Peer& peer, uint64_t verify_conf_ver) {
 
     // find and delete
     for (auto it = meta_.peers().cbegin(); it != meta_.peers().cend(); ++it) {
-        auto same_node = it->node_id() == peer().node_id();
+        auto same_node = it->node_id() == peer.node_id();
         auto same_id = it->id() == peer.id();
         if (same_node && same_id) {
             meta_.mutable_peers()->erase(it);
             meta_.mutable_range_epoch()->set_conf_ver(verify_conf_ver + 1);
             return Status::OK();
-        } else if (same_node || same_id) {
-            std:ostringst
-            return Status(Status::kInvalidArgument, "mismatch", )
         }
     }
     return Status(Status::kNotFound);
 }
 
-Status MetaKeeper::PromotePeer(const metapb::Peer& peer) {
+Status MetaKeeper::PromotePeer(uint64_t node_id, uint64_t peer_id) {
     std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
-    return Status::OK();
+    for (int i = 0; i < meta_.peers_size(); ++i) {
+        auto mp = meta_.mutable_peers(i);
+        if (mp->id() == peer_id && mp->node_id() == node_id) {
+            mp->set_type(metapb::PeerType_Normal);
+            return Status::OK();
+        }
+    }
+
+    return Status(Status::kNotFound);
 }
 
-void MetaKeeper::GetAllPeers(std::vector<metapb::Peer>* peers) const {
+std::vector<metapb::Peer> MetaKeeper::GetAllPeers() const {
+    std::vector<metapb::Peer> peers;
+    {
+        sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+
+        for (const auto& p : meta_.peers()) {
+            peers.emplace_back(p);
+        }
+    }
+    return peers;
+}
+
+bool MetaKeeper::FindPeer(uint64_t peer_id, metapb::Peer* peer) const {
     sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
-    for (const auto& p : meta_.peers()) {
-        peers->emplace_back(p);
+    for (const auto& p: meta_.peers()) {
+        if (p.id() == peer_id) {
+            if (peer != nullptr) peer->CopyFrom(p);
+            return true;
+        }
     }
+    return false;
 }
 
 bool MetaKeeper::FindPeerByNodeID(uint64_t node_id, metapb::Peer* peer) const {
@@ -122,16 +171,34 @@ bool MetaKeeper::FindPeerByNodeID(uint64_t node_id, metapb::Peer* peer) const {
     return false;
 }
 
-bool MetaKeeper::FindPeerByPeerID(uint64_t peer_id, metapb::Peer* peer) const {
-    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
-
-    for (const auto& p: meta_.peers()) {
-        if (p.id() == peer_id) {
-            if (peer != nullptr) peer->CopyFrom(p);
-            return true;
-        }
+Status MetaKeeper::verifyVersion(uint64_t version) const {
+    uint64_t current = meta_.range_epoch().version();
+    if (version == current) {
+        return Status::OK();
     }
-    return false;
+
+    std::ostringstream ss;
+    ss << "current is: " << current;
+    ss << ", to verify is: " << version;
+
+    if (version < current) {
+        return Status(Status::kStaleEpoch, "conf ver", ss.str());
+    } else {
+        assert(version != current);
+        return Status(Status::kInvalidArgument, "conf ver", ss.str());
+    }
+}
+
+Status MetaKeeper::VerifyVersion(uint64_t version) const {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+    return verifyVersion(version);
+}
+
+void MetaKeeper::Split(const std::string& end_key, uint64_t new_version) {
+    std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
+
+    meta_.set_end_key(end_key);
+    meta_.mutable_range_epoch()->set_version(new_version);
 }
 
 std::string MetaKeeper::ToString() const {
