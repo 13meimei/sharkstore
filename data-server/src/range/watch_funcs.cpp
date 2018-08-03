@@ -319,13 +319,10 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
         }*/
 
         std::vector<std::string*> vecUserKeys;
-        /*for ( auto i = 0 ; i < kv->key_size(); i++) {
+        for ( auto i = 0 ; i < kv->key_size(); i++) {
             vecUserKeys.emplace_back(kv->mutable_key(i));
-        }*/
-        for(auto itKey : kv->key()) {
-            vecUserKeys.emplace_back(&itKey);
-            //FLOG_DEBUG("%d   %s", meta_.table_id(), (itKey).c_str());
         }
+
         watch::Watcher::EncodeKey(&dbKey, meta_.table_id(), vecUserKeys);
 
         auto epoch = req.header().range_epoch();
@@ -396,15 +393,21 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
             err = KeyNotInRange("EmptyKey");
             break;
         }
+
         /*
         if(Status::kOk != WatchCode::EncodeKv(funcpb::kFuncWatchDel, meta_, *kv, *dbKey, *dbValue, err)) {
             break;
         }*/
 
-        std::vector<std::string*> vecUserKeys;
+        /*std::vector<std::string*> vecUserKeys;
         for(auto itKey : kv->key()) {
             vecUserKeys.emplace_back(&itKey);
+        }*/
+        std::vector<std::string*> vecUserKeys;
+        for ( auto i = 0 ; i < kv->key_size(); i++) {
+            vecUserKeys.emplace_back(kv->mutable_key(i));
         }
+
         watch::Watcher::EncodeKey(&dbKey, meta_.table_id(), vecUserKeys);
 
         auto epoch = req.header().range_epoch();
