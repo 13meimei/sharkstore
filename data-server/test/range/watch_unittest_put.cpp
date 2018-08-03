@@ -744,7 +744,7 @@ TEST_F(WatchTest, watch_put_group_del_get_nothing) {
     }
 }
 
-
+/*
 TEST_F(WatchTest, watch_put_single) {
     {
         // begin test create range
@@ -1732,7 +1732,7 @@ TEST_F(WatchTest, watch_delete) {
     FLOG_DEBUG("watch_unittest [%s].", "ok");
 }
 
-
+*/
 
    /* ////////////////////////////////////////////////////////////////////////ignore
     {

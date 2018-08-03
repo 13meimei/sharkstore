@@ -280,7 +280,7 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
     auto btime = get_micro_second();
     context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
-    FLOG_DEBUG("range[%" PRIu64 "] WatchPut begin", meta_.id());
+    FLOG_DEBUG("range[%" PRIu64 "] session_id:%" PRId64 " WatchPut begin", meta_.id(), msg->session_id);
 
     if (!CheckWriteable()) {
         auto resp = new watchpb::DsKvWatchPutResponse;
@@ -500,13 +500,15 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd) {
     int64_t version{0};
     version = getNextVersion(err);
     notifyKv.set_version(version);
-    FLOG_DEBUG("range[%" PRIu64 "] ApplyWatchPut key-version[%" PRIu64 "]", meta_.id(), version);
+    FLOG_DEBUG("range[%" PRIu64 "] ApplyWatchPut new version[%" PRIu64 "]", meta_.id(), version);
 
     std::string dbKey{""};
     std::string dbValue{""};
     if( Status::kOk != WatchCode::EncodeKv(funcpb::kFuncWatchPut, meta_, notifyKv, dbKey, dbValue, err) ) {
         //to do
         // SendError()
+        FLOG_WARN("EncodeKv failed, key:%s ", notifyKv.key(0).c_str());
+        ;
     }
 
     notifyKv.clear_key();
@@ -522,13 +524,9 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        //auto watch_server = context_->range_server->watch_server_;
-        //auto wSet = watch_server->GetWatcherSet_(dbKey);
         //save to db
         auto btime = get_micro_second();
-        //wSet->WatchSetLock(1);
         ret = store_->Put(dbKey, dbValue);
-        //wSet->WatchSetLock(0);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
@@ -568,28 +566,43 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd) {
     Status ret;
     errorpb::Error *err = nullptr;
 
-    FLOG_DEBUG("range[%" PRIu64 "] ApplyWatchDel begin", meta_.id());
+    FLOG_DEBUG("range[%"
+                       PRIu64
+                       "] ApplyWatchDel begin", meta_.id());
 
     auto &req = cmd.kv_watch_del_req();
-    watchpb::WatchKeyValue  notifyKv;
+    watchpb::WatchKeyValue notifyKv;
     notifyKv.CopyFrom(req.kv());
 
     int64_t version{0};
     version = getNextVersion(err);
     notifyKv.set_version(version);
-    FLOG_DEBUG("range[%" PRIu64 "] ApplyWatchDel key-version[%" PRIu64 "]", meta_.id(), version);
+    FLOG_DEBUG("range[%"
+                       PRIu64
+                       "] ApplyWatchDel new-version[%"
+                       PRIu64
+                       "]", meta_.id(), version);
 
 
     std::string dbKey{""};
     std::string dbValue{""};
-    if( Status::kOk != WatchCode::EncodeKv(funcpb::kFuncWatchDel, meta_, notifyKv, dbKey, dbValue, err) ) {
+    if (Status::kOk != WatchCode::EncodeKv(funcpb::kFuncWatchDel, meta_, notifyKv, dbKey, dbValue, err)) {
         //to do response error
         //SendError()
+        FLOG_WARN("EncodeKv failed, key:%s ", notifyKv.key(0).c_str());
+        ;
     }
+
+    notifyKv.clear_key();
+    notifyKv.add_key(dbKey);
+    if (!dbValue.empty()) {
+        notifyKv.set_value(dbValue);
+    }
+
 
     do {
         if (!KeyInRange(dbKey, err)) {
-            FLOG_WARN("ApplyWatchDel failed, epoch is changed");
+            FLOG_WARN("ApplyWatchDel failed, key:%s not in range.", dbKey.data());
             break;
         }
 
@@ -605,8 +618,8 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd) {
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
-            FLOG_ERROR("ApplyWatchDel failed, code:%d, msg:%s", ret.code(),
-                       ret.ToString().c_str());
+            FLOG_ERROR("ApplyWatchDel failed, code:%d, msg:%s , key:%s", ret.code(),
+                       ret.ToString().c_str(), EncodeToHexString(dbKey).c_str());
             break;
         }
         // ignore delete CheckSplit
@@ -655,8 +668,8 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     auto dbValue = tmpKv->value();
     auto currDbVersion = tmpKv->version();
 
-    std::string key{""};
-    std::string value{""};
+    //std::string key{""};
+    //std::string value{""};
     errorpb::Error *err = new errorpb::Error;
 
     auto watch_server = context_->range_server->watch_server_;
@@ -678,8 +691,8 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         for(auto w: vecNotifyWatcher) {
             auto w_id = w->GetWatcherId();
             idx++;
-            FLOG_DEBUG("range[%" PRIu64 "] Watch-Notify(%d)[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
-                       meta_.id(), funcId, key.c_str(), idx, uint32_t(watchCnt), w_id);
+            FLOG_DEBUG("range[%" PRIu64 "] session_id:%" PRId64 " Watch-Notify(%d)[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
+                       meta_.id(), w->getSessionId(), funcId, dbKey.c_str(), idx, uint32_t(watchCnt), w_id);
 
             assert(w_id > );
             /*if(w_id < 1) {
