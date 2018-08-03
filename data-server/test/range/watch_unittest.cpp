@@ -1,5 +1,5 @@
 ﻿#include <gtest/gtest.h>
-#include "cpp_permission.h"
+#include "helper/cpp_permission.h"
 
 #include <fastcommon/shared_func.h>
 #include "base/status.h"
@@ -13,8 +13,8 @@
 #include "server/run_status.h"
 #include "storage/store.h"
 
-#include "raft_server_mock.h"
-#include "socket_session_mock.h"
+#include "helper/mock/raft_server_mock.h"
+#include "helper/mock/socket_session_mock.h"
 #include "range/range.h"
 
 #include "watch/watcher.h"
@@ -23,11 +23,11 @@
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
 
 
-
 int main(int argc, char *argv[]) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
 
 char level[8] = "debug";
 
@@ -194,8 +194,8 @@ metapb::Range *genRange2() {
 
     return meta;
 }
-
-TEST_F(WatchTest, watch) {
+/*
+TEST_F(WatchTest, watch_put_no_leader) {
     {
         // begin test create range
         auto msg = new common::ProtoMessage;
@@ -211,8 +211,8 @@ TEST_F(WatchTest, watch) {
 
         ASSERT_TRUE(range_server_->find(1) != nullptr);
 
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 1) << metas.size();
         // end test create range
@@ -233,22 +233,20 @@ TEST_F(WatchTest, watch) {
 
         ASSERT_TRUE(range_server_->find(2) != nullptr);
 
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 2) << metas.size();
         // end test create range
     }
 
-    int64_t cnt(3);
-    while (cnt-- > 0 ) {
     {
         // begin test watch_put (no leader)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         watchpb::DsKvWatchPutRequest req;
 
-        //range_server_->ranges_[1]->setLeaderFlag(true);
+        range_server_->ranges_[1]->setLeaderFlag(false);
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
@@ -265,8 +263,8 @@ TEST_F(WatchTest, watch) {
         watchpb::DsKvWatchPutResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
-        
-        if(resp.header().has_error()) {
+
+        if (resp.header().has_error()) {
             FLOG_WARN("has error:%s", resp.header().error().message().c_str());
         }
         EXPECT_TRUE(resp.header().has_error());
@@ -276,13 +274,60 @@ TEST_F(WatchTest, watch) {
 
         // end test watch_put
     }
-/*
+}
+
+
+TEST_F(WatchTest, watch_put_not_leader) {
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
+    }
+
     {
         // begin test watch_put (not leader)
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 2;
+        raft->ops_.leader = 1;
         range_server_->ranges_[1]->setLeaderFlag(false);
 
         auto msg = new common::ProtoMessage;
@@ -312,6 +357,52 @@ TEST_F(WatchTest, watch) {
         ASSERT_TRUE(resp.header().error().not_leader().leader().node_id() == 2);
 
         // end test watch_put
+    }
+}
+
+TEST_F(WatchTest, watch_put_not_in_range) {
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
     }
 
     {
@@ -347,54 +438,65 @@ TEST_F(WatchTest, watch) {
         ASSERT_TRUE(resp.header().error().has_key_not_in_range());
         std::string key1("");
         key1 = DecodeSingleKey(0, resp.header().error().key_not_in_range().start_key());
-        FLOG_DEBUG("encodekey:%s   decodekey:%s ", resp.header().error().key_not_in_range().start_key().c_str(),  key1.c_str());
+        FLOG_DEBUG("encodekey:%s   decodekey:%s ", resp.header().error().key_not_in_range().start_key().c_str(),
+                   key1.c_str());
 
         ASSERT_TRUE(key1 == "01003");
         //ASSERT_TRUE(resp.header().error().key_not_in_range().end_key() == "01004");
         std::string key2 = DecodeSingleKey(0, resp.header().error().key_not_in_range().end_key());
-        
+
         ASSERT_TRUE(key2 == "01004");
 
         // end test watch_put
     }
+}
 
+*/
+TEST_F(WatchTest, watch_put_group_get_group) {
     {
-        // begin test watch_put (stale epoch)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
+        // begin test create range
         auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        watchpb::DsKvWatchPutRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(2);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->mutable_kv()->set_value("01003001:value");
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->WatchPut(msg);
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
 
-        watchpb::DsKvWatchPutResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
 
-        //ASSERT_TRUE(resp.header().has_error());
-        EXPECT_TRUE(resp.header().has_error());
-        //ASSERT_TRUE(resp.header().error().has_stale_epoch());
-        EXPECT_TRUE(resp.header().error().has_stale_epoch());
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
-        // end test watch_put
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
     }
-*/
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
+    }
+
     {
         // begin test watch_put group (key ok)
         FLOG_DEBUG("watch_put group mode.");
@@ -431,6 +533,263 @@ TEST_F(WatchTest, watch) {
         // end test watch_put
     }
 
+    //test get group
+
+    FLOG_DEBUG("pure_get group..." );
+    {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
+        // begin test pure_get(ok)
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
+        msg->msg_id = 2018080301;
+        watchpb::DsKvWatchGetMultiRequest req;
+
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_kv()->add_key("01003001");
+        req.mutable_kv()->add_key("01003002");
+        req.mutable_kv()->set_version(0);
+        //req.mutable_kv()->set_tableid(1);
+
+        //will print in range_server
+        //FLOG_DEBUG("pureGet req:%s", req.DebugString().c_str());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->PureGet(msg);
+
+        watchpb::DsKvWatchGetMultiResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        FLOG_DEBUG("pureGet group RESP:%s", resp.DebugString().c_str());
+
+        ASSERT_FALSE(resp.header().has_error());
+        ASSERT_TRUE(resp.kvs(0).value() == "01003001:value");
+
+    }
+}
+
+TEST_F(WatchTest, watch_put_group_del_get_nothing) {
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test watch_put group (key ok)
+        FLOG_DEBUG("watch_put group mode.");
+
+        // set leader
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+        watchpb::DsKvWatchPutRequest req;
+
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_req()->mutable_kv()->add_key("01003001");
+        req.mutable_req()->mutable_kv()->add_key("01003002");
+        req.mutable_req()->mutable_kv()->set_value("01003001:value");
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->WatchPut(msg);
+
+        watchpb::DsKvWatchPutResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        ASSERT_FALSE(resp.header().has_error());
+
+        // end test watch_put
+    }
+
+    //delete group
+    {
+        // begin test watch_delete( ok )
+
+        // set leader
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
+        msg->socket = &socket_;
+        watchpb::DsKvWatchDeleteRequest req;
+
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_req()->mutable_kv()->add_key("01003001");
+        req.mutable_req()->mutable_kv()->add_key("01003002");
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->WatchDel(msg);
+
+        watchpb::DsKvWatchDeleteResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
+
+        ASSERT_FALSE(resp.header().has_error());
+
+        // end test watch_delete
+    }
+
+
+    //test get group
+
+    FLOG_DEBUG("pure_get group...nothign" );
+    {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
+        // begin test pure_get(ok)
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
+        msg->msg_id = 2018080301;
+        watchpb::DsKvWatchGetMultiRequest req;
+
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_kv()->add_key("01003001");
+        req.mutable_kv()->add_key("01003002");
+        req.mutable_kv()->set_version(0);
+        //req.mutable_kv()->set_tableid(1);
+
+        //will print in range_server
+        //FLOG_DEBUG("pureGet req:%s", req.DebugString().c_str());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->PureGet(msg);
+
+        watchpb::DsKvWatchGetMultiResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        FLOG_DEBUG("pureGet group RESP:%s", resp.DebugString().c_str());
+
+        ASSERT_FALSE(resp.header().has_error());
+        ASSERT_TRUE(resp.kvs(0).value() != "01003001:value");
+
+    }
+}
+
+/*
+TEST_F(WatchTest, watch_put_single) {
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
+    }
+
     {
         // begin test watch_put (ok)
 
@@ -465,66 +824,205 @@ TEST_F(WatchTest, watch) {
         // end test watch_put
     }
 
-    /*{
-        // begin test watch_put (ok, retry split range)
+}
 
-        // set leader
-        range_server_->ranges_[1]->split_range_id_ = 2;
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->ops_.leader = 1;
-            range_server_->ranges_[1]->setLeaderFlag(true);
-        }
+///
+//TEST_F(WatchTest, watch_put_stale_epoch) {
+//    {
+//        // begin test create range
+//        auto msg = new common::ProtoMessage;
+//        schpb::CreateRangeRequest req;
+//        req.set_allocated_range(genRange1());
+//
+//        auto len = req.ByteSizeLong();
+//        msg->body.resize(len);
+//        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+//
+//        range_server_->CreateRange(msg);
+//        ASSERT_FALSE(range_server_->ranges_.empty());
+//
+//        ASSERT_TRUE(range_server_->find(1) != nullptr);
+//
+//        std::vector<metapb::Range> metas;
+//        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+//
+//        ASSERT_TRUE(metas.size() == 1) << metas.size();
+//        // end test create range
+//    }
+//
+//    {
+//        // begin test create range
+//        auto msg = new common::ProtoMessage;
+//        schpb::CreateRangeRequest req;
+//        req.set_allocated_range(genRange2());
+//
+//        auto len = req.ByteSizeLong();
+//        msg->body.resize(len);
+//        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+//
+//        range_server_->CreateRange(msg);
+//        ASSERT_FALSE(range_server_->ranges_.empty());
+//
+//        ASSERT_TRUE(range_server_->find(2) != nullptr);
+//
+//        std::vector<metapb::Range> metas;
+//        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+//
+//        ASSERT_TRUE(metas.size() == 2) << metas.size();
+//        // end test create range
+//    }
+//
+//    {
+//        // begin test watch_put (ok, retry split range)
+//
+//        // set leader
+//        range_server_->ranges_[1]->split_range_id_ = 2;
+//        {
+//            auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+//            raft->ops_.leader = 1;
+//            range_server_->ranges_[1]->setLeaderFlag(true);
+//        }
+//
+//        {
+//            auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
+//            raft->ops_.leader = 1;
+//            range_server_->ranges_[2]->setLeaderFlag(true);
+//        }
+//
+//        auto msg = new common::ProtoMessage;
+//        msg->expire_time = getticks() + 1000;
+//        watchpb::DsKvWatchPutRequest req;
+//
+//        req.mutable_header()->set_range_id(1);
+//        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+//        req.mutable_header()->mutable_range_epoch()->set_version(2);
+//
+//        req.mutable_req()->mutable_kv()->add_key("01004001");
+//        req.mutable_req()->mutable_kv()->set_value("01004001:value");
+//
+//        auto len = req.ByteSizeLong();
+//        msg->body.resize(len);
+//        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+//
+//        range_server_->WatchPut(msg);
+//
+//        watchpb::DsKvWatchPutResponse resp;
+//        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+//        ASSERT_TRUE(session_mock->GetResult(&resp));
+//
+//        //ASSERT_FALSE(resp.header().has_error());
+//        ASSERT_FALSE(resp.header().has_error());
+//
+//        // end test watch_put
+//    }
+//
+//}
 
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->ops_.leader = 1;
-            range_server_->ranges_[2]->setLeaderFlag(true);
-        }
+TEST_F(WatchTest, pure_get_ok) {
 
+    range_server_->DeleteRange(1);
+    range_server_->DeleteRange(2);
+    {
+        // begin test create range
         auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        watchpb::DsKvWatchPutRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(2);
-
-        req.mutable_req()->mutable_kv()->add_key("01004001");
-        req.mutable_req()->mutable_kv()->set_value("01004001:value");
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->WatchPut(msg);
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
 
-        watchpb::DsKvWatchPutResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
 
-        //ASSERT_FALSE(resp.header().has_error());
-        ASSERT_FALSE(resp.header().has_error());
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
-        // end test watch_put
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
     }
-   */ 
-    
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
+    }
+
     std::cout << "pure_get ...ok" << '\n';
     {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[2]->setLeaderFlag(true);
+
+        metapb::Range* rng = new metapb::Range;
+        range_server_->meta_store_->GetRange(1, rng);
+        FLOG_DEBUG("RANGE1  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
+
+        range_server_->meta_store_->GetRange(2, rng);
+        FLOG_DEBUG("RANGE2  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
+
+
+        //put first
+        auto msg1 = new common::ProtoMessage;
+        //put first
+        msg1->expire_time = getticks() + 1000;
+        msg1->session_id = 1;
+        msg1->socket = &socket_;
+        watchpb::DsKvWatchPutRequest req1;
+
+        req1.mutable_header()->set_range_id(2);
+        req1.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req1.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req1.mutable_req()->mutable_kv()->add_key("01004001");
+        req1.mutable_req()->mutable_kv()->set_value("01004001:value");
+        req1.mutable_req()->mutable_kv()->set_tableid(1);
+
+        auto len1 = req1.ByteSizeLong();
+        msg1->body.resize(len1);
+        ASSERT_TRUE(req1.SerializeToArray(msg1->body.data(), len1));
+
+        //auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
+        //raft->ops_.leader = 1;
+        //range_server_->ranges_[2]->setLeaderFlag(true);
+
+        range_server_->WatchPut(msg1);
+
+
         // begin test pure_get(ok)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
         watchpb::DsKvWatchGetMultiRequest req;
 
-        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->set_range_id(2);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
-        req.mutable_kv()->add_key("01003001");
-        req.mutable_kv()->set_version(-1);
+        req.mutable_kv()->add_key("01004001");
+        req.mutable_kv()->set_version(0);
         req.mutable_kv()->set_tableid(1);
-        
+
+        FLOG_DEBUG("RESP:%s", req.DebugString().c_str());
+
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
@@ -535,19 +1033,98 @@ TEST_F(WatchTest, watch) {
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
+        FLOG_DEBUG("RESP:%s", resp.DebugString().c_str());
+
         ASSERT_FALSE(resp.header().has_error());
-        if(resp.kvs_size()) {
-            ;
-            ASSERT_TRUE(resp.kvs(0).value() == "01003001:value");
-        } else {
-            std::cout << "no kvs_size" << std::endl;
+        ASSERT_TRUE(resp.kvs(0).value() == "01004001:value");
+
         }
 
-        FLOG_DEBUG("pure_get response: %s", resp.DebugString().c_str());
+}
+
+
+TEST_F(WatchTest, pure_get_group) {
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
     }
 
     FLOG_DEBUG("pure_get ...group ok");
     {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
+        // begin test watch_get (ok)
+        auto msg1 = new common::ProtoMessage;
+        //put first
+        msg1->expire_time = getticks() + 1000;
+        msg1->session_id = 1;
+        msg1->socket = &socket_;
+        watchpb::DsKvWatchPutRequest req1;
+
+        req1.mutable_header()->set_range_id(1);
+        req1.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req1.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req1.mutable_req()->mutable_kv()->add_key("01003001");
+        req1.mutable_req()->mutable_kv()->add_key("01003002");
+        req1.mutable_req()->mutable_kv()->set_value("01003001:value");
+
+        auto len1 = req1.ByteSizeLong();
+        msg1->body.resize(len1);
+        ASSERT_TRUE(req1.SerializeToArray(msg1->body.data(), len1));
+
+        range_server_->WatchPut(msg1);
+        watchpb::DsKvWatchPutResponse resp1;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp1));
+        FLOG_DEBUG("watch_put first response: %s", resp1.DebugString().c_str());
+
+
+        //auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        //raft->ops_.leader = 1;
+        //range_server_->ranges_[1]->setLeaderFlag(true);
+
         // begin test pure_get(ok)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
@@ -569,22 +1146,67 @@ TEST_F(WatchTest, watch) {
         range_server_->PureGet(msg);
 
         watchpb::DsKvWatchGetMultiResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        ASSERT_FALSE(resp.header().has_error());
-        if(resp.kvs_size()) {
-            ;
-            ASSERT_TRUE(resp.kvs(0).value() == "01003001:value");
-        } else {
-            std::cout << "no kvs_size" << std::endl;
-        }
+        FLOG_INFO("pureGet response:%s", resp.DebugString().c_str());
 
-        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
+        ASSERT_FALSE(resp.header().has_error());
+        ASSERT_TRUE(resp.kvs(0).value() == "01003001:value");
+    }
+
+}
+
+TEST_F(WatchTest, pure_get_prefix) {
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
     }
 
     FLOG_DEBUG("pure_get ...prefix ok");
     {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
         // begin test pure_get(ok)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
@@ -610,17 +1232,61 @@ TEST_F(WatchTest, watch) {
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        if(resp.kvs_size()) {
-            ;
+        if (resp.kvs_size()) { ;
             ASSERT_TRUE(resp.kvs(0).value() == "01003001:value");
         } else {
             FLOG_DEBUG("no kvs_size");
         }
         FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
     }
+}
 
-    
-        // end test watch_get
+
+TEST_F(WatchTest, watch_get_again) {
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
+    }
+
     FLOG_DEBUG("watch_get ... ok");
     {
         // begin test watch_get(ok)
@@ -628,6 +1294,10 @@ TEST_F(WatchTest, watch) {
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
         msg->socket = &socket_;
+
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
 
         watchpb::DsWatchRequest req;
 
@@ -637,8 +1307,9 @@ TEST_F(WatchTest, watch) {
 
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->set_version(-1);
-        req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_longpull(now + 5000);
         req.mutable_req()->set_startversion(100000);
+
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -650,19 +1321,24 @@ TEST_F(WatchTest, watch) {
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
+
+        FLOG_WARN("error:%s", resp.header().error().message().c_str());
         ASSERT_FALSE(resp.header().has_error());
-        if(resp.resp().events_size()) {
-            ;
+        if (resp.resp().events_size()) { ;
             ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
         }
 
-        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
         // end test watch_get
     }
 
 
     FLOG_DEBUG("watch_get group...ok");
     {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
         // begin test watch_get(ok)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
@@ -677,7 +1353,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->add_key("01003002");
         req.mutable_req()->mutable_kv()->set_version(-1);
-        req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_longpull(now + 5000);
 
         req.mutable_req()->set_startversion(100000);
 
@@ -691,9 +1367,10 @@ TEST_F(WatchTest, watch) {
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
+
         ASSERT_FALSE(resp.header().has_error());
-        if(resp.resp().events_size()) {
-            ;
+        if (resp.resp().events_size()) { ;
             ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
         }
 
@@ -703,9 +1380,13 @@ TEST_F(WatchTest, watch) {
 
     std::cout << "watch_get ...ok" << '\n';
     {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[2]->setLeaderFlag(true);
+
         // begin test watch_get (ok)
         auto msg1 = new common::ProtoMessage;
-       //put first 
+        //put first
         msg1->expire_time = getticks() + 1000;
         msg1->session_id = 1;
         msg1->socket = &socket_;
@@ -722,11 +1403,12 @@ TEST_F(WatchTest, watch) {
         msg1->body.resize(len1);
         ASSERT_TRUE(req1.SerializeToArray(msg1->body.data(), len1));
 
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        raft->ops_.leader = 2;
-        range_server_->ranges_[2]->setLeaderFlag(true);
-
         range_server_->WatchPut(msg1);
+        watchpb::DsKvWatchPutResponse resp1;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp1));
+        FLOG_DEBUG("watch_put first response: %s", resp1.DebugString().c_str());
+
         //get next
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
@@ -740,7 +1422,7 @@ TEST_F(WatchTest, watch) {
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
         req.mutable_req()->mutable_kv()->set_version(-1);
-        req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_longpull(now + 5000);
         req.mutable_req()->set_startversion(100000);
 
         auto len = req.ByteSizeLong();
@@ -750,21 +1432,63 @@ TEST_F(WatchTest, watch) {
         range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        ASSERT_TRUE(resp.header().has_error());
-        if(resp.resp().events_size()){
-            ;
-            FLOG_DEBUG("value:%s", resp.resp().events(0).kv().value().c_str());
-            ASSERT_TRUE(resp.resp().events(0).kv().value() == "01004001:value");
-        }
+        FLOG_DEBUG("watch_get second response: %s", resp.DebugString().c_str());
 
-        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
+        //ADDWATCHER SUCCESS
+        ASSERT_FALSE(resp.header().has_error());
         // end test watch_get
     }
 
-    std::cout << "watch_delete ...key empty" << '\n';
+}
+
+TEST_F(WatchTest, watch_delete) {
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        auto msg = new common::ProtoMessage;
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->CreateRange(msg);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
+    }
+
+    std::cout << "watch_get ...key empty" << '\n';
     {
         // begin test watch_get (key empty)
         auto msg = new common::ProtoMessage;
@@ -779,388 +1503,39 @@ TEST_F(WatchTest, watch) {
 
         req.mutable_req()->mutable_kv()->add_key("");
         req.mutable_req()->mutable_kv()->set_version(-1);
-        req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_longpull(now + 5000);
         req.mutable_req()->set_startversion(100000);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        range_server_->WatchGet(msg);
-
-        watchpb::DsWatchResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-        
-        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
-        // end test watch_get
-    }
-/*
-    std::cout << "watch_get ...no leader" << '\n';
-    {
-        // begin test watch_get (no leader)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 0;
-        range_server_->ranges_[1]->setLeaderFlag(false);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        watchpb::DsWatchRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->set_longpull(now+5000);
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchGet(msg);
-
-        watchpb::DsWatchResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_FALSE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().message() == "no leader");
-
-        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
-        // end test watch_get
-    }
-
-    std::cout << "watch_get ...not leader" << '\n';
-    {
-        // begin test watch_get (not leader)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 2;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        watchpb::DsWatchRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->set_longpull(now+5000);
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchGet(msg);
-
-        watchpb::DsWatchResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().leader().node_id() == 2);
-
-        FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
-        // end test watch_get
-    }
-
-    std::cout << "watch_get ...not in range" << '\n';
-    {
-        // begin test watch_get (not in range)
-
-        // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 1;
         range_server_->ranges_[1]->setLeaderFlag(true);
 
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        watchpb::DsWatchRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01004001");
-        req.mutable_req()->set_longpull(now+5000);
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
         range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
+        FLOG_DEBUG("watch_get RESP:%s", resp.DebugString().c_str());
         ASSERT_TRUE(resp.header().has_error());
         ASSERT_TRUE(resp.header().error().has_key_not_in_range());
 
-         FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
         // end test watch_get
     }
 
-    std::cout << "watch_get ...retry split range" << '\n';
-    {
-        // begin test watch_get (ok, retry split range)
-
-        // set leader
-        range_server_->ranges_[1]->split_range_id_ = 2;
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->ops_.leader = 1;
-            range_server_->ranges_[1]->setLeaderFlag(true);
-        }
-
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->ops_.leader = 1;
-            range_server_->ranges_[2]->setLeaderFlag(true);
-        }
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        watchpb::DsWatchRequest req;
-        msg->session_id = 1;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(2);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->set_longpull(now+5000);
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchGet(msg);
-
-        watchpb::DsWatchResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-        if(resp.header().has_error()) {
-            std::cout << "error:" << resp.header().error().message().c_str() << std::endl;
-        }
-        //ASSERT_FALSE(resp.header().has_error());
-        if(resp.resp().events_size())
-            ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
-
-         FLOG_DEBUG("watch_get response: %s", resp.resp().DebugString().c_str());
-
-        // end test watch_get
-    }
-    
-
-
-    std::cout << "watch_delete ...key empty" << '\n';
-    {
-        // begin test watch_delete (key empty)
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        watchpb::DsKvWatchDeleteRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchDel(msg);
-
-        watchpb::DsKvWatchDeleteResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-        // end test watch_delete
-    }
-
-    std::cout << "watch_delete ...no leader" << '\n';
-    {
-        // begin test watch_delete (no leader)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 0;
-        range_server_->ranges_[1]->setLeaderFlag(false);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        watchpb::DsKvWatchDeleteRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchDel(msg);
-
-        watchpb::DsKvWatchDeleteResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_FALSE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().message() == "no leader");
-
-        // end test watch_delete
-    }
-
-    std::cout << "watch_delete ...not leader" << '\n';
-    {
-        // begin test watch_delete (not leader)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 2;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        watchpb::DsKvWatchDeleteRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchDel(msg);
-
-        watchpb::DsKvWatchDeleteResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().leader().node_id() == 2);
-
-        // end test watch_delete
-    }
-
-    std::cout << "watch_delete ...not in range" << '\n';
-    {
-        // begin test watch_delete (not in range)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        watchpb::DsKvWatchDeleteRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01004001");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchDel(msg);
-
-        watchpb::DsKvWatchDeleteResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-
-        // end test watch_delete
-    }
-*/
-    /*
-    std::cout << "watch_get ...ensure not to be deleted" << '\n';
-    {
-        // begin test watch_get( ensure not to be deleted )
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        watchpb::DsWatchRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->set_longpull(now+5000);
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchGet(msg);
-
-        watchpb::DsWatchResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-       
-        if(resp.header().has_error()) {
-            std::cout << '\n';
-            std::cout << "error:" << resp.header().error().message().c_str() << std::endl;
-        }
-        ASSERT_FALSE(resp.header().has_error());
-        if(resp.resp().events_size())
-            ASSERT_TRUE(resp.resp().events(0).kv().value() == "01003001:value");
-
-        // end test watch_get
-    }
-*/
     std::cout << "watch_get 2...ensure not to be deleted" << '\n';
     {
         // begin test watch_get( ensure not to be deleted )
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        //raft->ops_.leader = 1;
-        //range_server_->ranges_[1]->setLeaderFlag(true);
+        raft->ops_.leader = 1;
+        range_server_->ranges_[2]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
@@ -1173,7 +1548,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
-        req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_longpull(now + 5000);
         req.mutable_req()->set_startversion(100);
 
         auto len = req.ByteSizeLong();
@@ -1185,14 +1560,15 @@ TEST_F(WatchTest, watch) {
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
 
         ASSERT_TRUE(resp.header().has_error());
-        if(resp.resp().events_size())
+        if (resp.resp().events_size())
             ASSERT_TRUE(resp.resp().events(0).kv().value() == "01004001:value");
 
         // end test watch_get
     }
-    
+
 
     {
         // begin test watch_delete( ok )
@@ -1223,6 +1599,8 @@ TEST_F(WatchTest, watch) {
         watchpb::DsKvWatchDeleteResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
 
         ASSERT_FALSE(resp.header().has_error());
 
@@ -1268,12 +1646,18 @@ TEST_F(WatchTest, watch) {
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
+        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
+
         ASSERT_FALSE(resp.header().has_error());
 
         // end test watch_delete
     }
 
     {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
         // begin test watch_get(ensure watch delete)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
@@ -1286,7 +1670,7 @@ TEST_F(WatchTest, watch) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_longpull(now + 5000);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -1297,15 +1681,20 @@ TEST_F(WatchTest, watch) {
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
 
         ASSERT_FALSE(resp.header().has_error());
-        if(resp.resp().events_size())
+        if (resp.resp().events_size())
             ASSERT_TRUE(resp.resp().events(0).kv().value().empty());
 
         // end test watch_get
     }
 
     {
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[2]->setLeaderFlag(true);
+
         // begin test watch_get (ensure watch delete)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
@@ -1319,7 +1708,7 @@ TEST_F(WatchTest, watch) {
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
         req.mutable_req()->mutable_kv()->set_version(1);
-        req.mutable_req()->set_longpull(now+5000);
+        req.mutable_req()->set_longpull(now + 5000);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -1331,12 +1720,20 @@ TEST_F(WatchTest, watch) {
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
+
         ASSERT_FALSE(resp.header().has_error());
-        if(resp.resp().events_size())
+        if (resp.resp().events_size())
             ASSERT_TRUE(resp.resp().events(0).kv().value().empty());
 
         // end test watch_get
     }
+
+    FLOG_DEBUG("watch_unittest [%s].", "ok");
+}
+
+*/
+
    /* ////////////////////////////////////////////////////////////////////////ignore
     {
         // begin test delete range (range 1)
@@ -1359,8 +1756,8 @@ TEST_F(WatchTest, watch) {
         ASSERT_FALSE(resp.header().has_error());
 
         // test meta_store
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
 
         ASSERT_TRUE(metas.size() == 1) << metas.size();
         // end test delete range
@@ -1385,15 +1782,13 @@ TEST_F(WatchTest, watch) {
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         // test meta_store
-        std::vector<std::string> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(metas);
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
         ASSERT_TRUE(metas.size() == 0) << metas.size();
         // end test delete range
     }
     */
-    FLOG_DEBUG("watch_unittest end.");
 
-  }
-}
+
 
 

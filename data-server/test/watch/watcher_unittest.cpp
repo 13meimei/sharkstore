@@ -377,7 +377,7 @@ TEST(TestWatchServer, SimulateInteractive) {
 
         auto w_ptr0 = std::make_shared<TestWatcher>(keys0, conn0);
         WatcherPtr w_p0 = std::static_pointer_cast<Watcher>(w_ptr0);
-        server.AddKeyWatcher(w_p0);
+        server.AddKeyWatcher(w_p0, nullptr);
         ASSERT_TRUE(conn0->ClientRead() != TEST_TIMEOUT);
     }
 
@@ -385,7 +385,7 @@ TEST(TestWatchServer, SimulateInteractive) {
         auto conn = new TestWatchConnection(5000, "hello", "timeout");
         auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
         WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
-        server.AddKeyWatcher(w_p);
+        server.AddKeyWatcher(w_p, nullptr);
 
         ASSERT_TRUE(conn->ClientRead() == TEST_TIMEOUT);
     }
@@ -394,7 +394,7 @@ TEST(TestWatchServer, SimulateInteractive) {
         auto conn = new TestWatchConnection(5000, "hello", "hello");
         auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
         WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
-        server.AddKeyWatcher(w_p);
+        server.AddKeyWatcher(w_p, nullptr);
 
         sleep(1);
         conn->ServerWrite(); // simulate server response
@@ -406,7 +406,7 @@ TEST(TestWatchServer, SimulateInteractive) {
         auto conn = new TestWatchConnection(5000, "hello", "world");
         auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
         WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
-        server.AddKeyWatcher(w_p);
+        server.AddKeyWatcher(w_p, nullptr);
 
         sleep(1);
         conn->ServerWrite(); // simulate server response
@@ -426,7 +426,7 @@ TEST(TestWatchServer, SimulateInteractive) {
                     auto conn = new TestWatchConnection(5000, "hello", "timeout"); // read timeout 5s
                     auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
                     WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
-                    server.AddKeyWatcher(w_p);
+                    server.AddKeyWatcher(w_p, nullptr);
                     ASSERT_TRUE(conn->ClientRead() == TEST_TIMEOUT);
                 });
             }
@@ -441,7 +441,7 @@ TEST(TestWatchServer, SimulateInteractive) {
                     auto conn = new TestWatchConnection(5000); // read timeout 5s
                     auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
                     WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
-                    server.AddKeyWatcher(w_p);
+                    server.AddKeyWatcher(w_p, nullptr);
 
                     sleep(1);
                     conn->ServerWrite(); // simulate server response
