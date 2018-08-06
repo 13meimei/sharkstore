@@ -112,7 +112,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     auto clientVersion = req.req().startversion();
     if(req.req().longpull() > 0) {
         uint64_t expireTime = get_micro_second();
-        expireTime += req.req().longpull();
+        expireTime += (req.req().longpull()*1000);
 
         msg->expire_time = expireTime;
     }
