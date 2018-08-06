@@ -685,6 +685,8 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
     //continue to get prefix key
     std::vector<std::string *> decodeKeys;
+    bool hasPrefix{false};
+
     if(watch::Watcher::DecodeKey(decodeKeys, dbKey)) {
 
         if (decodeKeys.size() > 1) {
@@ -700,6 +702,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 vecNotifyWatcher.push_back( it );
                 cnt ++;
             }
+            if(cnt) hasPrefix = true;
             FLOG_DEBUG("encode prefix key:%s  watcher count:%ld", EncodeToHexString(dbPreKey).c_str(), cnt);
         }
     } else {
@@ -765,15 +768,27 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 watch::WatchCode del_ret;
                 if (w->GetType() == watch::WATCH_KEY) {
                     del_ret = watch_server->DelKeyWatcher(w);
-                } else {
+
+                    if (del_ret) {
+                        FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelKeyWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
+                                  meta_.id(), EncodeToHexString(dbKey).c_str(), idx, uint32_t(watchCnt), w_id);
+                    } else {
+                        FLOG_DEBUG("range[%" PRIu64 "] DelKeyWatcher success. key:%s watch_id:%" PRIu64 , meta_.id(), EncodeToHexString(dbKey).c_str(), w_id);
+                    }
+                }
+
+                if(hasPrefix && w->GetType() == watch::WATCH_KEY) {
                     del_ret = watch_server->DelPrefixWatcher(w);
+
+                    if (del_ret) {
+                        FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelPrefixWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
+                                  meta_.id(), EncodeToHexString(dbKey).c_str(), idx, uint32_t(watchCnt), w_id);
+                    } else {
+                        FLOG_DEBUG("range[%" PRIu64 "] DelPrefixWatcher success. key:%s watch_id:%" PRIu64 , meta_.id(), EncodeToHexString(dbKey).c_str(), w_id);
+                    }
                 }
-                if (del_ret) {
-                    FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
-                           meta_.id(), EncodeToHexString(dbKey).c_str(), idx, uint32_t(watchCnt), w_id);
-                } else {
-                    FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s watch_id:%" PRIu64 , meta_.id(), EncodeToHexString(dbKey).c_str(), w_id);
-                }
+
+
             }
         }
     } else {
