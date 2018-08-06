@@ -214,9 +214,10 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             for (int i = 0; iterator->Valid() ; ++i) {
                 count++;
                 auto kv = resp->add_kvs();
+                auto tmpDbKey = iterator.get()->key();
                 auto tmpDbValue = iterator.get()->value();
                 
-                if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, dbKey, tmpDbValue, err)) {
+                if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_, kv, tmpDbKey, tmpDbValue, err)) {
                     //break;
                     continue;
                     FLOG_DEBUG("range[%" PRIu64 "] dbvalue:%s  err:%s", meta_.id(), EncodeToHexString(tmpDbValue).c_str(), err->message().c_str());
