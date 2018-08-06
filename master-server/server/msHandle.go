@@ -127,7 +127,7 @@ func (service *Server) handleNodeHeartbeat(ctx context.Context, req *mspb.NodeHe
 	return
 }
 
-func checkQurumDown(req *mspb.RangeHeartbeatRequest) bool {
+func checkQuorumDown(req *mspb.RangeHeartbeatRequest) bool {
 	totalVoters := 0
 	downVoters := 0
 	for _, peer := range req.GetRange().GetPeers() {
@@ -189,7 +189,7 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 	}
 
 	//range心跳恢复
-	if rng.State == metapb.RangeState_R_Abnormal && !checkQurumDown(req) {
+	if rng.State == metapb.RangeState_R_Abnormal && !checkQuorumDown(req) {
 		rng.State = metapb.RangeState_R_Normal
 		//执行store GC .
 		oldRng, found := cluster.FindPreGCRangeById(rng.GetId())
