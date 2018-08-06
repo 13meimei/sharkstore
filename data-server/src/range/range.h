@@ -86,6 +86,7 @@ public:
     void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
     void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
     void UnlockForce(common::ProtoMessage *msg, kvrpcpb::DsUnlockForceRequest &req);
+    void LockWatch(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
     void LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req);
 
     // KV
