@@ -89,7 +89,10 @@ private:
     WatchCode GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey&, WatcherMap&, WatcherValue *watcherVal);
 
 public:
-    WatcherId GenWatcherId() { return watcher_id_.fetch_add(1, std::memory_order_relaxed); }
+    WatcherId GenWatcherId() {
+        watcher_id_.fetch_add(1, std::memory_order_relaxed);
+        return watcher_id_;
+    }
 };
 
 

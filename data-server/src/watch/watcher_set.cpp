@@ -194,7 +194,7 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
     // del from key map
     auto key_map_it = key_map_.find(watcher_id);
     if (key_map_it == key_map_.end()) {
-        FLOG_WARN("watcher del failed, watcher id is not existed in key map: session_id:[%" PRIu64 "] key: [%s]",
+        FLOG_WARN("watcher del failed, watcher id is not existed in key map: watch_id:[%" PRIu64 "] key: [%s]",
                   watcher_id, EncodeToHexString(key).c_str());
         //return WATCH_WATCHER_NOT_EXIST; // no watcher id in key map
     } else {

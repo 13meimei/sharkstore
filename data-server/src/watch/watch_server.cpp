@@ -85,7 +85,7 @@ WatchCode WatchServer::GetKeyWatchers(std::vector<WatcherPtr>& w_ptr_vec, const 
 }
 
 WatchCode WatchServer::GetPrefixWatchers(std::vector<WatcherPtr>& w_ptr_vec, const PrefixKey& prefix, const int64_t &version) {
-    FLOG_DEBUG("watch server get prefix watchers: key [%s]", prefix.c_str());
+    FLOG_DEBUG("watch server get prefix watchers: key [%s]", EncodeToHexString(prefix).c_str());
     assert(w_ptr_vec.size() == 0);
     auto wset = GetWatcherSet_(prefix);
     return wset->GetPrefixWatchers(w_ptr_vec, prefix, version);

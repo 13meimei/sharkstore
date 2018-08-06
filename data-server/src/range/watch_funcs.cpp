@@ -111,7 +111,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     //add watch if client version is not equal to ds side
     auto clientVersion = req.req().startversion();
     if(req.req().longpull() > 0) {
-        uint64_t expireTime = getticks();
+        uint64_t expireTime = get_micro_second();
         expireTime += req.req().longpull();
 
         msg->expire_time = expireTime;

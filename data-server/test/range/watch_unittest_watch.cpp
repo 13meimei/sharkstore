@@ -171,6 +171,8 @@ protected:
         msg1->expire_time = getticks() + 1000;
         msg1->session_id = 1;
         msg1->socket = &socket_;
+        msg1->begin_time = get_micro_second();
+
         watchpb::DsKvWatchPutRequest req1;
 
         req1.mutable_header()->set_range_id(rangeId);
@@ -210,6 +212,8 @@ protected:
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
         msg->socket = &socket_;
+        msg->begin_time = get_micro_second();
+
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(rangeId);
@@ -249,6 +253,8 @@ protected:
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->begin_time = get_micro_second();
+
         watchpb::DsKvWatchGetMultiRequest req;
 
         req.set_prefix(prefix);
@@ -283,12 +289,14 @@ protected:
 
     void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, bool prefix = false)
     {
-
+        FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
         // begin test watch_get (key empty)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
         msg->socket = &socket_;
+        msg->begin_time = get_micro_second();
+
         watchpb::DsWatchRequest req;
 
         req.mutable_header()->set_range_id(rangeId);
@@ -319,8 +327,8 @@ protected:
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         FLOG_DEBUG("watch_get RESP:%s", resp.DebugString().c_str());
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
+        ASSERT_FALSE(resp.header().has_error());
+        //ASSERT_TRUE(resp.header().error().has_key_not_in_range());
 
     }
 protected:
@@ -420,6 +428,7 @@ TEST_F(WatchTest, watch_get_noexists_put) {
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
         msg->socket = &socket_;
+        msg->begin_time = get_micro_second();
 
         watchpb::DsWatchRequest req;
         req.mutable_header()->set_range_id(1);
@@ -550,6 +559,7 @@ TEST_F(WatchTest, watch_get_exist_del) {
         justDel(1, "01003001", "", "");
 
     }
+
 
     /*
      *
@@ -717,6 +727,57 @@ TEST_F(WatchTest, watch_get_exist_del) {
 }
 
 
+TEST_F(WatchTest, watch_get_group_exist_del) {
+    {
+        justPut(1, "01003001", "0100300102", "01003001:value");
+        //add prefix watch
+        justWatch(1, "01003001", "", true);
+
+// begin test watch_get (key empty)
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+        msg->session_id = 1;
+        msg->socket = &socket_;
+        msg->begin_time = get_micro_second();
+        watchpb::DsWatchRequest req;
+
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_req()->mutable_kv()->add_key("01003001");
+        req.mutable_req()->mutable_kv()->add_key("0100300102");
+        req.mutable_req()->mutable_kv()->set_version(0);
+        req.mutable_req()->set_longpull(now + 5000);
+///////////////////////////////////////////////
+        req.mutable_req()->set_startversion(0);
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
+        range_server_->WatchGet(msg);
+
+        watchpb::DsWatchResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        FLOG_DEBUG("watch_get RESP:%s", resp.DebugString().c_str());
+        ASSERT_FALSE(resp.header().has_error());
+//        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
+
+        FLOG_DEBUG("watch_get response: %s", resp.DebugString().c_str());
+
+
+//delete trigger notify
+        justDel(1, "01003001", "0100300102", "");
+
+    }
+}
 
    /* ////////////////////////////////////////////////////////////////////////ignore
     {
