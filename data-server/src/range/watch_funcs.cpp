@@ -127,7 +127,13 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
     auto w_ptr = std::make_shared<watch::Watcher>(meta_.table_id(), keys, clientVersion, msg);
 
-    auto wcode = watch_server->AddKeyWatcher(w_ptr, store_);
+    watch::WatchCode wcode;
+    if(prefix) {
+        wcode = watch_server->AddPrefixWatcher(w_ptr, store_);
+    } else {
+        wcode = watch_server->AddKeyWatcher(w_ptr, store_);
+    }
+
     if(watch::WATCH_OK == wcode) {
         return;
     } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
@@ -717,7 +723,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             auto w_id = w->GetWatcherId();
             idx++;
             FLOG_DEBUG("range[%" PRIu64 "] session_id:%" PRId64 " Watch-Notify(%d)[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
-                       meta_.id(), w->getSessionId(), funcId, dbKey.c_str(), idx, uint32_t(watchCnt), w_id);
+                       meta_.id(), w->getSessionId(), funcId, EncodeToHexString(dbKey).c_str(), idx, uint32_t(watchCnt), w_id);
 
             assert(w_id > );
             /*if(w_id < 1) {
@@ -763,10 +769,10 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                     del_ret = watch_server->DelPrefixWatcher(w);
                 }
                 if (del_ret) {
-                    FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[session][%" PRId64"]",
+                    FLOG_WARN("range[%" PRIu64 "] Watch-Notify DelWatcher WARN:[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
                            meta_.id(), EncodeToHexString(dbKey).c_str(), idx, uint32_t(watchCnt), w_id);
                 } else {
-                    FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s session_id:%" PRIu64 "...", meta_.id(), EncodeToHexString(dbKey).c_str(), w_id);
+                    FLOG_DEBUG("range[%" PRIu64 "] DelWatcher success. key:%s watch_id:%" PRIu64 , meta_.id(), EncodeToHexString(dbKey).c_str(), w_id);
                 }
             }
         }

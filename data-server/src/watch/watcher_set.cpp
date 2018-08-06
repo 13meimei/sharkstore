@@ -37,7 +37,7 @@ WatcherSet::WatcherSet() {
 
                     watcher_queue_.pop();
 
-                    FLOG_INFO("watcher is sent response, timer queue pop : session_id:[%" PRIu64 "] key: [%s]",
+                    FLOG_INFO("watcher is sent response, timer queue pop : watch_id:[%" PRIu64 "] key: [%s]",
                                w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
                     w_ptr = nullptr;
                 } else {
@@ -78,8 +78,8 @@ WatcherSet::WatcherSet() {
                                    " execute take time: %" PRId64 " ms,wait time:%" PRId64 ,
                            w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id, excEnd-excBegin,excBegin-waitBeginTime);
 
-                FLOG_INFO("watcher expire timeout, timer queue pop: session_id:[%" PRIu64 "] key: [%s]",
-                           w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
+                FLOG_INFO("watcher expire timeout, timer queue pop: session_id: %" PRId64 " watch_id:[%" PRIu64 "] key: [%s]",
+                          w_ptr->GetMessage()->session_id, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
             }
         }
     });
@@ -227,7 +227,7 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
         auto &watchers = watcher_map_it->second;
         auto watcher_it = watchers->mapKeyWatcher.find(watcher_id);
         if (watcher_it == watchers->mapKeyWatcher.end()) {
-            FLOG_WARN("watcher del failed, watcher id is not existed in watcher map: session_id:[%"
+            FLOG_WARN("watcher del failed, watcher id is not existed in watcher map: watch_id:[%"
                               PRIu64
                               "] key: [%s]",
                       watcher_id, EncodeToHexString(key).c_str());
@@ -243,7 +243,7 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
         watcher_map_.erase(watcher_map_it);
     }*/
 
-    FLOG_INFO("watcher del end: session_id:[%" PRIu64 "] key: [%s]",
+    FLOG_INFO("watcher del end: watch_id:[%" PRIu64 "] key: [%s]",
               watcher_id, EncodeToHexString(key).c_str());
 
     return WATCH_OK;
