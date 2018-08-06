@@ -681,7 +681,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     errorpb::Error *err = new errorpb::Error;
 
     auto watch_server = context_->range_server->watch_server_;
-    watch_server->GetKeyWatchers(vecNotifyWatcher, dbKey, currDbVersion);
+    watch_server->GetKeyWatchers(evtType, vecNotifyWatcher, dbKey, currDbVersion);
 
     //continue to get prefix key
     std::vector<std::string *> decodeKeys;
@@ -695,7 +695,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             watch::Watcher::EncodeKey(&dbPreKey, meta_.id(), decodeKeys);
 
             std::vector<watch::WatcherPtr> vecPrefixWatcher;
-            watch_server->GetPrefixWatchers(vecPrefixWatcher, dbPreKey, currDbVersion);
+            watch_server->GetPrefixWatchers(evtType, vecPrefixWatcher, dbPreKey, currDbVersion);
 
             auto cnt = 0L;
             for( auto it : vecPrefixWatcher) {

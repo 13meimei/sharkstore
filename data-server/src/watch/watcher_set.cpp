@@ -114,6 +114,10 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         std::string ext("");
         int64_t version(0);
         if(store_!= nullptr){
+
+            //to do 前缀模式时,需改为用iterator获取前缀下所有key
+
+            //single key
             Status ret = store_->Get(key, &val);
             if(ret.ok()){
                 if (!watch::Watcher::DecodeValue(&version, &userVal, &ext, val)) {
@@ -136,12 +140,12 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
     }
     auto& watcher_map = watcher_map_it->second->mapKeyWatcher;
 
-     if( currKeyVer != watcher_map_it->second->key_version_ && currKeyVer != 0) {
+     if( currKeyVer < watcher_map_it->second->key_version_ ) {
 
-         if(currKeyVer > watcher_map_it->second->key_version_) {
-             FLOG_ERROR("watcher add skip: watcher_id:[%" PRIu64 "] key: [%s] current version[%" PRIu64 "] watcher version[%" PRIu64 "]",
-                       w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), currKeyVer, watcher_map_it->second->key_version_);
-         } else {
+//         if(currKeyVer > watcher_map_it->second->key_version_) {
+//             FLOG_ERROR("watcher add skip: watcher_id:[%" PRIu64 "] key: [%s] current version[%" PRIu64 "] watcher version[%" PRIu64 "]",
+//                       w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), currKeyVer, watcher_map_it->second->key_version_);
+//         } else {
              FLOG_INFO("watcher add skip: watcher_id:[%"
                                PRIu64
                                "] key: [%s] current version[%"
@@ -152,7 +156,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                        w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), currKeyVer,
                        watcher_map_it->second->key_version_);
 
-         }
+//         }
          return WATCH_WATCHER_NOT_NEED;
      }
 
@@ -249,7 +253,7 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
     return WATCH_OK;
 }
 
-WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey& key, WatcherMap& watcherMap, WatcherValue *watcherValue) {
+WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& vec, const WatcherKey& key, WatcherMap& watcherMap, WatcherValue *watcherValue) {
     std::lock_guard<std::mutex> lock(watcher_map_mutex_);
 
     auto itWatcherVal = watcherMap.find(key);
@@ -262,6 +266,11 @@ WatchCode WatcherSet::GetWatchers(std::vector<WatcherPtr>& vec, const WatcherKey
     auto watchers = itWatcherVal->second;
     if(watchers->key_version_ < watcherValue->key_version_) {
         watchers->key_version_ = watcherValue->key_version_;
+    }
+
+    //to do clear version if delete event
+    if(evtType == watchpb::DELETE) {
+        watchers->key_version_ = 0;
     }
 
     if(watchers->mapKeyWatcher.size() > 0) {
@@ -288,12 +297,12 @@ WatchCode WatcherSet::DelKeyWatcher(const WatcherKey& key, WatcherId id) {
 }
 
 // key get watchers
-WatchCode WatcherSet::GetKeyWatchers(std::vector<WatcherPtr>& vec, const WatcherKey& key, const int64_t &version) {
+WatchCode WatcherSet::GetKeyWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& vec, const WatcherKey& key, const int64_t &version) {
     auto watcherVal = new WatcherValue;
     //auto mapKeyWatcher = new KeyWatcherMap;
     watcherVal->key_version_ = version;
 
-    auto retCode = GetWatchers(vec, key, key_watcher_map_, watcherVal);
+    auto retCode = GetWatchers(evtType, vec, key, key_watcher_map_, watcherVal);
     if( WATCH_OK == retCode) {
 
         for(auto it:watcherVal->mapKeyWatcher) {
@@ -320,11 +329,11 @@ WatchCode WatcherSet::DelPrefixWatcher(const PrefixKey& prefix, WatcherId id) {
 }
 
 // prefix get watchers
-WatchCode WatcherSet::GetPrefixWatchers(std::vector<WatcherPtr>& vec, const PrefixKey& prefix, const int64_t &version) {
+WatchCode WatcherSet::GetPrefixWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& vec, const PrefixKey& prefix, const int64_t &version) {
     auto watcherVal = new WatcherValue;
     watcherVal->key_version_ = version;
 
-    auto retCode = GetWatchers(vec, prefix, prefix_watcher_map_, watcherVal);
+    auto retCode = GetWatchers(evtType, vec, prefix, prefix_watcher_map_, watcherVal);
         if( WATCH_OK == retCode) {
 
             for(auto it:(watcherVal->mapKeyWatcher)) {
