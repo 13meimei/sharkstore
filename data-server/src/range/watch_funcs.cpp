@@ -666,6 +666,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         return -1;
     }
 
+    decltype(dbKey) dbPreKey{""};
     auto dbValue = tmpKv->value();
     auto currDbVersion = tmpKv->version();
 
@@ -675,6 +676,29 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
     auto watch_server = context_->range_server->watch_server_;
     watch_server->GetKeyWatchers(vecNotifyWatcher, dbKey, currDbVersion);
+
+    //continue to get prefix key
+    std::vector<std::string *> decodeKeys;
+    if(watch::Watcher::DecodeKey(decodeKeys, dbKey)) {
+
+        if (decodeKeys.size() > 1) {
+            decodeKeys.erase(decodeKeys.end() - 1);
+
+            watch::Watcher::EncodeKey(&dbPreKey, meta_.id(), decodeKeys);
+
+            std::vector<watch::WatcherPtr> vecPrefixWatcher;
+            watch_server->GetPrefixWatchers(vecPrefixWatcher, dbPreKey, currDbVersion);
+
+            auto cnt = 0L;
+            for( auto it : vecPrefixWatcher) {
+                vecNotifyWatcher.push_back( it );
+                cnt ++;
+            }
+            FLOG_DEBUG("encode prefix key:%s  watcher count:%ld", EncodeToHexString(dbPreKey).c_str(), cnt);
+        }
+    } else {
+        FLOG_WARN("DecodeKey error when WatchNotify, key:%s", EncodeToHexString(dbKey).c_str());
+    }
 
     auto watchCnt = vecNotifyWatcher.size();
     if (watchCnt > 0) {
