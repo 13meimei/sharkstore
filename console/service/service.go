@@ -23,16 +23,17 @@ import (
 	"console/config"
 	"util/log"
 	"util/ttlcache"
+
 	"strconv"
 	"errors"
 	"sync"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 const (
 	//DB_NAME = "fbase_mock_console"
-	DB_NAME     = "fbase"
-	LOCK_DBNAME = "lock"
-	LOCK_COLUMN = "lock_col"
+	DB_NAME = "fbase"
 
 	TABLE_NAME_USER          = "fbase_user"
 	TABLE_NAME_CLUSTER       = "fbase_cluster"
@@ -40,8 +41,36 @@ const (
 	TABLE_NAME_PRIVILEGE     = "fbase_privilege"
 	TABLE_NAME_SQL_APPLY     = "fbase_sql_apply"
 	TABLE_NAME_LOCK_NSP      = "fbase_lock_nsp"
+	TABLE_NAME_CONFIGURE_NSP = "fbase_configure_nsp"
 	TABLE_NAME_METRIC_SERVER = "metric_server"
+
+	STATUS_APPLY  = 1
+	STATUS_AUDIT  = 2
+	STATUS_REJECT = 3
+
+	LOCK_CLIENT_NAMESPACE_PREFIX = ""
 )
+
+var lockColumns = []*models.Column{
+	{Name: "k", DataType: 7, PrimaryKey: 1, Index: true},
+	{Name: "v", DataType: 7, Index: true},
+	{Name: "lock_id", DataType: 7, Index: true},
+	{Name: "expired_time", DataType: 4, Index: true},
+	{Name: "upd_time", DataType: 4, Index: true},
+	{Name: "delete_flag", DataType: 3, Index: true},
+	{Name: "creator", DataType: 7, Index: true},
+}
+
+var configureColumns = []*models.Column{
+	{Name: "k", DataType: 7, PrimaryKey: 1, Index: true},
+	{Name: "v", DataType: 7, Index: true},
+	{Name: "version", DataType: 7, Index: true},
+	{Name: "extend", DataType: 7, Index: true},
+	{Name: "create_time", DataType: 4, Index: true},
+	{Name: "upd_time", DataType: 4, Index: true},
+	{Name: "delete_flag", DataType: 3, Index: true},
+	{Name: "creator", DataType: 7, Index: true},
+}
 
 var serviceInstance *Service = nil
 
@@ -153,7 +182,40 @@ func (s *Service) CreateCluster(cId int, cName, masterUrl, gateHttpUrl, gateSqlU
 	return nil
 }
 
-func (s *Service) CreateDb(cId int, dbName string) error {
+func (s *Service) CreateDb(cId int, dbName string) (*models.DbInfo, error) {
+	info, err := s.selectClusterById(cId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(info.Id, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["name"] = dbName
+
+	var createDbResp = struct {
+		Code int           `json:"code"`
+		Msg  string        `json:"message"`
+		Data models.DbInfo `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/database/create", reqParams, &createDbResp); err != nil {
+		return nil, err
+	}
+	if createDbResp.Code != 0 {
+		log.Error("master createdb is failed. err:[%v]", createDbResp)
+		return nil, common.INTERNAL_ERROR
+	}
+
+	return &createDbResp.Data, nil
+}
+
+func (s *Service) DeleteDb(cId int, dbName string) error {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
 		return err
@@ -168,19 +230,19 @@ func (s *Service) CreateDb(cId int, dbName string) error {
 	reqParams := make(map[string]interface{})
 	reqParams["d"] = ts
 	reqParams["s"] = sign
-	reqParams["name"] = dbName
+	reqParams["dbName"] = dbName
 
-	var createDbResp = struct {
-		Code int         `json:"code"`
-		Msg  string      `json:"message"`
-		Data interface{} `json:"data"`
+	var deleteDbResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
 	}{}
-	if err := sendGetReq(info.MasterUrl, "/manage/database/create", reqParams, &createDbResp); err != nil {
-		return err
+	if err := sendGetReq(info.MasterUrl, "/manage/database/delete", reqParams, &deleteDbResp); err != nil {
+		log.Error("send delete db error, %v", err)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: err.Error()}
 	}
-	if createDbResp.Code != 0 {
-		log.Error("master createdb is failed. err:[%v]", createDbResp)
-		return common.INTERNAL_ERROR
+	if deleteDbResp.Code != 0 {
+		log.Error("master deleteDb is failed. err:[%v]", deleteDbResp)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: deleteDbResp.Msg}
 	}
 
 	return nil
@@ -219,13 +281,13 @@ func (s *Service) GetAllDb(cId int) (*[]models.DbInfo, error) {
 	return &(getAllDbResp.Data), nil
 }
 
-func (s *Service) CreateTable(cId int, dbName, tableName, policy, rangeKeys string, columnJsonArray, regxsJsonArray interface{}) error {
+func (s *Service) CreateTable(cId int, dbName, tableName, policy, rangeKeys string, columnJsonArray, regxsJsonArray interface{}) (*models.TableInfo, error) {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if info == nil {
-		return common.CLUSTER_NOTEXISTS_ERROR
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
 	}
 
 	ts := time.Now().Unix()
@@ -256,19 +318,19 @@ func (s *Service) CreateTable(cId int, dbName, tableName, policy, rangeKeys stri
 	reqParams["properties"] = r3
 
 	var createTableResp = struct {
-		Code int         `json:"code"`
-		Msg  string      `json:"message"`
-		Data interface{} `json:"data"`
+		Code int              `json:"code"`
+		Msg  string           `json:"message"`
+		Data models.TableInfo `json:"data"`
 	}{}
 	if err := sendPostReqStrBody(info.MasterUrl, "/manage/table/create", reqParams, &createTableResp); err != nil {
-		return err
+		return nil, err
 	}
 	if createTableResp.Code != 0 {
 		log.Error("master createTable is failed. err:[%v]", createTableResp)
-		return common.INTERNAL_ERROR
+		return nil, common.INTERNAL_ERROR
 	}
 
-	return nil
+	return &createTableResp.Data, nil
 }
 
 func (s *Service) GetAllTables(cId int, dbId, dbName string) (*[]models.TableInfo, error) {
@@ -482,7 +544,7 @@ func (s *Service) GetMasterAll(cId int, token string) (*models.Member, error) {
 	return masterNodesResp.Data, nil
 }
 
-func (s *Service) GetMasterLeader(cId int, token string) (interface{}, error) {
+func (s *Service) GetMasterLeader(cId int, token string) (*models.MsNode, error) {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
 		return nil, err
@@ -498,11 +560,11 @@ func (s *Service) GetMasterLeader(cId int, token string) (interface{}, error) {
 	reqParams["s"] = sign
 
 	var masterLeaderResp = struct {
-		Code int         `json:"code"`
-		Msg  string      `json:"message"`
-		Data interface{} `json:"data"`
+		Code int            `json:"code"`
+		Msg  string         `json:"message"`
+		Data *models.MsNode `json:"data"`
 	}{}
-	if err := sendGetReq(info.MasterUrl, "manage/master/getleader", reqParams, &masterLeaderResp); err != nil {
+	if err := sendGetReq(info.MasterUrl, "/manage/master/getleader", reqParams, &masterLeaderResp); err != nil {
 		return nil, err
 	}
 	if masterLeaderResp.Code != 0 {
@@ -1903,31 +1965,51 @@ func (s *Service) IsAdmin(userName string) (bool, error) {
 }
 
 //=============sql apply start==============
-func (s *Service) GetAllSqlApply(userName string, isAdmin bool) ([]*models.SqlApply, error) {
-	var sql string
-	if isAdmin {
-		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s order by create_time desc`, TABLE_NAME_SQL_APPLY)
-	} else {
-		sql = fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s where applyer = "%s" order by create_time desc`, TABLE_NAME_SQL_APPLY, userName)
+func (s *Service) GetAllSqlApply(userName string, isAdmin bool, pageInfo *models.PagerInfo) (int, []*models.SqlApply, error) {
+	selectSql := fmt.Sprintf(`select id, db_name, table_name, status, applyer, create_time, remark from %s`, TABLE_NAME_SQL_APPLY)
+	countSql := fmt.Sprintf(`select count(*) from %s`, TABLE_NAME_SQL_APPLY)
+	if !isAdmin {
+		selectSql = fmt.Sprintf(`%s where applyer = "%s"`, selectSql, userName)
+		countSql = fmt.Sprintf(`%s where applyer = "%s"`, countSql, userName)
 	}
-	log.Debug("get all sql apply records:  %s", sql)
-
-	rows, err := s.db.Query(sql)
-	if err != nil {
-		log.Error("db select is failed. err:[%v]", err)
-		return nil, common.DB_ERROR
-	}
-	result := make([]*models.SqlApply, 0)
-	for rows.Next() {
-		info := new(models.SqlApply)
-		if err := rows.Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.Status), &(info.Applyer), &(info.CreateTime), &(info.Remark)); err != nil {
-			log.Error("db scan is failed. err:[%v]", err)
-			return nil, common.DB_ERROR
+	if pageInfo != nil {
+		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
+			selectSql = fmt.Sprintf(`%s order by "%s" "%s"`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
+		} else {
+			selectSql = fmt.Sprintf(`%s order by create_time desc`, selectSql)
 		}
-		result = append(result, info)
+		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+			selectSql = fmt.Sprintf(`%s limit %d, %d`, selectSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+		}
 	}
-	return result, nil
 
+	log.Debug("get all sql apply records:  %s", selectSql)
+	var totalRecord int
+	if err := s.db.QueryRow(countSql).
+		Scan(&(totalRecord)); err != nil {
+		log.Error("db select is failed. err:[%v]", err)
+		return 0, nil, common.DB_ERROR
+	}
+	if totalRecord > 0 {
+		rows, err := s.db.Query(selectSql)
+		if err != nil {
+			log.Error("db select is failed. err:[%v]", err)
+			return 0, nil, common.DB_ERROR
+		}
+		result := make([]*models.SqlApply, 0)
+		for rows.Next() {
+			info := new(models.SqlApply)
+			if err := rows.Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.Status), &(info.Applyer), &(info.CreateTime), &(info.Remark)); err != nil {
+				log.Error("db scan is failed. err:[%v]", err)
+				return 0, nil, common.DB_ERROR
+			}
+			result = append(result, info)
+		}
+		return totalRecord, result, nil
+	} else {
+		return totalRecord, nil, nil
+	}
 }
 
 func (s *Service) ApplySql(dbName, tableName, sentence, applyer, remark string, cTime int64) error {
@@ -1937,9 +2019,9 @@ func (s *Service) ApplySql(dbName, tableName, sentence, applyer, remark string, 
 	}
 	idS := fmt.Sprintf("%s", id)
 
-	sql := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, sentence, status, applyer, create_time, remark) 
-		values ("%s", "%s", "%s", "%s", %d, "%s", %d, "%s")`,
-		TABLE_NAME_SQL_APPLY, idS, dbName, tableName, sentence, 1, applyer, cTime, remark)
+	sql := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, sentence, status, applyer, auditor, create_time, remark) 
+		values ("%s", "%s", "%s", "%s", %d, "%s", "%s", %d, "%s")`,
+		TABLE_NAME_SQL_APPLY, idS, dbName, tableName, sentence, STATUS_APPLY, applyer, "", cTime, remark)
 	_, err = s.execSql(sql)
 	if err != nil {
 		return err
@@ -1986,34 +2068,133 @@ func (s *Service) AuditSql(ids []string, status int, auditor string) error {
 //=============sql apply end==============
 
 //=============lock start==============
-func (s *Service) GetAllNamespace(userName string, isAdmin bool) ([]*models.NamespaceApply, error) {
-	var sql string
-	if isAdmin {
-		sql = fmt.Sprintf(`select namespace, cluster_id, applyer, create_time from %s`, TABLE_NAME_LOCK_NSP)
-	} else {
-		sql = fmt.Sprintf(`select namespace, cluster_id, applyer, create_time from %s where applyer = "%s" `, TABLE_NAME_LOCK_NSP, userName)
-	}
-	log.Debug("get all apply lock namespace: %s", sql)
-
-	rows, err := s.db.Query(sql)
-	if err != nil {
-		log.Error("db select is failed. err:[%v]", err)
-		return nil, common.DB_ERROR
-	}
-	result := make([]*models.NamespaceApply, 0)
-	for rows.Next() {
-		info := new(models.NamespaceApply)
-		if err := rows.Scan(&(info.NameSpace), &(info.ClusterId), &(info.Applyer), &(info.CreateTime)); err != nil {
-			log.Error("db scan is failed. err:[%v]", err)
-			return nil, common.DB_ERROR
-		}
-		result = append(result, info)
-	}
-	return result, nil
-
+func (s *Service) GetAllLockNsp(userName string, isAdmin bool, pageInfo *models.PagerInfo) (int, []*models.NamespaceApply, error) {
+	return s.GetAllNamespace(userName, isAdmin, pageInfo, TABLE_NAME_LOCK_NSP)
 }
 
-func (s *Service) ApplyLockNamespace(cId int, namespace, applyer string, cTime int64) error {
+func (s *Service) GetAllNamespace(userName string, isAdmin bool, pageInfo *models.PagerInfo, tableName string) (int, []*models.NamespaceApply, error) {
+	selectSql := fmt.Sprintf(`select id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time from %s`, tableName)
+	countSql := fmt.Sprintf(`select count(*) from %s`, tableName)
+
+	if !isAdmin {
+		selectSql = fmt.Sprintf(`%s where applyer = "%s"`, selectSql, userName)
+		countSql = fmt.Sprintf(`%s where applyer = "%s"`, countSql, userName)
+	}
+
+	if pageInfo != nil {
+		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
+			selectSql = fmt.Sprintf(`%s order by "%s" "%s"`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
+		} else {
+			selectSql = fmt.Sprintf(`%s order by create_time desc`, selectSql)
+		}
+		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+			selectSql = fmt.Sprintf(`%s limit %d, %d`, selectSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+		}
+	}
+	log.Debug("get all apply lock namespace: %s", selectSql)
+
+	var totalRecord int
+	if err := s.db.QueryRow(countSql).
+		Scan(&(totalRecord)); err != nil {
+		log.Error("db queryrow is failed. err:[%v]", err)
+		return 0, nil, common.DB_ERROR
+	}
+	if totalRecord > 0 {
+		rows, err := s.db.Query(selectSql)
+		if err != nil {
+			log.Error("db select is failed. err:[%v]", err)
+			return 0, nil, common.DB_ERROR
+		}
+		result := make([]*models.NamespaceApply, 0)
+		for rows.Next() {
+			info := new(models.NamespaceApply)
+			if err := rows.Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.DbId),
+				&(info.TableId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
+				log.Error("db scan is failed. err:[%v]", err)
+				return 0, nil, common.DB_ERROR
+			}
+			result = append(result, info)
+		}
+		return totalRecord, result, nil
+	} else {
+		return totalRecord, nil, nil
+	}
+}
+
+func (s *Service) GetNamespaceById(applyId, storeTable string) (*models.NamespaceApply, error) {
+	querySql := fmt.Sprintf(`select id, db_name, table_name, cluster_id, status, applyer, auditor, create_time from %s where id = "%s" `,
+		storeTable, applyId)
+
+	log.Debug("get single apply namespace info: %s", querySql)
+
+	info := new(models.NamespaceApply)
+	if err := s.db.QueryRow(querySql).
+		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
+		if err == sql.ErrNoRows {
+			log.Error("db row not exists. ")
+			return nil, nil
+		} else {
+			log.Error("db queryrow is failed. err:[%v]", err)
+			return nil, common.DB_ERROR
+		}
+	}
+	return info, nil
+}
+
+func (s *Service) existNspApply(dbName, tableName string, clusterId int, storeTable string) (bool, error) {
+	querySql := fmt.Sprintf(`select count(*) from %s where db_name = "%s" and table_name = "%s" and cluster_id = %d`,
+		storeTable, dbName, tableName, clusterId)
+	log.Debug("check exist namespace info: %s", querySql)
+	var count int
+	if err := s.db.QueryRow(querySql).
+		Scan(&(count)); err != nil {
+		log.Error("db queryrow is failed. err:[%v]", err)
+		return true, common.DB_ERROR
+	}
+	if count > 0 {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
+func (s *Service) existTable(dbName, tableName string, clusterId int) (bool, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return true, err
+	}
+	if info == nil {
+		return true, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["dbName"] = dbName
+	reqParams["tableName"] = tableName
+
+	var getTableResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/get/table", reqParams, &getTableResp); err != nil {
+		return true, err
+	}
+	if getTableResp.Code == 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (s *Service) ApplyLockNsp(cId int, dbName, tableName, applyer string, cTime int64) error {
+	return s.ApplyNamespace(cId, dbName, tableName, applyer, cTime, TABLE_NAME_LOCK_NSP)
+}
+
+func (s *Service) ApplyNamespace(cId int, dbName, tableName, applyer string, cTime int64, storeTable string) error {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
 		return err
@@ -2021,41 +2202,119 @@ func (s *Service) ApplyLockNamespace(cId int, namespace, applyer string, cTime i
 	if info == nil {
 		return common.CLUSTER_NOTEXISTS_ERROR
 	}
-
-	var columns []*models.Column
-	lockColumn := &models.Column{Name: LOCK_COLUMN, DataType: 1, PrimaryKey: 1, Index: true}
-	columns = append(columns, lockColumn)
-	err = s.CreateTable(cId, LOCK_DBNAME, namespace, "", "", columns, nil)
+	//唯一性检测
+	existFlag, err := s.existNspApply(dbName, tableName, cId, storeTable)
 	if err != nil {
-		log.Warn("apply lock namespace %v cluster %v failed, err: %v", namespace, cId, err)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: err.Error()}
+	}
+	if existFlag {
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: "had exist apply record"}
+	}
+
+	if flag, _ := s.existTable(dbName, tableName, cId); flag {
+		log.Warn("exist table [%d:%s:%s] or request error, please retry other namespace", cId, dbName, tableName)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: fmt.Sprintf("exist table [%s:%s] or request error, please retry other namespace", dbName, tableName)}
+	}
+
+	id, err := uuid.NewV4()
+	if err != nil {
 		return err
 	}
 
-	sql := fmt.Sprintf(`INSERT INTO %s (namespace, cluster_id, applyer, create_time) values ("%s", %d, "%s", %d)`,
-		TABLE_NAME_LOCK_NSP, namespace, cId, applyer, cTime)
-	_, err = s.execSql(sql)
+	nsp := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time) 
+		values ("%s", "%s", "%s", %d, 0, 0, %d, "%s", "%s", %d)`,
+		storeTable, fmt.Sprintf("%s", id), dbName, tableName, cId, STATUS_APPLY, applyer, "", cTime)
+	_, err = s.execSql(nsp)
 	if err != nil {
 		return err
 	}
 
-	log.Debug("%s apply lock namsspace %s success", applyer, namespace, applyer)
+	log.Debug("%s apply namespace [%s:%s] success", applyer, dbName, tableName)
 	return nil
 }
 
-func (s *Service) UpdateLockNsp(cId int, namespace, applyer string, cTime int64) error {
-	sql := fmt.Sprintf(`Insert into %s (namespace, cluster_id, applyer, create_time) values ("%s", %d, "%s", %d)`, TABLE_NAME_LOCK_NSP, namespace, cId, applyer, cTime)
-	rowsAffected, err := s.execSql(sql)
+func (s *Service) AuditLockNsp(ids []string, status int, auditor string) error {
+	for _, applyId := range ids {
+		info, err := s.GetNamespaceById(applyId, TABLE_NAME_LOCK_NSP)
+		if err != nil {
+			continue
+		}
+		var dbId, tableId int
+		if status == STATUS_AUDIT { // 审批通过
+			dbInfo, err := s.CreateDb(info.ClusterId, info.DbName)
+			if err != nil {
+				log.Warn("create lock db %v on cluster %v failed, err: %v", info.DbName, info.ClusterId, err)
+				return err
+			}
+			dbId = dbInfo.Id
+
+			if flag, _ := s.existTable(info.DbName, info.TableName, info.ClusterId); flag {
+				log.Warn("lock: exist db %v table %v in cluster %v, cannot audit", info.DbName, info.TableName, info.ClusterId)
+				return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: fmt.Sprintf("exist table %v in cluster %v", info.TableName, info.ClusterId)}
+			}
+
+			tableInfo, err := s.CreateTable(info.ClusterId, info.DbName, info.TableName, "", "", lockColumns, nil)
+			if err != nil {
+				log.Warn("create lock  table %v on cluster %v failed, err: %v", info.TableName, info.ClusterId, err)
+				return err
+			}
+			tableId = tableInfo.Id
+		}
+		nspSql := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time) values ("%s", "%s", "%s", %d,  %d,  %d, %d, "%s", "%s", %d )`,
+			TABLE_NAME_LOCK_NSP, applyId, info.DbName, info.TableName, info.ClusterId, dbId, tableId, status, info.Applyer, auditor, info.CreateTime)
+		rowsAffected, err := s.execSql(nspSql)
+		if err != nil {
+			return err
+		}
+		if rowsAffected != 1 {
+			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: "update apply status and return result error"}
+		}
+	}
+	log.Debug("%v audit lock namespace success, status: %v", auditor, status)
+	return nil
+}
+
+func (s *Service) UpdateLockNsp(applyId, applyer string) error {
+	return s.UpdateNsp(applyId, applyer, TABLE_NAME_LOCK_NSP)
+}
+
+func (s *Service) UpdateNsp(applyId, applyer, storeTable string) error {
+	applyInfo, err := s.GetNamespaceById(applyId, storeTable)
+	if err != nil {
+		return err
+	}
+	nspSql := fmt.Sprintf(`Insert into %s (id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time) values ("%s", "%s", "%s", %d, %d, %d, %d, "%s", "%s", %d)`,
+		storeTable, applyId, applyInfo.DbName, applyInfo.TableName, applyInfo.ClusterId, applyInfo.DbId, applyInfo.TableId,
+		applyInfo.Status, applyer, applyInfo.Auditor, applyInfo.CreateTime)
+	rowsAffected, err := s.execSql(nspSql)
 	if err != nil {
 		return err
 	}
 	if rowsAffected != 1 {
 		return common.CLUSTER_DUPCREATE_ERROR
 	}
-	log.Debug("update applyer %s success of namespace %d and clusterId %d", namespace, cId, applyer)
+	log.Debug("update applyer %s success of namespace [%s:%s] and clusterId %d", applyer, applyInfo.DbName, applyInfo.TableName, applyInfo.ClusterId)
 	return nil
 }
 
-func (s *Service) GetLockCluster() (*models.ClusterInfo, error) {
+func (s *Service) DeleteLockNsp(ids []string) error {
+	return s.DeleteNsp(ids, TABLE_NAME_LOCK_NSP)
+}
+
+func (s *Service) DeleteNsp(ids []string, storeTable string) error {
+	for _, applyId := range ids {
+		nspSql := fmt.Sprintf(`delete from %s where id = "%s"`,
+			storeTable, applyId)
+		_, err := s.execSql(nspSql)
+		if err != nil {
+			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: err.Error()}
+		}
+	}
+	log.Debug("%v delete lock namespace success")
+	return nil
+}
+
+func (s *Service) GetLockClusterList() ([]*models.ClusterInfo, error) {
 	clusterId := s.config.LockClusterId
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
@@ -2064,10 +2323,338 @@ func (s *Service) GetLockCluster() (*models.ClusterInfo, error) {
 	if info == nil {
 		return nil, common.CLUSTER_NOTEXISTS_ERROR
 	}
-	return info, nil
+	var clusters []*models.ClusterInfo
+	clusters = append(clusters, info)
+	return clusters, nil
+}
+
+//go by http command
+func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.LockInfo, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	log.Debug("get all lock list under clusterId:%v dbName:%v tableName:%v", clusterId, dbName, tableName)
+
+	filter := new(models.Filter_)
+	if pageInfo != nil {
+		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
+			var descFlag bool
+			switch pageInfo.SortOrder {
+			case "asc":
+				descFlag = true
+			default:
+				descFlag = false
+			}
+			order := &models.Order{By: pageInfo.SortName, Desc: descFlag}
+			filter.Order = []*models.Order{order}
+		} else {
+			order := &models.Order{By: "create_time", Desc: true}
+			filter.Order = []*models.Order{order}
+		}
+		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+			filter.Limit = &models.Limit_{Offset: uint64(pageInfo.GetPageOffset()), RowCount: uint64(pageInfo.GetPageSize())}
+		}
+	}
+
+	setQueryRep := &models.Query{
+		DatabaseName: dbName,
+		TableName:    tableName,
+		Command: &models.Command{
+			Type:   "get",
+			Field:  []string{"k", "v", "lock_id", "expired_time", "upd_time", "delete_flag", "creator"},
+			Filter: filter,
+		},
+	}
+	var reply models.Reply
+	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
+		return nil, err
+	}
+	if reply.Code != 0 {
+		log.Error("get cluster[%d] lock list failed. err:[%v]", clusterId, reply)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
+	}
+
+	log.Info("result: %v", reply)
+
+	var lockInfos []*models.LockInfo
+	for _, lockInfo := range reply.Values {
+		tInfo := new(models.LockInfo)
+		tInfo.K = fmt.Sprintf("%v", lockInfo[0])
+		tInfo.V = fmt.Sprintf("%v", lockInfo[1])
+		tInfo.LockId = fmt.Sprintf("%v", lockInfo[2])
+		tInfo.ExpiredTime, _ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[3]), 10, 46)
+		tInfo.UpdTime, _ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[4]), 10, 46)
+		deleteFlag, _ := strconv.ParseInt(fmt.Sprintf("%v", lockInfo[5]), 10, 46)
+		tInfo.DeleteFlag = int8(deleteFlag)
+		tInfo.Creator = fmt.Sprintf("%v", lockInfo[6])
+		lockInfos = append(lockInfos, tInfo)
+	}
+	return lockInfos, nil
+}
+
+func (s *Service) ForceUnLock(clusterId int, dbName, tableName, key string) error {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return err
+	}
+	if info == nil {
+		return common.CLUSTER_NOTEXISTS_ERROR
+	}
+	log.Debug("force unlock key %v under clusterId:%v dbName:%v tableName:%v", key, clusterId, dbName, tableName)
+	var reply models.Reply
+
+	filed_ := &models.Field_{Column: "k", Value: key}
+	var ands []*models.And
+	ands = append(ands, &models.And{Field: filed_, Relate: "="})
+
+	setQueryRep := &models.Query{
+		DatabaseName: dbName,
+		TableName:    tableName,
+		Command: &models.Command{
+			Type:   "del",
+			Filter: &models.Filter_{And: ands},
+		},
+	}
+
+	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
+		return err
+	}
+	if reply.Code != 0 || reply.RowsAffected != 1 {
+		log.Error("force unlock cluster[%d] lock failed. err:[%v]", clusterId, reply)
+		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
+	}
+	return nil
+}
+
+func (s *Service) ComputeClientToken(dbId, tableId int) string {
+	namespace := fmt.Sprintf("%s%d-%d", LOCK_CLIENT_NAMESPACE_PREFIX, dbId, tableId)
+	log.Info("compute client token %v", namespace)
+	return createToken(namespace)
+}
+
+func createToken(namespace string) string {
+	source := namespace
+	if len(source) < 32 {
+		var buf bytes.Buffer
+		buf.WriteString(source)
+		for i := 0; i < 32-len(source); i++ {
+			buf.WriteString("0")
+		}
+		source = buf.String()
+	}
+	encryptStr := encrypt(source)
+	var buf bytes.Buffer
+	for i := 0; i < len(encryptStr)/4; i++ {
+		buf.WriteString(string(encryptStr[i*4]))
+	}
+	return buf.String()
+}
+
+func encrypt(source string) string {
+	if source == "" {
+		return source
+	}
+	sources := []byte(source)
+	return encrpytMd5(sources)
+}
+
+func encrpytMd5(source []byte) string {
+	h := md5.New()
+	h.Write(source)
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (s *Service) GetClusterInfo(clusterId int) (*models.ClusterInfo, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+	clusterInfo := &models.ClusterInfo{Id: info.Id, Name: info.Name}
+	//var msNode *models.MsNode
+	//msNode, err = s.GetMasterLeader(clusterId, info.ClusterToken)
+	//if err != nil {
+	//	log.Warn("get cluster rpc port error, %v", err)
+	//	return clusterInfo, nil
+	//}
+	//if info.MasterUrl == "" {
+	//	info.MasterUrl = msNode.RpcServerAddr
+	//} else {
+	//	var urlArray, urlArray2 []string
+	//	if strings.HasPrefix(info.MasterUrl, "http://") {
+	//		urlArray = strings.Split(info.MasterUrl[7:], ":")
+	//	} else {
+	//		urlArray = strings.Split(info.MasterUrl, ":")
+	//	}
+	//	urlArray2 = strings.Split(msNode.RpcServerAddr, ":")
+	//	if len(urlArray) == 2 && len(urlArray2) == 2 {
+	//		clusterInfo.MasterUrl = fmt.Sprintf("%s:%s", urlArray[0], urlArray2[1])
+	//	}
+	//}
+	if info.MasterUrl != "" {
+		var urlArray []string
+		if strings.HasPrefix(info.MasterUrl, "http://") {
+			urlArray = strings.Split(info.MasterUrl[7:], ":")
+		} else {
+			urlArray = strings.Split(info.MasterUrl, ":")
+		}
+		clusterInfo.MasterUrl = urlArray[0]
+	}
+	return clusterInfo, nil
 }
 
 //=============lock end================
+
+//=============configure center start================
+func (s *Service) GetAllConfigureNsp(userName string, isAdmin bool, pageInfo *models.PagerInfo) (int, []*models.NamespaceApply, error) {
+	return s.GetAllNamespace(userName, isAdmin, pageInfo, TABLE_NAME_CONFIGURE_NSP)
+}
+
+func (s *Service) ApplyConfigureNsp(cId int, dbName, tableName, applyer string, cTime int64) error {
+	return s.ApplyNamespace(cId, dbName, tableName, applyer, cTime, TABLE_NAME_CONFIGURE_NSP)
+}
+
+func (s *Service) UpdateConfigureNsp(applyId, applyer string) error {
+	return s.UpdateNsp(applyId, applyer, TABLE_NAME_CONFIGURE_NSP)
+}
+
+func (s *Service) DeleteConfigureNsp(ids []string) error {
+	return s.DeleteNsp(ids, TABLE_NAME_CONFIGURE_NSP)
+}
+
+func (s *Service) GetConfigureClusterList() ([]*models.ClusterInfo, error) {
+	clusterId := s.config.ConfigureClusterId
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+	var clusters []*models.ClusterInfo
+	clusters = append(clusters, info)
+	return clusters, nil
+}
+
+//go by http command
+func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.ConfigureInfo, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	log.Debug("get all configure list under clusterId:%v dbName:%v tableName:%v", clusterId, dbName, tableName)
+
+	filter := new(models.Filter_)
+	if pageInfo != nil {
+		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
+			var descFlag bool
+			switch pageInfo.SortOrder {
+			case "asc":
+				descFlag = true
+			default:
+				descFlag = false
+			}
+			order := &models.Order{By: pageInfo.SortName, Desc: descFlag}
+			filter.Order = []*models.Order{order}
+		} else {
+			order := &models.Order{By: "create_time", Desc: true}
+			filter.Order = []*models.Order{order}
+		}
+		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+			filter.Limit = &models.Limit_{Offset: uint64(pageInfo.GetPageOffset()), RowCount: uint64(pageInfo.GetPageSize())}
+		}
+	}
+
+	setQueryRep := &models.Query{
+		DatabaseName: dbName,
+		TableName:    tableName,
+		Command: &models.Command{
+			Type:   "get",
+			Field:  []string{"k", "v", "version", "extend", "create_time", "upd_time", "delete_flag", "creator"},
+			Filter: filter,
+		},
+	}
+	var reply models.Reply
+	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
+		return nil, err
+	}
+	if reply.Code != 0 {
+		log.Error("get cluster[%d] configure list failed. err:[%v]", clusterId, reply)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
+	}
+
+	log.Info("result: %v", reply)
+
+	var configureInfos []*models.ConfigureInfo
+	for _, confInfo := range reply.Values {
+		tInfo := new(models.ConfigureInfo)
+		tInfo.K = fmt.Sprintf("%v", confInfo[0])
+		tInfo.V = fmt.Sprintf("%v", confInfo[1])
+		tInfo.Version = fmt.Sprintf("%v", confInfo[2])
+		tInfo.Extend = fmt.Sprintf("%v", confInfo[3])
+		tInfo.CreateTime, _ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[4]), 10, 46)
+		tInfo.UpdTime, _ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[5]), 10, 46)
+		deleteFlag, _ := strconv.ParseInt(fmt.Sprintf("%v", confInfo[6]), 10, 46)
+		tInfo.DeleteFlag = int8(deleteFlag)
+		tInfo.Creator = fmt.Sprintf("%v", confInfo[7])
+		configureInfos = append(configureInfos, tInfo)
+	}
+	return configureInfos, nil
+}
+
+func (s *Service) AuditConfigureNsp(ids []string, status int, auditor string) error {
+	for _, applyId := range ids {
+		info, err := s.GetNamespaceById(applyId, TABLE_NAME_CONFIGURE_NSP)
+		if err != nil {
+			continue
+		}
+		var dbId, tableId int
+		if status == STATUS_AUDIT { // 审批通过
+			dbInfo, err := s.CreateDb(info.ClusterId, info.DbName)
+			if err != nil {
+				log.Warn("create configure db %v on cluster %v failed, err: %v", info.DbName, info.ClusterId, err)
+				return err
+			}
+			dbId = dbInfo.Id
+
+			if flag, _ := s.existTable(info.DbName, info.TableName, info.ClusterId); flag {
+				log.Warn("configure: exist db %v table %v in cluster %v, cannot audit", info.DbName, info.TableName, info.ClusterId)
+				return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: fmt.Sprintf("exist table %v in cluster %v", info.TableName, info.ClusterId)}
+			}
+
+			tableInfo, err := s.CreateTable(info.ClusterId, info.DbName, info.TableName, "", "", configureColumns, nil)
+			if err != nil {
+				log.Warn("create configure  table %v on cluster %v failed, err: %v", info.TableName, info.ClusterId, err)
+				return err
+			}
+			tableId = tableInfo.Id
+		}
+		nspSql := fmt.Sprintf(`INSERT INTO %s (id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time) values ("%s", "%s", "%s", %d,  %d,  %d, %d, "%s", "%s", %d )`,
+			TABLE_NAME_CONFIGURE_NSP, applyId, info.DbName, info.TableName, info.ClusterId, dbId, tableId, status, info.Applyer, auditor, info.CreateTime)
+		rowsAffected, err := s.execSql(nspSql)
+		if err != nil {
+			return err
+		}
+		if rowsAffected != 1 {
+			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: "update configure apply status and return result error"}
+		}
+	}
+	log.Debug("%v audit configure namespace success, status: %v", auditor, status)
+	return nil
+}
+
+//=============configure center end================
 
 //=============metric add ===============
 
@@ -2413,7 +3000,7 @@ func sendPostReqStrBody(host, uri string, params map[string]interface{}, result 
 	return nil
 }
 
-func sendPostReqJsonBody(host, uri string, params map[string]interface{}, result interface{}) (error) {
+func sendPostReqJsonBody(host, uri string, params interface{}, result interface{}) (error) {
 	var url []string
 
 	url = append(url, host)
@@ -2455,11 +3042,18 @@ func sendPostReqJsonBody(host, uri string, params map[string]interface{}, result
 		return common.HTTP_REQUEST_ERROR
 	}
 	log.Debug("http response body:[%v]", string(data))
-
-	if err := json.Unmarshal(data, result); err != nil {
+	//解决反序列化时，float64超过一定长度默认科学计数法表示
+	d := json.NewDecoder(strings.NewReader(string(data)))
+	d.UseNumber()
+	if err := d.Decode(&result); err != nil {
 		log.Error("Cannot parse http response in json. body:[%v]", string(data))
 		return common.INTERNAL_ERROR
 	}
+
+	//if err := json.Unmarshal(data, result); err != nil {
+	//	log.Error("Cannot parse http response in json. body:[%v]", string(data))
+	//	return common.INTERNAL_ERROR
+	//}
 
 	return nil
 }

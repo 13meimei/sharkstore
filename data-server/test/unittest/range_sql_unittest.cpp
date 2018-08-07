@@ -14,6 +14,9 @@
 #include "proto/gen/schpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
 
+#include "helper/table.h"
+#include "helper/helper_util.h"
+#include "helper/query_builder.h"
 #include "helper/mock/socket_session_mock.h"
 #include "helper/mock/raft_server_mock.h"
 
@@ -24,10 +27,11 @@ int main(int argc, char* argv[]) {
 
 char level[8] = "debug";
 
+using namespace sharkstore::test::helper;
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::storage;
 
-class RawTest: public ::testing::Test {
+class RangeSQLTest: public ::testing::Test {
 protected:
     void SetUp() override {
         log_init2();
@@ -35,6 +39,7 @@ protected:
 
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
+        ds_config.range_config.recover_concurrency = 1;
 
         range_server_ = new server::RangeServer;
 
@@ -47,6 +52,8 @@ protected:
         context_->run_status = new server::RunStatus;
 
         range_server_->Init(context_);
+
+        table_ = CreateAccountTable();
     }
 
     void TearDown() override {
@@ -59,58 +66,62 @@ protected:
         delete context_;
     }
 
+    common::ProtoMessage* CreateInsertMessage() {
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+
+        kvrpcpb::DsInsertRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        InsertRequestBuilder builder(table_.get());
+        builder.AddRow({"1", "name1", "1"});
+        builder.AddRow({"2", "name2", "2"});
+        auto insert_req = builder.Build();
+        req.mutable_req()->Swap(&insert_req);
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        req.SerializeToArray(msg->body.data(), len);
+
+        return msg;
+    }
+
+    common::ProtoMessage* CreateSelectMessage() {
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+
+        kvrpcpb::DsSelectRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        SelectRequestBuilder builder(table_.get());
+        builder.AddAllFields();
+        auto select_req = builder.Build();
+        req.mutable_req()->Swap(&select_req);
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        req.SerializeToArray(msg->body.data(), len);
+
+        return msg;
+    }
+
 protected:
+    std::unique_ptr<Table> table_;
     server::ContextServer   *context_;
     server::RangeServer     *range_server_;
 };
 
-metapb::Range *genRange1() {
-    auto meta = new metapb::Range;
-
-    meta->set_id(1);
-    meta->set_start_key("01003");
-    meta->set_end_key("01004");
-    meta->mutable_range_epoch()->set_conf_ver(1);
-    meta->mutable_range_epoch()->set_version(1);
-
-    meta->set_table_id(1);
-
-    auto peer = meta->add_peers();
-    peer->set_id(1);
-    peer->set_node_id(1);
-
-    peer = meta->add_peers();
-    peer->set_id(2);
-    peer->set_node_id(2);
-
-    return meta;
-}
-
-metapb::Range *genRange2() {
-    auto meta = new metapb::Range;
-
-    meta->set_id(2);
-    meta->set_start_key("01004");
-    meta->set_end_key("01005");
-    meta->mutable_range_epoch()->set_conf_ver(1);
-    meta->mutable_range_epoch()->set_version(1);
-
-    meta->set_table_id(1);
-
-    auto peer = meta->add_peers();
-    peer->set_id(1);
-    peer->set_node_id(1);
-
-    return meta;
-}
-
-
-TEST_F(RawTest, Raw) {
+TEST_F(RangeSQLTest, Test) {
     {
         //begin test create range
         auto msg = new common::ProtoMessage;
         schpb::CreateRangeRequest req;
-        req.set_allocated_range(genRange1());
+        auto meta = MakeRangeMeta(table_.get());
+        req.mutable_range()->Swap(&meta);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -129,52 +140,8 @@ TEST_F(RawTest, Raw) {
     }
 
     {
-        //begin test create range
-        auto msg = new common::ProtoMessage;
-        schpb::CreateRangeRequest req;
-        req.set_allocated_range(genRange2());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
-        ASSERT_FALSE(range_server_->ranges_.empty());
-
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
-
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-
-        ASSERT_TRUE(metas.size() == 2) << metas.size();
-        //end test create range
-    }
-
-
-    {
         //begin test insert (no leader)
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsInsertRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->set_check_duplicate(true);
-
-        auto row = req.mutable_req()->add_rows();
-        row->set_key("01003001");
-        row->set_value("01003001:value");
-
-        row = req.mutable_req()->add_rows();
-        row->set_key("01003002");
-        row->set_value("01003002:value");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
+        auto msg = CreateInsertMessage();
         range_server_->Insert(msg);
 
         kvrpcpb::DsInsertResponse resp;
@@ -185,8 +152,6 @@ TEST_F(RawTest, Raw) {
         ASSERT_TRUE(resp.header().error().has_not_leader());
         ASSERT_FALSE(resp.header().error().not_leader().has_leader());
         ASSERT_TRUE(resp.header().error().message() == "no leader");
-
-        //end test insert
     }
 
     {
@@ -197,28 +162,7 @@ TEST_F(RawTest, Raw) {
         raft->ops_.leader = 2;
         range_server_->ranges_[1]->is_leader_ = false;
 
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsInsertRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->set_check_duplicate(true);
-
-        auto row = req.mutable_req()->add_rows();
-        row->set_key("01003001");
-        row->set_value("01003001:value");
-
-        row = req.mutable_req()->add_rows();
-        row->set_key("01003002");
-        row->set_value("01003002:value");
-
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+        auto msg = CreateInsertMessage();
 
         range_server_->Insert(msg);
 
@@ -230,8 +174,6 @@ TEST_F(RawTest, Raw) {
         ASSERT_TRUE(resp.header().error().has_not_leader());
         ASSERT_TRUE(resp.header().error().not_leader().has_leader());
         ASSERT_TRUE(resp.header().error().not_leader().leader().node_id() == 2);
-
-        //end test insert
     }
 
     {
@@ -242,27 +184,11 @@ TEST_F(RawTest, Raw) {
         raft->ops_.leader = 1;
         range_server_->ranges_[1]->is_leader_ = true;
 
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsInsertRequest req;
+        // set higher version
+        // TODO:
+        // range_server_->ranges_[1]->meta_.mutable_range_epoch()->set_version(2);
 
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(2);
-
-        req.mutable_req()->set_check_duplicate(true);
-
-        auto row = req.mutable_req()->add_rows();
-        row->set_key("01004001");
-        row->set_value("01004001:value");
-
-        row = req.mutable_req()->add_rows();
-        row->set_key("01004002");
-        row->set_value("01004002:value");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+        auto msg = CreateInsertMessage();
 
         range_server_->Insert(msg);
 
@@ -272,6 +198,10 @@ TEST_F(RawTest, Raw) {
 
         ASSERT_TRUE(resp.header().has_error());
         ASSERT_TRUE(resp.header().error().has_stale_epoch());
+
+        // rollback version
+        // TODO:
+        // range_server_->ranges_[1]->meta_.mutable_range_epoch()->set_version(1);
 
         //end test insert
     }
@@ -284,27 +214,7 @@ TEST_F(RawTest, Raw) {
         raft->ops_.leader = 1;
         range_server_->ranges_[1]->is_leader_ = true;
 
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsInsertRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->set_check_duplicate(true);
-
-        auto row = req.mutable_req()->add_rows();
-        row->set_key("01003001");
-        row->set_value("01003001:value");
-
-        row = req.mutable_req()->add_rows();
-        row->set_key("01003002");
-        row->set_value("01003002:value");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+        auto msg = CreateInsertMessage();
 
         range_server_->Insert(msg);
 
@@ -319,62 +229,7 @@ TEST_F(RawTest, Raw) {
     }
 
     {
-        //begin test insert (ok)
-
-        //set leader
-        auto raft = static_cast<RaftMock*> (range_server_->ranges_[2]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[2]->is_leader_ = true;
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsInsertRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->set_check_duplicate(true);
-
-        auto row = req.mutable_req()->add_rows();
-        row->set_key("01004001");
-        row->set_value("01004001:value");
-
-        row = req.mutable_req()->add_rows();
-        row->set_key("01004002");
-        row->set_value("01004002:value");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->Insert(msg);
-
-        kvrpcpb::DsInsertResponse resp;
-        auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().affected_keys() == 2) << resp.resp().affected_keys();
-
-        //end test insert
-    }
-
-    {
-        //begin test select(ok key query)
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsSelectRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->set_key("01003001");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+        auto msg = CreateSelectMessage();
 
         range_server_->Select(msg);
 
@@ -383,37 +238,7 @@ TEST_F(RawTest, Raw) {
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
         ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().rows_size() == 1) << "code:" << resp.resp().code() << " size:"  << resp.resp().rows_size();
-        ASSERT_TRUE(resp.resp().rows(0).key() == "01003001");
-
-        //end test select
-    }
-
-    {
-        //begin test select(ok scope query)
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsSelectRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_scope()->set_start("01003");
-        req.mutable_req()->mutable_scope()->set_limit("01004");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->Select(msg);
-
-        kvrpcpb::DsSelectResponse resp;
-        auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().rows_size() == 2);
+        ASSERT_TRUE(resp.resp().rows_size() == 2) << "code:" << resp.resp().code() << " size:"  << resp.resp().rows_size();
 
         //end test select
     }
@@ -426,20 +251,7 @@ TEST_F(RawTest, Raw) {
         raft->ops_.leader = 0;
         range_server_->ranges_[1]->is_leader_ = false;
 
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsSelectRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->set_key("01003001");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
+        auto msg = CreateSelectMessage();
         range_server_->Select(msg);
 
         kvrpcpb::DsSelectResponse resp;
@@ -462,20 +274,7 @@ TEST_F(RawTest, Raw) {
         raft->ops_.leader = 2;
         range_server_->ranges_[1]->is_leader_ = true;
 
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        kvrpcpb::DsSelectRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->set_key("01003001");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
+        auto msg = CreateSelectMessage();
         range_server_->Select(msg);
 
         kvrpcpb::DsSelectResponse resp;
@@ -975,31 +774,5 @@ TEST_F(RawTest, Raw) {
         ASSERT_TRUE(metas.size() == 1) << metas.size();
         //end test delete range
     }
-
-    {
-        //begin test delete range (range 2)
-        auto msg = new common::ProtoMessage;
-        schpb::DeleteRangeRequest req;
-        req.set_range_id(2);
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->DeleteRange(msg);
-
-        ASSERT_TRUE(range_server_->find(2) == nullptr);
-
-        schpb::DeleteRangeResponse resp;
-        auto session_mock = static_cast<SocketSessionMock*> (context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        //test meta_store
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-        ASSERT_TRUE(metas.size() == 0) << metas.size();
-        //end test delete range
-    }
-
 }
 

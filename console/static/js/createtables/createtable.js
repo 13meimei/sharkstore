@@ -58,7 +58,7 @@ $(document).ready(function() {
                 textField: "name",
                 width: 80, align: "center"            
             }, {
-                title: '默认值',
+                title: '默认值(暂不支持)',
                 name: "default_value",
                 type: "text",
                 width: 100, align: "center"

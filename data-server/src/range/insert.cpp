@@ -1,5 +1,7 @@
 #include "range.h"
 
+#include "range_logger.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace range {
@@ -11,10 +13,10 @@ void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
     context_->run_status->PushTime(monitor::PrintTag::Qwait,
                                    btime - msg->begin_time);
 
-    FLOG_DEBUG("range[%" PRIu64 "] Insert begin", id_);
+    RANGE_LOG_DEBUG("Insert begin");
 
     if (!VerifyLeader(err)) {
-        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", id_, err->message().c_str());
+        RANGE_LOG_WARN("Insert error: %s", err->message().c_str());
 
         auto resp = new kvrpcpb::DsInsertResponse;
         return SendError(msg, req.header(), resp, err);
@@ -28,7 +30,7 @@ void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
 
     auto epoch = req.header().range_epoch();
     if (!EpochIsEqual(epoch, err)) {
-        FLOG_WARN("range[%" PRIu64 "] Insert error: %s", id_, err->message().c_str());
+        RANGE_LOG_WARN("Insert error: %s", err->message().c_str());
 
         auto resp = new kvrpcpb::DsInsertResponse;
         return SendError(msg, req.header(), resp, err);
@@ -38,7 +40,7 @@ void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
         cmd.set_allocated_insert_req(req.release_req());
     });
     if (!ret.ok()) {
-        FLOG_ERROR("range[%" PRIu64 "] Insert raft submit error: %s", id_, ret.ToString().c_str());
+        RANGE_LOG_ERROR("Insert raft submit error: %s", ret.ToString().c_str());
 
         auto resp = new kvrpcpb::DsInsertResponse;
         SendError(msg, req.header(), resp, RaftFailError());
@@ -51,14 +53,14 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
 
     errorpb::Error *err = nullptr;
 
-    FLOG_DEBUG("Range %" PRIu64 " ApplyInsert begin", id_);
+    RANGE_LOG_DEBUG("ApplyInsert begin");
 
     auto &req = cmd.insert_req();
     do {
         auto epoch = cmd.verify_epoch();
 
         if (!EpochIsEqual(epoch, err)) {
-            FLOG_WARN("Range %" PRIu64 "  ApplyInsert error: %s", id_, err->message().c_str());
+            RANGE_LOG_WARN("ApplyInsert error: %s", err->message().c_str());
             break;
         }
 
@@ -68,7 +70,7 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
         context_->run_status->PushTime(monitor::PrintTag::Store, etime - btime);
 
         if (!ret.ok()) {
-            FLOG_ERROR("ApplyInsert failed, code:%d, msg:%s", ret.code(),
+            RANGE_LOG_ERROR("ApplyInsert failed, code:%d, msg:%s", ret.code(),
                        ret.ToString().c_str());
             break;
         }

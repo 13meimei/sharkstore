@@ -12,7 +12,6 @@
 #include <rocksdb/utilities/blob_db/blob_db.h>
 #include <rocksdb/rate_limiter.h>
 #include <fastcommon/shared_func.h>
-#include <common/ds_config.h>
 
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -507,43 +506,53 @@ void RangeServer::DeleteRange(common::ProtoMessage *msg) {
         return context_->socket_session->Send(msg, nullptr);
     }
 
-    auto resp = new schpb::DeleteRangeResponse;
-    if (DeleteRange(req.range_id()) != 0) {
-        auto err = resp->mutable_header()->mutable_error();
-        err->set_message("delete range failed");
-    }
+    FLOG_WARN("range[%" PRIu64 "] recv DeleteRange request. peer_id=%" PRIu64,
+            req.range_id(), req.peer_id());
 
+    auto resp = new schpb::DeleteRangeResponse;
+    auto s = DeleteRange(req.range_id(), req.peer_id());
+    if (!s.ok()) {
+        FLOG_ERROR("range[%" PRIu64 "] delete failed: %s", req.range_id(), s.ToString().c_str());
+
+        auto err = resp->mutable_header()->mutable_error();
+        err->set_message(s.ToString());
+    }
     return context_->socket_session->Send(msg, resp);
 }
 
-int RangeServer::DeleteRange(uint64_t range_id) {
+Status RangeServer::DeleteRange(uint64_t range_id, uint64_t peer_id) {
     std::shared_ptr<range::Range> rng;
     do {
         std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
-        meta_store_->DelRange(range_id);
-
         auto it = ranges_.find(range_id);
         if (it == ranges_.end()) {
             FLOG_WARN("delete range[%" PRIu64 "] not found.", range_id);
-            return 0;
+            return Status::OK();
         }
-
         rng = it->second;
 
+        if (peer_id != 0 && rng->GetPeerID() != peer_id) {
+            FLOG_WARN("range[%" PRIu64 "] delete a mismached peer. current: %" PRIu64 ", to delete: %" PRIu64,
+                    range_id, rng->GetPeerID(), peer_id);
+
+            // consider mismatch as success
+            return Status::OK();
+        }
+
+        meta_store_->DelRange(range_id);
         auto s = rng->Destroy();
         if (!s.ok()) {
             FLOG_INFO("delete range[%" PRIu64 "] truncate failed.", range_id);
-            return -1;
+            return s;
+        } else {
+            ranges_.erase(it);
         }
-
-        ranges_.erase(it);
-
     } while (false);
 
     FLOG_INFO("delete range[%" PRIu64 "] success.", range_id);
 
-    return 0;
+    return Status::OK();
 }
 
 void RangeServer::OfflineRange(common::ProtoMessage *msg) {
@@ -966,26 +975,21 @@ Status RangeServer::ApplySplit(uint64_t old_range_id,
                                const raft_cmdpb::SplitRequest &req) {
     auto rng = find(old_range_id);
     if (rng == nullptr) {
-        FLOG_ERROR("ApplySplit not found range_id %" PRIu64 " failed", old_range_id);
         return Status(Status::kNotFound, "range not found", "");
     }
 
     bool is_exist = false;
-    do {
+    {
         std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
         auto ret = CreateRange(req.new_range(), req.leader(), true);
         if (ret.code() == Status::kDuplicate) {
+            FLOG_WARN("range[%" PRIu64 "] ApplySplit(new range: %" PRIu64 ") already exist.",
+                old_range_id, req.new_range().id());
             is_exist = true;
-            break;
-        }
-
-        if (!ret.ok()) {
-            FLOG_ERROR("ApplySplit old_range_id: %" PRIu64 " new_range_id: %" PRIu64
-                       " failed",
-                       old_range_id, req.new_range().id());
+        } else if (!ret.ok()) {
             return ret;
         }
-    } while (false);
+    }
 
     metapb::Range meta = rng->options();
     meta.set_end_key(req.split_key());
@@ -997,7 +1001,6 @@ Status RangeServer::ApplySplit(uint64_t old_range_id,
     }
     auto ret = meta_store_->BatchAddRange(batch_ranges);
     if (!ret.ok()) {
-        FLOG_ERROR("ApplySplit batch add range failed");
         if (!is_exist) {
             DeleteRange(req.new_range().id());
         }
@@ -1199,23 +1202,23 @@ void RangeServer::OnRangeHeartbeatResp(const mspb::RangeHeartbeatResponse &resp)
             // TODO
             break;
         case taskpb::TaskType::RangeDelete:
-            FLOG_DEBUG("RangeHeartbeat task RangeDelete. range id: %" PRIu64,
+            FLOG_INFO("RangeHeartbeat task RangeDelete. range id: %" PRIu64,
                        resp.range_id());
             DeleteRange(resp.range_id());
             break;
         case taskpb::TaskType::RangeLeaderTransfer:
-            FLOG_DEBUG("RangeHeartbeat task RangeLeaderTransfer. range id: %" PRIu64,
+            FLOG_INFO("RangeHeartbeat task RangeLeaderTransfer. range id: %" PRIu64,
                        resp.range_id());
             // TODO
             // master undefinded
             break;
         case taskpb::TaskType::RangeAddPeer:
-            FLOG_DEBUG("RangeHeartbeat task RangeAddPeer. range id: %" PRIu64,
+            FLOG_INFO("RangeHeartbeat task RangeAddPeer. range id: %" PRIu64,
                        resp.range_id());
             range->AddPeer(resp.task().range_add_peer().peer());
             break;
         case taskpb::TaskType::RangeDelPeer:
-            FLOG_DEBUG("RangeHeartbeat task RangeDelPeer. range id: %" PRIu64,
+            FLOG_INFO("RangeHeartbeat task RangeDelPeer. range id: %" PRIu64,
                        resp.range_id());
             range->DelPeer(resp.task().range_del_peer().peer());
             break;

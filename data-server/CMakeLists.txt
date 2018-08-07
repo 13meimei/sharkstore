@@ -154,6 +154,7 @@ set(SOURCES
     src/server/version.cpp
     src/range/range.cpp
     src/range/lock.cpp
+    src/range/meta_keeper.cpp
     src/range/raw_get.cpp
     src/range/raw_put.cpp
     src/range/raw_delete.cpp

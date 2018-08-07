@@ -222,15 +222,33 @@ func (c *Cluster) FindDatabaseById(id uint64) (*Database, bool) {
 }
 
 func (c *Cluster) DeleteDatabase(name string) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	db, ok := c.FindDatabase(name)
+	if !ok {
+		return ErrNotExistDatabase
+	}
+
+	if len(db.GetAllTable()) != 0 {
+		return ErrNotAllowDelete
+	}
+
+	err := c.deleteDatabase(db.GetId())
+	if err != nil {
+		log.Error("delete database[%s] failed from store", name)
+		return err
+	}
+	c.dbs.Delete(name)
+	log.Info("delete database[%s] success", name)
 	return nil
 }
 
 func (c *Cluster) CreateDatabase(name string, properties string) (*Database, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	if _, ok := c.FindDatabase(name); ok {
+	if oldDb, ok := c.FindDatabase(name); ok {
 		log.Error("database name:%s is existed!", name)
-		return nil, ErrDupDatabase
+		return oldDb, ErrDupDatabase
 	}
 
 	id, err := c.idGener.GenID()
@@ -362,7 +380,7 @@ func (c *Cluster) CreateTable(dbName, tableName string, columns, regxs []*metapb
 	_t, find := db.FindTable(tableName)
 	if find {
 		log.Warn("dup Table %v", _t)
-		return nil, ErrDupTable
+		return _t, ErrDupTable
 	}
 
 	// create table
@@ -723,6 +741,12 @@ func (c *Cluster) storeDatabase(db *metapb.DataBase) error {
 	}
 	key := []byte(fmt.Sprintf("%s%d", PREFIX_DB, db.GetId()))
 	return c.store.Put(key, data)
+}
+
+//only when no table in database
+func (c *Cluster) deleteDatabase(dbId uint64) error {
+	key := []byte(fmt.Sprintf("%s%d", PREFIX_DB, dbId))
+	return c.store.Delete(key)
 }
 
 func (c *Cluster) storeTable(t *metapb.Table) error {

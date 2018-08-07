@@ -2,6 +2,7 @@
 
 #include "frame/sf_logger.h"
 #include "server/range_server.h"
+#include "range_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -43,7 +44,7 @@ void Range::Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req) {
     auto ds_resp = new kvrpcpb::DsSelectResponse;
     auto header = ds_resp->mutable_header();
 
-    FLOG_DEBUG("range[%" PRIu64 "] Select begin", id_);
+    RANGE_LOG_DEBUG("Select begin");
 
     do {
         if (!VerifyLeader(err)) {
@@ -87,15 +88,14 @@ void Range::Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req) {
         context_->run_status->PushTime(monitor::PrintTag::Store, etime - btime);
 
         if (etime - msg->begin_time > kTimeTakeWarnThresoldUSec) {
-            FLOG_WARN("range[%lu] select takes too long(%ld ms), sid=%ld, msgid=%ld",
-                      id_, (etime - msg->begin_time) / 1000, msg->session_id,
-                      msg->header.msg_id);
+            RANGE_LOG_WARN("select takes too long(%ld ms), sid=%" PRId64 ", msgid=%" PRId64,
+                      (etime - msg->begin_time) / 1000, msg->session_id, msg->header.msg_id);
         }
 
         if (ret.ok()) {
             resp->set_code(0);
         } else {
-            FLOG_WARN("range[%" PRIu64 "] Select from store error: %s", id_, ret.ToString().c_str());
+            RANGE_LOG_WARN("Select from store error: %s", ret.ToString().c_str());
 
             resp->set_code(static_cast<int>(ret.code()));
         }
@@ -103,17 +103,17 @@ void Range::Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req) {
         if (key.empty() && !EpochIsEqual(epoch, err)) {
             ds_resp->clear_resp();
 
-            FLOG_WARN("range[%" PRIu64 "] epoch change Select error: %s", id_, err->message().c_str());
+            RANGE_LOG_WARN("epoch change Select error: %s", err->message().c_str());
         }
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] Select error: %s", id_, err->message().c_str());
+        RANGE_LOG_WARN("Select error: %s", err->message().c_str());
     }
 
-    FLOG_DEBUG("range[%" PRIu64 "] Select result: code=%d, rows=%d", id_,
-               (ds_resp->has_resp() ? ds_resp->resp().code() : 0),
-               (ds_resp->has_resp() ? ds_resp->resp().rows_size() : 0));
+    RANGE_LOG_DEBUG("Select result: code=%d, rows=%d",
+            (ds_resp->has_resp() ? ds_resp->resp().code() : 0),
+            (ds_resp->has_resp() ? ds_resp->resp().rows_size() : 0));
 
     context_->socket_session->SetResponseHeader(req.header(), header, err);
     context_->socket_session->Send(msg, ds_resp);

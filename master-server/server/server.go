@@ -60,6 +60,7 @@ func (service *Server) ParseClusterInfo() []*Peer {
 func (service *Server) initHttpHandler() () {
 	s := service.server
 	s.Handle("/manage/database/create", NewHandler(service.validRequest, service.handleDatabaseCreate))
+	s.Handle("/manage/database/delete", NewHandler(service.validRequest, service.handleDatabaseDelete))
 	s.Handle("/manage/table/create", NewHandler(service.validRequest, service.handleTableCreate))
 	s.Handle("/manage/sql/table/create", NewHandler(service.validRequest, service.handleSqlTableCreate))
 

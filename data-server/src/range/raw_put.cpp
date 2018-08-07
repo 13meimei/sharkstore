@@ -1,6 +1,7 @@
 #include "range.h"
 
 #include "server/range_server.h"
+#include "range_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -36,7 +37,7 @@ void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
     auto btime = get_micro_second();
     context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
-    FLOG_DEBUG("range[%" PRIu64 "] RawPut begin", id_);
+    RANGE_LOG_DEBUG("RawPut begin");
 
     if (!CheckWriteable()) {
         auto resp = new kvrpcpb::DsKvRawPutResponse;
@@ -52,7 +53,7 @@ void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
         auto &key = req.req().key();
 
         if (key.empty()) {
-            FLOG_WARN("range[%" PRIu64 "] RawPut error: key empty", id_);
+            RANGE_LOG_WARN("RawPut error: key empty");
             err = KeyNotInRange(key);
             break;
         }
@@ -81,7 +82,7 @@ void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] RawPut error: %s", id_, err->message().c_str());
+        RANGE_LOG_WARN("RawPut error: %s", err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvRawPutResponse;
         return SendError(msg, req.header(), resp, err);
@@ -91,14 +92,14 @@ void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
 Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
     Status ret;
 
-    FLOG_DEBUG("range [%" PRIu64 "]ApplyRawPut begin", id_);
+    RANGE_LOG_DEBUG("ApplyRawPut begin");
     auto &req = cmd.kv_raw_put_req();
 
     errorpb::Error *err = nullptr;
 
     do {
         if (!KeyInRange(req.key(), err)) {
-            FLOG_WARN("Apply RawPut failed, epoch is changed");
+            RANGE_LOG_WARN("Apply RawPut failed, epoch is changed");
             ret = std::move(Status(Status::kInvalidArgument, "key not int range", ""));
             break;
         }
@@ -109,7 +110,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
-            FLOG_ERROR("ApplyRawPut failed, code:%d, msg:%s", ret.code(),
+            RANGE_LOG_ERROR("ApplyRawPut failed, code:%d, msg:%s", ret.code(),
                        ret.ToString().c_str());
             break;
         }

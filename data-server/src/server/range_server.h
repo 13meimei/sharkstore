@@ -111,7 +111,7 @@ private:  // admin
     void SetLogLevel(common::ProtoMessage *msg);
 
     Status CreateRange(const metapb::Range &range, uint64_t leader = 0, bool from_split = false);
-    int DeleteRange(uint64_t range_id);
+    Status DeleteRange(uint64_t range_id, uint64_t peer_id = 0);
     int CloseRange(uint64_t range_id);
     int OfflineRange(uint64_t range_id);
 
