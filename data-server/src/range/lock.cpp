@@ -27,7 +27,7 @@ bool DecodeValue(std::string* value,
                  int64_t* delete_flag,
                  std::string* creator,
                  std::string& buf) {
-    assert( value != nullptr &&  buf.length() == 0);
+    assert(value != nullptr && buf.length() != 0);
 
     size_t offset = 0;
     if (!DecodeBytesValue(buf, offset, value)) return false; // varchar    v
