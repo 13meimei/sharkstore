@@ -58,7 +58,7 @@ public:
     Range &operator=(const Range &) = delete;
     Range &operator=(const Range &) volatile = delete;
 
-    Status Initialize(uint64_t leader, bool from_split = false);
+    Status Initialize(uint64_t leader = 0, uint64_t log_start_index = 0);
     Status Shutdown();
 
     Status Apply(const std::string &cmd, uint64_t index) override;
@@ -176,7 +176,7 @@ private:
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
     Status ApplyDelete(const raft_cmdpb::Command &cmd);
 
-    Status ApplySplit(const raft_cmdpb::Command &cmd);
+    Status ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index);
 
     Status ApplyAddPeer(const raft::ConfChange &cc, bool *updated);
     Status ApplyDelPeer(const raft::ConfChange &cc, bool *updated);

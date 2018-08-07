@@ -30,16 +30,16 @@ Range::Range(server::ContextServer *context, const metapb::Range &meta)
 
 Range::~Range() { delete store_; }
 
-Status Range::Initialize(uint64_t leader, bool from_split) {
+Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     // 加载apply位置
     auto s = context_->meta_store->LoadApplyIndex(id_, &apply_index_);
     if (!s.ok()) {
         return Status(Status::kCorruption, "load applied", s.ToString());
     }
 
-    // set apply index = 1 (1 means the split operation)
-    if (from_split && apply_index_ == 0) {
-        apply_index_ = 1;
+    // 创建起始日志之前的日志都算作被应用过的
+    if (log_start_index > 1 && log_start_index - 1 > apply_index_) {
+        apply_index_ = log_start_index - 1;
         s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
         if (!s.ok()) {
             return Status(Status::kCorruption, "save applied", s.ToString());
@@ -55,9 +55,7 @@ Status Range::Initialize(uint64_t leader, bool from_split) {
     options.log_file_size = ds_config.raft_config.log_file_size;
     options.max_log_files = ds_config.raft_config.max_log_files;
     options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt > 0;
-    if (from_split) {
-        options.create_with_hole = true;
-    }
+    options.initial_first_index = log_start_index;
     options.storage_path = JoinFilePath(std::vector<std::string>{
         std::string(ds_config.raft_config.log_path), std::to_string(meta_.GetTableID()),
         std::to_string(id_)});
@@ -231,7 +229,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 
     Status ret;
     if (raft_cmd.cmd_type() == raft_cmdpb::CmdType::AdminSplit) {
-        ret = ApplySplit(raft_cmd);
+        ret = ApplySplit(raft_cmd, index);
     } else {
         auto ret = Apply(raft_cmd, index);
         // 非IO错误(致命），不给raft返回错误，不然raft会停止自己

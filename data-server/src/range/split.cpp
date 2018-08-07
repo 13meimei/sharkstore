@@ -156,8 +156,8 @@ void Range::AdminSplit(mspb::AskSplitResponse &resp) {
     }
 }
 
-Status Range::ApplySplit(const raft_cmdpb::Command &cmd) {
-    RANGE_LOG_INFO("ApplySplit Begin, version: %" PRIu64, meta_.GetVersion());
+Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
+    RANGE_LOG_INFO("ApplySplit Begin, version: %" PRIu64 ", index: %" PRIu64, meta_.GetVersion(), index);
 
     const auto& req = cmd.admin_split_req();
     auto ret = meta_.CheckSplit(req.split_key(), cmd.verify_epoch().version());
@@ -178,7 +178,7 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd) {
 
     context_->run_status->IncrSplitCount();
 
-    ret = context_->range_server->ApplySplit(id_, req);
+    ret = context_->range_server->ApplySplit(id_, req, index);
     if (!ret.ok()) {
         RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") create failed: %s",
                         req.new_range().id(), ret.ToString().c_str());

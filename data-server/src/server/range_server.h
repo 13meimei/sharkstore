@@ -95,7 +95,9 @@ private:
 
 public:
     Status ApplySplit(uint64_t old_range_id,
-                      const raft_cmdpb::SplitRequest &req);
+            const raft_cmdpb::SplitRequest &req,
+            uint64_t raft_index);
+
     void LeaderQueuePush(uint64_t leader, time_t expire);
 
     void ResetStats();
@@ -110,7 +112,7 @@ private:  // admin
     void GetPeerInfo(common::ProtoMessage *msg);
     void SetLogLevel(common::ProtoMessage *msg);
 
-    Status CreateRange(const metapb::Range &range, uint64_t leader = 0, bool from_split = false);
+    Status CreateRange(const metapb::Range &range, uint64_t leader = 0, uint64_t log_start_index = 0);
     Status DeleteRange(uint64_t range_id, uint64_t peer_id = 0);
     int CloseRange(uint64_t range_id);
     int OfflineRange(uint64_t range_id);

@@ -115,7 +115,7 @@ Status RaftFsm::start() {
         ops.log_file_size = rops_.log_file_size;
         ops.max_log_files = rops_.max_log_files;
         ops.allow_corrupt_startup = rops_.allow_log_corrupt;
-        ops.create_with_hole = rops_.create_with_hole;
+        ops.initial_first_index = rops_.initial_first_index;
         storage_ = std::shared_ptr<storage::Storage>(
             new storage::DiskStorage(id_, rops_.storage_path, ops));
     }
