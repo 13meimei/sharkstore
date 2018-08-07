@@ -64,22 +64,22 @@ type Query struct {
 }
 
 type CreateDatabase struct {
-	Sign         string   `json:"sign"`
-	DatabaseName string   `json:"databasename"`
+	Sign         string `json:"sign"`
+	DatabaseName string `json:"databasename"`
 }
 
 type Column struct {
 	Name       string `json:"name"`
 	DataType   string `json:"datatype"`
-	PrimaryKey bool `json:"primarykey"`
-	Unsigned bool `json:"unsigned"`
+	PrimaryKey bool   `json:"primarykey"`
+	Unsigned   bool   `json:"unsigned"`
 }
 
 type CreateTable struct {
-	Sign         string   `json:"sign"`
-	DatabaseName string   `json:"databasename"`
-	TableName string   `json:"tablename"`
-	Columns []*Column `json:"columns"`
+	Sign         string    `json:"sign"`
+	DatabaseName string    `json:"databasename"`
+	TableName    string    `json:"tablename"`
+	Columns      []*Column `json:"columns"`
 }
 
 type Reply struct {
@@ -102,7 +102,7 @@ func (q *Query) parseRowValues(buffer bufalloc.Buffer) ([]InsertRowValue, error)
 	indexes := make([]int, 0, len(q.Command.Values)*len(q.Command.Field))
 	for _, vs := range q.Command.Values {
 		if len(vs) != len(q.Command.Field) {
-			return nil, errors.New(fmt.Sprintf("len(values) != len(field) %v,%v",vs,q.Command.Field))
+			return nil, errors.New(fmt.Sprintf("len(values) != len(field) %v,%v", vs, q.Command.Field))
 		}
 		for _, v := range vs {
 			if v == nil {
