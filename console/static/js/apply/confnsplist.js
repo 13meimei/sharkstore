@@ -66,7 +66,8 @@
                         "<button id=\"viewCluster\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"集群详情\" onclick=\"viewCluster('" + row.cluster_id + "');\">集群详情</button>&nbsp;&nbsp;";
                     if (row.status == 2) {
                         buttonS = buttonS +
-                            "<button id=\"viewConfigure\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"配置详情\" onclick=\"viewConfigure('" + row.db_name + "','" + row.table_name + "','" + row.cluster_id + "');\">配置详情</button>";
+                            "<button id=\"viewConfigure\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"配置详情\" onclick=\"viewConfigure('" + row.db_name + "','" + row.table_name + "','" + row.cluster_id + "');\">配置详情</button>&nbsp;&nbsp;" +
+                            "<button id=\"viewToken\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看token\" onclick=\"viewClientToken('" + row.db_id + "','" + row.table_id + "');\">token详情</button>";
                     }
                     return buttonS;
                 }
@@ -395,4 +396,27 @@ function deleteNsp() {
                 }
             });
         });
+}
+
+function viewClientToken(dbId, tableId) {
+    $.ajax({
+        url: "/lock/client/getToken",
+        type: "post",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        dataType: "json",
+        data: {
+            "dbId": dbId,
+            "tableId": tableId
+        },
+        success: function (data) {
+            if (data.code === 0) {
+                swal("客户端token", data.data, "success");
+            } else {
+                swal("获取token失败！", data.msg, "warning");
+            }
+        },
+        error: function (res) {
+            swal("获取token失败！", "请联系管理员!", "error");
+        }
+    });
 }
