@@ -124,8 +124,8 @@ struct RaftOptions {
     size_t max_log_files = 5;
     // 启动时检测到日志损坏是否运行继续启动
     bool allow_log_corrupt = false;
-    // 创建时截断第一条日志
-    bool create_with_hole = false;
+    // 日志创建时的起始index
+    uint64_t initial_first_index = 0;
 
     // 已应用的位置，用于raft启动时recover
     uint64_t applied = 0;

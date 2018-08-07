@@ -461,7 +461,7 @@ void RangeServer::CreateRange(common::ProtoMessage *msg) {
     return context_->socket_session->Send(msg, resp);
 }
 
-Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader, bool from_split) {
+Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader, uint64_t log_start_index) {
     FLOG_DEBUG("new range: id=%" PRIu64 ", start=%s, end=%s,"
                " version=%" PRIu64 ", conf_ver=%" PRIu64,
                range.id(), EncodeToHexString(range.start_key()).c_str(),
@@ -485,7 +485,7 @@ Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader, boo
         return Status(Status::kNoMem, "new range null", "");
     }
     // 初始化range
-    auto ret = rng->Initialize(leader, from_split);
+    auto ret = rng->Initialize(leader, log_start_index);
     if (!ret.ok()) {
         FLOG_ERROR("initialize range[%" PRIu64 "] failed: %s", range.id(),
                    ret.ToString().c_str());
@@ -972,7 +972,8 @@ void RangeServer::KVScan(common::ProtoMessage *msg) {
 }
 
 Status RangeServer::ApplySplit(uint64_t old_range_id,
-                               const raft_cmdpb::SplitRequest &req) {
+                               const raft_cmdpb::SplitRequest &req,
+                               uint64_t raft_index) {
     auto rng = find(old_range_id);
     if (rng == nullptr) {
         return Status(Status::kNotFound, "range not found", "");
@@ -981,7 +982,7 @@ Status RangeServer::ApplySplit(uint64_t old_range_id,
     bool is_exist = false;
     {
         std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
-        auto ret = CreateRange(req.new_range(), req.leader(), true);
+        auto ret = CreateRange(req.new_range(), req.leader(), raft_index + 1);
         if (ret.code() == Status::kDuplicate) {
             FLOG_WARN("range[%" PRIu64 "] ApplySplit(new range: %" PRIu64 ") already exist.",
                 old_range_id, req.new_range().id());

@@ -156,24 +156,29 @@ void Range::AdminSplit(mspb::AskSplitResponse &resp) {
     }
 }
 
-Status Range::ApplySplit(const raft_cmdpb::Command &cmd) {
-    RANGE_LOG_INFO("ApplySplit Begin, version: %" PRIu64, meta_.GetVersion());
+Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
+    RANGE_LOG_INFO("ApplySplit Begin, version: %" PRIu64 ", index: %" PRIu64, meta_.GetVersion(), index);
 
     const auto& req = cmd.admin_split_req();
-    auto ret = meta_.VerifyVersion(cmd.verify_epoch().version());
+    auto ret = meta_.CheckSplit(req.split_key(), cmd.verify_epoch().version());
     if (ret.code() == Status::kStaleEpoch) {
-        RANGE_LOG_WARN("ApplySplit(new range: %" PRIu64 ") verify version failed: %s",
+        RANGE_LOG_WARN("ApplySplit(new range: %" PRIu64 ") check failed: %s",
                 req.new_range().id(), ret.ToString().c_str());
         return Status::OK();
+    } else if (ret.code() == Status::kOutOfBound) {
+        // invalid split key, ignore split request
+        RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") check failed: %s",
+                       req.new_range().id(), ret.ToString().c_str());
+        return Status::OK();
     } else if (!ret.ok()) {
-        RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") verify version failed: %s",
+        RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") check failed: %s",
                        req.new_range().id(), ret.ToString().c_str());
         return ret;
     }
 
     context_->run_status->IncrSplitCount();
 
-    ret = context_->range_server->ApplySplit(id_, req);
+    ret = context_->range_server->ApplySplit(id_, req, index);
     if (!ret.ok()) {
         RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") create failed: %s",
                         req.new_range().id(), ret.ToString().c_str());

@@ -35,7 +35,7 @@ protected:
         ASSERT_TRUE(s.ok()) << s.ToString();
         delete storage_;
 
-        ops_.create_with_hole = false;
+        ops_.initial_first_index = 0;
 
         Open();
     }
@@ -69,7 +69,7 @@ protected:
 class StorageHoleTest : public StorageTest {
 protected:
     void SetUp() override {
-        ops_.create_with_hole = true;
+        ops_.initial_first_index = 100;
         StorageTest::SetUp();
     }
 };
@@ -464,21 +464,21 @@ TEST_F(StorageTest, Corrupt2) {
 }
 #endif
 
-TEST_F(StorageHoleTest, CreateHole) {
+TEST_F(StorageHoleTest, StartIndex) {
     uint64_t index = 0;
     auto s = storage_->FirstIndex(&index);
-    ASSERT_EQ(index, 2);
+    ASSERT_EQ(index, 100);
     s = storage_->LastIndex(&index);
-    ASSERT_EQ(index, 1);
+    ASSERT_EQ(index, 99);
 
     std::vector<EntryPtr> ents;
     bool compacted = false;
-    s = storage_->Entries(1, 100, std::numeric_limits<uint64_t>::max(), &ents,
+    s = storage_->Entries(99, 200, std::numeric_limits<uint64_t>::max(), &ents,
                           &compacted);
     ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_TRUE(compacted);
 
-    const uint64_t lo = 2, hi = 100;
+    const uint64_t lo = 100, hi = 200;
     std::vector<EntryPtr> to_writes;
     RandomEntries(lo, hi, 256, &to_writes);
     s = storage_->StoreEntries(to_writes);

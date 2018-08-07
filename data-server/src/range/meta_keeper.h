@@ -40,7 +40,7 @@ public:
     bool FindPeer(uint64_t peer_id, metapb::Peer* peer = nullptr) const;
     bool FindPeerByNodeID(uint64_t node_id, metapb::Peer* peer = nullptr) const;
 
-    Status VerifyVersion(uint64_t version) const;
+    Status CheckSplit(const std::string& end_key, uint64_t version) const;
     void Split(const std::string& end_key, uint64_t new_version);
 
     std::string ToString() const;

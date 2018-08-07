@@ -3,6 +3,8 @@
 #include <mutex>
 #include <sstream>
 
+#include "base/util.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace range {
@@ -189,8 +191,18 @@ Status MetaKeeper::verifyVersion(uint64_t version) const {
     }
 }
 
-Status MetaKeeper::VerifyVersion(uint64_t version) const {
+Status MetaKeeper::CheckSplit(const std::string& end_key, uint64_t version) const {
     sharkstore::shared_lock<sharkstore::shared_mutex> lock(rw_lock_);
+
+    // check end key valid
+    if (end_key >= meta_.end_key() || end_key <= meta_.start_key()) {
+        std::ostringstream ss;
+        ss << EncodeToHex(end_key) << " out of bound [ ";
+        ss << EncodeToHex(meta_.start_key()) << " - ";
+        ss << EncodeToHex(meta_.end_key()) << "]";
+        return Status(Status::kOutOfBound, "split end key", ss.str());
+    }
+    // check version
     return verifyVersion(version);
 }
 
