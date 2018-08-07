@@ -26,7 +26,7 @@ Range::Range(server::ContextServer *context, const metapb::Range &meta)
       start_key_(meta.start_key()),
       meta_(meta) {
     store_ = new storage::Store(meta, context->rocks_db);
-    version_seq_ = new sharkstore::IdGenerater(meta_.id(), DEFAULT_CACHE_SIZE, context->meta_store);
+    version_seq_ = new sharkstore::IdGenerater(id_, DEFAULT_CACHE_SIZE, context->meta_store);
 }
 
 Range::~Range() { delete store_; }
