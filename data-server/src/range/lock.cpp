@@ -480,11 +480,12 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
 
         RANGE_LOG_INFO("ApplyUnlock: lock [%s] is unlock by %s", req.key().c_str(), req.by().c_str());
 
-        std::string decode_key;
-        auto decode_ret = lock::DecodeKey(decode_key, req.key());
-        if (!decode_ret) {
-            RANGE_LOG_ERROR("ApplyUnlock decode lock key [%s] failed", EncodeToHexString(req.key()).c_str());
-        }
+        std::string decode_key = req.key();
+        //std::string decode_key;
+        //auto decode_ret = lock::DecodeKey(decode_key, req.key());
+        //if (!decode_ret) {
+        //    FLOG_ERROR("ApplyUnlock decode lock key [%s] failed", EncodeToHexString(req.key()).c_str());
+        //}
 
         std::string err_msg;
         watchpb::WatchKeyValue watch_kv;
@@ -611,11 +612,12 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
                   "  ApplyUnlockForce: lock [%s] is force unlocked by %s",
                   id_, req.key().c_str(), req.by().c_str());
 
-        std::string decode_key;
-        auto decode_ret = lock::DecodeKey(decode_key, req.key());
-        if (!decode_ret) {
-            FLOG_ERROR("ApplyUnlockForce decode lock key [%s] failed", EncodeToHexString(req.key()).c_str());
-        }
+        std::string decode_key = req.key();
+        //std::string decode_key;
+        //auto decode_ret = lock::DecodeKey(decode_key, req.key());
+        //if (!decode_ret) {
+        //    FLOG_ERROR("ApplyUnlockForce decode lock key [%s] failed", EncodeToHexString(req.key()).c_str());
+        //}
 
         std::string err_msg;
         watchpb::WatchKeyValue watch_kv;
