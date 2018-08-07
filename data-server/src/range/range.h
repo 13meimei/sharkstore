@@ -27,7 +27,6 @@ _Pragma("once");
 
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
-#include "proto/gen/metapb.pb.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
@@ -35,6 +34,8 @@ _Pragma("once");
 #include "server/context_server.h"
 #include "server/run_status.h"
 #include "watch.h"
+
+#include "meta_keeper.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -51,8 +52,6 @@ enum {
     LOCK_EPOCH_ERROR
 };
 
-class RangeManager;
-
 class Range : public raft::StateMachine, public std::enable_shared_from_this<Range> {
 public:
     Range(server::ContextServer *context, const metapb::Range &meta);
@@ -62,7 +61,7 @@ public:
     Range &operator=(const Range &) = delete;
     Range &operator=(const Range &) volatile = delete;
 
-    Status Initialize(uint64_t leader, bool from_split = false);
+    Status Initialize(uint64_t leader = 0, uint64_t log_start_index = 0);
     Status Shutdown();
 
     Status Apply(const std::string &cmd, uint64_t index) override;
@@ -79,6 +78,7 @@ public:
 
     void TransferLeader();
     void GetPeerInfo(raft::RaftStatus *raft_status);
+    uint64_t GetPeerID() const;
 
     // lock
     kvrpcpb::LockValue *LockGet(const std::string &key);
@@ -194,11 +194,11 @@ private:
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
     Status ApplyDelete(const raft_cmdpb::Command &cmd);
 
-    Status ApplySplit(const raft_cmdpb::Command &cmd);
+    Status ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index);
 
-    Status ApplyAddPeer(const raft::ConfChange &cc);
-    Status ApplyDelPeer(const raft::ConfChange &cc);
-    Status ApplyPromotePeer(const raft::ConfChange &cc);
+    Status ApplyAddPeer(const raft::ConfChange &cc, bool *updated);
+    Status ApplyDelPeer(const raft::ConfChange &cc, bool *updated);
+    Status ApplyPromotePeer(const raft::ConfChange &cc, bool *updated);
 
     Status ApplyKVSet(const raft_cmdpb::Command &cmd);
     Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd);
@@ -327,7 +327,7 @@ public:
     // get private member
 public:
     bool valid() { return valid_; }
-    const metapb::Range &options() const { return meta_; }
+    metapb::Range options() const { return meta_.Get(); }
     bool EpochIsEqual(const metapb::Range &meta) {
         return EpochIsEqual(meta.range_epoch());
     };
@@ -349,12 +349,7 @@ private:
 
     bool PushHeartBeatMessage();
 
-    void AddPeer(raft_cmdpb::PeerTask &pt, metapb::Range &meta);
-    bool DelPeer(raft_cmdpb::PeerTask &pt, metapb::Range &meta);
-    bool SaveMeta(const metapb::Range &meta);
-
-    // return true if found
-    bool FindPeerByNodeID(uint64_t node_id, metapb::Peer *peer = nullptr);
+    Status SaveMeta(const metapb::Range &meta);
 
     errorpb::Error *TimeOutError();
     errorpb::Error *RaftFailError();
@@ -396,9 +391,11 @@ private:
     server::ContextServer *context_ = nullptr;
     const uint64_t node_id_ = 0;
     const uint64_t id_ = 0;
+    // cache range's start key
+    // since it will not change unless we have merge operation
+    const std::string start_key_;
 
-    metapb::Range meta_;
-    shared_mutex meta_lock_;
+    MetaKeeper meta_;
 
     std::atomic<bool> valid_ = { true };
 
