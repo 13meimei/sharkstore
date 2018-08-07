@@ -185,7 +185,8 @@ TEST_F(RangeSQLTest, Test) {
         range_server_->ranges_[1]->is_leader_ = true;
 
         // set higher version
-        range_server_->ranges_[1]->meta_.mutable_range_epoch()->set_version(2);
+        // TODO:
+        // range_server_->ranges_[1]->meta_.mutable_range_epoch()->set_version(2);
 
         auto msg = CreateInsertMessage();
 
@@ -199,7 +200,8 @@ TEST_F(RangeSQLTest, Test) {
         ASSERT_TRUE(resp.header().error().has_stale_epoch());
 
         // rollback version
-        range_server_->ranges_[1]->meta_.mutable_range_epoch()->set_version(1);
+        // TODO:
+        // range_server_->ranges_[1]->meta_.mutable_range_epoch()->set_version(1);
 
         //end test insert
     }

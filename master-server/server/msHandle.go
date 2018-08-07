@@ -216,11 +216,13 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 	// TODO: remove req.GetTerm() != 0 in the future
 	if req.GetTerm() != 0 {
 		if req.GetTerm() < rng.Term {
-			log.Warn("range[%v] stale term(%d < %d)", rng.GetId(), req.GetTerm(), rng.Term)
+			log.Warn("range[%v] stale term(%d < %d), stale leader: [%v], current leader: [%v]",
+				rng.GetId(), req.GetTerm(), rng.Term, req.GetLeader(), rng.GetLeader())
 			return
 		} else if req.GetTerm() > rng.Term {
 			saveCache = true
-			log.Info("range[%d] term change from %d to %d", rng.GetId(), rng.Term, req.GetTerm())
+			log.Info("range[%d] term change from %d to %d, new leader: [%v], prev leader: [%v]",
+				rng.GetId(), rng.Term, req.GetTerm(), req.GetLeader(), rng.GetLeader())
 		}
 	}
 

@@ -2,6 +2,8 @@
 
 #include "server/range_server.h"
 
+#include "range_logger.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace range {
@@ -27,7 +29,7 @@ bool Range::DeleteTry(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) 
         return false;
     }
 
-    FLOG_DEBUG("range[%" PRIu64 "] Delete Try ", split_range_id_);
+    RANGE_LOG_DEBUG("Delete Try %" PRIu64, split_range_id_);
 
     return rng->DeleteSubmit(msg, req);
 }
@@ -38,7 +40,7 @@ void Range::Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
     auto btime = get_micro_second();
     context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
-    FLOG_DEBUG("range[%" PRIu64 "] Delete begin", id_);
+    RANGE_LOG_DEBUG("Delete begin");
 
     if (!CheckWriteable()) {
         auto resp = new kvrpcpb::DsKvDeleteResponse;
@@ -84,7 +86,7 @@ void Range::Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
     } while (false);
 
     if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] Delete error: %s", id_, err->message().c_str());
+        RANGE_LOG_WARN("Delete error: %s", err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvDeleteResponse;
         return SendError(msg, req.header(), resp, err);
@@ -96,7 +98,7 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
 
-    FLOG_DEBUG("ApplyDelete begin");
+    RANGE_LOG_DEBUG("ApplyDelete begin");
 
     auto &req = cmd.delete_req();
 
@@ -106,12 +108,12 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
             auto epoch = cmd.verify_epoch();
 
             if (!EpochIsEqual(epoch, err)) {
-                FLOG_WARN("Range %" PRIu64 "  ApplyDelete error: %s", id_, err->message().c_str());
+                RANGE_LOG_WARN("ApplyDelete error: %s", err->message().c_str());
                 break;
             }
         } else {
             if (!KeyInRange(key, err)) {
-                FLOG_WARN("range[%" PRIu64 "] ApplyDelete error: %s", id_, err->message().c_str());
+                RANGE_LOG_WARN("ApplyDelete error: %s", err->message().c_str());
                 break;
             }
         }
@@ -122,7 +124,7 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
-            FLOG_ERROR("ApplyDelete failed, code:%d, msg:%s", ret.code(),
+            RANGE_LOG_ERROR("ApplyDelete failed, code:%d, msg:%s", ret.code(),
                        ret.ToString().c_str());
             break;
         }

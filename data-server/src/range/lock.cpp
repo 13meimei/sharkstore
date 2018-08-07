@@ -707,8 +707,8 @@ void Range::LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req)
 
     errorpb::Error *err = nullptr;
     auto ds_resp = new kvrpcpb::DsLockScanResponse;
-    auto start = std::max(req.req().start(), meta_.start_key());
-    auto limit = std::min(req.req().limit(), meta_.end_key());
+    auto start = std::max(req.req().start(), start_key_);
+    auto limit = std::min(req.req().limit(), meta_.GetEndKey());
     std::unique_ptr<storage::Iterator> iterator(store_->NewIterator(start, limit));
 
     int max_count = checkMaxCount(static_cast<int64_t >(req.req().count()));

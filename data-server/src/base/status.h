@@ -33,6 +33,7 @@ public:
         kResourceExhaust = 21,
         kNoLeftSpace = 22,
         kUnexpected = 23,
+        kOutOfBound = 24,
 
         kUnknown = 255,
     };

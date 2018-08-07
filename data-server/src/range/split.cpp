@@ -7,6 +7,8 @@
 #include "server/range_server.h"
 #include "server/server.h"
 
+#include "range_logger.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace range {
@@ -27,27 +29,23 @@ void Range::ResetStatisSize() {
     // 1;
     const static uint64_t split_size = ds_config.range_config.split_size;
 
+    auto *meta = new metapb::Range;
+    meta_.Get(meta);
+
     std::string split_key;
-    metapb::Range *meta = nullptr;
-
-    do {
-        sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
-        meta = new metapb::Range(meta_);
-    } while (false);
-
     if (ds_config.range_config.access_mode == 0) {
         real_size_ = store_->StatisSize(split_key, split_size);
     } else {
         real_size_ = store_->StatisSize(split_key, split_size, true);
     }
 
-    FLOG_DEBUG("range[%" PRIu64 "] real size: %" PRIu64, id_, real_size_);
+    RANGE_LOG_DEBUG("real size: %" PRIu64, real_size_);
 
     statis_flag_ = false;
 
     do {
         if (!EpochIsEqual(meta->range_epoch())) {
-            FLOG_WARN("range[%" PRIu64 "] ResetStatisSize epoch is changed", id_);
+            RANGE_LOG_WARN("ResetStatisSize epoch is changed");
             break;
         }
 
@@ -66,7 +64,7 @@ void Range::AskSplit(std::string &key, metapb::Range *meta) {
     assert(key >= meta->start_key());
     assert(key < meta->end_key());
 
-    FLOG_DEBUG("ask split %" PRIu64, id_);
+    RANGE_LOG_DEBUG("ask split %" PRIu64, id_);
     mspb::AskSplitRequest ask;
     ask.set_allocated_range(meta);
     ask.set_split_key(std::move(key));
@@ -76,26 +74,22 @@ void Range::AskSplit(std::string &key, metapb::Range *meta) {
 
 void Range::ReportSplit(const metapb::Range &new_range) {
     mspb::ReportSplitRequest report;
-    do {
-        sharkstore::shared_lock<sharkstore::shared_mutex> lock(meta_lock_);
-        report.set_allocated_left(new metapb::Range(meta_));
-    } while (false);
-
+    meta_.Get(report.mutable_left());
     report.set_allocated_right(new metapb::Range(new_range));
     context_->master_worker->AsyncReportSplit(report);
 }
 
 void Range::AdminSplit(mspb::AskSplitResponse &resp) {
     if (!EpochIsEqual(resp.range().range_epoch())) {
-        FLOG_WARN("range[%" PRIu64 "] AdminSplit epoch is changed", id_);
+        RANGE_LOG_WARN("AdminSplit epoch is changed");
         return;
     }
 
     auto &split_key = resp.split_key();
 
-    FLOG_INFO(
-        "range[%" PRIu64 "] AdminSplit new_range_id: %" PRIu64 " split_key: %s",
-        id_, resp.new_range_id(), EncodeToHexString(split_key).c_str());
+    RANGE_LOG_INFO(
+        "AdminSplit new_range_id: %" PRIu64 " split_key: %s",
+        resp.new_range_id(), EncodeToHexString(split_key).c_str());
 
     raft_cmdpb::Command cmd;
     uint64_t seq_id = submit_seq_.fetch_add(1);
@@ -115,7 +109,7 @@ void Range::AdminSplit(mspb::AskSplitResponse &resp) {
     auto psize = range->peers_size();
     auto rsize = resp.new_peer_ids_size();
     if (psize != rsize) {
-        FLOG_WARN("range[%" PRIu64 "] AdminSplit peers_size no equal", id_);
+        RANGE_LOG_WARN("AdminSplit peers_size no equal");
         return;
     }
 
@@ -158,71 +152,65 @@ void Range::AdminSplit(mspb::AskSplitResponse &resp) {
 
     auto ret = Submit(cmd);
     if (!ret.ok()) {
-        FLOG_ERROR("range[%" PRIu64 "] AdminSplit raft submit error: %s", id_, ret.ToString().c_str());
+        RANGE_LOG_ERROR("AdminSplit raft submit error: %s", ret.ToString().c_str());
     }
 }
 
-Status Range::ApplySplit(const raft_cmdpb::Command &cmd) {
-    FLOG_INFO("range[%" PRIu64 "] ApplySplit Begin,"
-              " version:%" PRIu64 " conf_ver:%" PRIu64,
-              id_, meta_.range_epoch().version(),
-              meta_.range_epoch().conf_ver());
+Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
+    RANGE_LOG_INFO("ApplySplit Begin, version: %" PRIu64 ", index: %" PRIu64, meta_.GetVersion(), index);
 
-    auto &epoch = cmd.verify_epoch();
-    if (epoch.version() < meta_.range_epoch().version()) {
-        FLOG_INFO("Range %" PRIu64 " ApplySplit epoch stale,"
-                  " verify: %" PRIu64 ", cur: %" PRIu64,
-                  id_, epoch.version(), meta_.range_epoch().version());
+    const auto& req = cmd.admin_split_req();
+    auto ret = meta_.CheckSplit(req.split_key(), cmd.verify_epoch().version());
+    if (ret.code() == Status::kStaleEpoch) {
+        RANGE_LOG_WARN("ApplySplit(new range: %" PRIu64 ") check failed: %s",
+                req.new_range().id(), ret.ToString().c_str());
         return Status::OK();
-    } else if (epoch.version() > meta_.range_epoch().version()) {
-        FLOG_ERROR("Range %" PRIu64 " ApplySplit epoch stale,"
-                   " verify: %" PRIu64 ", cur: %" PRIu64,
-                   id_, epoch.version(), meta_.range_epoch().version());
-        return Status(Status::kStaleEpoch, "epoch is changed", "");
+    } else if (ret.code() == Status::kOutOfBound) {
+        // invalid split key, ignore split request
+        RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") check failed: %s",
+                       req.new_range().id(), ret.ToString().c_str());
+        return Status::OK();
+    } else if (!ret.ok()) {
+        RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") check failed: %s",
+                       req.new_range().id(), ret.ToString().c_str());
+        return ret;
     }
 
     context_->run_status->IncrSplitCount();
 
-    auto &req = cmd.admin_split_req();
+    ret = context_->range_server->ApplySplit(id_, req, index);
+    if (!ret.ok()) {
+        RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") create failed: %s",
+                        req.new_range().id(), ret.ToString().c_str());
+        return ret;
+    }
 
-    auto ret = context_->range_server->ApplySplit(id_, req);
-    if (ret.ok()) {
-        do {
-            std::unique_lock<sharkstore::shared_mutex> lock(meta_lock_);
-            meta_.set_end_key(req.split_key());
-            store_->SetEndKey(req.split_key());
+    meta_.Split(req.split_key(), req.epoch().version());
 
-            meta_.mutable_range_epoch()->set_version(req.epoch().version());
-        } while (false);
+    if (req.leader() == node_id_) {
+        ReportSplit(req.new_range());
 
+        // new range report heartbeat
         split_range_id_ = req.new_range().id();
+        context_->range_server->LeaderQueuePush(split_range_id_,
+                                                getticks());
 
-        if (req.leader() == node_id_) {
-            ReportSplit(req.new_range());
-
-            // new range report heartbeat
-            context_->range_server->LeaderQueuePush(split_range_id_,
-                                                    getticks());
-
-            uint64_t rsize = ds_config.range_config.split_size >> 1;
-            auto rng = context_->range_server->find(split_range_id_);
-            if (rng != nullptr) {
-                rng->set_real_size(real_size_ - rsize);
-            }
-
-            real_size_ = rsize;
-
-            // specify leader don't trigger function OnLeaderChange
-            context_->run_status->IncrLeaderCount();
+        uint64_t rsize = ds_config.range_config.split_size >> 1;
+        auto rng = context_->range_server->find(split_range_id_);
+        if (rng != nullptr) {
+            rng->set_real_size(real_size_ - rsize);
         }
+
+        real_size_ = rsize;
+
+        // specify leader don't trigger function OnLeaderChange
+        context_->run_status->IncrLeaderCount();
     }
 
     context_->run_status->DecrSplitCount();
 
-    FLOG_INFO("range[%" PRIu64 "] ApplySplit End,"
-              " version:%" PRIu64 " conf_ver:%" PRIu64,
-              id_, meta_.range_epoch().version(),
-              meta_.range_epoch().conf_ver());
+    RANGE_LOG_INFO("ApplySplit(new range: %" PRIu64 ") End. version:%" PRIu64,
+            req.new_range().id(), meta_.GetVersion());
 
     return ret;
 }
