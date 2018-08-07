@@ -728,7 +728,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             FLOG_DEBUG("range[%" PRIu64 "] session_id:%" PRId64 " Watch-Notify(%d)[key][%s] (%" PRId32"/%" PRIu32")>>>[watch_id][%" PRId64"]",
                        meta_.id(), w->getSessionId(), funcId, EncodeToHexString(dbKey).c_str(), idx, uint32_t(watchCnt), w_id);
 
-            assert(w_id > );
+            assert(w_id > 0);
             /*if(w_id < 1) {
                 FLOG_ERROR("range[%" PRIu64 "] WatchNotify warn: watch_id is invalid.", meta_.id());
                 free(w->GetMessage());
