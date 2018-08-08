@@ -9168,12 +9168,6 @@ class LockValue : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::google::protobuf::int64 update_time() const;
   void set_update_time(::google::protobuf::int64 value);
 
-  // int64 delete_flag = 6;
-  void clear_delete_flag();
-  static const int kDeleteFlagFieldNumber = 6;
-  ::google::protobuf::int64 delete_flag() const;
-  void set_delete_flag(::google::protobuf::int64 value);
-
   // @@protoc_insertion_point(class_scope:kvrpcpb.LockValue)
  private:
 
@@ -9183,7 +9177,6 @@ class LockValue : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::google::protobuf::internal::ArenaStringPtr by_;
   ::google::protobuf::int64 delete_time_;
   ::google::protobuf::int64 update_time_;
-  ::google::protobuf::int64 delete_flag_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -17732,20 +17725,6 @@ inline void LockValue::set_update_time(::google::protobuf::int64 value) {
   
   update_time_ = value;
   // @@protoc_insertion_point(field_set:kvrpcpb.LockValue.update_time)
-}
-
-// int64 delete_flag = 6;
-inline void LockValue::clear_delete_flag() {
-  delete_flag_ = GOOGLE_LONGLONG(0);
-}
-inline ::google::protobuf::int64 LockValue::delete_flag() const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.LockValue.delete_flag)
-  return delete_flag_;
-}
-inline void LockValue::set_delete_flag(::google::protobuf::int64 value) {
-  
-  delete_flag_ = value;
-  // @@protoc_insertion_point(field_set:kvrpcpb.LockValue.delete_flag)
 }
 
 // string by = 7;

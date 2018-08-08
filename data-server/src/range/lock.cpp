@@ -26,7 +26,6 @@ bool DecodeValue(std::string* value,
                  std::string* lock_id,
                  int64_t* expired_time,
                  int64_t* update_time,
-                 int64_t* delete_flag,
                  std::string* creator,
                  std::string& buf) {
     assert(value != nullptr && buf.length() != 0);
@@ -36,7 +35,6 @@ bool DecodeValue(std::string* value,
     if (!DecodeBytesValue(buf, offset, lock_id)) return false; // varchar    lock_id
     if (!DecodeIntValue(buf, offset, expired_time)) return false; // bigint     expired_time
     if (!DecodeIntValue(buf, offset, update_time)) return false; // bigint     upd_time
-    if (!DecodeIntValue(buf, offset, delete_flag)) return false; // int        delete_flag
     if (!DecodeBytesValue(buf, offset, creator)) return false; // varchar    creator
     return true;
 }
@@ -57,7 +55,6 @@ void EncodeValue(std::string* buf,
                  const std::string* lock_id,
                  int64_t expired_time,
                  int64_t update_time,
-                 int64_t delete_flag,
                  const std::string* creator) {
     assert(buf != nullptr);
 
@@ -65,8 +62,7 @@ void EncodeValue(std::string* buf,
     EncodeBytesValue(buf, 3, lock_id->c_str(), lock_id->length());  // varchar    lock_id
     EncodeIntValue(buf, 4, expired_time);                           // bigint     expired_time
     EncodeIntValue(buf, 5, update_time);                            // bigint     upd_time
-    EncodeIntValue(buf, 6, delete_flag);                            // int        delete_flag
-    EncodeBytesValue(buf, 7, creator->c_str(), creator->length());  // varchar    creator
+    EncodeBytesValue(buf, 6, creator->c_str(), creator->length());  // varchar    creator
 }
 
 } // namespace lock
@@ -86,9 +82,8 @@ kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
     std::string lock_id;
     int64_t expired_time;
     int64_t update_time;
-    int64_t delete_flag;
     std::string creator;
-    if (!lock::DecodeValue(&value, &lock_id, &expired_time, &update_time, &delete_flag, &creator,
+    if (!lock::DecodeValue(&value, &lock_id, &expired_time, &update_time, &creator,
                                  val)) {
         RANGE_LOG_WARN("lock get: decode value failed, key[%s]", EncodeToHexString(key).c_str());
         return nullptr;
@@ -99,7 +94,6 @@ kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
     ret->set_id(lock_id);
     ret->set_delete_time(expired_time);
     ret->set_update_time(update_time);
-    ret->set_delete_flag(delete_flag);
     ret->set_by(creator);
 
     if (ret->delete_time() > 0 && ret->delete_time() <= getticks()) {
@@ -185,14 +179,6 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
         auto val = LockGet(req.key());
         // 允许相同id的重复执行lock
         if (val != nullptr) {
-            if (val->delete_flag()) {
-                RANGE_LOG_WARN("ApplyLock error: lock [%s] is force unlocked", req.key().c_str());
-                resp->mutable_resp()->set_code(LOCK_IS_FORCE_UNLOCKED);
-                resp->mutable_resp()->set_error("be force unlocked");
-                resp->mutable_resp()->set_value(val->value());
-                resp->mutable_resp()->set_update_time(val->update_time());
-                break;
-            }
             if (req.value().id() != val->id()) {
                 RANGE_LOG_WARN("ApplyLock error: lock [%s] is existed", req.key().c_str());
                 resp->mutable_resp()->set_code(LOCK_EXISTED);
@@ -215,11 +201,10 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
         const std::string& lock_id = req.value().id();
         int64_t expired_time = req.value().delete_time();
         int64_t update_time = req.value().update_time();
-        int64_t delete_flag = req.value().delete_flag();
         const std::string& creator = req.value().by();
 
         lock::EncodeValue(&value_buf,
-                          &value, &lock_id, expired_time, update_time, delete_flag, &creator);
+                          &value, &lock_id, expired_time, update_time, &creator);
         ret = store_->Put(req.key(), value_buf);
 
         context_->run_status->PushTime(monitor::PrintTag::Store,
@@ -321,13 +306,6 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
             resp->mutable_resp()->set_error("not exist");
             break;
         }
-        if (val->delete_flag()) {
-            RANGE_LOG_WARN("ApplyLockUpdate error: lock [%s] is force unlocked",
-                      req.key().c_str());
-            resp->mutable_resp()->set_code(LOCK_IS_FORCE_UNLOCKED);
-            resp->mutable_resp()->set_error("be force unlocked");
-            break;
-        }
         if (req.id() != val->id()) {
             RANGE_LOG_WARN("ApplyLockUpdate error: lock [%s] can not update with id "
                       "%s != %s",
@@ -350,11 +328,10 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         const std::string& lock_id = val->id();
         int64_t expired_time = val->delete_time();
         int64_t update_time = val->update_time();
-        int64_t delete_flag = val->delete_flag();
         const std::string& creator = req.by();
 
         lock::EncodeValue(&value_buf,
-                          &value, &lock_id, expired_time, update_time, delete_flag, &creator);
+                          &value, &lock_id, expired_time, update_time, &creator);
         ret = store_->Put(req.key(), value_buf);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -446,15 +423,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
             resp->mutable_resp()->set_error("not exist");
             break;
         }
-        // 允许force unlock的锁被owner正常解锁
-        if (val->delete_flag()) {
-            if (req.id() != val->id()) {
-                RANGE_LOG_WARN("ApplyUnlock error: lock [%s] is force unlocked", req.key().c_str());
-                resp->mutable_resp()->set_code(LOCK_IS_FORCE_UNLOCKED);
-                resp->mutable_resp()->set_error("be force unlocked");
-                break;
-            }
-        }
+
         if (req.id() != val->id()) {
             RANGE_LOG_WARN("ApplyUnlock error: lock [%s] not locked with id %s", req.key().c_str(), req.id().c_str());
             resp->mutable_resp()->set_code(LOCK_ID_MISMATCHED);
@@ -572,47 +541,52 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
             resp->mutable_resp()->set_error("not exist");
             break;
         }
-        if (val->delete_flag()) {
-            FLOG_WARN("ApplyUnlock error: lock [%s] is force unlocked",
-                      req.key().c_str());
-            resp->mutable_resp()->set_code(LOCK_IS_FORCE_UNLOCKED);
-            resp->mutable_resp()->set_error("be force unlocked");
-            break;
-        }
 
         auto btime = get_micro_second();
-        // do not really delete until the deleted time
-        val->set_delete_flag(1);
-
-
-        std::string value_buf;
-        const std::string& value = val->value();
-        const std::string& lock_id = val->id();
-        int64_t expired_time = val->delete_time();
-        int64_t update_time = val->update_time();
-        int64_t delete_flag = val->delete_flag();
-        const std::string& creator = req.by();
-
-        lock::EncodeValue(&value_buf,
-                          &value, &lock_id, expired_time, update_time, delete_flag, &creator);
-        ret = store_->Put(req.key(), value_buf);
-
+        ret = store_->Delete(req.key());
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
-            FLOG_ERROR("ApplyUnlockForce failed, code:%d, msg:%s", ret.code(),
+            RANGE_LOG_ERROR("ApplyForceUnlock failed, code:%d, msg:%s", ret.code(),
                        ret.ToString().c_str());
             resp->mutable_resp()->set_code(LOCK_STORE_FAILED);
-            resp->mutable_resp()->set_error("unlock force failed");
+            resp->mutable_resp()->set_error("force unlock failed");
             resp->mutable_resp()->set_value(val->value());
             resp->mutable_resp()->set_update_time(val->update_time());
             break;
         }
         delete val;
 
-        FLOG_INFO("Range %" PRIu64
-                  "  ApplyUnlockForce: lock [%s] is force unlocked by %s",
-                  id_, req.key().c_str(), req.by().c_str());
+        RANGE_LOG_INFO("ApplyForceUnlock: lock [%s] is unlock by %s", req.key().c_str(), req.by().c_str());
+//        auto btime = get_micro_second();
+//
+//        std::string value_buf;
+//        const std::string& value = val->value();
+//        const std::string& lock_id = val->id();
+//        int64_t expired_time = val->delete_time();
+//        int64_t update_time = val->update_time();
+//        const std::string& creator = req.by();
+//
+//        lock::EncodeValue(&value_buf,
+//                          &value, &lock_id, expired_time, update_time, &creator);
+//        ret = store_->Put(req.key(), value_buf);
+//
+//        context_->run_status->PushTime(monitor::PrintTag::Store,
+//                                       get_micro_second() - btime);
+//        if (!ret.ok()) {
+//            FLOG_ERROR("ApplyUnlockForce failed, code:%d, msg:%s", ret.code(),
+//                       ret.ToString().c_str());
+//            resp->mutable_resp()->set_code(LOCK_STORE_FAILED);
+//            resp->mutable_resp()->set_error("unlock force failed");
+//            resp->mutable_resp()->set_value(val->value());
+//            resp->mutable_resp()->set_update_time(val->update_time());
+//            break;
+//        }
+//        delete val;
+//
+//        FLOG_INFO("Range %" PRIu64
+//                  "  ApplyUnlockForce: lock [%s] is force unlocked by %s",
+//                  id_, req.key().c_str(), req.by().c_str());
 
         std::string decode_key = req.key();
         //std::string decode_key;
@@ -673,13 +647,6 @@ void Range::LockWatch(common::ProtoMessage *msg,
                       EncodeToHexString(encode_key).c_str());
             err = new errorpb::Error;
             err->set_message("lock is not existed");
-            break;
-        }
-        if (val->delete_flag()) {
-            FLOG_WARN("LockWatch error: lock [%s] is force unlocked",
-                      EncodeToHexString(encode_key).c_str());
-            err = new errorpb::Error;
-            err->set_message("lock is force unlocked");
             break;
         }
 

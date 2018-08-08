@@ -1163,7 +1163,6 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, delete_time_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, update_time_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, delete_flag_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockValue, by_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LockRequest, _internal_metadata_),
@@ -1380,24 +1379,24 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 533, -1, sizeof(DsKvRangeDeleteRequest)},
   { 540, -1, sizeof(DsKvRangeDeleteResponse)},
   { 547, -1, sizeof(LockValue)},
-  { 558, -1, sizeof(LockRequest)},
-  { 566, -1, sizeof(DsLockRequest)},
-  { 573, -1, sizeof(LockResponse)},
-  { 582, -1, sizeof(LockInfo)},
-  { 589, -1, sizeof(LockScanResponse)},
-  { 596, -1, sizeof(DsLockResponse)},
-  { 603, -1, sizeof(LockUpdateRequest)},
-  { 614, -1, sizeof(DsLockUpdateRequest)},
-  { 621, -1, sizeof(DsLockUpdateResponse)},
-  { 628, -1, sizeof(UnlockRequest)},
-  { 637, -1, sizeof(DsUnlockRequest)},
-  { 644, -1, sizeof(DsUnlockResponse)},
-  { 651, -1, sizeof(UnlockForceRequest)},
-  { 659, -1, sizeof(DsUnlockForceRequest)},
-  { 666, -1, sizeof(DsUnlockForceResponse)},
-  { 673, -1, sizeof(LockScanRequest)},
-  { 681, -1, sizeof(DsLockScanRequest)},
-  { 688, -1, sizeof(DsLockScanResponse)},
+  { 557, -1, sizeof(LockRequest)},
+  { 565, -1, sizeof(DsLockRequest)},
+  { 572, -1, sizeof(LockResponse)},
+  { 581, -1, sizeof(LockInfo)},
+  { 588, -1, sizeof(LockScanResponse)},
+  { 595, -1, sizeof(DsLockResponse)},
+  { 602, -1, sizeof(LockUpdateRequest)},
+  { 613, -1, sizeof(DsLockUpdateRequest)},
+  { 620, -1, sizeof(DsLockUpdateResponse)},
+  { 627, -1, sizeof(UnlockRequest)},
+  { 636, -1, sizeof(DsUnlockRequest)},
+  { 643, -1, sizeof(DsUnlockResponse)},
+  { 650, -1, sizeof(UnlockForceRequest)},
+  { 658, -1, sizeof(DsUnlockForceRequest)},
+  { 665, -1, sizeof(DsUnlockForceResponse)},
+  { 672, -1, sizeof(LockScanRequest)},
+  { 680, -1, sizeof(DsLockScanRequest)},
+  { 687, -1, sizeof(DsLockScanResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -2090,64 +2089,63 @@ void AddDescriptorsImpl() {
       "angeDeleteRequest\"p\n\027DsKvRangeDeleteResp"
       "onse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseH"
       "eader\022,\n\004resp\030\002 \001(\0132\036.kvrpcpb.KvRangeDel"
-      "eteResponse\"q\n\tLockValue\022\r\n\005value\030\002 \001(\014\022"
+      "eteResponse\"\\\n\tLockValue\022\r\n\005value\030\002 \001(\014\022"
       "\n\n\002id\030\003 \001(\t\022\023\n\013delete_time\030\004 \001(\003\022\023\n\013upda"
-      "te_time\030\005 \001(\003\022\023\n\013delete_flag\030\006 \001(\003\022\n\n\002by"
-      "\030\007 \001(\t\"f\n\013LockRequest\022\013\n\003key\030\001 \001(\014\022!\n\005va"
-      "lue\030\002 \001(\0132\022.kvrpcpb.LockValue\022\'\n\ttimesta"
-      "mp\030\n \001(\0132\024.timestamp.Timestamp\"Z\n\rDsLock"
-      "Request\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reques"
-      "tHeader\022!\n\003req\030\002 \001(\0132\024.kvrpcpb.LockReque"
-      "st\"O\n\014LockResponse\022\014\n\004code\030\001 \001(\003\022\r\n\005erro"
-      "r\030\002 \001(\t\022\r\n\005value\030\003 \001(\014\022\023\n\013update_time\030\004 "
-      "\001(\003\":\n\010LockInfo\022\013\n\003key\030\001 \001(\014\022!\n\005value\030\002 "
-      "\001(\0132\022.kvrpcpb.LockValue\"E\n\020LockScanRespo"
-      "nse\022\037\n\004info\030\001 \003(\0132\021.kvrpcpb.LockInfo\022\020\n\010"
-      "last_key\030\002 \001(\014\"^\n\016DsLockResponse\022\'\n\006head"
-      "er\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004res"
-      "p\030\002 \001(\0132\025.kvrpcpb.LockResponse\"\214\001\n\021LockU"
-      "pdateRequest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\023\n"
-      "\013update_time\030\005 \001(\003\022\024\n\014update_value\030\006 \001(\014"
+      "te_time\030\005 \001(\003\022\n\n\002by\030\007 \001(\t\"f\n\013LockRequest"
+      "\022\013\n\003key\030\001 \001(\014\022!\n\005value\030\002 \001(\0132\022.kvrpcpb.L"
+      "ockValue\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp."
+      "Timestamp\"Z\n\rDsLockRequest\022&\n\006header\030\001 \001"
+      "(\0132\026.kvrpcpb.RequestHeader\022!\n\003req\030\002 \001(\0132"
+      "\024.kvrpcpb.LockRequest\"O\n\014LockResponse\022\014\n"
+      "\004code\030\001 \001(\003\022\r\n\005error\030\002 \001(\t\022\r\n\005value\030\003 \001("
+      "\014\022\023\n\013update_time\030\004 \001(\003\":\n\010LockInfo\022\013\n\003ke"
+      "y\030\001 \001(\014\022!\n\005value\030\002 \001(\0132\022.kvrpcpb.LockVal"
+      "ue\"E\n\020LockScanResponse\022\037\n\004info\030\001 \003(\0132\021.k"
+      "vrpcpb.LockInfo\022\020\n\010last_key\030\002 \001(\014\"^\n\016DsL"
+      "ockResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Re"
+      "sponseHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.Loc"
+      "kResponse\"\214\001\n\021LockUpdateRequest\022\013\n\003key\030\001"
+      " \001(\014\022\n\n\002id\030\003 \001(\t\022\023\n\013update_time\030\005 \001(\003\022\024\n"
+      "\014update_value\030\006 \001(\014\022\'\n\ttimestamp\030\n \001(\0132\024"
+      ".timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"f\n\023DsLo"
+      "ckUpdateRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcp"
+      "b.RequestHeader\022\'\n\003req\030\002 \001(\0132\032.kvrpcpb.L"
+      "ockUpdateRequest\"d\n\024DsLockUpdateResponse"
+      "\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeade"
+      "r\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockResponse\"]"
+      "\n\rUnlockRequest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t"
       "\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Timestam"
-      "p\022\n\n\002by\030\013 \001(\t\"f\n\023DsLockUpdateRequest\022&\n\006"
-      "header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n\003"
-      "req\030\002 \001(\0132\032.kvrpcpb.LockUpdateRequest\"d\n"
-      "\024DsLockUpdateResponse\022\'\n\006header\030\001 \001(\0132\027."
-      "kvrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.k"
-      "vrpcpb.LockResponse\"]\n\rUnlockRequest\022\013\n\003"
-      "key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\'\n\ttimestamp\030\n \001(\013"
-      "2\024.timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"^\n\017Ds"
-      "UnlockRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb."
-      "RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.Unl"
-      "ockRequest\"`\n\020DsUnlockResponse\022\'\n\006header"
-      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004resp\030"
-      "\002 \001(\0132\025.kvrpcpb.LockResponse\"V\n\022UnlockFo"
-      "rceRequest\022\013\n\003key\030\001 \001(\014\022\'\n\ttimestamp\030\n \001"
-      "(\0132\024.timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"h\n\024"
-      "DsUnlockForceRequest\022&\n\006header\030\001 \001(\0132\026.k"
-      "vrpcpb.RequestHeader\022(\n\003req\030\002 \001(\0132\033.kvrp"
-      "cpb.UnlockForceRequest\"e\n\025DsUnlockForceR"
-      "esponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respon"
-      "seHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockRes"
-      "ponse\">\n\017LockScanRequest\022\r\n\005start\030\001 \001(\014\022"
-      "\r\n\005limit\030\002 \001(\014\022\r\n\005count\030\003 \001(\r\"b\n\021DsLockS"
-      "canRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Req"
-      "uestHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.LockSc"
-      "anRequest\"f\n\022DsLockScanResponse\022\'\n\006heade"
-      "r\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n\004resp"
-      "\030\002 \001(\0132\031.kvrpcpb.LockScanResponse*;\n\013Exe"
-      "cuteType\022\017\n\013ExecInvalid\020\000\022\013\n\007ExecPut\020\001\022\016"
-      "\n\nExecDelete\020\002*k\n\tMatchType\022\013\n\007Invalid\020\000"
-      "\022\t\n\005Equal\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022\017\n\013L"
-      "essOrEqual\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOrEqua"
-      "l\020\006*Z\n\tExistCase\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_N"
-      "otExists\020\001\022\r\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020"
-      "\003\022\014\n\010EC_Force\020\004*B\n\tOperation\022\016\n\nOP_Inval"
-      "id\020\000\022\n\n\006OP_Set\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Ge"
-      "t\020\003b\006proto3"
+      "p\022\n\n\002by\030\013 \001(\t\"^\n\017DsUnlockRequest\022&\n\006head"
+      "er\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022#\n\003req\030"
+      "\002 \001(\0132\026.kvrpcpb.UnlockRequest\"`\n\020DsUnloc"
+      "kResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Resp"
+      "onseHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockR"
+      "esponse\"V\n\022UnlockForceRequest\022\013\n\003key\030\001 \001"
+      "(\014\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Timest"
+      "amp\022\n\n\002by\030\013 \001(\t\"h\n\024DsUnlockForceRequest\022"
+      "&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022"
+      "(\n\003req\030\002 \001(\0132\033.kvrpcpb.UnlockForceReques"
+      "t\"e\n\025DsUnlockForceResponse\022\'\n\006header\030\001 \001"
+      "(\0132\027.kvrpcpb.ResponseHeader\022#\n\004resp\030\002 \001("
+      "\0132\025.kvrpcpb.LockResponse\">\n\017LockScanRequ"
+      "est\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\r\n\005cou"
+      "nt\030\003 \001(\r\"b\n\021DsLockScanRequest\022&\n\006header\030"
+      "\001 \001(\0132\026.kvrpcpb.RequestHeader\022%\n\003req\030\002 \001"
+      "(\0132\030.kvrpcpb.LockScanRequest\"f\n\022DsLockSc"
+      "anResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Res"
+      "ponseHeader\022\'\n\004resp\030\002 \001(\0132\031.kvrpcpb.Lock"
+      "ScanResponse*;\n\013ExecuteType\022\017\n\013ExecInval"
+      "id\020\000\022\013\n\007ExecPut\020\001\022\016\n\nExecDelete\020\002*k\n\tMat"
+      "chType\022\013\n\007Invalid\020\000\022\t\n\005Equal\020\001\022\014\n\010NotEqu"
+      "al\020\002\022\010\n\004Less\020\003\022\017\n\013LessOrEqual\020\004\022\n\n\006Large"
+      "r\020\005\022\021\n\rLargerOrEqual\020\006*Z\n\tExistCase\022\016\n\nE"
+      "C_Invalid\020\000\022\020\n\014EC_NotExists\020\001\022\r\n\tEC_Exis"
+      "ts\020\002\022\016\n\nEC_AnyCase\020\003\022\014\n\010EC_Force\020\004*B\n\tOp"
+      "eration\022\016\n\nOP_Invalid\020\000\022\n\n\006OP_Set\020\001\022\r\n\tO"
+      "P_Delete\020\002\022\n\n\006OP_Get\020\003b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 8731);
+      descriptor, 8710);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "kvrpcpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -31045,7 +31043,6 @@ const int LockValue::kValueFieldNumber;
 const int LockValue::kIdFieldNumber;
 const int LockValue::kDeleteTimeFieldNumber;
 const int LockValue::kUpdateTimeFieldNumber;
-const int LockValue::kDeleteFlagFieldNumber;
 const int LockValue::kByFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -31075,8 +31072,8 @@ LockValue::LockValue(const LockValue& from)
     by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
   }
   ::memcpy(&delete_time_, &from.delete_time_,
-    static_cast<size_t>(reinterpret_cast<char*>(&delete_flag_) -
-    reinterpret_cast<char*>(&delete_time_)) + sizeof(delete_flag_));
+    static_cast<size_t>(reinterpret_cast<char*>(&update_time_) -
+    reinterpret_cast<char*>(&delete_time_)) + sizeof(update_time_));
   // @@protoc_insertion_point(copy_constructor:kvrpcpb.LockValue)
 }
 
@@ -31085,8 +31082,8 @@ void LockValue::SharedCtor() {
   id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   by_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&delete_time_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&delete_flag_) -
-      reinterpret_cast<char*>(&delete_time_)) + sizeof(delete_flag_));
+      reinterpret_cast<char*>(&update_time_) -
+      reinterpret_cast<char*>(&delete_time_)) + sizeof(update_time_));
   _cached_size_ = 0;
 }
 
@@ -31134,8 +31131,8 @@ void LockValue::Clear() {
   id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   by_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&delete_time_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&delete_flag_) -
-      reinterpret_cast<char*>(&delete_time_)) + sizeof(delete_flag_));
+      reinterpret_cast<char*>(&update_time_) -
+      reinterpret_cast<char*>(&delete_time_)) + sizeof(update_time_));
   _internal_metadata_.Clear();
 }
 
@@ -31199,20 +31196,6 @@ bool LockValue::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &update_time_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // int64 delete_flag = 6;
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
-                 input, &delete_flag_)));
         } else {
           goto handle_unusual;
         }
@@ -31287,11 +31270,6 @@ void LockValue::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->update_time(), output);
   }
 
-  // int64 delete_flag = 6;
-  if (this->delete_flag() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(6, this->delete_flag(), output);
-  }
-
   // string by = 7;
   if (this->by().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -31342,11 +31320,6 @@ void LockValue::SerializeWithCachedSizes(
   // int64 update_time = 5;
   if (this->update_time() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(5, this->update_time(), target);
-  }
-
-  // int64 delete_flag = 6;
-  if (this->delete_flag() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(6, this->delete_flag(), target);
   }
 
   // string by = 7;
@@ -31412,13 +31385,6 @@ size_t LockValue::ByteSizeLong() const {
         this->update_time());
   }
 
-  // int64 delete_flag = 6;
-  if (this->delete_flag() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int64Size(
-        this->delete_flag());
-  }
-
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -31466,9 +31432,6 @@ void LockValue::MergeFrom(const LockValue& from) {
   if (from.update_time() != 0) {
     set_update_time(from.update_time());
   }
-  if (from.delete_flag() != 0) {
-    set_delete_flag(from.delete_flag());
-  }
 }
 
 void LockValue::CopyFrom(const ::google::protobuf::Message& from) {
@@ -31500,7 +31463,6 @@ void LockValue::InternalSwap(LockValue* other) {
   by_.Swap(&other->by_);
   swap(delete_time_, other->delete_time_);
   swap(update_time_, other->update_time_);
-  swap(delete_flag_, other->delete_flag_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -31645,20 +31607,6 @@ void LockValue::set_update_time(::google::protobuf::int64 value) {
   
   update_time_ = value;
   // @@protoc_insertion_point(field_set:kvrpcpb.LockValue.update_time)
-}
-
-// int64 delete_flag = 6;
-void LockValue::clear_delete_flag() {
-  delete_flag_ = GOOGLE_LONGLONG(0);
-}
-::google::protobuf::int64 LockValue::delete_flag() const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.LockValue.delete_flag)
-  return delete_flag_;
-}
-void LockValue::set_delete_flag(::google::protobuf::int64 value) {
-  
-  delete_flag_ = value;
-  // @@protoc_insertion_point(field_set:kvrpcpb.LockValue.delete_flag)
 }
 
 // string by = 7;
