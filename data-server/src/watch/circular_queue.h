@@ -137,13 +137,12 @@ namespace watch {
 
         if(isEmpty()) return 0;
 
-        if(!(version >= m_pQueue[m_iHead].version() &&
-           version <= m_pQueue[m_iTail].version())) {
+        if(version > m_pQueue[m_iTail].version()) {
             return -1;
         }
 
         for (int32_t i = m_iHead; i <= m_iTail; i++) {
-            if (m_pQueue[i].version() > version ) {
+            if (m_pQueue[i].version() >= version ) {
                 cnt++;
                 //std::vector<sharkstore::dataserver::watch::CEventBufferValue>::emplace(sharkstore::dataserver::watch::CEventBufferValue&)
                 elements.emplace_back(*(m_pQueue + i));

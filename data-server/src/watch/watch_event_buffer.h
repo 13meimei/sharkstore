@@ -23,6 +23,9 @@ namespace sharkstore {
             class CEventBufferValue {
             public:
                 CEventBufferValue(){};
+                CEventBufferValue(const CEventBufferValue &oth){
+                    *this = oth;
+                };
                 CEventBufferValue &operator=(const CEventBufferValue &oth) {
                     this->key_.assign(oth.key_.begin(), oth.key_.end());
                     this->value_ = oth.value_;
@@ -111,6 +114,11 @@ namespace sharkstore {
                         clear_thread_ = std::thread([this]() {
                             while(loop_flag_) {
                                 std::unique_lock<std::mutex> lock(buffer_mutex_);
+
+                                if(mapGroupBuffer.empty()) {
+                                    buffer_cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                                }
+
                                 //to do pop timeout data from queue
                                 for(auto itMap:mapGroupBuffer) {
                                     if(itMap.second->isEmpty())
@@ -131,7 +139,7 @@ namespace sharkstore {
                                     usleep(50000);
                                 }
 
-                                usleep(1000000);
+                                buffer_cond_.wait_for(lock, std::chrono::milliseconds(1000));
                             }
                         });
                     }
@@ -142,7 +150,7 @@ namespace sharkstore {
                 std::map<std::string, GroupValue *> mapGroupBuffer;
 
                 std::mutex buffer_mutex_;
-                std::condition_variable cond_;
+                std::condition_variable buffer_cond_;
 
                 static int32_t milli_timeout_;
                 static bool thread_flag_;

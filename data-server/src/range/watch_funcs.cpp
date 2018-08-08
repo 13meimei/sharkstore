@@ -532,11 +532,32 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
+
         if (!ret.ok()) {
             FLOG_ERROR("ApplyWatchPut failed, code:%d, msg:%s", ret.code(),
                        ret.ToString().data());
             break;
         }
+
+        //if(req.kv().key_size() > 1) {
+            //to do decode group key,ignore single key
+            /*std::vector<std::string*> keys;
+            std::string dbPreKey{""};
+
+            for(auto i =0; i < req.kv().key_size()-1; i++ ) {
+                keys.emplace_back(std::move(new std::string(req.kv().key(i))));
+            }
+            watch::Watcher::EncodeKey(&dbPreKey, meta_.GetTableID(), keys);
+            */
+            auto value = std::make_shared<watch::CEventBufferValue>(notifyKv, watchpb::PUT);
+            if(value->key_size()) {
+                FLOG_DEBUG(">>>key is valid.");
+            }
+
+            if (!eventBuffer->enQueue(dbKey, value.get())) {
+                FLOG_ERROR("load delete event kv to buffer error.");
+            }
+        //}
 
         if (cmd.cmd_id().node_id() == node_id_) {
             auto len = static_cast<uint64_t>(req.kv().ByteSizeLong());
@@ -614,28 +635,31 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
-        if(req.kv().key_size() > 1) {
-            //to do decode group key,ignore single key
-            std::vector<std::string*> keys;
-            std::string dbPreKey{""};
-
-            for(auto i =0; i < req.kv().key_size()-1; i++ ) {
-                keys.emplace_back(std::move(new std::string(req.kv().key(i))));
-            }
-            watch::Watcher::EncodeKey(&dbPreKey, meta_.id(), keys);
-
-            auto value = std::make_shared<watch::CEventBufferValue>(notifyKv, watchpb::DELETE);
-
-            if (!eventBuffer->enQueue(dbPreKey, value.get())) {
-                FLOG_ERROR("load delete event kv to buffer error.");
-            }
-        }
-
         if (!ret.ok()) {
             FLOG_ERROR("ApplyWatchDel failed, code:%d, msg:%s , key:%s", ret.code(),
                        ret.ToString().c_str(), EncodeToHexString(dbKey).c_str());
             break;
         }
+
+        //if(req.kv().key_size() > 1) {
+            //to do decode group key,ignore single key
+            /*std::vector<std::string*> keys;
+            std::string dbPreKey{""};
+
+            for(auto i =0; i < req.kv().key_size()-1; i++ ) {
+                keys.emplace_back(std::move(new std::string(req.kv().key(i))));
+            }
+            watch::Watcher::EncodeKey(&dbPreKey, meta_.GetTableID(), keys);
+            */
+            auto value = std::make_shared<watch::CEventBufferValue>(notifyKv, watchpb::DELETE);
+            if(value->key_size()) {
+                FLOG_DEBUG(">>>key is valid.");
+            }
+            if (!eventBuffer->enQueue(dbKey, value.get())) {
+                FLOG_ERROR("load delete event kv to buffer error.");
+            }
+        //}
+
         // ignore delete CheckSplit
     } while (false);
 
@@ -728,7 +752,8 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     events.emplace_back(singleEvent);
 
     //start to send user kv to client
-    auto watchCnt = vecNotifyWatcher.size();
+    int32_t watchCnt = vecNotifyWatcher.size();
+    FLOG_DEBUG("single key notify:%" PRId32 " key:%s", watchCnt, EncodeToHexString(dbKey).c_str());
     if (watchCnt > 0) {
         Range::SendNotify(vecNotifyWatcher, events);
     }
@@ -737,32 +762,62 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     if(hasPrefix) {
         watch_server->GetPrefixWatchers(evtType, vecPrefixNotifyWatcher, hashKey, dbKey, currDbVersion);
 
-        int32_t cnt = vecPrefixNotifyWatcher.size();
+        watchCnt = vecPrefixNotifyWatcher.size();
+        FLOG_DEBUG("prefix key notify:%" PRId32 " key:%s", watchCnt, EncodeToHexString(dbKey).c_str());
 
-        //to do 从缓冲区加载最新数据
-        if(hasPrefix) {
+        if(watchCnt > 0) {
             std::vector<watch::CEventBufferValue> vecUpdKeys;
-            cnt = eventBuffer->loadFromBuffer(dbKey, currDbVersion, vecUpdKeys);
-            if(cnt < 0) {
+            vecUpdKeys.clear();
+            int32_t cnt = eventBuffer->loadFromBuffer(dbKey, currDbVersion - 1, vecUpdKeys);
+            if (cnt < 0) {
                 //get all from db
-                FLOG_INFO("overlimit version in memory,get from db now.");
+                FLOG_INFO("overlimit version in memory,get from db now. notify:%"
+                                  PRId32
+                                  " key:%s version:%"
+                                  PRId64,
+                          watchCnt, EncodeToHexString(dbKey).c_str(), currDbVersion - 1);
+
             } else if (0 == cnt) {
-                FLOG_ERROR("doudbt no changing.");
+                FLOG_ERROR("doudbt no changing. notify:%"
+                                   PRId32
+                                   " key:%s", watchCnt, EncodeToHexString(dbKey).c_str());
             } else {
-                for(auto it : vecUpdKeys) {
+                FLOG_DEBUG("notify:%"
+                                   PRId32
+                                   " loadFromBuffer key:%s  data:%"
+                                   PRId32, watchCnt, EncodeToHexString(dbKey).c_str(), cnt);
+                for (auto i = 0; i < cnt; i++) {
+                    //to do need to decode kv
                     watchpb::Event evt;
-                    for(auto i=0; i++< it.key_size();) {
-                        evt.mutable_kv()->add_key(it.key(i));
+                    auto vecKeys = vecUpdKeys[i].key();
+                    assert(vecKeys.size() == 1);
+                    FLOG_DEBUG(">>>%d...value:%s create-time:%" PRId64 " %d", vecUpdKeys[i].type(), vecUpdKeys[i].value().c_str(), vecUpdKeys[i].createTime(), vecKeys.size());
+
+                    if(vecKeys.size() == 0) continue;
+                    
+                    std::vector<std::string *> userKeys;
+                    std::string userValue{""};
+                    int64_t decodeVersion{0};
+                    std::string decodeExt{""};
+
+                    std::string encodeKey{vecKeys[0]};
+                    std::string encodeValue{vecUpdKeys[i].value()};
+
+                    watch::Watcher::DecodeKey(userKeys, encodeKey);
+                    watch::Watcher::DecodeValue(&decodeVersion, &userValue, &decodeExt, encodeValue);
+
+                    for (auto i = 0; i < userKeys.size(); i++) {
+                        evt.mutable_kv()->add_key(*userKeys[i]);
                     }
-                    *evt.mutable_kv()->mutable_value() = it.value();
-                    evt.mutable_kv()->set_version(it.version());
-                    evt.set_type(it.type());
+
+                    *evt.mutable_kv()->mutable_value() = userValue;
+                    evt.mutable_kv()->set_version(vecUpdKeys[i].version());
+                    evt.set_type(vecUpdKeys[i].type());
 
                     events.emplace_back(evt);
                 }
             }
         }
-        FLOG_DEBUG("hash key:%s  watcher count:%" PRId32, EncodeToHexString(hashKey).c_str(), cnt);
     }
 
     watchCnt = vecPrefixNotifyWatcher.size();
@@ -816,21 +871,17 @@ int32_t Range::SendNotify(const std::vector<watch::WatcherPtr>& vecNotify, const
             del_ret = watch_server->DelKeyWatcher(w);
 
             if (del_ret) {
-                FLOG_WARN("range[%"
-                                  PRIu64
-                                  "] Watch-Notify DelKeyWatcher (%"
+                RANGE_LOG_WARN(" Watch-Notify DelKeyWatcher (%"
                                   PRId32
                                   "/%"
                                   PRId32
                                   ")>>>[watch_id][%"
                                   PRId64
                                   "]",
-                          meta_.id(), idx, uint32_t(watchCnt), w_id);
+                             idx, uint32_t(watchCnt), w_id);
             } else {
-                FLOG_DEBUG("range[%"
-                                   PRIu64
-                                   "] DelKeyWatcher success. watch_id:%"
-                                   PRIu64, meta_.id(), w_id);
+                RANGE_LOG_WARN(" DelKeyWatcher success. watch_id:%"
+                                   PRIu64, w_id);
             }
         }
 
@@ -838,21 +889,17 @@ int32_t Range::SendNotify(const std::vector<watch::WatcherPtr>& vecNotify, const
             del_ret = watch_server->DelPrefixWatcher(w);
 
             if (del_ret) {
-                FLOG_WARN("range[%"
-                                  PRIu64
-                                  "] Watch-Notify DelPrefixWatcher (%"
+                RANGE_LOG_WARN(" Watch-Notify DelPrefixWatcher (%"
                                   PRId32
                                   "/%"
                                   PRIu32
                                   ")>>>[watch_id][%"
                                   PRId64
                                   "]",
-                          meta_.id(), idx, uint32_t(watchCnt), w_id);
+                               idx, uint32_t(watchCnt), w_id);
             } else {
-                FLOG_DEBUG("range[%"
-                                   PRIu64
-                                   "] DelPrefixWatcher success. watch_id:%"
-                                   PRIu64, meta_.id(), w_id);
+                RANGE_LOG_WARN(" DelPrefixWatcher success. watch_id:%"
+                                   PRIu64, w_id);
             }
         }
 

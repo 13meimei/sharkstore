@@ -310,7 +310,7 @@ protected:
         req.mutable_req()->mutable_kv()->set_version(0);
         req.mutable_req()->set_longpull(now + 5000);
         ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_startversion(1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -438,8 +438,8 @@ TEST_F(WatchTest, watch_get_noexists_put) {
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now + 5000);
-        req.mutable_req()->set_startversion(0);
-
+        req.mutable_req()->set_startversion(1);
+        req.mutable_req()->set_prefix(true);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -487,7 +487,7 @@ TEST_F(WatchTest, watch_get_noexists_put) {
         req.mutable_req()->mutable_kv()->set_version(-1);
         req.mutable_req()->set_longpull(now + 5000);
 
-        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_startversion(1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -532,7 +532,7 @@ TEST_F(WatchTest, watch_get_exist_del) {
         req.mutable_req()->mutable_kv()->set_version(0);
         req.mutable_req()->set_longpull(now + 5000);
         ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_startversion(1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -750,7 +750,8 @@ TEST_F(WatchTest, watch_get_group_exist_del) {
         req.mutable_req()->mutable_kv()->set_version(0);
         req.mutable_req()->set_longpull(now + 5000);
 ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_startversion(1);
+        req.mutable_req()->set_prefix(true);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -808,7 +809,7 @@ TEST_F(WatchTest, watch_get_group_prefix_exist_del) {
         req.mutable_req()->mutable_kv()->set_version(0);
         req.mutable_req()->set_longpull(now + 5000);
 ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_startversion(1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);

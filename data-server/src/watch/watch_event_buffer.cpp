@@ -60,22 +60,31 @@ int32_t CEventBuffer::loadFromBuffer(const std::string &grpKey,  int64_t userVer
 bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *bufferValue) {
 
     std::lock_guard<std::mutex> lock(buffer_mutex_);
+    bool ret{false};
 
     auto it = mapGroupBuffer.find(grpKey);
     if(it == mapGroupBuffer.end()) {
         auto grpValue = new GroupValue(MAX_EVENT_QUEUE_SIZE);
 
         if(grpValue->enQueue(*bufferValue)) {
-            mapGroupBuffer.emplace(std::make_pair(grpKey, grpValue));
+            auto result = mapGroupBuffer.emplace(std::make_pair(grpKey, grpValue));
+            if(result.second) {
+                ret = true;
+            } else {
+                ret = true;
+            }
         } else {
             FLOG_WARN("map[%s] is full.", EncodeToHexString(grpKey).c_str());
-            return false;
+            ret = false;
         }
     } else {
-        return it->second->enQueue(*bufferValue);
+        ret = it->second->enQueue(*bufferValue);
     }
 
-    return true;
+    FLOG_DEBUG("emplace to queue,[%d] key:%s value:%s version:%" PRId64, ret,
+               EncodeToHexString(grpKey).c_str(), EncodeToHexString(bufferValue->value()).c_str(), bufferValue->version());
+
+    return ret;
 }
 
 bool CEventBuffer::deQueue(const std::string &grpKey, CEventBufferValue *bufferValue) {

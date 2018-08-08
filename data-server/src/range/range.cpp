@@ -27,9 +27,14 @@ Range::Range(server::ContextServer *context, const metapb::Range &meta)
       meta_(meta) {
     store_ = new storage::Store(meta, context->rocks_db);
     version_seq_ = new sharkstore::IdGenerater(id_, DEFAULT_CACHE_SIZE, context->meta_store);
+    eventBuffer = new watch::CEventBuffer;
 }
 
-Range::~Range() { delete store_; }
+Range::~Range() {
+    delete store_;
+    delete version_seq_;
+    delete eventBuffer;
+}
 
 Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     // 加载apply位置
