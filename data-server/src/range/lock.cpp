@@ -641,12 +641,20 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
 
 void Range::LockWatch(common::ProtoMessage *msg,
                         watchpb::DsKvWatchGetMultiRequest &req) {
-    std::string encode_key;
-    lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.kv().key()[0]);
-    FLOG_INFO("Range %" PRIu64" LockWatch: lock watch key[%s] encode[%s]",
-              id_, req.kv().key()[0].c_str(), EncodeToHexString(encode_key).c_str());
-
     errorpb::Error *err = nullptr;
+    if (req.kv().key_size() != 1) {
+        err = new errorpb::Error;
+        err->set_message("key list length != 1");
+        auto resp = new watchpb::DsKvWatchGetMultiResponse;
+        SendError(msg, req.header(), resp, err);
+        return;
+    }
+
+    std::string encode_key;
+    lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.kv().key(0));
+    FLOG_INFO("Range %" PRIu64" LockWatch: lock watch key[%s] encode[%s]",
+              id_, req.kv().key(0).c_str(), EncodeToHexString(encode_key).c_str());
+
     do {
         if (!VerifyLeader(err)) {
             break;
@@ -659,24 +667,27 @@ void Range::LockWatch(common::ProtoMessage *msg,
         if (val == nullptr) {
             FLOG_WARN("LockWatch error: lock encode key [%s] is not existed",
                       EncodeToHexString(encode_key).c_str());
+            err = new errorpb::Error;
             err->set_message("lock is not existed");
             break;
         }
         if (val->delete_flag()) {
             FLOG_WARN("LockWatch error: lock [%s] is force unlocked",
                       EncodeToHexString(encode_key).c_str());
+            err = new errorpb::Error;
             err->set_message("lock is force unlocked");
             break;
         }
 
         std::vector<watch::Key*> keys;
-        keys.push_back(std::move(new watch::Key(req.kv().key()[0])));
+        keys.push_back(new watch::Key(req.kv().key(0)));
 
         auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, msg);
         auto w_code = context_->range_server->watch_server_->AddKeyWatcher(w_ptr, store_);
         if (w_code != watch::WATCH_OK) {
             FLOG_WARN("LockWatch error: lock [%s] add key watcher failed",
                       EncodeToHexString(encode_key).c_str());
+            err = new errorpb::Error;
             err->set_message("add key watcher failed");
             break;
         }
