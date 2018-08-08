@@ -110,7 +110,7 @@ public:
 
     //KV watch series
     Status GetAndResp(const common::ProtoMessage *, watchpb::DsWatchRequest &, std::string &,
-                      std::string &, watchpb::DsWatchResponse *, uint64_t &, errorpb::Error *);
+                      std::string &, watchpb::DsWatchResponse *, uint64_t &, const bool &);
     void WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req);
     void PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
     void WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);

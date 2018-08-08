@@ -97,7 +97,7 @@ WatcherSet::~WatcherSet() {
 
 
 // private add/del watcher
-WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, WatcherMap& key_watchers, KeyMap& key_map_, storage::Store *store_) {
+WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, WatcherMap& key_watchers, KeyMap& key_map_, storage::Store *store_, bool prefixFlag ) {
     std::unique_lock<std::mutex> lock_queue(watcher_queue_mutex_);
     std::lock_guard<std::mutex> lock_map(watcher_map_mutex_);
 
@@ -115,8 +115,10 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         int64_t version(0);
         if(store_!= nullptr){
 
-            //to do 前缀模式时,需改为用iterator获取前缀下所有key
-
+            //reserve
+            if(prefixFlag) {
+                ;
+            }
             //single key
             Status ret = store_->Get(key, &val);
             if(ret.ok()){
@@ -321,7 +323,7 @@ WatchCode WatcherSet::GetKeyWatchers(const watchpb::EventType &evtType, std::vec
 
 // prefix add/del watcher
 WatchCode WatcherSet::AddPrefixWatcher(const PrefixKey& prefix, WatcherPtr& w_ptr, storage::Store *store_) {
-    return AddWatcher(prefix, w_ptr, prefix_watcher_map_, prefix_map_, store_);
+    return AddWatcher(prefix, w_ptr, prefix_watcher_map_, prefix_map_, store_, true);
 }
 
 WatchCode WatcherSet::DelPrefixWatcher(const PrefixKey& prefix, WatcherId id) {

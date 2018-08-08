@@ -32,6 +32,8 @@ namespace sharkstore {
                     this->version_ = oth.version_;
                     this->evtType_ = oth.evtType_;
                     this->create_time_ = getticks();
+
+                    //std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>version:" << oth.version_ << std::endl;
                     return *this;
                 }
 

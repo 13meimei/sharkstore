@@ -10,7 +10,7 @@ namespace dataserver {
 namespace range {
 
 Status Range::GetAndResp( const common::ProtoMessage *msg, watchpb::DsWatchRequest &req, std::string &key, std::string &val,
-                          watchpb::DsWatchResponse *dsResp, uint64_t &version, errorpb::Error *err) {
+                          watchpb::DsWatchResponse *dsResp, uint64_t &version, const bool &prefix) {
 
     version = 0;
     Status ret = store_->Get(key, &val);
@@ -24,9 +24,10 @@ Status Range::GetAndResp( const common::ProtoMessage *msg, watchpb::DsWatchReque
     auto userKv = new watchpb::WatchKeyValue;
     userKv->CopyFrom(req.req().kv());
 
+    auto err = std::make_shared<errorpb::Error>();
     if(ret.ok()) {
         //decode value
-        if(Status::kOk == WatchCode::DecodeKv(funcpb::kFuncWatchGet, meta_.Get(), userKv, key, val, err)) {
+        if(Status::kOk == WatchCode::DecodeKv(funcpb::kFuncWatchGet, meta_.Get(), userKv, key, val, err.get())) {
             evt->set_type(watchpb::PUT);
             evt->set_allocated_kv(userKv);
             version = userKv->version();
@@ -38,7 +39,8 @@ Status Range::GetAndResp( const common::ProtoMessage *msg, watchpb::DsWatchReque
         }
     } else {
         //consume version returning to user
-        version = getcurrVersion(err);
+        //version = getcurrVersion(err.get());
+        //to do get raft index
         evt->set_type(watchpb::DELETE);
         userKv->set_version(version);
 
@@ -141,7 +143,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
         auto btime = get_micro_second();
         //to do get from db again
-        GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, err);
+        GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, prefix);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
     } else {
@@ -539,7 +541,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
             break;
         }
 
-        //if(req.kv().key_size() > 1) {
+        if(req.kv().key_size() > 1) {
             //to do decode group key,ignore single key
             /*std::vector<std::string*> keys;
             std::string dbPreKey{""};
@@ -557,7 +559,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
             if (!eventBuffer->enQueue(dbKey, value.get())) {
                 FLOG_ERROR("load delete event kv to buffer error.");
             }
-        //}
+        }
 
         if (cmd.cmd_id().node_id() == node_id_) {
             auto len = static_cast<uint64_t>(req.kv().ByteSizeLong());
@@ -641,7 +643,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
             break;
         }
 
-        //if(req.kv().key_size() > 1) {
+        if(req.kv().key_size() > 1) {
             //to do decode group key,ignore single key
             /*std::vector<std::string*> keys;
             std::string dbPreKey{""};
@@ -658,7 +660,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
             if (!eventBuffer->enQueue(dbKey, value.get())) {
                 FLOG_ERROR("load delete event kv to buffer error.");
             }
-        //}
+        }
 
         // ignore delete CheckSplit
     } while (false);
@@ -768,14 +770,14 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         if(watchCnt > 0) {
             std::vector<watch::CEventBufferValue> vecUpdKeys;
             vecUpdKeys.clear();
-            int32_t cnt = eventBuffer->loadFromBuffer(dbKey, currDbVersion - 1, vecUpdKeys);
+            int32_t cnt = eventBuffer->loadFromBuffer(dbKey, currDbVersion, vecUpdKeys);
             if (cnt < 0) {
                 //get all from db
                 FLOG_INFO("overlimit version in memory,get from db now. notify:%"
                                   PRId32
                                   " key:%s version:%"
                                   PRId64,
-                          watchCnt, EncodeToHexString(dbKey).c_str(), currDbVersion - 1);
+                          watchCnt, EncodeToHexString(dbKey).c_str(), currDbVersion);
 
             } else if (0 == cnt) {
                 FLOG_ERROR("doudbt no changing. notify:%"
@@ -791,10 +793,10 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                     watchpb::Event evt;
                     auto vecKeys = vecUpdKeys[i].key();
                     assert(vecKeys.size() == 1);
-                    FLOG_DEBUG(">>>%d...value:%s create-time:%" PRId64 " %d", vecUpdKeys[i].type(), vecUpdKeys[i].value().c_str(), vecUpdKeys[i].createTime(), vecKeys.size());
+                    //FLOG_DEBUG(">>>%d...value:%s create-time:%" PRId64 " %d", vecUpdKeys[i].type(), vecUpdKeys[i].value().c_str(), vecUpdKeys[i].createTime(), vecKeys.size());
 
                     if(vecKeys.size() == 0) continue;
-                    
+
                     std::vector<std::string *> userKeys;
                     std::string userValue{""};
                     int64_t decodeVersion{0};

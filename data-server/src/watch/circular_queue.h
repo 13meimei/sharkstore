@@ -137,17 +137,21 @@ namespace watch {
 
         if(isEmpty()) return 0;
 
-        if(version > m_pQueue[m_iTail].version()) {
+        /*for (int32_t i = m_iHead; i < m_iTail; i++) {
+            std::cout << "head:" << m_iHead << "tail:" << m_iTail << "queue-version:" << m_pQueue[i].version() << std::endl;
+        }*/
+        if(version > m_pQueue[m_iTail-1].version()) {
+           // std::cout << "version:" << version << "head:" << m_iHead << "tail:" << m_iTail << "queue-version:" << m_pQueue[m_iTail].version() << std::endl;
             return -1;
         }
 
-        for (int32_t i = m_iHead; i <= m_iTail; i++) {
+        for (int32_t i = m_iHead; i < m_iTail; i++) {
             if (m_pQueue[i].version() >= version ) {
                 cnt++;
                 //std::vector<sharkstore::dataserver::watch::CEventBufferValue>::emplace(sharkstore::dataserver::watch::CEventBufferValue&)
                 elements.emplace_back(*(m_pQueue + i));
             } else {
-                break;
+                continue;
             }
         }
 
