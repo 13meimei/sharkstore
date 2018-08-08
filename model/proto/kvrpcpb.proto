@@ -495,7 +495,7 @@ message LockValue {
     string id               = 3;
     int64 delete_time       = 4;
     int64 update_time       = 5;
-    int64 delete_flag       = 6;
+    //int64 delete_flag       = 6;
     string by               = 7;
 }
 
