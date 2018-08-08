@@ -30,6 +30,7 @@ set(test_SRCS
     unittest/meta_store_unittest.cpp
     unittest/monitor_unittest.cpp
     unittest/range_ddl_unittest.cpp
+    unittest/range_meta_unittest.cpp
     unittest/range_raw_unittest.cpp
     unittest/range_sql_unittest.cpp
     unittest/row_decoder_unittest.cpp

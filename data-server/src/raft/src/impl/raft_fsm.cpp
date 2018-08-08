@@ -115,7 +115,7 @@ Status RaftFsm::start() {
         ops.log_file_size = rops_.log_file_size;
         ops.max_log_files = rops_.max_log_files;
         ops.allow_corrupt_startup = rops_.allow_log_corrupt;
-        ops.create_with_hole = rops_.create_with_hole;
+        ops.initial_first_index = rops_.initial_first_index;
         storage_ = std::shared_ptr<storage::Storage>(
             new storage::DiskStorage(id_, rops_.storage_path, ops));
     }
@@ -152,8 +152,8 @@ Status RaftFsm::start() {
         }
     }
     if (!local_found) {
-        return Status(Status::kInvalidArgument, "could not find local node in peers",
-                      PeersToString(rops_.peers));
+        return Status(Status::kInvalidArgument, std::string("could not find local node(") +
+                  std::to_string(node_id_) + ") in peers", PeersToString(rops_.peers));
     }
 
     LOG_INFO("newRaft[%llu]%s commit: %llu, applied: %llu, lastindex: %llu, "

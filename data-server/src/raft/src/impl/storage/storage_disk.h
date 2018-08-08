@@ -23,8 +23,8 @@ public:
         // 启动时检测到文件损坏是否继续，若是则备份可以正常打开工作
         bool allow_corrupt_startup = false;
 
-        // 创建时在日志开头制造一个空洞日志
-        bool create_with_hole = false;
+        // 创建时日志的起始index，之前的视作被截断
+        uint64_t initial_first_index = 0;
 
         // 每次操作都执行sync
         bool always_sync = false;

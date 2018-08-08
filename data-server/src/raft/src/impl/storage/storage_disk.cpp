@@ -79,22 +79,22 @@ Status DiskStorage::initMeta() {
         return s;
     }
 
-    // 创建日志空洞, 截断index=1处日志
-    if (!ops_.readonly && ops_.create_with_hole) {
+    // 创建日志空洞, 截断
+    if (!ops_.readonly && ops_.initial_first_index > 1) {
         if (trunc_meta_.index() > 1 || hard_state_.commit() > 1) {
             std::ostringstream ss;
             ss << "incompatible trunc index or commit: (" << trunc_meta_.index() << ", ";
             ss << hard_state_.commit() << ")";
-            return Status(Status::kInvalidArgument, "create hole", ss.str());
+            return Status(Status::kInvalidArgument, "initial truncate", ss.str());
         }
 
-        hard_state_.set_commit(1);
+        hard_state_.set_commit(ops_.initial_first_index - 1);
         s = meta_file_.SaveHardState(hard_state_);
         if (!s.ok()) {
             return s;
         }
 
-        trunc_meta_.set_index(1);
+        trunc_meta_.set_index(ops_.initial_first_index - 1);
         trunc_meta_.set_term(1);
         s = meta_file_.SaveTruncMeta(trunc_meta_);
         if (!s.ok()) {
