@@ -25,6 +25,7 @@ public:
 private:
     uint64_t                    table_id_;
     std::vector<std::string*>   keys_;
+    std::vector<std::string*>   keys_hash_;
     int64_t                    key_version_ = 0;
     common::ProtoMessage*       message_ = nullptr;
     WatchType                   type_ = WATCH_KEY;
@@ -36,7 +37,10 @@ private:
 
 public:
     uint64_t GetTableId() { return table_id_; }
-    const std::vector<std::string*>& GetKeys() { return keys_; }
+    const std::vector<std::string*>& GetKeys(uint16_t hashFlag = true) {
+        if(hashFlag) return keys_hash_;
+        return keys_;
+    }
     common::ProtoMessage* GetMessage() { return message_; }
     int GetType() { return type_; }
     void SetWatcherId(WatcherId id) { watcher_id_ = id; }

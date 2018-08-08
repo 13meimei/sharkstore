@@ -41,6 +41,8 @@ WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr, storage::Store *store_) 
                msgSessionId, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
     assert(w_ptr->GetType() == WATCH_KEY);
 
+    encode_key.clear();
+    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys(false));
     return wset->AddKeyWatcher(encode_key, w_ptr, store_);
 }
 
@@ -53,6 +55,9 @@ WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr, storage::Store *store
 
     auto ws = GetWatcherSet_(encode_key);
     w_ptr->SetWatcherId(ws->GenWatcherId());
+
+    encode_key.clear();
+    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys(false));
     return ws->AddPrefixWatcher(encode_key, w_ptr, store_);
 }
 
@@ -64,6 +69,9 @@ WatchCode WatchServer::DelKeyWatcher(WatcherPtr& w_ptr) {
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
+
+    encode_key.clear();
+    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys(false));
     return ws->DelKeyWatcher(encode_key, w_ptr->GetWatcherId());
 }
 
@@ -75,20 +83,23 @@ WatchCode WatchServer::DelPrefixWatcher(WatcherPtr& w_ptr) {
     w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
 
     auto ws = GetWatcherSet_(encode_key);
+
+    encode_key.clear();
+    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys(false));
     return ws->DelPrefixWatcher(encode_key, w_ptr->GetWatcherId());
 }
 
-WatchCode WatchServer::GetKeyWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& w_ptr_vec, const WatcherKey& key, const int64_t &version) {
+WatchCode WatchServer::GetKeyWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& w_ptr_vec, const WatcherKey &hash, const WatcherKey& key, const int64_t &version) {
     FLOG_DEBUG("watch server ready to get key watchers: key [%s]", EncodeToHexString(key).c_str());
     assert(w_ptr_vec.size() == 0);
-    auto ws = GetWatcherSet_(key);
+    auto ws = GetWatcherSet_(hash);
     return ws->GetKeyWatchers(evtType, w_ptr_vec, key, version);
 }
 
-WatchCode WatchServer::GetPrefixWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& w_ptr_vec, const PrefixKey& prefix, const int64_t &version) {
+WatchCode WatchServer::GetPrefixWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& w_ptr_vec, const PrefixKey &hash, const PrefixKey& prefix, const int64_t &version) {
     FLOG_DEBUG("watch server get prefix watchers: key [%s]", EncodeToHexString(prefix).c_str());
     assert(w_ptr_vec.size() == 0);
-    auto wset = GetWatcherSet_(prefix);
+    auto wset = GetWatcherSet_(hash);
     return wset->GetPrefixWatchers(evtType, w_ptr_vec, prefix, version);
 }
 

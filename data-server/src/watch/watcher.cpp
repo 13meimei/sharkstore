@@ -15,6 +15,9 @@ Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const 
     for (auto k: keys) {
         keys_.push_back(std::move(new WatcherKey(*k)));
     }
+    if(keys.size() > 0) {
+        keys_hash_.push_back(keys_[0]);
+    }
 }
 
 Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, common::ProtoMessage* msg):
@@ -22,11 +25,17 @@ Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey
     for (auto k: keys) {
         keys_.push_back(std::move(new WatcherKey(*k)));
     }
+    if(keys.size() > 0) {
+        keys_hash_.push_back(keys_[0]);
+    }
 }
 
 Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys):table_id_(table_id) {
     for (auto k: keys) {
         keys_.push_back(std::move(new WatcherKey(*k)));
+    }
+    if(keys.size() > 0) {
+        keys_hash_.push_back(keys_[0]);
     }
 }
 

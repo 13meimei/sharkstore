@@ -185,6 +185,7 @@ set(SOURCES
 	src/watch/watcher.cpp
 	src/watch/watcher_set.cpp
 	src/watch/watch_server.cpp
+	src/watch/watch_event_buffer.cpp
 )
 
 if (APPLE)
@@ -236,7 +237,7 @@ foreach(f IN LISTS SOURCES)
         COMPILE_DEFINITIONS "__FNAME__=\"${fname}\"") 
 endforeach() 
 
-add_executable(data-server ${SOURCES} )
+add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(

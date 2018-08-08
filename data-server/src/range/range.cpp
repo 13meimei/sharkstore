@@ -217,9 +217,9 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
         case raft_cmdpb::CmdType::KvRangeDel:
             return ApplyKVRangeDelete(cmd);
         case raft_cmdpb::CmdType::KvWatchPut:
-            return ApplyWatchPut(cmd);
+            return ApplyWatchPut(cmd, index);
         case raft_cmdpb::CmdType::KvWatchDel:
-            return ApplyWatchDel(cmd);
+            return ApplyWatchDel(cmd, index);
         default:
             FLOG_ERROR("range[%" PRIu64 "] Apply cmd type error %s", id_, CmdType_Name(cmd.cmd_type()).c_str());
             return Status(Status::kNotSupported, "cmd type not supported", "");

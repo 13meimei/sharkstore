@@ -501,7 +501,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
         std::string err_msg;
         watchpb::WatchKeyValue watch_kv;
         watch_kv.set_key(0, decode_key);
-        auto retCnt = WatchNotify(watchpb::DELETE, watch_kv, err_msg);
+        auto retCnt = WatchNotify(watchpb::DELETE, watch_kv, watch_kv.version(), err_msg);
         if (retCnt < 0) {
             FLOG_ERROR("ApplyUnlock WatchNotify failed, ret:%d, msg:%s", retCnt, err_msg.c_str());
         } else {
@@ -633,7 +633,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         std::string err_msg;
         watchpb::WatchKeyValue watch_kv;
         watch_kv.set_key(0, decode_key);
-        auto retCnt = WatchNotify(watchpb::DELETE, watch_kv, err_msg);
+        auto retCnt = WatchNotify(watchpb::DELETE, watch_kv, watch_kv.version(), err_msg);
         if (retCnt < 0) {
             FLOG_ERROR("ApplyUnlockForce WatchNotify failed, ret:%d, msg:%s", retCnt, err_msg.c_str());
         } else {

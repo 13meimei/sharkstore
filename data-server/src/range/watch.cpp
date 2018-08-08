@@ -149,9 +149,6 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             }
             default:
                 ret = -1;
-                if (err == nullptr) {
-                    err = new errorpb::Error;
-                }
                 err->set_message("unknown func_id");
                 FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
                 break;

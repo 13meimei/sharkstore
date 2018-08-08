@@ -34,7 +34,8 @@ _Pragma("once");
 
 #include "server/context_server.h"
 #include "server/run_status.h"
-#include "watch.h"
+#include "watch/watch_event_buffer.h"
+#include "watch/watcher.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -188,8 +189,8 @@ private:
     Status ApplyRawPut(const raft_cmdpb::Command &cmd);
     Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
 
-    Status ApplyWatchPut(const raft_cmdpb::Command &cmd);
-    Status ApplyWatchDel(const raft_cmdpb::Command &cmd);
+    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
+    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
 
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
     Status ApplyDelete(const raft_cmdpb::Command &cmd);
@@ -364,7 +365,11 @@ private:
     errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
 
 private:
-    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, std::string &errMsg);
+    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg);
+    int32_t SendNotify(const std::vector<watch::WatcherPtr>& vecNotify,
+                              const std::vector<watchpb::Event> &vecEvent ,
+                              bool prefix = false);
+
     int64_t getcurrVersion(errorpb::Error *err) const {
         int64_t  version{0};
         if( 0 != version_seq_->currentId(&version)) {
@@ -412,6 +417,7 @@ private:
 
     //std::atomic<uint64_t> version_seq_{0};
     sharkstore::IdGenerater *version_seq_ = nullptr;
+    watch::CEventBuffer *eventBuffer = nullptr;
 
     typedef std::pair<time_t, uint64_t> tr;
     std::atomic<uint64_t> submit_seq_{1};
