@@ -86,7 +86,8 @@ namespace watch {
     template<class T>
     bool CircularQueue<T>::enQueue(T element) {
         if (isFull()) {
-            return false;
+            T tmpElement;
+            deQueue(tmpElement);
         }
 
         m_pQueue[m_iTail] = element;

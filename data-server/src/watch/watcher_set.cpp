@@ -285,8 +285,6 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
     FLOG_INFO("watcher get fail: key: [%s] no watcher.", EncodeToHexString(key).c_str());
     return WATCH_WATCHER_NOT_EXIST;
 
-
-
 }
 
 // key add/del watcher

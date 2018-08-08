@@ -725,9 +725,10 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
     watch::Watcher::EncodeKey(&hashKey, meta_.GetTableID(), decodeKeys);
     if(hasPrefix) {
-        auto tmpCnt{0};
+        int16_t tmpCnt{0};
         for(auto it : kv.key()) {
-            if(++tmpCnt == 1) continue;
+            ++tmpCnt;
+            if(tmpCnt == 1) continue;
             //to do skip the first element
             decodeKeys.emplace_back(std::move(new std::string(it)));
         }
@@ -740,7 +741,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
     //decltype(dbKey) dbPreKey{""};
     auto dbValue = kv.value();
-    auto currDbVersion{version};
+    int64_t currDbVersion{version};
     auto watch_server = context_->range_server->watch_server_;
 
     int32_t evtCnt{1};
@@ -768,16 +769,71 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         FLOG_DEBUG("prefix key notify:%" PRId32 " key:%s", watchCnt, EncodeToHexString(dbKey).c_str());
 
         if(watchCnt > 0) {
+            //随机取用户版本作为起始版本
+            int64_t startVersion{vecPrefixNotifyWatcher[0]->getKeyVersion()};
+
             std::vector<watch::CEventBufferValue> vecUpdKeys;
             vecUpdKeys.clear();
-            int32_t cnt = eventBuffer->loadFromBuffer(dbKey, currDbVersion, vecUpdKeys);
+            int32_t cnt = eventBuffer->loadFromBuffer(dbKey, startVersion, vecUpdKeys);
             if (cnt < 0) {
                 //get all from db
                 FLOG_INFO("overlimit version in memory,get from db now. notify:%"
                                   PRId32
                                   " key:%s version:%"
                                   PRId64,
-                          watchCnt, EncodeToHexString(dbKey).c_str(), currDbVersion);
+                          watchCnt, EncodeToHexString(dbKey).c_str(), startVersion);
+                //use iterator
+                std::string dbKeyEnd{""};
+                dbKeyEnd.assign(dbKey);
+                if( 0 != WatchCode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
+                    //to do set error message
+                    FLOG_ERROR("NextComparableBytes error.");
+                    return -1;
+                }
+                //RANGE_LOG_DEBUG("WatchNotify key scope %s---%s", EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbKeyEnd).c_str());
+
+                //need to encode and decode
+                std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
+                uint32_t count{0};
+                auto err = std::make_shared<errorpb::Error>();
+                int64_t minVersion{0};
+                int64_t maxVersion{0};
+
+                for (int i = 0; iterator->Valid() ; ++i) {
+
+                    auto tmpDbKey = iterator.get()->key();
+                    auto tmpDbValue = iterator.get()->value();
+
+                    watchpb::WatchKeyValue kv;
+                    if(Status::kOk != WatchCode::DecodeKv(funcpb::kFuncPureGet, meta_.Get(), &kv, tmpDbKey, tmpDbValue, err.get())) {
+                        //break;
+                        continue;
+                    }
+                    //to judge version after decoding value and spliting version from value
+                    if (minVersion > kv.version()) {
+                        minVersion = kv.version();
+                    }
+                    if(maxVersion < kv.version()) {
+                        maxVersion = kv.version();
+                    }
+                    if( kv.version() > startVersion) {
+                        watchpb::Event evt;
+
+                        for (int16_t i = 0; i < kv.key().size(); i++) {
+                            evt.mutable_kv()->add_key(kv.key(i));
+                        }
+
+                        *evt.mutable_kv()->mutable_value() = kv.value();
+                        evt.mutable_kv()->set_version(kv.version());
+                        evt.set_type(evtType);
+
+                        events.emplace_back(evt);
+                        count++;
+                    }
+
+                    iterator->Next();
+                }
+                FLOG_DEBUG("load from db,count:%" PRIu32, count);
 
             } else if (0 == cnt) {
                 FLOG_ERROR("doudbt no changing. notify:%"
@@ -808,7 +864,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                     watch::Watcher::DecodeKey(userKeys, encodeKey);
                     watch::Watcher::DecodeValue(&decodeVersion, &userValue, &decodeExt, encodeValue);
 
-                    for (auto i = 0; i < userKeys.size(); i++) {
+                    for (int16_t i = 0; i < userKeys.size(); i++) {
                         evt.mutable_kv()->add_key(*userKeys[i]);
                     }
 
