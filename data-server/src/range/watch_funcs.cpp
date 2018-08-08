@@ -893,12 +893,14 @@ int32_t Range::SendNotify(const std::vector<watch::WatcherPtr>& vecNotify, const
     auto err = std::make_shared<errorpb::Error>();
     uint32_t watchCnt = uint32_t(vecNotify.size());
     auto watch_server = context_->range_server->watch_server_;
-    auto ds_resp = new watchpb::DsWatchResponse;
+
+    watchpb::DsWatchResponse ds_resp_;
+
 
     for (uint32_t i = 0; i < vecEvent.size(); i++) {
 
         auto &tmpKv = vecEvent[i].kv();
-        auto resp = ds_resp->mutable_resp();
+        auto resp = ds_resp_.mutable_resp();
         auto evt = resp->add_events();
 
         evt->set_type(vecEvent[i].type());
@@ -914,6 +916,7 @@ int32_t Range::SendNotify(const std::vector<watch::WatcherPtr>& vecNotify, const
     int32_t idx{0};
 
     for (auto w: vecNotify) {
+        auto ds_resp = new watchpb::DsWatchResponse(ds_resp_);
 
         auto resp = ds_resp->mutable_resp();
         auto w_id = w->GetWatcherId();
