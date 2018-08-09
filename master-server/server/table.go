@@ -624,6 +624,7 @@ func (dt *DeleteTableWorker) Work(cluster *Cluster) {
 
 				cluster.deletingTables.DeleteById(table.GetId())
 				log.Info("table id[%v] name[%v] delete ranges finish", table.GetId(), table.GetName())
+				continue
 			}
 
 			log.Debug("table id[%v] name[%v] is deleting, len(ranges) %v", table.GetId(), table.GetName(), len(ranges))

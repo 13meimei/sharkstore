@@ -380,7 +380,7 @@ func (p *KvProxy) sendReq(bo *Backoffer, ctx *Context, req *Request) (resp *Resp
 func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Context) (retry bool, err error) {
 	if rangeErr.GetNotLeader() != nil {
 		notLeader := rangeErr.GetNotLeader()
-		log.Warn("range leader changed, ctx: %s, , new leader[%d] %s", ctx.RequestHeader.String(), notLeader.GetLeader().GetNodeId(), ctx.NodeAddr)
+		log.Warn("range leader changed, ctx: %s, old leader[%v], new leader %s", ctx.RequestHeader.String(), ctx.NodeAddr, notLeader.GetLeader().GetNodeId())
 		// no leader
 		if notLeader.GetLeader() == nil {
 			err = bo.Backoff(boRangeMiss, fmt.Errorf("no leader: %v, range: %d", notLeader, ctx.VID.Id))
