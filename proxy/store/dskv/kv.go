@@ -70,13 +70,6 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 			goto Err
 		}
 		resp.UnlockForceResp = _resp
-	case Type_LockScan:
-		_resp, _err := p.Cli.LockScan(ctx, addr, req.GetLockScanReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.LockScanResp = _resp
 	case Type_RawPut:
 		_resp, _err := p.Cli.RawPut(ctx, addr, req.GetRawPutReq())
 		if _err != nil {
@@ -295,57 +288,57 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 	//var pErr *errorpb.Error
 	metricLoop := 0
 	//for {
-		metricLoop++
+	metricLoop++
 
-		l, err = p.RangeCache.LocateKey(bo, key)
-		if err != nil {
-			log.Error("locate key=%v failed, err=%v", key, err)
-			return
-		}
-		addr, err = p.RangeCache.GetNodeAddr(bo, l.NodeId)
-		if err != nil {
-			log.Error("locate node=%d failed, err=%v", l.NodeId, err)
-			return
-		}
-		log.Debug("send request key: %v, addr: %v", key, addr)
-		timeout, reqHeader, err = p.prepare(l, req)
-		if err != nil {
-			log.Error("prepare request[%v] failed, err=%v", req, err)
-			return
-		}
-		metricSend := time.Now().UnixNano()
-		ctx := &Context{VID: l.Region, NodeId: l.NodeId, NodeAddr: addr, RequestHeader: reqHeader, Timeout: timeout}
-		resp, err = p.sendReq(bo, ctx, req)
-		sendDelay := (time.Now().UnixNano() - metricSend) / int64(time.Millisecond)
-		if sendDelay <= 50 {
-			// do nothing
-		} else if sendDelay <= 200 {
-			log.Info("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
-		} else if sendDelay <= 500 {
-			log.Warn("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
-		} else {
-			log.Error("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
-		}
+	l, err = p.RangeCache.LocateKey(bo, key)
+	if err != nil {
+		log.Error("locate key=%v failed, err=%v", key, err)
+		return
+	}
+	addr, err = p.RangeCache.GetNodeAddr(bo, l.NodeId)
+	if err != nil {
+		log.Error("locate node=%d failed, err=%v", l.NodeId, err)
+		return
+	}
+	log.Debug("send request key: %v, addr: %v", key, addr)
+	timeout, reqHeader, err = p.prepare(l, req)
+	if err != nil {
+		log.Error("prepare request[%v] failed, err=%v", req, err)
+		return
+	}
+	metricSend := time.Now().UnixNano()
+	ctx := &Context{VID: l.Region, NodeId: l.NodeId, NodeAddr: addr, RequestHeader: reqHeader, Timeout: timeout}
+	resp, err = p.sendReq(bo, ctx, req)
+	sendDelay := (time.Now().UnixNano() - metricSend) / int64(time.Millisecond)
+	if sendDelay <= 50 {
+		// do nothing
+	} else if sendDelay <= 200 {
+		log.Info("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
+	} else if sendDelay <= 500 {
+		log.Warn("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
+	} else {
+		log.Error("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
+	}
 
-		if err != nil {
-			log.Error("send failed, ctx %v, err %v", ctx, err)
-			return
-		}
+	if err != nil {
+		log.Error("send failed, ctx %v, err %v", ctx, err)
+		return
+	}
 
-		/*pErr, err = resp.GetErr()
+	/*pErr, err = resp.GetErr()
+	if err != nil {
+		return
+	}
+	if pErr != nil {
+		err = bo.Backoff(boRangeMiss, errors.New(pErr.String()))
 		if err != nil {
 			return
 		}
-		if pErr != nil {
-			err = bo.Backoff(boRangeMiss, errors.New(pErr.String()))
-			if err != nil {
-				return
-			}
-			//range 拓扑改变了，记录可能有部分已经超出范围了，需要重新组织request的记录，这里不能进行直接重试
-			//continue
-		}
-		// 请求成功
-		return*/
+		//range 拓扑改变了，记录可能有部分已经超出范围了，需要重新组织request的记录，这里不能进行直接重试
+		//continue
+	}
+	// 请求成功
+	return*/
 	//}
 
 	return
@@ -395,8 +388,8 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 				//可能gateway没有拿到最新的拓扑
 				p.RangeCache.DropRegion(ctx.VID)
 				return false, ErrRouteChange
-			}else {
-				return false,ErrRouteChange
+			} else {
+				return false, ErrRouteChange
 			}
 		} else {
 			// update leader
@@ -412,7 +405,7 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 		}
 
 		//retry = true
-		return false,ErrRouteChange
+		return false, ErrRouteChange
 	}
 
 	if staleEpoch := rangeErr.GetStaleEpoch(); staleEpoch != nil {
