@@ -16,7 +16,7 @@ namespace watch {
 class WatchServer {
 public:
     WatchServer() = default;
-    WatchServer(uint64_t watcher_set_count);
+    explicit WatchServer(uint64_t watcher_set_count);
     WatchServer(const WatchServer&) = delete;
     WatchServer& operator=(const WatchServer&) = delete;
     ~WatchServer();

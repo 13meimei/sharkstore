@@ -18,6 +18,9 @@ bool DecodeFromHex(const std::string& hex, std::string* result);
 
 std::string SliceSeparate(const std::string &l, const std::string &r, size_t max_len = 0);
 
+// return a empty string if could not find one
+std::string NextComparable(const std::string& str);
+
 std::string JoinFilePath(const std::vector<std::string> &strs);
 
 int CheckDirExist(const std::string& path);

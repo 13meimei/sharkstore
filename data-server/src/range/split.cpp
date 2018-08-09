@@ -186,6 +186,7 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
     }
 
     meta_.Split(req.split_key(), req.epoch().version());
+    store_->SetEndKey(req.split_key());
 
     if (req.leader() == node_id_) {
         ReportSplit(req.new_range());

@@ -365,31 +365,6 @@ private:
                               const std::vector<watchpb::Event> &vecEvent ,
                               bool prefix = false);
 
-    int64_t getcurrVersion(errorpb::Error *err) const {
-        int64_t  version{0};
-        if( 0 != version_seq_->currentId(&version)) {
-            if (err == nullptr) {
-                err = new errorpb::Error;
-            }
-            err->set_message(version_seq_->getErrMsg());
-        }
-
-        return version;
-    }
-
-    int64_t getNextVersion(errorpb::Error *err) const {
-        int64_t  version{0};
-        if( 0 != version_seq_->nextId(&version)) {
-            if (err == nullptr) {
-                err = new errorpb::Error;
-            }
-            err->set_message(version_seq_->getErrMsg());
-        }
-
-        return version;
-    }
-
-
 private:
     static const int kTimeTakeWarnThresoldUSec = 500000;
 
@@ -412,8 +387,6 @@ private:
     std::atomic<uint64_t> statis_size_ = {0};
     uint64_t split_range_id_ = 0;
 
-    //std::atomic<uint64_t> version_seq_{0};
-    sharkstore::IdGenerater *version_seq_ = nullptr;
     watch::CEventBuffer *eventBuffer = nullptr;
 
     typedef std::pair<time_t, uint64_t> tr;

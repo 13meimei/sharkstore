@@ -31,11 +31,12 @@ static std::string GetRealKey(std::string& key) {
     return realKey;
 }
 
-Store::Store(const metapb::Range& meta, rocksdb::DB* db)
-    : range_id_(meta.id()),
-      start_key_(meta.start_key()),
-      end_key_(meta.end_key()),
-      db_(db) {
+Store::Store(const metapb::Range& meta, rocksdb::DB* db) :
+    table_id_(meta.table_id()) ,
+    range_id_(meta.id()),
+    start_key_(meta.start_key()),
+    end_key_(meta.end_key()),
+    db_(db) {
     assert(!start_key_.empty());
     assert(!end_key_.empty());
     assert(meta.primary_keys_size() > 0);
