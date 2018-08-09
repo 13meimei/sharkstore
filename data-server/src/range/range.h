@@ -3,7 +3,6 @@ _Pragma("once");
 #include <rocksdb/db.h>
 #include <stdint.h>
 #include <atomic>
-#include <memory>
 #include <mutex>
 #include <queue>
 #include <string>
@@ -14,10 +13,10 @@ _Pragma("once");
 #include "frame/sf_util.h"
 
 #include "base/shared_mutex.h"
-#include "base/status.h"
 #include "base/util.h"
 
-#include "common/ds_encoding.h"
+#include "common/socket_session.h"
+
 #include "storage/store.h"
 
 #include "raft/raft.h"
@@ -29,10 +28,8 @@ _Pragma("once");
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 
-#include "server/context_server.h"
-#include "server/run_status.h"
-
 #include "meta_keeper.h"
+#include "context.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -51,7 +48,7 @@ enum {
 
 class Range : public raft::StateMachine, public std::enable_shared_from_this<Range> {
 public:
-    Range(server::ContextServer *context, const metapb::Range &meta);
+    Range(RangeContext* context, const metapb::Range &meta);
     ~Range();
 
     Range(const Range &) = delete;
@@ -195,7 +192,7 @@ private:
 
     // split func
     void CheckSplit(uint64_t size);
-    void AskSplit(std::string &key, metapb::Range *meta);
+    void AskSplit(std::string &&key, metapb::Range&& meta);
     void ReportSplit(const metapb::Range &new_range);
 
     int64_t checkMaxCount(int64_t maxCount) {
@@ -211,9 +208,9 @@ private:
     void SendError(AsyncContext *context, R *resp, errorpb::Error *err) {
         auto header = resp->mutable_header();
 
-        context_->socket_session->SetResponseHeader(*context->request_header, header,
+        context_.SocketSession()->SetResponseHeader(*context->request_header, header,
                                                     err);
-        context_->socket_session->Send(context->release_proto_message(), resp);
+        context_.SocketSession()->Send(context->release_proto_message(), resp);
     }
 
     template <class R>
@@ -221,8 +218,8 @@ private:
                    errorpb::Error *err) {
         auto header = resp->mutable_header();
 
-        context_->socket_session->SetResponseHeader(req, header, err);
-        context_->socket_session->Send(msg, resp);
+        context_.SocketSession().SetResponseHeader(req, header, err);
+        context_.SocketSession().Send(msg, resp);
     }
 
     template <class RequestT>
@@ -280,9 +277,9 @@ private:
 
         response->mutable_resp()->set_code(code);
 
-        context_->socket_session->SetResponseHeader(*context->request_header,
+        context_.SocketSession()->SetResponseHeader(*context->request_header,
                                                     response->mutable_header(), err);
-        context_->socket_session->Send(context->release_proto_message(), response);
+        context_.SocketSession()->Send(context->release_proto_message(), response);
 
         return Status::OK();
     }
@@ -339,7 +336,7 @@ private:
 private:
     static const int kTimeTakeWarnThresoldUSec = 500000;
 
-    server::ContextServer *context_ = nullptr;
+    RangeContext* context_ = nullptr;
     const uint64_t node_id_ = 0;
     const uint64_t id_ = 0;
     // cache range's start key
@@ -364,7 +361,7 @@ private:
     std::priority_queue<tr, std::vector<tr>, std::greater<tr>> submit_queue_;
     std::mutex submit_mutex_;
 
-    storage::Store *store_ = nullptr;
+    std::unique_ptr<storage::Store> store_;
     std::shared_ptr<raft::Raft> raft_ = nullptr;
 
     int64_t max_count_ = 1000;

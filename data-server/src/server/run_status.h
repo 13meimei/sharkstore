@@ -10,6 +10,7 @@
 #include "frame/sf_status.h"
 #include "monitor/isystemstatus.h"
 #include "monitor/syscommon.h"
+#include "range/statistics.h"
 
 #include "context_server.h"
 
@@ -23,7 +24,7 @@ struct FileSystemUsage {
     uint64_t free_size = 0;
 };
 
-class RunStatus {
+class RunStatus : public range::Statistics {
 public:
     RunStatus() = default;
     ~RunStatus() = default;
@@ -35,19 +36,19 @@ public:
     int Start();
     void Stop();
 
-    void PushTime(monitor::PrintTag type, uint32_t time) {
+    void PushTime(monitor::PrintTag type, uint32_t time) override {
         system_status_.PutTopData(type, time);
     }
 
     bool GetFilesystemUsage(FileSystemUsage* usage);
-    uint64_t GetFilesystemUsedPercent() const { return fs_usage_percent_.load();}
+    uint64_t GetFilesystemUsedPercent() const override { return fs_usage_percent_.load();}
 
-    void IncrLeaderCount() { ++leader_count_; }
-    void DecrLeaderCount() { --leader_count_; }
+    void IncrLeaderCount() override { ++leader_count_; }
+    void DecrLeaderCount() override { --leader_count_; }
     uint64_t GetLeaderCount() const { return leader_count_; }
 
-    void IncrSplitCount() { ++split_count_; }
-    void DecrSplitCount() { --split_count_; }
+    void IncrSplitCount() override { ++split_count_; }
+    void DecrSplitCount() override { --split_count_; }
     uint64_t GetSplitCount() const { return split_count_; }
 
 private:

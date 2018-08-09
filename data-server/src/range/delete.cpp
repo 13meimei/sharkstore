@@ -24,7 +24,7 @@ bool Range::DeleteSubmit(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &re
 }
 
 bool Range::DeleteTry(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
-    std::shared_ptr<Range> rng = context_->range_server->find(split_range_id_);
+    std::shared_ptr<Range> rng = context_.FindRange(split_range_id_);
     if (rng == nullptr) {
         return false;
     }
@@ -38,7 +38,7 @@ void Range::Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_.Statistics().PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("Delete begin");
 

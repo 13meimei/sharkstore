@@ -6,7 +6,9 @@
 #include "master/worker.h"
 #include "server/range_server.h"
 #include "server/server.h"
+#include "base/util.h"
 
+#include "statistics.h"
 #include "range_logger.h"
 
 namespace sharkstore {
@@ -18,7 +20,7 @@ void Range::CheckSplit(uint64_t size) {
 
     if (!statis_flag_ && statis_size_ > ds_config.range_config.check_size) {
         statis_flag_ = true;
-        context_->range_server->StatisPush(id_);
+        context_.ScheduleCheckSize(id_);
     }
 }
 
@@ -29,8 +31,7 @@ void Range::ResetStatisSize() {
     // 1;
     const static uint64_t split_size = ds_config.range_config.split_size;
 
-    auto *meta = new metapb::Range;
-    meta_.Get(meta);
+    auto meta = meta_.Get();
 
     std::string split_key;
     if (ds_config.range_config.access_mode == 0) {
@@ -43,40 +44,37 @@ void Range::ResetStatisSize() {
 
     statis_flag_ = false;
 
-    do {
-        if (!EpochIsEqual(meta->range_epoch())) {
-            RANGE_LOG_WARN("ResetStatisSize epoch is changed");
-            break;
-        }
+    if (!EpochIsEqual(meta.range_epoch())) {
+        RANGE_LOG_WARN("ResetStatisSize epoch is changed");
+        return;
+    }
 
-        statis_size_ = 0;
-        // when real size >= max size, we need split with split size
-        if (real_size_ >= ds_config.range_config.max_size) {
-            return AskSplit(split_key, meta);
-        }
-    } while (false);
-
-    delete meta;
+    statis_size_ = 0;
+    // when real size >= max size, we need split with split size
+    if (real_size_ >= ds_config.range_config.max_size) {
+        return AskSplit(std::move(split_key), std::move(meta));
+    }
 }
 
-void Range::AskSplit(std::string &key, metapb::Range *meta) {
+void Range::AskSplit(std::string &&key, metapb::Range&& meta) {
     assert(!key.empty());
-    assert(key >= meta->start_key());
-    assert(key < meta->end_key());
+    assert(key >= meta.start_key());
+    assert(key < meta.end_key());
 
-    RANGE_LOG_DEBUG("ask split %" PRIu64, id_);
+    RANGE_LOG_INFO("AskSplit, version: %" PRIu64 ", key: %s",
+            meta.range_epoch().version(), key.c_str());
+
     mspb::AskSplitRequest ask;
-    ask.set_allocated_range(meta);
+    ask.set_allocated_range(new metapb::Range(std::move(meta)));
     ask.set_split_key(std::move(key));
-
-    context_->master_worker->AsyncAskSplit(ask);
+    context_.MasterClient()->AsyncAskSplit(ask);
 }
 
 void Range::ReportSplit(const metapb::Range &new_range) {
     mspb::ReportSplitRequest report;
     meta_.Get(report.mutable_left());
     report.set_allocated_right(new metapb::Range(new_range));
-    context_->master_worker->AsyncReportSplit(report);
+    context_.MasterClient()->AsyncReportSplit(report);
 }
 
 void Range::AdminSplit(mspb::AskSplitResponse &resp) {
@@ -89,7 +87,7 @@ void Range::AdminSplit(mspb::AskSplitResponse &resp) {
 
     RANGE_LOG_INFO(
         "AdminSplit new_range_id: %" PRIu64 " split_key: %s",
-        resp.new_range_id(), EncodeToHexString(split_key).c_str());
+        resp.new_range_id(), EncodeToHex(split_key).c_str());
 
     raft_cmdpb::Command cmd;
     uint64_t seq_id = submit_seq_.fetch_add(1);
@@ -176,9 +174,10 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
         return ret;
     }
 
-    context_->run_status->IncrSplitCount();
+    context_.Statistics().IncrSplitCount();
 
-    ret = context_->range_server->ApplySplit(id_, req, index);
+    std::shared_ptr<Range> split_range;
+    ret = context_.SplitRange(id_, req, index, &split_range);
     if (!ret.ok()) {
         RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") create failed: %s",
                         req.new_range().id(), ret.ToString().c_str());
@@ -192,22 +191,18 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
 
         // new range report heartbeat
         split_range_id_ = req.new_range().id();
-        context_->range_server->LeaderQueuePush(split_range_id_,
-                                                getticks());
+        context_.ScheduleHeartbeat(split_range_id_, false);
 
         uint64_t rsize = ds_config.range_config.split_size >> 1;
-        auto rng = context_->range_server->find(split_range_id_);
+        auto rng = context_.FindRange(split_range_id_);
         if (rng != nullptr) {
             rng->set_real_size(real_size_ - rsize);
         }
 
         real_size_ = rsize;
-
-        // specify leader don't trigger function OnLeaderChange
-        context_->run_status->IncrLeaderCount();
     }
 
-    context_->run_status->DecrSplitCount();
+    context_.Statistics().DecrSplitCount();
 
     RANGE_LOG_INFO("ApplySplit(new range: %" PRIu64 ") End. version:%" PRIu64,
             req.new_range().id(), meta_.GetVersion());

@@ -21,7 +21,6 @@ namespace server {
 
 class Worker;
 class Manager;
-class GrpcWorker;
 class RunStatus;
 class RangeServer;
 class RunStatus;

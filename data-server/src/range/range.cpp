@@ -19,20 +19,20 @@ static const int kDownPeerThresholdSecs = 50;
 // 磁盘使用率大于百分之92停写
 static const uint64_t kStopWriteFsUsagePercent = 92;
 
-Range::Range(server::ContextServer *context, const metapb::Range &meta)
-    : context_(context),
-      node_id_(context_->node_id),
-      id_(meta.id()),
-      start_key_(meta.start_key()),
-      meta_(meta) {
-    store_ = new storage::Store(meta, context->rocks_db);
+Range::Range(RangeContext* context, const metapb::Range &meta) :
+    context_(context),
+    node_id_(context_->GetNodeID()),
+    id_(meta.id()),
+    start_key_(meta.start_key()),
+    meta_(meta),
+    store_(new storage::Store(meta, context->DBInstance())) {
 }
 
-Range::~Range() { delete store_; }
+Range::~Range() {}
 
 Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     // 加载apply位置
-    auto s = context_->meta_store->LoadApplyIndex(id_, &apply_index_);
+    auto s = context_->MetaStore()->LoadApplyIndex(id_, &apply_index_);
     if (!s.ok()) {
         return Status(Status::kCorruption, "load applied", s.ToString());
     }
@@ -40,7 +40,7 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     // 创建起始日志之前的日志都算作被应用过的
     if (log_start_index > 1 && log_start_index - 1 > apply_index_) {
         apply_index_ = log_start_index - 1;
-        s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
+        s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
         if (!s.ok()) {
             return Status(Status::kCorruption, "save applied", s.ToString());
         }
@@ -76,12 +76,13 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     }
 
     // create raft group
-    s = context_->raft_server->CreateRaft(options, &raft_);
+    s = context_->RaftServer()->CreateRaft(options, &raft_);
     if (!s.ok()) {
         return Status(Status::kInvalidArgument, "create raft", s.ToString());
     }
 
     if (leader == node_id_) {
+        context_->Statistics()->IncrLeaderCount();
         is_leader_ = true;
     }
 
@@ -92,7 +93,7 @@ Status Range::Shutdown() {
     valid_ = false;
 
     // 删除raft
-    auto s = context_->raft_server->RemoveRaft(id_);
+    auto s = context_->RaftServer()->RemoveRaft(id_);
     if (!s.ok()) {
         RANGE_LOG_WARN("remove raft failed: %s", s.ToString().c_str());
     }
@@ -104,7 +105,7 @@ Status Range::Shutdown() {
 
 void Range::Heartbeat() {
     if (PushHeartBeatMessage()) {
-        context_->range_server->LeaderQueuePush(id_, ds_config.hb_config.range_interval * 1000 + getticks());
+        context_->ScheduleHeartbeat(id_, true);
     }
 
     // clear async apply expired task
@@ -171,7 +172,7 @@ bool Range::PushHeartBeatMessage() {
     stats->set_keys_written(store_stat.keys_write_per_sec);
     stats->set_bytes_written(store_stat.bytes_write_per_sec);
 
-    context_->master_worker->AsyncRangeHeartbeat(req);
+    context_->MasterClient()->AsyncRangeHeartbeat(req);
 
     return true;
 }
@@ -219,7 +220,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     auto start = std::chrono::system_clock::now();
 
     raft_cmdpb::Command raft_cmd;
-    context_->socket_session->GetMessage(cmd.data(), cmd.size(), &raft_cmd);
+    context_->SocketSession()->GetMessage(cmd.data(), cmd.size(), &raft_cmd);
 
     if (!valid_) {
         RANGE_LOG_ERROR("is invalid!");
@@ -242,7 +243,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     }
 
     apply_index_ = index;
-    auto s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
+    auto s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
     if (!s.ok()) {
         RANGE_LOG_ERROR("save apply index error %s", s.ToString().c_str());
         return s;
@@ -286,14 +287,14 @@ void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
 
             store_->ResetMetric();
 
-            context_->range_server->LeaderQueuePush(id_, getticks());
-            context_->run_status->IncrLeaderCount();
+            context_->ScheduleHeartbeat(id_, false);
+            context_->Statistics()->IncrLeaderCount();
         }
 
     } else {
         if (is_leader_) {
             is_leader_ = false;
-            context_->run_status->DecrLeaderCount();
+            context_->Statistics()->DecrLeaderCount();
         }
     }
 }
@@ -353,7 +354,7 @@ Status Range::ApplySnapshotFinish(uint64_t index) {
     }
 
     apply_index_ = index;
-    auto s = context_->meta_store->SaveApplyIndex(id_, index);
+    auto s = context_->MetaStore()->SaveApplyIndex(id_, index);
     if (!s.ok()) {
         RANGE_LOG_ERROR("save snapshot applied index failed(%s)!", s.ToString().c_str());
         return s;
@@ -363,8 +364,7 @@ Status Range::ApplySnapshotFinish(uint64_t index) {
 }
 
 Status Range::SaveMeta(const metapb::Range &meta) {
-    auto ms = context_->range_server->meta_store();
-    return ms->AddRange(meta);
+    return context_->MetaStore()->AddRange(meta);
 }
 
 Status Range::Destroy() {
@@ -373,7 +373,7 @@ Status Range::Destroy() {
     ClearExpiredContext();
 
     // 销毁raft
-    auto s = context_->raft_server->DestroyRaft(id_);
+    auto s = context_->RaftServer()->DestroyRaft(id_);
     if (!s.ok()) {
         RANGE_LOG_WARN("destroy raft failed: %s", s.ToString().c_str());
     }
@@ -384,7 +384,7 @@ Status Range::Destroy() {
         RANGE_LOG_ERROR("truncate store fail: %s", s.ToString().c_str());
         return s;
     }
-    s = context_->meta_store->DeleteApplyIndex(id_);
+    s = context_->MetaStore()->DeleteApplyIndex(id_);
     if (!s.ok()) {
         RANGE_LOG_ERROR("truncate delete apply fail: %s", s.ToString().c_str());
     }
@@ -433,7 +433,7 @@ bool Range::VerifyLeader(errorpb::Error *&err) {
 }
 
 bool Range::CheckWriteable() {
-    auto percent = context_->run_status->GetFilesystemUsedPercent();
+    auto percent = context_->Statistics()->GetFilesystemUsedPercent();
     if (percent > kStopWriteFsUsagePercent) {
         RANGE_LOG_ERROR(
                 "filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
@@ -447,16 +447,14 @@ bool Range::CheckWriteable() {
 bool Range::KeyInRange(const std::string &key) {
     if (key < start_key_) {
         RANGE_LOG_WARN("key: %s less than start_key:%s, out of range",
-                  EncodeToHexString(key).c_str(),
-                  EncodeToHexString(start_key_).c_str());
+                  EncodeToHex(key).c_str(), EncodeToHex(start_key_).c_str());
         return false;
     }
 
     auto end_key = meta_.GetEndKey();
     if (key >= end_key) {
         RANGE_LOG_WARN("key: %s greater than end_key:%s, out of range",
-                  EncodeToHexString(key).c_str(),
-                  EncodeToHexString(end_key).c_str());
+                  EncodeToHex(key).c_str(), EncodeToHex(end_key).c_str());
         return false;
     }
 
@@ -618,9 +616,10 @@ errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
     meta_.Get(stale_epoch->mutable_old_range());
 
     if (split_range_id_ > 0) {
-        auto new_meta = context_->range_server->GetRangeMeta(split_range_id_);
-        if (new_meta != nullptr) {
-            stale_epoch->set_allocated_new_range(new_meta);
+        auto split_range = context_->FindRange(split_range_id_);
+        if (split_range) {
+            auto split_meta = split_range->options();
+            stale_epoch->set_allocated_new_range(new metapb::Range(std::move(split_meta)));
         }
     }
 

@@ -23,9 +23,6 @@ ProtoMessage *SocketSessionImpl::GetProtoMessage(const void *data) {
 
     ds_unserialize_header(proto_header, &(msg->header));
 
-    //FLOG_INFO("new proto message. msgid: %" PRId64 ", func_id: %d, body_len: %d",
-    //           msg->header.msg_id, msg->header.func_id, msg->header.body_len);
-
     // 拷贝数据
     if (msg->header.body_len > 0) {
         msg->body.resize(msg->header.body_len);
