@@ -618,20 +618,22 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
 }
 
 void Range::LockWatch(common::ProtoMessage *msg,
-                        watchpb::DsKvWatchGetMultiRequest &req) {
+                        watchpb::DsWatchRequest& req) {
     errorpb::Error *err = nullptr;
-    if (req.kv().key_size() != 1) {
+    if (req.req().kv().key_size() != 1) {
+        RANGE_LOG_INFO("LockWatch: kv key size[%d] != 1", req.req().kv().key_size());
+
         err = new errorpb::Error;
         err->set_message("key list length != 1");
-        auto resp = new watchpb::DsKvWatchGetMultiResponse;
+        auto resp = new watchpb::DsWatchResponse;
         SendError(msg, req.header(), resp, err);
         return;
     }
 
     std::string encode_key;
-    lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.kv().key(0));
-    FLOG_INFO("Range %" PRIu64" LockWatch: lock watch key[%s] encode[%s]",
-              id_, req.kv().key(0).c_str(), EncodeToHexString(encode_key).c_str());
+    lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().kv().key(0));
+    RANGE_LOG_INFO("LockWatch: lock watch key[%s] encode[%s]",
+              req.req().kv().key(0).c_str(), EncodeToHexString(encode_key).c_str());
 
     do {
         if (!VerifyLeader(err)) {
@@ -651,7 +653,7 @@ void Range::LockWatch(common::ProtoMessage *msg,
         }
 
         std::vector<watch::Key*> keys;
-        keys.push_back(new watch::Key(req.kv().key(0)));
+        keys.push_back(new watch::Key(req.req().kv().key(0)));
 
         auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, msg);
         auto w_code = context_->range_server->watch_server_->AddKeyWatcher(w_ptr, store_);
@@ -667,7 +669,7 @@ void Range::LockWatch(common::ProtoMessage *msg,
     if (err != nullptr) {
         FLOG_WARN("range[%" PRIu64 "] LockWatch error: %s", id_, err->message().c_str());
 
-        auto resp = new watchpb::DsKvWatchGetMultiResponse;
+        auto resp = new watchpb::DsWatchResponse;
         SendError(msg, req.header(), resp, err);
     }
 }

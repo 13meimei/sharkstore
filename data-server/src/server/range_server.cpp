@@ -938,8 +938,8 @@ void RangeServer::UnlockForce(common::ProtoMessage *msg) {
 }
 
 void RangeServer::LockWatch(common::ProtoMessage *msg) {
-    watchpb::DsKvWatchGetMultiRequest req;
-    watchpb::DsKvWatchGetMultiResponse *resp;
+    watchpb::DsWatchRequest req;
+    watchpb::DsWatchResponse* resp;
 
     auto range = CheckAndDecodeRequest("LockWatch", req, resp, msg);
     if (range != nullptr) {
