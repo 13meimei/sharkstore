@@ -102,6 +102,7 @@ Status Store::WatchGet(const watchpb::DsKvWatchGetMultiRequest& req,
         if (!decodeWatchValue(iter->value(), resp_kv)) {
             return Status(Status::kCorruption, "decode watch value", EncodeToHex(iter->value()));
         }
+        iter->Next();
     }
     return iter->status();
 }
