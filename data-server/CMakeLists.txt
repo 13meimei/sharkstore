@@ -175,6 +175,7 @@ set(SOURCES
     src/storage/row_decoder.cpp
     src/storage/row_fetcher.cpp
     src/storage/store.cpp
+    src/storage/store_watch.cpp
     src/master/client.cpp
     src/master/connection.cpp
     src/master/rpc_types.cpp

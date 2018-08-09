@@ -37,7 +37,7 @@ private:
 
 public:
     uint64_t GetTableId() { return table_id_; }
-    const std::vector<std::string*>& GetKeys(uint16_t hashFlag = true) {
+    const std::vector<std::string*>& GetKeys(bool hashFlag = true) {
         if(hashFlag) return keys_hash_;
         return keys_;
     }

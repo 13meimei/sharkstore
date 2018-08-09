@@ -88,4 +88,42 @@ TEST(Util, SliceSeparate) {
     std::cout << "offset > 10: " << err  << " ratio:"<< err * 1.0 / 1000 <<"%" << std::endl;
 }
 
+TEST(Util, NextComparable) {
+    {
+        std::string str;
+        auto ret = NextComparable(str);
+        ASSERT_EQ(ret, "");
+    }
+    {
+        std::string str = "a";
+        auto ret = NextComparable(str);
+        ASSERT_EQ(ret, "b");
+    }
+    {
+        std::string str = "abcdef";
+        auto ret = NextComparable(str);
+        ASSERT_EQ(ret, "abcdeg");
+    }
+    {
+        std::string str = "\xFF";
+        auto ret = NextComparable(str);
+        ASSERT_EQ(ret, "");
+    }
+    {
+        std::string str = "abc\xFF\xFF";
+        auto ret = NextComparable(str);
+        ASSERT_EQ(ret, "abd");
+    }
+    {
+        std::string str = "\x01\x02\xFF\xFF\xFF";
+        auto ret = NextComparable(str);
+        ASSERT_EQ(ret, "\x01\x03");
+    }
+    {
+        std::string str = "\x01\x02\xFF\xFE\xFF";
+        auto ret = NextComparable(str);
+        ASSERT_EQ(ret, "\x01\x02\xFF\xFF");
+    }
+}
+
 } /* namespace  */
