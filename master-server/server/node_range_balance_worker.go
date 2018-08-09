@@ -79,7 +79,7 @@ func (w *balanceNodeRangeWorker) Stop() {
 func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *metapb.Peer, uint64) {
 	nodes := cluster.GetAllActiveNode()
 	if len(nodes) == 0 {
-		log.Debug("%v: node is nil", w.GetName())
+		log.Debug("%v: active node is nil", w.GetName())
 		cluster.metric.CollectScheduleCounter(w.GetName(), "no_node")
 		return nil, nil, 0
 	}

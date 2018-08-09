@@ -268,7 +268,7 @@ func (ctrl *LockForceUnLockAction) Execute(c *gin.Context) (interface{}, error) 
 }
 
 /**
- * lock 生成token
+ * lock 生成token [配置中心一样的算法]
  */
 type LockClientGetTokenAction struct {
 }
