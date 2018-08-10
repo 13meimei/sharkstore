@@ -787,6 +787,24 @@ func (r *Router) StartRouter() *gin.Engine {
 		router.GET(controllers.NODE_GET_RANGE_TOPOLOGY, func(c *gin.Context) {
 			handleAction(c, controllers.NewNodeRangeTopo())
 		})
+		router.GET(controllers.NODE_GET_CONFIG, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeGetConfig())
+		})
+		router.GET(controllers.NODE_SET_CONFIG, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeSetConfig())
+		})
+		router.GET(controllers.NODE_GET_DS_INFO, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeGetDsInfo())
+		})
+		router.GET(controllers.NODE_CLEAR_QUEUE, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeClearQueue())
+		})
+		router.GET(controllers.NODE_GET_PENDING_QUEUES, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeGetPendingQueues())
+		})
+		router.GET(controllers.NODE_FLUSH_DB, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeFlushDB())
+		})
 		router.POST(controllers.RANGE_PEERDEL, func(c *gin.Context) {
 			handleAction(c, controllers.NewPeerDelete())
 		})
@@ -816,6 +834,12 @@ func (r *Router) StartRouter() *gin.Engine {
 		})
 		router.POST(controllers.RANGE_REPLACE_RANGE, func(c *gin.Context) {
 			handleAction(c, controllers.NewRangeRebuild())
+		})
+		router.POST(controllers.RANGE_FORCE_SPLIT, func(c *gin.Context) {
+			handleAction(c, controllers.NewRangeForceSplit())
+		})
+		router.POST(controllers.RANGE_FORCE_COMPACT, func(c *gin.Context) {
+			handleAction(c, controllers.NewRangeForceCompact())
 		})
 		router.POST(controllers.RANGE_DELETE_RANGE, func(c *gin.Context) {
 			handleAction(c, controllers.NewRangeDelete())

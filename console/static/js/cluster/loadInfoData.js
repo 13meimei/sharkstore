@@ -369,7 +369,13 @@ app.controller('myClusterNodeInfo', function ($rootScope, $scope, $http, $timeou
                         "<button id=\"updateNodeStatus\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"修改状态\" onclick=\"updateNodeStatus('" + row.id + "');\">状态修改</button>&nbsp;&nbsp;",
                         "<button id=\"deleteNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"删除\" onclick=\"deleteNode(" + row.id + ");\">删除</button>&nbsp;&nbsp;",
                         "<button id=\"updateNodeLogLevel\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"修改日志级别\" onclick=\"updateNodeLogLevel('" + row.id + "');\">设置日志级别</button>&nbsp;&nbsp;",
-                        "<button id=\"getRangeTopoOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看range\" onclick=\"getRangeTopoOfNode('" + row.id + "');\">查看range</button>&nbsp;&nbsp;"
+                        "<button id=\"getRangeTopoOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看range\" onclick=\"getRangeTopoOfNode('" + row.id + "');\">查看range</button>&nbsp;&nbsp;",
+                        "<button id=\"getConfigOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看config\" onclick=\"getConfigOfNode('" + row.id + "');\">查看config</button>&nbsp;&nbsp;",
+                        "<button id=\"setConfigOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"设置config\" onclick=\"setConfigOfNode('" + row.id + "');\">设置config</button>&nbsp;&nbsp;",
+                        "<button id=\"getDsInfoOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"DS运行信息\" onclick=\"getDsInfoOfNode('" + row.id + "');\">DS运行信息</button>&nbsp;&nbsp;",
+                        "<button id=\"clearQueueOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"清理Queue\" onclick=\"clearQueueOfNode('" + row.id + "');\">清理Queue</button>&nbsp;&nbsp;",
+                        "<button id=\"getPendingQueuesOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"Pending任务\" onclick=\"getPendingQueuesOfNode('" + row.id + "');\">Pending任务</button>&nbsp;&nbsp;",
+                        "<button id=\"flushDBOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"FlushDB\" onclick=\"flushDBOfNode('" + row.id + "');\">FlushDB</button>&nbsp;&nbsp;"
                     ].join('');
                 }
             }
@@ -659,6 +665,268 @@ function getRangeTopoOfNode(nodeId) {
             //获取集群id
             var clusterId = $('#clusterId').val();
             window.location.href = "/node/getRangeTopo?clusterId=" + clusterId + "&nodeId=" + nodeId;
+        });
+}
+
+function getConfigOfNode(nodeId) {
+    swal({
+            title: "获取DS配置信息",
+            // todo show query input: section-name
+            text: "<select class='form-control' id='selectQueueType' style='height: 33px'><option value='0'>ALL</option><option value='1'>FAST_WORKER</option><option value='2'>SLOW_WORKER</option></select>",
+            html: true,
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false,
+        },
+        function () {
+            // todo get the query table data
+            var getConfigKey = $('#selectQueueType').val();
+            if (!hasText(getConfigKey)) {
+                swal("请输入要获取的keys");
+                return
+            }
+            //获取集群id
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/getConfigOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "getConfigKey": getConfigKey
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        // todo show query result table
+                    } else {
+                        swal("获取DS配置失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("获取DS配置失败！", res, "error");
+                }
+            });
+        });
+}
+
+function setConfigOfNode(nodeId) {
+    swal({
+            title: "设置DS配置信息",
+            // todo show set input table: section-name-value
+            text: "<select class='form-control' id='selectQueueType' style='height: 33px'><option value='0'>ALL</option><option value='1'>FAST_WORKER</option><option value='2'>SLOW_WORKER</option></select>",
+            html: true,
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false,
+        },
+        function () {
+            // todo get the input set data
+            var setConfig = $('#selectQueueType').val();
+            if (!hasText(setConfig)) {
+                swal("请输入要设置的keys");
+                return
+            }
+            //获取集群id
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/setConfigOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "setConfig": setConfig
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("设置DS配置成功！", "设置DS配置成功!", "success");
+                    } else {
+                        swal("设置DS配置失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("设置DS配置失败！", res, "error");
+                }
+            });
+        });
+}
+
+function getDsInfoOfNode(nodeId) {
+    swal({
+            title: "获取DS运行信息",
+            text: "请输入path来查询",
+            type: "input",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "查询",
+            closeOnConfirm: false
+        },
+        function (inputValue) {
+            if (inputValue === false) return;
+            if (inputValue === "") {
+                swal.showInputError("你需要输入path");
+                return
+            }
+
+            var path = inputValue;
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/getDsInfoOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "dsInfoPath": path
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        // todo show ds_info alert
+                        swal("获取DS运行信息成功！", data.msg, "success");
+                    } else {
+                        swal("获取DS运行信息失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("获取DS运行信息失败！", res, "error");
+                }
+            });
+        });
+}
+
+function clearQueueOfNode(nodeId) {
+    swal({
+            title: "清理DS任务队列",
+            text: "<select class='form-control' id='selectQueueType' style='height: 33px'><option value='0'>ALL</option><option value='1'>FAST_WORKER</option><option value='2'>SLOW_WORKER</option></select>",
+            html: true,
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false,
+        },
+        function () {
+            var queueType = $('#selectQueueType').val();
+            if (!hasText(queueType)) {
+                swal("请选择要清理的任务类型");
+                return
+            }
+            //获取集群id
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/clearQueueOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "queueType": queueType
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("清理DS任务队列成功！", "清理DS任务队列成功!", "success");
+                    } else {
+                        swal("清理DS任务队列失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("清理DS任务队列失败！", res, "error");
+                }
+            });
+        });
+}
+
+function getPendingQueuesOfNode(nodeId) {
+    swal({
+            title: "获取DS当前Pending队列",
+            // todo input for count
+            text: "<select class='form-control' id='selectPendingType' style='height: 33px'><option value='0'>ALL</option><option value='1'>INSERT</option><option value='2'>SELECT</option><option value='3'>POINT_SELECT</option><option value='4'>RANGE_SELECT</option></select>",
+            html: true,
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false
+        },
+        function () {
+            var pendingType = $('#selectPendingType').val();
+            var count;
+            if (!hasText(pendingType)) {
+                swal("请选择要查看的Pending任务类型");
+                return
+            }
+            //获取集群id
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/getPendingQueuesOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "pendingType": pendingType,
+                    "count": count
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        // todo show pending queues result
+                        swal("获取Pending任务队列成功！", data.msg, "success");
+                    } else {
+                        swal("获取Pending任务队列失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("获取Pending任务队列失败！", res, "error");
+                }
+            });
+        });
+}
+
+function flushDBOfNode(nodeId) {
+    swal({
+            title: "强制FlushDB",
+            text: "<select class='form-control' id='selectWaitType' style='height: 33px'><option value='true'>Wait</option><option value='false'>Don't Wait</option></select>",
+            html: true,
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false
+        },
+        function () {
+            var waitType = $('#selectWaitType').val();
+            if (!hasText(waitType)) {
+                swal("请选择是否等待");
+                return
+            }
+            //获取集群id
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/flushDBOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "wait": waitType
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("Flush DB 成功！", "Flush DB 成功!", "success");
+                    } else {
+                        swal("Flush DB 失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("Flush DB 失败！", res, "error");
+                }
+            });
         });
 }
 

@@ -19,6 +19,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/net/context"
+	"model/pkg/ds_admin"
 )
 
 var maxMsgID uint64
@@ -158,6 +159,16 @@ type RpcClient interface {
 	OfflineRange(ctx context.Context, in *schpb.OfflineRangeRequest) (*schpb.OfflineRangeResponse, error)
 	ReplaceRange(ctx context.Context, in *schpb.ReplaceRangeRequest) (*schpb.ReplaceRangeResponse, error)
 	Close()
+
+	// ds_admin
+	SetConfig(ctx context.Context, in *ds_adminpb.SetConfigRequest) (*ds_adminpb.SetConfigResponse, error)
+	GetConfig(ctx context.Context, in *ds_adminpb.GetConfigRequest) (*ds_adminpb.GetConfigResponse, error)
+	GetDsInfo(ctx context.Context, in *ds_adminpb.GetInfoRequest) (*ds_adminpb.GetInfoResponse, error)
+	ForceSplit(ctx context.Context, in *ds_adminpb.ForceSplitRequest) (*ds_adminpb.ForceSplitResponse, error)
+	ForceCompact(ctx context.Context, in *ds_adminpb.CompactionRequest) (*ds_adminpb.CompactionResponse, error)
+	ClearQueue(ctx context.Context, in *ds_adminpb.ClearQueueRequest) (*ds_adminpb.ClearQueueResponse, error)
+	GetPendingQueues(ctx context.Context, in *ds_adminpb.GetPendingsRequest) (*ds_adminpb.GetPendingsResponse, error)
+	FlushDB(ctx context.Context, in *ds_adminpb.FlushDBRequest) (*ds_adminpb.FlushDBResponse, error)
 }
 
 type Message struct {
@@ -746,6 +757,86 @@ func (c *DSRpcClient) Close() {
 		c.conn.Close()
 	}
 	c.waitList.Cleanup(ErrClientClosed)
+}
+
+func (c *DSRpcClient) SetConfig(ctx context.Context, in *ds_adminpb.SetConfigRequest) (*ds_adminpb.SetConfigResponse, error) {
+	out := new(ds_adminpb.SetConfigResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) GetConfig(ctx context.Context, in *ds_adminpb.GetConfigRequest) (*ds_adminpb.GetConfigResponse, error) {
+	out := new(ds_adminpb.GetConfigResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) GetDsInfo(ctx context.Context, in *ds_adminpb.GetInfoRequest) (*ds_adminpb.GetInfoResponse, error) {
+	out := new(ds_adminpb.GetInfoResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) ForceSplit(ctx context.Context, in *ds_adminpb.ForceSplitRequest) (*ds_adminpb.ForceSplitResponse, error) {
+	out := new(ds_adminpb.ForceSplitResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) ForceCompact(ctx context.Context, in *ds_adminpb.CompactionRequest) (*ds_adminpb.CompactionResponse, error) {
+	out := new(ds_adminpb.CompactionResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) ClearQueue(ctx context.Context, in *ds_adminpb.ClearQueueRequest) (*ds_adminpb.ClearQueueResponse, error) {
+	out := new(ds_adminpb.ClearQueueResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) GetPendingQueues(ctx context.Context, in *ds_adminpb.GetPendingsRequest) (*ds_adminpb.GetPendingsResponse, error) {
+	out := new(ds_adminpb.GetPendingsResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) FlushDB(ctx context.Context, in *ds_adminpb.FlushDBRequest) (*ds_adminpb.FlushDBResponse, error) {
+	out := new(ds_adminpb.FlushDBResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
 }
 
 func (c *DSRpcClient) Send(ctx context.Context, msg *Message) ([]byte, error) {
