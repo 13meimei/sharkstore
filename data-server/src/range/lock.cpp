@@ -6,8 +6,18 @@
 namespace sharkstore {
 namespace dataserver {
 namespace range {
-
 namespace lock {
+
+void EncodeKey(std::string* buf,
+               uint64_t tableId, const std::string* key) {
+    assert(buf != nullptr && buf->length() == 0);
+
+    buf->push_back(static_cast<char>(1));
+    EncodeUint64Ascending(buf, tableId); // column 1
+    assert(buf->length() == 9);
+
+    EncodeBytesAscending(buf, key->c_str(), key->length());
+}
 
 bool DecodeKey(std::string& key,
                const std::string& buf) {
@@ -22,47 +32,29 @@ bool DecodeKey(std::string& key,
     return true;
 }
 
-bool DecodeValue(std::string* value,
-                 std::string* lock_id,
-                 int64_t* expired_time,
-                 int64_t* update_time,
-                 std::string* creator,
-                 std::string& buf) {
-    assert(value != nullptr && buf.length() != 0);
-
-    size_t offset = 0;
-    if (!DecodeBytesValue(buf, offset, value)) return false; // varchar    v
-    if (!DecodeBytesValue(buf, offset, lock_id)) return false; // varchar    lock_id
-    if (!DecodeIntValue(buf, offset, expired_time)) return false; // bigint     expired_time
-    if (!DecodeIntValue(buf, offset, update_time)) return false; // bigint     upd_time
-    if (!DecodeBytesValue(buf, offset, creator)) return false; // varchar    creator
-    return true;
-}
-
-void EncodeKey(std::string* buf,
-               uint64_t tableId, const std::string* key) {
-    assert(buf != nullptr && buf->length() == 0);
-
-    buf->push_back(static_cast<char>(1));
-    EncodeUint64Ascending(buf, tableId); // column 1
-    assert(buf->length() == 9);
-
-    EncodeBytesAscending(buf, key->c_str(), key->length());
-}
-
 void EncodeValue(std::string* buf,
-                 const std::string* value,
-                 const std::string* lock_id,
-                 int64_t expired_time,
-                 int64_t update_time,
-                 const std::string* creator) {
+                          int64_t version,
+                          const kvrpcpb::LockValue& lock_value, //const std::string* value,
+                          const std::string* extend) {
     assert(buf != nullptr);
+    std::string value = lock_value.SerializeAsString();
+    EncodeIntValue(buf, 2, version);
+    EncodeBytesValue(buf, 3, value.c_str(), value.length());
+    EncodeBytesValue(buf, 4, extend->c_str(), extend->length());
+}
 
-    EncodeBytesValue(buf, 2, value->c_str(), value->length());              // varchar    v
-    EncodeBytesValue(buf, 3, lock_id->c_str(), lock_id->length());  // varchar    lock_id
-    EncodeIntValue(buf, 4, expired_time);                           // bigint     expired_time
-    EncodeIntValue(buf, 5, update_time);                            // bigint     upd_time
-    EncodeBytesValue(buf, 6, creator->c_str(), creator->length());  // varchar    creator
+bool DecodeValue(int64_t* version, kvrpcpb::LockValue* lock_value, std::string* extend,
+                 std::string& buf) {
+    assert(buf.length() != 0);
+
+    std::string value;
+    size_t offset = 0;
+
+    if (!DecodeIntValue(buf, offset, version)) return false;
+    if (!DecodeBytesValue(buf, offset, &value)) return false;
+    if (!DecodeBytesValue(buf, offset, extend)) return false;
+    if (!lock_value->ParseFromString(value)) return false;
+    return true;
 }
 
 } // namespace lock
@@ -78,23 +70,14 @@ kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
     RANGE_LOG_DEBUG("lock get ok: key[%s] val[%s]", EncodeToHexString(key).c_str(),
                EncodeToHexString(val).c_str());
 
-    std::string value;
-    std::string lock_id;
-    int64_t expired_time;
-    int64_t update_time;
-    std::string creator;
-    if (!lock::DecodeValue(&value, &lock_id, &expired_time, &update_time, &creator,
-                                 val)) {
+    auto ret = new kvrpcpb::LockValue;
+    int64_t version = 0; // not used
+    std::string extend(""); // not used
+    if (!lock::DecodeValue(&version, ret, &extend,
+                           val)) {
         RANGE_LOG_WARN("lock get: decode value failed, key[%s]", EncodeToHexString(key).c_str());
         return nullptr;
     }
-
-    auto ret = new kvrpcpb::LockValue;
-    ret->set_value(value);
-    ret->set_id(lock_id);
-    ret->set_delete_time(expired_time);
-    ret->set_update_time(update_time);
-    ret->set_by(creator);
 
     if (ret->delete_time() > 0 && ret->delete_time() <= getticks()) {
         RANGE_LOG_WARN("key[%s] deteled at time %ld", EncodeToHexString(key).c_str(),
@@ -123,7 +106,6 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
     req.mutable_req()->set_key(encode_key);
 
     auto& key = req.req().key();
-
     errorpb::Error *err = nullptr;
 
     do {
@@ -197,14 +179,11 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
         }
 
         std::string value_buf;
-        const std::string& value = req.value().value();
-        const std::string& lock_id = req.value().id();
-        int64_t expired_time = req.value().delete_time();
-        int64_t update_time = req.value().update_time();
-        const std::string& creator = req.value().by();
+        int64_t version = 0;
+        std::string extend("");
 
         lock::EncodeValue(&value_buf,
-                          &value, &lock_id, expired_time, update_time, &creator);
+                         version, req.value(), &extend);
         ret = store_->Put(req.key(), value_buf);
 
         context_->run_status->PushTime(monitor::PrintTag::Store,
@@ -324,14 +303,15 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         auto btime = get_micro_second();
 
         std::string value_buf;
-        const std::string& value = val->value();
-        const std::string& lock_id = val->id();
-        int64_t expired_time = val->delete_time();
-        int64_t update_time = val->update_time();
-        const std::string& creator = req.by();
+        int64_t version = 0;
+        std::string extend("");
 
+        val->set_value(req.update_value());
+        val->set_update_time(req.update_time());
+        val->set_by(req.by());
         lock::EncodeValue(&value_buf,
-                          &value, &lock_id, expired_time, update_time, &creator);
+                         version, *val, &extend);
+
         ret = store_->Put(req.key(), value_buf);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -558,35 +538,6 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         delete val;
 
         RANGE_LOG_INFO("ApplyForceUnlock: lock [%s] is unlock by %s", req.key().c_str(), req.by().c_str());
-//        auto btime = get_micro_second();
-//
-//        std::string value_buf;
-//        const std::string& value = val->value();
-//        const std::string& lock_id = val->id();
-//        int64_t expired_time = val->delete_time();
-//        int64_t update_time = val->update_time();
-//        const std::string& creator = req.by();
-//
-//        lock::EncodeValue(&value_buf,
-//                          &value, &lock_id, expired_time, update_time, &creator);
-//        ret = store_->Put(req.key(), value_buf);
-//
-//        context_->run_status->PushTime(monitor::PrintTag::Store,
-//                                       get_micro_second() - btime);
-//        if (!ret.ok()) {
-//            FLOG_ERROR("ApplyUnlockForce failed, code:%d, msg:%s", ret.code(),
-//                       ret.ToString().c_str());
-//            resp->mutable_resp()->set_code(LOCK_STORE_FAILED);
-//            resp->mutable_resp()->set_error("unlock force failed");
-//            resp->mutable_resp()->set_value(val->value());
-//            resp->mutable_resp()->set_update_time(val->update_time());
-//            break;
-//        }
-//        delete val;
-//
-//        FLOG_INFO("Range %" PRIu64
-//                  "  ApplyUnlockForce: lock [%s] is force unlocked by %s",
-//                  id_, req.key().c_str(), req.by().c_str());
 
         std::string decode_key = req.key();
         //std::string decode_key;
