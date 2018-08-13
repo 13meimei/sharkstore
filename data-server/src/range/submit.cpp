@@ -70,14 +70,14 @@ uint64_t SubmitQueue::Add(const kvrpcpb::RequestHeader& req_header,
 }
 
 std::unique_ptr<SubmitContext> SubmitQueue::Remove(uint64_t seq_id) {
+    std::unique_ptr<SubmitContext> ret;
     std::lock_guard<std::mutex> lock(mu_);
     auto it = ctx_map_.find(seq_id);
     if (it != ctx_map_.end()) {
+        ret = std::move(it->second);
         ctx_map_.erase(it);
-        return std::move(it->second);
-    } else {
-        return nullptr;
     }
+    return ret;
 }
 
 std::vector<uint64_t> SubmitQueue::GetExpired(size_t max_count) {
