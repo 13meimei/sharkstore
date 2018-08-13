@@ -10,7 +10,7 @@ void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("Insert begin");
@@ -35,7 +35,7 @@ void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
         auto resp = new kvrpcpb::DsInsertResponse;
         return SendError(msg, req.header(), resp, err);
     }
-    auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+    auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
         cmd.set_cmd_type(raft_cmdpb::CmdType::Insert);
         cmd.set_allocated_insert_req(req.release_req());
     });
@@ -67,7 +67,7 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
         auto btime = get_micro_second();
         ret = store_->Insert(req, &affected_keys);
         auto etime = get_micro_second();
-        context_->run_status->PushTime(monitor::PrintTag::Store, etime - btime);
+        context_->Statistics()->PushTime(monitor::PrintTag::Store, etime - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyInsert failed, code:%d, msg:%s", ret.code(),
@@ -93,9 +93,9 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsInsertResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), affected_keys,
-                     err);
-
+        resp->mutable_resp()->set_affected_keys(affected_keys);
+        resp->mutable_resp()->set_code(ret.code());
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }

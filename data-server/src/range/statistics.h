@@ -1,5 +1,7 @@
 _Pragma("once");
 
+#include "monitor/syscommon.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace range {

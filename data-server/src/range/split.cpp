@@ -20,7 +20,7 @@ void Range::CheckSplit(uint64_t size) {
 
     if (!statis_flag_ && statis_size_ > ds_config.range_config.check_size) {
         statis_flag_ = true;
-        context_.ScheduleCheckSize(id_);
+        context_->ScheduleCheckSize(id_);
     }
 }
 
@@ -67,14 +67,14 @@ void Range::AskSplit(std::string &&key, metapb::Range&& meta) {
     mspb::AskSplitRequest ask;
     ask.set_allocated_range(new metapb::Range(std::move(meta)));
     ask.set_split_key(std::move(key));
-    context_.MasterClient()->AsyncAskSplit(ask);
+    context_->MasterClient()->AsyncAskSplit(ask);
 }
 
 void Range::ReportSplit(const metapb::Range &new_range) {
     mspb::ReportSplitRequest report;
     meta_.Get(report.mutable_left());
     report.set_allocated_right(new metapb::Range(new_range));
-    context_.MasterClient()->AsyncReportSplit(report);
+    context_->MasterClient()->AsyncReportSplit(report);
 }
 
 void Range::AdminSplit(mspb::AskSplitResponse &resp) {
@@ -90,10 +90,9 @@ void Range::AdminSplit(mspb::AskSplitResponse &resp) {
         resp.new_range_id(), EncodeToHex(split_key).c_str());
 
     raft_cmdpb::Command cmd;
-    uint64_t seq_id = submit_seq_.fetch_add(1);
     // set cmd_id
     cmd.mutable_cmd_id()->set_node_id(node_id_);
-    cmd.mutable_cmd_id()->set_seq(seq_id);
+    cmd.mutable_cmd_id()->set_seq(submit_queue_.GetSeq());
     // set cmd_type
     cmd.set_cmd_type(raft_cmdpb::CmdType::AdminSplit);
 
@@ -174,10 +173,10 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
         return ret;
     }
 
-    context_.Statistics().IncrSplitCount();
+    context_->Statistics()->IncrSplitCount();
 
     std::shared_ptr<Range> split_range;
-    ret = context_.SplitRange(id_, req, index, &split_range);
+    ret = context_->SplitRange(id_, req, index, &split_range);
     if (!ret.ok()) {
         RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") create failed: %s",
                         req.new_range().id(), ret.ToString().c_str());
@@ -192,10 +191,10 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
 
         // new range report heartbeat
         split_range_id_ = req.new_range().id();
-        context_.ScheduleHeartbeat(split_range_id_, false);
+        context_->ScheduleHeartbeat(split_range_id_, false);
 
         uint64_t rsize = ds_config.range_config.split_size >> 1;
-        auto rng = context_.FindRange(split_range_id_);
+        auto rng = context_->FindRange(split_range_id_);
         if (rng != nullptr) {
             rng->set_real_size(real_size_ - rsize);
         }
@@ -203,7 +202,7 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
         real_size_ = rsize;
     }
 
-    context_.Statistics().DecrSplitCount();
+    context_->Statistics()->DecrSplitCount();
 
     RANGE_LOG_INFO("ApplySplit(new range: %" PRIu64 ") End. version:%" PRIu64,
             req.new_range().id(), meta_.GetVersion());

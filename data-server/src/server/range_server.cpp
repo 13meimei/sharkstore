@@ -406,12 +406,12 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
 
 void RangeServer::CreateRange(common::ProtoMessage *msg) {
     schpb::CreateRangeRequest req;
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
+    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
         FLOG_ERROR("deserialize create range request failed");
         return context_->socket_session->Send(msg, nullptr);
     }
 
-    FLOG_INFO("range[%lu] recv create range from master.", req.range().id());
+    FLOG_INFO("range[%" PRIu64 "] recv create range from master", req.range().id());
 
     errorpb::Error *err = nullptr;
     auto resp = new schpb::CreateRangeResponse;
@@ -501,7 +501,7 @@ Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader, uin
 
 void RangeServer::DeleteRange(common::ProtoMessage *msg) {
     schpb::DeleteRangeRequest req;
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
+    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
         FLOG_ERROR("deserialize delete range request failed");
         return context_->socket_session->Send(msg, nullptr);
     }
@@ -557,7 +557,7 @@ Status RangeServer::DeleteRange(uint64_t range_id, uint64_t peer_id) {
 
 void RangeServer::OfflineRange(common::ProtoMessage *msg) {
     schpb::OfflineRangeRequest req;
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
+    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
         FLOG_ERROR("deserialize offline range request failed");
         return context_->socket_session->Send(msg, nullptr);
     }
@@ -625,12 +625,12 @@ int RangeServer::CloseRange(uint64_t range_id) {
 
 void RangeServer::ReplaceRange(common::ProtoMessage *msg) {
     schpb::ReplaceRangeRequest req;
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
+    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
         FLOG_ERROR("deserialize replace range request failed");
         return context_->socket_session->Send(msg, nullptr);
     }
 
-    FLOG_WARN("start update range. old=%lu, new=%lu.", req.old_range_id(),
+    FLOG_WARN("start update range. old=%" PRIu64 ", new=%" PRIu64, req.old_range_id(),
               req.new_range().id());
 
     auto resp = new schpb::ReplaceRangeResponse;
@@ -654,7 +654,7 @@ void RangeServer::ReplaceRange(common::ProtoMessage *msg) {
 
 void RangeServer::TransferLeader(common::ProtoMessage *msg) {
     schpb::TransferRangeLeaderRequest req;
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
+    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
         FLOG_ERROR("deserialize transfer leader request failed");
         return context_->socket_session->Send(msg, nullptr);
     }
@@ -675,7 +675,7 @@ void RangeServer::TransferLeader(common::ProtoMessage *msg) {
 void RangeServer::GetPeerInfo(common::ProtoMessage *msg) {
     schpb::GetPeerInfoRequest req;
 
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
+    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
         FLOG_ERROR("deserialize transfer leader request failed");
         return context_->socket_session->Send(msg, nullptr);
     }
@@ -708,7 +708,7 @@ void RangeServer::GetPeerInfo(common::ProtoMessage *msg) {
 void RangeServer::SetLogLevel(common::ProtoMessage *msg) {
     schpb::SetNodeLogLevelRequest req;
 
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(), &req)) {
+    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
         FLOG_ERROR("deserialize transfer leader request failed");
         return context_->socket_session->Send(msg, nullptr);
     }
@@ -810,7 +810,7 @@ template <class RequestT, class ResponseT>
 std::shared_ptr<range::Range> RangeServer::CheckAndDecodeRequest(
     const char *func_name, RequestT &request, ResponseT *&respone,
     common::ProtoMessage *msg) {
-    if (!context_->socket_session->GetMessage(msg->body.data(), msg->body.size(),
+    if (!common::GetMessage(msg->body.data(), msg->body.size(),
                                               &request)) {
         FLOG_ERROR("deserialize %s request failed", func_name);
         context_->socket_session->Send(msg, nullptr);

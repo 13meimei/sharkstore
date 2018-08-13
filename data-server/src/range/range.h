@@ -1,13 +1,8 @@
 _Pragma("once");
 
-#include <rocksdb/db.h>
 #include <stdint.h>
 #include <atomic>
-#include <mutex>
-#include <queue>
 #include <string>
-#include <tuple>
-#include <unordered_map>
 
 #include "frame/sf_logger.h"
 #include "frame/sf_util.h"
@@ -26,25 +21,15 @@ _Pragma("once");
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/mspb.pb.h"
-#include "proto/gen/raft_cmdpb.pb.h"
 
 #include "meta_keeper.h"
 #include "context.h"
+#include "submit.h"
+#include "range_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace range {
-
-const int DEFAULT_LOCK_DELETE_TIME_MILLSEC = 3000;
-enum {
-    LOCK_OK = 0,
-    LOCK_EXISTED,
-    LOCK_NOT_EXIST,
-    LOCK_ID_MISMATCHED,
-    LOCK_IS_FORCE_UNLOCKED,
-    LOCK_STORE_FAILED,
-    LOCK_EPOCH_ERROR
-};
 
 class Range : public raft::StateMachine, public std::enable_shared_from_this<Range> {
 public:
@@ -111,50 +96,7 @@ public:
     bool DeleteSubmit(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
 
 private:
-    struct AsyncContext {
-        AsyncContext(raft_cmdpb::CmdType type, server::ContextServer *cs,
-                     common::ProtoMessage *msg, kvrpcpb::RequestHeader *req)
-            : cmd_type_(type),
-              context_server(cs),
-              proto_message(msg),
-              request_header(req) {}
-
-        ~AsyncContext() {
-            if (proto_message != nullptr) delete proto_message;
-            if (request_header != nullptr) delete request_header;
-
-            if (submit_time > 0) {
-                context_server->run_status->PushTime(monitor::PrintTag::Raft,
-                                                     get_micro_second() - submit_time);
-            }
-        }
-        common::ProtoMessage *release_proto_message() {
-            auto msg = proto_message;
-            proto_message = nullptr;
-            return msg;
-        }
-        kvrpcpb::RequestHeader *release_request_header() {
-            auto rh = request_header;
-            request_header = nullptr;
-            return rh;
-        }
-        raft_cmdpb::CmdType cmd_type_;
-        server::ContextServer *context_server = nullptr;
-        common::ProtoMessage *proto_message = nullptr;
-        kvrpcpb::RequestHeader *request_header = nullptr;
-
-        uint64_t submit_time = 0;
-    };
-
-    AsyncContext *AddContext(uint64_t id, raft_cmdpb::CmdType type,
-                             common::ProtoMessage *msg, kvrpcpb::RequestHeader *req);
-    AsyncContext *ReleaseContext(uint64_t seq_id);
-
-    void DelContext(uint64_t seq_id);
     void ClearExpiredContext();
-    std::tuple<bool, uint64_t> GetExpiredContext();
-
-    void SendTimeOutError(AsyncContext *context);
 
 private:
     kvrpcpb::KvRawGetResponse *RawGetTry(const std::string &key);
@@ -165,6 +107,10 @@ private:
 
 private:
     Status Submit(const raft_cmdpb::Command &cmd);
+
+    Status SubmitCmd(common::ProtoMessage *msg, const kvrpcpb::RequestHeader& header,
+                     const std::function<void(raft_cmdpb::Command &cmd)> &init);
+
     Status Apply(const raft_cmdpb::Command &cmd, uint64_t index);
 
     Status ApplyRawPut(const raft_cmdpb::Command &cmd);
@@ -205,90 +151,25 @@ private:
     }
 
     template <class R>
-    void SendError(AsyncContext *context, R *resp, errorpb::Error *err) {
-        auto header = resp->mutable_header();
-
-        context_.SocketSession()->SetResponseHeader(*context->request_header, header,
-                                                    err);
-        context_.SocketSession()->Send(context->release_proto_message(), resp);
-    }
-
-    template <class R>
     void SendError(common::ProtoMessage *msg, const kvrpcpb::RequestHeader &req, R *resp,
                    errorpb::Error *err) {
         auto header = resp->mutable_header();
 
-        context_.SocketSession().SetResponseHeader(req, header, err);
-        context_.SocketSession().Send(msg, resp);
+        common::SetResponseHeader(req, header, err);
+        context_->SocketSession()->Send(msg, resp);
     }
 
-    template <class RequestT>
-    Status SubmitCmd(common::ProtoMessage *msg, RequestT &req,
-                     const std::function<void(raft_cmdpb::Command &cmd)> &init) {
-        raft_cmdpb::Command cmd;
-        uint64_t seq_id = submit_seq_.fetch_add(1);
-
-        cmd.mutable_cmd_id()->set_node_id(node_id_);
-        cmd.mutable_cmd_id()->set_seq(seq_id);
-        init(cmd);
-
-        // set verify epoch
-        auto epoch = new metapb::RangeEpoch(req.header().range_epoch());
-        cmd.set_allocated_verify_epoch(epoch);
-
-        auto context = AddContext(seq_id, cmd.cmd_type(), msg, req.release_header());
-        context->submit_time = get_micro_second();
-
-        auto ret = Submit(cmd);
-        if (!ret.ok()) {
-            context->release_proto_message();
-            req.set_allocated_header(context->release_request_header());
-            DelContext(seq_id);
+    template <class R>
+    void ReplySubmit(const raft_cmdpb::Command& cmd, R *resp, errorpb::Error *err) {
+        auto ctx = submit_queue_.Remove(cmd.cmd_id().seq());
+        if (ctx != nullptr) {
+            ctx->CheckExecuteTime(id_, kTimeTakeWarnThresoldUSec);
+            ctx->Reply(context_->SocketSession(), resp, err);
+        } else {
+            RANGE_LOG_WARN("Apply cmd id %" PRIu64 " not found", cmd.cmd_id().seq());
+            delete resp;
+            delete err;
         }
-
-        return ret;
-    }
-
-    template <class ResponseT>
-    Status SendResponse(ResponseT *response, const raft_cmdpb::Command &cmd, int code,
-                        errorpb::Error *err) {
-        std::unique_ptr<AsyncContext> context(ReleaseContext(cmd.cmd_id().seq()));
-        if (context == nullptr) {
-            FLOG_ERROR("Apply cmd id %" PRIu64 " not found", cmd.cmd_id().seq());
-
-            if (err != nullptr) {
-                delete err;
-            }
-
-            delete response;
-            return Status(Status::kTimedOut, CmdType_Name(cmd.cmd_type()) + " time out",
-                          "");
-        }
-
-        auto etime = get_micro_second();
-        auto take = etime - context->proto_message->begin_time;
-        if (take > kTimeTakeWarnThresoldUSec) {
-            auto method = funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(context->proto_message->header.func_id));
-            FLOG_WARN("range[%lu] %s takes too long(%ld ms), sid=%ld, msgid=%ld", id_, method.c_str(), take / 1000,
-                      context->proto_message->session_id, context->proto_message->header.msg_id);
-        }
-
-        FLOG_DEBUG("range[%lu] response msgid=%ld.", id_, context->proto_message->header.msg_id);
-
-        response->mutable_resp()->set_code(code);
-
-        context_.SocketSession()->SetResponseHeader(*context->request_header,
-                                                    response->mutable_header(), err);
-        context_.SocketSession()->Send(context->release_proto_message(), response);
-
-        return Status::OK();
-    }
-
-    template <class ResponseT>
-    Status SendResponse(ResponseT *response, const raft_cmdpb::Command &cmd, int code,
-                        uint64_t rows, errorpb::Error *err) {
-        response->mutable_resp()->set_affected_keys(rows);
-        return SendResponse(response, cmd, code, err);
     }
 
 public:
@@ -334,7 +215,7 @@ private:
     errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
 
 private:
-    static const int kTimeTakeWarnThresoldUSec = 500000;
+    static const int64_t kTimeTakeWarnThresoldUSec = 500000;
 
     RangeContext* context_ = nullptr;
     const uint64_t node_id_ = 0;
@@ -355,11 +236,7 @@ private:
     std::atomic<uint64_t> statis_size_ = {0};
     uint64_t split_range_id_ = 0;
 
-    typedef std::pair<time_t, uint64_t> tr;
-    std::atomic<uint64_t> submit_seq_{1};
-    std::unordered_map<uint64_t, AsyncContext *> submit_map_;
-    std::priority_queue<tr, std::vector<tr>, std::greater<tr>> submit_queue_;
-    std::mutex submit_mutex_;
+    SubmitQueue submit_queue_;
 
     std::unique_ptr<storage::Store> store_;
     std::shared_ptr<raft::Raft> raft_ = nullptr;

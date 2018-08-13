@@ -1,47 +1,61 @@
 #include "range.h"
+
+#include "base/util.h"
 #include "server/range_server.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+enum {
+    LOCK_OK = 0,
+    LOCK_EXISTED,
+    LOCK_NOT_EXIST,
+    LOCK_ID_MISMATCHED,
+    LOCK_IS_FORCE_UNLOCKED,
+    LOCK_STORE_FAILED,
+    LOCK_EPOCH_ERROR
+};
+
+const int DEFAULT_LOCK_DELETE_TIME_MILLSEC = 3000;
+
 kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
-    FLOG_DEBUG("lock get: key[%s]", EncodeToHexString(key).c_str());
+    FLOG_DEBUG("lock get: key[%s]", EncodeToHex(key).c_str());
     std::string val;
     auto ret = store_->Get(key, &val);
     if (!ret.ok()) {
-        FLOG_WARN("lock get: no key[%s]", EncodeToHexString(key).c_str());
+        FLOG_WARN("lock get: no key[%s]", EncodeToHex(key).c_str());
         return nullptr;
     }
 
-    FLOG_DEBUG("lock get ok: key[%s] val[%s]", EncodeToHexString(key).c_str(),
-               EncodeToHexString(val).c_str());
+    FLOG_DEBUG("lock get ok: key[%s] val[%s]", EncodeToHex(key).c_str(),
+               EncodeToHex(val).c_str());
     auto req = new (kvrpcpb::LockValue);
     if (!req->ParseFromString(val)) {
-        FLOG_WARN("key[%s] value parse failed", EncodeToHexString(key).c_str());
+        FLOG_WARN("key[%s] value parse failed", EncodeToHex(key).c_str());
         return nullptr;
     }
 
     if (req->delete_time() > 0 && req->delete_time() <= getticks()) {
-        FLOG_WARN("key[%s] deteled at time %ld", EncodeToHexString(key).c_str(),
+        FLOG_WARN("key[%s] deteled at time %ld", EncodeToHex(key).c_str(),
                   req->delete_time());
         return nullptr;
     }
 
     if (getticks() - req->update_time() > DEFAULT_LOCK_DELETE_TIME_MILLSEC) {
         FLOG_WARN("key[%s] deteled last update time %ld > 3s",
-                  EncodeToHexString(key).c_str(), req->update_time());
+                  EncodeToHex(key).c_str(), req->update_time());
         return nullptr;
     }
 
     FLOG_DEBUG("lock get parse: key[%s] val[%s]",
-               EncodeToHexString(key).c_str(), req->DebugString().c_str());
+               EncodeToHex(key).c_str(), req->DebugString().c_str());
     return req;
 }
 
 void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
     FLOG_DEBUG("lock request: %s", req.DebugString().c_str());
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     auto &key = req.req().key();
@@ -64,7 +78,7 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
             break;
         }
 
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::Lock);
             cmd.set_allocated_lock_req(req.release_req());
         });
@@ -129,7 +143,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
                                                  getticks());
         }
         ret = store_->Put(req.key(), req.value().SerializeAsString());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
             FLOG_ERROR("ApplyLock failed, code:%d, msg:%s", ret.code(),
@@ -150,8 +164,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        SendResponse(resp, cmd, resp->has_resp() ? resp->resp().code() : 0,
-                     err);
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -161,7 +174,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
 void Range::LockUpdate(common::ProtoMessage *msg,
                        kvrpcpb::DsLockUpdateRequest &req) {
     FLOG_DEBUG("lock update: %s", req.DebugString().c_str());
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     auto &key = req.req().key();
@@ -184,7 +197,7 @@ void Range::LockUpdate(common::ProtoMessage *msg,
             break;
         }
 
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::LockUpdate);
             cmd.set_allocated_lock_update_req(req.release_req());
         });
@@ -251,7 +264,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         ret = store_->Put(req.key(), val->SerializeAsString());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
             FLOG_ERROR("ApplyLockUpdate failed, code:%d, msg:%s", ret.code(),
@@ -272,9 +285,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        SendResponse(resp, cmd, resp->has_resp() ? resp->resp().code() : 0,
-                     err);
-
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -283,7 +294,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
 
 void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
     FLOG_DEBUG("unlock: %s", req.DebugString().c_str());
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     auto &key = req.req().key();
@@ -296,7 +307,7 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
             break;
         }
 
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::Unlock);
             cmd.set_allocated_unlock_req(req.release_req());
         });
@@ -362,7 +373,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
         }
         auto btime = get_micro_second();
         ret = store_->Delete(req.key());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
             FLOG_ERROR("ApplyUnlock failed, code:%d, msg:%s", ret.code(),
@@ -380,8 +391,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        SendResponse(resp, cmd, resp->has_resp() ? resp->resp().code() : 0,
-                     err);
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -391,7 +401,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
 void Range::UnlockForce(common::ProtoMessage *msg,
                         kvrpcpb::DsUnlockForceRequest &req) {
     FLOG_DEBUG("unlock force: %s", req.DebugString().c_str());
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     auto &key = req.req().key();
@@ -404,7 +414,7 @@ void Range::UnlockForce(common::ProtoMessage *msg,
             break;
         }
 
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::UnlockForce);
             cmd.set_allocated_unlock_force_req(req.release_req());
         });
@@ -460,7 +470,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         // do not really delete until the deleted time
         val->set_delete_flag(true);
         ret = store_->Put(req.key(), val->SerializeAsString());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
             FLOG_ERROR("ApplyUnlockForce failed, code:%d, msg:%s", ret.code(),
@@ -479,8 +489,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        SendResponse(resp, cmd, resp->has_resp() ? resp->resp().code() : 0,
-                     err);
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -489,7 +498,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
 
 void Range::LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req) {
     FLOG_DEBUG("lock scan: %s", req.DebugString().c_str());
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, get_micro_second() - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, get_micro_second() - msg->begin_time);
 
     errorpb::Error *err = nullptr;
     auto ds_resp = new kvrpcpb::DsLockScanResponse;
@@ -522,8 +531,8 @@ void Range::LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req)
         FLOG_DEBUG("last key: %s", lastInfo.key().c_str());
     }
 
-    context_->socket_session->SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
-    context_->socket_session->Send(msg, ds_resp);
+    common::SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
+    context_->SocketSession()->Send(msg, ds_resp);
 }
 
 }  // namespace range

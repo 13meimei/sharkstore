@@ -3,8 +3,9 @@ _Pragma("once");
 #include <memory>
 #include <rocksdb/db.h>
 
-#include "statistics.h"
 #include "base/status.h"
+#include "proto/gen/raft_cmdpb.pb.h"
+#include "statistics.h"
 
 namespace sharkstore {
 
@@ -32,7 +33,6 @@ public:
     virtual uint64_t GetNodeID() const = 0;
 
     virtual rocksdb::DB *DBInstance() const() = 0;
-
     virtual master::Worker* MasterClient() = 0;
     virtual raft::RaftServer* RaftServer() = 0;
     virtual storage::MetaStore* MetaStore() = 0;
@@ -46,7 +46,7 @@ public:
     virtual std::shared_ptr<Range> FindRange(uint64_t range_id) { return nullptr; }
 
     // split
-    Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req,
+    virtual Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req,
             uint64_t raft_index, std::shared_ptr<Range> *new_range) {
         return Status(Status::kNotSupported);
     }

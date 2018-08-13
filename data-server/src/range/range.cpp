@@ -273,6 +273,28 @@ Status Range::Submit(const raft_cmdpb::Command &cmd) {
     }
 }
 
+Status Range::SubmitCmd(common::ProtoMessage *msg, const kvrpcpb::RequestHeader& header,
+                 const std::function<void(raft_cmdpb::Command &cmd)> &init) {
+    raft_cmdpb::Command cmd;
+    init(cmd);
+
+    // set verify epoch
+    auto epoch = new metapb::RangeEpoch(header.range_epoch());
+    cmd.set_allocated_verify_epoch(epoch);
+
+    // add to queue
+    auto seq = submit_queue_.Add(header, cmd.cmd_type(), msg);
+    cmd.mutable_cmd_id()->set_node_id(node_id_);
+    cmd.mutable_cmd_id()->set_seq(seq);
+
+    auto ret = Submit(cmd);
+    if (!ret.ok()) {
+        submit_queue_.Remove(cmd.cmd_id().seq());
+    }
+
+    return ret;
+}
+
 void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
     RANGE_LOG_INFO("Leader Change to Node %" PRIu64, leader);
 
@@ -482,75 +504,12 @@ bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&err) 
     return true;
 }
 
-Range::AsyncContext *Range::AddContext(uint64_t id, raft_cmdpb::CmdType type,
-                                       common::ProtoMessage *msg,
-                                       kvrpcpb::RequestHeader *req) {
-    AsyncContext *context = new AsyncContext(type, context_, msg, req);
-
-    std::lock_guard<std::mutex> lock(submit_mutex_);
-    submit_map_[id] = context;
-    submit_queue_.emplace(msg->expire_time, id);
-    return context;
-}
-
-void Range::DelContext(uint64_t seq_id) {
-    std::lock_guard<std::mutex> lock(submit_mutex_);
-    auto it = submit_map_.find(seq_id);
-    if (it != submit_map_.end()) {
-        delete it->second;
-        submit_map_.erase(it);
-    }
-}
-
-Range::AsyncContext *Range::ReleaseContext(uint64_t seq_id) {
-    std::lock_guard<std::mutex> lock(submit_mutex_);
-    auto it = submit_map_.find(seq_id);
-    if (it != submit_map_.end()) {
-        auto context = it->second;
-        submit_map_.erase(it);
-        return context;
-    }
-
-    return nullptr;
-}
-
-std::tuple<bool, uint64_t> Range::GetExpiredContext() {
-    std::lock_guard<std::mutex> lock(submit_mutex_);
-    if (submit_queue_.empty()) {
-        return std::make_tuple(true, 0);
-    }
-    auto ts = submit_queue_.top();
-    if (valid_) {
-        time_t now = getticks();
-        if (ts.first > now) {
-            return std::make_tuple(false, 0);
-        }
-    }
-
-    submit_queue_.pop();
-    return std::make_tuple(false, ts.second);
-}
-
 void Range::ClearExpiredContext() {
-    bool empty = false;
-    uint64_t seq_id = -1;
-
-    while (true) {
-        do {
-            std::tie(empty, seq_id) = GetExpiredContext();
-            if (empty || seq_id == 0) {
-                break;
-            }
-
-            Range::AsyncContext *context = ReleaseContext(seq_id);
-            if (context != nullptr) {
-                SendTimeOutError(context);
-            }
-
-        } while (seq_id > 0);
-
-        if (empty || is_leader_) {
-            break;
+    auto expired_seqs = submit_queue_.GetExpired();
+    for (auto seq: expired_seqs) {
+        auto ctx = submit_queue_.Remove(seq);
+        if (ctx) {
+            ctx->SendTimeout(context_->SocketSession());
         }
     }
 }

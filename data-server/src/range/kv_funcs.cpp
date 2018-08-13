@@ -11,7 +11,7 @@ namespace dataserver {
 namespace range {
 
 void Range::KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req) {
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     if (!CheckWriteable()) {
@@ -40,7 +40,7 @@ void Range::KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req) {
             break;
         }
 
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvSet);
             cmd.set_allocated_kv_set_req(req.release_req());
         });
@@ -65,7 +65,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
 
     auto &req = cmd.kv_set_req();
     do {
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("ApplyInsert error: %s", err->message().c_str());
             break;
@@ -83,7 +83,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
         }
         auto btime = get_micro_second();
         ret = store_->Put(req.kv().key(), req.kv().value());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         if (cmd.cmd_id().node_id() == node_id_) {
@@ -94,9 +94,9 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsInsertResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), affected_keys,
-                     err);
-
+        resp->mutable_resp()->set_affected_keys(affected_keys);
+        resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -104,7 +104,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
 }
 
 void Range::KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req) {
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     errorpb::Error *err = nullptr;
@@ -127,20 +127,20 @@ void Range::KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req) {
         auto btime = get_micro_second();
         auto ret = store_->Get(req.req().key(), resp->mutable_value());
 
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         resp->set_code(static_cast<int>(ret.code()));
     } while (false);
 
-    context_->socket_session->SetResponseHeader(req.header(), header, err);
-    context_->socket_session->Send(msg, ds_resp);
+    common::SetResponseHeader(req.header(), header, err);
+    context_->SocketSession()->Send(msg, ds_resp);
 }
 
 void Range::KVBatchSet(common::ProtoMessage *msg,
                        kvrpcpb::DsKvBatchSetRequest &req) {
     Status ret;
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     if (!CheckWriteable()) {
@@ -160,7 +160,7 @@ void Range::KVBatchSet(common::ProtoMessage *msg,
         if (!EpochIsEqual(epoch, err)) {
             break;
         }
-        ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvBatchSet);
             cmd.set_allocated_kv_batch_set_req(req.release_req());
         });
@@ -190,7 +190,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
         auto &req = cmd.kv_batch_set_req();
         auto existCase = req.case_();
 
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("ApplyKVBatchSet error: %s", err->message().c_str());
             break;
@@ -213,14 +213,13 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
                 total_size += kv.key().size() + kv.value().size();
                 ++total_count;
 
-                keyValues.push_back(std::pair<std::string, std::string>(
-                    std::move(kv.key()), std::move(kv.value())));
+                keyValues.push_back(std::pair<std::string, std::string>(kv.key(), kv.value()));
             } while (false);
         }
 
         auto btime = get_micro_second();
         ret = store_->BatchSet(keyValues);
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -236,9 +235,9 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvBatchSetResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), affected_keys,
-                     err);
-
+        resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
+        resp->mutable_resp()->set_affected_keys(affected_keys);
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -248,7 +247,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
 
 void Range::KVBatchGet(common::ProtoMessage *msg,
                        kvrpcpb::DsKvBatchGetRequest &req) {
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     errorpb::Error *err = nullptr;
@@ -275,15 +274,15 @@ void Range::KVBatchGet(common::ProtoMessage *msg,
         }
     }
 
-    context_->run_status->PushTime(monitor::PrintTag::Store, total_time);
+    context_->Statistics()->PushTime(monitor::PrintTag::Store, total_time);
 
-    context_->socket_session->SetResponseHeader(req.header(), header, err);
-    context_->socket_session->Send(msg, ds_resp);
+    common::SetResponseHeader(req.header(), header, err);
+    context_->SocketSession()->Send(msg, ds_resp);
 }
 
 void Range::KVDelete(common::ProtoMessage *msg,
                      kvrpcpb::DsKvDeleteRequest &req) {
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     if (!CheckWriteable()) {
@@ -302,7 +301,7 @@ void Range::KVDelete(common::ProtoMessage *msg,
             break;
         }
 
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvDelete);
             cmd.set_allocated_kv_delete_req(req.release_req());
         });
@@ -335,7 +334,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         ret = store_->Delete(req.key());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -347,7 +346,8 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvDeleteResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
+        resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -356,7 +356,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
 
 void Range::KVBatchDelete(common::ProtoMessage *msg,
                           kvrpcpb::DsKvBatchDeleteRequest &req) {
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
     errorpb::Error *err = nullptr;
 
@@ -389,7 +389,7 @@ void Range::KVBatchDelete(common::ProtoMessage *msg,
         }
     }
 
-    auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+    auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
         cmd.set_cmd_type(raft_cmdpb::CmdType::KvBatchDel);
         cmd.set_allocated_kv_batch_del_req(req.release_req());
     });
@@ -433,7 +433,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         ret = store_->BatchDelete(delKeys);
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -446,8 +446,9 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), affected_keys,
-                     err);
+        resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
+        resp->mutable_resp()->set_affected_keys(affected_keys);
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -456,7 +457,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
 
 void Range::KVRangeDelete(common::ProtoMessage *msg,
                           kvrpcpb::DsKvRangeDeleteRequest &req) {
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     if (!CheckWriteable()) {
@@ -482,7 +483,7 @@ void Range::KVRangeDelete(common::ProtoMessage *msg,
         return SendError(msg, req.header(), resp, err);
     }
 
-    auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+    auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
         cmd.set_cmd_type(raft_cmdpb::CmdType::KvRangeDel);
         cmd.set_allocated_kv_range_del_req(req.release_req());
     });
@@ -536,16 +537,16 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
             ret = store_->RangeDelete(start, limit);
         }
 
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
         resp->mutable_resp()->set_last_key(last_key);
-
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), affected_keys,
-                     nullptr);
+        resp->mutable_resp()->set_affected_keys(affected_keys);
+        resp->mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }
@@ -554,7 +555,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
 }
 
 void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
-    context_->run_status->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
                                    get_micro_second() - msg->begin_time);
 
     errorpb::Error *err = nullptr;
@@ -584,10 +585,10 @@ void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
         resp->set_last_key(resp->kvs(resp->kvs_size() - 1).key());
     }
 
-    context_->socket_session->SetResponseHeader(req.header(),
-                                                ds_resp->mutable_header(), err);
-    context_->socket_session->Send(msg, ds_resp);
+    common::SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
+    context_->SocketSession()->Send(msg, ds_resp);
 }
+
 }
 }
 }  // for namespace
