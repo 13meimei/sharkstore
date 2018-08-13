@@ -17,6 +17,7 @@ import (
 	"util/hlc"
 	"proxy/store/dskv/mock_ms"
 	"proxy/store/dskv/mock_ds"
+	"proxy/store/dskv"
 
 	"golang.org/x/net/context"
 	"util/deepcopy"
@@ -27,9 +28,11 @@ import (
 const testDBName = "testdb"
 const testTableName = "testTable"
 const dsPath = "/tmp/sharkstore/data"
+const dsPath1 = "/tmp/sharkstore/data1"
 const logPath = "/tmp/sharkstore/logs"
 
 var MockDs *mock_ds.DsRpcServer
+var MockDs1 *mock_ds.DsRpcServer
 var MockMs *mock_ms.Cluster
 
 
@@ -58,10 +61,12 @@ func bytesPrefix(prefix []byte) ([]byte, []byte) {
 func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) *Proxy {
 	rng :=deepcopy.Iface(rng_).(*metapb.Range)
 	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
+	node1 := &metapb.Node{Id: 2, ServerAddr: "127.0.0.1:6061"}
 	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
 	ms.SetDb(db)
 	ms.SetTable(table)
 	ms.SetNode(node)
+	ms.SetNode(node1)
 	ms.SetRange(rng)
 	go ms.Start()
 	MockMs = ms
@@ -70,6 +75,10 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 	ds.SetRange(rng)
 	go ds.Start()
 	MockDs = ds
+	time.Sleep(time.Second)
+	ds1 := mock_ds.NewDsRpcServer("127.0.0.1:6061", dsPath1)
+	go ds1.Start()
+	MockDs1 = ds1
 	time.Sleep(time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -232,7 +241,12 @@ func testProxyInsert(t *testing.T, p *Proxy, expectedAffected uint64, sql string
 	}
 	res, err := p.HandleInsert(testDBName, stmt, nil)
 	if err != nil {
-		t.Fatalf("insert failed: %v, sql: %v", err, sql)
+		if  err == dskv.ErrRouteChange{
+			t.Logf("insert failed, %v, sqlL%v", err, sql)
+			return
+		} else {
+			t.Fatalf("insert failed: %v, sql: %v", err, sql)
+		}
 	}
 	if res.Status != 0 {
 		t.Fatalf("insert failed. status not ok(%d)", res.Status)

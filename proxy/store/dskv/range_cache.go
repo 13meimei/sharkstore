@@ -96,7 +96,7 @@ func (c *RangeCache) LocateKey(bo *Backoffer, key []byte) (*KeyLocation, error) 
 	}
 	c.mu.Unlock()
 	r := rs[0]
-	log.Debug("load range key:%v,range:%d [%v-%v] leader:%d",key,r.GetID(),r.StartKey(),r.EndKey(),r.Leader().String())
+	log.Debug("load range key:%v,range:%d [%v-%v] leader:%s",key,r.GetID(),r.StartKey(),r.EndKey(),r.Leader().String())
 	return &KeyLocation{
 		Region:   r.VerID(),
 		StartKey: r.StartKey(),
@@ -234,7 +234,7 @@ func (c *RangeCache) loadRegion(bo *Backoffer, key []byte) ([]*Range, error) {
 	var err error
 	for {
 		if err != nil {
-			err = bo.Backoff(boMSRPC, err)
+			err = bo.Backoff(BoCacheLoad, err)
 			if err != nil {
 				return nil, err
 			}
