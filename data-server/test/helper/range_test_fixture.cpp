@@ -21,11 +21,11 @@ void RangeTestFixture::SetUp() {
     initContext();
 
     auto meta = MakeRangeMeta(table_.get());
-    range_.reset(new range::Range(&context_, meta));
+//    range_.reset(new range::Range(&context_, meta));
 }
 
 void RangeTestFixture::initContext() {
-    context_.node_id = 1;
+ //   context_.node_id = 1;
 
     char path[] = "/tmp/sharkstore_ds_range_test_XXXXXX";
     char* tmp = mkdtemp(path);
@@ -37,14 +37,14 @@ void RangeTestFixture::initContext() {
         rocksdb::Options ops;
         ops.create_if_missing = true;
         ops.error_if_exists = true;
-        auto s = rocksdb::DB::Open(ops, JoinFilePath({tmp_dir_, "data"}), &context_.rocks_db);
-        ASSERT_TRUE(s.ok()) << s.ToString();
+  //      auto s = rocksdb::DB::Open(ops, JoinFilePath({tmp_dir_, "data"}), &context_.rocks_db);
+  //      ASSERT_TRUE(s.ok()) << s.ToString();
     }
     // open meta store
     {
-        context_.meta_store = new storage::MetaStore(JoinFilePath({tmp_dir_, "meta"}));
-        auto s = context_.meta_store->Open();
-        ASSERT_TRUE(s.ok()) << s.ToString();
+   //     context_.meta_store = new storage::MetaStore(JoinFilePath({tmp_dir_, "meta"}));
+   //     auto s = context_.meta_store->Open();
+   //     ASSERT_TRUE(s.ok()) << s.ToString();
     }
 }
 

@@ -27,7 +27,6 @@ protected:
 
 private:
     std::string tmp_dir_;
-    dataserver::server::ContextServer context_;
 };
 
 } /* namespace helper */
