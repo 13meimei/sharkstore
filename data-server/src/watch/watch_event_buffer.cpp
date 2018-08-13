@@ -61,6 +61,7 @@ bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *b
 
     std::lock_guard<std::mutex> lock(buffer_mutex_);
     bool ret{false};
+    int64_t queueLength(0);
 
     auto it = mapGroupBuffer.find(grpKey);
     if(it == mapGroupBuffer.end()) {
@@ -73,16 +74,18 @@ bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *b
             } else {
                 ret = true;
             }
+            queueLength = grpValue->length();
         } else {
             FLOG_WARN("map[%s] is full.", EncodeToHexString(grpKey).c_str());
             ret = false;
         }
     } else {
         ret = it->second->enQueue(*bufferValue);
+        queueLength = it->second->length();
     }
 
-    FLOG_DEBUG("emplace to queue,[%d] key:%s value:%s version:%" PRId64, ret,
-               EncodeToHexString(grpKey).c_str(), EncodeToHexString(bufferValue->value()).c_str(), bufferValue->version());
+    FLOG_DEBUG("emplace to queue,[%d] key:%s value:%s version:%" PRId64 " queue_length:%" PRId64, ret,
+               EncodeToHexString(grpKey).c_str(), EncodeToHexString(bufferValue->value()).c_str(), bufferValue->version(), queueLength);
 
     return ret;
 }
