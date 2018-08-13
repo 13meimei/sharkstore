@@ -121,7 +121,7 @@ namespace watch {
     }
 
     template<class T>
-    int CircularQueue<T>::length() const {
+    int32_t CircularQueue<T>::length() const {
         return m_iLength;
     }
 
