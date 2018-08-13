@@ -217,16 +217,15 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
 }
 
 Status Range::Apply(const std::string &cmd, uint64_t index) {
+    if (!valid_) {
+        RANGE_LOG_ERROR("is invalid!");
+        return Status(Status::kInvalid, "range is invalid", "");
+    }
+
     auto start = std::chrono::system_clock::now();
 
     raft_cmdpb::Command raft_cmd;
-    context_->SocketSession()->GetMessage(cmd.data(), cmd.size(), &raft_cmd);
-
-    if (!valid_) {
-        RANGE_LOG_ERROR("is invalid!");
-        DelContext(raft_cmd.cmd_id().seq());
-        return Status(Status::kInvalid, "range is invalid", "");
-    }
+    common::GetMessage(cmd.data(), cmd.size(), &raft_cmd);
 
     Status ret;
     if (raft_cmd.cmd_type() == raft_cmdpb::CmdType::AdminSplit) {
@@ -583,34 +582,6 @@ errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
     }
 
     return err;
-}
-
-void Range::SendTimeOutError(AsyncContext *context) {
-    RANGE_LOG_WARN("deal %s timeout. sid=%" PRId64 ", msgid=%" PRId64,
-              raft_cmdpb::CmdType_Name(context->cmd_type_).c_str(),
-              context->proto_message->session_id, context->proto_message->msg_id);
-
-    auto err = TimeOutError();
-    switch (context->cmd_type_) {
-        case raft_cmdpb::CmdType::RawPut:
-            SendError(context, new kvrpcpb::DsKvRawPutResponse, err);
-            break;
-        case raft_cmdpb::CmdType::RawDelete:
-            SendError(context, new kvrpcpb::DsKvRawDeleteResponse, err);
-            break;
-        case raft_cmdpb::CmdType::Insert:
-            SendError(context, new kvrpcpb::DsInsertResponse, err);
-            break;
-        case raft_cmdpb::CmdType::Delete:
-            SendError(context, new kvrpcpb::DsDeleteResponse, err);
-            break;
-
-        default:
-            RANGE_LOG_ERROR("Apply cmd type error %d", context->cmd_type_);
-            delete err;
-    }
-
-    delete context;
 }
 
 }  // namespace range

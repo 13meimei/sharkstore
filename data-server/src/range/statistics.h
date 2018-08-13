@@ -6,10 +6,10 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-class Statistics {
+class RangeStats {
 public:
-    Statistics() = default;
-    virtual ~Statistics() = default;
+    RangeStats() = default;
+    virtual ~RangeStats() = default;
 
     virtual void PushTime(monitor::PrintTag type, uint32_t time) {}
     virtual void IncrLeaderCount() {}

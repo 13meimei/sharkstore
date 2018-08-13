@@ -46,7 +46,7 @@ public:
     metapb::Range *GetRangeMeta(uint64_t range_id);
 
     size_t GetRangesSize() const;
-    std::shared_ptr<range::Range> find(uint64_t range_id);
+    std::shared_ptr<range::Range> Find(uint64_t range_id);
 
     void OnNodeHeartbeatResp(const mspb::NodeHeartbeatResponse &) override;
     void OnRangeHeartbeatResp(const mspb::RangeHeartbeatResponse &) override;
@@ -141,6 +141,7 @@ private:
     storage::MetaStore *meta_store_ = nullptr;
 
     ContextServer *context_ = nullptr;
+    std::unique_ptr<range::RangeContext> range_context_;
 };
 
 }  // namespace server

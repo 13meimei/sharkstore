@@ -24,7 +24,7 @@ struct FileSystemUsage {
     uint64_t free_size = 0;
 };
 
-class RunStatus : public range::Statistics {
+class RunStatus : public range::RangeStats {
 public:
     RunStatus() = default;
     ~RunStatus() = default;

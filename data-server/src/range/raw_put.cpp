@@ -124,7 +124,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvRawPutResponse;
         if (!ret.ok()) {
-            resp->mutable_resp()->set_code(static_cast<int32_t>(ret.code()))
+            resp->mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
         }
         ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {

@@ -32,12 +32,12 @@ public:
 
     virtual uint64_t GetNodeID() const = 0;
 
-    virtual rocksdb::DB *DBInstance() const() = 0;
+    virtual rocksdb::DB *DBInstance() = 0;
     virtual master::Worker* MasterClient() = 0;
     virtual raft::RaftServer* RaftServer() = 0;
     virtual storage::MetaStore* MetaStore() = 0;
     virtual common::SocketSession* SocketSession() = 0;
-    virtual Statistics* Statistics() = 0;
+    virtual RangeStats* Statistics() = 0;
 
     virtual void ScheduleHeartbeat(uint64_t range_id, bool delay) {}
     virtual void ScheduleCheckSize(uint64_t range_id) {}

@@ -150,7 +150,7 @@ set(SOURCES
     src/server/node_address.cpp
     src/server/raft_logger.cpp
     src/server/run_status.cpp
-    src/server/range_context_impl.h
+    src/server/range_context_impl.cpp
     src/server/range_server.cpp
     src/server/version.cpp
     src/range/range.cpp

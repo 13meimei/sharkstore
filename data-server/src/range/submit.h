@@ -3,6 +3,7 @@ _Pragma("once");
 #include <queue>
 #include <vector>
 #include <unordered_map>
+#include <mutex>
 
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "common/socket_session.h"
@@ -83,7 +84,7 @@ private:
     using SubmitContextPtr = std::unique_ptr<SubmitContext>;
     using ContextMap = std::unordered_map<uint64_t, SubmitContextPtr>;
 
-    std::atomic<uint64_t> seq_ = {0};
+    uint64_t seq_ = 0;
     ContextMap ctx_map_;
     ExpireQueue expire_que_;
     mutable std::mutex mu_;
