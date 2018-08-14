@@ -743,7 +743,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
     FLOG_DEBUG("WatchNotify haskkey:%s  key:%s", EncodeToHexString(hashKey).c_str(), EncodeToHexString(dbKey).c_str());
     if(hasPrefix) {
-        auto value = std::make_shared<watch::CEventBufferValue>(kv, evtType);
+        auto value = std::make_shared<watch::CEventBufferValue>(kv, evtType, version);
 //        if(value->key_size()) {
 //            FLOG_DEBUG(">>>key is valid.");
 //        }
@@ -772,7 +772,8 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     }
 
     if(hasPrefix) {
-        watch_server->GetPrefixWatchers(evtType, vecPrefixNotifyWatcher, hashKey, dbKey, currDbVersion);
+        //watch_server->GetPrefixWatchers(evtType, vecPrefixNotifyWatcher, hashKey, dbKey, currDbVersion);
+        watch_server->GetPrefixWatchers(evtType, vecPrefixNotifyWatcher, hashKey, hashKey, currDbVersion);
 
         watchCnt = vecPrefixNotifyWatcher.size();
         FLOG_DEBUG("prefix key notify:%" PRId32 " key:%s", watchCnt, EncodeToHexString(dbKey).c_str());

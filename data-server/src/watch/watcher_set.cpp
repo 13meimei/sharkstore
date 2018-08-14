@@ -81,9 +81,9 @@ WatcherSet::WatcherSet() {
                 auto excEnd = getticks();
                 //auto take_time = excEnd - waitBeginTime;
 
-                FLOG_DEBUG("wait_until....session_id: %" PRId64 ",task msgid: %" PRId64
+                FLOG_DEBUG("wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
                                    " execute take time: %" PRId64 " ms,wait time:%" PRId64 ,
-                           w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id, excEnd-excBegin,excBegin-waitBeginTime);
+                           w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id, w_ptr->GetWatcherId(), excEnd-excBegin,excBegin-waitBeginTime);
 
                 FLOG_INFO("watcher expire timeout, timer queue pop: session_id: %" PRId64 " watch_id:[%" PRIu64 "] key: [%s]",
                           w_ptr->GetMessage()->session_id, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
@@ -301,7 +301,7 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
     if(watchers->mapKeyWatcher.size() > 0) {
         watchers->mapKeyWatcher.swap(watcherValue->mapKeyWatcher);
 
-        FLOG_INFO("watcher get success, key: [%s] watch_id[" PRId64 "]", EncodeToHexString(key).c_str(), int64_t(watcherValue->mapKeyWatcher.begin()->first) );
+        FLOG_INFO("watcher get success, key: [%s] watch_id[" PRId64 "]", EncodeToHexString(key).c_str(), watcherValue->mapKeyWatcher.begin()->first );
         return WATCH_OK;
     }
 

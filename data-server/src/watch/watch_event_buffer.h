@@ -46,9 +46,10 @@ public:
         return *this;
     }
 
-    CEventBufferValue(const watchpb::WatchKeyValue &val, const watchpb::EventType &evtType) {
+    CEventBufferValue(const watchpb::WatchKeyValue &val, const watchpb::EventType &evtType, const int64_t &keyVersion) {
         CopyFrom(val);
         this->evtType_ = evtType;
+        this->version_ = keyVersion;
         setUpdateTime();
     }
 
