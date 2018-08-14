@@ -7,6 +7,8 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+using namespace sharkstore::monitor;
+
 bool Range::RawPutSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
     auto &key = req.req().key();
 
@@ -15,8 +17,7 @@ bool Range::RawPutSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &
             cmd.set_cmd_type(raft_cmdpb::CmdType::RawPut);
             cmd.set_allocated_kv_raw_put_req(req.release_req());
         });
-
-        return ret.ok() ? true : false;
+        return ret.ok();
     }
 
     return false;
@@ -35,7 +36,7 @@ void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("RawPut begin");
 
@@ -106,7 +107,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
         }
 
         ret = store_->Put(req.key(), req.value());
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {

@@ -8,6 +8,8 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+using namespace sharkstore::monitor;
+
 bool Range::DeleteSubmit(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
     auto &key = req.req().key();
 
@@ -36,7 +38,7 @@ void Range::Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("Delete begin");
 
@@ -118,8 +120,7 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
         }
 
         ret = store_->DeleteRows(req, &affected_keys);
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
-                                       get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, get_micro_second() - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyDelete failed, code:%d, msg:%s", ret.code(),

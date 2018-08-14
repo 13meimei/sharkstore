@@ -6,12 +6,13 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+using namespace sharkstore::monitor;
+
 void Range::Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
-                                   btime - msg->begin_time);
+    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("Insert begin");
 
@@ -67,7 +68,7 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
 
         ret = store_->Insert(req, &affected_keys);
         auto etime = get_micro_second();
-        context_->Statistics()->PushTime(monitor::PrintTag::Store, etime - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyInsert failed, code:%d, msg:%s", ret.code(),

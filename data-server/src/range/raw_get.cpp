@@ -8,6 +8,8 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+using namespace sharkstore::monitor;
+
 kvrpcpb::KvRawGetResponse *Range::RawGetResp(const std::string &key) {
     if (is_leader_ && KeyInRange(key)) {
         auto resp = new kvrpcpb::KvRawGetResponse;
@@ -36,7 +38,7 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
     auto ds_resp = new kvrpcpb::DsKvRawGetResponse;
     auto header = ds_resp->mutable_header();
@@ -80,7 +82,7 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
 
         auto btime = get_micro_second();
         auto ret = store_->Get(req.req().key(), resp->mutable_value());
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
 
         resp->set_code(static_cast<int>(ret.code()));

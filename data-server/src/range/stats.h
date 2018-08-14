@@ -1,6 +1,6 @@
 _Pragma("once");
 
-#include "monitor/syscommon.h"
+#include "monitor/statistics.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -11,7 +11,7 @@ public:
     RangeStats() = default;
     virtual ~RangeStats() = default;
 
-    virtual void PushTime(monitor::PrintTag type, uint32_t time) {}
+    virtual void PushTime(monitor::HistogramType type, int64_t time) {}
     virtual void IncrLeaderCount() {}
     virtual void DecrLeaderCount() {}
     virtual void IncrSplitCount() {}

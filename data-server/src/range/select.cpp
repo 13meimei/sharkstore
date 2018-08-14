@@ -8,6 +8,8 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+using namespace sharkstore::monitor;
+
 kvrpcpb::SelectResponse *Range::SelectResp(const kvrpcpb::DsSelectRequest &req) {
     auto &key = req.req().key();
 
@@ -39,7 +41,7 @@ void Range::Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
     auto ds_resp = new kvrpcpb::DsSelectResponse;
     auto header = ds_resp->mutable_header();
@@ -85,10 +87,10 @@ void Range::Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req) {
         auto btime = get_micro_second();
         auto ret = store_->Select(req.req(), resp);
         auto etime = get_micro_second();
-        context_->Statistics()->PushTime(monitor::PrintTag::Store, etime - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
 
         if (etime - msg->begin_time > kTimeTakeWarnThresoldUSec) {
-            RANGE_LOG_WARN("select takes too long(%ld ms), sid=%" PRId64 ", msgid=%" PRId64,
+            RANGE_LOG_WARN("select takes too long(%" PRId64 " ms), sid=%" PRId64 ", msgid=%" PRId64,
                       (etime - msg->begin_time) / 1000, msg->session_id, msg->header.msg_id);
         }
 

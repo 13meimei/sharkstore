@@ -10,6 +10,7 @@
 #include "frame/sf_status.h"
 #include "monitor/isystemstatus.h"
 #include "monitor/syscommon.h"
+#include "monitor/statistics.h"
 #include "range/stats.h"
 
 #include "context_server.h"
@@ -36,8 +37,8 @@ public:
     int Start();
     void Stop();
 
-    void PushTime(monitor::PrintTag type, uint32_t time) override {
-        system_status_.PutTopData(type, time);
+    void PushTime(monitor::HistogramType type, int64_t time) override {
+        if (time > 0) statistics_.PushTime(type, static_cast<uint64_t>(time));
     }
 
     bool GetFilesystemUsage(FileSystemUsage* usage);
@@ -54,12 +55,15 @@ public:
 private:
     void run();
     void updateFSUsagePercent();
+    void printStatistics();
     void printDBMetric();
 
 private:
     ContextServer *context_ = nullptr;
 
     monitor::ISystemStatus system_status_;
+    monitor::Statistics statistics_;
+
     std::atomic<uint64_t> fs_usage_percent_ = {0};
 
     std::atomic<uint64_t> leader_count_ = {0};

@@ -13,8 +13,39 @@
 
 _Pragma("once");
 
+#include <mutex>
+#include "histogram.h"
+
 namespace sharkstore {
 namespace monitor {
+
+enum class HistogramType : uint32_t {
+    kQWait = 0,
+    kDeal,
+    kStore,
+    kRaft,
+    kMax,
+};
+
+const char *HistogramTypeName(HistogramType type);
+
+static constexpr uint32_t kHistogramTypeNum = static_cast<uint32_t>(HistogramType::kMax);
+
+class Statistics {
+public:
+    void PushTime(HistogramType type, uint64_t time);
+
+    void GetData(HistogramType type, HistogramData *data);
+
+    std::string ToString(HistogramType type) const;
+    std::string ToString() const;
+
+    void Reset();
+
+private:
+    Histogram histograms_[kHistogramTypeNum];
+    mutable std::mutex aggregate_lock_;
+};
 
 }  // namespace monitor
 }  // namespace sharkstore

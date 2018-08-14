@@ -10,9 +10,11 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+using namespace sharkstore::monitor;
+
 void Range::KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req) {
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
-                                   get_micro_second() - msg->begin_time);
+    context_->Statistics()->PushTime(HistogramType::kQWait,
+            get_micro_second() - msg->begin_time);
 
     if (!CheckWriteable()) {
         auto resp = new kvrpcpb::DsKvSetResponse;
@@ -83,8 +85,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
             }
         }
         ret = store_->Put(req.kv().key(), req.kv().value());
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
-                                       get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, get_micro_second() - btime);
 
         if (cmd.cmd_id().node_id() == node_id_) {
             auto len = req.kv().key().size() + req.kv().value().size();
@@ -104,7 +105,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
 }
 
 void Range::KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req) {
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     errorpb::Error *err = nullptr;
@@ -127,7 +128,7 @@ void Range::KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req) {
         auto btime = get_micro_second();
         auto ret = store_->Get(req.req().key(), resp->mutable_value());
 
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
 
         resp->set_code(static_cast<int>(ret.code()));
@@ -140,7 +141,7 @@ void Range::KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req) {
 void Range::KVBatchSet(common::ProtoMessage *msg,
                        kvrpcpb::DsKvBatchSetRequest &req) {
     Status ret;
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     if (!CheckWriteable()) {
@@ -219,7 +220,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
         }
 
         ret = store_->BatchSet(keyValues);
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -247,7 +248,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
 
 void Range::KVBatchGet(common::ProtoMessage *msg,
                        kvrpcpb::DsKvBatchGetRequest &req) {
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     errorpb::Error *err = nullptr;
@@ -274,7 +275,7 @@ void Range::KVBatchGet(common::ProtoMessage *msg,
         }
     }
 
-    context_->Statistics()->PushTime(monitor::PrintTag::Store, total_time);
+    context_->Statistics()->PushTime(HistogramType::kStore, total_time);
 
     common::SetResponseHeader(req.header(), header, err);
     context_->SocketSession()->Send(msg, ds_resp);
@@ -282,7 +283,7 @@ void Range::KVBatchGet(common::ProtoMessage *msg,
 
 void Range::KVDelete(common::ProtoMessage *msg,
                      kvrpcpb::DsKvDeleteRequest &req) {
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     if (!CheckWriteable()) {
@@ -334,7 +335,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
         }
 
         ret = store_->Delete(req.key());
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -356,7 +357,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
 
 void Range::KVBatchDelete(common::ProtoMessage *msg,
                           kvrpcpb::DsKvBatchDeleteRequest &req) {
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
     errorpb::Error *err = nullptr;
 
@@ -433,7 +434,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
         }
 
         ret = store_->BatchDelete(delKeys);
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -457,7 +458,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
 
 void Range::KVRangeDelete(common::ProtoMessage *msg,
                           kvrpcpb::DsKvRangeDeleteRequest &req) {
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     if (!CheckWriteable()) {
@@ -537,7 +538,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
             ret = store_->RangeDelete(start, limit);
         }
 
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
     } while (false);
 
@@ -555,7 +556,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
 }
 
 void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     errorpb::Error *err = nullptr;

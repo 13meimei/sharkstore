@@ -19,6 +19,8 @@ enum {
 
 const int DEFAULT_LOCK_DELETE_TIME_MILLSEC = 3000;
 
+using namespace sharkstore::monitor;
+
 kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
     FLOG_DEBUG("lock get: key[%s]", EncodeToHex(key).c_str());
     std::string val;
@@ -55,7 +57,7 @@ kvrpcpb::LockValue *Range::LockGet(const std::string &key) {
 
 void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
     FLOG_DEBUG("lock request: %s", req.DebugString().c_str());
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     auto &key = req.req().key();
@@ -144,7 +146,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
                                                  getticks());
         }
         ret = store_->Put(req.key(), req.value().SerializeAsString());
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
             FLOG_ERROR("ApplyLock failed, code:%d, msg:%s", ret.code(),
@@ -175,7 +177,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
 void Range::LockUpdate(common::ProtoMessage *msg,
                        kvrpcpb::DsLockUpdateRequest &req) {
     FLOG_DEBUG("lock update: %s", req.DebugString().c_str());
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     auto &key = req.req().key();
@@ -266,7 +268,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         ret = store_->Put(req.key(), val->SerializeAsString());
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
             FLOG_ERROR("ApplyLockUpdate failed, code:%d, msg:%s", ret.code(),
@@ -297,7 +299,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
 void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
     FLOG_DEBUG("unlock: %s", req.DebugString().c_str());
     auto atime = get_micro_second();
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, atime - msg->begin_time);
+    context_->Statistics()->PushTime(HistogramType::kQWait, atime - msg->begin_time);
 
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
@@ -376,7 +378,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
         }
         auto btime = get_micro_second();
         ret = store_->Delete(req.key());
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
             FLOG_ERROR("ApplyUnlock failed, code:%d, msg:%s", ret.code(),
@@ -404,7 +406,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
 void Range::UnlockForce(common::ProtoMessage *msg,
                         kvrpcpb::DsUnlockForceRequest &req) {
     FLOG_DEBUG("unlock force: %s", req.DebugString().c_str());
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
+    context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
     auto &key = req.req().key();
@@ -474,7 +476,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         // do not really delete until the deleted time
         val->set_delete_flag(true);
         ret = store_->Put(req.key(), val->SerializeAsString());
-        context_->Statistics()->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(HistogramType::kStore,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
             FLOG_ERROR("ApplyUnlockForce failed, code:%d, msg:%s", ret.code(),
@@ -502,7 +504,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
 
 void Range::LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req) {
     FLOG_DEBUG("lock scan: %s", req.DebugString().c_str());
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, get_micro_second() - msg->begin_time);
+    context_->Statistics()->PushTime(HistogramType::kQWait, get_micro_second() - msg->begin_time);
 
     errorpb::Error *err = nullptr;
     auto ds_resp = new kvrpcpb::DsLockScanResponse;

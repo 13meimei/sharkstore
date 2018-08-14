@@ -185,6 +185,7 @@ set(SOURCES
     src/monitor/encodedata.cpp
     src/monitor/histogram.cpp
     src/monitor/rangedata.cpp
+    src/monitor/statistics.cpp
 )
 
 if (APPLE)

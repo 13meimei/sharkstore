@@ -52,6 +52,7 @@ void RunStatus::run() {
         updateFSUsagePercent();
         printDBMetric();
         context_->worker->PrintQueueSize();
+        printStatistics();
 
         std::unique_lock<std::mutex> lock(mutex_);
         cond_.wait_for(lock,
@@ -84,6 +85,11 @@ void RunStatus::updateFSUsagePercent() {
     if (GetFilesystemUsage(&usage)) {
         fs_usage_percent_ = usage.used_size * 100/ usage.total_size;
     }
+}
+
+void RunStatus::printStatistics() {
+    FLOG_INFO("\n%s", statistics_.ToString().c_str());
+    statistics_.Reset();
 }
 
 void RunStatus::printDBMetric() {

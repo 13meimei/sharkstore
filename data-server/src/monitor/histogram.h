@@ -24,11 +24,11 @@ namespace monitor {
 // mostly the implementation is from the rocksdb project
 
 struct HistogramData {
-    double median;
-    double percentile95;
-    double percentile99;
-    double average;
-    double standard_deviation;
+    double median = 0.0;
+    double percentile95 = 0.0;
+    double percentile99 = 0.0;
+    double average = 0.0;
+    double standard_deviation = 0.0;
     // zero-initialize new members since old Statistics::histogramData()
     // implementations won't write them.
     double max = 0.0;

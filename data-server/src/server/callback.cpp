@@ -62,14 +62,14 @@ void ds_worker_deal_callback(request_buff_t *request, void *args) {
 }
 
 void ds_send_done_callback(response_buff_t *response, void *args, int err) {
-    uint32_t take_time = get_micro_second() - response->begin_time;
+    auto take_time = get_micro_second() - response->begin_time;
 
     FLOG_DEBUG("session_id: %" PRId64 ",task msgid: %" PRId64
-               " execute take time: %d us",
+               " execute take time: %" PRId64 " us",
                response->session_id, response->msg_id, take_time);
 
     auto cs = DataServer::Instance().context_server();
-    cs->run_status->PushTime(sharkstore::monitor::PrintTag::Deal, take_time);
+    cs->run_status->PushTime(sharkstore::monitor::HistogramType::kDeal, take_time);
 }
 
 int ds_user_init_callback() { return DataServer::Instance().Start(); }
