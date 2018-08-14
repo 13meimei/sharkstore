@@ -57,6 +57,7 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 		delay := time.Now().Sub(start)
 		if err != nil {
 			metric.GsMetric.ProxyApiMetric(method, false, delay)
+			metric.GsMetric.ErrorLogMetric(sql)
 		} else {
 			metric.GsMetric.ProxyApiMetric(method, true, delay)
 		}

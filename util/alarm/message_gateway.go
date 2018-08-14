@@ -34,14 +34,12 @@ type MessageTo struct {
 }
 
 type MessageGateway struct {
-	address string
 	client *http.Client // direct push to message gateway
 
 	alarmServerAddress string // alarm server address
 	pusher *http.Client // direct to alarm server
 
 	messages chan Message
-	receiver MessageReceiver
 
 	ctx context.Context
 }
@@ -50,9 +48,8 @@ const (
 	MESSAGEGATEWAY_WAIT_QUEUE_LENGTH = 10000
 )
 
-func NewMessageGateway(ctx context.Context, addr, alarmServerAddr string, receiver MessageReceiver) *MessageGateway {
+func NewMessageGateway(ctx context.Context, alarmServerAddr string) *MessageGateway {
 	gw := &MessageGateway{
-		address: addr,
 		client: &http.Client{
 			Timeout: time.Second*3,
 		},
@@ -73,7 +70,6 @@ func NewMessageGateway(ctx context.Context, addr, alarmServerAddr string, receiv
 			//},
 		},
 		messages: make(chan Message, MESSAGEGATEWAY_WAIT_QUEUE_LENGTH),
-		receiver: receiver,
 		ctx: ctx,
 	}
 
@@ -118,12 +114,13 @@ func (gw *MessageGateway) wait() {
 	for {
 		select {
 		case msg := <-gw.messages:
-			mailTo := gw.receiver.GetMailList(msg.ClusterId, msg.Level)
-			smsTo := gw.receiver.GetSmsList(msg.ClusterId, msg.Level)
-			log.Debug("message: %v, mail to: %v, sms to: %v", msg, mailTo, smsTo)
-			if err := gw.send(msg.Title, msg.Content, mailTo, smsTo); err != nil {
-				log.Error("alarm message send: %v", err)
-			}
+			//mailTo := gw.receiver.GetMailList(msg.ClusterId, msg.Level)
+			//smsTo := gw.receiver.GetSmsList(msg.ClusterId, msg.Level)
+			//log.Debug("message: %v, mail to: %v, sms to: %v", msg, mailTo, smsTo)
+			//if err := gw.send(msg.Title, msg.Content, mailTo, smsTo); err != nil {
+			//	log.Error("alarm message send: %v", err)
+			//}
+
 			// to alarm server
 			for _, sample := range msg.samples {
 				if err := gw.PushSampleJson(sample); err != nil {

@@ -32,11 +32,10 @@ import (
 	"math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	_ "github.com/gogo/protobuf/gogoproto"
-
-	kvrpcpb "model/pkg/kvrpcpb"
 )
+
+import _ "github.com/gogo/protobuf/gogoproto"
+import kvrpcpb "model/pkg/kvrpcpb"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
