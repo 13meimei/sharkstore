@@ -99,6 +99,14 @@ func (svr *DsRpcServer) GetRange(id uint64)(*metapb.Range) {
 	}
 }
 
+func (svr *DsRpcServer) DelRange(id uint64){
+	svr.rLock.Lock()
+	defer svr.rLock.Unlock()
+	if _, find := svr.rngs[id]; find {
+		delete(svr.rngs, id)
+	}
+}
+
 func (svr *DsRpcServer) Start() {
 	//cli, err := client.NewClient(svr.msAddr)
 	//if err != nil {
@@ -243,40 +251,36 @@ func (svr *DsRpcServer) insert(msg *dsClient.Message) {
 	var resp *kvrpcpb.DsInsertResponse
 	req := new(kvrpcpb.DsInsertRequest)
 	err := proto.Unmarshal(msg.GetData(), req)
-
-
-
-
 	if err != nil {
 		resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "decode insert failed"}}}
 	} else {
-
 		rangeId := req.Header.GetRangeId()
 		rng :=svr.GetRange(rangeId)
+		if rng == nil {
+			resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message:"no exist range", NotLeader: &errorpb.NotLeader{RangeId: rangeId}}}}
+		} else {
+			rngEpoch := req.Header.GetRangeEpoch()
 
-		rngEpoch := req.Header.GetRangeEpoch();
+			if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
+				num := 0
+				for _,row := range req.GetReq().Rows {
+					err := svr.store.Put(row.Key,row.Value)
+					if err == nil {
+						num++
+					}
 
-		if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
-			num := 0
-			for _,row := range req.GetReq().Rows {
-				err := svr.store.Put(row.Key,row.Value)
-				if err == nil {
-					num++
 				}
 
-			}
+				resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 0, AffectedKeys: uint64(num)}}
+			}else{
+				resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 1, AffectedKeys: uint64(0)}}
 
-			resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 0, AffectedKeys: uint64(num)}}
-		}else{
-			resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 1, AffectedKeys: uint64(0)}}
-
-			staleErr := &errorpb.Error{
-				StaleEpoch: &errorpb.StaleEpoch{OldRange:rng,NewRange:svr.childRngs[rangeId]},
+				staleErr := &errorpb.Error{
+					StaleEpoch: &errorpb.StaleEpoch{OldRange:rng,NewRange:svr.childRngs[rangeId]},
+				}
+				resp.Header.Error = staleErr
 			}
-			resp.Header.Error = staleErr
 		}
-
-
 	}
 	data, _ := proto.Marshal(resp)
 	msg.SetMsgType(0x12)

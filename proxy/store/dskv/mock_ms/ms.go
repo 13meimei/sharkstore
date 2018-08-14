@@ -3,6 +3,7 @@ package mock_ms
 import (
 	"net"
 	"fmt"
+	"sync"
 	"util/log"
 	"strings"
 	"strconv"
@@ -23,9 +24,11 @@ type Cluster struct {
 	id       uint64
 	db       *DbCache
 	tables   *TableCache
-	node     *metapb.Node
+	nodes     map[uint64]*metapb.Node
 	rpc      string
     host     string
+
+	rLock       sync.RWMutex
 
 	cli      client.SchClient
 	server   *server.Server
@@ -40,6 +43,7 @@ func NewCluster(rpc, host string) *Cluster {
 	    host: host,
 	    db: NewDbCache(),
 	    tables: NewTableCache(),
+	    nodes: make(map[uint64]*metapb.Node),
     }
 }
 
@@ -48,6 +52,8 @@ func (c *Cluster) SetDb(db *metapb.DataBase) {
 }
 
 func (c *Cluster) SetTable(t *metapb.Table) {
+	c.rLock.Lock()
+	defer c.rLock.Unlock()
 	db, _ := c.db.FindDb(t.GetDbName())
 	table := NewTable(t)
 	db.tables.Add(table)
@@ -55,10 +61,14 @@ func (c *Cluster) SetTable(t *metapb.Table) {
 }
 
 func (c *Cluster) SetNode(node *metapb.Node) {
-	c.node = node
+	c.rLock.Lock()
+	defer c.rLock.Unlock()
+	c.nodes[node.GetId()] = node
 }
 
 func (c *Cluster) SetRange(r *metapb.Range) {
+	c.rLock.Lock()
+	defer c.rLock.Unlock()
 	t, _ := c.tables.FindTableById(r.GetTableId())
 	t.ranges.Add(NewRange(r))
 }
@@ -107,7 +117,7 @@ func (c *Cluster) GetRoute(ctx context.Context, req *mspb.GetRouteRequest) (*msp
 }
 
 func (c *Cluster) NodeHeartbeat(ctx context.Context, req *mspb.NodeHeartbeatRequest) (*mspb.NodeHeartbeatResponse, error) {
-	resp := &mspb.NodeHeartbeatResponse{Header: &mspb.ResponseHeader{}, NodeId: c.node.GetId()}
+	resp := &mspb.NodeHeartbeatResponse{Header: &mspb.ResponseHeader{}, NodeId: req.GetNodeId()}
 	return resp, nil
 }
 
@@ -130,12 +140,12 @@ func (c *Cluster) NodeLogin(ctx context.Context, req *mspb.NodeLoginRequest) (*m
 }
 
 func (c *Cluster) GetNode(ctx context.Context, req *mspb.GetNodeRequest) (*mspb.GetNodeResponse, error) {
-	resp := &mspb.GetNodeResponse{Header: &mspb.ResponseHeader{}, Node: c.node}
+	resp := &mspb.GetNodeResponse{Header: &mspb.ResponseHeader{}, Node: c.nodes[req.GetId()]}
 	return resp, nil
 }
 
 func (c *Cluster) GetNodeId(ctx context.Context, req *mspb.GetNodeIdRequest) (*mspb.GetNodeIdResponse, error) {
-	if c.node == nil {
+	if c.nodes == nil || len(c.nodes) == 0 {
 		if client, ok := peer.FromContext(ctx); ok {
 			ip, _, err := net.SplitHostPort(client.Addr.String())
 			if err != nil {
@@ -150,10 +160,10 @@ func (c *Cluster) GetNodeId(ctx context.Context, req *mspb.GetNodeIdRequest) (*m
 				RaftAddr: raftAddr,
 				HttpAddr: httpAddr,
 			}
-			c.node = node
+			c.nodes[1] = node
 		}
 	}
-	resp := &mspb.GetNodeIdResponse{Header: &mspb.ResponseHeader{}, NodeId: c.node.GetId(), Clearup: false}
+	resp := &mspb.GetNodeIdResponse{Header: &mspb.ResponseHeader{}, NodeId: c.nodes[1].GetId(), Clearup: false}
 	return resp, nil
 }
 

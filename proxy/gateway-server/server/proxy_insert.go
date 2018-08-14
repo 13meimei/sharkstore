@@ -15,7 +15,6 @@ import (
 	"util/log"
 	"proxy/store/dskv"
 	"sort"
-	"context"
 )
 
 func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface{}) (*mysql.Result, error) {
@@ -93,9 +92,9 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 	if err != nil {
 		log.Error("insert error table[%s:%s], err %s", db, tableName, err.Error())
 		return nil, err
-	}else if affected != uint64(len(rows)){
-		log.Error("insert error table[%s:%s],request num:%d,inserted num:%d", db, tableName, len(rows),affected)
-		return nil,ErrAffectRows
+	} else if affected != uint64(len(rows)) {
+		log.Error("insert error table[%s:%s],request num:%d,inserted num:%d", db, tableName, len(rows), affected)
+		return nil, ErrAffectRows
 	}
 	if len(duplicateKey) != 0 {
 		resErr := new(mysql.SqlError)
@@ -255,64 +254,17 @@ func (p *Proxy) EncodeRow(t *Table, colMap map[string]int, rowValue InsertRowVal
 	}, nil
 }
 
-func (p *Proxy) batchInsert(t *Table, colMap map[string]int, rows []InsertRowValue) (affected uint64, duplicateKey []byte, err error) {
-	var kvPairs []*kvrpcpb.KeyValue
-
-
-	var kv *kvrpcpb.KeyValue
-	for i, r := range rows {
-		kv, err = p.EncodeRow(t, colMap, r)
-		if err != nil {
-			log.Error("[inert] table %s.%s encode row at %d failed: %v", t.DbName(), t.Name(), i, err)
-			return
-		}
-		kvPairs = append(kvPairs, kv)
-	}
-
-	affected = 0;
-
-	for i:=0;i<3;i++{
-
-		if kvPairs == nil || len(kvPairs) < 1{
-			log.Warn("retry insert task table:%s,row size:%d",t.GetName(),len(kvPairs))
-			break
-		}
-		if i>0 {
-			log.Info("retry insert task table:%s,row size:%d",t.GetName(),len(kvPairs))
-		}else{
-			log.Debug("insert task table:%s,row size:%d",t.GetName(),len(kvPairs))
-		}
-		affected_,duplicateKey_,retryKVPairs_,err_ := p.taskInsert(t,kvPairs)
-		if err_ != nil && err_ == dskv.ErrRouteChange {
-			duplicateKey = duplicateKey_
-			kvPairs = retryKVPairs_
-			affected += affected_
-			continue
-		}else{
-			duplicateKey = duplicateKey_
-			err = err_
-			affected += affected_
-		}
-
-		break
-
-	}
-
-
-	return
-}
-
-func(p *Proxy) taskInsert(t *Table,kvPairs []*kvrpcpb.KeyValue)(affected uint64, duplicateKey []byte,retryKVPairs []*kvrpcpb.KeyValue, err error){
-	var kvGroup [][]*kvrpcpb.KeyValue
+func (p *Proxy) batchInsert(context *dskv.ReqContext, t *Table, kvPairs []*kvrpcpb.KeyValue) (affected uint64, duplicateKey []byte, retryKVPairs []*kvrpcpb.KeyValue, err error) {
 	// 首先排序,这个很重要
 	sort.Sort(KvParisSlice(kvPairs))
+
+	var kvGroup [][]*kvrpcpb.KeyValue
 	retryKVPairs = make([]*kvrpcpb.KeyValue, 0)
 	// 按照route的范围划分kv group
 	ggroup := make(map[uint64][]*kvrpcpb.KeyValue)
 	for _, kv := range kvPairs {
 		log.Debug("task insert add key[%v]", kv.GetKey())
-		bo := dskv.NewBackoffer(dskv.MsMaxBackoff, context.Background())
-		l, _err := t.ranges.LocateKey(bo, kv.GetKey())
+		l, _err := t.ranges.LocateKey(context.GetBackOff(), kv.GetKey())
 		if _err != nil {
 			err = _err
 			log.Warn("locate key failed, err %v", err)
@@ -331,7 +283,7 @@ func(p *Proxy) taskInsert(t *Table,kvPairs []*kvrpcpb.KeyValue)(affected uint64,
 		// 每100个kv切割一下
 		if len(group) >= 100 {
 			kvGroup = append(kvGroup, group)
-			delete(ggroup,l.Region.Id)
+			delete(ggroup, l.Region.Id)
 		}
 	}
 	for _, group := range ggroup {
@@ -339,22 +291,24 @@ func(p *Proxy) taskInsert(t *Table,kvPairs []*kvrpcpb.KeyValue)(affected uint64,
 			kvGroup = append(kvGroup, group)
 		}
 	}
-	log.Debug("task insert %s group size:%d",t.GetName(),len(kvGroup))
+	log.Debug("%s, task insert %s group size: %d", context, t.GetName(), len(kvGroup))
 	// 只需要访问一个range
 	if len(kvGroup) == 1 {
-		affected,duplicateKey,err = p.insert(t, kvGroup[0])
+		affected, duplicateKey, err = p.insert(context, t, kvGroup[0])
 		if err != nil && err == dskv.ErrRouteChange {
-			retryKVPairs = append(retryKVPairs,kvGroup[0]...)
-			return 0,nil,retryKVPairs,err
-		}else{
-			return affected,duplicateKey,retryKVPairs,err
+			retryKVPairs = append(retryKVPairs, kvGroup[0]...)
+			return 0, nil, retryKVPairs, err
+		} else {
+			return affected, duplicateKey, retryKVPairs, err
 		}
 	}
+	startTime := time.Now()
 	// for more range batch insert
 	var tasks []*InsertTask
 	for _, rows := range kvGroup {
 		task := GetInsertTask()
-		task.init(p, t, rows)
+		cClone := context.Clone()
+		task.init(cClone, p, t, rows)
 		err = p.Submit(task)
 		if err != nil {
 			// release task
@@ -371,12 +325,12 @@ func(p *Proxy) taskInsert(t *Table,kvPairs []*kvrpcpb.KeyValue)(affected uint64,
 		if err_ != nil {
 			err = err_
 			if err == dskv.ErrRouteChange {
-				retryKVPairs = append(retryKVPairs,task.rows...)
-				log.Debug("insert task route change,table:%s, err[%v]",t.GetName(), err)
+				retryKVPairs = append(retryKVPairs, task.rows...)
+				log.Debug("insert task route change, table:%s, err[%v]", t.GetName(), err)
 				PutInsertTask(task)
 				continue
-			}else{
-				log.Error("insert task do failed,table:%s, err[%v]",t.GetName(), err)
+			} else {
+				log.Error("insert task do failed, table:%s, err[%v]", t.GetName(), err)
 				PutInsertTask(task)
 				return
 			}
@@ -390,40 +344,70 @@ func(p *Proxy) taskInsert(t *Table,kvPairs []*kvrpcpb.KeyValue)(affected uint64,
 		affected += task.rest.GetAffected()
 		PutInsertTask(task)
 	}
-
+	context.GetBackOff().CombineTime(int(time.Since(startTime).Nanoseconds()/1000000))
+	log.Debug("%s execute batch task finish", context)
 	return
 }
 
 func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValue) (affected uint64, duplicateKey []byte, err error) {
-
-	if len(rows) > 1 {
-		affected,duplicateKey,err = p.batchInsert(t, colMap, rows)
-	} else {
-		var kvPairs []*kvrpcpb.KeyValue
-		var kv *kvrpcpb.KeyValue
-		for i, r := range rows {
-			kv, err = p.EncodeRow(t, colMap, r)
-			if err != nil {
-				log.Error("[inert] table %s.%s encode row at %d failed: %v", t.DbName(), t.Name(), i, err)
-				return
-			}
-			kvPairs = append(kvPairs, kv)
+	var kvPairs []*kvrpcpb.KeyValue
+	var kv *kvrpcpb.KeyValue
+	for i, r := range rows {
+		kv, err = p.EncodeRow(t, colMap, r)
+		if err != nil {
+			log.Error("[insert] table %s.%s encode row at %d failed: %v", t.DbName(), t.Name(), i, err)
+			return
 		}
-		for i:=0;i<3;i++{
-			affected,duplicateKey,err =  p.insert(t, kvPairs)
-			if err != nil && err == dskv.ErrRouteChange {
-				log.Warn("route change ,retry table:t,key:%s",t.GetName(),kvPairs[0].GetKey())
-				continue
-			}
+		kvPairs = append(kvPairs, kv)
+	}
+
+	var affectedTp uint64
+	var duplicateKeyTp []byte
+	var errTp error
+
+	context  := dskv.NewPRConext(dskv.InsertMaxBackoff)
+	var errForRetry error
+	for metricLoop := 0; ; metricLoop++ {
+		if kvPairs == nil || len(kvPairs) == 0 {
 			break
 		}
+		if errForRetry != nil {
+			errForRetry = context.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
+			if errForRetry != nil {
+				log.Error("%s execute timeout", context)
+				return
+			}
+		}
+		if metricLoop > 0 {
+			log.Info("%s, retry insert table:%s, row size:%d, loop: %v", context, t.GetName(), len(kvPairs), metricLoop)
+		} else {
+			log.Debug("%s, insert table:%s, row size:%d", context, t.GetName(), len(kvPairs))
+		}
 
+		if len(kvPairs) > 1 {
+			affectedTp, duplicateKeyTp, kvPairs, errTp = p.batchInsert(context, t, kvPairs)
+		} else {
+			affectedTp, duplicateKeyTp, errTp = p.insert(context, t, kvPairs)
+		}
+
+		if errTp != nil && errTp == dskv.ErrRouteChange {
+			log.Warn("%s route change ,retry table:%s, row size:%v", context, t.GetName(), len(kvPairs))
+			duplicateKey = duplicateKeyTp
+			affected += affectedTp
+			errForRetry = errTp
+			err = errTp
+			continue
+		}
+		duplicateKey = duplicateKeyTp
+		affected += affectedTp
+		err = errTp
+		break
 	}
+	log.Debug("%s execute finish", context)
 	return
 }
 
-func (p *Proxy) insert(t *Table, rows []*kvrpcpb.KeyValue) (
-	affected uint64, duplicateKey []byte, err error) {
+func (p *Proxy) insert(context *dskv.ReqContext, t *Table, rows []*kvrpcpb.KeyValue) (affected uint64, duplicateKey []byte, err error) {
 	if len(rows) == 0 {
 		err = ErrEmptyRow
 		return
@@ -434,46 +418,23 @@ func (p *Proxy) insert(t *Table, rows []*kvrpcpb.KeyValue) (
 		CheckDuplicate: t.PkDupCheck(),
 		Timestamp:      &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical},
 	}
-	var resps []*kvrpcpb.InsertResponse
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
 	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
-	// 单行写入
-	if len(rows) == 1 {
-		var resp *kvrpcpb.InsertResponse
-		resp, _, err = proxy.Insert(req, rows[0].GetKey())
-		if err != nil {
-			return
-		}
-		if resp.GetCode() == 0 {
-			affected = resp.GetAffectedKeys()
-		} else if resp.GetDuplicateKey() != nil {
-			duplicateKey = resp.GetDuplicateKey()
-		}
-		if resp.GetCode() >0 {
-			err = CodeToErr(int(resp.GetCode()))
-			return
-		}
-
+	//单range写入，包括单行数据，同range多行数据
+	var resp *kvrpcpb.InsertResponse
+	resp, _, err = proxy.Insert(context, req, rows[0].GetKey())
+	if err != nil {
 		return
-	} else {
-		scope := &kvrpcpb.Scope{Start: rows[0].GetKey(), Limit: rows[len(rows)-1].GetKey()}
-		resps, err = proxy.SqlInsert(req, scope)
-		if err != nil {
-			return
-		}
-		for _, resp := range resps {
-			if resp.GetCode() == 0 {
-				affected += resp.GetAffectedKeys()
-			} else if resp.GetDuplicateKey() != nil {
-				duplicateKey = resp.GetDuplicateKey()
-				return
-			}
-			if resp.GetCode() >0 {
-				err = CodeToErr(int(resp.GetCode()))
-				return
-			}
-		}
+	}
+	if resp.GetCode() == 0 {
+		affected = resp.GetAffectedKeys()
+	} else if resp.GetDuplicateKey() != nil {
+		duplicateKey = resp.GetDuplicateKey()
+	}
+	if resp.GetCode() > 0 {
+		err = CodeToErr(int(resp.GetCode()))
+		return
 	}
 	return
 }

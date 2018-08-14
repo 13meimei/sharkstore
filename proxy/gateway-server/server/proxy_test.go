@@ -1,12 +1,13 @@
 package server
 
 import (
-	"model/pkg/metapb"
 	"testing"
-	"util"
-	"util/log"
+	"fmt"
 	"strconv"
 	"util/deepcopy"
+	"util"
+	"util/log"
+	"model/pkg/metapb"
 )
 
 //
@@ -1099,30 +1100,36 @@ import (
 //	testProxySelect(t, p, expected, "select * from "+testTableName)
 //}
 //
-////func TestProxyAdminRoute(t *testing.T) {
-////	columns := []*columnInfo{
-////		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true},
-////		&columnInfo{name: "name", typ: metapb.DataType_Varchar},
-////		&columnInfo{name: "balance", typ: metapb.DataType_Double},
-////	}
-////	p := newTestProxy(columns, nil)
-////
-////	var start, end []byte
-////	table, err := p.msCli.GetTable(1, testTableName)
-////	if err != nil {
-////		t.Fatal("ms cli gettable: ", err)
-////	}
-////	start = util.EncodeStorePrefix(util.Store_Prefix_KV, table.GetId())
-////	_, end = bytesPrefix(start)
-////	//skey := formatRouteKey(metapb.Key_NegativeInfinity)
-////	//ekey := formatRouteKey(metapb.Key_PositiveInfinity)
-////	skey := formatRouteKey(start)
-////	ekey := formatRouteKey(end)
-////
-////	testProxyAdmin(t, p, [][]string{
-////		[]string{"1", string(skey), string(ekey), "1", "127.0.0.1:7788", "1"},
-////	}, fmt.Sprintf("admin route('show', '%s')", testTableName))
-////}
+
+func TestProxyAdminRoute(t *testing.T) {
+	columns := []*columnInfo{
+		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true},
+		&columnInfo{name: "name", typ: metapb.DataType_Varchar},
+		&columnInfo{name: "balance", typ: metapb.DataType_Double},
+	}
+	db := &metapb.DataBase{Name: testDBName, Id: 1}
+	table := makeTestTable(columns)
+	var start, end []byte
+	start = util.EncodeStorePrefix(util.Store_Prefix_KV, table.GetId())
+	_, end = bytesPrefix(start)
+	rng := &metapb.Range{
+		Id:         1,
+		TableId:    1,
+		StartKey:   start,
+		EndKey:     end,
+		RangeEpoch: &metapb.RangeEpoch{ConfVer: 1, Version: 1},
+		Peers:      []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+	}
+	p := newTestProxy(db, table, rng)
+	defer p.Close()
+
+	skey := formatRouteKey(start)
+	ekey := formatRouteKey(end)
+
+	testProxyAdmin(t, p, [][]string{
+		[]string{fmt.Sprintf("%d", rng.GetId()), string(skey), string(ekey), "1", "127.0.0.1:6060", fmt.Sprintf("%d:%d", rng.RangeEpoch.ConfVer, rng.RangeEpoch.Version)},
+	}, fmt.Sprintf("admin route('show', '%s')", testTableName))
+}
 //
 //func TestProxyRoute(t *testing.T){
 //	conf := new(Config)
@@ -1163,6 +1170,8 @@ func TestProxyInsert(t *testing.T) {
 	defer p.Close()
 	// testProxySelect(t, p, [][]string{}, "select * from "+testTableName+" where id > 1 and id < 100")
 
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075)")
+	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
 	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075)")
 	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
 	testProxyInsert(t, p, 1, "insert into "+testTableName+"(iD,nAMe,bAlaNce) values(3, 'myname3', 3.1)")
@@ -1212,8 +1221,50 @@ func TestProxyInsertOneRowWithRangeChange(t *testing.T) {
 	MockDs.RangeSplit(oldRng, newRng)
 
 	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
+	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
 
 	//time.Sleep(time.Second*5)
+}
+
+
+func TestProxyInsertOneRowWithErrorNode(t *testing.T) {
+	log.InitFileLog(logPath, "proxy", "debug")
+	columns := []*columnInfo{
+		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true},
+		&columnInfo{name: "name", typ: metapb.DataType_Varchar},
+		&columnInfo{name: "balance", typ: metapb.DataType_Double},
+	}
+	db := &metapb.DataBase{Name: testDBName, Id: 1}
+	table := makeTestTable(columns)
+	start := util.EncodeStorePrefix(util.Store_Prefix_KV, table.GetId())
+	r := util.BytesPrefix(start)
+	rng := &metapb.Range{
+		Id:         1,
+		TableId:    1,
+		StartKey:   r.Start,
+		EndKey:     r.Limit,
+		RangeEpoch: &metapb.RangeEpoch{ConfVer: 1, Version: 1},
+		Peers:      []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+	}
+	p := newTestProxy(db, table, rng)
+	defer CloseMock(p)
+	defer p.Close()
+
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
+	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
+
+	oldRng :=deepcopy.Iface(rng).(*metapb.Range)
+	newRng :=deepcopy.Iface(rng).(*metapb.Range)
+	var peers []*metapb.Peer
+	peers = append(peers, &metapb.Peer{Id: 3, NodeId: 2})
+	newRng.Peers = peers
+	MockDs.DelRange(oldRng.GetId())
+	MockDs1.SetRange(newRng)
+	MockMs.SetRange(newRng)
+
+	testProxyInsert(t, p, 0, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
+	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
 }
 
 func TestProxyInsertWithRangeChange(t *testing.T) {
