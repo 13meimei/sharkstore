@@ -150,7 +150,7 @@ namespace watch {
         }
 
         int32_t mid(0);
-        int32_t from(m_iHead), to(m_iTail);
+        int32_t from(m_iHead), to(m_iTail-1);
 
         while(from < to) {
 
@@ -161,11 +161,16 @@ namespace watch {
             } else {
                 if (version > m_pQueue[mid].version()) {
                     from = mid;
+                } else {
+                    break;
                 }
             }
+            if(mid == 0 || mid == 1) break;
         }
 
         for(int32_t i = from; i < to; i++) {
+            if(version >= m_pQueue[i].version()) continue;
+
             cnt++;
             (m_pQueue + i)->setUpdateTime();
             elements.emplace_back(*(m_pQueue + i));

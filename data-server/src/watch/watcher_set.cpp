@@ -193,8 +193,8 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         code = WATCH_OK;
 
-        FLOG_INFO("watcher add success: watcher_id:[%" PRIu64 "] key: [%s]",
-                  w_ptr->GetWatcherId(), EncodeToHexString(key).c_str());
+        FLOG_INFO("watcher add success: count:%" PRIu64 " watcher_id:[%" PRIu64 "] key: [%s]",
+                  watcher_map_it->second->mapKeyWatcher.size(), w_ptr->GetWatcherId(), EncodeToHexString(key).c_str());
     } else {
         code = WATCH_WATCHER_EXIST;
 
@@ -246,24 +246,27 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
     if (watcher_map_it == watcher_map_.end()) {
         FLOG_WARN("watcher del failed, key is not existed in watcher map: watch_id:[%" PRIu64 "] key: [%s]",
                   watcher_id, EncodeToHexString(key).c_str());
-        //return WATCH_KEY_NOT_EXIST; // no key in watcher map
-    } else {
-        auto &watchers = watcher_map_it->second;
-        auto watcher_it = watchers->mapKeyWatcher.find(watcher_id);
-        if (watcher_it == watchers->mapKeyWatcher.end()) {
-            FLOG_WARN("watcher del failed, watcher id is not existed in watcher map: watch_id:[%"
-                              PRIu64
-                              "] key: [%s]",
-                      watcher_id, EncodeToHexString(key).c_str());
-            //return WATCH_WATCHER_NOT_EXIST; // no watcher id in watcher map
-        } else {
-            // do del from watcher map
-            watchers->mapKeyWatcher.erase(watcher_it);
 
-            FLOG_WARN("watcher del success within watcher map: watch_id:[%"
+    } else {
+        //mapKeyWatcher maybe already swaped when getWatcher method called, except timeout occasion
+        auto &watchers = watcher_map_it->second->mapKeyWatcher;
+        if(watchers.size() > 0) {
+            auto watcher_it = watchers.find(watcher_id);
+            if (watcher_it == watchers.end()) {
+            FLOG_WARN("watcher del failed, watcher id is not existed in keyWatcher map. map_size:%" PRIu64 " watch_id:[%"
                               PRIu64
                               "] key: [%s]",
-                      watcher_id, EncodeToHexString(key).c_str());
+                      watchers.size(), watcher_id, EncodeToHexString(key).c_str());
+                ;
+            } else {
+                // do del from watcher map
+                watchers.erase(watcher_it);
+
+                FLOG_WARN("watcher del success within watcher map: watch_id:[%"
+                                  PRIu64
+                                  "] key: [%s]",
+                          watcher_id, EncodeToHexString(key).c_str());
+            }
         }
     }
 
@@ -301,7 +304,8 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
     if(watchers->mapKeyWatcher.size() > 0) {
         watchers->mapKeyWatcher.swap(watcherValue->mapKeyWatcher);
 
-        FLOG_INFO("watcher get success, key: [%s] watch_id[" PRId64 "]", EncodeToHexString(key).c_str(), watcherValue->mapKeyWatcher.begin()->first );
+        FLOG_INFO("watcher get success,count:%" PRIu64 " key: [%s] watch_id[%" PRId64 "]",
+                  watcherValue->mapKeyWatcher.size(), EncodeToHexString(key).c_str(), watcherValue->mapKeyWatcher.begin()->first );
         return WATCH_OK;
     }
 

@@ -318,7 +318,7 @@ protected:
         req.mutable_req()->mutable_kv()->set_version(0);
         req.mutable_req()->set_longpull(1);
         ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(1);
+        //req.mutable_req()->set_startversion(1);
         req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
@@ -478,6 +478,15 @@ TEST_F(WatchTest, watch_get_group_prefix_exist_del) {
     }
 }
 
+TEST_F(WatchTest, watch_not_exist_key) {
 
+    {
+        //justPut(1, "01003001", "", "01003001:value");
+        justWatch(1, "0100300100001", "", false);
+        justDel(1, "0100300100001", "", "");
+
+    }
+
+}
 
 

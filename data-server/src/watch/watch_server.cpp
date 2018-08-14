@@ -37,7 +37,7 @@ WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr, storage::Store *store_) 
     auto wset = GetWatcherSet_(encode_key);
     w_ptr->SetWatcherId(wset->GenWatcherId());
 
-    FLOG_DEBUG("watch server ready to add key watcher: watch_id [%" PRIu64 "] watch_id[%" PRIu64 "] key:%s",
+    FLOG_DEBUG("watch server ready to add key watcher: session_id [%" PRIu64 "] watch_id[%" PRIu64 "] key:%s",
                msgSessionId, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
     assert(w_ptr->GetType() == WATCH_KEY);
 

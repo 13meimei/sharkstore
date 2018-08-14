@@ -699,7 +699,6 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
 int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg) {
 
-    int32_t ret{0};
     bool groupFlag{false};
 
     std::vector<watch::WatcherPtr> vecNotifyWatcher;
@@ -737,8 +736,13 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             decodeKeys.emplace_back(std::move(new std::string(it)));
         }
         watch::Watcher::EncodeKey(&dbKey, meta_.GetTableID(), decodeKeys);
+
     } else {
         dbKey = hashKey;
+    }
+
+    for(auto it : decodeKeys) {
+        delete it;
     }
 
     FLOG_DEBUG("WatchNotify haskkey:%s  key:%s", EncodeToHexString(hashKey).c_str(), EncodeToHexString(dbKey).c_str());
@@ -856,7 +860,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         }
     }
 
-    return ret;
+    return watchCnt;
 }
 
 int32_t Range::SendNotify( watch::WatcherPtr w, watchpb::DsWatchResponse *ds_resp, bool prefix)
