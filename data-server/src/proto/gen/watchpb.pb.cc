@@ -100,7 +100,7 @@ namespace protobuf_watchpb_2eproto {
 namespace {
 
 ::google::protobuf::Metadata file_level_metadata[15];
-const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[2];
+const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[3];
 
 }  // namespace
 
@@ -184,6 +184,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchResponse, watchid_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchResponse, code_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchResponse, scope_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(WatchResponse, events_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsKvWatchPutRequest, _internal_metadata_),
@@ -257,15 +258,15 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 25, -1, sizeof(WatchCreateRequest)},
   { 37, -1, sizeof(DsWatchResponse)},
   { 44, -1, sizeof(WatchResponse)},
-  { 52, -1, sizeof(DsKvWatchPutRequest)},
-  { 59, -1, sizeof(DsKvWatchPutResponse)},
-  { 66, -1, sizeof(KvWatchPutRequest)},
-  { 72, -1, sizeof(DsKvWatchDeleteRequest)},
-  { 79, -1, sizeof(DsKvWatchDeleteResponse)},
-  { 86, -1, sizeof(KvWatchDeleteRequest)},
-  { 93, -1, sizeof(KvWatchResponse)},
-  { 99, -1, sizeof(DsKvWatchGetMultiRequest)},
-  { 108, -1, sizeof(DsKvWatchGetMultiResponse)},
+  { 53, -1, sizeof(DsKvWatchPutRequest)},
+  { 60, -1, sizeof(DsKvWatchPutResponse)},
+  { 67, -1, sizeof(KvWatchPutRequest)},
+  { 73, -1, sizeof(DsKvWatchDeleteRequest)},
+  { 80, -1, sizeof(DsKvWatchDeleteResponse)},
+  { 87, -1, sizeof(KvWatchDeleteRequest)},
+  { 94, -1, sizeof(KvWatchResponse)},
+  { 100, -1, sizeof(DsKvWatchGetMultiRequest)},
+  { 109, -1, sizeof(DsKvWatchGetMultiResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -406,36 +407,38 @@ void AddDescriptorsImpl() {
       "(\003\022\016\n\006prefix\030\006 \001(\010\022\020\n\010longPull\030\007 \001(\003\"`\n\017"
       "DsWatchResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
       "b.ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.watchpb"
-      ".WatchResponse\"N\n\rWatchResponse\022\017\n\007watch"
-      "Id\030\001 \001(\003\022\014\n\004code\030\002 \001(\005\022\036\n\006events\030\003 \003(\0132\016"
-      ".watchpb.Event\"f\n\023DsKvWatchPutRequest\022&\n"
-      "\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n"
-      "\003req\030\002 \001(\0132\032.watchpb.KvWatchPutRequest\"g"
-      "\n\024DsKvWatchPutResponse\022\'\n\006header\030\001 \001(\0132\027"
-      ".kvrpcpb.ResponseHeader\022&\n\004resp\030\002 \001(\0132\030."
-      "watchpb.KvWatchResponse\"7\n\021KvWatchPutReq"
-      "uest\022\"\n\002kv\030\001 \001(\0132\026.watchpb.WatchKeyValue"
-      "\"l\n\026DsKvWatchDeleteRequest\022&\n\006header\030\001 \001"
-      "(\0132\026.kvrpcpb.RequestHeader\022*\n\003req\030\002 \001(\0132"
-      "\035.watchpb.KvWatchDeleteRequest\"j\n\027DsKvWa"
-      "tchDeleteResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
-      "cpb.ResponseHeader\022&\n\004resp\030\002 \001(\0132\030.watch"
-      "pb.KvWatchResponse\"J\n\024KvWatchDeleteReque"
-      "st\022\"\n\002kv\030\001 \001(\0132\026.watchpb.WatchKeyValue\022\016"
-      "\n\006prefix\030\002 \001(\010\"\037\n\017KvWatchResponse\022\014\n\004cod"
-      "e\030\001 \001(\005\"\205\001\n\030DsKvWatchGetMultiRequest\022&\n\006"
-      "header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n\002"
-      "kv\030\002 \001(\0132\026.watchpb.WatchKeyValue\022\016\n\006pref"
-      "ix\030\003 \001(\010\022\r\n\005limit\030\004 \001(\r\"w\n\031DsKvWatchGetM"
-      "ultiResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.R"
-      "esponseHeader\022\014\n\004code\030\002 \001(\005\022#\n\003kvs\030\003 \003(\013"
-      "2\026.watchpb.WatchKeyValue* \n\tEventType\022\007\n"
-      "\003PUT\020\000\022\n\n\006DELETE\020\001*%\n\nFilterType\022\t\n\005NOPU"
-      "T\020\000\022\014\n\010NODELETE\020\001B#\n!com.tig.shark.commo"
-      "n.network.grpcb\006proto3"
+      ".WatchResponse\"]\n\rWatchResponse\022\017\n\007watch"
+      "Id\030\001 \001(\003\022\014\n\004code\030\003 \001(\005\022\r\n\005scope\030\006 \001(\005\022\036\n"
+      "\006events\030\t \003(\0132\016.watchpb.Event\"f\n\023DsKvWat"
+      "chPutRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.R"
+      "equestHeader\022\'\n\003req\030\002 \001(\0132\032.watchpb.KvWa"
+      "tchPutRequest\"g\n\024DsKvWatchPutResponse\022\'\n"
+      "\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022&"
+      "\n\004resp\030\002 \001(\0132\030.watchpb.KvWatchResponse\"7"
+      "\n\021KvWatchPutRequest\022\"\n\002kv\030\001 \001(\0132\026.watchp"
+      "b.WatchKeyValue\"l\n\026DsKvWatchDeleteReques"
+      "t\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeade"
+      "r\022*\n\003req\030\002 \001(\0132\035.watchpb.KvWatchDeleteRe"
+      "quest\"j\n\027DsKvWatchDeleteResponse\022\'\n\006head"
+      "er\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022&\n\004res"
+      "p\030\002 \001(\0132\030.watchpb.KvWatchResponse\"J\n\024KvW"
+      "atchDeleteRequest\022\"\n\002kv\030\001 \001(\0132\026.watchpb."
+      "WatchKeyValue\022\016\n\006prefix\030\002 \001(\010\"\037\n\017KvWatch"
+      "Response\022\014\n\004code\030\001 \001(\005\"\205\001\n\030DsKvWatchGetM"
+      "ultiRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Re"
+      "questHeader\022\"\n\002kv\030\002 \001(\0132\026.watchpb.WatchK"
+      "eyValue\022\016\n\006prefix\030\003 \001(\010\022\r\n\005limit\030\004 \001(\r\"w"
+      "\n\031DsKvWatchGetMultiResponse\022\'\n\006header\030\001 "
+      "\001(\0132\027.kvrpcpb.ResponseHeader\022\014\n\004code\030\002 \001"
+      "(\005\022#\n\003kvs\030\003 \003(\0132\026.watchpb.WatchKeyValue*"
+      " \n\tEventType\022\007\n\003PUT\020\000\022\n\n\006DELETE\020\001*1\n\nSco"
+      "peValue\022\021\n\rRESPONSE_PART\020\000\022\020\n\014RESPONSE_A"
+      "LL\020\001*%\n\nFilterType\022\t\n\005NOPUT\020\000\022\014\n\010NODELET"
+      "E\020\001B#\n!com.tig.shark.common.network.grpc"
+      "b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1662);
+      descriptor, 1728);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "watchpb.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -469,9 +472,23 @@ bool EventType_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* FilterType_descriptor() {
+const ::google::protobuf::EnumDescriptor* ScopeValue_descriptor() {
   protobuf_watchpb_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_watchpb_2eproto::file_level_enum_descriptors[1];
+}
+bool ScopeValue_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::google::protobuf::EnumDescriptor* FilterType_descriptor() {
+  protobuf_watchpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_watchpb_2eproto::file_level_enum_descriptors[2];
 }
 bool FilterType_IsValid(int value) {
   switch (value) {
@@ -2906,6 +2923,7 @@ void DsWatchResponse::set_allocated_resp(::watchpb::WatchResponse* resp) {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int WatchResponse::kWatchIdFieldNumber;
 const int WatchResponse::kCodeFieldNumber;
+const int WatchResponse::kScopeFieldNumber;
 const int WatchResponse::kEventsFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -2924,15 +2942,15 @@ WatchResponse::WatchResponse(const WatchResponse& from)
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::memcpy(&watchid_, &from.watchid_,
-    static_cast<size_t>(reinterpret_cast<char*>(&code_) -
-    reinterpret_cast<char*>(&watchid_)) + sizeof(code_));
+    static_cast<size_t>(reinterpret_cast<char*>(&scope_) -
+    reinterpret_cast<char*>(&watchid_)) + sizeof(scope_));
   // @@protoc_insertion_point(copy_constructor:watchpb.WatchResponse)
 }
 
 void WatchResponse::SharedCtor() {
   ::memset(&watchid_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&code_) -
-      reinterpret_cast<char*>(&watchid_)) + sizeof(code_));
+      reinterpret_cast<char*>(&scope_) -
+      reinterpret_cast<char*>(&watchid_)) + sizeof(scope_));
   _cached_size_ = 0;
 }
 
@@ -2975,8 +2993,8 @@ void WatchResponse::Clear() {
 
   events_.Clear();
   ::memset(&watchid_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&code_) -
-      reinterpret_cast<char*>(&watchid_)) + sizeof(code_));
+      reinterpret_cast<char*>(&scope_) -
+      reinterpret_cast<char*>(&watchid_)) + sizeof(scope_));
   _internal_metadata_.Clear();
 }
 
@@ -3004,10 +3022,10 @@ bool WatchResponse::MergePartialFromCodedStream(
         break;
       }
 
-      // int32 code = 2;
-      case 2: {
+      // int32 code = 3;
+      case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
@@ -3018,10 +3036,24 @@ bool WatchResponse::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .watchpb.Event events = 3;
-      case 3: {
+      // int32 scope = 6;
+      case 6: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &scope_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .watchpb.Event events = 9;
+      case 9: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(74u /* 74 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                 input, add_events()));
         } else {
@@ -3061,16 +3093,21 @@ void WatchResponse::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->watchid(), output);
   }
 
-  // int32 code = 2;
+  // int32 code = 3;
   if (this->code() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->code(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->code(), output);
   }
 
-  // repeated .watchpb.Event events = 3;
+  // int32 scope = 6;
+  if (this->scope() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->scope(), output);
+  }
+
+  // repeated .watchpb.Event events = 9;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->events_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->events(static_cast<int>(i)), output);
+      9, this->events(static_cast<int>(i)), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -3092,17 +3129,22 @@ void WatchResponse::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(1, this->watchid(), target);
   }
 
-  // int32 code = 2;
+  // int32 code = 3;
   if (this->code() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->code(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->code(), target);
   }
 
-  // repeated .watchpb.Event events = 3;
+  // int32 scope = 6;
+  if (this->scope() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->scope(), target);
+  }
+
+  // repeated .watchpb.Event events = 9;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->events_size()); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        3, this->events(static_cast<int>(i)), deterministic, target);
+        9, this->events(static_cast<int>(i)), deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -3122,7 +3164,7 @@ size_t WatchResponse::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // repeated .watchpb.Event events = 3;
+  // repeated .watchpb.Event events = 9;
   {
     unsigned int count = static_cast<unsigned int>(this->events_size());
     total_size += 1UL * count;
@@ -3140,11 +3182,18 @@ size_t WatchResponse::ByteSizeLong() const {
         this->watchid());
   }
 
-  // int32 code = 2;
+  // int32 code = 3;
   if (this->code() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
         this->code());
+  }
+
+  // int32 scope = 6;
+  if (this->scope() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int32Size(
+        this->scope());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -3183,6 +3232,9 @@ void WatchResponse::MergeFrom(const WatchResponse& from) {
   if (from.code() != 0) {
     set_code(from.code());
   }
+  if (from.scope() != 0) {
+    set_scope(from.scope());
+  }
 }
 
 void WatchResponse::CopyFrom(const ::google::protobuf::Message& from) {
@@ -3212,6 +3264,7 @@ void WatchResponse::InternalSwap(WatchResponse* other) {
   events_.InternalSwap(&other->events_);
   swap(watchid_, other->watchid_);
   swap(code_, other->code_);
+  swap(scope_, other->scope_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -3238,7 +3291,7 @@ void WatchResponse::set_watchid(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:watchpb.WatchResponse.watchId)
 }
 
-// int32 code = 2;
+// int32 code = 3;
 void WatchResponse::clear_code() {
   code_ = 0;
 }
@@ -3252,7 +3305,21 @@ void WatchResponse::set_code(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:watchpb.WatchResponse.code)
 }
 
-// repeated .watchpb.Event events = 3;
+// int32 scope = 6;
+void WatchResponse::clear_scope() {
+  scope_ = 0;
+}
+::google::protobuf::int32 WatchResponse::scope() const {
+  // @@protoc_insertion_point(field_get:watchpb.WatchResponse.scope)
+  return scope_;
+}
+void WatchResponse::set_scope(::google::protobuf::int32 value) {
+  
+  scope_ = value;
+  // @@protoc_insertion_point(field_set:watchpb.WatchResponse.scope)
+}
+
+// repeated .watchpb.Event events = 9;
 int WatchResponse::events_size() const {
   return events_.size();
 }

@@ -118,6 +118,27 @@ inline bool EventType_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<EventType>(
     EventType_descriptor(), name, value);
 }
+enum ScopeValue {
+  RESPONSE_PART = 0,
+  RESPONSE_ALL = 1,
+  ScopeValue_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  ScopeValue_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool ScopeValue_IsValid(int value);
+const ScopeValue ScopeValue_MIN = RESPONSE_PART;
+const ScopeValue ScopeValue_MAX = RESPONSE_ALL;
+const int ScopeValue_ARRAYSIZE = ScopeValue_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* ScopeValue_descriptor();
+inline const ::std::string& ScopeValue_Name(ScopeValue value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    ScopeValue_descriptor(), value);
+}
+inline bool ScopeValue_Parse(
+    const ::std::string& name, ScopeValue* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ScopeValue>(
+    ScopeValue_descriptor(), name, value);
+}
 enum FilterType {
   NOPUT = 0,
   NODELETE = 1,
@@ -860,10 +881,10 @@ class WatchResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
 
   // accessors -------------------------------------------------------
 
-  // repeated .watchpb.Event events = 3;
+  // repeated .watchpb.Event events = 9;
   int events_size() const;
   void clear_events();
-  static const int kEventsFieldNumber = 3;
+  static const int kEventsFieldNumber = 9;
   const ::watchpb::Event& events(int index) const;
   ::watchpb::Event* mutable_events(int index);
   ::watchpb::Event* add_events();
@@ -878,11 +899,17 @@ class WatchResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::int64 watchid() const;
   void set_watchid(::google::protobuf::int64 value);
 
-  // int32 code = 2;
+  // int32 code = 3;
   void clear_code();
-  static const int kCodeFieldNumber = 2;
+  static const int kCodeFieldNumber = 3;
   ::google::protobuf::int32 code() const;
   void set_code(::google::protobuf::int32 value);
+
+  // int32 scope = 6;
+  void clear_scope();
+  static const int kScopeFieldNumber = 6;
+  ::google::protobuf::int32 scope() const;
+  void set_scope(::google::protobuf::int32 value);
 
   // @@protoc_insertion_point(class_scope:watchpb.WatchResponse)
  private:
@@ -891,6 +918,7 @@ class WatchResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::RepeatedPtrField< ::watchpb::Event > events_;
   ::google::protobuf::int64 watchid_;
   ::google::protobuf::int32 code_;
+  ::google::protobuf::int32 scope_;
   mutable int _cached_size_;
   friend struct protobuf_watchpb_2eproto::TableStruct;
 };
@@ -2499,7 +2527,7 @@ inline void WatchResponse::set_watchid(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:watchpb.WatchResponse.watchId)
 }
 
-// int32 code = 2;
+// int32 code = 3;
 inline void WatchResponse::clear_code() {
   code_ = 0;
 }
@@ -2513,7 +2541,21 @@ inline void WatchResponse::set_code(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:watchpb.WatchResponse.code)
 }
 
-// repeated .watchpb.Event events = 3;
+// int32 scope = 6;
+inline void WatchResponse::clear_scope() {
+  scope_ = 0;
+}
+inline ::google::protobuf::int32 WatchResponse::scope() const {
+  // @@protoc_insertion_point(field_get:watchpb.WatchResponse.scope)
+  return scope_;
+}
+inline void WatchResponse::set_scope(::google::protobuf::int32 value) {
+  
+  scope_ = value;
+  // @@protoc_insertion_point(field_set:watchpb.WatchResponse.scope)
+}
+
+// repeated .watchpb.Event events = 9;
 inline int WatchResponse::events_size() const {
   return events_.size();
 }
@@ -3244,6 +3286,11 @@ template <> struct is_proto_enum< ::watchpb::EventType> : ::google::protobuf::in
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::watchpb::EventType>() {
   return ::watchpb::EventType_descriptor();
+}
+template <> struct is_proto_enum< ::watchpb::ScopeValue> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::watchpb::ScopeValue>() {
+  return ::watchpb::ScopeValue_descriptor();
 }
 template <> struct is_proto_enum< ::watchpb::FilterType> : ::google::protobuf::internal::true_type {};
 template <>

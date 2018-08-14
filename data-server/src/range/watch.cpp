@@ -3,12 +3,13 @@
 //#include "range.h"
 #include "watch.h" // old
 #include "watch/watcher.h" // new
+#include "range/range_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, const watchpb::WatchKeyValue &kv,
+int16_t WatchEncodeAndDecode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, const watchpb::WatchKeyValue &kv,
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err) {
     int16_t ret(0);
@@ -86,15 +87,16 @@ int16_t WatchCode::EncodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
 }
 
 
-int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta_, watchpb::WatchKeyValue *kv, 
+int16_t WatchEncodeAndDecode::DecodeKv(funcpb::FunctionID funcId, const uint64_t &tableId, watchpb::WatchKeyValue *kv,
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err) {
         int16_t ret(0);
         std::vector<std::string*> keys;
         int64_t version(0);
         keys.clear();
-        
-        FLOG_WARN("range[%" PRIu64 "] DecodeKv dbKey:%s dbValue:%s", meta_.id(), EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
+
+        FLOG_DEBUG("DecodeKv dbKey:%s dbValue:%s", EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
+        //FLOG_WARN("range[%" PRIu64 "] DecodeKv dbKey:%s dbValue:%s", meta_.id(), EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
         auto val = std::make_shared<std::string>("");
         auto ext = std::make_shared<std::string>("");
 
@@ -104,7 +106,7 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             case funcpb::kFuncWatchPut:
             case funcpb::kFuncWatchDel: {
                 std::vector<std::string *> encodeKeys;
-                watch::Watcher w(meta_.table_id(), encodeKeys);
+                watch::Watcher w(tableId, encodeKeys);
 
                 //decode key to kv
                 if (!db_key.empty()) {
@@ -115,10 +117,7 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                             kv->add_key(*itKey);
                         }
                     } else {
-                        FLOG_WARN("range[%"
-                                          PRIu64
-                                          "] DecodeKey exception, key:%s.", meta_.id(),
-                                  EncodeToHexString(db_key).c_str());
+                        FLOG_WARN(" DecodeKey exception, key:%s.", EncodeToHexString(db_key).c_str());
                     }
 
                     //to do free keys
@@ -133,12 +132,9 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
                     //decode value to kv
                     w.DecodeValue(&version, val.get(), ext.get(), db_value);
 
-                    FLOG_WARN("range[%"
+                    FLOG_WARN(" version(decode from value)[%"
                                       PRIu64
-                                      "] version(decode from value)[%"
-                                      PRIu64
-                                      "] key_size:%d  encodevalue:%s", meta_.id(), version, kv->key_size(),
-                              (*val).c_str());
+                                      "] key_size:%d  encodevalue:%s", version, kv->key_size(), (*val).c_str());
 
 
                     kv->set_value(*val);
@@ -150,13 +146,13 @@ int16_t WatchCode::DecodeKv(funcpb::FunctionID funcId, const metapb::Range &meta
             default:
                 ret = -1;
                 err->set_message("unknown func_id");
-                FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
+                FLOG_WARN(" error: unknown func_id:%d", funcId);
                 break;
         }
         return ret;
 }
 
-int16_t  WatchCode::NextComparableBytes(const char *key, const int32_t &len, std::string &result) {
+int16_t  WatchEncodeAndDecode::NextComparableBytes(const char *key, const int32_t &len, std::string &result) {
     if(len > 0) {
         result.resize(len);
     }

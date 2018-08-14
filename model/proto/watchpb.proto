@@ -14,6 +14,11 @@ enum EventType {
     DELETE = 1;
 }
 
+enum ScopeValue {
+    RESPONSE_PART    = 0;
+    RESPONSE_ALL     = 1;
+}
+
 enum FilterType {
     // filter out put event.
     NOPUT    = 0;
@@ -88,8 +93,9 @@ message DsWatchResponse {
 message WatchResponse {
     // watch_id is the ID of the watcher that corresponds to the response.
     int64 watchId         = 1;
-    int32 code            = 2; // 0 success 1 failure
-    repeated Event events = 3; // 是否需要只返回一个
+    int32 code            = 3; // 0 success 1 failure
+    int32 scope           = 6; // 0 part(default)    1 all
+    repeated Event events = 9; // 是否需要只返回一个
 }
 
 //simple KV add request

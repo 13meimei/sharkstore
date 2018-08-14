@@ -10,6 +10,7 @@
 
 #include "watch.h"
 #include "watcher.h"
+#include "storage/store.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -55,10 +56,11 @@ public:
             global_version_ = ver;
 
         return true;
-    }
+    };
+
     uint64_t getVersion() const {
         return global_version_;
-    }
+    };
 
     void WatchSetLock(uint16_t flag) {
         if(flag) {
@@ -66,7 +68,12 @@ public:
         } else {
             watcher_map_mutex_.unlock();
         }
-    }
+    };
+
+    int32_t loadFromDb(storage::Store *store, const watchpb::EventType &evtType, const std::string &fromKey,
+                       const std::string &endKey, const int64_t &startVersion, const uint64_t &tableId,
+                       watchpb::DsWatchResponse *dsResp);
+
 
 private:
     WatcherMap              key_watcher_map_;
@@ -86,7 +93,7 @@ private:
 private:
     WatchCode AddWatcher(const WatcherKey&, WatcherPtr&, WatcherMap&, KeyMap&, storage::Store *, bool prefixFlag = false);
     WatchCode DelWatcher(const WatcherKey&, WatcherId, WatcherMap&, KeyMap&);
-    WatchCode GetWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& vec, const WatcherKey&, WatcherMap&, WatcherValue *watcherVal);
+    WatchCode GetWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& vec, const WatcherKey&, WatcherMap&, WatcherValue *watcherVal, bool prefixFlag = false);
 
 public:
     WatcherId GenWatcherId() {

@@ -119,6 +119,9 @@ public:
     bool WatchDeleteSubmit(common::ProtoMessage *msg,
                             watchpb::DsKvWatchDeleteRequest &req);
 
+    watch::CEventBuffer *getEventBuffer() {
+        return  eventBuffer;
+    }
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
     kvrpcpb::SelectResponse *SelectResp(const kvrpcpb::DsSelectRequest &req);
@@ -361,9 +364,12 @@ private:
 
 private:
     int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg);
-    int32_t SendNotify(const std::vector<watch::WatcherPtr>& vecNotify,
-                              const std::vector<watchpb::Event> &vecEvent ,
-                              bool prefix = false);
+    int32_t loadFromDb(const watchpb::EventType &evtType,
+                       const std::string &fromKey,
+                       const std::string &endKey,
+                       const int64_t &startVersion,
+                       watchpb::DsWatchResponse *dsResp);
+    int32_t SendNotify( watch::WatcherPtr w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
 
 private:
     static const int kTimeTakeWarnThresoldUSec = 500000;
