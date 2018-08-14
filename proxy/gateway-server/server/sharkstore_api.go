@@ -126,7 +126,7 @@ func (api *SharkStoreApi) execute(s *Server, dbName string, tableName string, qu
 
 	t := s.proxy.router.FindTable(dbName, tableName)
 	if t == nil {
-		log.Error("table %s.%s doesn.t exist", dbName, tableName)
+		log.Error("table %s.%s doesn't exist", dbName, tableName)
 		reply = &Reply{Code: errCommandNoTable, Message: ErrNotExistTable.Error()}
 		return reply
 	}

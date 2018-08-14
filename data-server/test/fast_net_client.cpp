@@ -136,7 +136,7 @@ static void client_recv() {
             if (msg != nullptr) {
                 if (msg->body.size() > 0) {
                     tpb::TestMsg tmsg;
-                    socket_session->GetMessage(msg->body.data(), msg->body.size(), &tmsg);
+                    GetMessage(msg->body.data(), msg->body.size(), &tmsg);
                 }
                 delete msg;
                 auto t = time(NULL);
