@@ -21,7 +21,7 @@ namespace watch {
 //ms
 #define EVENT_BUFFER_TIME_OUT 1800000
 #define MAX_EVENT_BUFFER_MAP_SIZE 1000
-#define MAX_EVENT_QUEUE_SIZE  1000
+#define MAX_EVENT_QUEUE_SIZE  10000
 
 
 class CEventBufferValue;

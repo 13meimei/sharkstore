@@ -136,7 +136,8 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                 return WATCH_WATCHER_NOT_NEED;
             }
 
-            if(prefixFlag && ret.ok()) {
+            if(prefixFlag) {
+                FLOG_DEBUG("prefix mode: loadFromDb...");
                 std::string endKey(key);
 
                 if( 0 != range::WatchEncodeAndDecode::NextComparableBytes(key.data(), key.length(), endKey)) {

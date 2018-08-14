@@ -315,10 +315,10 @@ protected:
         if(!key2.empty()) {
             req.mutable_req()->mutable_kv()->add_key(key2);
         }
-        req.mutable_req()->mutable_kv()->set_version(0);
+        req.mutable_req()->mutable_kv()->set_version(1);
         req.mutable_req()->set_longpull(1);
         ///////////////////////////////////////////////
-        //req.mutable_req()->set_startversion(1);
+        req.mutable_req()->set_startversion(1);
         req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
@@ -489,4 +489,14 @@ TEST_F(WatchTest, watch_not_exist_key) {
 
 }
 
+TEST_F(WatchTest, watch_exist_single_key) {
+
+    {
+        justPut(1, "01003001", "", "01003001:value");
+        justWatch(1, "01003001", "", false);
+        justDel(1, "01003001", "", "");
+
+    }
+
+}
 
