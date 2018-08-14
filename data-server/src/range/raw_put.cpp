@@ -94,6 +94,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
 
     RANGE_LOG_DEBUG("ApplyRawPut begin");
     auto &req = cmd.kv_raw_put_req();
+    auto btime = get_micro_second();
 
     errorpb::Error *err = nullptr;
 
@@ -104,7 +105,6 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto btime = get_micro_second();
         ret = store_->Put(req.key(), req.value());
         context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -126,7 +126,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
         if (!ret.ok()) {
             resp->mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
         }
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }

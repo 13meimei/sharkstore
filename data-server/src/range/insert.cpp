@@ -56,6 +56,7 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
     RANGE_LOG_DEBUG("ApplyInsert begin");
 
     auto &req = cmd.insert_req();
+    auto btime = get_micro_second();
     do {
         auto &epoch = cmd.verify_epoch();
 
@@ -64,7 +65,6 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto btime = get_micro_second();
         ret = store_->Insert(req, &affected_keys);
         auto etime = get_micro_second();
         context_->Statistics()->PushTime(monitor::PrintTag::Store, etime - btime);
@@ -95,7 +95,7 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
         auto resp = new kvrpcpb::DsInsertResponse;
         resp->mutable_resp()->set_affected_keys(affected_keys);
         resp->mutable_resp()->set_code(ret.code());
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }

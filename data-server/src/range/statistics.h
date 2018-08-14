@@ -16,8 +16,6 @@ public:
     virtual void DecrLeaderCount() {}
     virtual void IncrSplitCount() {}
     virtual void DecrSplitCount() {}
-
-    virtual uint64_t GetFilesystemUsedPercent() const { return 0; }
 };
 
 }  // namespace range

@@ -97,6 +97,7 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
 
     RANGE_LOG_DEBUG("ApplyRawDelete begin");
 
+    auto btime = get_micro_second();
     auto &req = cmd.kv_raw_delete_req();
 
     do {
@@ -105,7 +106,6 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto btime = get_micro_second();
         ret = store_->Delete(req.key());
         context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -121,7 +121,7 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvRawDeleteResponse;
         resp->mutable_resp()->set_code(ret.code());
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }

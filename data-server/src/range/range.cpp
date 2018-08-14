@@ -454,7 +454,7 @@ bool Range::VerifyLeader(errorpb::Error *&err) {
 }
 
 bool Range::CheckWriteable() {
-    auto percent = context_->Statistics()->GetFilesystemUsedPercent();
+    auto percent = context_->GetFSUsagePercent();
     if (percent > kStopWriteFsUsagePercent) {
         RANGE_LOG_ERROR(
                 "filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",

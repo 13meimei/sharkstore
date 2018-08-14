@@ -100,6 +100,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
     FLOG_DEBUG("apply lock: %s", cmd.DebugString().c_str());
     Status ret;
     errorpb::Error *err = nullptr;
+    auto atime = get_micro_second();
 
     auto req = cmd.lock_req();
     auto resp = new (kvrpcpb::DsLockResponse);
@@ -164,7 +165,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, atime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -219,6 +220,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     FLOG_DEBUG("apply lock update: %s", cmd.DebugString().c_str());
     Status ret;
     errorpb::Error *err = nullptr;
+    auto atime = get_micro_second();
 
     auto &req = cmd.lock_update_req();
     auto resp = new (kvrpcpb::DsLockUpdateResponse);
@@ -285,7 +287,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, atime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -294,8 +296,8 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
 
 void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
     FLOG_DEBUG("unlock: %s", req.DebugString().c_str());
-    context_->Statistics()->PushTime(monitor::PrintTag::Qwait,
-                                   get_micro_second() - msg->begin_time);
+    auto atime = get_micro_second();
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, atime - msg->begin_time);
 
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
@@ -330,6 +332,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
     FLOG_DEBUG("apply unlock: %s", cmd.DebugString().c_str());
     Status ret;
     errorpb::Error *err = nullptr;
+    auto atime = get_micro_second();
 
     auto &req = cmd.unlock_req();
     auto resp = new (kvrpcpb::DsUnlockResponse);
@@ -391,7 +394,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, atime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -437,6 +440,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     FLOG_DEBUG("apply unlock force: %s", cmd.DebugString().c_str());
     Status ret;
     errorpb::Error *err = nullptr;
+    auto atime = get_micro_second();
 
     auto &req = cmd.unlock_force_req();
     auto resp = new (kvrpcpb::DsUnlockForceResponse);
@@ -489,7 +493,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, atime);
     } else if (err != nullptr) {
         delete err;
     }

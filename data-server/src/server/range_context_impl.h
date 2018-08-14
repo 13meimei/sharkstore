@@ -23,6 +23,8 @@ public:
     common::SocketSession* SocketSession() override { return server_->socket_session; }
     range::RangeStats* Statistics() override { return server_->run_status; }
 
+    uint64_t GetFSUsagePercent() const override;
+
     void ScheduleHeartbeat(uint64_t range_id, bool delay) override;
     void ScheduleCheckSize(uint64_t range_id) override;
 
@@ -30,7 +32,8 @@ public:
     std::shared_ptr<range::Range> FindRange(uint64_t range_id) override;
 
     // split
-    Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index);
+    Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req,
+            uint64_t raft_index) override;
 
 private:
     ContextServer* server_ = nullptr;

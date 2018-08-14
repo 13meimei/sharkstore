@@ -160,9 +160,10 @@ private:
     }
 
     template <class R>
-    void ReplySubmit(const raft_cmdpb::Command& cmd, R *resp, errorpb::Error *err) {
+    void ReplySubmit(const raft_cmdpb::Command& cmd, R *resp, errorpb::Error *err, int64_t apply_time) {
         auto ctx = submit_queue_.Remove(cmd.cmd_id().seq());
         if (ctx != nullptr) {
+            context_->Statistics()->PushTime(monitor::PrintTag::Raft, apply_time - ctx->CreateTime());
             ctx->CheckExecuteTime(id_, kTimeTakeWarnThresoldUSec);
             ctx->Reply(context_->SocketSession(), resp, err);
         } else {

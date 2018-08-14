@@ -41,7 +41,7 @@ public:
     }
 
     bool GetFilesystemUsage(FileSystemUsage* usage);
-    uint64_t GetFilesystemUsedPercent() const override { return fs_usage_percent_.load();}
+    uint64_t GetFilesystemUsedPercent() const { return fs_usage_percent_.load();}
 
     void IncrLeaderCount() override { ++leader_count_; }
     void DecrLeaderCount() override { --leader_count_; }

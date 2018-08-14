@@ -64,6 +64,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
 
     auto &req = cmd.kv_set_req();
+    auto btime = get_micro_second();
     do {
         auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
@@ -81,7 +82,6 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
                 affected_keys = 1;
             }
         }
-        auto btime = get_micro_second();
         ret = store_->Put(req.kv().key(), req.kv().value());
         context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -96,7 +96,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
         auto resp = new kvrpcpb::DsInsertResponse;
         resp->mutable_resp()->set_affected_keys(affected_keys);
         resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -185,6 +185,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
     auto total_size = 0, total_count = 0;
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
+    auto btime = get_micro_second();
 
     do {
         auto &req = cmd.kv_batch_set_req();
@@ -217,7 +218,6 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
             } while (false);
         }
 
-        auto btime = get_micro_second();
         ret = store_->BatchSet(keyValues);
         context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -237,7 +237,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
         auto resp = new kvrpcpb::DsKvBatchSetResponse;
         resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
         resp->mutable_resp()->set_affected_keys(affected_keys);
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -322,6 +322,7 @@ void Range::KVDelete(common::ProtoMessage *msg,
 Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
     Status ret;
     errorpb::Error *err = nullptr;
+    auto btime = get_micro_second();
 
     do {
         auto &req = cmd.kv_delete_req();
@@ -332,7 +333,6 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto btime = get_micro_second();
         ret = store_->Delete(req.key());
         context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -347,7 +347,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvDeleteResponse;
         resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -407,6 +407,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
 
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
+    auto btime = get_micro_second();
 
     do {
         auto &req = cmd.kv_batch_del_req();
@@ -431,7 +432,6 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
             }
         }
 
-        auto btime = get_micro_second();
         ret = store_->BatchDelete(delKeys);
         context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -448,7 +448,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
         auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
         resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
         resp->mutable_resp()->set_affected_keys(affected_keys);
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -502,6 +502,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
     std::string last_key;
+    auto btime = get_micro_second();
 
     do {
         auto &req = cmd.kv_range_del_req();
@@ -514,7 +515,6 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto btime = get_micro_second();
         if (req.case_() == kvrpcpb::EC_Exists ||
             req.case_() == kvrpcpb::EC_AnyCase) {
             std::unique_ptr<storage::Iterator> iterator(
@@ -546,7 +546,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
         resp->mutable_resp()->set_last_key(last_key);
         resp->mutable_resp()->set_affected_keys(affected_keys);
         resp->mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
-        ReplySubmit(cmd, resp, err);
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }
