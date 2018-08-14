@@ -40,7 +40,7 @@ class SocketBaseMock: public common::SocketBase {
 
 public:
     virtual int Send(response_buff_t *response) {
-        FLOG_DEBUG("Send mock...%s", response->buff);
+        FLOG_DEBUG("Send mock...session_id[%" PRId64 "] msg_id[%" PRId64 "] buff:%s", response->session_id, response->msg_id, response->buff);
         return 0;
     }
 };
@@ -170,6 +170,7 @@ protected:
         //put first
         msg1->expire_time = get_micro_second() + 1000000;
         msg1->session_id = 1;
+        msg1->msg_id = 20180813;
         msg1->socket = &socket_;
         msg1->begin_time = get_micro_second();
 
@@ -213,6 +214,7 @@ protected:
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
+        msg->msg_id = 20180813;
 
         watchpb::DsKvWatchDeleteRequest req;
 
@@ -253,7 +255,9 @@ protected:
         auto msg = new common::ProtoMessage;
         msg->expire_time = get_micro_second() + 1000000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         msg->begin_time = get_micro_second();
+        msg->msg_id = 20180813;
 
         watchpb::DsKvWatchGetMultiRequest req;
 
@@ -296,6 +300,7 @@ protected:
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
+        msg->msg_id = 20180813;
 
         watchpb::DsWatchRequest req;
 
@@ -308,9 +313,10 @@ protected:
             req.mutable_req()->mutable_kv()->add_key(key2);
         }
         req.mutable_req()->mutable_kv()->set_version(0);
-        req.mutable_req()->set_longpull(now + 5000);
+        req.mutable_req()->set_longpull(1);
         ///////////////////////////////////////////////
         req.mutable_req()->set_startversion(1);
+        req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -429,6 +435,7 @@ TEST_F(WatchTest, watch_get_noexists_put) {
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
+        msg->msg_id = 20180813;
 
         watchpb::DsWatchRequest req;
         req.mutable_header()->set_range_id(1);
@@ -436,8 +443,9 @@ TEST_F(WatchTest, watch_get_noexists_put) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01003001");
+        req.mutable_req()->mutable_kv()->add_key("0100300102");
         req.mutable_req()->mutable_kv()->set_version(-1);
-        req.mutable_req()->set_longpull(now + 5000);
+        req.mutable_req()->set_longpull(1);
         req.mutable_req()->set_startversion(1);
         req.mutable_req()->set_prefix(true);
 
@@ -485,7 +493,7 @@ TEST_F(WatchTest, watch_get_noexists_put) {
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->add_key("01003002");
         req.mutable_req()->mutable_kv()->set_version(-1);
-        req.mutable_req()->set_longpull(now + 5000);
+        req.mutable_req()->set_longpull(1);
 
         req.mutable_req()->set_startversion(1);
 
@@ -521,6 +529,8 @@ TEST_F(WatchTest, watch_get_exist_del) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = get_micro_second() + 1000000;
         msg->session_id = 1;
+        msg->msg_id = 20180813;
+
         msg->socket = &socket_;
         watchpb::DsWatchRequest req;
 
@@ -530,7 +540,7 @@ TEST_F(WatchTest, watch_get_exist_del) {
 
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->set_version(0);
-        req.mutable_req()->set_longpull(now + 5000);
+        req.mutable_req()->set_longpull(1);
         ///////////////////////////////////////////////
         req.mutable_req()->set_startversion(1);
 
@@ -663,7 +673,7 @@ TEST_F(WatchTest, watch_get_exist_del) {
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
         req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->set_longpull(now + 5000);
+        req.mutable_req()->set_longpull(1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -701,7 +711,7 @@ TEST_F(WatchTest, watch_get_exist_del) {
 
         req.mutable_req()->mutable_kv()->add_key("01004001");
         req.mutable_req()->mutable_kv()->set_version(1);
-        req.mutable_req()->set_longpull(now + 5000);
+        req.mutable_req()->set_longpull(1);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -738,6 +748,7 @@ TEST_F(WatchTest, watch_get_group_exist_del) {
         msg->expire_time = get_micro_second() + 1000000;
         msg->session_id = 1;
         msg->socket = &socket_;
+        msg->msg_id = 20180813;
         msg->begin_time = get_micro_second();
         watchpb::DsWatchRequest req;
 
@@ -748,7 +759,7 @@ TEST_F(WatchTest, watch_get_group_exist_del) {
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->add_key("0100300102");
         req.mutable_req()->mutable_kv()->set_version(0);
-        req.mutable_req()->set_longpull(now + 5000);
+        req.mutable_req()->set_longpull(1);
 ///////////////////////////////////////////////
         req.mutable_req()->set_startversion(1);
         req.mutable_req()->set_prefix(true);
@@ -790,12 +801,13 @@ TEST_F(WatchTest, watch_get_group_prefix_exist_del) {
 
         //add prefix watch
         justWatch(1, "01003001", "", true);
-        justWatch(1, "01003001", "0100300103", false);
+        justWatch(1, "01003001", "0100300103", true);
 
 // begin test watch_get (key empty)
         auto msg = new common::ProtoMessage;
         msg->expire_time = get_micro_second() + 1000000;
         msg->session_id = 1;
+        msg->msg_id = 20180813;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
         watchpb::DsWatchRequest req;
@@ -807,7 +819,7 @@ TEST_F(WatchTest, watch_get_group_prefix_exist_del) {
         req.mutable_req()->mutable_kv()->add_key("01003001");
         req.mutable_req()->mutable_kv()->add_key("0100300102");
         req.mutable_req()->mutable_kv()->set_version(0);
-        req.mutable_req()->set_longpull(now + 5000);
+        req.mutable_req()->set_longpull(1);
 ///////////////////////////////////////////////
         req.mutable_req()->set_startversion(1);
 

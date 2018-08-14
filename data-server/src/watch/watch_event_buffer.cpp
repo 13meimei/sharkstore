@@ -17,9 +17,9 @@ void printBufferValue(CEventBufferValue &val) {
                val.version());
 }
 
-//ms
-#define EVENT_BUFFER_TIME_OUT 10000
-#define MAX_EVENT_QUEUE_SIZE  10000
+bool operator < (const struct SGroupKey &l, const struct SGroupKey &r) {
+    return l.key_ < r.key_;
+}
 
 bool CEventBuffer::thread_flag_=true;
 int32_t CEventBuffer::milli_timeout_ = EVENT_BUFFER_TIME_OUT;
@@ -62,43 +62,69 @@ bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *b
     std::lock_guard<std::mutex> lock(buffer_mutex_);
     bool ret{false};
     int64_t queueLength(0);
+    GroupKey key(grpKey);
 
-    auto it = mapGroupBuffer.find(grpKey);
+    auto it = mapGroupBuffer.find(key);
     if(it == mapGroupBuffer.end()) {
+
+        //to do escasp from map
+        if(isFull()) {
+            GroupKey k(listGroupBuffer.begin()->key_, listGroupBuffer.begin()->create_time_);
+            listGroupBuffer.pop_front();
+
+            FLOG_INFO("list pop key:%s", EncodeToHexString(k.key_).c_str());
+
+            auto itMap = mapGroupBuffer.find(k);
+            if(itMap != mapGroupBuffer.end()) {
+                deQueue(itMap->second);
+                mapGroupBuffer.erase(itMap);
+                map_size_--;
+                FLOG_WARN("map pop success, key:%s  create(ms):%" PRId64 " map-length:%" PRId32, k.key_.c_str(), k.create_time_, map_size_);
+            } else {
+                FLOG_WARN("map pop error, key:%s  create(ms):%" PRId64 " map-length:%" PRId32, k.key_.c_str(), k.create_time_, map_size_);
+            }
+        }
+
         auto grpValue = new GroupValue(MAX_EVENT_QUEUE_SIZE);
 
         if(grpValue->enQueue(*bufferValue)) {
-            auto result = mapGroupBuffer.emplace(std::make_pair(grpKey, grpValue));
+            listGroupBuffer.push_back(key);
+            auto result = mapGroupBuffer.emplace(std::make_pair(key, grpValue));
             if(result.second) {
                 ret = true;
             } else {
-                ret = true;
+                FLOG_WARN("mapGroupBuffer emplace error, key:%s", EncodeToHexString(grpKey).c_str());
+                ret = false;
             }
             queueLength = grpValue->length();
+
+            if(ret)
+                map_size_++;
+
         } else {
-            FLOG_WARN("map[%s] is full.", EncodeToHexString(grpKey).c_str());
+            FLOG_WARN("map[%s]->queue is full.", EncodeToHexString(grpKey).c_str());
             ret = false;
         }
     } else {
         ret = it->second->enQueue(*bufferValue);
+        if(!ret) {
+            FLOG_WARN("map[%s]->queue is full..", EncodeToHexString(grpKey).c_str());
+        }
         queueLength = it->second->length();
     }
 
-    FLOG_DEBUG("emplace to queue,[%d] key:%s value:%s version:%" PRId64 " queue_length:%" PRId64, ret,
-               EncodeToHexString(grpKey).c_str(), EncodeToHexString(bufferValue->value()).c_str(), bufferValue->version(), queueLength);
+    FLOG_DEBUG("emplace to queue,[%d] key:%s value:%s version:%" PRId64 " map-length:%" PRId32 " queue-length:%" PRId64, ret,
+               EncodeToHexString(grpKey).c_str(), bufferValue->value().c_str(), bufferValue->version(), map_size_, queueLength);
 
     return ret;
 }
 
-bool CEventBuffer::deQueue(const std::string &grpKey, CEventBufferValue *bufferValue) {
+bool CEventBuffer::deQueue(GroupValue   *grpVal) {
 
-    std::lock_guard<std::mutex> lock(buffer_mutex_);
-
-    auto it = mapGroupBuffer.find(grpKey);
-    if(it == mapGroupBuffer.end()) {
-        return false;
-    } else {
-        it->second->deQueue(*bufferValue);
+    //std::lock_guard<std::mutex> lock(buffer_mutex_);
+    if(grpVal != nullptr) {
+        grpVal->clearQueue();
+        delete grpVal;
     }
 
     return true;

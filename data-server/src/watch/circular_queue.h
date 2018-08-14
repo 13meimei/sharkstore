@@ -27,12 +27,12 @@ namespace watch {
         bool deQueue(T &element);
 
         int32_t getData(int64_t version, std::vector<T> &element);
-        int64_t preDequeue() {
+        int64_t getUsedTime() {
             if(isEmpty()) {
                 return 0;
             }
 
-            return m_pQueue[m_iHead].createTime();
+            return m_pQueue[m_iHead].usedTime();
         };
 
         //传入一个T的引用，方便接队头，而不是返回队头，这样函数返回布尔，调用完毕后，引用拿到队头
@@ -87,7 +87,10 @@ namespace watch {
     bool CircularQueue<T>::enQueue(T element) {
         if (isFull()) {
             T tmpElement;
-            deQueue(tmpElement);
+
+            if(!deQueue(tmpElement)){
+                return false;
+            }
         }
 
         m_pQueue[m_iTail] = element;
@@ -146,14 +149,26 @@ namespace watch {
             return -1;
         }
 
-        for (int32_t i = m_iHead; i < m_iTail; i++) {
-            if (m_pQueue[i].version() >= version ) {
-                cnt++;
-                //std::vector<sharkstore::dataserver::watch::CEventBufferValue>::emplace(sharkstore::dataserver::watch::CEventBufferValue&)
-                elements.emplace_back(*(m_pQueue + i));
+        int32_t mid(0);
+        int32_t from(m_iHead), to(m_iTail);
+
+        while(from < to) {
+
+            mid = (from + to) / 2;
+            if (version == m_pQueue[mid].version()) {
+                from = mid;
+                break;
             } else {
-                continue;
+                if (version > m_pQueue[mid].version()) {
+                    from = mid;
+                }
             }
+        }
+
+        for(int32_t i = from; i < to; i++) {
+            cnt++;
+            (m_pQueue + i)->setUpdateTime();
+            elements.emplace_back(*(m_pQueue + i));
         }
 
         return cnt;

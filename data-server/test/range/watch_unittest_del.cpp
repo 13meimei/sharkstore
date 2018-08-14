@@ -72,6 +72,9 @@ std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf
     return key;
 }
 
+metapb::Range *genRange2();
+metapb::Range *genRange1();
+
 class WatchTest : public ::testing::Test {
 protected:
     void SetUp() override {
@@ -98,6 +101,51 @@ protected:
 
         range_server_->Init(context_);
         now = getticks();
+
+        {
+            // begin test create range
+            auto msg = new common::ProtoMessage;
+            schpb::CreateRangeRequest req;
+            req.set_allocated_range(genRange1());
+
+            auto len = req.ByteSizeLong();
+            msg->body.resize(len);
+            ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+            range_server_->CreateRange(msg);
+            ASSERT_FALSE(range_server_->ranges_.empty());
+
+            ASSERT_TRUE(range_server_->find(1) != nullptr);
+
+            std::vector<metapb::Range> metas;
+            auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+            ASSERT_TRUE(metas.size() == 1) << metas.size();
+            // end test create range
+        }
+
+        {
+            // begin test create range
+            auto msg = new common::ProtoMessage;
+            schpb::CreateRangeRequest req;
+            req.set_allocated_range(genRange2());
+
+            auto len = req.ByteSizeLong();
+            msg->body.resize(len);
+            ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+            range_server_->CreateRange(msg);
+            ASSERT_FALSE(range_server_->ranges_.empty());
+
+            ASSERT_TRUE(range_server_->find(2) != nullptr);
+
+            std::vector<metapb::Range> metas;
+            auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+            ASSERT_TRUE(metas.size() == 2) << metas.size();
+            // end test create range
+        }
+
     }
 
     void TearDown() override {
@@ -196,49 +244,6 @@ metapb::Range *genRange2() {
 }
 
 TEST_F(WatchTest, watch_put_del_get_single) {
-    {
-        // begin test create range
-        auto msg = new common::ProtoMessage;
-        schpb::CreateRangeRequest req;
-        req.set_allocated_range(genRange1());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
-        ASSERT_FALSE(range_server_->ranges_.empty());
-
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
-
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-
-        ASSERT_TRUE(metas.size() == 1) << metas.size();
-        // end test create range
-    }
-
-    {
-        // begin test create range
-        auto msg = new common::ProtoMessage;
-        schpb::CreateRangeRequest req;
-        req.set_allocated_range(genRange2());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
-        ASSERT_FALSE(range_server_->ranges_.empty());
-
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
-
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-
-        ASSERT_TRUE(metas.size() == 2) << metas.size();
-        // end test create range
-    }
 
     {
         // begin test watch_put group (key ok)
@@ -251,6 +256,9 @@ TEST_F(WatchTest, watch_put_del_get_single) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->socket = &socket_;
+        msg->session_id = 1;
+        msg->msg_id = 99;
         watchpb::DsKvWatchPutRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -289,6 +297,7 @@ TEST_F(WatchTest, watch_put_del_get_single) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         msg->msg_id = 2018080301;
         watchpb::DsKvWatchGetMultiRequest req;
 
@@ -367,6 +376,7 @@ TEST_F(WatchTest, watch_put_del_get_single) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         msg->msg_id = 2018080301;
         watchpb::DsKvWatchGetMultiRequest req;
 
@@ -402,50 +412,6 @@ TEST_F(WatchTest, watch_put_del_get_single) {
 
 TEST_F(WatchTest, watch_put_del_get_group) {
     {
-        // begin test create range
-        auto msg = new common::ProtoMessage;
-        schpb::CreateRangeRequest req;
-        req.set_allocated_range(genRange1());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
-        ASSERT_FALSE(range_server_->ranges_.empty());
-
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
-
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-
-        ASSERT_TRUE(metas.size() == 1) << metas.size();
-        // end test create range
-    }
-
-    {
-        // begin test create range
-        auto msg = new common::ProtoMessage;
-        schpb::CreateRangeRequest req;
-        req.set_allocated_range(genRange2());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
-        ASSERT_FALSE(range_server_->ranges_.empty());
-
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
-
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-
-        ASSERT_TRUE(metas.size() == 2) << metas.size();
-        // end test create range
-    }
-
-    {
         // begin test watch_put group (key ok)
         FLOG_DEBUG("watch_put group mode.");
 
@@ -456,6 +422,7 @@ TEST_F(WatchTest, watch_put_del_get_group) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->socket = &socket_;
         watchpb::DsKvWatchPutRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -494,6 +461,7 @@ TEST_F(WatchTest, watch_put_del_get_group) {
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
         msg->msg_id = 2018080301;
+        msg->socket = &socket_;
         watchpb::DsKvWatchGetMultiRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -573,6 +541,7 @@ TEST_F(WatchTest, watch_put_del_get_group) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         msg->msg_id = 2018080301;
         watchpb::DsKvWatchGetMultiRequest req;
 
@@ -607,49 +576,6 @@ TEST_F(WatchTest, watch_put_del_get_group) {
 }
 
 TEST_F(WatchTest, watch_del_noexists_key) {
-    {
-        // begin test create range
-        auto msg = new common::ProtoMessage;
-        schpb::CreateRangeRequest req;
-        req.set_allocated_range(genRange1());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
-        ASSERT_FALSE(range_server_->ranges_.empty());
-
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
-
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-
-        ASSERT_TRUE(metas.size() == 1) << metas.size();
-        // end test create range
-    }
-
-    {
-        // begin test create range
-        auto msg = new common::ProtoMessage;
-        schpb::CreateRangeRequest req;
-        req.set_allocated_range(genRange2());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
-        ASSERT_FALSE(range_server_->ranges_.empty());
-
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
-
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-
-        ASSERT_TRUE(metas.size() == 2) << metas.size();
-        // end test create range
-    }
 
     {
         // begin test watch_put group (key ok)
@@ -662,6 +588,7 @@ TEST_F(WatchTest, watch_del_noexists_key) {
 
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->socket = &socket_;
         watchpb::DsKvWatchPutRequest req;
 
         req.mutable_header()->set_range_id(1);
@@ -778,6 +705,7 @@ TEST_F(WatchTest, watch_del_noexists_key) {
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
         msg->session_id = 1;
+        msg->socket = &socket_;
         msg->msg_id = 2018080301;
         watchpb::DsKvWatchGetMultiRequest req;
 
