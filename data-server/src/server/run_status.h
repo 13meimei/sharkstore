@@ -10,7 +10,7 @@
 #include "frame/sf_status.h"
 #include "monitor/isystemstatus.h"
 #include "monitor/syscommon.h"
-#include "range/statistics.h"
+#include "range/stats.h"
 
 #include "context_server.h"
 

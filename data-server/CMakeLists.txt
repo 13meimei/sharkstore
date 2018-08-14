@@ -183,6 +183,7 @@ set(SOURCES
     src/monitor/isystemstatus.cpp
     src/monitor/datacacl.cpp
     src/monitor/encodedata.cpp
+    src/monitor/histogram.cpp
     src/monitor/rangedata.cpp
 )
 

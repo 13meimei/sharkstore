@@ -6,7 +6,7 @@
 #include "server/server.h"
 #include "base/util.h"
 
-#include "statistics.h"
+#include "stats.h"
 #include "range_logger.h"
 
 namespace sharkstore {

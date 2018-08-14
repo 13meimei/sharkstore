@@ -5,7 +5,7 @@ _Pragma("once");
 
 #include "base/status.h"
 #include "proto/gen/raft_cmdpb.pb.h"
-#include "statistics.h"
+#include "stats.h"
 #include "split_policy.h"
 
 namespace sharkstore {
