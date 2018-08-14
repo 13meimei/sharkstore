@@ -186,7 +186,7 @@ func (service *Server) InitMasterServer(conf *Config) {
 		service.server = s
 	}
 	service.initHttpHandler()
-	if "" != conf.Alarm.ServerAddress {
+	if len(conf.Alarm.ServerAddress) != 0 {
 		service.alarmClient, err = alarm.NewAlarmClient(conf.Alarm.ServerAddress)
 		if err != nil {
 			log.Fatal("create alarm client failed, err[%v]", err)
@@ -203,8 +203,16 @@ func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
 			Sms:  r.Sms,
 		})
 	}
-	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort, conf.MessageGatewayAddress, conf.RemoteAlarmServerAddress, alarm.NewSimpleReceiver(alarmReceivers))
-	return err
+	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort,
+		conf.RemoteAlarmServerAddress)
+	if err != nil {
+		log.Error("alarm.NewAlarmServer failed, err: [%v]", err)
+		return nil
+	}
+
+	// app ping url, for alive alarm
+	service.server.Handle("/app/ping", alarm.HandleAppPing)
+	return nil
 }
 
 func (service *Server) InitMetricServer(conf *Config) {
@@ -226,7 +234,7 @@ func (service *Server) InitMetricServer(conf *Config) {
 	}
 	service.metricServer = metric.NewMetric(service.server, store, conf.Threshold)
 
-	if "" != conf.Alarm.ServerAddress {
+	if len(conf.Alarm.ServerAddress) != 0 {
 		var err error
 		service.alarmClient, err = alarm.NewAlarmClient(conf.Alarm.ServerAddress)
 		if err != nil {

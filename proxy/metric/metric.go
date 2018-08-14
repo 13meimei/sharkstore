@@ -22,6 +22,7 @@ import (
 	"model/pkg/statspb"
 	"util/log"
 	"util/metrics"
+	"util/alarm"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -32,6 +33,12 @@ type SlowLog struct {
 	maxSlowLogNum uint64
 	currentIndex  uint64
 	slowLog       []*statspb.SlowLog
+}
+
+type ErrorLog struct {
+	maxErrorLogNum 	uint64
+	currentIndex  	uint64
+	errorLog 	[]string
 }
 
 type Metric struct {
@@ -51,9 +58,13 @@ type Metric struct {
 	connectCount int64
 
 	startTime time.Time
+
+	errorLogLock	sync.Mutex
+	errorLogger 	*ErrorLog
+	alarmClient 	*alarm.Client
 }
 
-func NewMetric(clusterId uint64, host, addr string, maxSlowLogNum uint64) *Metric {
+func NewMetric(clusterId uint64, host, addr string, maxSlowLogNum uint64, alarmServerAddr string) *Metric {
 	metric := &Metric{
 		clusterId: clusterId,
 		host: host,
@@ -62,6 +73,10 @@ func NewMetric(clusterId uint64, host, addr string, maxSlowLogNum uint64) *Metri
 		slowLogger: &SlowLog{
 			maxSlowLogNum: maxSlowLogNum,
 			slowLog:       make([]*statspb.SlowLog, 0, maxSlowLogNum),
+		},
+		errorLogger: &ErrorLog{
+			maxErrorLogNum: maxSlowLogNum,
+			errorLog: make([]string, 0, maxSlowLogNum),
 		},
 	}
 	if addr != "" {
@@ -76,8 +91,16 @@ func NewMetric(clusterId uint64, host, addr string, maxSlowLogNum uint64) *Metri
 	}
 	metric.proxyMeter = metrics.NewMetricMeter("GS-Proxy", time.Second * 60, metric)
 	metric.storeMeter = metrics.NewMetricMeter("GS-Store", time.Second * 60, metric)
-  
+
+	if len(alarmServerAddr) != 0 {
+		var err error
+		metric.alarmClient, err = alarm.NewAlarmClient(alarmServerAddr)
+		if err != nil {
+			log.Error("create alarm client failed, err[%v]", err)
+		}
+	}
 	go metric.Run()
+
 	return metric
 }
 
@@ -117,7 +140,7 @@ func (m *Metric) Run() {
 	for {
 		select {
 		case <-timer.C:
-			// slowlog
+		// slowlog
 			m.lock.Lock()
 			slowLogger := m.slowLogger
 			m.slowLogger = &SlowLog{
@@ -139,6 +162,22 @@ func (m *Metric) Run() {
 			if err != nil {
 				log.Warn("send metric server failed, err[%v]", err)
 			}
+		// fixme slowlog alarm
+		//	m.alarmClient.SimpleAlarm(m.clusterId, "slowlog alarm", "", samples)
+
+		// error log
+			m.errorLogLock.Lock()
+			errorLogger := m.errorLogger
+			m.errorLogger = &ErrorLog {
+				maxErrorLogNum: m.maxSlowLogNum,
+				errorLog: make([]string, 0, m.maxSlowLogNum),
+			}
+			m.errorLogLock.Unlock()
+			if len(errorLogger.errorLog) == 0 {
+				continue
+			}
+		// fixme errorlog alarm
+		//	m.alarmClient.SimpleAlarm(m.clusterId, "errorlog alarm", "", samples)
 		}
 	}
 }
@@ -155,6 +194,24 @@ func (m *Metric) StoreApiMetric(method string, ack bool, delay time.Duration) {
 		return
 	}
 	m.storeMeter.AddApiWithDelay(method, ack, delay)
+}
+
+func (m *Metric) ErrorLogMetric(errorLog string) {
+	if m == nil {
+		return
+	}
+	m.errorLogLock.Lock()
+	defer m.errorLogLock.Unlock()
+
+	errorLogger := m.errorLogger
+	index := errorLogger.currentIndex
+	if uint64(len(errorLogger.errorLog)) < errorLogger.maxErrorLogNum {
+		errorLogger.errorLog = append(errorLogger.errorLog, errorLog)
+	} else {
+		errorLogger.errorLog[index % errorLogger.maxErrorLogNum] = errorLog
+	}
+
+	errorLogger.currentIndex++
 }
 
 func (m *Metric) SlowLogMetric(slowLog string, delay time.Duration) {

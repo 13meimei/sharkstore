@@ -61,9 +61,9 @@ WatcherSet::WatcherSet() {
                 auto resp = new watchpb::DsWatchResponse;
                 resp->mutable_resp()->set_code(Status::kTimedOut);
 
-                auto err = new errorpb::Error();
-                err->set_message("watch request timeout");
-                resp->mutable_header()->set_allocated_error(err);
+//                auto err = new errorpb::Error();
+//                err->set_message("watch request timeout");
+//                resp->mutable_header()->set_allocated_error(err);
 
                 w_ptr->Send(resp);
 

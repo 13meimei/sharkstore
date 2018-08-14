@@ -25,11 +25,10 @@ import (
 	"math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	metapb "model/pkg/metapb"
-
-	_ "github.com/gogo/protobuf/gogoproto"
 )
+
+import metapb "model/pkg/metapb"
+import _ "github.com/gogo/protobuf/gogoproto"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
