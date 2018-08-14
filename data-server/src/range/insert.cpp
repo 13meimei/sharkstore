@@ -57,7 +57,7 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
 
     auto &req = cmd.insert_req();
     do {
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
 
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("ApplyInsert error: %s", err->message().c_str());

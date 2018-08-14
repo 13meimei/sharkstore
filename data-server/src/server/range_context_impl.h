@@ -10,13 +10,11 @@ namespace server {
 
 class RangeContextImpl : public range::RangeContext {
 public:
-    explicit RangeContextImpl(ContextServer *s) : server_(s) {}
-
-    // split parameters
-    uint64_t SplitSize() const override;
-    uint64_t MaxSize() const override;
+    explicit RangeContextImpl(ContextServer *s);
 
     uint64_t GetNodeID() const override { return server_->node_id; }
+
+    range::SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
 
     rocksdb::DB *DBInstance() override { return server_->rocks_db; }
     master::Worker* MasterClient() override  { return server_->master_worker; }
@@ -32,11 +30,11 @@ public:
     std::shared_ptr<range::Range> FindRange(uint64_t range_id) override;
 
     // split
-    Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req,
-                  uint64_t raft_index, std::shared_ptr<range::Range> *new_range) override;
+    Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index);
 
 private:
     ContextServer* server_ = nullptr;
+    std::unique_ptr<range::SplitPolicy> split_policy_;
 };
 
 

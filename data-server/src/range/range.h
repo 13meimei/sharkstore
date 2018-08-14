@@ -191,7 +191,7 @@ public:
     bool EpochIsEqual(const metapb::Range &meta) {
         return EpochIsEqual(meta.range_epoch());
     };
-    void set_real_size(uint64_t rsize) { real_size_ = rsize; }
+    void SetRealSize(uint64_t rsize) { real_size_ = rsize; }
     void GetReplica(metapb::Replica *rep);
 
 private:
@@ -207,7 +207,6 @@ private:
 
     Status SaveMeta(const metapb::Range &meta);
 
-    errorpb::Error *TimeOutError();
     errorpb::Error *RaftFailError();
     errorpb::Error *NoLeaderError();
     errorpb::Error *NotLeaderError(metapb::Peer &&peer);
@@ -239,7 +238,7 @@ private:
     SubmitQueue submit_queue_;
 
     std::unique_ptr<storage::Store> store_;
-    std::shared_ptr<raft::Raft> raft_ = nullptr;
+    std::shared_ptr<raft::Raft> raft_;
 
     int64_t max_count_ = 1000;
 };

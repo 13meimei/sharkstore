@@ -326,7 +326,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
     do {
         auto &req = cmd.kv_delete_req();
 
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("ApplyKVBatchSet error: %s", err->message().c_str());
             break;
@@ -412,7 +412,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
         auto &req = cmd.kv_batch_del_req();
         std::vector<std::string> delKeys(req.keys_size());
 
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("ApplyKVBatchDelete error: %s", err->message().c_str());
             break;
@@ -508,7 +508,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
         auto start = std::max(req.start(), start_key_);
         auto limit = std::min(req.limit(), meta_.GetEndKey());
 
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("KVRangeDelet error: %s", err->message().c_str());
             break;

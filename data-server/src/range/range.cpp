@@ -548,13 +548,6 @@ errorpb::Error *Range::KeyNotInRange(const std::string &key) {
     return err;
 }
 
-errorpb::Error *Range::TimeOutError() {
-    errorpb::Error *err = new errorpb::Error;
-    err->set_message("requset timeout");
-    err->mutable_timeout();
-    return err;
-}
-
 errorpb::Error *Range::RaftFailError() {
     errorpb::Error *err = new errorpb::Error;
     err->set_message("raft submit fail");

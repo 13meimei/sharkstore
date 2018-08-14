@@ -6,6 +6,7 @@ _Pragma("once");
 #include "base/status.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "statistics.h"
+#include "split_policy.h"
 
 namespace sharkstore {
 
@@ -26,11 +27,10 @@ public:
     RangeContext() = default;
     virtual ~RangeContext() = default;
 
-    // split parameters
-    virtual uint64_t SplitSize() const = 0;
-    virtual uint64_t MaxSize() const = 0;
-
     virtual uint64_t GetNodeID() const = 0;
+
+    // 分裂策略
+    virtual SplitPolicy* GetSplitPolicy() = 0;
 
     virtual rocksdb::DB *DBInstance() = 0;
     virtual master::Worker* MasterClient() = 0;
@@ -46,8 +46,7 @@ public:
     virtual std::shared_ptr<Range> FindRange(uint64_t range_id) { return nullptr; }
 
     // split
-    virtual Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req,
-            uint64_t raft_index, std::shared_ptr<Range> *new_range) {
+    virtual Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index) {
         return Status(Status::kNotSupported);
     }
 };

@@ -1,7 +1,5 @@
-#include <common/ds_config.h>
 #include "range.h"
 
-#include "common/ds_config.h"
 #include "frame/sf_util.h"
 #include "master/worker.h"
 #include "server/range_server.h"
@@ -18,7 +16,13 @@ namespace range {
 void Range::CheckSplit(uint64_t size) {
     statis_size_ += size;
 
-    if (!statis_flag_ && statis_size_ > ds_config.range_config.check_size) {
+    // split disabled
+    if (!context_->GetSplitPolicy()->Enabled()) {
+        return;
+    }
+
+    auto check_size = context_->GetSplitPolicy()->CheckSize();
+    if (!statis_flag_ && statis_size_ > check_size) {
         statis_flag_ = true;
         context_->ScheduleCheckSize(id_);
     }
@@ -29,18 +33,19 @@ void Range::ResetStatisSize() {
     // amicable sequence writing and random writing
     // const static uint64_t split_size = ds_config.range_config.split_size >>
     // 1;
-    const static uint64_t split_size = ds_config.range_config.split_size;
-
     auto meta = meta_.Get();
 
     std::string split_key;
-    if (ds_config.range_config.access_mode == 0) {
-        real_size_ = store_->StatisSize(split_key, split_size);
+    auto type = context_->GetSplitPolicy()->GetSplitKeyType();
+    if (type == SplitKeyType::kNormal) {
+        real_size_ = store_->StatisSize(split_key, context_->GetSplitPolicy()->SplitSize());
     } else {
-        real_size_ = store_->StatisSize(split_key, split_size, true);
+        real_size_ = store_->StatisSize(split_key, context_->GetSplitPolicy()->SplitSize(), true);
     }
 
-    RANGE_LOG_DEBUG("real size: %" PRIu64, real_size_);
+    RANGE_LOG_DEBUG("policy: %s/%s, real size: %" PRIu64,
+            context_->GetSplitPolicy()->Name().c_str(),
+            SplitKeyTypeName(type).c_str(), real_size_);
 
     statis_flag_ = false;
 
@@ -51,7 +56,7 @@ void Range::ResetStatisSize() {
 
     statis_size_ = 0;
     // when real size >= max size, we need split with split size
-    if (real_size_ >= ds_config.range_config.max_size) {
+    if (real_size_ >= context_->GetSplitPolicy()->MaxSize()) {
         return AskSplit(std::move(split_key), std::move(meta));
     }
 }
@@ -61,8 +66,10 @@ void Range::AskSplit(std::string &&key, metapb::Range&& meta) {
     assert(key >= meta.start_key());
     assert(key < meta.end_key());
 
-    RANGE_LOG_INFO("AskSplit, version: %" PRIu64 ", key: %s",
-            meta.range_epoch().version(), key.c_str());
+    RANGE_LOG_INFO("AskSplit, version: %" PRIu64 ", key: %s, policy: %s/%s",
+            meta.range_epoch().version(), EncodeToHex(key).c_str(),
+            context_->GetSplitPolicy()->Name().c_str(),
+            SplitKeyTypeName(context_->GetSplitPolicy()->GetSplitKeyType()).c_str());
 
     mspb::AskSplitRequest ask;
     ask.set_allocated_range(new metapb::Range(std::move(meta)));
@@ -175,8 +182,7 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
 
     context_->Statistics()->IncrSplitCount();
 
-    std::shared_ptr<Range> split_range;
-    ret = context_->SplitRange(id_, req, index, &split_range);
+    ret = context_->SplitRange(id_, req, index);
     if (!ret.ok()) {
         RANGE_LOG_ERROR("ApplySplit(new range: %" PRIu64 ") create failed: %s",
                         req.new_range().id(), ret.ToString().c_str());
@@ -193,10 +199,10 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
         split_range_id_ = req.new_range().id();
         context_->ScheduleHeartbeat(split_range_id_, false);
 
-        uint64_t rsize = ds_config.range_config.split_size >> 1;
+        uint64_t rsize = context_->GetSplitPolicy()->SplitSize() >> 1;
         auto rng = context_->FindRange(split_range_id_);
         if (rng != nullptr) {
-            rng->set_real_size(real_size_ - rsize);
+            rng->SetRealSize(real_size_ - rsize);
         }
 
         real_size_ = rsize;

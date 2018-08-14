@@ -1,3 +1,4 @@
+#include <common/ds_config.h>
 #include "range_context_impl.h"
 
 #include "common/ds_config.h"
@@ -8,12 +9,33 @@ namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-uint64_t RangeContextImpl::SplitSize() const {
-    return ds_config.range_config.split_size;
-}
+class DefaultSplitPolicy : public range::SplitPolicy {
+public:
+    std::string Name() const override { return "Default"; }
 
-uint64_t RangeContextImpl::MaxSize() const {
-    return ds_config.range_config.max_size;
+    bool Enabled() const override { return true; }
+
+    uint64_t CheckSize() const override {
+        return ds_config.range_config.check_size;
+    }
+
+    uint64_t SplitSize() const override {
+        return ds_config.range_config.split_size;
+    }
+
+    uint64_t MaxSize() const override {
+        return ds_config.range_config.max_size;
+    }
+
+    range::SplitKeyType GetSplitKeyType() override {
+        return ds_config.range_config.access_mode == 0 ?
+            range::SplitKeyType::kNormal : range::SplitKeyType::kKeepFirstPart;
+    }
+};
+
+RangeContextImpl::RangeContextImpl(ContextServer *s) :
+    server_(s),
+    split_policy_(new DefaultSplitPolicy) {
 }
 
 void RangeContextImpl::ScheduleHeartbeat(uint64_t range_id, bool delay) {
@@ -32,8 +54,8 @@ std::shared_ptr<range::Range> RangeContextImpl::FindRange(uint64_t range_id) {
 
 // split
 Status RangeContextImpl::SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req,
-                  uint64_t raft_index, std::shared_ptr<range::Range> *new_range) {
-    return Status(Status::kNotFound);
+                  uint64_t raft_index) {
+    return server_->range_server->SplitRange(range_id, req, raft_index);
 }
 
 }  // namespace server

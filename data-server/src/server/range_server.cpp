@@ -316,7 +316,7 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
     ds_header_t &header = msg->header;
 
     FLOG_DEBUG(
-        "server start deal %s task, sid=%ld, msgid=%ld",
+        "server start deal %s task, sid=%" PRId64 ", msgid=%" PRId64,
         funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(header.func_id)).c_str(),
         msg->session_id, msg->header.msg_id);
 
@@ -466,7 +466,8 @@ void RangeServer::CreateRange(common::ProtoMessage *msg) {
     return context_->socket_session->Send(msg, resp);
 }
 
-Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader, uint64_t log_start_index) {
+Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader,
+        uint64_t log_start_index) {
     FLOG_DEBUG("new range: id=%" PRIu64 ", start=%s, end=%s,"
                " version=%" PRIu64 ", conf_ver=%" PRIu64,
                range.id(), EncodeToHexString(range.start_key()).c_str(),
@@ -485,10 +486,6 @@ Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader, uin
     }
 
     auto rng = std::make_shared<range::Range>(range_context_.get(), range);
-    if (rng == nullptr) {
-        FLOG_ERROR("create new range[%" PRIu64 "] failed.", range.id());
-        return Status(Status::kNoMem, "new range null", "");
-    }
     // 初始化range
     auto ret = rng->Initialize(leader, log_start_index);
     if (!ret.ok()) {
@@ -976,9 +973,8 @@ void RangeServer::KVScan(common::ProtoMessage *msg) {
     }
 }
 
-Status RangeServer::ApplySplit(uint64_t old_range_id,
-                               const raft_cmdpb::SplitRequest &req,
-                               uint64_t raft_index) {
+Status RangeServer::SplitRange(uint64_t old_range_id, const raft_cmdpb::SplitRequest &req,
+                  uint64_t raft_index) {
     auto rng = Find(old_range_id);
     if (rng == nullptr) {
         return Status(Status::kNotFound, "range not found", "");
@@ -990,8 +986,7 @@ Status RangeServer::ApplySplit(uint64_t old_range_id,
         auto ret = CreateRange(req.new_range(), req.leader(), raft_index + 1);
         if (ret.code() == Status::kDuplicate) {
             FLOG_WARN("range[%" PRIu64 "] ApplySplit(new range: %" PRIu64 ") already exist.",
-                old_range_id, req.new_range().id());
-            is_exist = true;
+                      old_range_id, req.new_range().id());
         } else if (!ret.ok()) {
             return ret;
         }
@@ -1166,15 +1161,6 @@ void RangeServer::StatisPush(uint64_t range_id) {
     std::lock_guard<std::mutex> lock(statis_mutex_);
     statis_queue_.push(range_id);
     statis_cond_.notify_all();
-}
-
-metapb::Range *RangeServer::GetRangeMeta(uint64_t range_id) {
-    auto rng = Find(range_id);
-    if (rng != nullptr) {
-        return new metapb::Range(rng->options());
-    }
-
-    return nullptr;
 }
 
 void RangeServer::OnNodeHeartbeatResp(const mspb::NodeHeartbeatResponse &resp) {

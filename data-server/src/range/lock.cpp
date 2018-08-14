@@ -104,7 +104,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
     auto req = cmd.lock_req();
     auto resp = new (kvrpcpb::DsLockResponse);
     do {
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             FLOG_WARN("Range %" PRIu64 "  ApplyLock error: %s", id_, err->message().c_str());
             resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
@@ -223,7 +223,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     auto &req = cmd.lock_update_req();
     auto resp = new (kvrpcpb::DsLockUpdateResponse);
     do {
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             FLOG_WARN("Range %" PRIu64 "  ApplyLockUpdate error: %s",
                       id_, err->message().c_str());
@@ -334,7 +334,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
     auto &req = cmd.unlock_req();
     auto resp = new (kvrpcpb::DsUnlockResponse);
     do {
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             FLOG_WARN("Range %" PRIu64 "  ApplyUnlock error: %s", id_, err->message().c_str());
             resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
@@ -441,7 +441,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     auto &req = cmd.unlock_force_req();
     auto resp = new (kvrpcpb::DsUnlockForceResponse);
     do {
-        auto epoch = cmd.verify_epoch();
+        auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             FLOG_WARN("Range %" PRIu64 "  UnlockForce error: %s", id_, err->message().c_str());
             resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);

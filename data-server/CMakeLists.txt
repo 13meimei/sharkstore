@@ -163,6 +163,7 @@ set(SOURCES
     src/range/insert.cpp
     src/range/delete.cpp
     src/range/split.cpp
+    src/range/split_policy.cpp
     src/range/peer.cpp
     src/range/snapshot.cpp
     src/range/kv_funcs.cpp
