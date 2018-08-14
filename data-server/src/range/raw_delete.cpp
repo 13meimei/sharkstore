@@ -13,7 +13,7 @@ bool Range::RawDeleteSubmit(common::ProtoMessage *msg,
     auto &key = req.req().key();
 
     if (is_leader_ && KeyInRange(key)) {
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::RawDelete);
             cmd.set_allocated_kv_raw_delete_req(req.release_req());
         });
@@ -25,7 +25,7 @@ bool Range::RawDeleteSubmit(common::ProtoMessage *msg,
 }
 
 bool Range::RawDeleteTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req) {
-    std::shared_ptr<Range> rng = context_->range_server->find(split_range_id_);
+    std::shared_ptr<Range> rng = context_->FindRange(split_range_id_);
     if (rng == nullptr) {
         return false;
     }
@@ -37,7 +37,7 @@ void Range::RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("RawDelete begin");
 
@@ -107,7 +107,7 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         ret = store_->Delete(req.key());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -120,7 +120,8 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvRawDeleteResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
+        resp->mutable_resp()->set_code(ret.code());
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }

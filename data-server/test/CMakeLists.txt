@@ -13,6 +13,11 @@ set(test_helper_SRCS
     helper/table.cpp
 )
 
+foreach(f IN LISTS test_helper_SRCS)
+    set_source_files_properties(${f} PROPERTIES
+            COMPILE_DEFINITIONS "__FNAME__=\"${f}\"")
+endforeach()
+
 add_library(shark-test-helper SHARED ${test_helper_SRCS})
 
 set (test_DEPEND_LIBS

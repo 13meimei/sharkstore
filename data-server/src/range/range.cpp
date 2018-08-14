@@ -19,20 +19,20 @@ static const int kDownPeerThresholdSecs = 50;
 // 磁盘使用率大于百分之92停写
 static const uint64_t kStopWriteFsUsagePercent = 92;
 
-Range::Range(server::ContextServer *context, const metapb::Range &meta)
-    : context_(context),
-      node_id_(context_->node_id),
-      id_(meta.id()),
-      start_key_(meta.start_key()),
-      meta_(meta) {
-    store_ = new storage::Store(meta, context->rocks_db);
+Range::Range(RangeContext* context, const metapb::Range &meta) :
+    context_(context),
+    node_id_(context_->GetNodeID()),
+    id_(meta.id()),
+    start_key_(meta.start_key()),
+    meta_(meta),
+    store_(new storage::Store(meta, context->DBInstance())) {
 }
 
-Range::~Range() { delete store_; }
+Range::~Range() {}
 
 Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     // 加载apply位置
-    auto s = context_->meta_store->LoadApplyIndex(id_, &apply_index_);
+    auto s = context_->MetaStore()->LoadApplyIndex(id_, &apply_index_);
     if (!s.ok()) {
         return Status(Status::kCorruption, "load applied", s.ToString());
     }
@@ -40,7 +40,7 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     // 创建起始日志之前的日志都算作被应用过的
     if (log_start_index > 1 && log_start_index - 1 > apply_index_) {
         apply_index_ = log_start_index - 1;
-        s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
+        s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
         if (!s.ok()) {
             return Status(Status::kCorruption, "save applied", s.ToString());
         }
@@ -76,12 +76,13 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     }
 
     // create raft group
-    s = context_->raft_server->CreateRaft(options, &raft_);
+    s = context_->RaftServer()->CreateRaft(options, &raft_);
     if (!s.ok()) {
         return Status(Status::kInvalidArgument, "create raft", s.ToString());
     }
 
     if (leader == node_id_) {
+        context_->Statistics()->IncrLeaderCount();
         is_leader_ = true;
     }
 
@@ -92,7 +93,7 @@ Status Range::Shutdown() {
     valid_ = false;
 
     // 删除raft
-    auto s = context_->raft_server->RemoveRaft(id_);
+    auto s = context_->RaftServer()->RemoveRaft(id_);
     if (!s.ok()) {
         RANGE_LOG_WARN("remove raft failed: %s", s.ToString().c_str());
     }
@@ -104,7 +105,7 @@ Status Range::Shutdown() {
 
 void Range::Heartbeat() {
     if (PushHeartBeatMessage()) {
-        context_->range_server->LeaderQueuePush(id_, ds_config.hb_config.range_interval * 1000 + getticks());
+        context_->ScheduleHeartbeat(id_, true);
     }
 
     // clear async apply expired task
@@ -171,7 +172,7 @@ bool Range::PushHeartBeatMessage() {
     stats->set_keys_written(store_stat.keys_write_per_sec);
     stats->set_bytes_written(store_stat.bytes_write_per_sec);
 
-    context_->master_worker->AsyncRangeHeartbeat(req);
+    context_->MasterClient()->AsyncRangeHeartbeat(req);
 
     return true;
 }
@@ -216,16 +217,15 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
 }
 
 Status Range::Apply(const std::string &cmd, uint64_t index) {
+    if (!valid_) {
+        RANGE_LOG_ERROR("is invalid!");
+        return Status(Status::kInvalid, "range is invalid", "");
+    }
+
     auto start = std::chrono::system_clock::now();
 
     raft_cmdpb::Command raft_cmd;
-    context_->socket_session->GetMessage(cmd.data(), cmd.size(), &raft_cmd);
-
-    if (!valid_) {
-        RANGE_LOG_ERROR("is invalid!");
-        DelContext(raft_cmd.cmd_id().seq());
-        return Status(Status::kInvalid, "range is invalid", "");
-    }
+    common::GetMessage(cmd.data(), cmd.size(), &raft_cmd);
 
     Status ret;
     if (raft_cmd.cmd_type() == raft_cmdpb::CmdType::AdminSplit) {
@@ -242,7 +242,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     }
 
     apply_index_ = index;
-    auto s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
+    auto s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
     if (!s.ok()) {
         RANGE_LOG_ERROR("save apply index error %s", s.ToString().c_str());
         return s;
@@ -272,6 +272,28 @@ Status Range::Submit(const raft_cmdpb::Command &cmd) {
     }
 }
 
+Status Range::SubmitCmd(common::ProtoMessage *msg, const kvrpcpb::RequestHeader& header,
+                 const std::function<void(raft_cmdpb::Command &cmd)> &init) {
+    raft_cmdpb::Command cmd;
+    init(cmd);
+
+    // set verify epoch
+    auto epoch = new metapb::RangeEpoch(header.range_epoch());
+    cmd.set_allocated_verify_epoch(epoch);
+
+    // add to queue
+    auto seq = submit_queue_.Add(header, cmd.cmd_type(), msg);
+    cmd.mutable_cmd_id()->set_node_id(node_id_);
+    cmd.mutable_cmd_id()->set_seq(seq);
+
+    auto ret = Submit(cmd);
+    if (!ret.ok()) {
+        submit_queue_.Remove(cmd.cmd_id().seq());
+    }
+
+    return ret;
+}
+
 void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
     RANGE_LOG_INFO("Leader Change to Node %" PRIu64, leader);
 
@@ -286,14 +308,14 @@ void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
 
             store_->ResetMetric();
 
-            context_->range_server->LeaderQueuePush(id_, getticks());
-            context_->run_status->IncrLeaderCount();
+            context_->ScheduleHeartbeat(id_, false);
+            context_->Statistics()->IncrLeaderCount();
         }
 
     } else {
         if (is_leader_) {
             is_leader_ = false;
-            context_->run_status->DecrLeaderCount();
+            context_->Statistics()->DecrLeaderCount();
         }
     }
 }
@@ -353,7 +375,7 @@ Status Range::ApplySnapshotFinish(uint64_t index) {
     }
 
     apply_index_ = index;
-    auto s = context_->meta_store->SaveApplyIndex(id_, index);
+    auto s = context_->MetaStore()->SaveApplyIndex(id_, index);
     if (!s.ok()) {
         RANGE_LOG_ERROR("save snapshot applied index failed(%s)!", s.ToString().c_str());
         return s;
@@ -363,8 +385,7 @@ Status Range::ApplySnapshotFinish(uint64_t index) {
 }
 
 Status Range::SaveMeta(const metapb::Range &meta) {
-    auto ms = context_->range_server->meta_store();
-    return ms->AddRange(meta);
+    return context_->MetaStore()->AddRange(meta);
 }
 
 Status Range::Destroy() {
@@ -373,7 +394,7 @@ Status Range::Destroy() {
     ClearExpiredContext();
 
     // 销毁raft
-    auto s = context_->raft_server->DestroyRaft(id_);
+    auto s = context_->RaftServer()->DestroyRaft(id_);
     if (!s.ok()) {
         RANGE_LOG_WARN("destroy raft failed: %s", s.ToString().c_str());
     }
@@ -384,7 +405,7 @@ Status Range::Destroy() {
         RANGE_LOG_ERROR("truncate store fail: %s", s.ToString().c_str());
         return s;
     }
-    s = context_->meta_store->DeleteApplyIndex(id_);
+    s = context_->MetaStore()->DeleteApplyIndex(id_);
     if (!s.ok()) {
         RANGE_LOG_ERROR("truncate delete apply fail: %s", s.ToString().c_str());
     }
@@ -433,7 +454,7 @@ bool Range::VerifyLeader(errorpb::Error *&err) {
 }
 
 bool Range::CheckWriteable() {
-    auto percent = context_->run_status->GetFilesystemUsedPercent();
+    auto percent = context_->Statistics()->GetFilesystemUsedPercent();
     if (percent > kStopWriteFsUsagePercent) {
         RANGE_LOG_ERROR(
                 "filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
@@ -447,16 +468,14 @@ bool Range::CheckWriteable() {
 bool Range::KeyInRange(const std::string &key) {
     if (key < start_key_) {
         RANGE_LOG_WARN("key: %s less than start_key:%s, out of range",
-                  EncodeToHexString(key).c_str(),
-                  EncodeToHexString(start_key_).c_str());
+                  EncodeToHex(key).c_str(), EncodeToHex(start_key_).c_str());
         return false;
     }
 
     auto end_key = meta_.GetEndKey();
     if (key >= end_key) {
         RANGE_LOG_WARN("key: %s greater than end_key:%s, out of range",
-                  EncodeToHexString(key).c_str(),
-                  EncodeToHexString(end_key).c_str());
+                  EncodeToHex(key).c_str(), EncodeToHex(end_key).c_str());
         return false;
     }
 
@@ -484,75 +503,12 @@ bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&err) 
     return true;
 }
 
-Range::AsyncContext *Range::AddContext(uint64_t id, raft_cmdpb::CmdType type,
-                                       common::ProtoMessage *msg,
-                                       kvrpcpb::RequestHeader *req) {
-    AsyncContext *context = new AsyncContext(type, context_, msg, req);
-
-    std::lock_guard<std::mutex> lock(submit_mutex_);
-    submit_map_[id] = context;
-    submit_queue_.emplace(msg->expire_time, id);
-    return context;
-}
-
-void Range::DelContext(uint64_t seq_id) {
-    std::lock_guard<std::mutex> lock(submit_mutex_);
-    auto it = submit_map_.find(seq_id);
-    if (it != submit_map_.end()) {
-        delete it->second;
-        submit_map_.erase(it);
-    }
-}
-
-Range::AsyncContext *Range::ReleaseContext(uint64_t seq_id) {
-    std::lock_guard<std::mutex> lock(submit_mutex_);
-    auto it = submit_map_.find(seq_id);
-    if (it != submit_map_.end()) {
-        auto context = it->second;
-        submit_map_.erase(it);
-        return context;
-    }
-
-    return nullptr;
-}
-
-std::tuple<bool, uint64_t> Range::GetExpiredContext() {
-    std::lock_guard<std::mutex> lock(submit_mutex_);
-    if (submit_queue_.empty()) {
-        return std::make_tuple(true, 0);
-    }
-    auto ts = submit_queue_.top();
-    if (valid_) {
-        time_t now = getticks();
-        if (ts.first > now) {
-            return std::make_tuple(false, 0);
-        }
-    }
-
-    submit_queue_.pop();
-    return std::make_tuple(false, ts.second);
-}
-
 void Range::ClearExpiredContext() {
-    bool empty = false;
-    uint64_t seq_id = -1;
-
-    while (true) {
-        do {
-            std::tie(empty, seq_id) = GetExpiredContext();
-            if (empty || seq_id == 0) {
-                break;
-            }
-
-            Range::AsyncContext *context = ReleaseContext(seq_id);
-            if (context != nullptr) {
-                SendTimeOutError(context);
-            }
-
-        } while (seq_id > 0);
-
-        if (empty || is_leader_) {
-            break;
+    auto expired_seqs = submit_queue_.GetExpired();
+    for (auto seq: expired_seqs) {
+        auto ctx = submit_queue_.Remove(seq);
+        if (ctx) {
+            ctx->SendTimeout(context_->SocketSession());
         }
     }
 }
@@ -592,13 +548,6 @@ errorpb::Error *Range::KeyNotInRange(const std::string &key) {
     return err;
 }
 
-errorpb::Error *Range::TimeOutError() {
-    errorpb::Error *err = new errorpb::Error;
-    err->set_message("requset timeout");
-    err->mutable_timeout();
-    return err;
-}
-
 errorpb::Error *Range::RaftFailError() {
     errorpb::Error *err = new errorpb::Error;
     err->set_message("raft submit fail");
@@ -618,41 +567,14 @@ errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
     meta_.Get(stale_epoch->mutable_old_range());
 
     if (split_range_id_ > 0) {
-        auto new_meta = context_->range_server->GetRangeMeta(split_range_id_);
-        if (new_meta != nullptr) {
-            stale_epoch->set_allocated_new_range(new_meta);
+        auto split_range = context_->FindRange(split_range_id_);
+        if (split_range) {
+            auto split_meta = split_range->options();
+            stale_epoch->set_allocated_new_range(new metapb::Range(std::move(split_meta)));
         }
     }
 
     return err;
-}
-
-void Range::SendTimeOutError(AsyncContext *context) {
-    RANGE_LOG_WARN("deal %s timeout. sid=%" PRId64 ", msgid=%" PRId64,
-              raft_cmdpb::CmdType_Name(context->cmd_type_).c_str(),
-              context->proto_message->session_id, context->proto_message->msg_id);
-
-    auto err = TimeOutError();
-    switch (context->cmd_type_) {
-        case raft_cmdpb::CmdType::RawPut:
-            SendError(context, new kvrpcpb::DsKvRawPutResponse, err);
-            break;
-        case raft_cmdpb::CmdType::RawDelete:
-            SendError(context, new kvrpcpb::DsKvRawDeleteResponse, err);
-            break;
-        case raft_cmdpb::CmdType::Insert:
-            SendError(context, new kvrpcpb::DsInsertResponse, err);
-            break;
-        case raft_cmdpb::CmdType::Delete:
-            SendError(context, new kvrpcpb::DsDeleteResponse, err);
-            break;
-
-        default:
-            RANGE_LOG_ERROR("Apply cmd type error %d", context->cmd_type_);
-            delete err;
-    }
-
-    delete context;
 }
 
 }  // namespace range

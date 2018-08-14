@@ -11,7 +11,7 @@ bool Range::RawPutSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &
     auto &key = req.req().key();
 
     if (is_leader_ && KeyInRange(key)) {
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::RawPut);
             cmd.set_allocated_kv_raw_put_req(req.release_req());
         });
@@ -23,7 +23,7 @@ bool Range::RawPutSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &
 }
 
 bool Range::RawPutTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
-    auto rng = context_->range_server->find(split_range_id_);
+    auto rng = context_->FindRange(split_range_id_);
     if (rng == nullptr) {
         return false;
     }
@@ -35,7 +35,7 @@ void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("RawPut begin");
 
@@ -106,7 +106,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         ret = store_->Put(req.key(), req.value());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -123,7 +123,10 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvRawPutResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
+        if (!ret.ok()) {
+            resp->mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
+        }
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }

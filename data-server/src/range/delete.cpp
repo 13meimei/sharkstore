@@ -12,19 +12,17 @@ bool Range::DeleteSubmit(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &re
     auto &key = req.req().key();
 
     if (is_leader_ && (key.empty() || KeyInRange(key))) {
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::Delete);
             cmd.set_allocated_delete_req(req.release_req());
         });
-
-        return ret.ok() ? true : false;
+        return ret.ok();
     }
-
     return false;
 }
 
 bool Range::DeleteTry(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
-    std::shared_ptr<Range> rng = context_->range_server->find(split_range_id_);
+    std::shared_ptr<Range> rng = context_->FindRange(split_range_id_);
     if (rng == nullptr) {
         return false;
     }
@@ -38,7 +36,7 @@ void Range::Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("Delete begin");
 
@@ -105,7 +103,7 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
     do {
         auto &key = req.key();
         if (key.empty()) {
-            auto epoch = cmd.verify_epoch();
+            auto &epoch = cmd.verify_epoch();
 
             if (!EpochIsEqual(epoch, err)) {
                 RANGE_LOG_WARN("ApplyDelete error: %s", err->message().c_str());
@@ -120,7 +118,7 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
 
         auto btime = get_micro_second();
         ret = store_->DeleteRows(req, &affected_keys);
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -132,7 +130,9 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new kvrpcpb::DsKvDeleteResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), affected_keys, err);
+        resp->mutable_resp()->set_affected_keys(affected_keys);
+        resp->mutable_resp()->set_code(ret.code());
+        ReplySubmit(cmd, resp, err);
     } else if (err != nullptr) {
         delete err;
     }

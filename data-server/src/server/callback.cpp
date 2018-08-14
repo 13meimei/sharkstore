@@ -3,20 +3,21 @@
 #include "frame/sf_logger.h"
 #include "frame/sf_util.h"
 
-#include "manager.h"
-#include "monitor/syscommon.h"
+#include "common/socket_message.h"
 #include "run_status.h"
+#include "manager.h"
 #include "server.h"
 #include "worker.h"
 
 using sharkstore::dataserver::common::ProtoMessage;
 using sharkstore::dataserver::server::DataServer;
+using namespace sharkstore::dataserver::common;
 
 extern "C" {
 
 void ds_manager_deal_callback(request_buff_t *request, void *args) {
     auto cs = DataServer::Instance().context_server();
-    ProtoMessage *req = cs->socket_session->GetProtoMessage(request->buff);
+    ProtoMessage *req = GetProtoMessage(request->buff);
     if (req != nullptr) {
         req->session_id = request->session_id;
         req->begin_time = get_micro_second();
@@ -38,7 +39,7 @@ void ds_manager_deal_callback(request_buff_t *request, void *args) {
 
 void ds_worker_deal_callback(request_buff_t *request, void *args) {
     auto cs = DataServer::Instance().context_server();
-    ProtoMessage *req = cs->socket_session->GetProtoMessage(request->buff);
+    ProtoMessage *req = GetProtoMessage(request->buff);
 
     if (req != nullptr) {
         req->session_id = request->session_id;

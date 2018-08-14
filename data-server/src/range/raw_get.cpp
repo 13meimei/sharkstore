@@ -24,7 +24,7 @@ kvrpcpb::KvRawGetResponse *Range::RawGetResp(const std::string &key) {
 }
 
 kvrpcpb::KvRawGetResponse *Range::RawGetTry(const std::string &key) {
-    auto rng = context_->range_server->find(split_range_id_);
+    auto rng = context_->FindRange(split_range_id_);
     if (rng == nullptr) {
         return nullptr;
     }
@@ -36,7 +36,7 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
 
     auto ds_resp = new kvrpcpb::DsKvRawGetResponse;
     auto header = ds_resp->mutable_header();
@@ -80,7 +80,7 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
 
         auto btime = get_micro_second();
         auto ret = store_->Get(req.req().key(), resp->mutable_value());
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
 
         resp->set_code(static_cast<int>(ret.code()));
@@ -90,8 +90,8 @@ void Range::RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req) {
         RANGE_LOG_WARN("RawGet error: %s", err->message().c_str());
     }
 
-    context_->socket_session->SetResponseHeader(req.header(), header, err);
-    context_->socket_session->Send(msg, ds_resp);
+    common::SetResponseHeader(req.header(), header, err);
+    context_->SocketSession()->Send(msg, ds_resp);
 }
 
 }  // namespace range
