@@ -571,19 +571,19 @@ class Node : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::std::string* release_raft_addr();
   void set_allocated_raft_addr(::std::string* raft_addr);
 
-  // string http_addr = 4;
-  void clear_http_addr();
-  static const int kHttpAddrFieldNumber = 4;
-  const ::std::string& http_addr() const;
-  void set_http_addr(const ::std::string& value);
+  // string admin_addr = 4;
+  void clear_admin_addr();
+  static const int kAdminAddrFieldNumber = 4;
+  const ::std::string& admin_addr() const;
+  void set_admin_addr(const ::std::string& value);
   #if LANG_CXX11
-  void set_http_addr(::std::string&& value);
+  void set_admin_addr(::std::string&& value);
   #endif
-  void set_http_addr(const char* value);
-  void set_http_addr(const char* value, size_t size);
-  ::std::string* mutable_http_addr();
-  ::std::string* release_http_addr();
-  void set_allocated_http_addr(::std::string* http_addr);
+  void set_admin_addr(const char* value);
+  void set_admin_addr(const char* value, size_t size);
+  ::std::string* mutable_admin_addr();
+  ::std::string* release_admin_addr();
+  void set_allocated_admin_addr(::std::string* admin_addr);
 
   // string version = 6;
   void clear_version();
@@ -618,7 +618,7 @@ class Node : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::google::protobuf::RepeatedPtrField< ::metapb::NodeLabel > labels_;
   ::google::protobuf::internal::ArenaStringPtr server_addr_;
   ::google::protobuf::internal::ArenaStringPtr raft_addr_;
-  ::google::protobuf::internal::ArenaStringPtr http_addr_;
+  ::google::protobuf::internal::ArenaStringPtr admin_addr_;
   ::google::protobuf::internal::ArenaStringPtr version_;
   ::google::protobuf::uint64 id_;
   int state_;
@@ -2429,57 +2429,57 @@ inline void Node::set_allocated_raft_addr(::std::string* raft_addr) {
   // @@protoc_insertion_point(field_set_allocated:metapb.Node.raft_addr)
 }
 
-// string http_addr = 4;
-inline void Node::clear_http_addr() {
-  http_addr_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// string admin_addr = 4;
+inline void Node::clear_admin_addr() {
+  admin_addr_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Node::http_addr() const {
-  // @@protoc_insertion_point(field_get:metapb.Node.http_addr)
-  return http_addr_.GetNoArena();
+inline const ::std::string& Node::admin_addr() const {
+  // @@protoc_insertion_point(field_get:metapb.Node.admin_addr)
+  return admin_addr_.GetNoArena();
 }
-inline void Node::set_http_addr(const ::std::string& value) {
+inline void Node::set_admin_addr(const ::std::string& value) {
   
-  http_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:metapb.Node.http_addr)
+  admin_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:metapb.Node.admin_addr)
 }
 #if LANG_CXX11
-inline void Node::set_http_addr(::std::string&& value) {
+inline void Node::set_admin_addr(::std::string&& value) {
   
-  http_addr_.SetNoArena(
+  admin_addr_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:metapb.Node.http_addr)
+  // @@protoc_insertion_point(field_set_rvalue:metapb.Node.admin_addr)
 }
 #endif
-inline void Node::set_http_addr(const char* value) {
+inline void Node::set_admin_addr(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
-  http_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:metapb.Node.http_addr)
+  admin_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:metapb.Node.admin_addr)
 }
-inline void Node::set_http_addr(const char* value, size_t size) {
+inline void Node::set_admin_addr(const char* value, size_t size) {
   
-  http_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+  admin_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:metapb.Node.http_addr)
+  // @@protoc_insertion_point(field_set_pointer:metapb.Node.admin_addr)
 }
-inline ::std::string* Node::mutable_http_addr() {
+inline ::std::string* Node::mutable_admin_addr() {
   
-  // @@protoc_insertion_point(field_mutable:metapb.Node.http_addr)
-  return http_addr_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  // @@protoc_insertion_point(field_mutable:metapb.Node.admin_addr)
+  return admin_addr_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Node::release_http_addr() {
-  // @@protoc_insertion_point(field_release:metapb.Node.http_addr)
+inline ::std::string* Node::release_admin_addr() {
+  // @@protoc_insertion_point(field_release:metapb.Node.admin_addr)
   
-  return http_addr_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  return admin_addr_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Node::set_allocated_http_addr(::std::string* http_addr) {
-  if (http_addr != NULL) {
+inline void Node::set_allocated_admin_addr(::std::string* admin_addr) {
+  if (admin_addr != NULL) {
     
   } else {
     
   }
-  http_addr_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), http_addr);
-  // @@protoc_insertion_point(field_set_allocated:metapb.Node.http_addr)
+  admin_addr_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), admin_addr);
+  // @@protoc_insertion_point(field_set_allocated:metapb.Node.admin_addr)
 }
 
 // .metapb.NodeState state = 5;
