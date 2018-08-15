@@ -548,14 +548,7 @@ func (service *Server) handleRangeForceSplit(w http.ResponseWriter, r *http.Requ
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 
-	var nodeId uint64
 	var err error
-	if nodeId, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
-		log.Error("http range force split: %v", err.Error())
-		reply.Code = -1
-		reply.Message = err.Error()
-		return
-	}
 	rangeId, err := strconv.ParseUint(r.FormValue(HTTP_RANGE_ID), 10, 64)
 	if err != nil {
 		log.Error("http range force split error: %s", http_error_invalid_parameter)
@@ -563,8 +556,15 @@ func (service *Server) handleRangeForceSplit(w http.ResponseWriter, r *http.Requ
 		reply.Message = http_error_invalid_parameter
 		return
 	}
+	rng := service.cluster.FindRange(rangeId)
+	if rng == nil {
+		log.Error("http range force split error: %s", http_error_range_find)
+		reply.Code = HTTP_ERROR_RANGE_FIND
+		reply.Message = http_error_range_find
+		return
+	}
 
-	node := service.cluster.FindNodeById(nodeId)
+	node := service.cluster.FindNodeById(rng.Leader.NodeId)
 	if node == nil {
 		log.Error("http range force split error: %s", http_error_node_find)
 		reply.Code = HTTP_ERROR_NODE_FIND
@@ -586,14 +586,7 @@ func (service *Server) handleRangeForceCompact(w http.ResponseWriter, r *http.Re
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 
-	var nodeId uint64
 	var err error
-	if nodeId, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
-		log.Error("http range force compact: %v", err.Error())
-		reply.Code = -1
-		reply.Message = err.Error()
-		return
-	}
 	rangeId, err := strconv.ParseUint(r.FormValue(HTTP_RANGE_ID), 10, 64)
 	if err != nil {
 		log.Error("http range force compact error: %s", http_error_invalid_parameter)
@@ -601,8 +594,15 @@ func (service *Server) handleRangeForceCompact(w http.ResponseWriter, r *http.Re
 		reply.Message = http_error_invalid_parameter
 		return
 	}
+	rng := service.cluster.FindRange(rangeId)
+	if rng == nil {
+		log.Error("http range force compact error: %s", http_error_range_find)
+		reply.Code = HTTP_ERROR_RANGE_FIND
+		reply.Message = http_error_range_find
+		return
+	}
 
-	node := service.cluster.FindNodeById(nodeId)
+	node := service.cluster.FindNodeById(rng.Leader.NodeId)
 	if node == nil {
 		log.Error("http range force compact error: %s", http_error_node_find)
 		reply.Code = HTTP_ERROR_NODE_FIND

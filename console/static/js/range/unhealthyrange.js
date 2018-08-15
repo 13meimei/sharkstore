@@ -66,7 +66,7 @@ app.controller('myranges', function($rootScope, $scope, $http, $timeout) {
                       success: function (data) {
                           if (data.code === 0) {
                               swal("分裂range成功!", "分裂range成功!", "success");
-                              window.location.reload();
+                              //window.location.reload();
                           } else {
                               swal("分裂range失败！", data.message, "error");
                           }
@@ -101,7 +101,7 @@ app.controller('myranges', function($rootScope, $scope, $http, $timeout) {
                       success: function (data) {
                           if (data.code === 0) {
                               swal("compact range成功!", "compact range成功!", "success");
-                              window.location.reload();
+                              //window.location.reload();
                           } else {
                               swal("compact range失败！", data.message, "error");
                           }
