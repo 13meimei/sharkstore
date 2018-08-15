@@ -18,25 +18,13 @@ struct Context {
 struct Message {
     Head head;
     std::vector<uint8_t> body;
-
-    Message() = default;
-    Message(const Message&) = default;
-    Message& operator=(const Message&) = default;
-
-    Message(Message&& msg) {
-        *this = std::move(msg);
-    }
-
-    Message& operator=(Message&& msg) {
-        if (this != &msg) {
-            head = msg.head;
-            body = std::move(msg.body);
-        }
-        return *this;
-    }
 };
 
-using Handler = std::function<void(const Context&, Message&& msg)>;
+using MessagePtr = std::shared_ptr<Message>;
+
+inline MessagePtr NewMessage() { return std::make_shared<Message>(); }
+
+using Handler = std::function<void(const Context&, const MessagePtr& msg)>;
 
 }  // namespace net
 }  // namespace dataserver

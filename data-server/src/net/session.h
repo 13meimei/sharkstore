@@ -26,12 +26,11 @@ public:
 
     static uint64_t TotalCount() { return total_count_; }
 
-    void Write(Message&& msg);
+    void Write(const MessagePtr& msg);
 
 private:
     bool init();
     void doClose();
-    void appendWrite(Message&& msg);
     void doWrite();
 
     void readHead();
@@ -54,7 +53,7 @@ private:
     Head head_;
     std::vector<uint8_t> body_;
 
-    std::deque<Message> write_msgs_;
+    std::deque<MessagePtr> write_msgs_;
 };
 
 }  // namespace net

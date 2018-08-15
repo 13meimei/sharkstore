@@ -56,9 +56,7 @@ void Head::Decode() {
 std::string Head::DebugString() const {
     std::ostringstream ss;
     ss << "{";
-    ss << "\"magic\": \"0x";
-    ss << std::hex << std::setfill('0') << std::setw(2) << magic;
-    ss << "\", ";
+    ss << "\"magic\": " << magic << ", ";
     ss << "\"vesrion\": " << version << ", ";
     ss << "\"msg_type\": " << msg_type << ", ";
     ss << "\"func_id\": " << func_id << ", ";

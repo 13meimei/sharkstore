@@ -23,8 +23,8 @@ Status AdminServer::Start(uint16_t port) {
     net_server_.reset(new net::Server(sops));
 
     auto ret = net_server_->ListenAndServe("0.0.0.0", port,
-            [this](const net::Context& ctx, net::Message&& msg) {
-                OnMessage(ctx, std::move(msg));
+            [this](const net::Context& ctx, const net::MessagePtr& msg) {
+                OnMessage(ctx, msg);
             });
     if (!ret.ok()) return ret;
 
@@ -37,11 +37,11 @@ Status AdminServer::Stop() {
     return Status::OK();
 }
 
-void AdminServer::OnMessage(const net::Context& ctx, net::Message&& msg) {
+void AdminServer::OnMessage(const net::Context& ctx, const net::MessagePtr& msg) {
     ds_adminpb::AdminRequest req;
-    if (!req.ParseFromArray(msg.body.data(), static_cast<int>(msg.body.size()))) {
+    if (!req.ParseFromArray(msg->body.data(), static_cast<int>(msg->body.size()))) {
         FLOG_ERROR("[Admin] deserialize failed from %s, head: %s",
-                ctx.remote_addr.c_str(), msg.head.DebugString().c_str());
+                ctx.remote_addr.c_str(), msg->head.DebugString().c_str());
     }
     FLOG_INFO("[Admin] recv %s from %s.", ds_adminpb::AdminType_Name(req.typ()).c_str(), ctx.remote_addr.c_str());
 
@@ -49,14 +49,14 @@ void AdminServer::OnMessage(const net::Context& ctx, net::Message&& msg) {
     resp.set_code(12);
     resp.set_error_msg("not implemented");
 
-    net::Message resp_msg;
-    resp_msg.head.SetFrom(msg.head);
-    resp_msg.body.resize(resp.ByteSizeLong());
-    resp.SerializeToArray(resp_msg.body.data(), static_cast<int>(resp_msg.body.size()));
+    auto resp_msg = net::NewMessage();
+    resp_msg->head.SetFrom(msg->head);
+    resp_msg->body.resize(resp.ByteSizeLong());
+    resp.SerializeToArray(resp_msg->body.data(), static_cast<int>(resp_msg->body.size()));
 
     auto conn = ctx.session.lock();
     if (conn) {
-        conn->Write(std::move(resp_msg));
+        conn->Write(resp_msg);
     }
 }
 

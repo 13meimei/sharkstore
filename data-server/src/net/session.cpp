@@ -93,24 +93,16 @@ void Session::readHead() {
                      });
 }
 
-void Session::appendWrite(Message&& msg) {
-    bool write_in_progress = !write_msgs_.empty();
-    write_msgs_.push_back(std::move(msg));
-    if (!write_in_progress) {
-        doWrite();
-    }
-}
-
 void Session::doWrite() {
     auto self(shared_from_this());
 
     // prepare write buffer
-    auto &msg = write_msgs_.front();
-    msg.head.body_length = msg.body.size();
-    msg.head.Encode();
+    auto msg = write_msgs_.front();
+    msg->head.body_length = static_cast<uint32_t>(msg->body.size());
+    msg->head.Encode();
     std::vector<asio::const_buffer> buffers{
-        asio::buffer(&msg.head, sizeof(msg.head)),
-        asio::buffer(msg.body.data(), msg.body.size())
+        asio::buffer(&msg->head, sizeof(msg->head)),
+        asio::buffer(msg->body.data(), msg->body.size())
     };
 
     asio::async_write(socket_, buffers,
@@ -127,17 +119,23 @@ void Session::doWrite() {
                       });
 }
 
-void Session::Write(Message&& msg) {
+void Session::Write(const MessagePtr& msg) {
     auto self(shared_from_this());
-    asio::post(socket_.get_io_context(), [self, &msg] { self->appendWrite(std::move(msg)); });
+    asio::post(socket_.get_io_context(), [self, msg] {
+        bool write_in_progress = !self->write_msgs_.empty();
+        self->write_msgs_.push_back(msg);
+        if (!write_in_progress) {
+            self->doWrite();
+        }
+    });
 }
 
 void Session::readBody() {
     if (head_.body_length == 0) {
         if (head_.func_id == kHeartbeatFuncID) { // response heartbeat
-            Message msg;
-            msg.head.SetFrom(head_);
-            Write(std::move(msg));
+            auto msg = std::make_shared<Message>();
+            msg->head.SetFrom(head_);
+            Write(msg);
         }
         readHead();
         return;
@@ -148,10 +146,10 @@ void Session::readBody() {
     asio::async_read(socket_, asio::buffer(body_.data(), body_.size()),
                      [this, self](std::error_code ec, std::size_t) {
                          if (!ec) {
-                             Message msg;
-                             msg.head = head_;
-                             msg.body = std::move(body_);
-                             handler_(session_ctx_, std::move(msg));
+                             auto msg = NewMessage();
+                             msg->head = head_;
+                             msg->body = std::move(body_);
+                             handler_(session_ctx_, msg);
 
                              readHead();
                          } else {
