@@ -44,8 +44,8 @@ int32_t CEventBuffer::loadFromBuffer(const std::string &grpKey,  int64_t userVer
 
     int32_t resultCnt{0};
 
-    if(isEmpty()) {
-        return resultCnt;
+    if(isEmpty() || userVersion == 0) {
+        return -1;
     }
 
     auto it = mapGroupBuffer.find(grpKey);

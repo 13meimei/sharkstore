@@ -316,9 +316,9 @@ protected:
             req.mutable_req()->mutable_kv()->add_key(key2);
         }
         req.mutable_req()->mutable_kv()->set_version(1);
-        req.mutable_req()->set_longpull(1);
+        req.mutable_req()->set_longpull(5000);
         ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(1);
+        req.mutable_req()->set_startversion(0);
         req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
@@ -485,10 +485,12 @@ TEST_F(WatchTest, watch_not_exist_key) {
         justWatch(1, "0100300100001", "", false);
         justDel(1, "0100300100001", "", "");
 
+        justWatch(1, "0100300100002", "", true);
+        justDel(1, "0100300100002", "abc", "def");
     }
 
 }
-
+/*
 TEST_F(WatchTest, watch_exist_single_key) {
 
     {
@@ -499,4 +501,4 @@ TEST_F(WatchTest, watch_exist_single_key) {
     }
 
 }
-
+*/

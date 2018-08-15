@@ -142,10 +142,9 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         std::vector<watch::CEventBufferValue> vecUpdKeys;
 
         int32_t memCnt = eventBuffer->loadFromBuffer(*hashKey[0], clientVersion, vecUpdKeys);
+        RANGE_LOG_DEBUG("loadFromBuffer hit count[%" PRId32 "]", memCnt);
 
         if(memCnt > 0) {
-            RANGE_LOG_DEBUG("loadFromBuffer hit count[%" PRId32 "]", memCnt);
-
             auto resp = ds_resp->mutable_resp();
             resp->set_code(Status::kOk);
             resp->set_scope(watchpb::RESPONSE_PART);
@@ -164,6 +163,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             w_ptr->Send(ds_resp);
             return;
         } else {
+            w_ptr->setBufferFlag(memCnt);
             wcode = watch_server->AddPrefixWatcher(w_ptr, store_);
         }
     } else {
@@ -178,12 +178,12 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, prefix);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
+        w_ptr->Send(ds_resp);
     } else {
         RANGE_LOG_ERROR("add watcher exception(%d).", static_cast<int>(wcode));
+        return;
     }
-    //watch_server->WatchServerUnlock(1);
 
-    w_ptr->Send(ds_resp);
     return;
 }
 
