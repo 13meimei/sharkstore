@@ -272,13 +272,20 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             RANGE_LOG_DEBUG("PureGet ok:%d ", count);
             code = Status::kOk;
         } else {
-            auto kv = resp->add_kvs();
-            auto ret = store_->Get(dbKey, &dbValue);
 
+            auto ret = store_->Get(dbKey, &dbValue);
             if(ret.ok()) {
                 //to do decode value version
                 RANGE_LOG_DEBUG("PureGet: dbKey:%s dbValue:%s  ", EncodeToHexString(dbKey).c_str(),
                            EncodeToHexString(dbValue).c_str());
+
+                auto kv = resp->add_kvs();
+                /*
+                int64_t dbVersion(0);
+                std::string userValue("");
+                std::string extend("");
+                watch::Watcher::DecodeValue(&dbVersion, &userValue, &extend, dbValue);
+                */
                 if (Status::kOk != WatchEncodeAndDecode::DecodeKv(funcpb::kFuncPureGet, meta_.GetTableID(), kv, dbKey, dbValue, err)) {
                     RANGE_LOG_WARN("DecodeKv fail. dbvalue:%s  err:%s", EncodeToHexString(dbValue).c_str(),
                                err->message().c_str());
@@ -286,11 +293,10 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
                 }
             }
 
-            RANGE_LOG_DEBUG("PureGet code:%d msg:%s userValue:%s ", ret.code(), ret.ToString().data(), kv->value().c_str());
+            RANGE_LOG_DEBUG("PureGet code:%d msg:%s ", ret.code(), ret.ToString().data());
             code = ret.code();
         }
-        context_->run_status->PushTime(monitor::PrintTag::Get,
-                                       get_micro_second() - btime);
+        context_->run_status->PushTime(monitor::PrintTag::Get, get_micro_second() - btime);
 
         resp->set_code(static_cast<int32_t>(code));
     } while (false);
