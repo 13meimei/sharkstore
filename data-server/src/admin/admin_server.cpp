@@ -1,6 +1,7 @@
 #include "admin_server.h"
 
 #include "proto/gen/ds_admin.pb.h"
+#include "net/session.h"
 #include "frame/sf_logger.h"
 
 namespace sharkstore {
@@ -20,10 +21,11 @@ Status AdminServer::Start(uint16_t port) {
     sops.io_threads_num = 0;
     sops.max_connections = 200;
     net_server_.reset(new net::Server(sops));
+
     auto ret = net_server_->ListenAndServe("0.0.0.0", port,
-            [this](const net::Context& ctx, const net::Head& head, std::vector<uint8_t>&& body) {
-        OnMessage(ctx, head, std::move(body));
-    });
+            [this](const net::Context& ctx, net::Message&& msg) {
+                OnMessage(ctx, std::move(msg));
+            });
     if (!ret.ok()) return ret;
 
     FLOG_INFO("[Admin] server listen on 0.0.0.0:%u", port);
@@ -35,16 +37,27 @@ Status AdminServer::Stop() {
     return Status::OK();
 }
 
-void AdminServer::OnMessage(const net::Context& ctx, const net::Head& head,
-               std::vector<uint8_t>&& body) {
+void AdminServer::OnMessage(const net::Context& ctx, net::Message&& msg) {
     ds_adminpb::AdminRequest req;
-    if (!req.ParseFromArray(body.data(), static_cast<int>(body.size()))) {
+    if (!req.ParseFromArray(msg.body.data(), static_cast<int>(msg.body.size()))) {
         FLOG_ERROR("[Admin] deserialize failed from %s, head: %s",
-                ctx.remote_addr.c_str(), head.DebugString().c_str());
+                ctx.remote_addr.c_str(), msg.head.DebugString().c_str());
     }
     FLOG_INFO("[Admin] recv %s from %s.", ds_adminpb::AdminType_Name(req.typ()).c_str(), ctx.remote_addr.c_str());
 
     ds_adminpb::AdminResponse resp;
+    resp.set_code(12);
+    resp.set_error_msg("not implemented");
+
+    net::Message resp_msg;
+    resp_msg.head.SetFrom(msg.head);
+    resp_msg.body.resize(resp.ByteSizeLong());
+    resp.SerializeToArray(resp_msg.body.data(), static_cast<int>(resp_msg.body.size()));
+
+    auto conn = ctx.session.lock();
+    if (conn) {
+        conn->Write(std::move(resp_msg));
+    }
 }
 
 } // namespace admin

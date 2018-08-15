@@ -8,10 +8,20 @@ namespace sharkstore {
 namespace dataserver {
 namespace net {
 
+void Head::SetFrom(const Head& req) {
+    func_id = req.func_id;
+    msg_id = req.msg_id;
+    proto_type = req.proto_type;
+    if (req.msg_type == kAdminRequestType) {
+        msg_type = kAdminResponseType;
+    } else if (req.msg_type == kDataRequestType) {
+        msg_type = kDataResponseType;
+    }
+}
+
 Status Head::Valid() const {
-    bool valid_magic = std::equal(magic, magic + 4, kMagic.cbegin());
-    if (!valid_magic) {
-        return Status(Status::kInvalidArgument, "magic", "");
+    if (magic != kMagic) {
+        return Status(Status::kInvalidArgument, "magic", std::to_string(magic));
     }
     if (msg_type != kDataRequestType && msg_type != kDataResponseType &&
         msg_type != kAdminRequestType && msg_type != kAdminResponseType) {
@@ -24,6 +34,7 @@ Status Head::Valid() const {
 }
 
 void Head::Encode() {
+    magic = htobe32(magic);
     version = htobe16(version);
     msg_type = htobe16(msg_type);
     func_id = htobe16(func_id);
@@ -33,6 +44,7 @@ void Head::Encode() {
 }
 
 void Head::Decode() {
+    magic = be32toh(magic);
     version = be16toh(version);
     msg_type = be16toh(msg_type);
     func_id = be16toh(func_id);
@@ -45,9 +57,7 @@ std::string Head::DebugString() const {
     std::ostringstream ss;
     ss << "{";
     ss << "\"magic\": \"0x";
-    for (auto c : magic) {
-        ss << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(c);
-    }
+    ss << std::hex << std::setfill('0') << std::setw(2) << magic;
     ss << "\", ";
     ss << "\"vesrion\": " << version << ", ";
     ss << "\"msg_type\": " << msg_type << ", ";

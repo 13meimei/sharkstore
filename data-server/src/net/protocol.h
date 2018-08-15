@@ -7,7 +7,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace net {
 
-static const std::array<uint8_t, 4> kMagic = {0x23, 0x23, 0x23, 0x23};
+static const uint32_t kMagic = 0x23232323;
 
 static const uint16_t kCurrentVersion = 1;
 
@@ -18,8 +18,10 @@ static const uint16_t kDataResponseType = 0x12;
 
 static const uint32_t kMaxBodyLength = 20 * 1024 * 1024;  // 20Mb
 
+static const uint16_t kHeartbeatFuncID = 0;
+
 struct Head {
-    uint8_t magic[4] = {kMagic[0], kMagic[1], kMagic[2], kMagic[3]};
+    uint32_t magic = kMagic;
     uint16_t version = kCurrentVersion;
     uint16_t msg_type = 0;
     uint16_t func_id = 0;
@@ -28,6 +30,9 @@ struct Head {
     uint8_t proto_type = 0;
     uint32_t timeout = 0;
     uint32_t body_length = 0;
+
+    // set from a request head, self is a response head
+    void SetFrom(const Head& req);
 
     // encode to network byte order
     void Encode();

@@ -19,8 +19,7 @@ public:
     AdminServer& operator=(const AdminServer&) = delete;
 
 private:
-    void OnMessage(const net::Context& ctx, const net::Head& head,
-            std::vector<uint8_t>&& body);
+    void OnMessage(const net::Context& ctx, net::Message&& msg);
 
 private:
     server::ContextServer* context_ = nullptr;

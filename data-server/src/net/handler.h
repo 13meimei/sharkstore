@@ -15,7 +15,28 @@ struct Context {
     std::string local_addr;
 };
 
-using Handler = std::function<void(const Context&, const Head&, std::vector<uint8_t>&&)>;
+struct Message {
+    Head head;
+    std::vector<uint8_t> body;
+
+    Message() = default;
+    Message(const Message&) = default;
+    Message& operator=(const Message&) = default;
+
+    Message(Message&& msg) {
+        *this = std::move(msg);
+    }
+
+    Message& operator=(Message&& msg) {
+        if (this != &msg) {
+            head = msg.head;
+            body = std::move(msg.body);
+        }
+        return *this;
+    }
+};
+
+using Handler = std::function<void(const Context&, Message&& msg)>;
 
 }  // namespace net
 }  // namespace dataserver

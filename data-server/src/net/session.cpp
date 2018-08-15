@@ -1,6 +1,7 @@
 #include "session.h"
 
 #include <asio/read.hpp>
+#include <asio/write.hpp>
 #include <asio/read_until.hpp>
 
 #include "frame/sf_logger.h"
@@ -73,7 +74,7 @@ void Session::doClose() {
 
 void Session::readHead() {
     auto self(shared_from_this());
-    asio::async_read(socket_, asio::buffer(&head_, kHeadSize),
+    asio::async_read(socket_, asio::buffer(&head_, sizeof(head_)),
                      [this, self](std::error_code ec, std::size_t) {
                          if (!ec) {
                              head_.Decode();
@@ -92,13 +93,66 @@ void Session::readHead() {
                      });
 }
 
+void Session::appendWrite(Message&& msg) {
+    bool write_in_progress = !write_msgs_.empty();
+    write_msgs_.push_back(std::move(msg));
+    if (!write_in_progress) {
+        doWrite();
+    }
+}
+
+void Session::doWrite() {
+    auto self(shared_from_this());
+
+    // prepare write buffer
+    auto &msg = write_msgs_.front();
+    msg.head.body_length = msg.body.size();
+    msg.head.Encode();
+    std::vector<asio::const_buffer> buffers{
+        asio::buffer(&msg.head, sizeof(msg.head)),
+        asio::buffer(msg.body.data(), msg.body.size())
+    };
+
+    asio::async_write(socket_, buffers,
+                      [this, self](std::error_code ec, std::size_t /*length*/) {
+                          if (!ec) {
+                              write_msgs_.pop_front();
+                              if (!write_msgs_.empty()) {
+                                  doWrite();
+                              }
+                          } else {
+                              FLOG_ERROR("%s write message error: %s", id_.c_str(), ec.message().c_str());
+                              doClose();
+                          }
+                      });
+}
+
+void Session::Write(Message&& msg) {
+    auto self(shared_from_this());
+    asio::post(socket_.get_io_context(), [self, &msg] { self->appendWrite(std::move(msg)); });
+}
+
 void Session::readBody() {
+    if (head_.body_length == 0) {
+        if (head_.func_id == kHeartbeatFuncID) { // response heartbeat
+            Message msg;
+            msg.head.SetFrom(head_);
+            Write(std::move(msg));
+        }
+        readHead();
+        return;
+    }
+
     body_.resize(head_.body_length);
     auto self(shared_from_this());
     asio::async_read(socket_, asio::buffer(body_.data(), body_.size()),
                      [this, self](std::error_code ec, std::size_t) {
                          if (!ec) {
-                             handler_(session_ctx_, head_, std::move(body_));
+                             Message msg;
+                             msg.head = head_;
+                             msg.body = std::move(body_);
+                             handler_(session_ctx_, std::move(msg));
+
                              readHead();
                          } else {
                              FLOG_ERROR("%s read rpc body error: %s", id_.c_str(),

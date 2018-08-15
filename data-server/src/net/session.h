@@ -1,8 +1,9 @@
 _Pragma("once");
 
+#include <queue>
+#include <memory>
 #include <asio/ip/tcp.hpp>
 #include <asio/streambuf.hpp>
-#include <memory>
 
 #include "handler.h"
 #include "options.h"
@@ -25,18 +26,22 @@ public:
 
     static uint64_t TotalCount() { return total_count_; }
 
-private:
-    // all server's sessions count
-    static std::atomic<uint64_t> total_count_;
+    void Write(Message&& msg);
 
 private:
     bool init();
     void doClose();
+    void appendWrite(Message&& msg);
+    void doWrite();
 
     void readHead();
     void readBody();
 
 private:
+
+    // all server's sessions count
+    static std::atomic<uint64_t> total_count_;
+
     const SessionOptions& opt_;
     const Handler& handler_;
 
@@ -48,6 +53,8 @@ private:
 
     Head head_;
     std::vector<uint8_t> body_;
+
+    std::deque<Message> write_msgs_;
 };
 
 }  // namespace net
