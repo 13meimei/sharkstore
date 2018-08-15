@@ -481,7 +481,7 @@ void AddDescriptorsImpl() {
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\016ds_admin.proto\022\nds_adminpb\"x\n\tAdminAut"
       "h\0220\n\006method\030\001 \001(\0162 .ds_adminpb.AdminAuth"
-      ".AuthMethod\022\r\n\005epoch\030\002 \001(\004\022\014\n\004sign\030\003 \001(\t"
+      ".AuthMethod\022\r\n\005epoch\030\002 \001(\003\022\014\n\004sign\030\003 \001(\t"
       "\"\034\n\nAuthMethod\022\016\n\nMD5_DIGEST\020\000\"\202\004\n\014Admin"
       "Request\022\"\n\003typ\030\001 \001(\0162\025.ds_adminpb.AdminT"
       "ype\022#\n\004auth\030\002 \001(\0132\025.ds_adminpb.AdminAuth"
@@ -758,13 +758,13 @@ bool AdminAuth::MergePartialFromCodedStream(
         break;
       }
 
-      // uint64 epoch = 2;
+      // int64 epoch = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &epoch_)));
         } else {
           goto handle_unusual;
@@ -820,9 +820,9 @@ void AdminAuth::SerializeWithCachedSizes(
       1, this->method(), output);
   }
 
-  // uint64 epoch = 2;
+  // int64 epoch = 2;
   if (this->epoch() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(2, this->epoch(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->epoch(), output);
   }
 
   // string sign = 3;
@@ -855,9 +855,9 @@ void AdminAuth::SerializeWithCachedSizes(
       1, this->method(), target);
   }
 
-  // uint64 epoch = 2;
+  // int64 epoch = 2;
   if (this->epoch() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(2, this->epoch(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(2, this->epoch(), target);
   }
 
   // string sign = 3;
@@ -895,10 +895,10 @@ size_t AdminAuth::ByteSizeLong() const {
         this->sign());
   }
 
-  // uint64 epoch = 2;
+  // int64 epoch = 2;
   if (this->epoch() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
         this->epoch());
   }
 
@@ -1002,15 +1002,15 @@ void AdminAuth::set_method(::ds_adminpb::AdminAuth_AuthMethod value) {
   // @@protoc_insertion_point(field_set:ds_adminpb.AdminAuth.method)
 }
 
-// uint64 epoch = 2;
+// int64 epoch = 2;
 void AdminAuth::clear_epoch() {
-  epoch_ = GOOGLE_ULONGLONG(0);
+  epoch_ = GOOGLE_LONGLONG(0);
 }
-::google::protobuf::uint64 AdminAuth::epoch() const {
+::google::protobuf::int64 AdminAuth::epoch() const {
   // @@protoc_insertion_point(field_get:ds_adminpb.AdminAuth.epoch)
   return epoch_;
 }
-void AdminAuth::set_epoch(::google::protobuf::uint64 value) {
+void AdminAuth::set_epoch(::google::protobuf::int64 value) {
   
   epoch_ = value;
   // @@protoc_insertion_point(field_set:ds_adminpb.AdminAuth.epoch)

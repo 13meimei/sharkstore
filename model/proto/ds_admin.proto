@@ -8,7 +8,7 @@ message AdminAuth {
     }
 
     AuthMethod method = 1; // not used, keep default is ok
-    uint64 epoch = 2;   // time since 1970 in seconds
+    int64 epoch = 2;   // time since 1970 in seconds
     string sign = 3;    // md5(admin_type, epoch, token)
 };
 

@@ -329,11 +329,11 @@ class AdminAuth : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::std::string* release_sign();
   void set_allocated_sign(::std::string* sign);
 
-  // uint64 epoch = 2;
+  // int64 epoch = 2;
   void clear_epoch();
   static const int kEpochFieldNumber = 2;
-  ::google::protobuf::uint64 epoch() const;
-  void set_epoch(::google::protobuf::uint64 value);
+  ::google::protobuf::int64 epoch() const;
+  void set_epoch(::google::protobuf::int64 value);
 
   // .ds_adminpb.AdminAuth.AuthMethod method = 1;
   void clear_method();
@@ -346,7 +346,7 @@ class AdminAuth : public ::google::protobuf::Message /* @@protoc_insertion_point
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr sign_;
-  ::google::protobuf::uint64 epoch_;
+  ::google::protobuf::int64 epoch_;
   int method_;
   mutable int _cached_size_;
   friend struct protobuf_ds_5fadmin_2eproto::TableStruct;
@@ -2654,15 +2654,15 @@ inline void AdminAuth::set_method(::ds_adminpb::AdminAuth_AuthMethod value) {
   // @@protoc_insertion_point(field_set:ds_adminpb.AdminAuth.method)
 }
 
-// uint64 epoch = 2;
+// int64 epoch = 2;
 inline void AdminAuth::clear_epoch() {
-  epoch_ = GOOGLE_ULONGLONG(0);
+  epoch_ = GOOGLE_LONGLONG(0);
 }
-inline ::google::protobuf::uint64 AdminAuth::epoch() const {
+inline ::google::protobuf::int64 AdminAuth::epoch() const {
   // @@protoc_insertion_point(field_get:ds_adminpb.AdminAuth.epoch)
   return epoch_;
 }
-inline void AdminAuth::set_epoch(::google::protobuf::uint64 value) {
+inline void AdminAuth::set_epoch(::google::protobuf::int64 value) {
   
   epoch_ = value;
   // @@protoc_insertion_point(field_set:ds_adminpb.AdminAuth.epoch)
