@@ -1,4 +1,4 @@
-#include "rpc_protocol.h"
+#include "protocol.h"
 
 #include <iomanip>
 #include <sstream>
@@ -8,22 +8,22 @@ namespace sharkstore {
 namespace dataserver {
 namespace net {
 
-bool RPCHead::Valid() const {
-    bool valid_magic = std::equal(magic, magic + 4, kRPCMagicV1.cbegin()) ||
-                       std::equal(magic, magic + 4, kRPCMagicV2.cbegin());
+Status Head::Valid() const {
+    bool valid_magic = std::equal(magic, magic + 4, kMagic.cbegin());
     if (!valid_magic) {
-        return false;
+        return Status(Status::kInvalidArgument, "magic", "");
     }
-    if (msg_type != kRPCRequestType && msg_type != kRPCResponseType) {
-        return false;
+    if (msg_type != kDataRequestType && msg_type != kDataResponseType &&
+        msg_type != kAdminRequestType && msg_type != kAdminResponseType) {
+        return Status(Status::kInvalidArgument, "msg type", std::to_string(msg_type));
     }
-    if (body_length > kMaxRPCBodyLength) {
-        return false;
+    if (body_length > kMaxBodyLength) {
+        return Status(Status::kInvalidArgument, "body length", std::to_string(body_length));
     }
-    return true;
+    return Status::OK();
 }
 
-void RPCHead::Encode() {
+void Head::Encode() {
     version = htobe16(version);
     msg_type = htobe16(msg_type);
     func_id = htobe16(func_id);
@@ -32,7 +32,7 @@ void RPCHead::Encode() {
     body_length = htobe32(body_length);
 }
 
-void RPCHead::Decode() {
+void Head::Decode() {
     version = be16toh(version);
     msg_type = be16toh(msg_type);
     func_id = be16toh(func_id);
@@ -41,7 +41,7 @@ void RPCHead::Decode() {
     body_length = be32toh(body_length);
 }
 
-std::string RPCHead::DebugString() const {
+std::string Head::DebugString() const {
     std::ostringstream ss;
     ss << "{";
     ss << "\"magic\": \"0x";

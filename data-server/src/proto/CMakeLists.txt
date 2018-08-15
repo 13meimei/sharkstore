@@ -1,4 +1,5 @@
 set (proto_SOURCES
+    gen/ds_admin.pb.cc
     gen/errorpb.pb.cc
     gen/eventpb.pb.cc
     gen/funcpb.pb.cc

@@ -5,7 +5,6 @@
 
 #include "common/socket_message.h"
 #include "run_status.h"
-#include "manager.h"
 #include "server.h"
 #include "worker.h"
 
@@ -14,28 +13,6 @@ using sharkstore::dataserver::server::DataServer;
 using namespace sharkstore::dataserver::common;
 
 extern "C" {
-
-void ds_manager_deal_callback(request_buff_t *request, void *args) {
-    auto cs = DataServer::Instance().context_server();
-    ProtoMessage *req = GetProtoMessage(request->buff);
-    if (req != nullptr) {
-        req->session_id = request->session_id;
-        req->begin_time = get_micro_second();
-        req->expire_time = getticks();
-
-        if (req->header.time_out > 0) {
-            req->expire_time += req->header.time_out;
-        } else {
-            req->expire_time += ds_config.task_timeout;
-        }
-
-        FLOG_INFO("new proto message. session_id: %" PRId64 ",msgid: %" PRId64
-                  ", func_id: %d, body_len: %d",
-                  request->session_id, req->header.msg_id, req->header.func_id,
-                  req->header.body_len);
-        cs->manager->Push(req);
-    }
-}
 
 void ds_worker_deal_callback(request_buff_t *request, void *args) {
     auto cs = DataServer::Instance().context_server();

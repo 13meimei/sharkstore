@@ -48,6 +48,16 @@ git clone --depth 1 --branch v1.1.0 https://github.com/Tencent/rapidjson.git
 sudo cp -r rapidjson/include/rapidjson /usr/local/include/
 ```
 
+## asio安装   
+```sh
+wget https://github.com/chriskohlhoff/asio/archive/asio-1-12-0.tar.gz
+tar xvf asio-1-12-0.tar.gz
+cd asio-asio-1-12-0/asio
+./autogen.sh
+env CXXFLAGS="-DASIO_STANDALONE -std=c++11" ./configure --without-boost
+sudo make install -j `nproc`
+```
+
 ## gtest and gmock
 v1.8.0
 ```sh

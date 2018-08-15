@@ -29,7 +29,6 @@ struct ContextServer {
     uint64_t node_id = 0;
 
     Worker *worker = nullptr;
-    Manager *manager = nullptr;
 
     RunStatus *run_status = nullptr;
     RangeServer *range_server = nullptr;

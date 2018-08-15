@@ -146,7 +146,6 @@ set(SOURCES
     src/server/callback.cpp
     src/server/server.cpp
     src/server/worker.cpp
-    src/server/manager.cpp
     src/server/node_address.cpp
     src/server/raft_logger.cpp
     src/server/run_status.cpp
@@ -186,6 +185,7 @@ set(SOURCES
     src/monitor/histogram.cpp
     src/monitor/rangedata.cpp
     src/monitor/statistics.cpp
+    src/admin/admin_server.cpp
 )
 
 if (APPLE)
@@ -203,16 +203,12 @@ add_subdirectory(src/common)
 add_subdirectory(src/frame)
 add_subdirectory(src/proto)
 add_subdirectory(src/raft)
-
-OPTION (BUILD_NET "build sharkstore net" OFF)
-MESSAGE(STATUS BUILD_NET=${BUILD_NET})
-if (BUILD_NET)
-    add_subdirectory(src/net)
-endif()
+add_subdirectory(src/net)
 
 set (depend_LIBRARYS
     sharkstore-proto
     sharkstore-raft
+    sharkstore-net
     sharkstore-common
     sharkstore-frame
     sharkstore-lkqueue

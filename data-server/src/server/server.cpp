@@ -7,8 +7,9 @@
 #include "common/socket_session_impl.h"
 #include "frame/sf_logger.h"
 
-#include "manager.h"
 #include "master/worker_impl.h"
+#include "admin/admin_server.h"
+
 #include "node_address.h"
 #include "raft_logger.h"
 #include "range_server.h"
@@ -24,7 +25,6 @@ DataServer::DataServer() {
     context_ = new ContextServer;
 
     context_->worker = new Worker;
-    context_->manager = new Manager;
 
     context_->run_status = new RunStatus;
     context_->range_server = new RangeServer;
@@ -43,7 +43,6 @@ DataServer::DataServer() {
 
 DataServer::~DataServer() {
     delete context_->worker;
-    delete context_->manager;
     delete context_->master_worker;
     delete context_->run_status;
     delete context_->range_server;
@@ -122,13 +121,11 @@ int DataServer::Init() {
         return -1;
     }
 
-    if (context_->manager->Init(context_) != 0) {
-        return -1;
-    }
-
     if (context_->run_status->Init(context_) != 0) {
         return -1;
     }
+
+    admin_server_.reset(new admin::AdminServer(context_));
 
     return 0;
 }
@@ -142,7 +139,9 @@ int DataServer::Start() {
         return -1;
     }
 
-    if (context_->manager->Start() != 0) {
+    auto ret = admin_server_->Start(ds_config.manager_config.port);
+    if (!ret.ok()) {
+        FLOG_ERROR("start admin server failed: %s", ret.ToString().c_str());
         return -1;
     }
 
@@ -169,11 +168,12 @@ int DataServer::Start() {
 }
 
 void DataServer::Stop() {
+    if (admin_server_) {
+        admin_server_->Stop();
+    }
+
     if (context_->worker != nullptr) {
         context_->worker->Stop();
-    }
-    if (context_->manager != nullptr) {
-        context_->manager->Stop();
     }
     if (context_->range_server != nullptr) {
         context_->range_server->Stop();
