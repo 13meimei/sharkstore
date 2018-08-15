@@ -81,10 +81,13 @@ WatcherSet::WatcherSet() {
                 auto excEnd = getticks();
                 //auto take_time = excEnd - waitBeginTime;
 
-                FLOG_DEBUG("key: [%s] wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
+                FLOG_INFO("key: [%s] wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
                                    " execute take time: %" PRId64 " ms,wait time:%" PRId64 ,
                            EncodeToHexString(encode_key).c_str(), w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id,
                            w_ptr->GetWatcherId(), excEnd-excBegin,excBegin-waitBeginTime);
+
+                FLOG_DEBUG("timeout: msg->begin_time:%" PRId64 "us msg->expire_time:%" PRId64 "us now:%" PRId64 "us",
+                          w_ptr->GetMessage()->begin_time, w_ptr->GetMessage()->expire_time, excEnd*1000);
 
 //                FLOG_INFO("watcher expire timeout, timer queue pop: session_id: %" PRId64 " watch_id:[%" PRIu64 "] key: [%s]",
 //                          w_ptr->GetMessage()->session_id, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
