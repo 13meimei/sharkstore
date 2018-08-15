@@ -12,7 +12,6 @@ import (
 	"time"
 	"strings"
 
-	"model/pkg/kvrpcpb"
 	"model/pkg/metapb"
 	"util/bufalloc"
 	"util/log"
@@ -169,7 +168,7 @@ func (s *Server) handleKVCommand(w http.ResponseWriter, r *http.Request) {
 
 	t := s.proxy.router.FindTable(dbname, tname)
 	if t == nil {
-		log.Error("table %s.%s doesn.t exist", dbname, tname)
+		log.Error("table %s.%s doesn't exist", dbname, tname)
 		reply = &Reply{Code: errCommandNoTable, Message: ErrNotExistTable.Error()}
 		return
 	}
@@ -220,19 +219,12 @@ func (s *Server) handleKVCommand(w http.ResponseWriter, r *http.Request) {
 
 func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	log.Debug("get command ........... %v", query)
-	log.Debug("get command: %v", query.Command)
 	// 解析选择列
-	columns := query.parseColumnNames()
-	fieldList := make([]*kvrpcpb.SelectField, 0, len(columns))
-	for _, c := range columns {
-		col := t.FindColumn(c)
-		if col == nil {
-			return nil, fmt.Errorf("invalid column(%s)", c)
-		}
-		fieldList = append(fieldList, &kvrpcpb.SelectField{
-			Typ:    kvrpcpb.SelectField_Column,
-			Column: col,
-		})
+	columns := query.parseSelectCols(t)
+	fieldList, err := makeFieldList(t, columns)
+	if err != nil {
+		log.Error("get command, find %s.%s field list error(%s), ", t.DbName(), t.Name(), err)
+		return nil, err
 	}
 
 	if len(query.Command.PKs) == 0 {
@@ -313,7 +305,7 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	}
 }
 
-func formatReply(columnMap map[string]*metapb.Column, rowss [][]*Row, order []*Order, columns []string) *Reply {
+func formatReply(columnMap map[string]*metapb.Column, rowss [][]*Row, order []*Order, columns []*SelColumn) *Reply {
 	rowset := make([][]interface{}, 0)
 	for _, rows := range rowss {
 		for _, row := range rows {
@@ -323,6 +315,11 @@ func formatReply(columnMap map[string]*metapb.Column, rowss [][]*Row, order []*O
 					row_ = append(row_, nil)
 					continue
 				}
+				if _,find := columnMap[f.col]; !find {
+					row_ = append(row_, f.value)
+					continue
+				}
+
 				switch columnMap[f.col].GetDataType() {
 				case metapb.DataType_Tinyint:
 					fallthrough
@@ -378,12 +375,12 @@ func formatReply(columnMap map[string]*metapb.Column, rowss [][]*Row, order []*O
 	if order != nil {
 		for _, o := range order {
 			for n, c := range columns {
-				if c == o.By {
+				if c.col == o.By {
 					// sort
 					sorter := &rowsetSorter{
 						rowset:          rowset,
 						orderByFieldNum: n,
-						column:          columnMap[c],
+						column:          columnMap[c.col],
 					}
 					sort.Sort(sorter)
 				}

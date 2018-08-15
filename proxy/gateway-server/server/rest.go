@@ -47,13 +47,19 @@ type Filter_ struct {
 	Order []*Order `json:"order"`
 }
 
+type AggreFunc struct {
+	Function string `json:"func"`
+	Field    string `json:"field"`
+}
+
 type Command struct {
-	Version string          `json:"version"`
-	Type    string          `json:"type"`
-	Field   []string        `json:"field"`
-	Values  [][]interface{} `json:"values"`
-	Filter  *Filter_        `json:"filter"`
-	PKs     [][]*And        `json:"pks"`
+	Version   string          `json:"version"`
+	Type      string          `json:"type"`
+	Field     []string        `json:"field"`
+	Values    [][]interface{} `json:"values"`
+	Filter    *Filter_        `json:"filter"`
+	PKs       [][]*And        `json:"pks"`
+	AggreFunc []*AggreFunc    `json:"aggrefunc"`
 }
 
 type Query struct {
@@ -91,6 +97,10 @@ type Reply struct {
 
 func (q *Query) parseColumnNames() []string {
 	return q.Command.Field
+}
+
+func (q *Query) parseAggreFuncs() []*AggreFunc {
+	return q.Command.AggreFunc
 }
 
 func (q *Query) parseRowValues(buffer bufalloc.Buffer) ([]InsertRowValue, error) {
@@ -277,6 +287,21 @@ func (q *Query) parseScope() *Scope {
 		return nil
 	}
 	return q.Command.Filter.Scope
+}
+
+func (q *Query) parseSelectCols(t *Table) []*SelColumn{
+	var columns []*SelColumn
+	for _, c := range q.parseColumnNames() {
+		columns = append(columns, &SelColumn{col: c})
+	}
+	for _, aggre := range q.parseAggreFuncs() {
+		if aggre.Function == "count" && aggre.Field == "*" {
+			columns = append(columns, &SelColumn{aggreFunc: aggre.Function})
+		} else {
+			columns = append(columns, &SelColumn{aggreFunc: aggre.Function, col:aggre.Field})
+		}
+	}
+	return columns
 }
 
 //func Float64ToByte(float float64) []byte {

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -11,7 +10,6 @@ import (
 	msClient "pkg-go/ms_client"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
-	"model/pkg/kvrpcpb"
 	"model/pkg/metapb"
 	"util/assert"
 	"util/hlc"
@@ -423,7 +421,8 @@ func testGetFilter(t *testing.T, query *Query, table *Table, p *Proxy, stmt *sql
 	return getFilter
 }
 
-func testGetCommand(t *testing.T, table *Table, p *Proxy, filter *Filter, stmt *sqlparser.Select, expected [][]string, limit_ *Limit_, order []*Order, columns []string) {
+//the func no support aggre function
+func testGetCommand(t *testing.T, table *Table, p *Proxy, filter *Filter, stmt *sqlparser.Select, expected [][]interface{}, limit_ *Limit_, order []*Order, columns []string) {
 	var limit *Limit
 	if limit_ != nil {
 		limit = &Limit{
@@ -431,17 +430,14 @@ func testGetCommand(t *testing.T, table *Table, p *Proxy, filter *Filter, stmt *
 			rowCount: limit_.RowCount,
 		}
 	}
+	var cols []*SelColumn
+	for _, c := range columns {
+		cols = append(cols, &SelColumn{col: c})
+	}
 
-	fieldList := make([]*kvrpcpb.SelectField, 0, len(columns))
-	for _, c := range filter.columns {
-		col := table.FindColumn(c)
-		if col == nil {
-			t.Fatalf("invalid column(%s)", c)
-		}
-		fieldList = append(fieldList, &kvrpcpb.SelectField{
-			Typ:    kvrpcpb.SelectField_Column,
-			Column: col,
-		})
+	fieldList, err := makeFieldList(table, cols)
+	if err != nil {
+		t.Fatal("get command, find field list error: " , err)
 	}
 	rowss, err := p.doSelect(table, fieldList, filter.matchs, limit, nil)
 	if err != nil {
@@ -452,8 +448,12 @@ func testGetCommand(t *testing.T, table *Table, p *Proxy, filter *Filter, stmt *
 	//	t.Fatal("build select result error: ", err)
 	//}
 	//selectResult := formatSelectResult(res)
-	reply, _ := json.Marshal(formatReply(table.columns, rowss, order, columns))
-	t.Log("getResult: ", string(reply))
+	reply := formatReply(table.columns, rowss, order, cols)
+
+	assert.Equal(t, reply.Code, 0, fmt.Sprintf("reply.code %v", reply.Code))
+	assert.Equal(t, len(reply.Values), len(expected), fmt.Sprintf("reply value %v, except %v", reply.Values, expected))
+
+	t.Logf("getResult: %v", reply)
 }
 
 func testSetCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected *Reply) {
