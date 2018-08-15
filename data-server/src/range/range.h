@@ -50,7 +50,9 @@ enum {
     LOCK_ID_MISMATCHED,
     LOCK_IS_FORCE_UNLOCKED,
     LOCK_STORE_FAILED,
-    LOCK_EPOCH_ERROR
+    LOCK_EPOCH_ERROR,
+    LOCK_TIME_OUT,  //value 7 same with defined in status.h
+    LOCK_PARAMETER_ERROR
 };
 
 class Range : public raft::StateMachine, public std::enable_shared_from_this<Range> {

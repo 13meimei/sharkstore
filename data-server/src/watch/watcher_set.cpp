@@ -50,13 +50,13 @@ WatcherSet::WatcherSet() {
                 continue; // no valid watcher wait in queue
             }
 
-            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime() / 1000);
+            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime());
             std::chrono::system_clock::time_point expire(mill_sec);
 
-            int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time / 1000};
+            int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time};
 
             if (watcher_expire_cond_.wait_until(lock, expire) == std::cv_status::timeout) {
-                auto excBegin = getticks();
+                auto excBegin = get_micro_second();
                 // send timeout response
                 auto resp = new watchpb::DsWatchResponse;
                 resp->mutable_resp()->set_code(Status::kTimedOut);
@@ -78,16 +78,16 @@ WatcherSet::WatcherSet() {
 
                 watcher_queue_.pop();
 
-                auto excEnd = getticks();
+                auto excEnd = get_micro_second();
                 //auto take_time = excEnd - waitBeginTime;
 
                 FLOG_INFO("key: [%s] wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
-                                   " execute take time: %" PRId64 " ms,wait time:%" PRId64 ,
+                                   " execute take time: %" PRId64 " us,wait time:%" PRId64 " us",
                            EncodeToHexString(encode_key).c_str(), w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id,
                            w_ptr->GetWatcherId(), excEnd-excBegin,excBegin-waitBeginTime);
 
-                FLOG_DEBUG("timeout: msg->begin_time:%" PRId64 "us msg->expire_time:%" PRId64 "us now:%" PRId64 "us",
-                          w_ptr->GetMessage()->begin_time, w_ptr->GetMessage()->expire_time, excEnd*1000);
+                FLOG_DEBUG("timeout: msg->begin_time:%" PRId64 "us expire:%" PRId64 "ms now:%" PRId64 "us",
+                           w_ptr->GetMessage()->begin_time, w_ptr->GetExpireTime(), excEnd);
 
 //                FLOG_INFO("watcher expire timeout, timer queue pop: session_id: %" PRId64 " watch_id:[%" PRIu64 "] key: [%s]",
 //                          w_ptr->GetMessage()->session_id, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());

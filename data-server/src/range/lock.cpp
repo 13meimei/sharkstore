@@ -577,6 +577,7 @@ void Range::LockWatch(common::ProtoMessage *msg,
         err = new errorpb::Error;
         err->set_message("key list length != 1");
         auto resp = new watchpb::DsWatchResponse;
+        resp->mutable_resp()->set_code(LOCK_PARAMETER_ERROR);
         SendError(msg, req.header(), resp, err);
         return;
     }
@@ -600,13 +601,19 @@ void Range::LockWatch(common::ProtoMessage *msg,
                       EncodeToHexString(encode_key).c_str());
             err = new errorpb::Error;
             err->set_message("lock is not existed");
-            break;
+
+            auto resp = new watchpb::DsWatchResponse;
+            resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
+            SendError(msg, req.header(), resp, err);
+            return;
         }
 
         std::vector<watch::Key*> keys;
         keys.push_back(new watch::Key(req.req().kv().key(0)));
 
-        auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, msg);
+        int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+
+        auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, msg);
         auto w_code = context_->range_server->watch_server_->AddKeyWatcher(w_ptr, store_);
         if (w_code != watch::WATCH_OK) {
             FLOG_WARN("LockWatch error: lock [%s] add key watcher failed",

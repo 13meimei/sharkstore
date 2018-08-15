@@ -105,12 +105,6 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
     //add watch if client version is not equal to ds side
     auto clientVersion = req.req().startversion();
-    if(req.req().longpull() > 0) {
-        uint64_t expireTime = get_micro_second();
-        expireTime += (req.req().longpull()*1000);
-
-        msg->expire_time = expireTime;
-    }
 
     //to do add watch
     auto watch_server = context_->range_server->watch_server_;
@@ -125,7 +119,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         watchType = watch::WATCH_PREFIX;
     }
 
-    auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, msg);
+    int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+    auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, msg);
 
     watch::WatchCode wcode;
     if(prefix) {

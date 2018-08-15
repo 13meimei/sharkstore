@@ -210,7 +210,7 @@ protected:
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
-        msg->expire_time = get_micro_second() + 1000000;
+        msg->expire_time = getticks() + 3000;
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
@@ -256,7 +256,7 @@ protected:
 
         // begin test pure_get(ok)
         auto msg = new common::ProtoMessage;
-        msg->expire_time = get_micro_second() + 1000000;
+        msg->expire_time = getticks() + 3000;
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
@@ -299,7 +299,7 @@ protected:
         FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
         // begin test watch_get (key empty)
         auto msg = new common::ProtoMessage;
-        msg->expire_time = get_micro_second() + 1000000;
+        msg->expire_time = getticks() + 3000;
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();

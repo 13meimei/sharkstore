@@ -16,8 +16,8 @@ namespace watch {
 class Watcher {
 public:
     Watcher() = delete;
-    Watcher(uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, common::ProtoMessage*);
-    Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, common::ProtoMessage*);
+    Watcher(uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, common::ProtoMessage*);
+    Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, common::ProtoMessage*);
     Watcher(uint64_t, const std::vector<WatcherKey*>&);
     virtual ~Watcher();
     //bool operator>(const Watcher* other) const;
