@@ -192,7 +192,7 @@ message GetNodeIdRequest {
     RequestHeader header       = 1;
     uint32      server_port    = 2;
     uint32      raft_port      = 3;
-    uint32      http_port      = 4;
+    uint32      admin_port     = 4;
     string      version        = 5;
 }
 
