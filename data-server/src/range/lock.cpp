@@ -103,9 +103,9 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().key());
-    req.mutable_req()->set_key(encode_key);
+    //req.mutable_req()->set_key(encode_key);
 
-    auto& key = req.req().key();
+    //auto& key = req.req().key();
     errorpb::Error *err = nullptr;
 
     do {
@@ -114,7 +114,7 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
             break;
         }
 
-        if (!KeyInRange(key, err)) {
+        if (!KeyInRange(encode_key, err)) {
             RANGE_LOG_WARN("Lock error: %s", err->message().c_str());
             break;
         }
@@ -222,9 +222,9 @@ void Range::LockUpdate(common::ProtoMessage *msg,
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().key());
-    req.mutable_req()->set_key(encode_key);
+    //req.mutable_req()->set_key(encode_key);
 
-    auto &key = req.req().key();
+    //auto &key = req.req().key();
     errorpb::Error *err = nullptr;
 
     do {
@@ -233,7 +233,7 @@ void Range::LockUpdate(common::ProtoMessage *msg,
             break;
         }
 
-        if (!KeyInRange(key, err)) {
+        if (!KeyInRange(encode_key, err)) {
             RANGE_LOG_WARN("LockUpdate error: %s", err->message().c_str());
             break;
         }
@@ -349,15 +349,15 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().key());
-    req.mutable_req()->set_key(encode_key);
+    //req.mutable_req()->set_key(encode_key);
 
-    auto &key = req.req().key();
+    //auto &key = req.req().key();
     errorpb::Error *err = nullptr;
     do {
         if (!VerifyLeader(err)) {
             break;
         }
-        if (!KeyInRange(key, err)) {
+        if (!KeyInRange(encode_key, err)) {
             break;
         }
 
@@ -466,15 +466,15 @@ void Range::UnlockForce(common::ProtoMessage *msg,
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().key());
-    req.mutable_req()->set_key(encode_key);
+    //req.mutable_req()->set_key(encode_key);
 
-    auto &key = req.req().key();
+    //auto &key = req.req().key();
     errorpb::Error *err = nullptr;
     do {
         if (!VerifyLeader(err)) {
             break;
         }
-        if (!KeyInRange(key, err)) {
+        if (!KeyInRange(encode_key, err)) {
             break;
         }
 
