@@ -9,7 +9,6 @@ import (
 	"util/log"
 
 	"golang.org/x/net/context"
-	"model/pkg/ds_admin"
 )
 
 // Client is a client that sends RPC.
@@ -26,15 +25,6 @@ type SchClient interface {
 	SetNodeLogLevel(addr string, level string) error
 	OffLineRange(addr string, rangeId uint64) error
 	ReplaceRange(addr string, oldRangeId uint64, newRange *metapb.Range) error
-	// ds_admin
-	SetConfig(addr string, configs []*ds_adminpb.ConfigItem) error
-	GetConfig(addr string, keys []*ds_adminpb.ConfigKey) (*ds_adminpb.GetConfigResponse, error)
-	GetDsInfo(addr, path string) (*ds_adminpb.GetInfoResponse, error)
-	ForceSplit(addr string, rangeId uint64) error
-	ForceCompact(addr string, rangeId uint64) (*ds_adminpb.CompactionResponse, error)
-	ClearQueue(addr string, queueType ds_adminpb.ClearQueueRequest_QueueType) (*ds_adminpb.ClearQueueResponse, error)
-	GetPendingQueues(addr string, pendingType ds_adminpb.GetPendingsRequest_PendingType, count uint64) (*ds_adminpb.GetPendingsResponse, error)
-	FlushDB(addr string, wait bool) error
 }
 
 type SchRpcClient struct {
@@ -218,143 +208,6 @@ func (c *SchRpcClient) ReplaceRange(addr string, oldRangeId uint64, newRange *me
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
 	defer cancel()
 	_, err = conn.ReplaceRange(ctx, req)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *SchRpcClient) SetConfig(addr string, configs []*ds_adminpb.ConfigItem) error {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return err
-	}
-	req := &ds_adminpb.SetConfigRequest{
-		Configs: configs,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
-	defer cancel()
-	_, err = conn.SetConfig(ctx, req)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *SchRpcClient) GetConfig(addr string, keys []*ds_adminpb.ConfigKey) (*ds_adminpb.GetConfigResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	req := &ds_adminpb.GetConfigRequest{
-		Key: keys,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
-	defer cancel()
-	resp, err := conn.GetConfig(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *SchRpcClient) GetDsInfo(addr, path string) (*ds_adminpb.GetInfoResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	req := &ds_adminpb.GetInfoRequest{
-		Path: path,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
-	defer cancel()
-	resp, err := conn.GetDsInfo(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *SchRpcClient) ForceSplit(addr string, rangeId uint64) error {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return err
-	}
-	req := &ds_adminpb.ForceSplitRequest{
-		RangeId: rangeId,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
-	defer cancel()
-	_, err = conn.ForceSplit(ctx, req)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *SchRpcClient) ForceCompact(addr string, rangeId uint64) (*ds_adminpb.CompactionResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	req := &ds_adminpb.CompactionRequest{
-		RangeId: rangeId,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
-	defer cancel()
-	resp, err := conn.ForceCompact(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *SchRpcClient) ClearQueue(addr string, queueType ds_adminpb.ClearQueueRequest_QueueType) (*ds_adminpb.ClearQueueResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	req := &ds_adminpb.ClearQueueRequest{
-		QueueType: queueType,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
-	defer cancel()
-	resp, err := conn.ClearQueue(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *SchRpcClient) GetPendingQueues(addr string, pendingType ds_adminpb.GetPendingsRequest_PendingType, count uint64) (*ds_adminpb.GetPendingsResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	req := &ds_adminpb.GetPendingsRequest{
-		Ptype: pendingType,
-		Count: count,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
-	defer cancel()
-	resp, err := conn.GetPendingQueues(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *SchRpcClient) FlushDB(addr string, wait bool) error {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return err
-	}
-	req := &ds_adminpb.FlushDBRequest{
-		Wait: wait,
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
-	defer cancel()
-	_, err = conn.FlushDB(ctx, req)
 	if err != nil {
 		return err
 	}
