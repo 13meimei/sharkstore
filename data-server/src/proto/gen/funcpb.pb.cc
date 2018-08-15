@@ -80,7 +80,7 @@ namespace {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\014funcpb.proto\022\006funcpb*\377\004\n\nFunctionID\022\022\n"
+      "\n\014funcpb.proto\022\006funcpb*\220\005\n\nFunctionID\022\022\n"
       "\016kFuncHeartbeat\020\000\022\017\n\013kFuncRawGet\020\001\022\017\n\013kF"
       "uncRawPut\020\002\022\022\n\016kFuncRawDelete\020\003\022\023\n\017kFunc"
       "RawExecute\020\004\022\017\n\013kFuncSelect\020\n\022\017\n\013kFuncIn"
@@ -96,10 +96,11 @@ void AddDescriptorsImpl() {
       "cRangeTransferLeader\020\353\007\022\025\n\020kFuncUpdateRa"
       "nge\020\354\007\022\025\n\020kFuncGetPeerInfo\020\355\007\022\031\n\024kFuncSe"
       "tNodeLogLevel\020\356\007\022\026\n\021kFuncOfflineRange\020\357\007"
-      "\022\026\n\021kFuncReplaceRange\020\360\007b\006proto3"
+      "\022\026\n\021kFuncReplaceRange\020\360\007\022\017\n\nkFuncAdmin\020\321"
+      "\017b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 672);
+      descriptor, 689);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "funcpb.proto", &protobuf_RegisterTypes);
 }
@@ -155,6 +156,7 @@ bool FunctionID_IsValid(int value) {
     case 1006:
     case 1007:
     case 1008:
+    case 2001:
       return true;
     default:
       return false;

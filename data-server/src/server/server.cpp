@@ -7,13 +7,13 @@
 #include "common/socket_session_impl.h"
 #include "frame/sf_logger.h"
 
-#include "version.h"
 #include "manager.h"
 #include "master/worker_impl.h"
 #include "node_address.h"
 #include "raft_logger.h"
 #include "range_server.h"
 #include "run_status.h"
+#include "version.h"
 #include "worker.h"
 
 namespace sharkstore {
@@ -61,20 +61,19 @@ bool DataServer::startRaftServer() {
     raft::RaftServerOptions ops;
 
     ops.node_id = context_->node_id;
-    ops.consensus_threads_num = static_cast<uint8_t>(ds_config.raft_config.consensus_threads);
+    ops.consensus_threads_num =
+        static_cast<uint8_t>(ds_config.raft_config.consensus_threads);
     ops.consensus_queue_capacity = ds_config.raft_config.consensus_queue;
     ops.apply_threads_num = static_cast<uint8_t>(ds_config.raft_config.apply_threads);
     ops.apply_queue_capacity = ds_config.raft_config.apply_queue;
-    ops.tick_interval =
-        std::chrono::milliseconds(ds_config.raft_config.tick_interval_ms);
+    ops.tick_interval = std::chrono::milliseconds(ds_config.raft_config.tick_interval_ms);
     ops.max_size_per_msg = ds_config.raft_config.max_msg_size;
 
     ops.transport_options.listen_port = static_cast<uint16_t>(ds_config.raft_config.port);
-    ops.transport_options.send_io_threads =
-        ds_config.raft_config.transport_send_threads;
-    ops.transport_options.recv_io_threads =
-        ds_config.raft_config.transport_recv_threads;
-    ops.transport_options.resolver = std::make_shared<NodeAddress>(context_->master_worker);
+    ops.transport_options.send_io_threads = ds_config.raft_config.transport_send_threads;
+    ops.transport_options.recv_io_threads = ds_config.raft_config.transport_recv_threads;
+    ops.transport_options.resolver =
+        std::make_shared<NodeAddress>(context_->master_worker);
 
     auto rs = raft::CreateRaftServer(ops);
     context_->raft_server = rs.release();
@@ -98,7 +97,7 @@ int DataServer::Init() {
     mspb::GetNodeIdRequest req;
     req.set_server_port(static_cast<uint32_t>(ds_config.worker_config.port));
     req.set_raft_port(static_cast<uint32_t>(ds_config.raft_config.port));
-    req.set_http_port(static_cast<uint32_t>(ds_config.manager_config.port));
+    req.set_admin_port(static_cast<uint32_t>(ds_config.manager_config.port));
     req.set_version(version);
     auto s = context_->master_worker->GetNodeId(req, &node_id, &clearup);
     if (!s.ok()) {
