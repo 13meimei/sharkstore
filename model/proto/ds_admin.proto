@@ -94,7 +94,7 @@ message GetInfoResponse {
 
 message ForceSplitRequest {
     uint64 range_id = 1;
-    int64 transaction_id = 2; // for retry
+    uint64 version = 2; // current RangeEpoch version
 }
 
 message ForceSplitResponse {
