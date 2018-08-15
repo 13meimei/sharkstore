@@ -1663,11 +1663,18 @@ class ForceSplitRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::uint64 range_id() const;
   void set_range_id(::google::protobuf::uint64 value);
 
+  // int64 transaction_id = 2;
+  void clear_transaction_id();
+  static const int kTransactionIdFieldNumber = 2;
+  ::google::protobuf::int64 transaction_id() const;
+  void set_transaction_id(::google::protobuf::int64 value);
+
   // @@protoc_insertion_point(class_scope:ds_adminpb.ForceSplitRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::uint64 range_id_;
+  ::google::protobuf::int64 transaction_id_;
   mutable int _cached_size_;
   friend struct protobuf_ds_5fadmin_2eproto::TableStruct;
 };
@@ -1850,11 +1857,18 @@ class CompactionRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::uint64 range_id() const;
   void set_range_id(::google::protobuf::uint64 value);
 
+  // int64 transaction_id = 2;
+  void clear_transaction_id();
+  static const int kTransactionIdFieldNumber = 2;
+  ::google::protobuf::int64 transaction_id() const;
+  void set_transaction_id(::google::protobuf::int64 value);
+
   // @@protoc_insertion_point(class_scope:ds_adminpb.CompactionRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::uint64 range_id_;
+  ::google::protobuf::int64 transaction_id_;
   mutable int _cached_size_;
   friend struct protobuf_ds_5fadmin_2eproto::TableStruct;
 };
@@ -3935,6 +3949,20 @@ inline void ForceSplitRequest::set_range_id(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:ds_adminpb.ForceSplitRequest.range_id)
 }
 
+// int64 transaction_id = 2;
+inline void ForceSplitRequest::clear_transaction_id() {
+  transaction_id_ = GOOGLE_LONGLONG(0);
+}
+inline ::google::protobuf::int64 ForceSplitRequest::transaction_id() const {
+  // @@protoc_insertion_point(field_get:ds_adminpb.ForceSplitRequest.transaction_id)
+  return transaction_id_;
+}
+inline void ForceSplitRequest::set_transaction_id(::google::protobuf::int64 value) {
+  
+  transaction_id_ = value;
+  // @@protoc_insertion_point(field_set:ds_adminpb.ForceSplitRequest.transaction_id)
+}
+
 // -------------------------------------------------------------------
 
 // ForceSplitResponse
@@ -3955,6 +3983,20 @@ inline void CompactionRequest::set_range_id(::google::protobuf::uint64 value) {
   
   range_id_ = value;
   // @@protoc_insertion_point(field_set:ds_adminpb.CompactionRequest.range_id)
+}
+
+// int64 transaction_id = 2;
+inline void CompactionRequest::clear_transaction_id() {
+  transaction_id_ = GOOGLE_LONGLONG(0);
+}
+inline ::google::protobuf::int64 CompactionRequest::transaction_id() const {
+  // @@protoc_insertion_point(field_get:ds_adminpb.CompactionRequest.transaction_id)
+  return transaction_id_;
+}
+inline void CompactionRequest::set_transaction_id(::google::protobuf::int64 value) {
+  
+  transaction_id_ = value;
+  // @@protoc_insertion_point(field_set:ds_adminpb.CompactionRequest.transaction_id)
 }
 
 // -------------------------------------------------------------------

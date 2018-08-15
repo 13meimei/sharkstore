@@ -262,6 +262,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForceSplitRequest, range_id_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForceSplitRequest, transaction_id_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForceSplitResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -273,6 +274,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CompactionRequest, range_id_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CompactionRequest, transaction_id_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CompactionResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -330,15 +332,15 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 75, -1, sizeof(GetInfoRequest)},
   { 81, -1, sizeof(GetInfoResponse)},
   { 87, -1, sizeof(ForceSplitRequest)},
-  { 93, -1, sizeof(ForceSplitResponse)},
-  { 98, -1, sizeof(CompactionRequest)},
-  { 104, -1, sizeof(CompactionResponse)},
-  { 111, -1, sizeof(ClearQueueRequest)},
-  { 117, -1, sizeof(ClearQueueResponse)},
-  { 123, -1, sizeof(GetPendingsRequest)},
-  { 130, -1, sizeof(GetPendingsResponse)},
-  { 136, -1, sizeof(FlushDBRequest)},
-  { 142, -1, sizeof(FlushDBResponse)},
+  { 94, -1, sizeof(ForceSplitResponse)},
+  { 99, -1, sizeof(CompactionRequest)},
+  { 106, -1, sizeof(CompactionResponse)},
+  { 113, -1, sizeof(ClearQueueRequest)},
+  { 119, -1, sizeof(ClearQueueResponse)},
+  { 125, -1, sizeof(GetPendingsRequest)},
+  { 132, -1, sizeof(GetPendingsResponse)},
+  { 138, -1, sizeof(FlushDBRequest)},
+  { 144, -1, sizeof(FlushDBResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -517,29 +519,30 @@ void AddDescriptorsImpl() {
       "pb.ConfigKey\"<\n\021GetConfigResponse\022\'\n\007con"
       "figs\030\001 \003(\0132\026.ds_adminpb.ConfigItem\"\036\n\016Ge"
       "tInfoRequest\022\014\n\004path\030\001 \001(\t\"\037\n\017GetInfoRes"
-      "ponse\022\014\n\004data\030\001 \001(\t\"%\n\021ForceSplitRequest"
-      "\022\020\n\010range_id\030\001 \001(\004\"\024\n\022ForceSplitResponse"
-      "\"%\n\021CompactionRequest\022\020\n\010range_id\030\001 \001(\004\""
-      "8\n\022CompactionResponse\022\021\n\tbegin_key\030\001 \001(\014"
-      "\022\017\n\007end_key\030\002 \001(\014\"\210\001\n\021ClearQueueRequest\022"
-      ";\n\nqueue_type\030\001 \001(\0162\'.ds_adminpb.ClearQu"
-      "eueRequest.QueueType\"6\n\tQueueType\022\007\n\003ALL"
-      "\020\000\022\017\n\013FAST_WORKER\020\001\022\017\n\013SLOW_WORKER\020\002\"%\n\022"
-      "ClearQueueResponse\022\017\n\007cleared\030\001 \001(\004\"\262\001\n\022"
-      "GetPendingsRequest\0229\n\005ptype\030\001 \001(\0162*.ds_a"
-      "dminpb.GetPendingsRequest.PendingType\022\r\n"
-      "\005count\030\002 \001(\004\"R\n\013PendingType\022\007\n\003ALL\020\000\022\n\n\006"
-      "INSERT\020\001\022\n\n\006SELECT\020\002\022\020\n\014PONIT_SELECT\020\003\022\020"
-      "\n\014RANGE_SELECT\020\004\"#\n\023GetPendingsResponse\022"
-      "\014\n\004desc\030\001 \001(\t\"\036\n\016FlushDBRequest\022\014\n\004wait\030"
-      "\001 \001(\010\"\021\n\017FlushDBResponse*\230\001\n\tAdminType\022\013"
-      "\n\007UNKNOWN\020\000\022\016\n\nSET_CONFIG\020\001\022\016\n\nGET_CONFI"
-      "G\020\002\022\014\n\010GET_INFO\020\003\022\017\n\013FORCE_SPLIT\020\004\022\016\n\nCO"
-      "MPACTION\020\005\022\017\n\013CLEAR_QUEUE\020\006\022\020\n\014GET_PENDI"
-      "NGS\020\007\022\014\n\010FLUSH_DB\020\010b\006proto3"
+      "ponse\022\014\n\004data\030\001 \001(\t\"=\n\021ForceSplitRequest"
+      "\022\020\n\010range_id\030\001 \001(\004\022\026\n\016transaction_id\030\002 \001"
+      "(\003\"\024\n\022ForceSplitResponse\"=\n\021CompactionRe"
+      "quest\022\020\n\010range_id\030\001 \001(\004\022\026\n\016transaction_i"
+      "d\030\002 \001(\003\"8\n\022CompactionResponse\022\021\n\tbegin_k"
+      "ey\030\001 \001(\014\022\017\n\007end_key\030\002 \001(\014\"\210\001\n\021ClearQueue"
+      "Request\022;\n\nqueue_type\030\001 \001(\0162\'.ds_adminpb"
+      ".ClearQueueRequest.QueueType\"6\n\tQueueTyp"
+      "e\022\007\n\003ALL\020\000\022\017\n\013FAST_WORKER\020\001\022\017\n\013SLOW_WORK"
+      "ER\020\002\"%\n\022ClearQueueResponse\022\017\n\007cleared\030\001 "
+      "\001(\004\"\262\001\n\022GetPendingsRequest\0229\n\005ptype\030\001 \001("
+      "\0162*.ds_adminpb.GetPendingsRequest.Pendin"
+      "gType\022\r\n\005count\030\002 \001(\004\"R\n\013PendingType\022\007\n\003A"
+      "LL\020\000\022\n\n\006INSERT\020\001\022\n\n\006SELECT\020\002\022\020\n\014PONIT_SE"
+      "LECT\020\003\022\020\n\014RANGE_SELECT\020\004\"#\n\023GetPendingsR"
+      "esponse\022\014\n\004desc\030\001 \001(\t\"\036\n\016FlushDBRequest\022"
+      "\014\n\004wait\030\001 \001(\010\"\021\n\017FlushDBResponse*\230\001\n\tAdm"
+      "inType\022\013\n\007UNKNOWN\020\000\022\016\n\nSET_CONFIG\020\001\022\016\n\nG"
+      "ET_CONFIG\020\002\022\014\n\010GET_INFO\020\003\022\017\n\013FORCE_SPLIT"
+      "\020\004\022\016\n\nCOMPACTION\020\005\022\017\n\013CLEAR_QUEUE\020\006\022\020\n\014G"
+      "ET_PENDINGS\020\007\022\014\n\010FLUSH_DB\020\010b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 2307);
+      descriptor, 2355);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "ds_admin.proto", &protobuf_RegisterTypes);
 }
@@ -5638,6 +5641,7 @@ void GetInfoResponse::set_allocated_data(::std::string* data) {
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int ForceSplitRequest::kRangeIdFieldNumber;
+const int ForceSplitRequest::kTransactionIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 ForceSplitRequest::ForceSplitRequest()
@@ -5653,12 +5657,16 @@ ForceSplitRequest::ForceSplitRequest(const ForceSplitRequest& from)
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  range_id_ = from.range_id_;
+  ::memcpy(&range_id_, &from.range_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&transaction_id_) -
+    reinterpret_cast<char*>(&range_id_)) + sizeof(transaction_id_));
   // @@protoc_insertion_point(copy_constructor:ds_adminpb.ForceSplitRequest)
 }
 
 void ForceSplitRequest::SharedCtor() {
-  range_id_ = GOOGLE_ULONGLONG(0);
+  ::memset(&range_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&transaction_id_) -
+      reinterpret_cast<char*>(&range_id_)) + sizeof(transaction_id_));
   _cached_size_ = 0;
 }
 
@@ -5699,7 +5707,9 @@ void ForceSplitRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  range_id_ = GOOGLE_ULONGLONG(0);
+  ::memset(&range_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&transaction_id_) -
+      reinterpret_cast<char*>(&range_id_)) + sizeof(transaction_id_));
   _internal_metadata_.Clear();
 }
 
@@ -5721,6 +5731,20 @@ bool ForceSplitRequest::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
                  input, &range_id_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int64 transaction_id = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &transaction_id_)));
         } else {
           goto handle_unusual;
         }
@@ -5758,6 +5782,11 @@ void ForceSplitRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->range_id(), output);
   }
 
+  // int64 transaction_id = 2;
+  if (this->transaction_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->transaction_id(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -5775,6 +5804,11 @@ void ForceSplitRequest::SerializeWithCachedSizes(
   // uint64 range_id = 1;
   if (this->range_id() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->range_id(), target);
+  }
+
+  // int64 transaction_id = 2;
+  if (this->transaction_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(2, this->transaction_id(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -5799,6 +5833,13 @@ size_t ForceSplitRequest::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->range_id());
+  }
+
+  // int64 transaction_id = 2;
+  if (this->transaction_id() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
+        this->transaction_id());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -5833,6 +5874,9 @@ void ForceSplitRequest::MergeFrom(const ForceSplitRequest& from) {
   if (from.range_id() != 0) {
     set_range_id(from.range_id());
   }
+  if (from.transaction_id() != 0) {
+    set_transaction_id(from.transaction_id());
+  }
 }
 
 void ForceSplitRequest::CopyFrom(const ::google::protobuf::Message& from) {
@@ -5860,6 +5904,7 @@ void ForceSplitRequest::Swap(ForceSplitRequest* other) {
 void ForceSplitRequest::InternalSwap(ForceSplitRequest* other) {
   using std::swap;
   swap(range_id_, other->range_id_);
+  swap(transaction_id_, other->transaction_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -5884,6 +5929,20 @@ void ForceSplitRequest::set_range_id(::google::protobuf::uint64 value) {
   
   range_id_ = value;
   // @@protoc_insertion_point(field_set:ds_adminpb.ForceSplitRequest.range_id)
+}
+
+// int64 transaction_id = 2;
+void ForceSplitRequest::clear_transaction_id() {
+  transaction_id_ = GOOGLE_LONGLONG(0);
+}
+::google::protobuf::int64 ForceSplitRequest::transaction_id() const {
+  // @@protoc_insertion_point(field_get:ds_adminpb.ForceSplitRequest.transaction_id)
+  return transaction_id_;
+}
+void ForceSplitRequest::set_transaction_id(::google::protobuf::int64 value) {
+  
+  transaction_id_ = value;
+  // @@protoc_insertion_point(field_set:ds_adminpb.ForceSplitRequest.transaction_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -6088,6 +6147,7 @@ void ForceSplitResponse::InternalSwap(ForceSplitResponse* other) {
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int CompactionRequest::kRangeIdFieldNumber;
+const int CompactionRequest::kTransactionIdFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 CompactionRequest::CompactionRequest()
@@ -6103,12 +6163,16 @@ CompactionRequest::CompactionRequest(const CompactionRequest& from)
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  range_id_ = from.range_id_;
+  ::memcpy(&range_id_, &from.range_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&transaction_id_) -
+    reinterpret_cast<char*>(&range_id_)) + sizeof(transaction_id_));
   // @@protoc_insertion_point(copy_constructor:ds_adminpb.CompactionRequest)
 }
 
 void CompactionRequest::SharedCtor() {
-  range_id_ = GOOGLE_ULONGLONG(0);
+  ::memset(&range_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&transaction_id_) -
+      reinterpret_cast<char*>(&range_id_)) + sizeof(transaction_id_));
   _cached_size_ = 0;
 }
 
@@ -6149,7 +6213,9 @@ void CompactionRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  range_id_ = GOOGLE_ULONGLONG(0);
+  ::memset(&range_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&transaction_id_) -
+      reinterpret_cast<char*>(&range_id_)) + sizeof(transaction_id_));
   _internal_metadata_.Clear();
 }
 
@@ -6171,6 +6237,20 @@ bool CompactionRequest::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
                  input, &range_id_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int64 transaction_id = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &transaction_id_)));
         } else {
           goto handle_unusual;
         }
@@ -6208,6 +6288,11 @@ void CompactionRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->range_id(), output);
   }
 
+  // int64 transaction_id = 2;
+  if (this->transaction_id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(2, this->transaction_id(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -6225,6 +6310,11 @@ void CompactionRequest::SerializeWithCachedSizes(
   // uint64 range_id = 1;
   if (this->range_id() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->range_id(), target);
+  }
+
+  // int64 transaction_id = 2;
+  if (this->transaction_id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(2, this->transaction_id(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -6249,6 +6339,13 @@ size_t CompactionRequest::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->range_id());
+  }
+
+  // int64 transaction_id = 2;
+  if (this->transaction_id() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
+        this->transaction_id());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -6283,6 +6380,9 @@ void CompactionRequest::MergeFrom(const CompactionRequest& from) {
   if (from.range_id() != 0) {
     set_range_id(from.range_id());
   }
+  if (from.transaction_id() != 0) {
+    set_transaction_id(from.transaction_id());
+  }
 }
 
 void CompactionRequest::CopyFrom(const ::google::protobuf::Message& from) {
@@ -6310,6 +6410,7 @@ void CompactionRequest::Swap(CompactionRequest* other) {
 void CompactionRequest::InternalSwap(CompactionRequest* other) {
   using std::swap;
   swap(range_id_, other->range_id_);
+  swap(transaction_id_, other->transaction_id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -6334,6 +6435,20 @@ void CompactionRequest::set_range_id(::google::protobuf::uint64 value) {
   
   range_id_ = value;
   // @@protoc_insertion_point(field_set:ds_adminpb.CompactionRequest.range_id)
+}
+
+// int64 transaction_id = 2;
+void CompactionRequest::clear_transaction_id() {
+  transaction_id_ = GOOGLE_LONGLONG(0);
+}
+::google::protobuf::int64 CompactionRequest::transaction_id() const {
+  // @@protoc_insertion_point(field_get:ds_adminpb.CompactionRequest.transaction_id)
+  return transaction_id_;
+}
+void CompactionRequest::set_transaction_id(::google::protobuf::int64 value) {
+  
+  transaction_id_ = value;
+  // @@protoc_insertion_point(field_set:ds_adminpb.CompactionRequest.transaction_id)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

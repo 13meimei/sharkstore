@@ -94,6 +94,7 @@ message GetInfoResponse {
 
 message ForceSplitRequest {
     uint64 range_id = 1;
+    int64 transaction_id = 2; // for retry
 }
 
 message ForceSplitResponse {
@@ -102,6 +103,7 @@ message ForceSplitResponse {
 
 message CompactionRequest {
     uint64 range_id = 1; // if range_id equals zero means to compact full db
+    int64 transaction_id = 2; // for retry
 }
 
 message CompactionResponse {
