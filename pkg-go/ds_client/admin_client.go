@@ -27,10 +27,10 @@ type AdminClient interface {
 	GetInfo(addr, path string) (*ds_adminpb.GetInfoResponse, error)
 
 	// ForceSplit force split
-	ForceSplit(addr string, rangeID uint64) error
+	ForceSplit(addr string, rangeID uint64, version uint64) error
 
 	// ForceCompact force compact
-	ForceCompact(addr string, rangeID uint64) (*ds_adminpb.CompactionResponse, error)
+	ForceCompact(addr string, rangeID uint64, transactionID int64) (*ds_adminpb.CompactionResponse, error)
 
 	// ClearQueue clear queue
 	ClearQueue(addr string, queueType ds_adminpb.ClearQueueRequest_QueueType) (*ds_adminpb.ClearQueueResponse, error)
@@ -141,20 +141,22 @@ func (c *adminClient) GetInfo(addr, path string) (*ds_adminpb.GetInfoResponse, e
 }
 
 // ForceSplit force split
-func (c *adminClient) ForceSplit(addr string, rangeID uint64) error {
+func (c *adminClient) ForceSplit(addr string, rangeID uint64, version uint64) error {
 	req := c.newRequest(ds_adminpb.AdminType_FORCE_SPLIT)
 	req.ForceSplitReq = &ds_adminpb.ForceSplitRequest{
 		RangeId: rangeID,
+		Version: version,
 	}
 	_, err := c.send(addr, req)
 	return err
 }
 
 // ForceCompact force compact
-func (c *adminClient) ForceCompact(addr string, rangeID uint64) (*ds_adminpb.CompactionResponse, error) {
+func (c *adminClient) ForceCompact(addr string, rangeID uint64, transID int64) (*ds_adminpb.CompactionResponse, error) {
 	req := c.newRequest(ds_adminpb.AdminType_COMPACTION)
 	req.CompactionReq = &ds_adminpb.CompactionRequest{
-		RangeId: rangeID,
+		RangeId:       rangeID,
+		TransactionId: transID,
 	}
 	resp, err := c.send(addr, req)
 	if err != nil {

@@ -572,7 +572,7 @@ func (service *Server) handleRangeForceSplit(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = service.cluster.ForceSplitRemote(node.GetAdminAddr(), rangeId)
+	err = service.cluster.ForceSplitRemote(node.GetAdminAddr(), rangeId, rng.GetRangeEpoch().GetVersion())
 	if err != nil {
 		log.Error("http range force split failed. error:[%v]", err.Error())
 		reply.Code = -1
