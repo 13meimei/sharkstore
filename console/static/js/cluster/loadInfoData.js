@@ -321,7 +321,7 @@ app.controller('myClusterNodeInfo', function ($rootScope, $scope, $http, $timeou
                 valign: 'middle'
             }, {
                 title: 'heartbeat_addr',
-                field: 'http_addr',
+                field: 'admin_addr',
                 align: 'center',
                 valign: 'middle'
             }, {
