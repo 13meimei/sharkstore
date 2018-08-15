@@ -653,14 +653,14 @@ class AdminResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::ds_adminpb::GetConfigResponse* release_get_cfg_resp();
   void set_allocated_get_cfg_resp(::ds_adminpb::GetConfigResponse* get_cfg_resp);
 
-  // .ds_adminpb.GetInfoResponse get_status_response = 12;
-  bool has_get_status_response() const;
-  void clear_get_status_response();
-  static const int kGetStatusResponseFieldNumber = 12;
-  const ::ds_adminpb::GetInfoResponse& get_status_response() const;
-  ::ds_adminpb::GetInfoResponse* mutable_get_status_response();
-  ::ds_adminpb::GetInfoResponse* release_get_status_response();
-  void set_allocated_get_status_response(::ds_adminpb::GetInfoResponse* get_status_response);
+  // .ds_adminpb.GetInfoResponse get_info_response = 12;
+  bool has_get_info_response() const;
+  void clear_get_info_response();
+  static const int kGetInfoResponseFieldNumber = 12;
+  const ::ds_adminpb::GetInfoResponse& get_info_response() const;
+  ::ds_adminpb::GetInfoResponse* mutable_get_info_response();
+  ::ds_adminpb::GetInfoResponse* release_get_info_response();
+  void set_allocated_get_info_response(::ds_adminpb::GetInfoResponse* get_info_response);
 
   // .ds_adminpb.ForceSplitResponse force_split_resp = 13;
   bool has_force_split_resp() const;
@@ -720,7 +720,7 @@ class AdminResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::ArenaStringPtr error_msg_;
   ::ds_adminpb::SetConfigResponse* set_cfg_resp_;
   ::ds_adminpb::GetConfigResponse* get_cfg_resp_;
-  ::ds_adminpb::GetInfoResponse* get_status_response_;
+  ::ds_adminpb::GetInfoResponse* get_info_response_;
   ::ds_adminpb::ForceSplitResponse* force_split_resp_;
   ::ds_adminpb::CompactionResponse* compaction_resp_;
   ::ds_adminpb::ClearQueueResponse* clear_queue_resp_;
@@ -3250,44 +3250,44 @@ inline void AdminResponse::set_allocated_get_cfg_resp(::ds_adminpb::GetConfigRes
   // @@protoc_insertion_point(field_set_allocated:ds_adminpb.AdminResponse.get_cfg_resp)
 }
 
-// .ds_adminpb.GetInfoResponse get_status_response = 12;
-inline bool AdminResponse::has_get_status_response() const {
-  return this != internal_default_instance() && get_status_response_ != NULL;
+// .ds_adminpb.GetInfoResponse get_info_response = 12;
+inline bool AdminResponse::has_get_info_response() const {
+  return this != internal_default_instance() && get_info_response_ != NULL;
 }
-inline void AdminResponse::clear_get_status_response() {
-  if (GetArenaNoVirtual() == NULL && get_status_response_ != NULL) delete get_status_response_;
-  get_status_response_ = NULL;
+inline void AdminResponse::clear_get_info_response() {
+  if (GetArenaNoVirtual() == NULL && get_info_response_ != NULL) delete get_info_response_;
+  get_info_response_ = NULL;
 }
-inline const ::ds_adminpb::GetInfoResponse& AdminResponse::get_status_response() const {
-  const ::ds_adminpb::GetInfoResponse* p = get_status_response_;
-  // @@protoc_insertion_point(field_get:ds_adminpb.AdminResponse.get_status_response)
+inline const ::ds_adminpb::GetInfoResponse& AdminResponse::get_info_response() const {
+  const ::ds_adminpb::GetInfoResponse* p = get_info_response_;
+  // @@protoc_insertion_point(field_get:ds_adminpb.AdminResponse.get_info_response)
   return p != NULL ? *p : *reinterpret_cast<const ::ds_adminpb::GetInfoResponse*>(
       &::ds_adminpb::_GetInfoResponse_default_instance_);
 }
-inline ::ds_adminpb::GetInfoResponse* AdminResponse::mutable_get_status_response() {
+inline ::ds_adminpb::GetInfoResponse* AdminResponse::mutable_get_info_response() {
   
-  if (get_status_response_ == NULL) {
-    get_status_response_ = new ::ds_adminpb::GetInfoResponse;
+  if (get_info_response_ == NULL) {
+    get_info_response_ = new ::ds_adminpb::GetInfoResponse;
   }
-  // @@protoc_insertion_point(field_mutable:ds_adminpb.AdminResponse.get_status_response)
-  return get_status_response_;
+  // @@protoc_insertion_point(field_mutable:ds_adminpb.AdminResponse.get_info_response)
+  return get_info_response_;
 }
-inline ::ds_adminpb::GetInfoResponse* AdminResponse::release_get_status_response() {
-  // @@protoc_insertion_point(field_release:ds_adminpb.AdminResponse.get_status_response)
+inline ::ds_adminpb::GetInfoResponse* AdminResponse::release_get_info_response() {
+  // @@protoc_insertion_point(field_release:ds_adminpb.AdminResponse.get_info_response)
   
-  ::ds_adminpb::GetInfoResponse* temp = get_status_response_;
-  get_status_response_ = NULL;
+  ::ds_adminpb::GetInfoResponse* temp = get_info_response_;
+  get_info_response_ = NULL;
   return temp;
 }
-inline void AdminResponse::set_allocated_get_status_response(::ds_adminpb::GetInfoResponse* get_status_response) {
-  delete get_status_response_;
-  get_status_response_ = get_status_response;
-  if (get_status_response) {
+inline void AdminResponse::set_allocated_get_info_response(::ds_adminpb::GetInfoResponse* get_info_response) {
+  delete get_info_response_;
+  get_info_response_ = get_info_response;
+  if (get_info_response) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:ds_adminpb.AdminResponse.get_status_response)
+  // @@protoc_insertion_point(field_set_allocated:ds_adminpb.AdminResponse.get_info_response)
 }
 
 // .ds_adminpb.ForceSplitResponse force_split_resp = 13;

@@ -44,7 +44,7 @@ message AdminResponse {
 
     SetConfigResponse set_cfg_resp = 10;
     GetConfigResponse get_cfg_resp = 11;
-    GetInfoResponse get_status_response = 12;
+    GetInfoResponse get_info_response = 12;
     ForceSplitResponse force_split_resp = 13;
     CompactionResponse compaction_resp = 14;
     ClearQueueResponse clear_queue_resp = 15;

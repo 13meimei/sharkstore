@@ -201,7 +201,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdminResponse, error_msg_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdminResponse, set_cfg_resp_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdminResponse, get_cfg_resp_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdminResponse, get_status_response_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdminResponse, get_info_response_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdminResponse, force_split_resp_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdminResponse, compaction_resp_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AdminResponse, clear_queue_resp_),
@@ -455,7 +455,7 @@ void TableStruct::InitDefaultsImpl() {
       ::ds_adminpb::SetConfigResponse::internal_default_instance());
   _AdminResponse_default_instance_._instance.get_mutable()->get_cfg_resp_ = const_cast< ::ds_adminpb::GetConfigResponse*>(
       ::ds_adminpb::GetConfigResponse::internal_default_instance());
-  _AdminResponse_default_instance_._instance.get_mutable()->get_status_response_ = const_cast< ::ds_adminpb::GetInfoResponse*>(
+  _AdminResponse_default_instance_._instance.get_mutable()->get_info_response_ = const_cast< ::ds_adminpb::GetInfoResponse*>(
       ::ds_adminpb::GetInfoResponse::internal_default_instance());
   _AdminResponse_default_instance_._instance.get_mutable()->force_split_resp_ = const_cast< ::ds_adminpb::ForceSplitResponse*>(
       ::ds_adminpb::ForceSplitResponse::internal_default_instance());
@@ -495,51 +495,51 @@ void AddDescriptorsImpl() {
       "eq\030\017 \001(\0132\035.ds_adminpb.ClearQueueRequest\022"
       "8\n\020get_pendings_req\030\020 \001(\0132\036.ds_adminpb.G"
       "etPendingsRequest\0220\n\014flush_db_req\030\021 \001(\0132"
-      "\032.ds_adminpb.FlushDBRequest\"\361\003\n\rAdminRes"
+      "\032.ds_adminpb.FlushDBRequest\"\357\003\n\rAdminRes"
       "ponse\022\014\n\004code\030\001 \001(\r\022\021\n\terror_msg\030\002 \001(\t\0223"
       "\n\014set_cfg_resp\030\n \001(\0132\035.ds_adminpb.SetCon"
       "figResponse\0223\n\014get_cfg_resp\030\013 \001(\0132\035.ds_a"
-      "dminpb.GetConfigResponse\0228\n\023get_status_r"
-      "esponse\030\014 \001(\0132\033.ds_adminpb.GetInfoRespon"
-      "se\0228\n\020force_split_resp\030\r \001(\0132\036.ds_adminp"
-      "b.ForceSplitResponse\0227\n\017compaction_resp\030"
-      "\016 \001(\0132\036.ds_adminpb.CompactionResponse\0228\n"
-      "\020clear_queue_resp\030\017 \001(\0132\036.ds_adminpb.Cle"
-      "arQueueResponse\022:\n\021get_pendings_resp\030\020 \001"
-      "(\0132\037.ds_adminpb.GetPendingsResponse\0222\n\rf"
-      "lush_db_resp\030\021 \001(\0132\033.ds_adminpb.FlushDBR"
-      "esponse\"*\n\tConfigKey\022\017\n\007section\030\001 \001(\t\022\014\n"
-      "\004name\030\002 \001(\t\"\?\n\nConfigItem\022\"\n\003key\030\001 \001(\0132\025"
-      ".ds_adminpb.ConfigKey\022\r\n\005value\030\002 \001(\t\";\n\020"
-      "SetConfigRequest\022\'\n\007configs\030\001 \003(\0132\026.ds_a"
-      "dminpb.ConfigItem\"\023\n\021SetConfigResponse\"6"
-      "\n\020GetConfigRequest\022\"\n\003key\030\001 \003(\0132\025.ds_adm"
-      "inpb.ConfigKey\"<\n\021GetConfigResponse\022\'\n\007c"
-      "onfigs\030\001 \003(\0132\026.ds_adminpb.ConfigItem\"\036\n\016"
-      "GetInfoRequest\022\014\n\004path\030\001 \001(\t\"\037\n\017GetInfoR"
-      "esponse\022\014\n\004data\030\001 \001(\t\"%\n\021ForceSplitReque"
-      "st\022\020\n\010range_id\030\001 \001(\004\"\024\n\022ForceSplitRespon"
-      "se\"%\n\021CompactionRequest\022\020\n\010range_id\030\001 \001("
-      "\004\"8\n\022CompactionResponse\022\021\n\tbegin_key\030\001 \001"
-      "(\014\022\017\n\007end_key\030\002 \001(\014\"\210\001\n\021ClearQueueReques"
-      "t\022;\n\nqueue_type\030\001 \001(\0162\'.ds_adminpb.Clear"
-      "QueueRequest.QueueType\"6\n\tQueueType\022\007\n\003A"
-      "LL\020\000\022\017\n\013FAST_WORKER\020\001\022\017\n\013SLOW_WORKER\020\002\"%"
-      "\n\022ClearQueueResponse\022\017\n\007cleared\030\001 \001(\004\"\262\001"
-      "\n\022GetPendingsRequest\0229\n\005ptype\030\001 \001(\0162*.ds"
-      "_adminpb.GetPendingsRequest.PendingType\022"
-      "\r\n\005count\030\002 \001(\004\"R\n\013PendingType\022\007\n\003ALL\020\000\022\n"
-      "\n\006INSERT\020\001\022\n\n\006SELECT\020\002\022\020\n\014PONIT_SELECT\020\003"
-      "\022\020\n\014RANGE_SELECT\020\004\"#\n\023GetPendingsRespons"
-      "e\022\014\n\004desc\030\001 \001(\t\"\036\n\016FlushDBRequest\022\014\n\004wai"
-      "t\030\001 \001(\010\"\021\n\017FlushDBResponse*\230\001\n\tAdminType"
-      "\022\013\n\007UNKNOWN\020\000\022\016\n\nSET_CONFIG\020\001\022\016\n\nGET_CON"
-      "FIG\020\002\022\014\n\010GET_INFO\020\003\022\017\n\013FORCE_SPLIT\020\004\022\016\n\n"
-      "COMPACTION\020\005\022\017\n\013CLEAR_QUEUE\020\006\022\020\n\014GET_PEN"
-      "DINGS\020\007\022\014\n\010FLUSH_DB\020\010b\006proto3"
+      "dminpb.GetConfigResponse\0226\n\021get_info_res"
+      "ponse\030\014 \001(\0132\033.ds_adminpb.GetInfoResponse"
+      "\0228\n\020force_split_resp\030\r \001(\0132\036.ds_adminpb."
+      "ForceSplitResponse\0227\n\017compaction_resp\030\016 "
+      "\001(\0132\036.ds_adminpb.CompactionResponse\0228\n\020c"
+      "lear_queue_resp\030\017 \001(\0132\036.ds_adminpb.Clear"
+      "QueueResponse\022:\n\021get_pendings_resp\030\020 \001(\013"
+      "2\037.ds_adminpb.GetPendingsResponse\0222\n\rflu"
+      "sh_db_resp\030\021 \001(\0132\033.ds_adminpb.FlushDBRes"
+      "ponse\"*\n\tConfigKey\022\017\n\007section\030\001 \001(\t\022\014\n\004n"
+      "ame\030\002 \001(\t\"\?\n\nConfigItem\022\"\n\003key\030\001 \001(\0132\025.d"
+      "s_adminpb.ConfigKey\022\r\n\005value\030\002 \001(\t\";\n\020Se"
+      "tConfigRequest\022\'\n\007configs\030\001 \003(\0132\026.ds_adm"
+      "inpb.ConfigItem\"\023\n\021SetConfigResponse\"6\n\020"
+      "GetConfigRequest\022\"\n\003key\030\001 \003(\0132\025.ds_admin"
+      "pb.ConfigKey\"<\n\021GetConfigResponse\022\'\n\007con"
+      "figs\030\001 \003(\0132\026.ds_adminpb.ConfigItem\"\036\n\016Ge"
+      "tInfoRequest\022\014\n\004path\030\001 \001(\t\"\037\n\017GetInfoRes"
+      "ponse\022\014\n\004data\030\001 \001(\t\"%\n\021ForceSplitRequest"
+      "\022\020\n\010range_id\030\001 \001(\004\"\024\n\022ForceSplitResponse"
+      "\"%\n\021CompactionRequest\022\020\n\010range_id\030\001 \001(\004\""
+      "8\n\022CompactionResponse\022\021\n\tbegin_key\030\001 \001(\014"
+      "\022\017\n\007end_key\030\002 \001(\014\"\210\001\n\021ClearQueueRequest\022"
+      ";\n\nqueue_type\030\001 \001(\0162\'.ds_adminpb.ClearQu"
+      "eueRequest.QueueType\"6\n\tQueueType\022\007\n\003ALL"
+      "\020\000\022\017\n\013FAST_WORKER\020\001\022\017\n\013SLOW_WORKER\020\002\"%\n\022"
+      "ClearQueueResponse\022\017\n\007cleared\030\001 \001(\004\"\262\001\n\022"
+      "GetPendingsRequest\0229\n\005ptype\030\001 \001(\0162*.ds_a"
+      "dminpb.GetPendingsRequest.PendingType\022\r\n"
+      "\005count\030\002 \001(\004\"R\n\013PendingType\022\007\n\003ALL\020\000\022\n\n\006"
+      "INSERT\020\001\022\n\n\006SELECT\020\002\022\020\n\014PONIT_SELECT\020\003\022\020"
+      "\n\014RANGE_SELECT\020\004\"#\n\023GetPendingsResponse\022"
+      "\014\n\004desc\030\001 \001(\t\"\036\n\016FlushDBRequest\022\014\n\004wait\030"
+      "\001 \001(\010\"\021\n\017FlushDBResponse*\230\001\n\tAdminType\022\013"
+      "\n\007UNKNOWN\020\000\022\016\n\nSET_CONFIG\020\001\022\016\n\nGET_CONFI"
+      "G\020\002\022\014\n\010GET_INFO\020\003\022\017\n\013FORCE_SPLIT\020\004\022\016\n\nCO"
+      "MPACTION\020\005\022\017\n\013CLEAR_QUEUE\020\006\022\020\n\014GET_PENDI"
+      "NGS\020\007\022\014\n\010FLUSH_DB\020\010b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 2309);
+      descriptor, 2307);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "ds_admin.proto", &protobuf_RegisterTypes);
 }
@@ -2119,7 +2119,7 @@ const int AdminResponse::kCodeFieldNumber;
 const int AdminResponse::kErrorMsgFieldNumber;
 const int AdminResponse::kSetCfgRespFieldNumber;
 const int AdminResponse::kGetCfgRespFieldNumber;
-const int AdminResponse::kGetStatusResponseFieldNumber;
+const int AdminResponse::kGetInfoResponseFieldNumber;
 const int AdminResponse::kForceSplitRespFieldNumber;
 const int AdminResponse::kCompactionRespFieldNumber;
 const int AdminResponse::kClearQueueRespFieldNumber;
@@ -2154,10 +2154,10 @@ AdminResponse::AdminResponse(const AdminResponse& from)
   } else {
     get_cfg_resp_ = NULL;
   }
-  if (from.has_get_status_response()) {
-    get_status_response_ = new ::ds_adminpb::GetInfoResponse(*from.get_status_response_);
+  if (from.has_get_info_response()) {
+    get_info_response_ = new ::ds_adminpb::GetInfoResponse(*from.get_info_response_);
   } else {
-    get_status_response_ = NULL;
+    get_info_response_ = NULL;
   }
   if (from.has_force_split_resp()) {
     force_split_resp_ = new ::ds_adminpb::ForceSplitResponse(*from.force_split_resp_);
@@ -2205,7 +2205,7 @@ void AdminResponse::SharedDtor() {
   error_msg_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete set_cfg_resp_;
   if (this != internal_default_instance()) delete get_cfg_resp_;
-  if (this != internal_default_instance()) delete get_status_response_;
+  if (this != internal_default_instance()) delete get_info_response_;
   if (this != internal_default_instance()) delete force_split_resp_;
   if (this != internal_default_instance()) delete compaction_resp_;
   if (this != internal_default_instance()) delete clear_queue_resp_;
@@ -2251,10 +2251,10 @@ void AdminResponse::Clear() {
     delete get_cfg_resp_;
   }
   get_cfg_resp_ = NULL;
-  if (GetArenaNoVirtual() == NULL && get_status_response_ != NULL) {
-    delete get_status_response_;
+  if (GetArenaNoVirtual() == NULL && get_info_response_ != NULL) {
+    delete get_info_response_;
   }
-  get_status_response_ = NULL;
+  get_info_response_ = NULL;
   if (GetArenaNoVirtual() == NULL && force_split_resp_ != NULL) {
     delete force_split_resp_;
   }
@@ -2343,12 +2343,12 @@ bool AdminResponse::MergePartialFromCodedStream(
         break;
       }
 
-      // .ds_adminpb.GetInfoResponse get_status_response = 12;
+      // .ds_adminpb.GetInfoResponse get_info_response = 12;
       case 12: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(98u /* 98 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_get_status_response()));
+               input, mutable_get_info_response()));
         } else {
           goto handle_unusual;
         }
@@ -2468,10 +2468,10 @@ void AdminResponse::SerializeWithCachedSizes(
       11, *this->get_cfg_resp_, output);
   }
 
-  // .ds_adminpb.GetInfoResponse get_status_response = 12;
-  if (this->has_get_status_response()) {
+  // .ds_adminpb.GetInfoResponse get_info_response = 12;
+  if (this->has_get_info_response()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      12, *this->get_status_response_, output);
+      12, *this->get_info_response_, output);
   }
 
   // .ds_adminpb.ForceSplitResponse force_split_resp = 13;
@@ -2548,11 +2548,11 @@ void AdminResponse::SerializeWithCachedSizes(
         11, *this->get_cfg_resp_, deterministic, target);
   }
 
-  // .ds_adminpb.GetInfoResponse get_status_response = 12;
-  if (this->has_get_status_response()) {
+  // .ds_adminpb.GetInfoResponse get_info_response = 12;
+  if (this->has_get_info_response()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        12, *this->get_status_response_, deterministic, target);
+        12, *this->get_info_response_, deterministic, target);
   }
 
   // .ds_adminpb.ForceSplitResponse force_split_resp = 13;
@@ -2628,11 +2628,11 @@ size_t AdminResponse::ByteSizeLong() const {
         *this->get_cfg_resp_);
   }
 
-  // .ds_adminpb.GetInfoResponse get_status_response = 12;
-  if (this->has_get_status_response()) {
+  // .ds_adminpb.GetInfoResponse get_info_response = 12;
+  if (this->has_get_info_response()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        *this->get_status_response_);
+        *this->get_info_response_);
   }
 
   // .ds_adminpb.ForceSplitResponse force_split_resp = 13;
@@ -2716,8 +2716,8 @@ void AdminResponse::MergeFrom(const AdminResponse& from) {
   if (from.has_get_cfg_resp()) {
     mutable_get_cfg_resp()->::ds_adminpb::GetConfigResponse::MergeFrom(from.get_cfg_resp());
   }
-  if (from.has_get_status_response()) {
-    mutable_get_status_response()->::ds_adminpb::GetInfoResponse::MergeFrom(from.get_status_response());
+  if (from.has_get_info_response()) {
+    mutable_get_info_response()->::ds_adminpb::GetInfoResponse::MergeFrom(from.get_info_response());
   }
   if (from.has_force_split_resp()) {
     mutable_force_split_resp()->::ds_adminpb::ForceSplitResponse::MergeFrom(from.force_split_resp());
@@ -2766,7 +2766,7 @@ void AdminResponse::InternalSwap(AdminResponse* other) {
   error_msg_.Swap(&other->error_msg_);
   swap(set_cfg_resp_, other->set_cfg_resp_);
   swap(get_cfg_resp_, other->get_cfg_resp_);
-  swap(get_status_response_, other->get_status_response_);
+  swap(get_info_response_, other->get_info_response_);
   swap(force_split_resp_, other->force_split_resp_);
   swap(compaction_resp_, other->compaction_resp_);
   swap(clear_queue_resp_, other->clear_queue_resp_);
@@ -2932,44 +2932,44 @@ void AdminResponse::set_allocated_get_cfg_resp(::ds_adminpb::GetConfigResponse* 
   // @@protoc_insertion_point(field_set_allocated:ds_adminpb.AdminResponse.get_cfg_resp)
 }
 
-// .ds_adminpb.GetInfoResponse get_status_response = 12;
-bool AdminResponse::has_get_status_response() const {
-  return this != internal_default_instance() && get_status_response_ != NULL;
+// .ds_adminpb.GetInfoResponse get_info_response = 12;
+bool AdminResponse::has_get_info_response() const {
+  return this != internal_default_instance() && get_info_response_ != NULL;
 }
-void AdminResponse::clear_get_status_response() {
-  if (GetArenaNoVirtual() == NULL && get_status_response_ != NULL) delete get_status_response_;
-  get_status_response_ = NULL;
+void AdminResponse::clear_get_info_response() {
+  if (GetArenaNoVirtual() == NULL && get_info_response_ != NULL) delete get_info_response_;
+  get_info_response_ = NULL;
 }
-const ::ds_adminpb::GetInfoResponse& AdminResponse::get_status_response() const {
-  const ::ds_adminpb::GetInfoResponse* p = get_status_response_;
-  // @@protoc_insertion_point(field_get:ds_adminpb.AdminResponse.get_status_response)
+const ::ds_adminpb::GetInfoResponse& AdminResponse::get_info_response() const {
+  const ::ds_adminpb::GetInfoResponse* p = get_info_response_;
+  // @@protoc_insertion_point(field_get:ds_adminpb.AdminResponse.get_info_response)
   return p != NULL ? *p : *reinterpret_cast<const ::ds_adminpb::GetInfoResponse*>(
       &::ds_adminpb::_GetInfoResponse_default_instance_);
 }
-::ds_adminpb::GetInfoResponse* AdminResponse::mutable_get_status_response() {
+::ds_adminpb::GetInfoResponse* AdminResponse::mutable_get_info_response() {
   
-  if (get_status_response_ == NULL) {
-    get_status_response_ = new ::ds_adminpb::GetInfoResponse;
+  if (get_info_response_ == NULL) {
+    get_info_response_ = new ::ds_adminpb::GetInfoResponse;
   }
-  // @@protoc_insertion_point(field_mutable:ds_adminpb.AdminResponse.get_status_response)
-  return get_status_response_;
+  // @@protoc_insertion_point(field_mutable:ds_adminpb.AdminResponse.get_info_response)
+  return get_info_response_;
 }
-::ds_adminpb::GetInfoResponse* AdminResponse::release_get_status_response() {
-  // @@protoc_insertion_point(field_release:ds_adminpb.AdminResponse.get_status_response)
+::ds_adminpb::GetInfoResponse* AdminResponse::release_get_info_response() {
+  // @@protoc_insertion_point(field_release:ds_adminpb.AdminResponse.get_info_response)
   
-  ::ds_adminpb::GetInfoResponse* temp = get_status_response_;
-  get_status_response_ = NULL;
+  ::ds_adminpb::GetInfoResponse* temp = get_info_response_;
+  get_info_response_ = NULL;
   return temp;
 }
-void AdminResponse::set_allocated_get_status_response(::ds_adminpb::GetInfoResponse* get_status_response) {
-  delete get_status_response_;
-  get_status_response_ = get_status_response;
-  if (get_status_response) {
+void AdminResponse::set_allocated_get_info_response(::ds_adminpb::GetInfoResponse* get_info_response) {
+  delete get_info_response_;
+  get_info_response_ = get_info_response;
+  if (get_info_response) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:ds_adminpb.AdminResponse.get_status_response)
+  // @@protoc_insertion_point(field_set_allocated:ds_adminpb.AdminResponse.get_info_response)
 }
 
 // .ds_adminpb.ForceSplitResponse force_split_resp = 13;
