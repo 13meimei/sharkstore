@@ -158,7 +158,11 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
             resp->mutable_resp()->set_error(err->message());
             break;
         }
-        auto val = LockGet(req.key());
+
+        std::string encode_key;
+        lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.key());
+
+        auto val = LockGet(encode_key);
         // 允许相同id的重复执行lock
         if (val != nullptr) {
             if (req.value().id() != val->id()) {
@@ -184,7 +188,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
 
         lock::EncodeValue(&value_buf,
                          version, req.value(), &extend);
-        ret = store_->Put(req.key(), value_buf);
+        ret = store_->Put(encode_key, value_buf);
 
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -196,7 +200,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
         }
 
         if (cmd.cmd_id().node_id() == node_id_) {
-            auto len = req.key().size() + req.value().ByteSizeLong();
+            auto len = encode_key.size() + req.value().ByteSizeLong();
             CheckSplit(len);
         }
         delete val;
@@ -278,7 +282,10 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto val = LockGet(req.key());
+        std::string encode_key;
+        lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.key());
+
+        auto val = LockGet(encode_key);
         if (val == nullptr) {
             RANGE_LOG_WARN("ApplyLockUpdate error: lock [%s] is not existed", req.key().c_str());
             resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
@@ -312,7 +319,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         lock::EncodeValue(&value_buf,
                          version, *val, &extend);
 
-        ret = store_->Put(req.key(), value_buf);
+        ret = store_->Put(encode_key, value_buf);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
@@ -324,7 +331,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         }
 
         if (cmd.cmd_id().node_id() == node_id_) {
-            auto len = req.key().size() + req.ByteSizeLong();
+            auto len = encode_key.size() + req.ByteSizeLong();
             CheckSplit(len);
         }
         delete val;
@@ -396,7 +403,10 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto val = LockGet(req.key());
+        std::string encode_key;
+        lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.key());
+
+        auto val = LockGet(encode_key);
         if (val == nullptr) {
             RANGE_LOG_WARN("ApplyUnlock error: lock [%s] is not existed", req.key().c_str());
             resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
@@ -413,7 +423,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
             break;
         }
         auto btime = get_micro_second();
-        ret = store_->Delete(req.key());
+        ret = store_->Delete(encode_key);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
@@ -512,7 +522,10 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto val = LockGet(req.key());
+        std::string encode_key;
+        lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.key());
+
+        auto val = LockGet(encode_key);
         if (val == nullptr) {
             FLOG_WARN("Range %" PRIu64
                       "  ApplyUnlockForce error: lock [%s] is not existed",
@@ -523,7 +536,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         }
 
         auto btime = get_micro_second();
-        ret = store_->Delete(req.key());
+        ret = store_->Delete(encode_key);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
