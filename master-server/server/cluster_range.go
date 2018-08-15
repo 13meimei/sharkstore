@@ -3,11 +3,11 @@ package server
 import (
 	"fmt"
 	"master-server/http_reply"
+	"model/pkg/ds_admin"
 	"model/pkg/metapb"
 	"model/pkg/mspb"
 	"util/deepcopy"
 	"util/log"
-	"model/pkg/ds_admin"
 )
 
 func (c *Cluster) createRangeRemote(r *metapb.Range) error {
@@ -362,7 +362,7 @@ func (c *Cluster) ReplaceRangeRemote(addr string, oldRangeId uint64, newRange *m
 func (c *Cluster) ForceSplitRemote(addr string, rangeId uint64) error {
 	var err error = nil
 	for i := 0; i < 3; i++ {
-		err = c.cli.ForceSplit(addr, rangeId)
+		err = c.adminCli.ForceSplit(addr, rangeId)
 		if err != nil {
 			log.Warn("force split range[%d] of node[%s] failed, error[%v]", rangeId, addr, err)
 		} else {
@@ -376,7 +376,7 @@ func (c *Cluster) ForceSplitRemote(addr string, rangeId uint64) error {
 
 func (c *Cluster) ForceCompactRemote(addr string, rangeId uint64) (resp *ds_adminpb.CompactionResponse, err error) {
 	for i := 0; i < 3; i++ {
-		resp, err = c.cli.ForceCompact(addr, rangeId)
+		resp, err = c.adminCli.ForceCompact(addr, rangeId)
 		if err != nil {
 			log.Warn("force compact range[%d] of node[%s] failed, error[%v]", rangeId, addr, err)
 		} else {

@@ -608,8 +608,8 @@ func (service *Server) handleGetNodeId(ctx context.Context, req *mspb.GetNodeIdR
 		}
 		serverAddr := fmt.Sprintf("%s:%d", ip, req.GetServerPort())
 		raftAddr := fmt.Sprintf("%s:%d", ip, req.GetRaftPort())
-		httpAddr := fmt.Sprintf("%s:%d", ip, req.GetHttpPort())
-		node, cleanUp, err := service.cluster.GetNodeId(serverAddr, raftAddr, httpAddr, req.GetVersion())
+		adminAddr := fmt.Sprintf("%s:%d", ip, req.GetAdminPort())
+		node, cleanUp, err := service.cluster.GetNodeId(serverAddr, raftAddr, adminAddr, req.GetVersion())
 		if err != nil {
 			return nil, err
 		}

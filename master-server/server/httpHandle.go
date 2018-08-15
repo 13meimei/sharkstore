@@ -19,13 +19,13 @@ import (
 	"time"
 
 	"master-server/http_reply"
+	"model/pkg/ds_admin"
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
 	"util"
 	"util/deepcopy"
 	"util/log"
 	"util/server"
-	"model/pkg/ds_admin"
 )
 
 var (
@@ -572,7 +572,7 @@ func (service *Server) handleRangeForceSplit(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = service.cluster.ForceSplitRemote(node.GetServerAddr(), rangeId)
+	err = service.cluster.ForceSplitRemote(node.GetAdminAddr(), rangeId)
 	if err != nil {
 		log.Error("http range force split failed. error:[%v]", err.Error())
 		reply.Code = -1
@@ -610,7 +610,7 @@ func (service *Server) handleRangeForceCompact(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	_, err = service.cluster.ForceCompactRemote(node.GetServerAddr(), rangeId)
+	_, err = service.cluster.ForceCompactRemote(node.GetAdminAddr(), rangeId)
 	if err != nil {
 		log.Error("http range force compact failed. error:[%v]", err.Error())
 		reply.Code = -1
@@ -3343,7 +3343,7 @@ func (service *Server) handleTableGetRoute(w http.ResponseWriter, r *http.Reques
 			State:      int32(rng.State),
 			DbName:     table.GetDbName(),
 			TableName:  table.GetName(),
-			TableId:  table.GetId(),
+			TableId:    table.GetId(),
 			LastHbTime: rng.LastHbTimeTS.Format("2006-01-02 15:04:05"),
 		}
 		route := &Route{
@@ -3760,7 +3760,7 @@ func (service *Server) handleTableTopologyQuery(w http.ResponseWriter, r *http.R
 }
 
 //set metric send config
-func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) () {
+func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 	interval := r.FormValue("interval")
@@ -3780,7 +3780,7 @@ func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Requ
 }
 
 //get metric send config
-func (service *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) () {
+func (service *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 

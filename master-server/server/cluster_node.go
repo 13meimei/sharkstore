@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"model/pkg/ds_admin"
 	"model/pkg/metapb"
 	"util/log"
-	"model/pkg/ds_admin"
 )
 
 func (c *Cluster) NodeLogin(nodeId uint64) error {
@@ -28,13 +28,13 @@ func (c *Cluster) NodeLogin(nodeId uint64) error {
 
 /**
   get nodeId, and clean up command
- */
-func (c *Cluster) GetNodeId(serverAddr, raftAddr, httpAddr, version string) (*Node, bool, error) {
+*/
+func (c *Cluster) GetNodeId(serverAddr, raftAddr, adminAddr, version string) (*Node, bool, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	if node := c.FindNodeByAddr(serverAddr); node != nil {
 		log.Debug("node:[%v] start or find", node)
-		 //需要clean up, 然后上线
+		//需要clean up, 然后上线
 		if node.IsLogout() {
 			return node, true, nil
 		}
@@ -45,27 +45,26 @@ func (c *Cluster) GetNodeId(serverAddr, raftAddr, httpAddr, version string) (*No
 			return nil, false, err
 		}
 		n := &metapb.Node{
-			Id: nodeId,
+			Id:         nodeId,
 			ServerAddr: serverAddr,
-			RaftAddr: raftAddr,
-			HttpAddr: httpAddr,
-			State: metapb.NodeState_N_Initial,
-			Version: version,
+			RaftAddr:   raftAddr,
+			AdminAddr:  adminAddr,
+			State:      metapb.NodeState_N_Initial,
+			Version:    version,
 		}
 		node = NewNode(n)
 
 		err = c.AddNode(node)
 		if err != nil {
-			log.Error("node add err %v",node)
+			log.Error("node add err %v", node)
 			return nil, false, err
 		}
-		log.Debug("node add %v",node)
+		log.Debug("node add %v", node)
 		return node, false, nil
 	}
 }
 
-
-func (c *Cluster) AddNode(node *Node) (error) {
+func (c *Cluster) AddNode(node *Node) error {
 	err := c.storeNode(node.Node)
 	if err != nil {
 		log.Error("store node:[%v] failed, err:[%v]", node.Node, err)
@@ -108,7 +107,7 @@ func (c *Cluster) FindNodeById(id uint64) *Node {
 }
 
 func (c *Cluster) FindNodeByAddr(addr string) *Node {
-	if node, find :=  c.nodes.FindNodeByAddr(addr); find {
+	if node, find := c.nodes.FindNodeByAddr(addr); find {
 		return node
 	}
 	return nil
@@ -140,7 +139,7 @@ func (c *Cluster) NodeUpgrade(nodeID uint64) error {
 	return c.UpdateNodeState(node, metapb.NodeState_N_Upgrade)
 }
 
-func (c *Cluster)UpdateNodeState(n *Node, state metapb.NodeState) error {
+func (c *Cluster) UpdateNodeState(n *Node, state metapb.NodeState) error {
 	oldState := n.State
 	n.State = state
 	err := c.storeNode(n.Node)
@@ -221,7 +220,6 @@ func (c *Cluster) getRangeNodes(r *Range) []*Node {
 	return nodes
 }
 
-
 func (c *Cluster) blockNode(nodeID uint64) error {
 	node := c.FindNodeById(nodeID)
 	if node == nil {
@@ -270,7 +268,7 @@ func (c *Cluster) setConfigRemote(nodeId uint64, configs []*ds_adminpb.ConfigIte
 	if node == nil {
 		return ErrNotExistNode
 	}
-	err := c.cli.SetConfig(node.GetServerAddr(), configs)
+	err := c.adminCli.SetConfig(node.GetAdminAddr(), configs)
 	if err != nil {
 		log.Warn("set config[%v] of node[%s] failed, error[%v]", nil, node.GetServerAddr(), err)
 		return err
@@ -283,7 +281,7 @@ func (c *Cluster) getConfigRemote(nodeId uint64, keys []*ds_adminpb.ConfigKey) (
 	if node == nil {
 		return nil, ErrNotExistNode
 	}
-	resp, err := c.cli.GetConfig(node.GetServerAddr(), keys)
+	resp, err := c.adminCli.GetConfig(node.GetAdminAddr(), keys)
 	if err != nil {
 		log.Warn("get config of node[%s] failed, error[%v]", node.GetServerAddr(), err)
 		return nil, err
@@ -296,7 +294,7 @@ func (c *Cluster) getDsInfoRemote(nodeId uint64, path string) (*ds_adminpb.GetIn
 	if node == nil {
 		return nil, ErrNotExistNode
 	}
-	resp, err := c.cli.GetDsInfo(node.GetServerAddr(), path)
+	resp, err := c.adminCli.GetInfo(node.GetAdminAddr(), path)
 	if err != nil {
 		log.Warn("get ds_info of node[%s] failed, error[%v]", node.GetServerAddr(), err)
 		return nil, err
@@ -309,7 +307,7 @@ func (c *Cluster) clearQueueRemote(nodeId uint64, queueType ds_adminpb.ClearQueu
 	if node == nil {
 		return nil, ErrNotExistNode
 	}
-	resp, err := c.cli.ClearQueue(node.GetServerAddr(), queueType)
+	resp, err := c.adminCli.ClearQueue(node.GetAdminAddr(), queueType)
 	if err != nil {
 		log.Warn("clear queueType[%v] of node[%s] failed, error[%v]", queueType, node.GetServerAddr(), err)
 		return nil, err
@@ -322,7 +320,7 @@ func (c *Cluster) getPendingQueuesRemote(nodeId uint64, pendingType ds_adminpb.G
 	if node == nil {
 		return nil, ErrNotExistNode
 	}
-	resp, err := c.cli.GetPendingQueues(node.GetServerAddr(), pendingType, count)
+	resp, err := c.adminCli.GetPendingQueues(node.GetAdminAddr(), pendingType, count)
 	if err != nil {
 		log.Warn("get pending[type=%d] queues of node[%s] failed, error[%v]", pendingType, node.GetServerAddr(), err)
 		return nil, err
@@ -335,7 +333,7 @@ func (c *Cluster) flushDBRemote(nodeId uint64, wait bool) error {
 	if node == nil {
 		return ErrNotExistNode
 	}
-	err := c.cli.FlushDB(node.GetServerAddr(), wait)
+	err := c.adminCli.FlushDB(node.GetAdminAddr(), wait)
 	if err != nil {
 		log.Warn("flush db[wait=%t] of node[%s] failed, error[%v]", wait, node.GetServerAddr(), err)
 		return err
