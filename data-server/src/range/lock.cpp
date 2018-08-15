@@ -599,8 +599,8 @@ void Range::LockWatch(common::ProtoMessage *msg,
         if (val == nullptr) {
             FLOG_WARN("LockWatch error: lock encode key [%s] is not existed",
                       EncodeToHexString(encode_key).c_str());
-            err = new errorpb::Error;
-            err->set_message("lock is not existed");
+            //err = new errorpb::Error;
+            //err->set_message("lock is not existed");
 
             auto resp = new watchpb::DsWatchResponse;
             resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
