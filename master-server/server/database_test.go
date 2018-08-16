@@ -7,7 +7,7 @@ import (
 )
 
 func TestFindAndDeleteTable(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBlotDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 
 	// 第一步.　添加新的节点

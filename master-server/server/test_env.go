@@ -124,11 +124,13 @@ func (b *LevelDBBatch)Commit() error {
 }
 
 var path = "/tmp/Data"
+var dsPath = "/tmp/Data"
 
 func initDataPath() {
 	os.RemoveAll(path)
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
+		fmt.Sprintf("init data path %s err %v", path, err)
 		os.Exit(-1)
 		return
 	}
