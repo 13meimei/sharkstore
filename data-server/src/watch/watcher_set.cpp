@@ -135,7 +135,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
             if(prefixFlag) {
                 //用户端版本低于内存版本时，需要全量
-                if(w_ptr->getBufferFlag() == -1) {
+                if(w_ptr->getBufferFlag() <= 0) {
 
                     std::string endKey(key);
                     if (0 != range::WatchEncodeAndDecode::NextComparableBytes(key.data(), key.length(), endKey)) {
@@ -145,12 +145,12 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                     }
 
                     auto ds_resp = new watchpb::DsWatchResponse;
-                    auto tmpVer(0);
+                    auto tmpVer(clientVersion);
 
                     auto count = loadFromDb(store_, watchpb::PUT, key, endKey, tmpVer, w_ptr->GetTableId(),
                                             ds_resp);
-                    FLOG_DEBUG("prefix mode: loadFromDb count:%"
-                                       PRId32, count);
+                    FLOG_DEBUG("prefix mode: version:%" PRId64 " loadFromDb count:%"
+                                       PRId32, tmpVer, count);
                     if (count > 0) {
                         w_ptr->Send(ds_resp);
                         return WATCH_OK;

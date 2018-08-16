@@ -137,7 +137,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         std::vector<watch::CEventBufferValue> vecUpdKeys;
 
         int32_t memCnt = eventBuffer->loadFromBuffer(*hashKey[0], clientVersion, vecUpdKeys);
-        RANGE_LOG_DEBUG("loadFromBuffer hit count[%" PRId32 "]", memCnt);
+        RANGE_LOG_DEBUG("loadFromBuffer hit count[%" PRId32 "]  version:%" PRId64 , memCnt, clientVersion);
 
         if(memCnt > 0) {
             auto resp = ds_resp->mutable_resp();
