@@ -186,6 +186,9 @@ set(SOURCES
     src/monitor/rangedata.cpp
     src/monitor/statistics.cpp
     src/admin/admin_server.cpp
+    src/admin/get_config.cpp
+    src/admin/get_info.cpp
+    src/admin/set_config.cpp
 )
 
 if (APPLE)
