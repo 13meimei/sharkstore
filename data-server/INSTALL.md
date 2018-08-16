@@ -29,6 +29,16 @@ cd libfastcommon
 sudo ./make.sh install
 ```
 
+## snappy
+```sh
+wget https://github.com/google/snappy/archive/1.1.7.tar.gz
+tar xvf 1.1.7.tar.gz
+cd snappy-1.1.7/
+mkdir build && cd build
+cmake .. -DSNAPPY_BUILD_TESTS=OFF -DCMAKE_CXX_FLAGS="-O2 -DNDEBUG -g -fPIC"
+sudo make install -j 4
+```
+
 ## rocksdb
 v5.11.3
 ```sh
@@ -37,7 +47,7 @@ tar xvf v5.11.3.tar.gz
 cd rocksdb-5.11.3
 mkdir build
 cd build
-cmake ..
+cmake .. -DWITH_SNAPPY=ON -DWITH_TESTS=OFF
 make -j `nproc`
 sudo make install
 ```
