@@ -132,8 +132,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         if(store_!= nullptr){
 
             Status ret;
-            std::pair<int64_t, bool> result;
-            result.second = false;
+            std::pair<int64_t, bool> result = std::make_pair(0, false);
 
             if(prefixFlag) {
                 //用户端版本低于内存版本时，需要全量
@@ -158,7 +157,11 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                         return WATCH_OK;
                     }
 
-                    ret = Status(Status::kNotFound);
+                    if(result.second) {
+                        ret = Status(Status::kNotChange);
+                    } else {
+                        ret = Status(Status::kNotFound);
+                    }
                     if (ds_resp != nullptr) delete ds_resp;
                 }
             } else {
@@ -171,15 +174,16 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                         version = 0;
                         return WATCH_WATCHER_NOT_NEED;
                     }
+                    result.first = 1;
                     result.second = true;
                 }else if(ret.code() != Status::kNotFound) {
-                    FLOG_ERROR("AddWatcher Decode error, key: %s err:%s", EncodeToHexString(key).c_str(), ret.ToString().c_str());
+                    FLOG_ERROR("AddWatcher Get error, key: %s err:%s", EncodeToHexString(key).c_str(), ret.ToString().c_str());
                     version = 0;
                     return WATCH_WATCHER_NOT_NEED;
                 }
             }
 
-            if(ret.code() == Status::kNotFound && !result.second) {
+            if(ret.code() == Status::kNotFound && clientVersion > 0) {
                 auto ds_resp = new watchpb::DsWatchResponse;
                 ds_resp->mutable_resp()->set_code(Status::kNotFound);
                 ds_resp->mutable_resp()->set_watchid(w_ptr->GetWatcherId());
@@ -190,7 +194,8 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         }
 
-        FLOG_DEBUG("AddWatcher start_version:%" PRId64 " db version[%" PRId64 "], key: %s", clientVersion, version, EncodeToHexString(key).c_str());
+        FLOG_DEBUG("AddWatcher(%s) start_version:%" PRId64 " db version[%" PRId64 "], key: %s",
+                   prefixFlag?"prefix":"single", clientVersion, version, EncodeToHexString(key).c_str());
         auto v = new WatcherValue;
         v->key_version_ = version;
         watcher_map_it = key_watchers.insert(std::make_pair(key, v)).first;
@@ -209,7 +214,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                    prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
                    watcher_map_it->second->key_version_);
 
-     return WATCH_WATCHER_NOT_NEED;
+        return WATCH_WATCHER_NOT_NEED;
     }
 
     auto ret = watcher_map.emplace(std::make_pair(watcher_id, w_ptr)).second;

@@ -45,13 +45,13 @@ namespace range {
 const int DEFAULT_LOCK_DELETE_TIME_MILLSEC = 3000;
 enum {
     LOCK_OK = 0,
+    LOCK_NOT_EXIST = Status::kNotFound,
     LOCK_EXISTED,
-    LOCK_NOT_EXIST,
     LOCK_ID_MISMATCHED,
     LOCK_IS_FORCE_UNLOCKED,
     LOCK_STORE_FAILED,
     LOCK_EPOCH_ERROR,
-    LOCK_TIME_OUT,  //value 7 same with defined in status.h
+    LOCK_TIME_OUT = Status::kTimedOut,  //value 7 same with defined in status.h
     LOCK_PARAMETER_ERROR
 };
 

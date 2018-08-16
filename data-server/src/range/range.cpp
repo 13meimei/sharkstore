@@ -29,7 +29,7 @@ Range::Range(server::ContextServer *context, const metapb::Range &meta)
     eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
                                         ds_config.watch_config.buffer_queue_size);
 
-    RANGE_LOG_DEBUG("Range constructor: capacity %lld ---%lld", ds_config.watch_config.buffer_map_size, ds_config.watch_config.buffer_queue_size);
+    //RANGE_LOG_DEBUG("Range constructor: capacity %lld ---%lld", ds_config.watch_config.buffer_map_size, ds_config.watch_config.buffer_queue_size);
 }
 
 Range::~Range() {
