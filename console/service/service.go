@@ -29,6 +29,7 @@ import (
 	"sync"
 	"crypto/md5"
 	"encoding/hex"
+	"model/pkg/ds_admin"
 )
 
 const (
@@ -978,7 +979,7 @@ func (s *Service) GetConfigOfNode(clusterId, nodeId int, configKeys string) (int
 	var getConfigOfNodeResp = struct {
 		Code int                      `json:"code"`
 		Msg  string                   `json:"message"`
-		Data string `json:"data"`
+		Data []*ds_adminpb.ConfigItem `json:"data"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/node/getConfigOfNode", reqParams, &getConfigOfNodeResp); err != nil {
 		return nil, err

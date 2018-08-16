@@ -518,14 +518,15 @@ func (service *Server) handleNodeGetConfig(w http.ResponseWriter, r *http.Reques
 		reply.Message = err.Error()
 		return
 	}
-	configBytes, err := json.Marshal(resp.Configs)
-	if err != nil {
-		log.Error("http get node config failed. error:[%v]", err.Error())
-		reply.Code = -1
-		reply.Message = err.Error()
-		return
-	}
-	reply.Data = string(configBytes)
+	//configBytes, err := json.Marshal(resp.Configs)
+	//if err != nil {
+	//	log.Error("http get node config failed. error:[%v]", err.Error())
+	//	reply.Code = -1
+	//	reply.Message = err.Error()
+	//	return
+	//}
+	//reply.Data = string(configBytes)
+	reply.Data = resp.Configs
 	return
 }
 
