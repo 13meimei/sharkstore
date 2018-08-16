@@ -211,7 +211,7 @@ func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
 	}
 
 	// app ping url, for alive alarm
-	service.server.Handle("/app/ping", alarm.HandleAppPing)
+	service.server.Handle("/app/ping", service.alarmServer.HandleAppPing)
 	return nil
 }
 

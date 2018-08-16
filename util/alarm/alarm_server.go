@@ -3,6 +3,7 @@ package alarm
 import (
 	"fmt"
 	"sync"
+	"strings"
 	"strconv"
 	"errors"
 	"net"
@@ -17,11 +18,15 @@ import (
 
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-	"strings"
+	"github.com/gomodule/redigo/redis"
+	"github.com/gin-gonic/gin/json"
 )
 
 const (
-	APP_NAME_GATEWAY = "gw"
+	APP_NAME_GATEWAY = "gateway"
+	APP_NAME_MASTER = "master"
+	APP_NAME_METRIC = "metric"
+	APP_KEY_JOIN_LETTER = "_"
 )
 
 type AlarmServer interface {
@@ -36,7 +41,44 @@ type Server struct {
 	aliveCheckingAppKeys 	[]string
 	aliveCheckingLock 	sync.RWMutex
 
-	//aliveAppsRemote *JimdbAPClient // todo jimdb ap client
+	jimUrl string
+	jimApAddr string
+	jimConnTimeoutSec time.Duration
+	jimWriteTimeoutSec time.Duration
+	jimReadTimeoutSec time.Duration
+	jimRequirePass string
+
+
+	jimClientPool *redis.Pool
+	//jimClientLock sync.Mutex
+}
+
+func (s *Server) jimDial() (redis.Conn, error) {
+	if (len(s.jimUrl) == 0 || len(s.jimApAddr) == 0) {
+		s.jimClientPool = nil
+		return nil, errors.New("no jim url or ap addr")
+	}
+
+	var dialOpts []redis.DialOption
+	if s.jimConnTimeoutSec > 0 {
+		dialOpts = append(dialOpts, redis.DialConnectTimeout(s.jimConnTimeoutSec*time.Second))
+	}
+	if s.jimWriteTimeoutSec > 0 {
+		dialOpts = append(dialOpts, redis.DialWriteTimeout(s.jimWriteTimeoutSec * time.Second))
+	}
+	if s.jimReadTimeoutSec > 0 {
+		dialOpts = append(dialOpts, redis.DialReadTimeout(s.jimReadTimeoutSec*time.Second))
+	}
+	if len(s.jimRequirePass) != 0 {
+		dialOpts = append(dialOpts, redis.DialPassword(s.jimRequirePass))
+	}
+
+	return redis.Dial("tcp", s.jimApAddr, dialOpts...)
+}
+
+func (s *Server) jimSendCommand(commandName string, args ...interface{}) (interface{}, error) {
+	conn := s.jimClientPool.Get()
+	return conn.Do(commandName, args...)
 }
 
 func newServer(ctx context.Context, alarmServerAddr string) *Server {
@@ -49,15 +91,61 @@ func newServer(ctx context.Context, alarmServerAddr string) *Server {
 	s.gateway = gateway
 	s.filters = append(s.filters, new(clusterIdFilter))
 
+	s.jimClientPool = func() *redis.Pool {
+		return &redis.Pool{
+			MaxIdle: 3,
+			IdleTimeout: 240 * time.Second,
+			Dial: func() (redis.Conn, error) {
+				return s.jimDial()
+			},
+		}
+	}()
+
+	go s.aliveCheckingAlarm()
 	return s
 }
 
-func (s *Server) genAliveAppKey(appName string, clusterId uint64, appAddr string) string {
-	return fmt.Sprintf("alive_%v_%v_%v", appName, clusterId, appAddr)
+func (s *Server) splitAliveAppKey(appKey string) (appName, clusterId, appAddr string) {
+	strs := strings.Split(appKey, APP_KEY_JOIN_LETTER)
+	appName = strs[1]
+	clusterId = strs[2]
+	appAddr = strs[3]
+	return
 }
 
-func (s *Server) AddAliveCheckingAppAddr(appName string, clusterId uint64, appAddr string) {
+// ex. alive_gateway_1_127.0.0.1
+func (s *Server) genAliveAppKey(appName, clusterId, appAddr string) string {
+	name := strings.ToLower(appName)
+	switch {
+	case strings.HasPrefix(name, APP_NAME_GATEWAY):
+		log.Info("in gen app key: treat [%v] as [%v]", appName, APP_NAME_GATEWAY)
+		return fmt.Sprintf("alive%s%v%s%v%s%v",
+			APP_KEY_JOIN_LETTER, APP_NAME_GATEWAY,
+			APP_KEY_JOIN_LETTER, clusterId,
+			APP_KEY_JOIN_LETTER, appAddr)
+	case strings.HasPrefix(name, APP_NAME_MASTER):
+		log.Info("in gen app key: treat [%v] as [%v]", appName, APP_NAME_MASTER)
+		return fmt.Sprintf("alive%s%v%s%v%s%v",
+			APP_KEY_JOIN_LETTER, APP_NAME_MASTER,
+			APP_KEY_JOIN_LETTER, clusterId,
+			APP_KEY_JOIN_LETTER, appAddr)
+	case strings.HasPrefix(name, APP_NAME_METRIC):
+		log.Info("in gen app key: treat [%v] as [%v]", appName, APP_NAME_METRIC)
+		return fmt.Sprintf("alive%s%v%s%v%s%v",
+			APP_KEY_JOIN_LETTER, APP_NAME_METRIC,
+			APP_KEY_JOIN_LETTER, clusterId,
+			APP_KEY_JOIN_LETTER, appAddr)
+	default:
+		return ""
+	}
+}
+
+func (s *Server) addAliveCheckingAppAddr(appName, clusterId, appAddr string) {
 	appKey := s.genAliveAppKey(appName, clusterId, appAddr)
+	if len(appKey) == 0 {
+		log.Warn("app name [%v] can not be generated", appName)
+		return
+	}
 
 	s.aliveCheckingLock.Lock()
 	defer s.aliveCheckingLock.Unlock()
@@ -65,7 +153,7 @@ func (s *Server) AddAliveCheckingAppAddr(appName string, clusterId uint64, appAd
 	s.aliveCheckingAppKeys = append(s.aliveCheckingAppKeys, appKey)
 }
 
-func (s *Server) CopyAliveCheckingAppKeys() (ret []string) {
+func (s *Server) copyAliveCheckingAppKeys() (ret []string) {
 	s.aliveCheckingLock.Lock()
 	defer s.aliveCheckingLock.Unlock()
 
@@ -119,6 +207,7 @@ func (s *Server) parseHost(host string) ([]string, error) {
 func (s *Server) loadAliveCheckingAppAddrs() error {
 	clusterInfos, err := s.getClusterInfo()
 	if err != nil {
+		log.Error("alive checking get cluster info failed: %v", err)
 		return err
 	}
 	for _, info := range clusterInfos {
@@ -134,9 +223,8 @@ func (s *Server) loadAliveCheckingAppAddrs() error {
 		}
 
 		for _, gwAddr := range gwAddrs {
-			s.AddAliveCheckingAppAddr(APP_NAME_GATEWAY, info.id, gwAddr)
+			s.addAliveCheckingAppAddr(APP_NAME_GATEWAY, fmt.Sprint(info.id), gwAddr)
 		}
-
 	}
 
 	return nil
@@ -218,46 +306,115 @@ func (s *Server) NodeRangeAlarm(ctx context.Context, req *alarmpb.NodeRangeAlarm
 	return resp, err
 }
 
-func HandleAppPing(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleAppPing(w http.ResponseWriter, r *http.Request) {
 	log.Debug("handle app ping")
 
-	//app := r.FormValue("app")
-	//ips := r.FormValue("ips")
-	//ttl, _ := strconv.ParseUint(r.FormValue("ping_interval"), 10, 64)
-	//
-	//s.genAliveAppKey()
+	var resp string
+	defer w.Write([]byte(resp))
 
-	// fixme setex key with ttl ping_interval to jimdb
+	appName := r.FormValue("app_name") // app argv[0]
+	appClusterId := r.FormValue("cluster_id")
+	ipAddrs := r.FormValue("ip_addrs") // string ip join with ',': ip1,ip2,...
+	ttl, err := strconv.ParseUint(r.FormValue("ping_interval"), 10, 64)
+	if err != nil {
+		resp = fmt.Sprintf("ping_interval parseuint failed: %v", err)
+		log.Error(resp)
+		return
+	}
+	ipAddrsArr := strings.Split(ipAddrs, ",")
+	if len(ipAddrsArr) == 0 {
+		resp = fmt.Sprintf("ip_addrs can not be split with letter ','")
+		log.Error(resp)
+		return
+	}
 
+	for _, appAddr := range ipAddrsArr {
+		appKey := s.genAliveAppKey(appName, appClusterId, appAddr)
+		log.Info("gen app key: %v", appKey)
+		if len(appKey) == 0 {
+			resp = fmt.Sprintf("app name [%v] can not be generated", appName)
+			log.Error(resp)
+			return
+		}
+
+		// setex key with ttl ping_interval to jimdb
+		reply, err := s.jimSendCommand("setex",  appKey, ttl*2, "")
+		replyStr, err := redis.String(reply, err)
+		if err != nil {
+			resp = fmt.Sprintf("jim command setex reply type is not int: %v", err)
+			log.Error(resp)
+			return
+		}
+		if (strings.Compare(replyStr, "ok") != 0) {
+			resp = fmt.Sprintf("jim command setex reply is not ok")
+			log.Error(resp)
+			return
+		}
+	}
+
+	resp = "ok"
 }
 
-func (s *Server) AliveCheckingAlarm() {
+func (s *Server) aliveCheckingAlarm() {
 	log.Debug("alive checking alarm processing...")
 
-	t := time.NewTicker(10 *time.Second)
+	loadTicker := time.NewTicker(30 *time.Second)
+	checkTicker := time.NewTicker(10 *time.Second)
 	for {
 		select {
-		case <-t.C:
+		case <-loadTicker.C:
 			if err := s.loadAliveCheckingAppAddrs(); err != nil {
 				log.Error("loadAliveCheckingAppAddrs failed: %v", err)
-				continue
 			}
 
-			appKeys := s.CopyAliveCheckingAppKeys()
+		case <-checkTicker.C:
+			appKeys := s.copyAliveCheckingAppKeys()
 			for _, key := range appKeys {
-				// fixme get app in jimdb, if it is not in
-				key = key
+				// get app key from jimdb, if it is not in, then alarm
+				// exists return interger
+				reply, err := s.jimSendCommand("exists", key)
+				if err != nil {
+					log.Error("jim send command error: %v", err)
+					continue
+				}
+				replyInt, err := redis.Int(reply, err)
+				if err != nil {
+					log.Error("jim command setex reply type is not int: %v", err)
+					continue
+				}
+
+				if replyInt != 0 { // app key exists
+					continue
+				}
+
+				var samplesJson []string
+				appName, clusterId, appAddr := s.splitAliveAppKey(key)
+				info := make(map[string]interface{})
+				info["spaceId"] = clusterId
+				info["ip"] = appAddr
+				info["app_is_not_alive"] = 1
+				info["app_name"] = appName
+				sample := NewSample("", 0, 0, info)
+
+				sampleJson, err := json.Marshal(sample)
+				if err != nil {
+					log.Error("sample json marshal failed: %v", err)
+					continue
+				}
+				samplesJson = append(samplesJson, string(sampleJson))
 
 				if err := s.gateway.notify(Message{
-					//ClusterId: clusterId,
-					//Title: req.GetTitle(),
-					//Content: req.GetContent(),
-					//samples: req.SampleJson,
+					ClusterId: func() int64 {
+						ret, _ :=strconv.ParseInt(clusterId, 10, 64)
+						return ret
+					}(),
+					Title: "alive alarm",
+					Content: "",
+					samples: samplesJson,
 				}, time.Second); err != nil {
 					log.Error("alive alarm notify timeout")
 				}
 			}
-
 		}
 	}
 }
