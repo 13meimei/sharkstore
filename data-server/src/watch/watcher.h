@@ -57,7 +57,7 @@ public:
     WatcherId GetWatcherId() { return watcher_id_; }
     int64_t GetExpireTime() { return expire_time_; }
     bool IsSentResponse() {
-        std::lock_guard<std::mutex> lock(send_lock_);
+        //std::lock_guard<std::mutex> lock(send_lock_);
         return sent_response_flag;
     }
     int64_t getKeyVersion() const {
