@@ -112,6 +112,8 @@ static int load_rocksdb_config(IniContext *ini_context) {
     ds_config.rocksdb_config.cache_index_and_filter_blocks =
             (bool)iniGetIntValue(section, "cache_index_and_filter_blocks", ini_context, 0);
 
+    ds_config.rocksdb_config.compression = load_integer_value_atleast(ini_context, section, "compression", 0, 0);
+
     ds_config.rocksdb_config.storage_type = load_integer_value_atleast(ini_context, section, "storage_type", 0, 0);
 
     ds_config.rocksdb_config.min_blob_size = load_integer_value_atleast(ini_context, section, "min_blob_size", 0, 0);
@@ -124,6 +126,7 @@ static int load_rocksdb_config(IniContext *ini_context) {
         fprintf(stderr, "invalid rocksdb blob_gc_percent config(%d)", ds_config.rocksdb_config.blob_gc_percent);
         return -1;
     }
+    ds_config.rocksdb_config.blob_compression = load_integer_value_atleast(ini_context, section, "blob_compression", 0, 0);
 
     ds_config.rocksdb_config.ttl = load_integer_value_atleast(ini_context, section, "ttl", 0, 0);
 
@@ -161,11 +164,13 @@ void print_rocksdb_config() {
               "\n\tlevel0_stop_writes_trigger: %d"
               "\n\tdisable_wal: %d"
               "\n\tcache_index_and_filter_blocks: %d"
+              "\n\tcompression: %d"
               "\n\tstorage_type: %d"
               "\n\tmin_blob_size: %d"
               "\n\tblob_file_size: %lu"
               "\n\tenable_garbage_collection: %d"
               "\n\tblob_gc_percent: %d"
+              "\n\tblob_compression: %d"
               "\n\tttl: %d"
               "\n\tenable_stats: %d"
               "\n\tenable_debug_log: %d"
@@ -193,11 +198,13 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.level0_stop_writes_trigger,
               ds_config.rocksdb_config.disable_wal,
               ds_config.rocksdb_config.cache_index_and_filter_blocks,
+              ds_config.rocksdb_config.compression,
               ds_config.rocksdb_config.storage_type,
               ds_config.rocksdb_config.min_blob_size,
               ds_config.rocksdb_config.blob_file_size,
               ds_config.rocksdb_config.enable_garbage_collection,
               ds_config.rocksdb_config.blob_gc_percent,
+              ds_config.rocksdb_config.blob_compression,
               ds_config.rocksdb_config.ttl,
               ds_config.rocksdb_config.enable_stats,
               ds_config.rocksdb_config.enable_debug_log
