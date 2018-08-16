@@ -26,7 +26,10 @@ Range::Range(server::ContextServer *context, const metapb::Range &meta)
       start_key_(meta.start_key()),
       meta_(meta) {
     store_ = new storage::Store(meta, context->rocks_db);
-    eventBuffer = new watch::CEventBuffer;
+    eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
+                                        ds_config.watch_config.buffer_queue_size);
+
+    //RANGE_LOG_DEBUG("Range constructor: capacity %lld ---%lld", ds_config.watch_config.buffer_map_size, ds_config.watch_config.buffer_queue_size);
 }
 
 Range::~Range() {

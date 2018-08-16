@@ -103,9 +103,9 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().key());
-    req.mutable_req()->set_key(encode_key);
+    //req.mutable_req()->set_key(encode_key);
 
-    auto& key = req.req().key();
+    //auto& key = req.req().key();
     errorpb::Error *err = nullptr;
 
     do {
@@ -114,7 +114,7 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
             break;
         }
 
-        if (!KeyInRange(key, err)) {
+        if (!KeyInRange(encode_key, err)) {
             RANGE_LOG_WARN("Lock error: %s", err->message().c_str());
             break;
         }
@@ -158,7 +158,11 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
             resp->mutable_resp()->set_error(err->message());
             break;
         }
-        auto val = LockGet(req.key());
+
+        std::string encode_key;
+        lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.key());
+
+        auto val = LockGet(encode_key);
         // 允许相同id的重复执行lock
         if (val != nullptr) {
             if (req.value().id() != val->id()) {
@@ -184,7 +188,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
 
         lock::EncodeValue(&value_buf,
                          version, req.value(), &extend);
-        ret = store_->Put(req.key(), value_buf);
+        ret = store_->Put(encode_key, value_buf);
 
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -196,7 +200,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd) {
         }
 
         if (cmd.cmd_id().node_id() == node_id_) {
-            auto len = req.key().size() + req.value().ByteSizeLong();
+            auto len = encode_key.size() + req.value().ByteSizeLong();
             CheckSplit(len);
         }
         delete val;
@@ -222,9 +226,9 @@ void Range::LockUpdate(common::ProtoMessage *msg,
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().key());
-    req.mutable_req()->set_key(encode_key);
+    //req.mutable_req()->set_key(encode_key);
 
-    auto &key = req.req().key();
+    //auto &key = req.req().key();
     errorpb::Error *err = nullptr;
 
     do {
@@ -233,7 +237,7 @@ void Range::LockUpdate(common::ProtoMessage *msg,
             break;
         }
 
-        if (!KeyInRange(key, err)) {
+        if (!KeyInRange(encode_key, err)) {
             RANGE_LOG_WARN("LockUpdate error: %s", err->message().c_str());
             break;
         }
@@ -278,7 +282,10 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto val = LockGet(req.key());
+        std::string encode_key;
+        lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.key());
+
+        auto val = LockGet(encode_key);
         if (val == nullptr) {
             RANGE_LOG_WARN("ApplyLockUpdate error: lock [%s] is not existed", req.key().c_str());
             resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
@@ -312,7 +319,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         lock::EncodeValue(&value_buf,
                          version, *val, &extend);
 
-        ret = store_->Put(req.key(), value_buf);
+        ret = store_->Put(encode_key, value_buf);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
@@ -324,7 +331,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         }
 
         if (cmd.cmd_id().node_id() == node_id_) {
-            auto len = req.key().size() + req.ByteSizeLong();
+            auto len = encode_key.size() + req.ByteSizeLong();
             CheckSplit(len);
         }
         delete val;
@@ -349,15 +356,15 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().key());
-    req.mutable_req()->set_key(encode_key);
+    //req.mutable_req()->set_key(encode_key);
 
-    auto &key = req.req().key();
+    //auto &key = req.req().key();
     errorpb::Error *err = nullptr;
     do {
         if (!VerifyLeader(err)) {
             break;
         }
-        if (!KeyInRange(key, err)) {
+        if (!KeyInRange(encode_key, err)) {
             break;
         }
 
@@ -396,7 +403,10 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto val = LockGet(req.key());
+        std::string encode_key;
+        lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.key());
+
+        auto val = LockGet(encode_key);
         if (val == nullptr) {
             RANGE_LOG_WARN("ApplyUnlock error: lock [%s] is not existed", req.key().c_str());
             resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
@@ -413,7 +423,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
             break;
         }
         auto btime = get_micro_second();
-        ret = store_->Delete(req.key());
+        ret = store_->Delete(encode_key);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
@@ -466,15 +476,15 @@ void Range::UnlockForce(common::ProtoMessage *msg,
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.req().key());
-    req.mutable_req()->set_key(encode_key);
+    //req.mutable_req()->set_key(encode_key);
 
-    auto &key = req.req().key();
+    //auto &key = req.req().key();
     errorpb::Error *err = nullptr;
     do {
         if (!VerifyLeader(err)) {
             break;
         }
-        if (!KeyInRange(key, err)) {
+        if (!KeyInRange(encode_key, err)) {
             break;
         }
 
@@ -512,7 +522,10 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        auto val = LockGet(req.key());
+        std::string encode_key;
+        lock::EncodeKey(&encode_key, meta_.GetTableID(), &req.key());
+
+        auto val = LockGet(encode_key);
         if (val == nullptr) {
             FLOG_WARN("Range %" PRIu64
                       "  ApplyUnlockForce error: lock [%s] is not existed",
@@ -523,7 +536,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         }
 
         auto btime = get_micro_second();
-        ret = store_->Delete(req.key());
+        ret = store_->Delete(encode_key);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
         if (!ret.ok()) {
@@ -577,6 +590,7 @@ void Range::LockWatch(common::ProtoMessage *msg,
         err = new errorpb::Error;
         err->set_message("key list length != 1");
         auto resp = new watchpb::DsWatchResponse;
+        resp->mutable_resp()->set_code(LOCK_PARAMETER_ERROR);
         SendError(msg, req.header(), resp, err);
         return;
     }
@@ -598,15 +612,21 @@ void Range::LockWatch(common::ProtoMessage *msg,
         if (val == nullptr) {
             FLOG_WARN("LockWatch error: lock encode key [%s] is not existed",
                       EncodeToHexString(encode_key).c_str());
-            err = new errorpb::Error;
-            err->set_message("lock is not existed");
-            break;
+            //err = new errorpb::Error;
+            //err->set_message("lock is not existed");
+
+            auto resp = new watchpb::DsWatchResponse;
+            resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
+            SendError(msg, req.header(), resp, err);
+            return;
         }
 
         std::vector<watch::Key*> keys;
         keys.push_back(new watch::Key(req.req().kv().key(0)));
 
-        auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, msg);
+        int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+
+        auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, msg);
         auto w_code = context_->range_server->watch_server_->AddKeyWatcher(w_ptr, store_);
         if (w_code != watch::WATCH_OK) {
             FLOG_WARN("LockWatch error: lock [%s] add key watcher failed",

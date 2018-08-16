@@ -210,7 +210,7 @@ protected:
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
-        msg->expire_time = get_micro_second() + 1000000;
+        msg->expire_time = getticks() + 3000;
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
@@ -256,7 +256,7 @@ protected:
 
         // begin test pure_get(ok)
         auto msg = new common::ProtoMessage;
-        msg->expire_time = get_micro_second() + 1000000;
+        msg->expire_time = getticks() + 3000;
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
@@ -299,7 +299,7 @@ protected:
         FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
         // begin test watch_get (key empty)
         auto msg = new common::ProtoMessage;
-        msg->expire_time = get_micro_second() + 1000000;
+        msg->expire_time = getticks() + 3000;
         msg->session_id = 1;
         msg->socket = &socket_;
         msg->begin_time = get_micro_second();
@@ -315,10 +315,10 @@ protected:
         if(!key2.empty()) {
             req.mutable_req()->mutable_kv()->add_key(key2);
         }
-        req.mutable_req()->mutable_kv()->set_version(0);
-        req.mutable_req()->set_longpull(1);
+        req.mutable_req()->mutable_kv()->set_version(1);
+        req.mutable_req()->set_longpull(5000);
         ///////////////////////////////////////////////
-        //req.mutable_req()->set_startversion(1);
+        req.mutable_req()->set_startversion(0);
         req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
@@ -485,8 +485,20 @@ TEST_F(WatchTest, watch_not_exist_key) {
         justWatch(1, "0100300100001", "", false);
         justDel(1, "0100300100001", "", "");
 
+        justWatch(1, "0100300100002", "", true);
+        justDel(1, "0100300100002", "abc", "def");
     }
 
 }
+/*
+TEST_F(WatchTest, watch_exist_single_key) {
 
+    {
+        justPut(1, "01003001", "", "01003001:value");
+        justWatch(1, "01003001", "", false);
+        justDel(1, "01003001", "", "");
 
+    }
+
+}
+*/

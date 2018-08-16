@@ -29,6 +29,17 @@ CEventBuffer::CEventBuffer() {
     create_thread();
 }
 
+CEventBuffer::CEventBuffer(const int &mapSize, const int &queueSize) {
+    map_capacity_ = mapSize>MAX_EVENT_BUFFER_MAP_SIZE?MAX_EVENT_BUFFER_MAP_SIZE:mapSize;
+    queue_capacity_ = queueSize>MAX_EVENT_QUEUE_SIZE?MAX_EVENT_QUEUE_SIZE:queueSize;
+
+    map_capacity_ = map_capacity_>0?map_capacity_:DEFAULT_EVENT_BUFFER_MAP_SIZE;
+    queue_capacity_ = queue_capacity_>0?queue_capacity_:DEFAULT_EVENT_QUEUE_SIZE;
+
+    mapGroupBuffer.clear();
+    create_thread();
+}
+
 CEventBuffer::~CEventBuffer() {
     for(auto it : mapGroupBuffer) {
         delete it.second;
@@ -44,8 +55,8 @@ int32_t CEventBuffer::loadFromBuffer(const std::string &grpKey,  int64_t userVer
 
     int32_t resultCnt{0};
 
-    if(isEmpty()) {
-        return resultCnt;
+    if(isEmpty() || userVersion == 0) {
+        return -1;
     }
 
     auto it = mapGroupBuffer.find(grpKey);
@@ -72,20 +83,20 @@ bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *b
             GroupKey k(listGroupBuffer.begin()->key_, listGroupBuffer.begin()->create_time_);
             listGroupBuffer.pop_front();
 
-            FLOG_INFO("list pop key:%s", EncodeToHexString(k.key_).c_str());
+            FLOG_INFO("buffer_map auto pop key:%s", EncodeToHexString(k.key_).c_str());
 
             auto itMap = mapGroupBuffer.find(k);
             if(itMap != mapGroupBuffer.end()) {
                 deQueue(itMap->second);
                 mapGroupBuffer.erase(itMap);
                 map_size_--;
-                FLOG_WARN("map pop success, key:%s  create(ms):%" PRId64 " map-length:%" PRId32, k.key_.c_str(), k.create_time_, map_size_);
+                FLOG_INFO("map pop success, key:%s  create(ms):%" PRId64 " map-length:%" PRId32, k.key_.c_str(), k.create_time_, map_size_);
             } else {
-                FLOG_WARN("map pop error, key:%s  create(ms):%" PRId64 " map-length:%" PRId32, k.key_.c_str(), k.create_time_, map_size_);
+                FLOG_INFO("map pop error, key:%s  create(ms):%" PRId64 " map-length:%" PRId32, k.key_.c_str(), k.create_time_, map_size_);
             }
         }
 
-        auto grpValue = new GroupValue(MAX_EVENT_QUEUE_SIZE);
+        auto grpValue = new GroupValue(queue_capacity_);
 
         if(grpValue->enQueue(*bufferValue)) {
             listGroupBuffer.push_back(key);
@@ -93,7 +104,7 @@ bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *b
             if(result.second) {
                 ret = true;
             } else {
-                FLOG_WARN("mapGroupBuffer emplace error, key:%s", EncodeToHexString(grpKey).c_str());
+                FLOG_INFO("mapGroupBuffer emplace error, key:%s", EncodeToHexString(grpKey).c_str());
                 ret = false;
             }
             queueLength = grpValue->length();
@@ -102,7 +113,7 @@ bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *b
                 map_size_++;
 
         } else {
-            FLOG_WARN("map[%s]->queue is full.", EncodeToHexString(grpKey).c_str());
+            FLOG_WARN("map[%s]->queue is full[%" PRId32 "]", EncodeToHexString(grpKey).c_str(), queue_capacity_);
             ret = false;
         }
     } else {
@@ -113,8 +124,10 @@ bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *b
         queueLength = it->second->length();
     }
 
-    FLOG_DEBUG("emplace to queue,[%d] key:%s value:%s version:%" PRId64 " map-length:%" PRId32 " queue-length:%" PRId64, ret,
-               EncodeToHexString(grpKey).c_str(), bufferValue->value().c_str(), bufferValue->version(), map_size_, queueLength);
+    FLOG_DEBUG("capacity:%" PRId32 "-%" PRId32 " >>>emplace to queue, key:%s value:%s version:%"
+                                               PRId64 " map-length:%" PRId32 " queue-length:%" PRId64,
+               map_capacity_, queue_capacity_, EncodeToHexString(grpKey).c_str(), bufferValue->value().c_str(),
+               bufferValue->version(), map_size_, queueLength);
 
     return ret;
 }

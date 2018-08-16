@@ -139,12 +139,13 @@ namespace watch {
     int32_t CircularQueue<T>::getData(int64_t version, std::vector<T> &elements) {
         int32_t  cnt{0};
 
-        if(isEmpty()) return 0;
+        if(isEmpty()) return -1;
 
-        /*for (int32_t i = m_iHead; i < m_iTail; i++) {
-            std::cout << "head:" << m_iHead << "tail:" << m_iTail << "queue-version:" << m_pQueue[i].version() << std::endl;
-        }*/
-        if(version > m_pQueue[m_iTail-1].version()) {
+        if(version >= m_pQueue[m_iTail-1].version()) {
+            return 0;
+        }
+
+        if(version < m_pQueue[m_iHead].version()) {
            // std::cout << "version:" << version << "head:" << m_iHead << "tail:" << m_iTail << "queue-version:" << m_pQueue[m_iTail].version() << std::endl;
             return -1;
         }
@@ -168,7 +169,7 @@ namespace watch {
             if(mid == 0 || mid == 1) break;
         }
 
-        for(int32_t i = from; i < to; i++) {
+        for(int32_t i = from; i <= to; i++) {
             if(version >= m_pQueue[i].version()) continue;
 
             cnt++;

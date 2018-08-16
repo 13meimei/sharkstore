@@ -105,12 +105,6 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
     //add watch if client version is not equal to ds side
     auto clientVersion = req.req().startversion();
-    if(req.req().longpull() > 0) {
-        uint64_t expireTime = get_micro_second();
-        expireTime += (req.req().longpull()*1000);
-
-        msg->expire_time = expireTime;
-    }
 
     //to do add watch
     auto watch_server = context_->range_server->watch_server_;
@@ -125,7 +119,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         watchType = watch::WATCH_PREFIX;
     }
 
-    auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, msg);
+    int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+    auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, msg);
 
     watch::WatchCode wcode;
     if(prefix) {
@@ -142,10 +137,9 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         std::vector<watch::CEventBufferValue> vecUpdKeys;
 
         int32_t memCnt = eventBuffer->loadFromBuffer(*hashKey[0], clientVersion, vecUpdKeys);
+        RANGE_LOG_DEBUG("loadFromBuffer hit count[%" PRId32 "]  version:%" PRId64 , memCnt, clientVersion);
 
         if(memCnt > 0) {
-            RANGE_LOG_DEBUG("loadFromBuffer hit count[%" PRId32 "]", memCnt);
-
             auto resp = ds_resp->mutable_resp();
             resp->set_code(Status::kOk);
             resp->set_scope(watchpb::RESPONSE_PART);
@@ -164,6 +158,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             w_ptr->Send(ds_resp);
             return;
         } else {
+            w_ptr->setBufferFlag(memCnt);
             wcode = watch_server->AddPrefixWatcher(w_ptr, store_);
         }
     } else {
@@ -178,12 +173,12 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, prefix);
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
+        w_ptr->Send(ds_resp);
     } else {
         RANGE_LOG_ERROR("add watcher exception(%d).", static_cast<int>(wcode));
+        return;
     }
-    //watch_server->WatchServerUnlock(1);
 
-    w_ptr->Send(ds_resp);
     return;
 }
 
@@ -277,13 +272,20 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             RANGE_LOG_DEBUG("PureGet ok:%d ", count);
             code = Status::kOk;
         } else {
-            auto kv = resp->add_kvs();
-            auto ret = store_->Get(dbKey, &dbValue);
 
+            auto ret = store_->Get(dbKey, &dbValue);
             if(ret.ok()) {
                 //to do decode value version
                 RANGE_LOG_DEBUG("PureGet: dbKey:%s dbValue:%s  ", EncodeToHexString(dbKey).c_str(),
                            EncodeToHexString(dbValue).c_str());
+
+                auto kv = resp->add_kvs();
+                /*
+                int64_t dbVersion(0);
+                std::string userValue("");
+                std::string extend("");
+                watch::Watcher::DecodeValue(&dbVersion, &userValue, &extend, dbValue);
+                */
                 if (Status::kOk != WatchEncodeAndDecode::DecodeKv(funcpb::kFuncPureGet, meta_.GetTableID(), kv, dbKey, dbValue, err)) {
                     RANGE_LOG_WARN("DecodeKv fail. dbvalue:%s  err:%s", EncodeToHexString(dbValue).c_str(),
                                err->message().c_str());
@@ -291,11 +293,10 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
                 }
             }
 
-            RANGE_LOG_DEBUG("PureGet code:%d msg:%s userValue:%s ", ret.code(), ret.ToString().data(), kv->value().c_str());
+            RANGE_LOG_DEBUG("PureGet code:%d msg:%s ", ret.code(), ret.ToString().data());
             code = ret.code();
         }
-        context_->run_status->PushTime(monitor::PrintTag::Get,
-                                       get_micro_second() - btime);
+        context_->run_status->PushTime(monitor::PrintTag::Get, get_micro_second() - btime);
 
         resp->set_code(static_cast<int32_t>(code));
     } while (false);
@@ -842,14 +843,14 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 auto watcherServer = context_->range_server->watch_server_;
                 auto ws = watcherServer->GetWatcherSet_(hashKey);
 
-                auto count = ws->loadFromDb(store_, evtType, dbKey, dbKeyEnd, startVersion, meta_.GetTableID(), dsResp);
-                if(count <= 0) {
+                auto result = ws->loadFromDb(store_, evtType, dbKey, dbKeyEnd, startVersion, meta_.GetTableID(), dsResp);
+                if(result.first <= 0) {
                     delete dsResp;
                     dsResp = nullptr;
                 }
 
                 //scopeFlag = 1;
-                FLOG_DEBUG("notify %d/%" PRId32 " load from db, db-count:%" PRId32 " key:%s ", i, watchCnt, count, EncodeToHexString(dbKey).c_str());
+                FLOG_DEBUG("notify %d/%" PRId32 " load from db, db-count:%" PRId32 " key:%s ", i, watchCnt, result.first, EncodeToHexString(dbKey).c_str());
 
             }
 

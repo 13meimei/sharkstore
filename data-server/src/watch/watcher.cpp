@@ -10,8 +10,8 @@ namespace watch {
 
 ////////////////////////////////////// watcher //////////////////////////////////////
 
-Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, common::ProtoMessage* msg):
-        table_id_(table_id), key_version_(version), message_(msg), watcher_id_(msg->session_id), expire_time_(msg->expire_time) {
+Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, common::ProtoMessage* msg):
+        table_id_(table_id), key_version_(version), message_(msg), watcher_id_(msg->session_id), expire_time_(expire_time) {
     for (auto k: keys) {
         keys_.push_back(std::move(new WatcherKey(*k)));
     }
@@ -20,8 +20,8 @@ Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const 
     }
 }
 
-Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, common::ProtoMessage* msg):
-        table_id_(table_id), key_version_(version), message_(msg), type_(type), watcher_id_(msg->session_id), expire_time_(msg->expire_time) {
+Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, common::ProtoMessage* msg):
+        table_id_(table_id), key_version_(version), message_(msg), type_(type), watcher_id_(msg->session_id), expire_time_(expire_time) {
     for (auto k: keys) {
         keys_.push_back(std::move(new WatcherKey(*k)));
     }
@@ -47,8 +47,8 @@ Watcher::~Watcher() {
 /*
 bool Watcher::operator>(const Watcher* other) const {
     return this->message_->expire_time > other->message_->expire_time;
-}*/
-
+}
+*/
 void Watcher::Send(google::protobuf::Message* resp) {
     std::lock_guard<std::mutex> lock(send_lock_);
     if (sent_response_flag) {

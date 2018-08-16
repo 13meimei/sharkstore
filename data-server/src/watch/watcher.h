@@ -16,11 +16,17 @@ namespace watch {
 class Watcher {
 public:
     Watcher() = delete;
-    Watcher(uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, common::ProtoMessage*);
-    Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, common::ProtoMessage*);
+    Watcher(uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, common::ProtoMessage*);
+    Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, common::ProtoMessage*);
     Watcher(uint64_t, const std::vector<WatcherKey*>&);
     virtual ~Watcher();
     //bool operator>(const Watcher* other) const;
+    void setBufferFlag(const int64_t &flag){
+        buffer_flag_ = flag;
+    }
+    int64_t getBufferFlag() const {
+        return buffer_flag_;
+    }
 
 private:
     uint64_t                    table_id_;
@@ -31,6 +37,10 @@ private:
     WatchType                   type_ = WATCH_KEY;
     WatcherId                   watcher_id_;
     int64_t                     expire_time_;
+    //prefix mode:
+    // 0 key has no changing, need to add watcher
+    // -1 key version is lower than buffer or buffer is empty, need to get all from db
+    int64_t                     buffer_flag_ = 0;
 
     std::mutex          send_lock_;
     volatile bool       sent_response_flag = false;
@@ -75,7 +85,8 @@ public:
 template <class T>
 struct Greater {
     bool operator()(const T& a, const T& b) {
-        return a > b;
+        return a->GetMessage()->expire_time > b->GetMessage()->expire_time;
+        //return a > b;
     }
 };
 

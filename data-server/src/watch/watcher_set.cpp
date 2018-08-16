@@ -50,13 +50,13 @@ WatcherSet::WatcherSet() {
                 continue; // no valid watcher wait in queue
             }
 
-            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime() / 1000);
+            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime());
             std::chrono::system_clock::time_point expire(mill_sec);
 
-            int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time / 1000};
+            int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time};
 
             if (watcher_expire_cond_.wait_until(lock, expire) == std::cv_status::timeout) {
-                auto excBegin = getticks();
+                auto excBegin = get_micro_second();
                 // send timeout response
                 auto resp = new watchpb::DsWatchResponse;
                 resp->mutable_resp()->set_code(Status::kTimedOut);
@@ -78,17 +78,22 @@ WatcherSet::WatcherSet() {
 
                 watcher_queue_.pop();
 
-                auto excEnd = getticks();
+                auto excEnd = get_micro_second();
                 //auto take_time = excEnd - waitBeginTime;
 
-                FLOG_DEBUG("wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
-                                   " execute take time: %" PRId64 " ms,wait time:%" PRId64 ,
-                           w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id, w_ptr->GetWatcherId(), excEnd-excBegin,excBegin-waitBeginTime);
+                FLOG_INFO("key: [%s] wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
+                                   " execute take time: %" PRId64 " us,wait time:%" PRId64 " us",
+                           EncodeToHexString(encode_key).c_str(), w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id,
+                           w_ptr->GetWatcherId(), excEnd-excBegin,excBegin-waitBeginTime);
 
-                FLOG_INFO("watcher expire timeout, timer queue pop: session_id: %" PRId64 " watch_id:[%" PRIu64 "] key: [%s]",
-                          w_ptr->GetMessage()->session_id, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
+                FLOG_DEBUG("timeout: msg->begin_time:%" PRId64 "us expire:%" PRId64 "ms now:%" PRId64 "us",
+                           w_ptr->GetMessage()->begin_time, w_ptr->GetExpireTime(), excEnd);
+
+//                FLOG_INFO("watcher expire timeout, timer queue pop: session_id: %" PRId64 " watch_id:[%" PRIu64 "] key: [%s]",
+//                          w_ptr->GetMessage()->session_id, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
             }
         }
+        FLOG_DEBUG("thread exit...");
     });
 }
 
@@ -99,6 +104,10 @@ WatcherSet::~WatcherSet() {
         watcher_expire_cond_.notify_one();
     }
     watcher_timer_.join();
+
+    for(auto it : key_watcher_map_) {
+        if(it.second != nullptr) delete it.second;
+    }
     // todo leave members' memory alone now, todo free
 }
 
@@ -110,7 +119,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
     WatchCode code;
     auto watcher_id = w_ptr->GetWatcherId();
-    auto currKeyVer = w_ptr->getKeyVersion();
+    auto clientVersion = w_ptr->getKeyVersion();
 
     // add to watcher map
     auto watcher_map_it = key_watchers.find(key);
@@ -122,65 +131,91 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         int64_t version(0);
         if(store_!= nullptr){
 
-            //single key
-            Status ret = store_->Get(key, &val);
-            if(ret.ok()){
-                if (!watch::Watcher::DecodeValue(&version, &userVal, &ext, val)) {
-                    FLOG_ERROR("AddWatcher Decode error, key: %s", EncodeToHexString(key).c_str());
+            Status ret;
+            std::pair<int64_t, bool> result = std::make_pair(0, false);
+
+            if(prefixFlag) {
+                //用户端版本低于内存版本时，需要全量
+                if(w_ptr->getBufferFlag() < 0) {
+
+                    std::string endKey(key);
+                    if (0 != range::WatchEncodeAndDecode::NextComparableBytes(key.data(), key.length(), endKey)) {
+                        //to do set error message
+                        FLOG_ERROR("AddWatcher fail, NextComparableBytes execute error.");
+                        return WATCH_WATCHER_NOT_NEED;
+                    }
+
+                    auto ds_resp = new watchpb::DsWatchResponse;
+                    auto tmpVer(clientVersion);
+
+                    result = loadFromDb(store_, watchpb::PUT, key, endKey, tmpVer, w_ptr->GetTableId(),
+                                            ds_resp);
+                    FLOG_DEBUG("prefix mode: version:%" PRId64 " loadFromDb count:%" PRId64, tmpVer, result.first);
+
+                    if (result.first > 0) {
+                        w_ptr->Send(ds_resp);
+                        return WATCH_OK;
+                    }
+
+                    if(result.second) {
+                        ret = Status(Status::kNotChange);
+                    } else {
+                        ret = Status(Status::kNotFound);
+                    }
+                    if (ds_resp != nullptr) delete ds_resp;
+                }
+            } else {
+
+                //single key
+                ret = store_->Get(key, &val);
+                if(ret.ok()){
+                    if (!watch::Watcher::DecodeValue(&version, &userVal, &ext, val)) {
+                        FLOG_ERROR("AddWatcher Decode error, key: %s", EncodeToHexString(key).c_str());
+                        version = 0;
+                        return WATCH_WATCHER_NOT_NEED;
+                    }
+                    result.first = 1;
+                    result.second = true;
+                }else if(ret.code() != Status::kNotFound) {
+                    FLOG_ERROR("AddWatcher Get error, key: %s err:%s", EncodeToHexString(key).c_str(), ret.ToString().c_str());
                     version = 0;
                     return WATCH_WATCHER_NOT_NEED;
                 }
-            }else if(ret.code() != Status::kNotFound) {
-                FLOG_ERROR("AddWatcher Decode error, key: %s", EncodeToHexString(key).c_str());
-                version = 0;
-                return WATCH_WATCHER_NOT_NEED;
             }
 
-            if(prefixFlag && ret.ok()) {
-                std::string endKey(key);
-
-                if( 0 != range::WatchEncodeAndDecode::NextComparableBytes(key.data(), key.length(), endKey)) {
-                    //to do set error message
-                    FLOG_ERROR("AddWatcher fail, NextComparableBytes execute error.");
-                    return WATCH_WATCHER_NOT_NEED;
-                }
-
+            if(ret.code() == Status::kNotFound && clientVersion > 0) {
                 auto ds_resp = new watchpb::DsWatchResponse;
-                auto count = loadFromDb(store_, watchpb::PUT, key, endKey, version, w_ptr->GetTableId(), ds_resp);
-                if(count > 0) {
-                    w_ptr->Send(ds_resp);
-                    return WATCH_OK;
-                }
+                ds_resp->mutable_resp()->set_code(Status::kNotFound);
+                ds_resp->mutable_resp()->set_watchid(w_ptr->GetWatcherId());
+
+                w_ptr->Send(ds_resp);
+                return WATCH_KEY_NOT_EXIST;
             }
 
         }
 
-        FLOG_DEBUG("AddWatcher db version[%" PRId64 "], key: %s", version, EncodeToHexString(key).c_str());
+        FLOG_DEBUG("AddWatcher(%s) start_version:%" PRId64 " db version[%" PRId64 "], key: %s",
+                   prefixFlag?"prefix":"single", clientVersion, version, EncodeToHexString(key).c_str());
         auto v = new WatcherValue;
         v->key_version_ = version;
         watcher_map_it = key_watchers.insert(std::make_pair(key, v)).first;
     }
     auto& watcher_map = watcher_map_it->second->mapKeyWatcher;
 
-     if( currKeyVer < watcher_map_it->second->key_version_ ) {
+    if( clientVersion < watcher_map_it->second->key_version_ ) {
 
-//         if(currKeyVer > watcher_map_it->second->key_version_) {
-//             FLOG_ERROR("watcher add skip: watcher_id:[%" PRIu64 "] key: [%s] current version[%" PRIu64 "] watcher version[%" PRIu64 "]",
-//                       w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), currKeyVer, watcher_map_it->second->key_version_);
-//         } else {
-             FLOG_INFO("watcher add skip: watcher_id:[%"
-                               PRIu64
-                               "] key: [%s] current version[%"
-                               PRIu64
-                               "] watcher version[%"
-                               PRIu64
-                               "]",
-                       w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), currKeyVer,
-                       watcher_map_it->second->key_version_);
+         FLOG_INFO("watcher add skip(%s): watcher_id:[%"
+                           PRIu64
+                           "] key: [%s] current version[%"
+                           PRIu64
+                           "] watcher version[%"
+                           PRIu64
+                           "]",
+                   prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
+                   watcher_map_it->second->key_version_);
 
-//         }
-         return WATCH_WATCHER_NOT_NEED;
-     }
+        return WATCH_WATCHER_NOT_NEED;
+    }
 
     auto ret = watcher_map.emplace(std::make_pair(watcher_id, w_ptr)).second;
     if (ret) {
@@ -193,12 +228,12 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         code = WATCH_OK;
 
-        FLOG_INFO("watcher add success: count:%" PRIu64 " watcher_id:[%" PRIu64 "] key: [%s]",
+        FLOG_INFO("watcher add success, count:%" PRIu64 " watcher_id[%" PRIu64 "] key: [%s]",
                   watcher_map_it->second->mapKeyWatcher.size(), w_ptr->GetWatcherId(), EncodeToHexString(key).c_str());
     } else {
         code = WATCH_WATCHER_EXIST;
 
-        FLOG_ERROR("watcher add failed: watcher_id:[%" PRIu64 "] key: [%s]",
+        FLOG_ERROR("watcher add failed, watcher_id[%" PRIu64 "] exists, key: [%s]",
                   w_ptr->GetWatcherId(), EncodeToHexString(key).c_str());
     }
     return code;
@@ -297,7 +332,7 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
     }
 
     //to do clear version if delete event
-    if(evtType == watchpb::DELETE) {
+    if(evtType == watchpb::DELETE  && !prefixFlag) {
         watchers->key_version_ = 0;
     }
 
@@ -377,7 +412,7 @@ WatchCode WatcherSet::GetPrefixWatchers(const watchpb::EventType &evtType, std::
     return retCode;
 }
 
-int32_t WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &evtType, const std::string &fromKey,
+std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &evtType, const std::string &fromKey,
                    const std::string &endKey, const int64_t &startVersion, const uint64_t &tableId,
                    watchpb::DsWatchResponse *dsResp) {
 
@@ -388,11 +423,19 @@ int32_t WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &
     int64_t maxVersion{0};
     auto err = std::make_shared<errorpb::Error>();
 
+    //<db-count:db-exists-data>
+    std::pair<int32_t, bool> result;
+    result.second = false;
+
     auto resp = dsResp->mutable_resp();
     resp->set_code(Status::kOk);
     resp->set_scope(watchpb::RESPONSE_ALL);
 
     for (int i = 0; iterator->Valid() ; ++i) {
+
+        if(0 == i) {
+            result.second = true;
+        }
 
         auto evt = resp->add_events();
         evt->set_type(evtType);
@@ -413,7 +456,7 @@ int32_t WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &
             maxVersion = kv.version();
         }
 
-        if( kv.version() > startVersion) {
+        //if( kv.version() > startVersion) {
 
             for (int16_t i = 0; i < kv.key().size(); i++) {
                 evt->mutable_kv()->add_key(kv.key(i));
@@ -424,12 +467,17 @@ int32_t WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &
             evt->set_type(evtType);
 
             count++;
-        }
+        //}
 
         iterator->Next();
     }
 
-    return count;
+    result.first = count;
+    if(startVersion == maxVersion) {
+        result.first = 0;
+    }
+
+    return result;
 }
 
 } // namespace watch
