@@ -231,6 +231,22 @@ void RangeServer::buildDBOptions(rocksdb::Options& ops) {
     ops.level0_slowdown_writes_trigger =
             ds_config.rocksdb_config.level0_slowdown_writes_trigger;
     ops.level0_stop_writes_trigger = ds_config.rocksdb_config.level0_stop_writes_trigger;
+
+    // compress
+    auto compress_type =
+            static_cast<rocksdb::CompressionType>(ds_config.rocksdb_config.compression);
+    switch (compress_type) {
+        case rocksdb::kSnappyCompression: // 1
+        case rocksdb::kZlibCompression:  // 2
+        case rocksdb::kBZip2Compression: // 3
+        case rocksdb::kLZ4Compression: // 4
+        case rocksdb::kLZ4HCCompression: // 5
+        case rocksdb::kXpressCompression: // 6
+            ops.compression = compress_type;
+            break;
+        default:
+            (void)ops.compression;
+    }
 }
 
 int RangeServer::OpenDB() {
@@ -276,6 +292,24 @@ int RangeServer::OpenDB() {
         bops.min_blob_size = static_cast<uint64_t>(ds_config.rocksdb_config.min_blob_size);
         bops.enable_garbage_collection = ds_config.rocksdb_config.enable_garbage_collection;
         bops.blob_file_size = ds_config.rocksdb_config.blob_file_size;
+        // compress
+        auto compress_type =
+                static_cast<rocksdb::CompressionType>(ds_config.rocksdb_config.blob_compression);
+        switch (compress_type) {
+            case rocksdb::kSnappyCompression: // 1
+            case rocksdb::kZlibCompression:  // 2
+            case rocksdb::kBZip2Compression: // 3
+            case rocksdb::kLZ4Compression: // 4
+            case rocksdb::kLZ4HCCompression: // 5
+            case rocksdb::kXpressCompression: // 6
+            case rocksdb::kZSTD:
+                bops.compression = compress_type;
+                break;
+            default:
+                (void)bops.compression;
+        }
+
+
 #ifdef BLOB_EXTEND_OPTIONS
         bops.gc_file_expired_percent = ds_config.rocksdb_config.blob_gc_percent;
 #endif
