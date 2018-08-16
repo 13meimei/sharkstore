@@ -72,9 +72,9 @@ sudo make install
 ## gperf tools
 v2.6.3
 ```sh
-wget https://github.com/gperftools/gperftools/releases/download/gperftools-2.6.3/gperftools-2.6.3.tar.gz
+wget https://github.com/gperftools/gperftools/archive/gperftools-2.6.3.tar.gz
 tar xvf gperftools-2.6.3.tar.gz
-cd gperftools-2.6.3
+cd gperftools-gperftools-2.6.3
 ./autogen.sh
 ./configure
 make -j `nproc`
