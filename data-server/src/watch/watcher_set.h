@@ -70,7 +70,7 @@ public:
         }
     };
 
-    int32_t loadFromDb(storage::Store *store, const watchpb::EventType &evtType, const std::string &fromKey,
+    std::pair<int32_t, bool> loadFromDb(storage::Store *store, const watchpb::EventType &evtType, const std::string &fromKey,
                        const std::string &endKey, const int64_t &startVersion, const uint64_t &tableId,
                        watchpb::DsWatchResponse *dsResp);
 

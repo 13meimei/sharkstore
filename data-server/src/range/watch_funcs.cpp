@@ -843,14 +843,14 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 auto watcherServer = context_->range_server->watch_server_;
                 auto ws = watcherServer->GetWatcherSet_(hashKey);
 
-                auto count = ws->loadFromDb(store_, evtType, dbKey, dbKeyEnd, startVersion, meta_.GetTableID(), dsResp);
-                if(count <= 0) {
+                auto result = ws->loadFromDb(store_, evtType, dbKey, dbKeyEnd, startVersion, meta_.GetTableID(), dsResp);
+                if(result.first <= 0) {
                     delete dsResp;
                     dsResp = nullptr;
                 }
 
                 //scopeFlag = 1;
-                FLOG_DEBUG("notify %d/%" PRId32 " load from db, db-count:%" PRId32 " key:%s ", i, watchCnt, count, EncodeToHexString(dbKey).c_str());
+                FLOG_DEBUG("notify %d/%" PRId32 " load from db, db-count:%" PRId32 " key:%s ", i, watchCnt, result.first, EncodeToHexString(dbKey).c_str());
 
             }
 

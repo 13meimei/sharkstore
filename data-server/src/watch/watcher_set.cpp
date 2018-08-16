@@ -132,7 +132,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         if(store_!= nullptr){
 
             Status ret;
-
+            std::pair<int64_t, bool> result;
             if(prefixFlag) {
                 //用户端版本低于内存版本时，需要全量
                 if(w_ptr->getBufferFlag() <= 0) {
@@ -147,11 +147,11 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                     auto ds_resp = new watchpb::DsWatchResponse;
                     auto tmpVer(clientVersion);
 
-                    auto count = loadFromDb(store_, watchpb::PUT, key, endKey, tmpVer, w_ptr->GetTableId(),
+                    result = loadFromDb(store_, watchpb::PUT, key, endKey, tmpVer, w_ptr->GetTableId(),
                                             ds_resp);
                     FLOG_DEBUG("prefix mode: version:%" PRId64 " loadFromDb count:%"
-                                       PRId32, tmpVer, count);
-                    if (count > 0) {
+                                       PRId32, tmpVer, result.first);
+                    if (result.first > 0) {
                         w_ptr->Send(ds_resp);
                         return WATCH_OK;
                     }
@@ -176,7 +176,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                 }
             }
 
-            if(ret.code() == Status::kNotFound && clientVersion != 0) {
+            if(ret.code() == Status::kNotFound && !result.second) {
                 auto ds_resp = new watchpb::DsWatchResponse;
                 ds_resp->mutable_resp()->set_code(Status::kNotFound);
                 ds_resp->mutable_resp()->set_watchid(w_ptr->GetWatcherId());
@@ -404,7 +404,7 @@ WatchCode WatcherSet::GetPrefixWatchers(const watchpb::EventType &evtType, std::
     return retCode;
 }
 
-int32_t WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &evtType, const std::string &fromKey,
+std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &evtType, const std::string &fromKey,
                    const std::string &endKey, const int64_t &startVersion, const uint64_t &tableId,
                    watchpb::DsWatchResponse *dsResp) {
 
@@ -415,11 +415,17 @@ int32_t WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &
     int64_t maxVersion{0};
     auto err = std::make_shared<errorpb::Error>();
 
+    std::pair<int32_t, bool> result;
+
     auto resp = dsResp->mutable_resp();
     resp->set_code(Status::kOk);
     resp->set_scope(watchpb::RESPONSE_ALL);
 
     for (int i = 0; iterator->Valid() ; ++i) {
+
+        if(0 == i) {
+            result.second = true;
+        }
 
         auto evt = resp->add_events();
         evt->set_type(evtType);
@@ -456,7 +462,9 @@ int32_t WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &
         iterator->Next();
     }
 
-    return count;
+    result.first = count;
+
+    return result;
 }
 
 } // namespace watch
