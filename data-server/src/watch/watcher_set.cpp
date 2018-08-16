@@ -92,8 +92,8 @@ WatcherSet::WatcherSet() {
 //                FLOG_INFO("watcher expire timeout, timer queue pop: session_id: %" PRId64 " watch_id:[%" PRIu64 "] key: [%s]",
 //                          w_ptr->GetMessage()->session_id, w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
             }
-            FLOG_DEBUG("thread exit...");
         }
+        FLOG_DEBUG("thread exit...");
     });
 }
 

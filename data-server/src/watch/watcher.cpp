@@ -47,8 +47,8 @@ Watcher::~Watcher() {
 /*
 bool Watcher::operator>(const Watcher* other) const {
     return this->message_->expire_time > other->message_->expire_time;
-}*/
-
+}
+*/
 void Watcher::Send(google::protobuf::Message* resp) {
     std::lock_guard<std::mutex> lock(send_lock_);
     if (sent_response_flag) {

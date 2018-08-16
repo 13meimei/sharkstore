@@ -85,7 +85,8 @@ public:
 template <class T>
 struct Greater {
     bool operator()(const T& a, const T& b) {
-        return a > b;
+        return a->GetMessage()->expire_time > b->GetMessage()->expire_time;
+        //return a > b;
     }
 };
 
