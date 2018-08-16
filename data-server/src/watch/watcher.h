@@ -39,7 +39,7 @@ private:
     int64_t                     expire_time_;
     //prefix mode:
     // 0 key has no changing, need to add watcher
-    // -1 key version is lower than buffer, need to get all from db
+    // -1 key version is lower than buffer or buffer is empty, need to get all from db
     int64_t                     buffer_flag_ = 0;
 
     std::mutex          send_lock_;

@@ -139,7 +139,7 @@ namespace watch {
     int32_t CircularQueue<T>::getData(int64_t version, std::vector<T> &elements) {
         int32_t  cnt{0};
 
-        if(isEmpty()) return 0;
+        if(isEmpty()) return -1;
 
         if(version >= m_pQueue[m_iTail-1].version()) {
             return 0;

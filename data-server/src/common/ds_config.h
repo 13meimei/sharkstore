@@ -81,6 +81,11 @@ typedef struct ds_config_s {
         int interval;
     } metric_config;
 
+    struct {
+        int buffer_map_size;
+        int buffer_queue_size;
+    } watch_config;
+
     sf_socket_thread_config_t manager_config;  // manager thread config
     sf_socket_thread_config_t worker_config;   // worker thread config
 } ds_config_t;

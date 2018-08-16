@@ -20,9 +20,10 @@ namespace watch {
 
 //ms
 #define EVENT_BUFFER_TIME_OUT 1800000
-#define MAX_EVENT_BUFFER_MAP_SIZE 1000
-#define MAX_EVENT_QUEUE_SIZE  10000
-
+#define MAX_EVENT_BUFFER_MAP_SIZE 10000
+#define MAX_EVENT_QUEUE_SIZE  100000
+#define DEFAULT_EVENT_BUFFER_MAP_SIZE 10
+#define DEFAULT_EVENT_QUEUE_SIZE  100
 
 class CEventBufferValue;
 void printBufferValue(CEventBufferValue &val);
@@ -121,6 +122,7 @@ using ListGroupBuffer = std::list<GroupKey>;
 class CEventBuffer {
 public:
     CEventBuffer();
+    CEventBuffer(const int &mapSize, const int &queueSize);
     ~CEventBuffer();
 
     int32_t loadFromBuffer(const std::string &grpKey, int64_t uerVersion, std::vector<CEventBufferValue> &result);
@@ -189,6 +191,8 @@ private:
     MapGroupBuffer mapGroupBuffer;
     ListGroupBuffer listGroupBuffer;
 
+    int32_t map_capacity_{DEFAULT_EVENT_BUFFER_MAP_SIZE};
+    int32_t queue_capacity_{DEFAULT_EVENT_QUEUE_SIZE};
     int32_t map_size_{0};
 
     std::mutex buffer_mutex_;

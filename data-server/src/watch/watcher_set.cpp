@@ -137,7 +137,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
             if(prefixFlag) {
                 //用户端版本低于内存版本时，需要全量
-                if(w_ptr->getBufferFlag() <= 0) {
+                if(w_ptr->getBufferFlag() < 0) {
 
                     std::string endKey(key);
                     if (0 != range::WatchEncodeAndDecode::NextComparableBytes(key.data(), key.length(), endKey)) {
@@ -151,8 +151,8 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
                     result = loadFromDb(store_, watchpb::PUT, key, endKey, tmpVer, w_ptr->GetTableId(),
                                             ds_resp);
-                    FLOG_DEBUG("prefix mode: version:%" PRId64 " loadFromDb count:%"
-                                       PRId32, tmpVer, result.first);
+                    FLOG_DEBUG("prefix mode: version:%" PRId64 " loadFromDb count:%" PRId64, tmpVer, result.first);
+
                     if (result.first > 0) {
                         w_ptr->Send(ds_resp);
                         return WATCH_OK;
@@ -451,7 +451,7 @@ std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::Store *store, const wat
             maxVersion = kv.version();
         }
 
-        if( kv.version() > startVersion) {
+        //if( kv.version() > startVersion) {
 
             for (int16_t i = 0; i < kv.key().size(); i++) {
                 evt->mutable_kv()->add_key(kv.key(i));
@@ -462,12 +462,15 @@ std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::Store *store, const wat
             evt->set_type(evtType);
 
             count++;
-        }
+        //}
 
         iterator->Next();
     }
 
     result.first = count;
+    if(startVersion == maxVersion) {
+        result.first = 0;
+    }
 
     return result;
 }
