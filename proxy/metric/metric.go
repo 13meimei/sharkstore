@@ -135,12 +135,47 @@ func (m *Metric) GetMetricAddress() string  {
 	return m.metricAddr
 }
 
+func (m *Metric) gatewayErrorlogAlarm(clusterId, ipAddr string, errorlogs []string) {
+	var samples []*alarm.Sample
+
+	for _, errorlog := range errorlogs {
+		info := make(map[string]interface{})
+		info["spaceId"] = clusterId
+		info["ip"] = ipAddr
+		info["gateway_errorlog"] = 1
+		info["errorlog"] = errorlog
+		samples = append(samples, alarm.NewSample("", 0, 0, info))
+	}
+
+	if err := m.alarmClient.SimpleAlarm(m.clusterId, "errorlog alarm", "", samples); err != nil {
+		log.Error("errorlog alarm do failed: %v", err)
+	}
+}
+
+func (m *Metric) gatewaySlowlogAlarm(clusterId, ipAddr string, slowlogs []*statspb.SlowLog) {
+	var samples []*alarm.Sample
+
+	for _, slowlog := range slowlogs {
+		info := make(map[string]interface{})
+		info["spaceId"] = clusterId
+		info["ip"] = ipAddr
+		info["gateway_slowlog"] = 1
+		info["slowlog"] = slowlog.SlowLog
+		samples = append(samples, alarm.NewSample("", 0, 0, info))
+	}
+
+	if err := m.alarmClient.SimpleAlarm(m.clusterId, "slowlog alarm", "", samples); err != nil {
+		log.Error("slowlog alarm do failed: %v", err)
+	}
+}
+
 func (m *Metric) Run() {
 	timer := time.NewTicker(time.Minute * 10)
 	for {
 		select {
 		case <-timer.C:
 		// slowlog
+		func() {
 			m.lock.Lock()
 			slowLogger := m.slowLogger
 			m.slowLogger = &SlowLog{
@@ -150,7 +185,7 @@ func (m *Metric) Run() {
 			m.lock.Unlock()
 			stats := &statspb.SlowLogStats{}
 			if len(slowLogger.slowLog) == 0 {
-				continue
+				return
 			}
 			stats.SlowLogs = slowLogger.slowLog
 			values := url.Values{}
@@ -162,10 +197,13 @@ func (m *Metric) Run() {
 			if err != nil {
 				log.Warn("send metric server failed, err[%v]", err)
 			}
-		// fixme slowlog alarm
-		//	m.alarmClient.SimpleAlarm(m.clusterId, "slowlog alarm", "", samples)
+
+			// slowlog alarm
+			m.gatewaySlowlogAlarm(fmt.Sprint(m.clusterId), m.host, slowLogger.slowLog)
+		}()
 
 		// error log
+		func() {
 			m.errorLogLock.Lock()
 			errorLogger := m.errorLogger
 			m.errorLogger = &ErrorLog {
@@ -174,10 +212,11 @@ func (m *Metric) Run() {
 			}
 			m.errorLogLock.Unlock()
 			if len(errorLogger.errorLog) == 0 {
-				continue
+				return
 			}
-		// fixme errorlog alarm
-		//	m.alarmClient.SimpleAlarm(m.clusterId, "errorlog alarm", "", samples)
+			// errorlog alarm
+			m.gatewayErrorlogAlarm(fmt.Sprint(m.clusterId), m.host, errorLogger.errorLog)
+		}()
 		}
 	}
 }
