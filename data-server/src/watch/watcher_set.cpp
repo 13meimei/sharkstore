@@ -133,6 +133,8 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
             Status ret;
             std::pair<int64_t, bool> result;
+            result.second = false;
+
             if(prefixFlag) {
                 //用户端版本低于内存版本时，需要全量
                 if(w_ptr->getBufferFlag() <= 0) {
@@ -169,6 +171,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                         version = 0;
                         return WATCH_WATCHER_NOT_NEED;
                     }
+                    result.second = true;
                 }else if(ret.code() != Status::kNotFound) {
                     FLOG_ERROR("AddWatcher Decode error, key: %s err:%s", EncodeToHexString(key).c_str(), ret.ToString().c_str());
                     version = 0;
@@ -415,7 +418,9 @@ std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::Store *store, const wat
     int64_t maxVersion{0};
     auto err = std::make_shared<errorpb::Error>();
 
+    //<db-count:db-exists-data>
     std::pair<int32_t, bool> result;
+    result.second = false;
 
     auto resp = dsResp->mutable_resp();
     resp->set_code(Status::kOk);
