@@ -29,7 +29,6 @@ import (
 	"sync"
 	"crypto/md5"
 	"encoding/hex"
-	"model/pkg/ds_admin"
 )
 
 const (
@@ -979,7 +978,7 @@ func (s *Service) GetConfigOfNode(clusterId, nodeId int, configKeys string) (int
 	var getConfigOfNodeResp = struct {
 		Code int                      `json:"code"`
 		Msg  string                   `json:"message"`
-		Data []*ds_adminpb.ConfigItem `json:"data"`
+		Data string `json:"data"`
 	}{}
 	if err := sendGetReq(info.MasterUrl, "/manage/node/getConfigOfNode", reqParams, &getConfigOfNodeResp); err != nil {
 		return nil, err
@@ -1053,7 +1052,7 @@ func (s *Service) GetDsInfoOfNode(clusterId, nodeId int, path string) (interface
 		log.Error("get ds_info of node[nodeId=%d, clusterId=%d] failed. err:[%v]", nodeId, clusterId, getDsInfoOfNodeResp)
 		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getDsInfoOfNodeResp.Msg}
 	}
-	return getDsInfoOfNodeResp, nil
+	return getDsInfoOfNodeResp.Data, nil
 }
 
 func (s *Service) ClearQueueOfNode(clusterId, nodeId int, queueType string) (interface{}, error) {
@@ -1086,7 +1085,7 @@ func (s *Service) ClearQueueOfNode(clusterId, nodeId int, queueType string) (int
 		log.Error("clear queue of node[nodeId=%d, clusterId=%d] failed. err:[%v]", nodeId, clusterId, clearQueueOfNodeResp)
 		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: clearQueueOfNodeResp.Msg}
 	}
-	return clearQueueOfNodeResp, nil
+	return clearQueueOfNodeResp.Data, nil
 }
 
 func (s *Service) GetPendingQueuesOfNode(clusterId, nodeId int, pendingType, count string) (interface{}, error) {
@@ -1120,7 +1119,7 @@ func (s *Service) GetPendingQueuesOfNode(clusterId, nodeId int, pendingType, cou
 		log.Error("get pending queues of node[nodeId=%d, clusterId=%d] failed. err:[%v]", nodeId, clusterId, getPendingQueuesOfNodeResp)
 		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getPendingQueuesOfNodeResp.Msg}
 	}
-	return getPendingQueuesOfNodeResp, nil
+	return getPendingQueuesOfNodeResp.Data, nil
 }
 
 func (s *Service) FlushDBOfNode(clusterId, nodeId int, wait bool) (interface{}, error) {

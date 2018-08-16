@@ -455,14 +455,19 @@ func (service *Server) handleNodeSetConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var configs []*ds_adminpb.ConfigItem
-	if err = json.Unmarshal([]byte(configString), configs); err != nil {
+	var configArray []ds_adminpb.ConfigItem
+	if err = json.Unmarshal([]byte(configString), &configArray); err != nil {
 		log.Error("configs json parse error: %v", err.Error())
 		reply.Code = -1
 		reply.Message = "configs json parse error: " + err.Error()
 		return
 	}
 
+	var configs []*ds_adminpb.ConfigItem
+	for _, configItem := range configArray {
+		item := deepcopy.Iface(configItem).(ds_adminpb.ConfigItem)
+		configs = append(configs, &item)
+	}
 	if err = service.cluster.setConfigRemote(nodeId, configs); err != nil {
 		log.Error("http set node config failed. error:[%v]", err.Error())
 		reply.Code = -1
@@ -493,14 +498,19 @@ func (service *Server) handleNodeGetConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var keys []*ds_adminpb.ConfigKey
-	if err = json.Unmarshal([]byte(keyString), keys); err != nil {
+	var keyArray []ds_adminpb.ConfigKey
+	if err = json.Unmarshal([]byte(keyString), &keyArray); err != nil {
 		log.Error("config key json parse error: %v", err.Error())
 		reply.Code = -1
 		reply.Message = "config key json parse error: " + err.Error()
 		return
 	}
 
+	var keys []*ds_adminpb.ConfigKey
+	for _, configKey := range keyArray {
+		key := deepcopy.Iface(configKey).(ds_adminpb.ConfigKey)
+		keys = append(keys, &key)
+	}
 	resp, err := service.cluster.getConfigRemote(nodeId, keys)
 	if err != nil {
 		log.Error("http get node config failed. error:[%v]", err.Error())
@@ -508,7 +518,14 @@ func (service *Server) handleNodeGetConfig(w http.ResponseWriter, r *http.Reques
 		reply.Message = err.Error()
 		return
 	}
-	reply.Data = resp.Configs
+	configBytes, err := json.Marshal(resp.Configs)
+	if err != nil {
+		log.Error("http get node config failed. error:[%v]", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	reply.Data = string(configBytes)
 	return
 }
 
@@ -708,7 +725,7 @@ func (service *Server) handleNodeGetPendingQueues(w http.ResponseWriter, r *http
 
 	resp, err := service.cluster.getPendingQueuesRemote(nodeId, pendingType, count)
 	if err != nil {
-		log.Error("http node get pending queue[type=%d] failed. error:[%v]", pendingType, err.Error())
+		log.Error("http node get pending queue[type=%v, count=%d] failed. error:[%v]", pendingType, count, err.Error())
 		reply.Code = -1
 		reply.Message = err.Error()
 		return
