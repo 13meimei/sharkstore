@@ -35,7 +35,8 @@ func Ping(clusterId, pingBaseUrl string, ping_interval int64) {
 		return
 	}
 
-	url := fmt.Sprintf(`http://%s?cluster_id=%s&app_name=%s&ip_addrs=%s&ping_interval=%d`, clusterId, pingBaseUrl, app, strings.Join(ips, ","), ping_interval)
+	url := fmt.Sprintf(`http://%s?cluster_id=%s&app_name=%s&ip_addrs=%s&ping_interval=%d`,
+		pingBaseUrl, clusterId, app, strings.Join(ips, ","), ping_interval)
 
 	timer := time.NewTicker(time.Duration(ping_interval) * time.Second)
 	for {

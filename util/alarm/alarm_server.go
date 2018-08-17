@@ -44,8 +44,6 @@ type Server struct {
 	jimConnTimeoutSec time.Duration
 	jimWriteTimeoutSec time.Duration
 	jimReadTimeoutSec time.Duration
-	//jimRequirePass string
-
 	jimClientPool *redis.Pool
 }
 
@@ -72,11 +70,14 @@ func (s *Server) jimDial() (redis.Conn, error) {
 }
 
 func (s *Server) jimSendCommand(commandName string, args ...interface{}) (interface{}, error) {
+	if (s.jimClientPool == nil) {
+		return nil, errors.New("no redis pool")
+	}
 	conn := s.jimClientPool.Get()
 	return conn.Do(commandName, args...)
 }
 
-func newServer(ctx context.Context, alarmServerAddr string) *Server {
+func newServer(ctx context.Context, alarmServerAddr string, jimUrl, jimApAddr string) *Server {
 	gateway := NewMessageGateway(ctx, alarmServerAddr)
 	if gateway == nil {
 		return nil
@@ -85,6 +86,8 @@ func newServer(ctx context.Context, alarmServerAddr string) *Server {
 	s := new(Server)
 	s.gateway = gateway
 
+	s.jimUrl = jimUrl
+	s.jimApAddr = jimApAddr
 	s.jimClientPool = func() *redis.Pool {
 		return &redis.Pool{
 			MaxIdle: 3,
@@ -160,13 +163,13 @@ func (s *Server) copyAliveCheckingAppKeys() (ret []string) {
 	return
 }
 
-func NewAlarmServer(ctx context.Context, port int, remoteAlarmServerAddr string) (*Server, error) {
+func NewAlarmServer(ctx context.Context, port int, remoteAlarmServerAddr string, jimUrl, jimApAddr string) (*Server, error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
 	if err != nil {
 		return nil, err
 	}
 	s := grpc.NewServer()
-	server := newServer(ctx, remoteAlarmServerAddr)
+	server := newServer(ctx, remoteAlarmServerAddr, jimUrl, jimApAddr)
 	if server == nil {
 		return nil, errors.New("server is nil")
 	}
@@ -298,7 +301,7 @@ func (s *Server) NodeRangeAlarm(ctx context.Context, req *alarmpb.NodeRangeAlarm
 func (s *Server) HandleAppPing(w http.ResponseWriter, r *http.Request) {
 	log.Debug("handle app ping")
 
-	var resp string
+	resp := "ok"
 	defer w.Write([]byte(resp))
 
 	appName := r.FormValue("app_name") // app argv[0]
@@ -340,8 +343,6 @@ func (s *Server) HandleAppPing(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	resp = "ok"
 }
 
 func (s *Server) aliveCheckingAlarm() {

@@ -226,6 +226,8 @@ type AlarmConfig struct {
 	RemoteAlarmServerAddress string`toml:"remote-alarm-server-address,omitempty" json:"remote-alarm-server-address"`
 	MessageGatewayAddress string	`toml:"message-gateway-address,omitempty" json:"message-gateway-address"`
 	Receivers []*AlarmReceiver		`toml:"receivers,omitempty" json:"receivers"`
+	jimUrl string 			`toml:"jim-url,omitempty" json:"jim-url"`
+	jimApAddr string		`toml:"jim-ap-addr,omitempty" json:"jim-ap-addr"`
 }
 
 func (c *ClusterConfig) adjust() error {

@@ -6,12 +6,17 @@ import (
 	"net/http"
 	"time"
 	"strconv"
+	"model/pkg/alarmpb"
+	"fmt"
+	"net/http/httptest"
+	"strings"
+	"github.com/gomodule/redigo/redis"
 )
 
-func TestAlarm(t *testing.T) {
+func TestAlarmGrpc(t *testing.T) {
 	//ctx, cancel:= context.WithCancel(context.Background())
 	ctx, _ := context.WithCancel(context.Background())
-	_, err := NewAlarmServer(ctx, 2222, "http://localhost:3333")
+	_, err := NewAlarmServer(ctx, 2222, "http://localhost:3333", "", "")
 	if err != nil {
 		t.Fatalf("NewAlarmServer failed: %v", err)
 	}
@@ -43,12 +48,83 @@ func TestAlarm(t *testing.T) {
 		t.Fatalf("alarm range no hb error: %v", err)
 	}
 
-	if err := cli.TaskTimeoutAlarm(1, nil, nil, "this task is timeout", nil); err != nil {
-		t.Fatalf("alarm timeout error: %v", err)
-	}
-
-	if err := cli.TaskTimeoutAlarm(3, nil, nil, "this task is timeout", nil); err != nil {
-		t.Fatalf("alarm timeout error: %v", err)
-	}
 	time.Sleep(3*time.Second)
 }
+
+func TestAlarmMessageNotify(t *testing.T) {
+	ctx := context.Background()
+	s := newServer(ctx, "", "", "")
+
+	appName := "gateway"
+	clusterId := 10
+	appAddr := "127.0.0.1"
+
+	var samples []*Sample
+	info := make(map[string]interface{})
+	info["spaceId"] = clusterId
+	info["ip"] = appAddr
+	info["app_is_not_alive"] = 1
+	info["app_name"] = appName
+	samples = append(samples, NewSample("", 0, 0, info))
+	fmt.Println("len samples: ", len(samples))
+	req := &alarmpb.SimpleRequest{
+		Head: &alarmpb.RequestHeader{ClusterId: int64(10)},
+		Title: "title simple alarm",
+		Content: "content simple alarm",
+		SampleJson: SamplesToJson(samples),
+	}
+	s.SimpleAlarm(ctx, req)
+	time.Sleep(3*time.Second)
+}
+
+func TestAlarmHandleAppPing(t *testing.T) {
+	ctx := context.Background()
+	s := newServer(ctx, "", "/redis/cluster/1:1803528818953446384", "192.168.150.61:5360") // do not send alarm really
+
+	clusterId := 10
+	appName := "gateway"
+	ip0 := "192.168.0.0"
+	ip1 := "192.168.0.1"
+	ips := []string{ip0, ip1}
+	ping_interval := 3
+	url := fmt.Sprintf(`http://%s?cluster_id=%s&app_name=%s&ip_addrs=%s&ping_interval=%d`,
+		"", clusterId, appName, strings.Join(ips, ","), ping_interval)
+
+	var r *http.Request
+	w := httptest.NewRecorder()
+
+	// setex to jimdb
+	r = httptest.NewRequest("GET", url, nil)
+	s.HandleAppPing(w, r)
+
+	// check jimdb
+	appKey := s.genAliveAppKey(appName, fmt.Sprint(clusterId), ip0)
+	t.Logf("test app key: %v", appKey)
+
+	waitTicker := time.NewTicker(10*time.Second)
+	for {
+		select {
+		case <-waitTicker.C:
+			return
+		default:
+		reply, err := s.jimSendCommand("exists", appKey)
+		if err != nil {
+			t.Logf("jim send command error: %v", err)
+		}
+		replyInt, err := redis.Int(reply, err)
+		if err != nil {
+			t.Logf("jim command setex reply type is not int: %v", err)
+		}
+
+		if replyInt != 0 { // app key exists
+			t.Logf("reply 1")
+		} else {
+			t.Fatal("reply 0")
+		}
+	}
+	}
+}
+
+//func TestAlarmLoadAliveAppFromTableFbaseCluster(t *testing.T) {
+//
+//}

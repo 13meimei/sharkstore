@@ -204,7 +204,7 @@ func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
 		})
 	}
 	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort,
-		conf.RemoteAlarmServerAddress)
+		conf.RemoteAlarmServerAddress, conf.jimUrl, conf.jimApAddr)
 	if err != nil {
 		log.Error("alarm.NewAlarmServer failed, err: [%v]", err)
 		return nil

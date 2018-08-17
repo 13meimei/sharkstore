@@ -124,7 +124,7 @@ func (gw *MessageGateway) wait() {
 			// to alarm server
 			for _, sample := range msg.samples {
 				if err := gw.PushSampleJson(sample); err != nil {
-					log.Error("push to remote alarm server error: ", err)
+					log.Error("push to remote alarm server error: %v", err)
 				}
 			}
 		case <-gw.ctx.Done():
@@ -146,6 +146,9 @@ func (gw *MessageGateway) notify(message Message, timeout time.Duration) (err er
 }
 
 func (gw *MessageGateway) PushSampleJson(sample string) error {
+	if len(gw.alarmServerAddress) == 0 {
+		return errors.New("alarm server address is not config")
+	}
 	req, _ := http.NewRequest("POST", gw.alarmServerAddress, strings.NewReader(sample))
 	req.Header.Add("User-Agent", "AlarmPusher-Agent")
 	req.Header.Set("Connection", "close")
