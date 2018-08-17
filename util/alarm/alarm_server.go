@@ -19,7 +19,6 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gomodule/redigo/redis"
-	"github.com/gin-gonic/gin/json"
 )
 
 const (
@@ -36,21 +35,18 @@ type AlarmServer interface {
 
 type Server struct {
 	gateway *MessageGateway
-	filters []alarmFilter
 
-	aliveCheckingAppKeys 	[]string
-	aliveCheckingLock 	sync.RWMutex
+	aliveCheckingAppKeys []string
+	aliveCheckingLock sync.RWMutex
 
 	jimUrl string
 	jimApAddr string
 	jimConnTimeoutSec time.Duration
 	jimWriteTimeoutSec time.Duration
 	jimReadTimeoutSec time.Duration
-	jimRequirePass string
-
+	//jimRequirePass string
 
 	jimClientPool *redis.Pool
-	//jimClientLock sync.Mutex
 }
 
 func (s *Server) jimDial() (redis.Conn, error) {
@@ -60,6 +56,8 @@ func (s *Server) jimDial() (redis.Conn, error) {
 	}
 
 	var dialOpts []redis.DialOption
+	dialOpts = append(dialOpts, redis.DialPassword(s.jimUrl))
+
 	if s.jimConnTimeoutSec > 0 {
 		dialOpts = append(dialOpts, redis.DialConnectTimeout(s.jimConnTimeoutSec*time.Second))
 	}
@@ -68,9 +66,6 @@ func (s *Server) jimDial() (redis.Conn, error) {
 	}
 	if s.jimReadTimeoutSec > 0 {
 		dialOpts = append(dialOpts, redis.DialReadTimeout(s.jimReadTimeoutSec*time.Second))
-	}
-	if len(s.jimRequirePass) != 0 {
-		dialOpts = append(dialOpts, redis.DialPassword(s.jimRequirePass))
 	}
 
 	return redis.Dial("tcp", s.jimApAddr, dialOpts...)
@@ -89,7 +84,6 @@ func newServer(ctx context.Context, alarmServerAddr string) *Server {
 
 	s := new(Server)
 	s.gateway = gateway
-	s.filters = append(s.filters, new(clusterIdFilter))
 
 	s.jimClientPool = func() *redis.Pool {
 		return &redis.Pool{
@@ -289,11 +283,6 @@ func (s *Server) NodeRangeAlarm(ctx context.Context, req *alarmpb.NodeRangeAlarm
 	case alarmpb.NodeRangeAlarmType_NODE_LEADER_COUNT:
 	}
 
-	for _, f := range s.filters {
-		if ok := f.FilteredByInt(req.GetHead().GetClusterId()); ok {
-			return resp, nil
-		}
-	}
 	if err := s.gateway.notify(Message{
 		ClusterId: clusterId,
 		Title: "node/range alarm",
@@ -387,21 +376,16 @@ func (s *Server) aliveCheckingAlarm() {
 					continue
 				}
 
-				var samplesJson []string
+				var samples []*Sample
 				appName, clusterId, appAddr := s.splitAliveAppKey(key)
 				info := make(map[string]interface{})
 				info["spaceId"] = clusterId
 				info["ip"] = appAddr
 				info["app_is_not_alive"] = 1
 				info["app_name"] = appName
-				sample := NewSample("", 0, 0, info)
 
-				sampleJson, err := json.Marshal(sample)
-				if err != nil {
-					log.Error("sample json marshal failed: %v", err)
-					continue
-				}
-				samplesJson = append(samplesJson, string(sampleJson))
+				samples = append(samples, NewSample("", 0, 0, info))
+				samplesJson := SamplesToJson(samples)
 
 				if err := s.gateway.notify(Message{
 					ClusterId: func() int64 {
@@ -426,11 +410,6 @@ func (s *Server) SimpleAlarm(ctx context.Context, req *alarmpb.SimpleRequest) (*
 
 	clusterId := req.GetHead().GetClusterId()
 
-	for _, f := range s.filters {
-		if ok := f.FilteredByInt(req.GetHead().GetClusterId()); ok {
-			return resp, nil
-		}
-	}
 	if err := s.gateway.notify(Message{
 		ClusterId: clusterId,
 		Title: req.GetTitle(),
