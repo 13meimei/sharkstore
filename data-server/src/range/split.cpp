@@ -216,7 +216,7 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
     return ret;
 }
 
-Status Range::ForceSplit(uint64_t version) {
+Status Range::ForceSplit(uint64_t version, std::string *split_key) {
     return Status(Status::kNotSupported);
 }
 

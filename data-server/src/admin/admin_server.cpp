@@ -104,7 +104,7 @@ Status AdminServer::forceSplit(const ds_adminpb::ForceSplitRequest& req, ds_admi
         return Status(Status::kNotFound, "range", std::to_string(req.range_id()));
     }
     FLOG_INFO("[Admin] force split range %" PRIu64 ", version: %" PRIu64, req.range_id(), req.version());
-    auto s = rng->ForceSplit(req.version());
+    auto s = rng->ForceSplit(req.version(), resp->mutable_split_key());
     if (s.code() == Status::kStaleEpoch) {
         FLOG_WARN("[Admin] force split range %" PRIu64 ", stale version: %" PRIu64,
                 req.range_id(), req.version());
@@ -139,7 +139,9 @@ Status AdminServer::compaction(const ds_adminpb::CompactionRequest& req, ds_admi
 }
 
 Status AdminServer::clearQueue(const ds_adminpb::ClearQueueRequest& req, ds_adminpb::ClearQueueResponse* resp) {
-    return Status(Status::kNotSupported);
+    // TODO:
+    resp->set_cleared(100);
+    return Status::OK();
 }
 
 Status AdminServer::getPending(const ds_adminpb::GetPendingsRequest& req, ds_adminpb::GetPendingsResponse* resp) {
