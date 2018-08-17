@@ -77,7 +77,7 @@ void AdminServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg)
     AdminResponse resp;
     Status ret = checkAuth(req.auth());
     if (ret.ok()) {
-        execute(req, &resp);
+        ret = execute(req, &resp);
     }
 
     if (!ret.ok()) {
