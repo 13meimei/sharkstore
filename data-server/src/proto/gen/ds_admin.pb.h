@@ -1761,10 +1761,25 @@ class ForceSplitResponse : public ::google::protobuf::Message /* @@protoc_insert
 
   // accessors -------------------------------------------------------
 
+  // bytes split_key = 1;
+  void clear_split_key();
+  static const int kSplitKeyFieldNumber = 1;
+  const ::std::string& split_key() const;
+  void set_split_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_split_key(::std::string&& value);
+  #endif
+  void set_split_key(const char* value);
+  void set_split_key(const void* value, size_t size);
+  ::std::string* mutable_split_key();
+  ::std::string* release_split_key();
+  void set_allocated_split_key(::std::string* split_key);
+
   // @@protoc_insertion_point(class_scope:ds_adminpb.ForceSplitResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr split_key_;
   mutable int _cached_size_;
   friend struct protobuf_ds_5fadmin_2eproto::TableStruct;
 };
@@ -3966,6 +3981,59 @@ inline void ForceSplitRequest::set_version(::google::protobuf::uint64 value) {
 // -------------------------------------------------------------------
 
 // ForceSplitResponse
+
+// bytes split_key = 1;
+inline void ForceSplitResponse::clear_split_key() {
+  split_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ForceSplitResponse::split_key() const {
+  // @@protoc_insertion_point(field_get:ds_adminpb.ForceSplitResponse.split_key)
+  return split_key_.GetNoArena();
+}
+inline void ForceSplitResponse::set_split_key(const ::std::string& value) {
+  
+  split_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:ds_adminpb.ForceSplitResponse.split_key)
+}
+#if LANG_CXX11
+inline void ForceSplitResponse::set_split_key(::std::string&& value) {
+  
+  split_key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:ds_adminpb.ForceSplitResponse.split_key)
+}
+#endif
+inline void ForceSplitResponse::set_split_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  split_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:ds_adminpb.ForceSplitResponse.split_key)
+}
+inline void ForceSplitResponse::set_split_key(const void* value, size_t size) {
+  
+  split_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:ds_adminpb.ForceSplitResponse.split_key)
+}
+inline ::std::string* ForceSplitResponse::mutable_split_key() {
+  
+  // @@protoc_insertion_point(field_mutable:ds_adminpb.ForceSplitResponse.split_key)
+  return split_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ForceSplitResponse::release_split_key() {
+  // @@protoc_insertion_point(field_release:ds_adminpb.ForceSplitResponse.split_key)
+  
+  return split_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ForceSplitResponse::set_allocated_split_key(::std::string* split_key) {
+  if (split_key != NULL) {
+    
+  } else {
+    
+  }
+  split_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), split_key);
+  // @@protoc_insertion_point(field_set_allocated:ds_adminpb.ForceSplitResponse.split_key)
+}
 
 // -------------------------------------------------------------------
 

@@ -98,6 +98,7 @@ message ForceSplitRequest {
 }
 
 message ForceSplitResponse {
+    bytes split_key = 1;
 }
 
 

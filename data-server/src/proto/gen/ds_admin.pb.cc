@@ -268,6 +268,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ForceSplitResponse, split_key_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CompactionRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -333,14 +334,14 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 81, -1, sizeof(GetInfoResponse)},
   { 87, -1, sizeof(ForceSplitRequest)},
   { 94, -1, sizeof(ForceSplitResponse)},
-  { 99, -1, sizeof(CompactionRequest)},
-  { 106, -1, sizeof(CompactionResponse)},
-  { 113, -1, sizeof(ClearQueueRequest)},
-  { 119, -1, sizeof(ClearQueueResponse)},
-  { 125, -1, sizeof(GetPendingsRequest)},
-  { 132, -1, sizeof(GetPendingsResponse)},
-  { 138, -1, sizeof(FlushDBRequest)},
-  { 144, -1, sizeof(FlushDBResponse)},
+  { 100, -1, sizeof(CompactionRequest)},
+  { 107, -1, sizeof(CompactionResponse)},
+  { 114, -1, sizeof(ClearQueueRequest)},
+  { 120, -1, sizeof(ClearQueueResponse)},
+  { 126, -1, sizeof(GetPendingsRequest)},
+  { 133, -1, sizeof(GetPendingsResponse)},
+  { 139, -1, sizeof(FlushDBRequest)},
+  { 145, -1, sizeof(FlushDBResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -520,29 +521,30 @@ void AddDescriptorsImpl() {
       "figs\030\001 \003(\0132\026.ds_adminpb.ConfigItem\"\036\n\016Ge"
       "tInfoRequest\022\014\n\004path\030\001 \001(\t\"\037\n\017GetInfoRes"
       "ponse\022\014\n\004data\030\001 \001(\t\"6\n\021ForceSplitRequest"
-      "\022\020\n\010range_id\030\001 \001(\004\022\017\n\007version\030\002 \001(\004\"\024\n\022F"
-      "orceSplitResponse\"=\n\021CompactionRequest\022\020"
-      "\n\010range_id\030\001 \001(\004\022\026\n\016transaction_id\030\002 \001(\003"
-      "\"8\n\022CompactionResponse\022\021\n\tbegin_key\030\001 \001("
-      "\014\022\017\n\007end_key\030\002 \001(\014\"\210\001\n\021ClearQueueRequest"
-      "\022;\n\nqueue_type\030\001 \001(\0162\'.ds_adminpb.ClearQ"
-      "ueueRequest.QueueType\"6\n\tQueueType\022\007\n\003AL"
-      "L\020\000\022\017\n\013FAST_WORKER\020\001\022\017\n\013SLOW_WORKER\020\002\"%\n"
-      "\022ClearQueueResponse\022\017\n\007cleared\030\001 \001(\004\"\262\001\n"
-      "\022GetPendingsRequest\0229\n\005ptype\030\001 \001(\0162*.ds_"
-      "adminpb.GetPendingsRequest.PendingType\022\r"
-      "\n\005count\030\002 \001(\004\"R\n\013PendingType\022\007\n\003ALL\020\000\022\n\n"
-      "\006INSERT\020\001\022\n\n\006SELECT\020\002\022\020\n\014PONIT_SELECT\020\003\022"
-      "\020\n\014RANGE_SELECT\020\004\"#\n\023GetPendingsResponse"
-      "\022\014\n\004desc\030\001 \001(\t\"\036\n\016FlushDBRequest\022\014\n\004wait"
-      "\030\001 \001(\010\"\021\n\017FlushDBResponse*\230\001\n\tAdminType\022"
-      "\013\n\007UNKNOWN\020\000\022\016\n\nSET_CONFIG\020\001\022\016\n\nGET_CONF"
-      "IG\020\002\022\014\n\010GET_INFO\020\003\022\017\n\013FORCE_SPLIT\020\004\022\016\n\nC"
-      "OMPACTION\020\005\022\017\n\013CLEAR_QUEUE\020\006\022\020\n\014GET_PEND"
-      "INGS\020\007\022\014\n\010FLUSH_DB\020\010b\006proto3"
+      "\022\020\n\010range_id\030\001 \001(\004\022\017\n\007version\030\002 \001(\004\"\'\n\022F"
+      "orceSplitResponse\022\021\n\tsplit_key\030\001 \001(\014\"=\n\021"
+      "CompactionRequest\022\020\n\010range_id\030\001 \001(\004\022\026\n\016t"
+      "ransaction_id\030\002 \001(\003\"8\n\022CompactionRespons"
+      "e\022\021\n\tbegin_key\030\001 \001(\014\022\017\n\007end_key\030\002 \001(\014\"\210\001"
+      "\n\021ClearQueueRequest\022;\n\nqueue_type\030\001 \001(\0162"
+      "\'.ds_adminpb.ClearQueueRequest.QueueType"
+      "\"6\n\tQueueType\022\007\n\003ALL\020\000\022\017\n\013FAST_WORKER\020\001\022"
+      "\017\n\013SLOW_WORKER\020\002\"%\n\022ClearQueueResponse\022\017"
+      "\n\007cleared\030\001 \001(\004\"\262\001\n\022GetPendingsRequest\0229"
+      "\n\005ptype\030\001 \001(\0162*.ds_adminpb.GetPendingsRe"
+      "quest.PendingType\022\r\n\005count\030\002 \001(\004\"R\n\013Pend"
+      "ingType\022\007\n\003ALL\020\000\022\n\n\006INSERT\020\001\022\n\n\006SELECT\020\002"
+      "\022\020\n\014PONIT_SELECT\020\003\022\020\n\014RANGE_SELECT\020\004\"#\n\023"
+      "GetPendingsResponse\022\014\n\004desc\030\001 \001(\t\"\036\n\016Flu"
+      "shDBRequest\022\014\n\004wait\030\001 \001(\010\"\021\n\017FlushDBResp"
+      "onse*\230\001\n\tAdminType\022\013\n\007UNKNOWN\020\000\022\016\n\nSET_C"
+      "ONFIG\020\001\022\016\n\nGET_CONFIG\020\002\022\014\n\010GET_INFO\020\003\022\017\n"
+      "\013FORCE_SPLIT\020\004\022\016\n\nCOMPACTION\020\005\022\017\n\013CLEAR_"
+      "QUEUE\020\006\022\020\n\014GET_PENDINGS\020\007\022\014\n\010FLUSH_DB\020\010b"
+      "\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 2348);
+      descriptor, 2367);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "ds_admin.proto", &protobuf_RegisterTypes);
 }
@@ -5950,6 +5952,7 @@ void ForceSplitRequest::set_version(::google::protobuf::uint64 value) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int ForceSplitResponse::kSplitKeyFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 ForceSplitResponse::ForceSplitResponse()
@@ -5965,10 +5968,15 @@ ForceSplitResponse::ForceSplitResponse(const ForceSplitResponse& from)
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  split_key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.split_key().size() > 0) {
+    split_key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.split_key_);
+  }
   // @@protoc_insertion_point(copy_constructor:ds_adminpb.ForceSplitResponse)
 }
 
 void ForceSplitResponse::SharedCtor() {
+  split_key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _cached_size_ = 0;
 }
 
@@ -5978,6 +5986,7 @@ ForceSplitResponse::~ForceSplitResponse() {
 }
 
 void ForceSplitResponse::SharedDtor() {
+  split_key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void ForceSplitResponse::SetCachedSize(int size) const {
@@ -6009,6 +6018,7 @@ void ForceSplitResponse::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  split_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _internal_metadata_.Clear();
 }
 
@@ -6021,12 +6031,29 @@ bool ForceSplitResponse::MergePartialFromCodedStream(
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
-  handle_unusual:
-    if (tag == 0) {
-      goto success;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // bytes split_key = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_split_key()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
     }
-    DO_(::google::protobuf::internal::WireFormat::SkipField(
-          input, tag, _internal_metadata_.mutable_unknown_fields()));
   }
 success:
   // @@protoc_insertion_point(parse_success:ds_adminpb.ForceSplitResponse)
@@ -6043,6 +6070,12 @@ void ForceSplitResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  // bytes split_key = 1;
+  if (this->split_key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      1, this->split_key(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -6056,6 +6089,13 @@ void ForceSplitResponse::SerializeWithCachedSizes(
   // @@protoc_insertion_point(serialize_to_array_start:ds_adminpb.ForceSplitResponse)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
+
+  // bytes split_key = 1;
+  if (this->split_key().size() > 0) {
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+        1, this->split_key(), target);
+  }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
@@ -6074,6 +6114,13 @@ size_t ForceSplitResponse::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // bytes split_key = 1;
+  if (this->split_key().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::BytesSize(
+        this->split_key());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -6103,6 +6150,10 @@ void ForceSplitResponse::MergeFrom(const ForceSplitResponse& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.split_key().size() > 0) {
+
+    split_key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.split_key_);
+  }
 }
 
 void ForceSplitResponse::CopyFrom(const ::google::protobuf::Message& from) {
@@ -6129,6 +6180,7 @@ void ForceSplitResponse::Swap(ForceSplitResponse* other) {
 }
 void ForceSplitResponse::InternalSwap(ForceSplitResponse* other) {
   using std::swap;
+  split_key_.Swap(&other->split_key_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -6140,6 +6192,59 @@ void ForceSplitResponse::InternalSwap(ForceSplitResponse* other) {
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // ForceSplitResponse
+
+// bytes split_key = 1;
+void ForceSplitResponse::clear_split_key() {
+  split_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& ForceSplitResponse::split_key() const {
+  // @@protoc_insertion_point(field_get:ds_adminpb.ForceSplitResponse.split_key)
+  return split_key_.GetNoArena();
+}
+void ForceSplitResponse::set_split_key(const ::std::string& value) {
+  
+  split_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:ds_adminpb.ForceSplitResponse.split_key)
+}
+#if LANG_CXX11
+void ForceSplitResponse::set_split_key(::std::string&& value) {
+  
+  split_key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:ds_adminpb.ForceSplitResponse.split_key)
+}
+#endif
+void ForceSplitResponse::set_split_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  split_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:ds_adminpb.ForceSplitResponse.split_key)
+}
+void ForceSplitResponse::set_split_key(const void* value, size_t size) {
+  
+  split_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:ds_adminpb.ForceSplitResponse.split_key)
+}
+::std::string* ForceSplitResponse::mutable_split_key() {
+  
+  // @@protoc_insertion_point(field_mutable:ds_adminpb.ForceSplitResponse.split_key)
+  return split_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* ForceSplitResponse::release_split_key() {
+  // @@protoc_insertion_point(field_release:ds_adminpb.ForceSplitResponse.split_key)
+  
+  return split_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void ForceSplitResponse::set_allocated_split_key(::std::string* split_key) {
+  if (split_key != NULL) {
+    
+  } else {
+    
+  }
+  split_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), split_key);
+  // @@protoc_insertion_point(field_set_allocated:ds_adminpb.ForceSplitResponse.split_key)
+}
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
 
