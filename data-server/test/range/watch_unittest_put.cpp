@@ -240,6 +240,52 @@ protected:
         return;
     }
 
+    void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, bool prefix = false)
+    {
+        FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
+        // begin test watch_get (key empty)
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 3000;
+        msg->session_id = 1;
+        msg->socket = &socket_;
+        msg->begin_time = get_micro_second();
+        msg->msg_id = 20180813;
+
+        watchpb::DsWatchRequest req;
+
+        req.mutable_header()->set_range_id(rangeId);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_req()->mutable_kv()->add_key(key1);
+        if(!key2.empty()) {
+            req.mutable_req()->mutable_kv()->add_key(key2);
+        }
+        req.mutable_req()->mutable_kv()->set_version(1);
+        req.mutable_req()->set_longpull(10000);
+        ///////////////////////////////////////////////
+        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_prefix(prefix);
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
+        range_server_->WatchGet(msg);
+
+        watchpb::DsWatchResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        FLOG_DEBUG("watch_get RESP:%s", resp.DebugString().c_str());
+        ASSERT_FALSE(resp.header().has_error());
+        //ASSERT_TRUE(resp.header().error().has_key_not_in_range());
+
+    }
 
 protected:
     server::ContextServer *context_;
@@ -338,13 +384,19 @@ TEST_F(WatchTest, watch_put_group_get_group) {
         range_server_->meta_store_->GetRange(2, rng);
         FLOG_DEBUG("RANGE2  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
 
-        for(auto i = 0; i < 110; i ++) {
+        for(auto i = 0; i < 1000; i ++) {
             char szKey2[1000] = {0};
             sprintf(szKey2, "01004001%d", i);
             std::string key2(szKey2);
             justPut(2, "01004001", key2, "01004001:value");
             justPut(2, "0100400101", key2, "01004001:value");
+
+            FLOG_DEBUG(">>>>>>>>>>>%d", i);
+            justWatch(2, "0100400102", "", true);
         }
+
+
+        sleep(15);
         /*
         for(auto i = 0; i < 110; i ++) {
             char szKey2[1000] = {0};
