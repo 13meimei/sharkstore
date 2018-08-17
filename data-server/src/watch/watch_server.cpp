@@ -47,7 +47,7 @@ WatchCode WatchServer::AddKeyWatcher(WatcherPtr& w_ptr, storage::Store *store_) 
 }
 
 WatchCode WatchServer::AddPrefixWatcher(WatcherPtr& w_ptr, storage::Store *store_) {
-    FLOG_DEBUG("watch server add prefix watcher: watch_id [%" PRIu64 "]", w_ptr->GetWatcherId());
+    FLOG_DEBUG("watch server add prefix watcher: session_id [%" PRIu64 "]", w_ptr->GetWatcherId());
     assert(w_ptr->GetType() == WATCH_PREFIX);
     std::string encode_key;
 

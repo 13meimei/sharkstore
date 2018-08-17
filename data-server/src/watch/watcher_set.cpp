@@ -50,7 +50,7 @@ WatcherSet::WatcherSet() {
                 continue; // no valid watcher wait in queue
             }
 
-            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime());
+            auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime()/1000);
             std::chrono::system_clock::time_point expire(mill_sec);
 
             int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time};
@@ -114,6 +114,8 @@ WatcherSet::~WatcherSet() {
 
 // private add/del watcher
 WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, WatcherMap& key_watchers, KeyMap& key_map, storage::Store *store_, bool prefixFlag ) {
+    int64_t beginTime(getticks());
+
     std::unique_lock<std::mutex> lock_queue(watcher_queue_mutex_);
     std::lock_guard<std::mutex> lock_map(watcher_map_mutex_);
 
@@ -217,6 +219,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         return WATCH_WATCHER_NOT_NEED;
     }
 
+    int64_t endTime(getticks());
     auto ret = watcher_map.emplace(std::make_pair(watcher_id, w_ptr)).second;
     if (ret) {
         //add to key_map_
@@ -228,18 +231,19 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         code = WATCH_OK;
 
-        FLOG_INFO("watcher add success, count:%" PRIu64 " watcher_id[%" PRIu64 "] key: [%s]",
-                  watcher_map_it->second->mapKeyWatcher.size(), w_ptr->GetWatcherId(), EncodeToHexString(key).c_str());
+        FLOG_INFO("watcher add success, count:%" PRIu64 " watcher_id[%" PRIu64 "] key: [%s]  take time:%" PRId64 " ms",
+                  watcher_map_it->second->mapKeyWatcher.size(), w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), endTime - beginTime);
     } else {
         code = WATCH_WATCHER_EXIST;
 
-        FLOG_ERROR("watcher add failed, watcher_id[%" PRIu64 "] exists, key: [%s]",
-                  w_ptr->GetWatcherId(), EncodeToHexString(key).c_str());
+        FLOG_ERROR("watcher add failed, watcher_id[%" PRIu64 "] exists, key: [%s] take time:%" PRId64 " ms",
+                  w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), endTime - beginTime);
     }
     return code;
 }
 
 WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, WatcherMap& watcher_map_, KeyMap& key_map_) {
+    int64_t beginTime(getticks());
     std::lock_guard<std::mutex> lock(watcher_map_mutex_);
 
     // XXX del from queue, pop in watcher expire thread
@@ -309,9 +313,9 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
     if (watchers->mapKeyWatcher.empty()) {
         watcher_map_.erase(watcher_map_it);
     }*/
-
-    FLOG_INFO("watcher del end: watch_id:[%" PRIu64 "] key: [%s]",
-              watcher_id, EncodeToHexString(key).c_str());
+    int64_t endTime(getticks());
+    FLOG_INFO("watcher del end: watch_id:[%" PRIu64 "] key: [%s] take time:%" PRId64 " ms",
+              watcher_id, EncodeToHexString(key).c_str(), endTime - beginTime);
 
     return WATCH_OK;
 }

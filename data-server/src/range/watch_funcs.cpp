@@ -119,7 +119,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         watchType = watch::WATCH_PREFIX;
     }
 
-    int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+    //int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+    int64_t expireTime = (req.req().longpull() > 0)?get_micro_second() + req.req().longpull()*1000:msg->expire_time*1000;
     auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, msg);
 
     watch::WatchCode wcode;
@@ -539,6 +540,8 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     notifyKv.set_version(version);
     RANGE_LOG_DEBUG("ApplyWatchPut new version[%" PRIu64 "]", version);
 
+    int64_t beginTime(getticks());
+
     std::string dbKey{""};
     std::string dbValue{""};
     if( Status::kOk != WatchEncodeAndDecode::EncodeKv(funcpb::kFuncWatchPut, meta_.Get(), notifyKv, dbKey, dbValue, err) ) {
@@ -600,6 +603,9 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         delete err;
         return ret;
     }
+
+    int64_t endTime(getticks());
+    FLOG_DEBUG("ApplyWatchPut key[%s], take time:%" PRId64 " ms", EncodeToHexString(dbKey).c_str(), endTime - beginTime);
 
     //notify watcher
     std::string errMsg("");
