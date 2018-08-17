@@ -2,6 +2,7 @@
 
 #include "net/session.h"
 #include "frame/sf_logger.h"
+#include "server/range_server.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -97,13 +98,44 @@ void AdminServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg)
     }
 }
 
-
 Status AdminServer::forceSplit(const ds_adminpb::ForceSplitRequest& req, ds_adminpb::ForceSplitResponse* resp) {
-    return Status(Status::kNotSupported);
+    auto rng = context_->range_server->Find(req.range_id());
+    if (rng == nullptr) {
+        return Status(Status::kNotFound, "range", std::to_string(req.range_id()));
+    }
+    FLOG_INFO("[Admin] force split range %" PRIu64 ", version: %" PRIu64, req.range_id(), req.version());
+    auto s = rng->ForceSplit(req.version());
+    if (s.code() == Status::kStaleEpoch) {
+        FLOG_WARN("[Admin] force split range %" PRIu64 ", stale version: %" PRIu64,
+                req.range_id(), req.version());
+        return Status::OK();
+    } else {
+        return s;
+    }
 }
 
 Status AdminServer::compaction(const ds_adminpb::CompactionRequest& req, ds_adminpb::CompactionResponse* resp) {
-    return Status(Status::kNotSupported);
+    auto db = context_->rocks_db;
+    rocksdb::Status s;
+    if (req.range_id() == 0) {
+        s = db->CompactRange(rocksdb::CompactRangeOptions(), nullptr, nullptr);
+    } else {
+        auto rng = context_->range_server->Find(req.range_id());
+        if (rng == nullptr) {
+            return Status(Status::kNotFound, "range", std::to_string(req.range_id()));
+        }
+        auto meta = rng->options();
+        resp->set_begin_key(meta.start_key());
+        resp->set_end_key(meta.end_key());
+        rocksdb::Slice begin = meta.start_key();
+        rocksdb::Slice end = meta.end_key();
+        s = db->CompactRange(rocksdb::CompactRangeOptions(), &begin, &end);
+    }
+
+    if (!s.ok()) {
+        return Status(Status::kIOError, "compact range", s.ToString());
+    }
+    return Status::OK();
 }
 
 Status AdminServer::clearQueue(const ds_adminpb::ClearQueueRequest& req, ds_adminpb::ClearQueueResponse* resp) {
@@ -115,7 +147,13 @@ Status AdminServer::getPending(const ds_adminpb::GetPendingsRequest& req, ds_adm
 }
 
 Status AdminServer::flushDB(const ds_adminpb::FlushDBRequest& req, ds_adminpb::FlushDBResponse* resp) {
-    return Status(Status::kNotSupported);
+    rocksdb::FlushOptions fops;
+    fops.wait = req.wait();
+    auto s = context_->rocks_db->Flush(fops);
+    if (!s.ok()) {
+        return Status(Status::kIOError, "flush", s.ToString());
+    }
+    return Status::OK();
 }
 
 } // namespace admin

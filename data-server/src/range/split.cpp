@@ -216,6 +216,10 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
     return ret;
 }
 
+Status Range::ForceSplit(uint64_t version) {
+    return Status(Status::kNotSupported);
+}
+
 }  // namespace range
 }  // namespace dataserver
 }  // namespace sharkstore

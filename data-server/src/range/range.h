@@ -59,6 +59,8 @@ public:
     void GetPeerInfo(raft::RaftStatus *raft_status);
     uint64_t GetPeerID() const;
 
+    Status ForceSplit(uint64_t version);
+
     // lock
     kvrpcpb::LockValue *LockGet(const std::string &key);
     void Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req);
