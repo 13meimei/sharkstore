@@ -624,7 +624,8 @@ void Range::LockWatch(common::ProtoMessage *msg,
         std::vector<watch::Key*> keys;
         keys.push_back(new watch::Key(req.req().kv().key(0)));
 
-        int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+        //int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+        int64_t expireTime = (req.req().longpull() > 0)?get_micro_second() + req.req().longpull()*1000:msg->expire_time*1000;
 
         auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, msg);
         auto w_code = context_->range_server->watch_server_->AddKeyWatcher(w_ptr, store_);

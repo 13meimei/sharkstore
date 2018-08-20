@@ -36,6 +36,7 @@ private:
     common::ProtoMessage*       message_ = nullptr;
     WatchType                   type_ = WATCH_KEY;
     WatcherId                   watcher_id_;
+    int64_t                     msg_id_;
     int64_t                     expire_time_;
     //prefix mode:
     // 0 key has no changing, need to add watcher
@@ -65,6 +66,10 @@ public:
     }
     int64_t getSessionId() const{
         return message_->session_id;
+    }
+
+    int64_t GetMsgId() const {
+        return msg_id_;
     }
 public:
     virtual void Send(google::protobuf::Message* resp);

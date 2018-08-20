@@ -83,7 +83,7 @@ WatcherSet::WatcherSet() {
 
                 FLOG_INFO("key: [%s] wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
                                    " execute take time: %" PRId64 " us,wait time:%" PRId64 " us",
-                           EncodeToHexString(encode_key).c_str(), w_ptr->GetMessage()->session_id, w_ptr->GetMessage()->msg_id,
+                           EncodeToHexString(encode_key).c_str(), w_ptr->GetMessage()->session_id, w_ptr->GetMsgId(),
                            w_ptr->GetWatcherId(), excEnd-excBegin,excBegin-waitBeginTime);
 
                 FLOG_DEBUG("timeout: msg->begin_time:%" PRId64 "us expire:%" PRId64 "ms now:%" PRId64 "us",

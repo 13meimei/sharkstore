@@ -628,6 +628,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     auto &req = cmd.kv_watch_del_req();
     watchpb::WatchKeyValue notifyKv;
     notifyKv.CopyFrom(req.kv());
+    auto prefix = req.prefix();
 
     uint64_t version{0};
     //version = getNextVersion(err);
@@ -638,33 +639,82 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
     std::string dbKey{""};
     std::string dbValue{""};
-    if (Status::kOk != WatchEncodeAndDecode::EncodeKv(funcpb::kFuncWatchDel, meta_.Get(), notifyKv, dbKey, dbValue, err)) {
-        //to do response error
-        //SendError()
-        FLOG_WARN("EncodeKv failed, key:%s ", notifyKv.key(0).c_str());
-        ;
+
+    std::vector<std::string*> userKeys;
+    for(auto i = 0; i < req.kv().key_size(); i++) {
+        userKeys.push_back(std::move(new std::string(req.kv().key(i))));
+    }
+    watch::Watcher::EncodeKey(&dbKey, meta_.GetTableID(), userKeys);
+
+    for(auto it:userKeys) {
+        delete it;
     }
 
-    notifyKv.clear_key();
-    notifyKv.add_key(dbKey);
-    if (!dbValue.empty()) {
-        notifyKv.set_value(dbValue);
+    if(!req.kv().value().empty()) {
+        std::string extend("");
+        watch::Watcher::EncodeValue(&dbValue, version, &req.kv().value(), &extend);
     }
 
+//    if (Status::kOk != WatchEncodeAndDecode::EncodeKv(funcpb::kFuncWatchDel, meta_.GetTableID(), notifyKv, dbKey, dbValue, err)) {
+//        //to do response error
+//        //SendError()
+//        FLOG_WARN("EncodeKv failed, key:%s ", notifyKv.key(0).c_str());
+//        ;
+//    }
 
-    do {
-        if (!KeyInRange(dbKey, err)) {
-            FLOG_WARN("ApplyWatchDel failed, key:%s not in range.", dbKey.data());
-            break;
+    std::vector<std::string> delKeys;
+
+
+    if (!KeyInRange(dbKey, err)) {
+        FLOG_WARN("ApplyWatchDel failed, key:%s not in range.", dbKey.data());
+    }
+    if (err != nullptr) {
+        delete err;
+        return ret;
+    }
+
+    if(prefix) {
+        std::string dbKeyEnd("");
+        if (0 != WatchEncodeAndDecode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
+            //to do set error message
+            FLOG_ERROR("NextComparableBytes error, skip key:%s", EncodeToHexString(dbKey).c_str());
+            return Status(Status::kUnknown);
         }
 
-        //auto watch_server = context_->range_server->watch_server_;
+        std::unique_ptr<storage::Iterator> iterator(
+                store_->NewIterator(dbKey, dbKeyEnd));
+
+        for (int i = 0; iterator->Valid(); ++i) {
+            delKeys.push_back(std::move(iterator->key()));
+            iterator->Next();
+        }
+
+        std::string first_key("");
+        std::string last_key("");
+        int64_t keySize = delKeys.size();
+        if (delKeys.size() > 0) {
+            first_key = delKeys[0];
+            last_key = delKeys[delKeys.size() - 1];
+        }
+
+        RANGE_LOG_DEBUG("BatchDelete afftected_keys:%" PRId64 " first_key:%s last_key:%s",
+                        keySize, first_key.c_str(), last_key.c_str());
+    } else {
+        delKeys.push_back(dbKey);
+    }
+
+//                ret = store_->BatchDelete(delKeys);
+//                if (!ret.ok()) {
+//                    FLOG_ERROR("BatchDelete failed, code:%d, msg:%s , key:%s", ret.code(),
+//                               ret.ToString().c_str(), EncodeToHexString(dbKey).c_str());
+//                    break;
+//                }
+
+    for(auto it : delKeys) {
+
         auto btime = get_micro_second();
 
-        //auto wSet = watch_server->GetWatcherSet_(dbKey);
-        //wSet->WatchSetLock(1);
-        ret = store_->Delete(dbKey);
-        //wSet->WatchSetLock(0);
+        ret = store_->Delete(it);
 
         context_->run_status->PushTime(monitor::PrintTag::Store,
                                        get_micro_second() - btime);
@@ -675,36 +725,39 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
             break;
         }
 
-        // ignore delete CheckSplit
-    } while (false);
 
-    if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new watchpb::DsKvWatchDeleteResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
-    } else if (err != nullptr) {
-        delete err;
-        return ret;
-    }
+        if (cmd.cmd_id().node_id() == node_id_) {
+            auto resp = new watchpb::DsKvWatchDeleteResponse;
+            SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
+        } else if (err != nullptr) {
+            delete err;
+            return ret;
+        }
 
-    FLOG_DEBUG("store->Delete->ret.code:%s", ret.ToString().c_str());
-    /*if( ret.code() == Status::kNotFound ) {
-        return ret;
-    }*/
+        FLOG_DEBUG("store->Delete->ret.code:%s", ret.ToString().c_str());
+        /*if( ret.code() == Status::kNotFound ) {
+            return ret;
+        }*/
 
-    //notify watcher
-    int32_t retCnt(0);
-    std::string errMsg("");
-    retCnt = WatchNotify(watchpb::DELETE, req.kv(), version, errMsg);
-    if (retCnt < 0) {
-        FLOG_ERROR("WatchNotify-del failed, ret:%d, msg:%s", retCnt, errMsg.c_str());
-    } else {
-        FLOG_DEBUG("WatchNotify-del success, count:%d, msg:%s", retCnt, errMsg.c_str());
+        notifyKv.clear_key();
+        notifyKv.add_key(it);
+
+        //notify watcher
+        int32_t retCnt(0);
+        std::string errMsg("");
+        retCnt = WatchNotify(watchpb::DELETE, notifyKv, version, errMsg, prefix);
+        if (retCnt < 0) {
+            FLOG_ERROR("WatchNotify-del failed, ret:%d, msg:%s", retCnt, errMsg.c_str());
+        } else {
+            FLOG_DEBUG("WatchNotify-del success, watch_count:%d, msg:%s", retCnt, errMsg.c_str());
+        }
+
     }
 
     return ret;
 }
 
-int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg) {
+int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg, bool prefix) {
 
     bool groupFlag{false};
 
@@ -723,7 +776,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     std::string dbKey("");
 
     bool hasPrefix{false};
-    if(kv.key_size() > 1) {
+    if(prefix || kv.key_size() > 1) {
         hasPrefix = true;
     }
 

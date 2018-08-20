@@ -42,6 +42,7 @@ class SocketBaseMock: public common::SocketBase {
 public:
     virtual int Send(response_buff_t *response) {
         FLOG_DEBUG("Send mock...%s", response->buff);
+
         return 0;
     }
 };
