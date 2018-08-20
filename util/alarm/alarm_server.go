@@ -39,6 +39,8 @@ type Server struct {
 	aliveCheckingAppKeys []string
 	aliveCheckingLock sync.RWMutex
 
+	sqlArgs string
+
 	jimUrl string
 	jimApAddr string
 	jimConnTimeoutSec time.Duration
@@ -77,7 +79,7 @@ func (s *Server) jimSendCommand(commandName string, args ...interface{}) (interf
 	return conn.Do(commandName, args...)
 }
 
-func newServer(ctx context.Context, alarmServerAddr string, jimUrl, jimApAddr string) *Server {
+func newServer(ctx context.Context, alarmServerAddr string, sqlArgs, jimUrl, jimApAddr string) *Server {
 	gateway := NewMessageGateway(ctx, alarmServerAddr)
 	if gateway == nil {
 		return nil
@@ -86,6 +88,7 @@ func newServer(ctx context.Context, alarmServerAddr string, jimUrl, jimApAddr st
 	s := new(Server)
 	s.gateway = gateway
 
+	s.sqlArgs = sqlArgs
 	s.jimUrl = jimUrl
 	s.jimApAddr = jimApAddr
 	s.jimClientPool = func() *redis.Pool {
@@ -163,13 +166,13 @@ func (s *Server) copyAliveCheckingAppKeys() (ret []string) {
 	return
 }
 
-func NewAlarmServer(ctx context.Context, port int, remoteAlarmServerAddr string, jimUrl, jimApAddr string) (*Server, error) {
+func NewAlarmServer(ctx context.Context, port int, remoteAlarmServerAddr string, sqlArgs, jimUrl, jimApAddr string) (*Server, error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
 	if err != nil {
 		return nil, err
 	}
 	s := grpc.NewServer()
-	server := newServer(ctx, remoteAlarmServerAddr, jimUrl, jimApAddr)
+	server := newServer(ctx, remoteAlarmServerAddr, sqlArgs, jimUrl, jimApAddr)
 	if server == nil {
 		return nil, errors.New("server is nil")
 	}
@@ -236,7 +239,7 @@ type ClusterInfo struct {
 }
 
 func (s *Server) getClusterInfo() (clusterInfos []ClusterInfo, err error) {
-	db, err := sql.Open("mysql", "test:123456@tcp(sharkstore.gw1.jd.com:3360)/fbase")
+	db, err := sql.Open("mysql", s.sqlArgs)
 	if err != nil {
 		return nil, err
 	}
