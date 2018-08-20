@@ -726,7 +726,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         }
 
 
-        if (cmd.cmd_id().node_id() == node_id_) {
+        if (cmd.cmd_id().node_id() == node_id_ && delKeys[delKeys.size() - 1] == it) {
             auto resp = new watchpb::DsKvWatchDeleteResponse;
             SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
         } else if (err != nullptr) {
@@ -735,9 +735,6 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         }
 
         FLOG_DEBUG("store->Delete->ret.code:%s", ret.ToString().c_str());
-        /*if( ret.code() == Status::kNotFound ) {
-            return ret;
-        }*/
 
         notifyKv.clear_key();
         notifyKv.add_key(it);

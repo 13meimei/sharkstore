@@ -283,6 +283,7 @@ protected:
 
         range_server_->PureGet(msg);
 
+
         watchpb::DsKvWatchGetMultiResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
@@ -291,9 +292,10 @@ protected:
 
         ASSERT_FALSE(resp.header().has_error());
         if (hint == 0) {
-            EXPECT_TRUE(resp.kvs_size() == 1);
+            EXPECT_TRUE(resp.kvs_size() == 0);
         } else if (hint == 1) {
-            EXPECT_TRUE(resp.kvs(0).value() == val);
+            if(resp.kvs_size())
+                EXPECT_TRUE(resp.kvs(0).value() == val);
         } else {
             FLOG_DEBUG("skip hint...%d", hint);
         }
