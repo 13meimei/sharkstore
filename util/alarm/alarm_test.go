@@ -1,22 +1,22 @@
 package alarm
 
 import (
+	"fmt"
 	"testing"
 	"context"
-	"net/http"
 	"time"
-	"strconv"
-	"model/pkg/alarmpb"
-	"fmt"
-	"net/http/httptest"
 	"strings"
+	"strconv"
+	"net/http"
+	"net/http/httptest"
+	"model/pkg/alarmpb"
 	"github.com/gomodule/redigo/redis"
 )
 
 func TestAlarmGrpc(t *testing.T) {
 	//ctx, cancel:= context.WithCancel(context.Background())
 	ctx, _ := context.WithCancel(context.Background())
-	_, err := NewAlarmServer(ctx, 2222, "http://localhost:3333", "", "")
+	_, err := NewAlarmServer(ctx, 2222, "http://localhost:3333", "", "", "")
 	if err != nil {
 		t.Fatalf("NewAlarmServer failed: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestAlarmGrpc(t *testing.T) {
 
 func TestAlarmMessageNotify(t *testing.T) {
 	ctx := context.Background()
-	s := newServer(ctx, "", "", "")
+	s := newServer(ctx, "", "", "", "")
 
 	appName := "gateway"
 	clusterId := 10
@@ -77,9 +77,32 @@ func TestAlarmMessageNotify(t *testing.T) {
 	time.Sleep(3*time.Second)
 }
 
+func TestSetGetJimdb(t *testing.T) {
+	ctx := context.Background()
+	s := newServer(ctx, "", "", "/redis/cluster/1:1803528818953446384", "192.168.150.61:5360") // do not send alarm really
+
+	// test set/get jimdb
+	var err error
+	setReply, _:= s.jimSendCommand("set", "k_a", "v_a")
+	var setRes string
+	setRes, err = redis.String(setReply, err)
+	if err != nil {
+		t.Fatalf("set failed: %v", err)
+	}
+	fmt.Println("set result: ", setRes)
+
+	getReply, _:= s.jimSendCommand("get", "k_a")
+	var getRes string
+	getRes, err = redis.String(getReply, err)
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	fmt.Println("get result: ", getRes)
+}
+
 func TestAlarmHandleAppPing(t *testing.T) {
 	ctx := context.Background()
-	s := newServer(ctx, "", "/redis/cluster/1:1803528818953446384", "192.168.150.61:5360") // do not send alarm really
+	s := newServer(ctx, "", "", "/redis/cluster/1:1803528818953446384", "192.168.150.61:5360") // do not send alarm really
 
 	clusterId := 10
 	appName := "gateway"
@@ -88,7 +111,7 @@ func TestAlarmHandleAppPing(t *testing.T) {
 	ips := []string{ip0, ip1}
 	ping_interval := 3
 	url := fmt.Sprintf(`http://%s?cluster_id=%s&app_name=%s&ip_addrs=%s&ping_interval=%d`,
-		"", clusterId, appName, strings.Join(ips, ","), ping_interval)
+		"", fmt.Sprint(clusterId), appName, strings.Join(ips, ","), ping_interval)
 
 	var r *http.Request
 	w := httptest.NewRecorder()
@@ -101,12 +124,14 @@ func TestAlarmHandleAppPing(t *testing.T) {
 	appKey := s.genAliveAppKey(appName, fmt.Sprint(clusterId), ip0)
 	t.Logf("test app key: %v", appKey)
 
+	//
 	waitTicker := time.NewTicker(10*time.Second)
 	for {
 		select {
 		case <-waitTicker.C:
 			return
 		default:
+		fmt.Println("do exists command...")
 		reply, err := s.jimSendCommand("exists", appKey)
 		if err != nil {
 			t.Logf("jim send command error: %v", err)
@@ -116,15 +141,27 @@ func TestAlarmHandleAppPing(t *testing.T) {
 			t.Logf("jim command setex reply type is not int: %v", err)
 		}
 
+		fmt.Println("reply int: ", replyInt)
 		if replyInt != 0 { // app key exists
 			t.Logf("reply 1")
 		} else {
-			t.Fatal("reply 0")
+			t.Logf("reply 0")
 		}
-	}
+			time.Sleep(1*time.Second)
+		}
 	}
 }
 
-//func TestAlarmLoadAliveAppFromTableFbaseCluster(t *testing.T) {
-//
-//}
+func TestAlarmGetClusterInfo(t *testing.T) {
+	ctx := context.Background()
+	s := newServer(ctx, "", "test:123456@tcp(192.168.183.66:3360)/fbase", "/redis/cluster/1:1803528818953446384", "192.168.150.61:5360") // do not send alarm really
+
+	infos, err := s.getClusterInfo()
+	if err != nil {
+		t.Fatalf("get cluster info failed: %v", err)
+	}
+	for _, info := range infos {
+		fmt.Println("info: ", info)
+	}
+
+}

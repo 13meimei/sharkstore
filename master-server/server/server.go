@@ -196,15 +196,15 @@ func (service *Server) InitMasterServer(conf *Config) {
 }
 
 func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
-	var alarmReceivers []*alarm.User
-	for _, r := range conf.Receivers {
-		alarmReceivers = append(alarmReceivers, &alarm.User{
-			Mail: r.Mail,
-			Sms:  r.Sms,
-		})
-	}
+	//var alarmReceivers []*alarm.User
+	//for _, r := range conf.Receivers {
+	//	alarmReceivers = append(alarmReceivers, &alarm.User{
+	//		Mail: r.Mail,
+	//		Sms:  r.Sms,
+	//	})
+	//}
 	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort,
-		conf.RemoteAlarmServerAddress, conf.jimUrl, conf.jimApAddr)
+		conf.RemoteAlarmServerAddress, conf.MysqlArgs, conf.jimUrl, conf.jimApAddr)
 	if err != nil {
 		log.Error("alarm.NewAlarmServer failed, err: [%v]", err)
 		return nil
