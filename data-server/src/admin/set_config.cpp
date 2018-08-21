@@ -98,9 +98,6 @@ static const ConfigSetFuncMap cfg_set_funcs = {
 };
 
 Status AdminServer::setConfig(const SetConfigRequest& req, SetConfigResponse* resp) {
-    for (const auto& kv: cfg_set_funcs) {
-        FLOG_INFO("[Admin] set %s", kv.first.c_str());
-    }
     for (auto &cfg: req.configs()) {
         auto it = cfg_set_funcs.find(cfg.key().section() + "." + cfg.key().name());
         if (it == cfg_set_funcs.end()) {

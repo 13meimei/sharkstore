@@ -35,6 +35,12 @@ public:
     void Push(common::ProtoMessage *task);
 
     void PrintQueueSize();
+
+    size_t ClearQueue(bool fast, bool slow);
+
+    // TODO:
+    void GetPending() const {}
+
 private:
 
     struct MsgQueue {

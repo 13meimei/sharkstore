@@ -86,8 +86,48 @@ void Session::readHead() {
                                  doClose();
                              }
                          } else {
-                             FLOG_ERROR("%s read rpc head error: %s", id_.c_str(),
-                                        ec.message().c_str());
+                             if (ec == asio::error::eof) {
+                                 FLOG_INFO("%s read rpc head error: %s", id_.c_str(),
+                                            ec.message().c_str());
+                             } else {
+                                 FLOG_ERROR("%s read rpc head error: %s", id_.c_str(),
+                                            ec.message().c_str());
+                             }
+                             doClose();
+                         }
+                     });
+}
+
+void Session::readBody() {
+    if (head_.body_length == 0) {
+        if (head_.func_id == kHeartbeatFuncID) { // response heartbeat
+            auto msg = std::make_shared<Message>();
+            msg->head.SetFrom(head_);
+            Write(msg);
+        }
+        readHead();
+        return;
+    }
+
+    body_.resize(head_.body_length);
+    auto self(shared_from_this());
+    asio::async_read(socket_, asio::buffer(body_.data(), body_.size()),
+                     [this, self](std::error_code ec, std::size_t) {
+                         if (!ec) {
+                             auto msg = NewMessage();
+                             msg->head = head_;
+                             msg->body = std::move(body_);
+                             handler_(session_ctx_, msg);
+
+                             readHead();
+                         } else {
+                             if (ec == asio::error::eof) {
+                                 FLOG_INFO("%s read rpc body error: %s", id_.c_str(),
+                                            ec.message().c_str());
+                             } else {
+                                 FLOG_ERROR("%s read rpc body error: %s", id_.c_str(),
+                                            ec.message().c_str());
+                             }
                              doClose();
                          }
                      });
@@ -128,36 +168,6 @@ void Session::Write(const MessagePtr& msg) {
             self->doWrite();
         }
     });
-}
-
-void Session::readBody() {
-    if (head_.body_length == 0) {
-        if (head_.func_id == kHeartbeatFuncID) { // response heartbeat
-            auto msg = std::make_shared<Message>();
-            msg->head.SetFrom(head_);
-            Write(msg);
-        }
-        readHead();
-        return;
-    }
-
-    body_.resize(head_.body_length);
-    auto self(shared_from_this());
-    asio::async_read(socket_, asio::buffer(body_.data(), body_.size()),
-                     [this, self](std::error_code ec, std::size_t) {
-                         if (!ec) {
-                             auto msg = NewMessage();
-                             msg->head = head_;
-                             msg->body = std::move(body_);
-                             handler_(session_ctx_, msg);
-
-                             readHead();
-                         } else {
-                             FLOG_ERROR("%s read rpc body error: %s", id_.c_str(),
-                                        ec.message().c_str());
-                             doClose();
-                         }
-                     });
 }
 
 } /* net */

@@ -190,6 +190,29 @@ void Worker::Clean(HashQueue &hash_queue) {
     }
 }
 
+size_t Worker::ClearQueue(bool fast, bool slow) {
+    size_t count = 0;
+    if (fast) {
+        for (auto& q : fast_queue_.msg_queue) {
+            common::ProtoMessage *task;
+            while (q->msg_queue.try_dequeue(task)) {
+                delete task;
+                ++count;
+            }
+        }
+    }
+    if (slow) {
+        for (auto& q : slow_queue_.msg_queue) {
+            common::ProtoMessage *task;
+            while (q->msg_queue.try_dequeue(task)) {
+                delete task;
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 // 0: fast queue; 1: slow queue;
 int Worker::FuncType(common::ProtoMessage *msg) {
     if (msg->header.func_id == funcpb::FunctionID::kFuncSelect) {

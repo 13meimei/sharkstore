@@ -37,6 +37,7 @@ private:
 private:
     server::ContextServer* context_ = nullptr;
     std::unique_ptr<net::Server> net_server_;
+    // TODO: worker thread
 };
 
 } // namespace admin

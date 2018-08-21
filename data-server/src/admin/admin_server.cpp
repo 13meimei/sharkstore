@@ -3,6 +3,7 @@
 #include "net/session.h"
 #include "frame/sf_logger.h"
 #include "server/range_server.h"
+#include "server/worker.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -39,12 +40,12 @@ Status AdminServer::Stop() {
     return Status::OK();
 }
 
-Status AdminServer::checkAuth(const ds_adminpb::AdminAuth& auth) {
+Status AdminServer::checkAuth(const AdminAuth& auth) {
     // TODO:
     return Status::OK();
 }
 
-Status AdminServer::execute(const ds_adminpb::AdminRequest& req, ds_adminpb::AdminResponse* resp) {
+Status AdminServer::execute(const AdminRequest& req, AdminResponse* resp) {
     switch (req.typ()) {
         case SET_CONFIG:
             return setConfig(req.set_cfg_req(), resp->mutable_set_cfg_resp());
@@ -73,7 +74,8 @@ void AdminServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg)
         FLOG_ERROR("[Admin] deserialize failed from %s, head: %s",
                 ctx.remote_addr.c_str(), msg->head.DebugString().c_str());
     }
-    FLOG_INFO("[Admin] recv %s from %s.", ds_adminpb::AdminType_Name(req.typ()).c_str(), ctx.remote_addr.c_str());
+    FLOG_INFO("[Admin] recv %s from %s, detail: %s", AdminType_Name(req.typ()).c_str(), ctx.remote_addr.c_str(),
+            req.ShortDebugString().c_str());
 
     AdminResponse resp;
     Status ret = checkAuth(req.auth());
@@ -98,23 +100,16 @@ void AdminServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg)
     }
 }
 
-Status AdminServer::forceSplit(const ds_adminpb::ForceSplitRequest& req, ds_adminpb::ForceSplitResponse* resp) {
+Status AdminServer::forceSplit(const ForceSplitRequest& req, ForceSplitResponse* resp) {
     auto rng = context_->range_server->Find(req.range_id());
     if (rng == nullptr) {
         return Status(Status::kNotFound, "range", std::to_string(req.range_id()));
     }
     FLOG_INFO("[Admin] force split range %" PRIu64 ", version: %" PRIu64, req.range_id(), req.version());
-    auto s = rng->ForceSplit(req.version(), resp->mutable_split_key());
-    if (s.code() == Status::kStaleEpoch) {
-        FLOG_WARN("[Admin] force split range %" PRIu64 ", stale version: %" PRIu64,
-                req.range_id(), req.version());
-        return Status::OK();
-    } else {
-        return s;
-    }
+    return rng->ForceSplit(req.version(), resp->mutable_split_key());
 }
 
-Status AdminServer::compaction(const ds_adminpb::CompactionRequest& req, ds_adminpb::CompactionResponse* resp) {
+Status AdminServer::compaction(const CompactionRequest& req, CompactionResponse* resp) {
     auto db = context_->rocks_db;
     rocksdb::Status s;
     if (req.range_id() == 0) {
@@ -138,17 +133,33 @@ Status AdminServer::compaction(const ds_adminpb::CompactionRequest& req, ds_admi
     return Status::OK();
 }
 
-Status AdminServer::clearQueue(const ds_adminpb::ClearQueueRequest& req, ds_adminpb::ClearQueueResponse* resp) {
-    // TODO:
-    resp->set_cleared(100);
+Status AdminServer::clearQueue(const ClearQueueRequest& req, ClearQueueResponse* resp) {
+    bool clear_fast = false, clear_slow = false;
+    switch (req.queue_type()) {
+        case ClearQueueRequest_QueueType_FAST_WORKER:
+            clear_fast = true;
+            break;
+        case ClearQueueRequest_QueueType_SLOW_WORKER:
+            clear_slow = true;
+            break;
+        case ClearQueueRequest_QueueType_ALL:
+            clear_fast = true;
+            clear_slow = true;
+            break;
+        default:
+            return Status(Status::kInvalidArgument, "queue type", std::to_string(req.queue_type()));
+    }
+    resp->set_cleared(context_->worker->ClearQueue(clear_fast, clear_slow));
+    FLOG_WARN("[Admin] %s queue cleared: %" PRIu64,
+            ClearQueueRequest_QueueType_Name(req.queue_type()).c_str(), resp->cleared());
     return Status::OK();
 }
 
-Status AdminServer::getPending(const ds_adminpb::GetPendingsRequest& req, ds_adminpb::GetPendingsResponse* resp) {
+Status AdminServer::getPending(const GetPendingsRequest& req, GetPendingsResponse* resp) {
     return Status(Status::kNotSupported);
 }
 
-Status AdminServer::flushDB(const ds_adminpb::FlushDBRequest& req, ds_adminpb::FlushDBResponse* resp) {
+Status AdminServer::flushDB(const FlushDBRequest& req, FlushDBResponse* resp) {
     rocksdb::FlushOptions fops;
     fops.wait = req.wait();
     auto s = context_->rocks_db->Flush(fops);
