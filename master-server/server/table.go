@@ -26,6 +26,10 @@ var PREFIX_AUTO_FAILOVER_TABLE string = fmt.Sprintf("$auto_failover_table_%d")
 
 type Table struct {
 	*metapb.Table
+	//自增id
+	idGenerator IDGenerator
+	//geneLock
+
 	// 表属性锁
 	schemaLock sync.RWMutex
 	// 路由锁
@@ -60,6 +64,21 @@ func (t *Table) GenColId() uint64 {
 	defer t.lock.Unlock()
 	t.maxColId++
 	return t.maxColId
+}
+
+func (t *Table) GetAutoIncId(store Store, size uint32) ([]uint64, error) {
+	t.getGenerator(store)
+	return t.idGenerator.GetBatchIds(size)
+}
+
+func (t *Table) getGenerator(store Store){
+	if t.idGenerator == nil {
+		t.lock.Lock()
+		defer t.lock.Unlock()
+		if t.idGenerator == nil {
+			t.idGenerator = NewTablePkIdGenerator(t.GetId(), store)
+		}
+	}
 }
 
 type TableProperty struct {

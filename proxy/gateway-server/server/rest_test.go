@@ -63,6 +63,25 @@ func TestRestKVHttp(t *testing.T) {
 		RowsAffected: 4,
 	})
 
+	setQueryNoPkRep := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			Field: []string{"name", "balance"},
+			Values: [][]interface{}{
+				[]interface{}{"myname1", 0.1},
+				[]interface{}{"myname2", 0.2},
+				[]interface{}{"myname3", 0.3},
+				[]interface{}{"myname3", 0.4},
+			},
+		},
+	}
+
+	testSetCommand(t, setQueryNoPkRep, table, s.proxy, &Reply{
+		Code:         0,
+		RowsAffected: 4,
+	})
+
 	getAggreQueryRep := &Query{
 		DatabaseName: testDBName,
 		TableName:    testTableName,
@@ -78,7 +97,7 @@ func TestRestKVHttp(t *testing.T) {
 	}
 
 	expected := [][]interface{}{
-		[]interface{}{3, 3, 1, 0.6},
+		[]interface{}{4, 4, 1, 1.0},
 	}
 	assertGetCommand(t, getAggreQueryRep, s.proxy, expected, table )
 
@@ -93,6 +112,7 @@ func TestRestKVHttp(t *testing.T) {
 		[]interface{}{1, "myname1", 0.1},
 		[]interface{}{2, "myname2", 0.2},
 		[]interface{}{3, "myname3", 0.3},
+		[]interface{}{4, "myname3", 0.4},
 	}
 	assertGetCommand(t, getQueryRep, s.proxy, expected, table)
 
@@ -116,6 +136,7 @@ func TestRestKVHttp(t *testing.T) {
 	expected = [][]interface{}{
 		[]interface{}{2, "myname2", 0.2},
 		[]interface{}{3, "myname3", 0.3},
+		[]interface{}{4, "myname3", 0.4},
 	}
 	assertGetCommand(t, getWhereQuery, s.proxy, expected, table)
 
@@ -191,7 +212,7 @@ func mockGwServer() (*Server, error) {
 func TestRestMset(t *testing.T) {
 	//log.InitFileLog(logPath, "proxy", "debug")
 	columns := []*columnInfo{
-		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true},
+		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true, autoInc: true},
 		&columnInfo{name: "name", typ: metapb.DataType_Varchar},
 		&columnInfo{name: "balance", typ: metapb.DataType_Double},
 	}
@@ -236,12 +257,29 @@ func TestRestMset(t *testing.T) {
 		},
 	}
 
-	//set, _ := json.Marshal(setQuery)
-	//fmt.Println("@@@", string(set))
 	testSetCommand(t, setQuery, table, p, &Reply{
 		Code:         0,
 		RowsAffected: 3,
 	})
+
+	setNoPkQuery := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			Field: []string{"name", "balance"},
+			Values: [][]interface{}{
+				[]interface{}{"myname1", 0.003},
+				[]interface{}{"myname10", 0.002},
+				[]interface{}{"myname100", 0.001},
+			},
+		},
+	}
+
+	testSetCommand(t, setNoPkQuery, table, p, &Reply{
+		Code:         0,
+		RowsAffected: 3,
+	})
+
 
 	// test getll
 	sql := "select id, name, balance from " + testTableName
@@ -264,9 +302,9 @@ func TestRestMset(t *testing.T) {
 	filter_ := testGetFilter(t, getQuery, table, p, stmt)
 
 	expected := [][]interface{}{
-		[]interface{}{3, "myname3", 0.003},
-		[]interface{}{2, "myname2", 0.002},
-		[]interface{}{1, "myname1", 0.001},
+		[]interface{}{1, "myname1", 0.003},
+		[]interface{}{2, "myname10", 0.002},
+		[]interface{}{3, "myname100", 0.001},
 	}
 	testGetCommand(t, table, p, filter_, stmt, expected, nil, nil, columnNames)
 	//testProxySelect(t, p, expected, sql)

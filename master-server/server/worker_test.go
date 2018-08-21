@@ -304,6 +304,23 @@ func newBlotDbCluster(t *testing.T, id IDGenerator) *Cluster {
 	initDataPath()
 	cfg := NewDefaultConfig()
 	log.InitFileLog(cfg.Log.Dir, cfg.Log.Module, cfg.Log.Level)
+	store := mockRaftServer(cfg, t)
+
+	var clusterId uint64 = 1
+	var nodeId uint64 = 1
+	cluster := NewCluster(clusterId, nodeId, store, newScheduleOption(cfg))
+	err := cluster.LoadCache()
+	if err != nil {
+		t.Fatalf("load cache failed, err %v", err)
+	}
+	cluster.idGener = id
+	// 指定自己为leader
+	cluster.UpdateLeader(&Peer{ID: nodeId})
+	cluster.cli = &LocalDSClient{}
+	return cluster
+}
+
+func mockRaftServer(cfg *Config, t *testing.T) *RaftStore{
 	var peers []*Peer
 	for _, peer := range cfg.Cluster.Peers {
 		node := &Peer{}
@@ -346,17 +363,5 @@ func newBlotDbCluster(t *testing.T, id IDGenerator) *Cluster {
 	if lleader == 0 {
 		t.Fatalf("leader is 0")
 	}
-	var clusterId uint64 = 1
-	var nodeId uint64 = 1
-
-	cluster := NewCluster(clusterId, nodeId, store, newScheduleOption(cfg))
-	err = cluster.LoadCache()
-	if err != nil {
-		t.Fatalf("load cache failed, err %v", err)
-	}
-	cluster.idGener = id
-	// 指定自己为leader
-	cluster.UpdateLeader(&Peer{ID: nodeId})
-	cluster.cli = &LocalDSClient{}
-	return cluster
+	return store
 }

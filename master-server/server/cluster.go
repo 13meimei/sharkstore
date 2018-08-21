@@ -39,6 +39,7 @@ var PREFIX_AUTO_TRANSFER_UNABLE string = fmt.Sprintf("schema%sauto_transfer_unab
 var PREFIX_AUTO_FAILOVER_UNABLE string = fmt.Sprintf("schema%sauto_failover_unable%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 var PREFIX_AUTO_SPLIT_UNABLE string = fmt.Sprintf("schema%sauto_split_unable%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 var PREFIX_METRIC string = fmt.Sprintf("schema%smetric_send%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
+var TABLE_PK_INCREMENT_ID string = fmt.Sprintf("$table_increment_id")
 
 type Cluster struct {
 	clusterId uint64

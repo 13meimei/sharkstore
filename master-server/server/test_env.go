@@ -217,3 +217,11 @@ func (alloc *mockIDAllocator) GenID() (uint64, error) {
 	return atomic.AddUint64(&alloc.base, 1), nil
 }
 
+func (alloc *mockIDAllocator) GetBatchIds(size uint32) ([]uint64, error) {
+	ids := make([]uint64, size)
+
+	for len(ids) < int(size) {
+		ids = append(ids, atomic.AddUint64(&alloc.base, 1))
+	}
+	return ids, nil
+}

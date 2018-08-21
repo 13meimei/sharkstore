@@ -449,20 +449,6 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	// 解析选择列
 	cols := query.parseColumnNames()
 
-	// 按照表的每个列查找对应列值位置
-	colMap, t, err := proxy.matchInsertValues(t, cols)
-	if err != nil {
-		log.Error("[insert] table %s.%s match column values error(%v)", db, tableName, err)
-		return nil, err
-	}
-
-	// 检查是否缺少某列
-	// TODO：支持默认值
-	/*if err := proxy.checkMissingColumn(t, colMap); err != nil {
-		log.Error("[insert] table %s.%s missing column(%v)", db, tableName, err)
-		return nil, err
-	}*/
-
 	buffer := bufalloc.AllocBuffer(512)
 	defer bufalloc.FreeBuffer(buffer)
 	rows, err := query.parseRowValues(buffer)
@@ -470,6 +456,40 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	if err != nil {
 		log.Error("parse row values error: %v", err)
 		return nil, err
+	}
+
+	// 按照表的每个列查找对应列值位置
+	colMap, t, err := proxy.matchInsertValues(t, cols)
+	if err != nil {
+		log.Error("[insert] table %s.%s match column values error(%v)", db, tableName, err)
+		return nil, err
+	}
+
+	// TODO：支持默认值
+
+	// 检查是否缺少pk
+	pkName,  err := proxy.checkPKMissing(t, colMap)
+	if err != nil {
+		log.Error("[insert] table %s.%s missing column(%v)", db, tableName, err)
+		return nil, err
+	}
+	//填充自增id值
+	if len(pkName) > 0 {
+		maxSize := len(colMap)
+		colMap[pkName] = maxSize
+		ids, err := proxy.msCli.GetAutoIncId(t.GetDbId(), t.GetId(), uint32(len(rows)))
+		if err != nil {
+			log.Error("[insert] table %s.%s get auto_increment value err, %v", db, tableName, err)
+			return nil, err
+		}
+		if len(ids) != len(rows) {
+			log.Error("[insert] table %s.%s get auto_increment value err, %v", db, tableName, err)
+			return nil, fmt.Errorf("get auto increment id size %d not equal insert size %d", len(ids), len(rows))
+		}
+		for i, row := range rows {
+			row = append(row, []byte(fmt.Sprintf("%v", ids[i])))
+			rows[i] = row
+		}
 	}
 
 	affected, duplicateKey, err := proxy.insertRows(t, colMap, rows)

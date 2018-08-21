@@ -169,3 +169,10 @@ func (service *Server) CreateTable(ctx context.Context, req *mspb.CreateTableReq
 
 	return service.handleCreateTable(ctx, req)
 }
+func (service *Server) GetAutoIncId(ctx context.Context, req *mspb.GetAutoIncIdRequest) (*mspb.GetAutoIncIdResponse, error) {
+	if err := service.checkClusterValid(); err != nil {
+		resp := &mspb.GetAutoIncIdResponse{Header: &mspb.ResponseHeader{Error: err}}
+		return resp, nil
+	}
+	return service.handleAutoIncId(ctx, req)
+}

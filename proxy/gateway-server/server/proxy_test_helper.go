@@ -39,6 +39,7 @@ type columnInfo struct {
 	typ        metapb.DataType
 	isPK       bool
 	isUnsigned bool
+	autoInc	   bool
 }
 
 func bytesPrefix(prefix []byte) ([]byte, []byte) {
@@ -208,6 +209,9 @@ func makeTestTable(colInfos []*columnInfo) *metapb.Table {
 		if info.isPK {
 			pks = append(pks, info.name)
 			c.PrimaryKey = 1
+		}
+		if info.autoInc {
+			c.AutoIncrement = true
 		}
 		columns = append(columns, c)
 		colID++
