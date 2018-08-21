@@ -275,9 +275,9 @@ func (p *KvProxy) doSendFail(bo *Backoffer, ctx *Context, err error) error {
 
 	// Retry on request failure when it's not canceled.
 	// When a ds is not available, the leader of related region should be elected quickly.
-	// TODO: the number of retry time should be limited:since region may be unavailable
+	// TODO: the number of retry time should be limited: since region may be unavailable
 	// when some unrecoverable disaster happened.
-	err = bo.Backoff(boKVRPC, fmt.Errorf("send ds request error: %v, ctx: %s, try next peer later", err, ctx.RequestHeader))
+	err = bo.Backoff(BoKVRPC, fmt.Errorf("send ds request error: %v, ctx: %s, try next peer later", err, ctx.RequestHeader))
 	return err
 }
 
@@ -286,15 +286,12 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 	var timeout time.Duration
 	var reqHeader *kvrpcpb.RequestHeader
 	//var pErr *errorpb.Error
-	metricLoop := 0
-	//for {
-	metricLoop++
-
 	l, err = p.RangeCache.LocateKey(bo, key)
 	if err != nil {
 		log.Error("locate key=%v failed, err=%v", key, err)
 		return
 	}
+
 	addr, err = p.RangeCache.GetNodeAddr(bo, l.NodeId)
 	if err != nil {
 		log.Error("locate node=%d failed, err=%v", l.NodeId, err)
@@ -313,33 +310,17 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 	if sendDelay <= 50 {
 		// do nothing
 	} else if sendDelay <= 200 {
-		log.Info("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
+		log.Info("request to %s type:%s execut time %d ms, msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, reqHeader.TraceId, l.Region.Id)
 	} else if sendDelay <= 500 {
-		log.Warn("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
+		log.Warn("request to %s type:%s execut time %d ms, msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay,  reqHeader.TraceId, l.Region.Id)
 	} else {
-		log.Error("request to %s type:%s execut time %d ms,loop :%d msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, metricLoop, reqHeader.TraceId, l.Region.Id)
+		log.Error("request to %s type:%s execut time %d ms, msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, reqHeader.TraceId, l.Region.Id)
 	}
 
 	if err != nil {
 		log.Error("send failed, ctx %v, err %v", ctx, err)
 		return
 	}
-
-	/*pErr, err = resp.GetErr()
-	if err != nil {
-		return
-	}
-	if pErr != nil {
-		err = bo.Backoff(boRangeMiss, errors.New(pErr.String()))
-		if err != nil {
-			return
-		}
-		//range 拓扑改变了，记录可能有部分已经超出范围了，需要重新组织request的记录，这里不能进行直接重试
-		//continue
-	}
-	// 请求成功
-	return*/
-	//}
 
 	return
 }
@@ -380,16 +361,16 @@ func (p *KvProxy) sendReq(bo *Backoffer, ctx *Context, req *Request) (resp *Resp
 func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Context) (retry bool, err error) {
 	if rangeErr.GetNotLeader() != nil {
 		notLeader := rangeErr.GetNotLeader()
-		log.Warn("range leader changed, ctx: %s, old leader[%v], new leader %s", ctx.RequestHeader.String(), ctx.NodeAddr, notLeader.GetLeader().GetNodeId())
+		log.Warn("range leader changed, ctx: %s, old leader[%s], new leader %v", ctx.RequestHeader.String(), ctx.NodeAddr, notLeader.GetLeader().GetNodeId())
 		// no leader
 		if notLeader.GetLeader() == nil {
-			err = bo.Backoff(boRangeMiss, fmt.Errorf("no leader: %v, range: %d", notLeader, ctx.VID.Id))
+			err = bo.Backoff(BoRangeMiss, fmt.Errorf("no leader: %v, range: %d", notLeader, ctx.VID.Id))
 			if err != nil {
 				//可能gateway没有拿到最新的拓扑
 				p.RangeCache.DropRegion(ctx.VID)
 				return false, ErrRouteChange
 			} else {
-				return false, ErrRouteChange
+				return true, nil
 			}
 		} else {
 			// update leader
@@ -409,7 +390,7 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 	}
 
 	if staleEpoch := rangeErr.GetStaleEpoch(); staleEpoch != nil {
-		log.Warn("ds reports `StaleEpoch`, ctx: %s, [%d %d] retry later %s",
+		log.Warn("ds reports `StaleEpoch`, ctx: %s, [%d %d], retry later %s",
 			ctx.RequestHeader.String(), staleEpoch.GetOldRange().GetId(), staleEpoch.GetNewRange().GetId(), ctx.NodeAddr)
 		var ranges []*metapb.Range
 		if staleEpoch.GetOldRange() != nil {
@@ -430,7 +411,7 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 	if rangeErr.GetServerIsBusy() != nil {
 		log.Warn("ds reports `ServerIsBusy`, reason: %s, ctx: %s, retry later %s",
 			rangeErr.GetServerIsBusy().GetReason(), ctx.RequestHeader.String(), ctx.NodeAddr)
-		err = bo.Backoff(boServerBusy, ErrServerBusy)
+		err = bo.Backoff(BoServerBusy, ErrServerBusy)
 		if err != nil {
 			return false, err
 		}

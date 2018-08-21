@@ -33,7 +33,7 @@ DataServer::DataServer() {
     std::vector<std::string> ms_addrs;
     for (int i = 0; i < ds_config.hb_config.master_num; i++) {
         if (ds_config.hb_config.master_host[i][0] != '\0') {
-            ms_addrs.push_back(ds_config.hb_config.master_host[i]);
+            ms_addrs.emplace_back(ds_config.hb_config.master_host[i]);
         }
     }
     context_->master_worker =
@@ -41,34 +41,13 @@ DataServer::DataServer() {
 }
 
 DataServer::~DataServer() {
-    if (context_->worker != nullptr) {
-        delete context_->worker;
-    }
-
-    if (context_->manager != nullptr) {
-        delete context_->manager;
-    }
-
-    if (context_->master_worker != nullptr) {
-        delete context_->master_worker;
-    }
-
-    if (context_->run_status != nullptr) {
-        delete context_->run_status;
-    }
-
-    if (context_->range_server != nullptr) {
-        delete context_->range_server;
-    }
-
-    if (context_->socket_session != nullptr) {
-        delete context_->socket_session;
-    }
-
-    if (context_->raft_server != nullptr) {
-        delete context_->raft_server;
-    }
-
+    delete context_->worker;
+    delete context_->manager;
+    delete context_->master_worker;
+    delete context_->run_status;
+    delete context_->range_server;
+    delete context_->socket_session;
+    delete context_->raft_server;
     delete context_;
 }
 
@@ -81,20 +60,20 @@ bool DataServer::startRaftServer() {
     raft::RaftServerOptions ops;
 
     ops.node_id = context_->node_id;
-    ops.consensus_threads_num = ds_config.raft_config.consensus_threads;
+    ops.consensus_threads_num = static_cast<uint8_t>(ds_config.raft_config.consensus_threads);
     ops.consensus_queue_capacity = ds_config.raft_config.consensus_queue;
-    ops.apply_threads_num = ds_config.raft_config.apply_threads;
+    ops.apply_threads_num = static_cast<uint8_t>(ds_config.raft_config.apply_threads);
     ops.apply_queue_capacity = ds_config.raft_config.apply_queue;
     ops.tick_interval =
         std::chrono::milliseconds(ds_config.raft_config.tick_interval_ms);
     ops.max_size_per_msg = ds_config.raft_config.max_msg_size;
 
-    ops.transport_options.listen_port = ds_config.raft_config.port;
+    ops.transport_options.listen_port = static_cast<uint16_t>(ds_config.raft_config.port);
     ops.transport_options.send_io_threads =
         ds_config.raft_config.transport_send_threads;
     ops.transport_options.recv_io_threads =
         ds_config.raft_config.transport_recv_threads;
-    ops.transport_options.resolver = std::make_shared<NodeAddress>();
+    ops.transport_options.resolver = std::make_shared<NodeAddress>(context_->master_worker);
 
     auto rs = raft::CreateRaftServer(ops);
     context_->raft_server = rs.release();

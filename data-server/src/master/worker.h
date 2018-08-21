@@ -1,5 +1,6 @@
 _Pragma("once");
 
+#include "base/status.h"
 #include "proto/gen/mspb.pb.h"
 #include "task_handler.h"
 

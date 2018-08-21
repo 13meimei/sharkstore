@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "monitor/isystemstatus.h"
+#include "monitor/statistics.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -18,6 +19,13 @@ TEST(Monitor, Basic) {
     ASSERT_GT(total, 0);
     ASSERT_GT(available, 0);
     ASSERT_GE(total, available);
+}
+
+TEST(Monitor, Statistics) {
+    Statistics s;
+    s.PushTime(HistogramType::kRaft, 123);
+    std::cout << s.ToString() << std::endl;
+    s.ToString();
 }
 
 } /* namespace  */

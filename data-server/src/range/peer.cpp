@@ -1,6 +1,7 @@
 #include "range.h"
 
 #include "storage/meta_store.h"
+#include "proto/gen/raft_cmdpb.pb.h"
 
 #include "range_logger.h"
 
@@ -110,7 +111,7 @@ Status Range::ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) {
     }
 
     if (updated) {
-        ret = SaveMeta(meta_.Get());
+        ret = context_->MetaStore()->AddRange(meta_.Get());
         if (!ret.ok()) {
             RANGE_LOG_ERROR("save meta failed: %s", ret.ToString().c_str());
             return ret;
@@ -123,7 +124,7 @@ Status Range::ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) {
     }
 
     apply_index_ = index;
-    auto s = context_->meta_store->SaveApplyIndex(id_, apply_index_);
+    auto s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
     if (!s.ok()) {
         RANGE_LOG_ERROR("save apply index error %s", s.ToString().c_str());
         return s;
@@ -133,9 +134,10 @@ Status Range::ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) {
 
 Status Range::ApplyAddPeer(const raft::ConfChange &cc, bool *updated) {
     raft_cmdpb::PeerTask pt;
-    if (!context_->socket_session->GetMessage(cc.context.c_str(), cc.context.size(),
-                                              &pt)) {
-        return Status(Status::kInvalidArgument, "context deserialize fail", "");
+    auto res = common::GetMessage(cc.context.c_str(), cc.context.size(), &pt);
+    if (!res) {
+        return Status(Status::kInvalidArgument, "deserialize add peer context",
+                      EncodeToHex(cc.context));
     }
 
     auto ret = meta_.AddPeer(pt.peer(), pt.verify_epoch().conf_ver());
@@ -151,9 +153,10 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc, bool *updated) {
 
 Status Range::ApplyDelPeer(const raft::ConfChange &cc, bool *updated) {
     raft_cmdpb::PeerTask pt;
-    if (!context_->socket_session->GetMessage(cc.context.c_str(), cc.context.size(),
-                                              &pt)) {
-        return Status(Status::kInvalidArgument, "context deserialize fail", "");
+    auto res = common::GetMessage(cc.context.c_str(), cc.context.size(), &pt);
+    if (!res) {
+        return Status(Status::kInvalidArgument, "deserialize delete peer context",
+                EncodeToHex(cc.context));
     }
 
     auto ret = meta_.DelPeer(pt.peer(), pt.verify_epoch().conf_ver());

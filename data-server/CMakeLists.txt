@@ -150,6 +150,7 @@ set(SOURCES
     src/server/node_address.cpp
     src/server/raft_logger.cpp
     src/server/run_status.cpp
+    src/server/range_context_impl.cpp
     src/server/range_server.cpp
     src/server/version.cpp
     src/range/range.cpp
@@ -162,11 +163,13 @@ set(SOURCES
     src/range/insert.cpp
     src/range/delete.cpp
     src/range/split.cpp
+    src/range/split_policy.cpp
     src/range/peer.cpp
     src/range/snapshot.cpp
     src/range/kv_funcs.cpp
-    src/range/watch.cpp
-    src/range/watch_funcs.cpp
+	src/range/watch.cpp
+	src/range/watch_funcs.cpp
+    src/range/submit.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
     src/storage/iterator.cpp
@@ -183,11 +186,13 @@ set(SOURCES
     src/monitor/isystemstatus.cpp
     src/monitor/datacacl.cpp
     src/monitor/encodedata.cpp
+    src/monitor/histogram.cpp
     src/monitor/rangedata.cpp
 	src/watch/watcher.cpp
 	src/watch/watcher_set.cpp
 	src/watch/watch_server.cpp
 	src/watch/watch_event_buffer.cpp
+    src/monitor/statistics.cpp
 )
 
 if (APPLE)

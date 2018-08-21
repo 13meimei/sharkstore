@@ -7,6 +7,7 @@
 #include "storage/meta_store.h"
 //#include "storage/store.h"
 #include <iostream>
+#include <mutex>
 
 #define DEFAULT_CACHE_SIZE 1
 
