@@ -627,6 +627,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     RANGE_LOG_DEBUG("ApplyWatchDel begin");
 
     auto &req = cmd.kv_watch_del_req();
+    auto btime = get_micro_second();
     watchpb::WatchKeyValue notifyKv;
     notifyKv.CopyFrom(req.kv());
     auto prefix = req.prefix();
@@ -756,7 +757,8 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     if(prefix && cmd.cmd_id().node_id() == node_id_ && delKeys.size() == 0) {
         auto resp = new watchpb::DsKvWatchDeleteResponse;
         ret = Status(Status::kNotFound);
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
+        resp->mutable_resp()->set_code(ret.code());
+        ReplySubmit(cmd, resp, err, btime);
     }
 
     return ret;
