@@ -182,7 +182,7 @@ void Worker::DealTask(common::ProtoMessage *task) {
 
 void Worker::Clean(HashQueue &hash_queue) {
     for (auto mq : hash_queue.msg_queue) {
-        common::ProtoMessage *task;
+        common::ProtoMessage *task = nullptr;
         while (mq->msg_queue.try_dequeue(task)) {
             delete task;
         }

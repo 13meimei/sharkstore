@@ -16,6 +16,7 @@ _Pragma("once");
 #include <cstdint>
 #include <atomic>
 #include <string>
+#include <mutex>
 
 namespace sharkstore {
 namespace monitor {
@@ -23,11 +24,11 @@ namespace monitor {
 // mostly the implementation is from the rocksdb project
 
 struct HistogramData {
-    double median;
-    double percentile95;
-    double percentile99;
-    double average;
-    double standard_deviation;
+    double median = 0.0;
+    double percentile95 = 0.0;
+    double percentile99 = 0.0;
+    double average = 0.0;
+    double standard_deviation = 0.0;
     // zero-initialize new members since old Statistics::histogramData()
     // implementations won't write them.
     double max = 0.0;
@@ -76,6 +77,33 @@ struct HistogramStat {
 };
 
 
+class Histogram {
+public:
+    Histogram() { Clear(); }
+
+    Histogram(const Histogram&) = delete;
+    Histogram& operator=(const Histogram&) = delete;
+
+    void Clear();
+    bool Empty() const;
+    void Add(uint64_t value);
+    void Merge(const Histogram& other);
+
+    std::string ToString() const;
+    const char* Name() const{ return "Histogram"; }
+    uint64_t min() const { return stats_.min(); }
+    uint64_t max() const { return stats_.max(); }
+    uint64_t num() const { return stats_.num(); }
+    double Median() const;
+    double Percentile(double p) const;
+    double Average() const;
+    double StandardDeviation() const;
+    void Data(HistogramData* const data) const;
+
+private:
+    HistogramStat stats_;
+    std::mutex mutex_;
+};
 
 }  // namespace monitor
 }  // namespace sharkstore

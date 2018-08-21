@@ -100,7 +100,7 @@ TEST_F(DdlTest, Ddl) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -122,7 +122,7 @@ TEST_F(DdlTest, Ddl) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         schpb::CreateRangeResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -154,7 +154,7 @@ TEST_F(DdlTest, Ddl) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         schpb::CreateRangeResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -185,7 +185,7 @@ TEST_F(DdlTest, Ddl) {
 
         ASSERT_TRUE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) == nullptr);
+        ASSERT_TRUE(range_server_->Find(1) == nullptr);
 
         schpb::DeleteRangeResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);

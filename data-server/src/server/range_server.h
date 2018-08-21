@@ -19,7 +19,7 @@
 #include "range/range.h"
 #include "storage/meta_store.h"
 
-#include "context_server.h"
+#include "server/context_server.h"
 #include "watch/watch_server.h"
 
 namespace sharkstore {
@@ -44,10 +44,9 @@ public:
     void StatisPush(uint64_t range_id);
 
     storage::MetaStore *meta_store() { return meta_store_; }
-    metapb::Range *GetRangeMeta(uint64_t range_id);
 
     size_t GetRangesSize() const;
-    std::shared_ptr<range::Range> find(uint64_t range_id);
+    std::shared_ptr<range::Range> Find(uint64_t range_id);
 
     void OnNodeHeartbeatResp(const mspb::NodeHeartbeatResponse &) override;
     void OnRangeHeartbeatResp(const mspb::RangeHeartbeatResponse &) override;
@@ -104,15 +103,10 @@ private:
         common::ProtoMessage *msg);
 
 public:
-    Status ApplySplit(uint64_t old_range_id,
-            const raft_cmdpb::SplitRequest &req,
+    Status SplitRange(uint64_t old_range_id, const raft_cmdpb::SplitRequest &req,
             uint64_t raft_index);
 
     void LeaderQueuePush(uint64_t leader, time_t expire);
-
-    void AddReadStats(uint64_t size, uint64_t count);
-    void AddWriteStats(uint64_t size, uint64_t count);
-    void ResetStats();
 
 private:  // admin
     void CreateRange(common::ProtoMessage *msg);
@@ -125,6 +119,7 @@ private:  // admin
     void SetLogLevel(common::ProtoMessage *msg);
 
     Status CreateRange(const metapb::Range &range, uint64_t leader = 0, uint64_t log_start_index = 0);
+
     Status DeleteRange(uint64_t range_id, uint64_t peer_id = 0);
     int CloseRange(uint64_t range_id);
     int OfflineRange(uint64_t range_id);
@@ -153,6 +148,7 @@ private:
     storage::MetaStore *meta_store_ = nullptr;
 
     ContextServer *context_ = nullptr;
+    std::unique_ptr<range::RangeContext> range_context_;
 
 public:
     watch::WatchServer* watch_server_;

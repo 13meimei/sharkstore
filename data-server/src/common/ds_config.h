@@ -34,11 +34,13 @@ typedef struct ds_config_s {
         int level0_stop_writes_trigger;
         bool disable_wal;
         bool cache_index_and_filter_blocks;
+        int compression;
         int storage_type;
         int min_blob_size;
         size_t blob_file_size;
         bool enable_garbage_collection;
         int blob_gc_percent;
+        int blob_compression;
         int ttl;
         bool enable_stats;
         bool enable_debug_log;

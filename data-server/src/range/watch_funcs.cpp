@@ -1,9 +1,7 @@
 #include "range.h"
 #include "server/range_server.h"
 #include "watch.h"
-#include "watch/watcher.h"
-
-#include "range_logger.h"
+#include "monitor/statistics.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -56,7 +54,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
+
 
     auto ds_resp = new watchpb::DsWatchResponse;
     auto header = ds_resp->mutable_header();
@@ -98,8 +97,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
     if (err != nullptr) {
         RANGE_LOG_WARN("WatchGet error: %s", err->message().c_str());
-        context_->socket_session->SetResponseHeader(req.header(), header, err);
-        context_->socket_session->Send(msg, ds_resp);
+        common::SetResponseHeader(req.header(), header, err);
+        context_->SocketSession()->Send(msg, ds_resp);
         return;
     }
 
@@ -107,7 +106,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     auto clientVersion = req.req().startversion();
 
     //to do add watch
-    auto watch_server = context_->range_server->watch_server_;
+    auto watch_server = context_->RangServer()->watch_server_;
     std::vector<watch::WatcherKey*> keys;
 
     for (auto i = 0; i < tmpKv.key_size(); i++) {
@@ -160,10 +159,10 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
             return;
         } else {
             w_ptr->setBufferFlag(memCnt);
-            wcode = watch_server->AddPrefixWatcher(w_ptr, store_);
+            wcode = watch_server->AddPrefixWatcher(w_ptr, store_.get());
         }
     } else {
-        wcode = watch_server->AddKeyWatcher(w_ptr, store_);
+        wcode = watch_server->AddKeyWatcher(w_ptr, store_.get());
     }
 
     if(watch::WATCH_OK == wcode) {
@@ -172,7 +171,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         auto btime = get_micro_second();
         //to do get from db again
         GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, prefix);
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
                                        get_micro_second() - btime);
         w_ptr->Send(ds_resp);
     } else {
@@ -187,7 +186,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     errorpb::Error *err = nullptr;
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
     auto ds_resp = new watchpb::DsKvWatchGetMultiResponse;
     auto header = ds_resp->mutable_header();
@@ -297,7 +296,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             RANGE_LOG_DEBUG("PureGet code:%d msg:%s ", ret.code(), ret.ToString().data());
             code = ret.code();
         }
-        context_->run_status->PushTime(monitor::PrintTag::Get, get_micro_second() - btime);
+        context_->Statistics()->PushTime(monitor::HistogramType::kQWait, get_micro_second() - btime);
 
         resp->set_code(static_cast<int32_t>(code));
     } while (false);
@@ -306,8 +305,8 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         RANGE_LOG_WARN("PureGet error: %s", err->message().c_str());
     }
 
-    context_->socket_session->SetResponseHeader(req.header(), header, err);
-    context_->socket_session->Send(msg, ds_resp);
+    common::SetResponseHeader(req.header(), header, err);
+    context_->SocketSession()->Send(msg, ds_resp);
 }
 
 void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req) {
@@ -317,7 +316,7 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
     //auto extPtr{std::make_shared<std::string>("")};
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("session_id:%" PRId64 " WatchPut begin", msg->session_id);
 
@@ -409,7 +408,7 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
     //auto extPtr = std::make_shared<std::string>();
 
     auto btime = get_micro_second();
-    context_->run_status->PushTime(monitor::PrintTag::Qwait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("WatchDel begin");
 
@@ -498,7 +497,7 @@ bool Range::WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutReque
     auto &kv = req.req().kv();
 
     if (is_leader_ && kv.key_size() > 0 ) {
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvWatchPut);
             cmd.set_allocated_kv_watch_put_req(req.release_req());
         });
@@ -514,7 +513,7 @@ bool Range::WatchDeleteSubmit(common::ProtoMessage *msg,
     auto &kv = req.req().kv();
 
     if (is_leader_ && kv.key_size() > 0 ) {
-        auto ret = SubmitCmd(msg, req, [&req](raft_cmdpb::Command &cmd) {
+        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvWatchDel);
             cmd.set_allocated_kv_watch_del_req(req.release_req());
         });
@@ -531,6 +530,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
     RANGE_LOG_DEBUG("ApplyWatchPut begin");
     auto &req = cmd.kv_watch_put_req();
+    auto btime = get_micro_second();
     watchpb::WatchKeyValue notifyKv;
     notifyKv.CopyFrom(req.kv());
 
@@ -567,7 +567,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         //save to db
         auto btime = get_micro_second();
         ret = store_->Put(dbKey, dbValue);
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
                                        get_micro_second() - btime);
 
 
@@ -598,7 +598,8 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new watchpb::DsKvWatchPutResponse;
-        SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
+        resp->mutable_resp()->set_code(ret.code());
+        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
         return ret;
@@ -716,7 +717,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
         ret = store_->Delete(it);
 
-        context_->run_status->PushTime(monitor::PrintTag::Store,
+        context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
                                        get_micro_second() - btime);
 
         if (!ret.ok()) {
@@ -728,7 +729,8 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
         if (cmd.cmd_id().node_id() == node_id_ && delKeys[delKeys.size() - 1] == it) {
             auto resp = new watchpb::DsKvWatchDeleteResponse;
-            SendResponse(resp, cmd, static_cast<int>(ret.code()), err);
+            resp->mutable_resp()->set_code(ret.code());
+            ReplySubmit(cmd, resp, err, btime);
         } else if (err != nullptr) {
             delete err;
             return ret;
@@ -815,7 +817,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
     auto dbValue = kv.value();
     int64_t currDbVersion{version};
-    auto watch_server = context_->range_server->watch_server_;
+    auto watch_server = context_->RangServer()->watch_server_;
 
     watch_server->GetKeyWatchers(evtType, vecNotifyWatcher, hashKey, dbKey, currDbVersion);
 
@@ -896,10 +898,10 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                     return -1;
                 }
                 //RANGE_LOG_DEBUG("WatchNotify key scope %s---%s", EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbKeyEnd).c_str());
-                auto watcherServer = context_->range_server->watch_server_;
+                auto watcherServer = context_->RangServer()->watch_server_;
                 auto ws = watcherServer->GetWatcherSet_(hashKey);
 
-                auto result = ws->loadFromDb(store_, evtType, dbKey, dbKeyEnd, startVersion, meta_.GetTableID(), dsResp);
+                auto result = ws->loadFromDb(store_.get(), evtType, dbKey, dbKeyEnd, startVersion, meta_.GetTableID(), dsResp);
                 if(result.first <= 0) {
                     delete dsResp;
                     dsResp = nullptr;
@@ -922,7 +924,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
 int32_t Range::SendNotify( watch::WatcherPtr w, watchpb::DsWatchResponse *ds_resp, bool prefix)
 {
-    auto watch_server = context_->range_server->watch_server_;
+    auto watch_server = context_->RangServer()->watch_server_;
     auto resp = ds_resp->mutable_resp();
     auto w_id = w->GetWatcherId();
 
