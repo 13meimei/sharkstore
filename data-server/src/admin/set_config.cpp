@@ -73,7 +73,6 @@ static const ConfigSetFuncMap cfg_set_funcs = {
         SET_ROCKSDB_OPTIONS(soft_pending_compaction_bytes_limit),
         SET_ROCKSDB_OPTIONS(hard_pending_compaction_bytes_limit),
         SET_ROCKSDB_OPTIONS(level0_file_num_compaction_trigger),
-        SET_ROCKSDB_OPTIONS(level0_file_num_compaction_trigger),
         SET_ROCKSDB_OPTIONS(level0_slowdown_writes_trigger),
         SET_ROCKSDB_OPTIONS(level0_stop_writes_trigger),
         SET_ROCKSDB_OPTIONS(target_file_size_base),
