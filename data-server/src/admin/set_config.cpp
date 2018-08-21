@@ -13,7 +13,7 @@ using namespace ds_adminpb;
 using ConfigSetFunc = std::function<Status(server::ContextServer*, const std::string&)>;
 using ConfigSetFuncMap = std::map<std::string, ConfigSetFunc>;
 
-Status setLogLevel(server::ContextServer* ctx, const std::string& value) {
+static Status setLogLevel(server::ContextServer* ctx, const std::string& value) {
     (void)ctx;
     char level[8] = {'\0'};
     snprintf(level, 8, "%s", value.c_str());

@@ -45,6 +45,7 @@ private:
     using RaftMapType = std::unordered_map<uint64_t, std::shared_ptr<RaftImpl>>;
 
     std::shared_ptr<RaftImpl> findRaft(uint64_t id) const;
+    size_t raftSize() const;
 
     void sendHeartbeat(const RaftMapType& rafts);
     void onMessage(MessagePtr& msg);

@@ -196,6 +196,8 @@ public:
     };
     void SetRealSize(uint64_t rsize) { real_size_ = rsize; }
     void GetReplica(metapb::Replica *rep);
+    uint64_t GetSplitRangeID() const { return split_range_id_; }
+    size_t GetSubmitQueueSize() const { return submit_queue_.Size(); }
 
 private:
     bool VerifyLeader(errorpb::Error *&err);

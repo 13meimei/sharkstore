@@ -38,6 +38,9 @@ public:
 
     size_t ClearQueue(bool fast, bool slow);
 
+    uint64_t FastQueueSize() const { return fast_queue_.all_msg_size; }
+    uint64_t SlowQueueSize() const { return slow_queue_.all_msg_size; }
+
     // TODO:
     void GetPending() const {}
 

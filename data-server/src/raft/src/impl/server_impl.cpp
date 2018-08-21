@@ -227,9 +227,15 @@ std::shared_ptr<Raft> RaftServerImpl::FindRaft(uint64_t id) const {
     return std::static_pointer_cast<Raft>(findRaft(id));
 }
 
+size_t RaftServerImpl::raftSize() const {
+    sharkstore::shared_lock<sharkstore::shared_mutex> lock(rafts_mu_);
+    return all_rafts_.size();
+}
+
 void RaftServerImpl::GetStatus(ServerStatus* status) const {
     status->total_snap_sending = snapshot_manager_->SendingCount();
     status->total_snap_applying = snapshot_manager_->ApplyingCount();
+    status->total_rafts_count  = raftSize();
 }
 
 void RaftServerImpl::onMessage(MessagePtr& msg) {
