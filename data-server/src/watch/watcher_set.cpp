@@ -204,18 +204,17 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
     }
     auto& watcher_map = watcher_map_it->second->mapKeyWatcher;
 
+    FLOG_INFO("AddWatcher(%s) prompt version: watcher_id:[%"
+                      PRIu64
+                      "] key: [%s] start version[%"
+                      PRIu64
+                      "] watcher version[%"
+                      PRIu64
+                      "]",
+              prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
+              watcher_map_it->second->key_version_);
+
     if( clientVersion < watcher_map_it->second->key_version_ ) {
-
-         FLOG_INFO("watcher add skip(%s): watcher_id:[%"
-                           PRIu64
-                           "] key: [%s] current version[%"
-                           PRIu64
-                           "] watcher version[%"
-                           PRIu64
-                           "]",
-                   prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
-                   watcher_map_it->second->key_version_);
-
         return WATCH_WATCHER_NOT_NEED;
     }
 

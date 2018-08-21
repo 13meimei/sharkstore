@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-char level[8] = "debug";
+char level[8] = "WARN";
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -461,18 +461,49 @@ TEST_F(WatchTest, watch_put_get_del_get_group) {
 
 TEST_F(WatchTest, watch_del_benchmark) {
 
+    FLOG_DEBUG("watch_del single mode.");
+    //justPut(1, "01003001", "01003001001", "03003001:value");
+    //justGet(1, "01003001", "", "03003001:value", 1);
+    //justGet(1, "01003001", "", "03003001:value", 1, true);
+
+    int64_t bTime(getticks());
+    for (int i = 0; i < 10000000; i++) {
+        justDel(1, "01003001", "", "", false);
+        //justGet(1, "01003001", "", "", 0);
+    }
+    int64_t endTime(getticks());
+    FLOG_WARN("count:10000000 elapse:%" PRId64 "s average:%" PRId64 "/s", (endTime - bTime)/1000, 10000000/ ((endTime - bTime)/1000));
+
+}
+
+TEST_F(WatchTest, watch_put_benchmark) {
+
     FLOG_DEBUG("watch_put single mode.");
     //justPut(1, "01003001", "01003001001", "03003001:value");
     //justGet(1, "01003001", "", "03003001:value", 1);
     //justGet(1, "01003001", "", "03003001:value", 1, true);
 
     int64_t bTime(getticks());
-    for (int i = 0; i < 1000000; i++) {
-        justDel(1, "01003001", "", "", false);
-        //justGet(1, "01003001", "", "", 0);
+    for (int i = 0; i < 10000000; i++) {
+        justPut(1, "01003001", "", "01003001:value");
     }
     int64_t endTime(getticks());
-    FLOG_DEBUG("count:1000000 %" PRId64 "/s", 1000000/ ((endTime - bTime)/1000));
+    FLOG_WARN("count:10000000 elapse:%" PRId64 "s average:%" PRId64 "/s", (endTime - bTime)/1000, 10000000/ ((endTime - bTime)/1000));
 
 }
 
+TEST_F(WatchTest, watch_get_benchmark) {
+
+    FLOG_DEBUG("watch_put single mode.");
+    justPut(1, "01003001", "01003001001", "03003001:value");
+    //justGet(1, "01003001", "", "03003001:value", 1);
+    //justGet(1, "01003001", "", "03003001:value", 1, true);
+
+    int64_t bTime(getticks());
+    for (int i = 0; i < 10000000; i++) {
+        justGet(1, "01003001", "", "", 1, false);
+    }
+    int64_t endTime(getticks());
+    FLOG_WARN("count:10000000 elapse:%" PRId64 "s average:%" PRId64 "/s", (endTime - bTime)/1000, 10000000/ ((endTime - bTime)/1000));
+
+}

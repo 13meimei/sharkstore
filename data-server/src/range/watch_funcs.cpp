@@ -219,7 +219,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             break;
         }
 
-        RANGE_LOG_WARN("PureGet key before:%s after:%s", key[0].c_str(), EncodeToHexString(dbKey).c_str());
+        RANGE_LOG_INFO("PureGet key before:%s after:%s", key[0].c_str(), EncodeToHexString(dbKey).c_str());
 
         auto epoch = req.header().range_epoch();
         bool in_range = KeyInRange(dbKey);
@@ -709,7 +709,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 //                               ret.ToString().c_str(), EncodeToHexString(dbKey).c_str());
 //                    break;
 //                }
-
+    std::vector<std::string*> vecKeys;
     for(auto it : delKeys) {
 
         auto btime = get_micro_second();
@@ -737,7 +737,15 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         FLOG_DEBUG("store->Delete->ret.code:%s", ret.ToString().c_str());
 
         notifyKv.clear_key();
-        notifyKv.add_key(it);
+
+        vecKeys.clear();
+        watch::Watcher::DecodeKey(vecKeys, it);
+        for(auto key:vecKeys) {
+            notifyKv.add_key(*key);
+        }
+        for(auto key:vecKeys) {
+            delete key;
+        }
 
         //notify watcher
         int32_t retCnt(0);
