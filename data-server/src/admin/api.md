@@ -52,7 +52,7 @@
 与配置文件ds.conf一致，如 log.level
 
 ## GET_INFO
-参数为string类型的path，
+参数为string类型的path，多级路径使用`.`分隔        
 目前支持的path路径：  
    
 - sever 或者 path传空       
@@ -69,7 +69,18 @@
 后面可以跟raft id(range id)，如`raft.123`表示获取 id=123 的raft信息。   
 不加id (path=raft)返回raft整体信息，如raft总个数、快照计数等。
 
-
+## ForceSplit
+强制分裂某个range     
+// TODO: 待实现
+##  Compaction
+手动compaction，可选指定compaction某个range范围内的数据。      
+不指定compaction整个db。
+##  ClearQueue
+清除指定类型的worker队列，并返回清除了多少个。
+## GetPendings
+待实现
+##  FlushDB
+rocksdb flushdb操作，wait为true表示同步等待操作完成。
 
 
 
