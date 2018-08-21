@@ -674,15 +674,15 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     }
 
     if(prefix) {
-        std::string dbKeyEnd("");
+        std::string dbKeyEnd(dbKey);
         if (0 != WatchEncodeAndDecode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
             //to do set error message
             FLOG_ERROR("NextComparableBytes error, skip key:%s", EncodeToHexString(dbKey).c_str());
             return Status(Status::kUnknown);
         }
 
-        std::unique_ptr<storage::Iterator> iterator(
-                store_->NewIterator(dbKey, dbKeyEnd));
+        RANGE_LOG_DEBUG("ApplyWatchDel key scope %s---%s", EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbKeyEnd).c_str());
+        std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
 
         for (int i = 0; iterator->Valid(); ++i) {
             delKeys.push_back(std::move(iterator->key()));
@@ -698,7 +698,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         }
 
         RANGE_LOG_DEBUG("BatchDelete afftected_keys:%" PRId64 " first_key:%s last_key:%s",
-                        keySize, first_key.c_str(), last_key.c_str());
+                        keySize,  EncodeToHexString(first_key).c_str(), EncodeToHexString(last_key).c_str());
     } else {
         delKeys.push_back(dbKey);
     }

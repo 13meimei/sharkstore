@@ -199,7 +199,7 @@ protected:
         return;
     }
 
-    void justDel(const int16_t &rangeId, const std::string &key1, const std::string &key2, const std::string &value)
+    void justDel(const int16_t &rangeId, const std::string &key1, const std::string &key2, const std::string &value, bool prefix = false)
     {
         FLOG_DEBUG("justDel...range:%d key1:%s  key2:%s", rangeId, key1.c_str(), key2.c_str() );
 
@@ -228,6 +228,8 @@ protected:
             req.mutable_req()->mutable_kv()->add_key(key2);
 
         req.mutable_req()->mutable_kv()->set_version(1);
+
+        req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
@@ -452,340 +454,25 @@ TEST_F(WatchTest, watch_put_get_del_get_group) {
         justGet(1, "01003001", "", "03003001:value", 1);
         justGet(1, "01003001", "", "03003001:value", 1, true);
 
-        justDel(1, "01003001", "", "");
+        justDel(1, "01003001", "", "", true);
         justGet(1, "01003001", "", "", 0);
 
 }
 
-/*
+TEST_F(WatchTest, watch_del_benchmark) {
 
-TEST_F(WatchTest, watch_put_del_get_group) {
-    {
-        // begin test watch_put group (key ok)
-        FLOG_DEBUG("watch_put group mode.");
+    FLOG_DEBUG("watch_put single mode.");
+    //justPut(1, "01003001", "01003001001", "03003001:value");
+    //justGet(1, "01003001", "", "03003001:value", 1);
+    //justGet(1, "01003001", "", "03003001:value", 1, true);
 
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->socket = &socket_;
-        watchpb::DsKvWatchPutRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->mutable_kv()->add_key("01003002");
-        req.mutable_req()->mutable_kv()->set_value("01003001:value");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchPut(msg);
-
-        watchpb::DsKvWatchPutResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // end test watch_put
+    int64_t bTime(getticks());
+    for (int i = 0; i < 1000000; i++) {
+        justDel(1, "01003001", "", "", false);
+        //justGet(1, "01003001", "", "", 0);
     }
-
-    //test get group
-
-    FLOG_DEBUG("pure_get group..." );
-    {
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        // begin test pure_get(ok)
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        msg->msg_id = 2018080301;
-        msg->socket = &socket_;
-        watchpb::DsKvWatchGetMultiRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_kv()->add_key("01003001");
-        req.mutable_kv()->add_key("01003002");
-        req.mutable_kv()->set_version(0);
-
-        //will print in range_server
-        //FLOG_DEBUG("pureGet req:%s", req.DebugString().c_str());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->PureGet(msg);
-
-        watchpb::DsKvWatchGetMultiResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        FLOG_DEBUG("pureGet group RESP:%s", resp.DebugString().c_str());
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.kvs(0).value() == "01003001:value");
-
-    }
-
-    FLOG_DEBUG("delete group..." );
-    {
-        // begin test watch_delete( ok )
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        msg->socket = &socket_;
-        watchpb::DsKvWatchDeleteRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->mutable_kv()->add_key("01003002");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchDel(msg);
-
-        watchpb::DsKvWatchDeleteResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // end test watch_delete
-    }
-
-    FLOG_DEBUG("pure_get nothing" );
-    {
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        // begin test pure_get(ok)
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        msg->socket = &socket_;
-        msg->msg_id = 2018080301;
-        watchpb::DsKvWatchGetMultiRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_kv()->add_key("01003001");
-        req.mutable_kv()->add_key("01003002");
-        req.mutable_kv()->set_version(0);
-
-        //will print in range_server
-        //FLOG_DEBUG("pureGet req:%s", req.DebugString().c_str());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->PureGet(msg);
-
-        watchpb::DsKvWatchGetMultiResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        FLOG_DEBUG("pureGet group RESP:%s", resp.DebugString().c_str());
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.kvs_size() == 0);
-
-    }
+    int64_t endTime(getticks());
+    FLOG_DEBUG("count:1000000 %" PRId64 "/s", 1000000/ ((endTime - bTime)/1000));
 
 }
 
-TEST_F(WatchTest, watch_del_noexists_key) {
-
-    {
-        // begin test watch_put group (key ok)
-        FLOG_DEBUG("watch_put group mode.");
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->socket = &socket_;
-        watchpb::DsKvWatchPutRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->mutable_kv()->add_key("01003002");
-        req.mutable_req()->mutable_kv()->set_value("01003001:value");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchPut(msg);
-
-        watchpb::DsKvWatchPutResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // end test watch_put
-    }
-
-    //delete group
-    {
-        // begin test watch_delete( ok )
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        msg->socket = &socket_;
-        watchpb::DsKvWatchDeleteRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->mutable_kv()->add_key("01003002");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchDel(msg);
-
-        watchpb::DsKvWatchDeleteResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // end test watch_delete
-    }
-
-    //delete group again
-    {
-        // begin test watch_delete( ok )
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        msg->socket = &socket_;
-        watchpb::DsKvWatchDeleteRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->mutable_kv()->add_key("01003001");
-        req.mutable_req()->mutable_kv()->add_key("01003002");
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->WatchDel(msg);
-
-        watchpb::DsKvWatchDeleteResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // end test watch_delete
-    }
-
-
-    //test get group
-
-    FLOG_DEBUG("pure_get group...nothign" );
-    {
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
-        // begin test pure_get(ok)
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->session_id = 1;
-        msg->socket = &socket_;
-        msg->msg_id = 2018080301;
-        watchpb::DsKvWatchGetMultiRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_kv()->add_key("01003001");
-        req.mutable_kv()->add_key("01003002");
-        req.mutable_kv()->set_version(0);
-        //req.mutable_kv()->set_tableid(1);
-
-        //will print in range_server
-        //FLOG_DEBUG("pureGet req:%s", req.DebugString().c_str());
-
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->PureGet(msg);
-
-        watchpb::DsKvWatchGetMultiResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        FLOG_DEBUG("pureGet group RESP:%s", resp.DebugString().c_str());
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.code() == 1);
-        ASSERT_TRUE(resp.kvs_size() == 0);
-
-    }
-}
-*/
