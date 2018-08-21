@@ -734,7 +734,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
             ReplySubmit(cmd, resp, err, btime);
         } else if (err != nullptr) {
             delete err;
-            return ret;
+            continue;
         }
 
         FLOG_DEBUG("store->Delete->ret.code:%s", ret.ToString().c_str());
