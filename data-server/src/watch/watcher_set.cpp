@@ -185,6 +185,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                 }
             }
 
+            //用户版本大于０　则返回kNotFound　client下次请求时，调整用户version为０
             if(ret.code() == Status::kNotFound && clientVersion > 0) {
                 auto ds_resp = new watchpb::DsWatchResponse;
                 ds_resp->mutable_resp()->set_code(Status::kNotFound);
@@ -306,12 +307,14 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
                           watcher_id, EncodeToHexString(key).c_str());
             }
         }
+
+        if (watcher_map_it->second->mapKeyWatcher.empty()) {
+            watcher_map_.erase(watcher_map_it);
+        }
     }
 
 
-    if (watcher_map_it->second->mapKeyWatcher.empty()) {
-        watcher_map_.erase(watcher_map_it);
-    }
+
     int64_t endTime(getticks());
     FLOG_INFO("watcher del end: watch_id:[%" PRIu64 "] key: [%s] take time:%" PRId64 " ms",
               watcher_id, EncodeToHexString(key).c_str(), endTime - beginTime);
