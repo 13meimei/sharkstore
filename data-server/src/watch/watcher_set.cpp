@@ -162,6 +162,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
                     if(result.second) {
                         ret = Status(Status::kNotChange);
+                        version = clientVersion;
                     } else {
                         ret = Status(Status::kNotFound);
                     }
@@ -186,7 +187,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                 }
 
                 //db有数据　用户版本为０　首次返回数据给client
-                if( ret.ok() && version > 0 && clientVersion == 0) {
+                if( ret.ok() && version > 0 && (clientVersion == 0 || clientVersion < version) ) {
                     auto ds_resp = new watchpb::DsWatchResponse;
                     auto resp = ds_resp->mutable_resp();
 
