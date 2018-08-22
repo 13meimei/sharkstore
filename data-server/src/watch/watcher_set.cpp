@@ -202,7 +202,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                     std::vector<std::string *> vecKeys;
                     watch::Watcher::DecodeKey(vecKeys, key);
                     for(auto itKey:vecKeys) {
-                        resp->add_events()->mutable_kv()->add_key(*itKey);
+                        evt->mutable_kv()->add_key(*itKey);
                     }
                     for(auto itKey:vecKeys) {
                         delete itKey;
