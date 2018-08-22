@@ -219,6 +219,8 @@ private:
     errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
 
 private:
+    friend class RangeTestFixture;
+
     static const int64_t kTimeTakeWarnThresoldUSec = 500000;
 
     RangeContext* context_ = nullptr;

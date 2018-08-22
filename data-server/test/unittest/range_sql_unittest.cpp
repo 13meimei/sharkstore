@@ -19,6 +19,7 @@
 #include "helper/query_builder.h"
 #include "helper/mock/socket_session_mock.h"
 #include "helper/mock/raft_server_mock.h"
+#include "helper/range_test_fixture.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -114,6 +115,10 @@ protected:
     server::ContextServer   *context_;
     server::RangeServer     *range_server_;
 };
+
+TEST_F(RangeTestFixture, Test) {
+    range_->is_leader_ = true;
+}
 
 TEST_F(RangeSQLTest, Test) {
     {

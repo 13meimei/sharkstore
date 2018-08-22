@@ -2,6 +2,8 @@ _Pragma("once");
 
 #include <gtest/gtest.h>
 #include "range/range.h"
+#include "range/context.h"
+#include "mock/range_context_mock.h"
 
 #include "table.h"
 
@@ -9,24 +11,28 @@ namespace sharkstore {
 namespace test {
 namespace helper {
 
-class RangeTestFixture : public ::testing::Test {
-public:
-    explicit RangeTestFixture(std::unique_ptr<Table> t);
+// for test only
+using namespace kvrpcpb;
+using namespace sharkstore::dataserver;
+using namespace sharkstore::dataserver::range;
 
+class RangeTestFixture : public ::testing::Test {
 protected:
     void SetUp() override;
     void TearDown() override;
 
+protected:
+    Status TestInsert(DsInsertRequest &req, DsInsertResponse *resp);
+    Status TestSelect(DsSelectRequest& req, DsSelectResponse* resp);
+    Status TestDelete(DsDeleteRequest& req, DsDeleteResponse* resp);
+
 private:
-    void initContext();
-    void destroyContext();
+    Status getResult(google::protobuf::Message *resp);
 
 protected:
+    std::unique_ptr<mock::RangeContextMock> context_;
     std::unique_ptr<Table> table_;
     std::unique_ptr<dataserver::range::Range> range_;
-
-private:
-    std::string tmp_dir_;
 };
 
 } /* namespace helper */

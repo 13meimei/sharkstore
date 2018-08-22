@@ -2,61 +2,79 @@
 
 #include "storage/meta_store.h"
 #include "base/util.h"
+
 #include "helper_util.h"
+#include "helper/table.h"
+#include "helper/mock/socket_session_mock.h"
 
 namespace sharkstore {
 namespace test {
 namespace helper {
 
 using namespace sharkstore::dataserver;
-
-RangeTestFixture::RangeTestFixture(std::unique_ptr<Table> t) {
-}
+using namespace sharkstore::dataserver::common;
+using namespace google::protobuf;
 
 void RangeTestFixture::SetUp() {
-    if (!table_) {
-        throw std::runtime_error("invalid table");
-    }
+    table_ = CreateAccountTable();
 
-    initContext();
+    context_.reset(new mock::RangeContextMock);
+    auto s = context_->Init();
+    ASSERT_TRUE(s.ok()) << s.ToString();
 
     auto meta = MakeRangeMeta(table_.get());
-//    range_.reset(new range::Range(&context_, meta));
-}
-
-void RangeTestFixture::initContext() {
- //   context_.node_id = 1;
-
-    char path[] = "/tmp/sharkstore_ds_range_test_XXXXXX";
-    char* tmp = mkdtemp(path);
-    ASSERT_TRUE(tmp != NULL);
-    tmp_dir_ = tmp;
-
-    // open data rocksdb
-    {
-        rocksdb::Options ops;
-        ops.create_if_missing = true;
-        ops.error_if_exists = true;
-  //      auto s = rocksdb::DB::Open(ops, JoinFilePath({tmp_dir_, "data"}), &context_.rocks_db);
-  //      ASSERT_TRUE(s.ok()) << s.ToString();
-    }
-    // open meta store
-    {
-   //     context_.meta_store = new storage::MetaStore(JoinFilePath({tmp_dir_, "meta"}));
-   //     auto s = context_.meta_store->Open();
-   //     ASSERT_TRUE(s.ok()) << s.ToString();
-    }
-}
-
-void RangeTestFixture::destroyContext() {
-    RemoveDirAll(tmp_dir_.c_str());
+    range_.reset(new range::Range(context_.get(), meta));
+    s = range_->Initialize();
+    ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
 void RangeTestFixture::TearDown() {
-    destroyContext();
+    if (context_) {
+        context_->Destroy();
+    }
 }
 
+ProtoMessage* NewMsg(const Message& req) {
+    auto msg = new common::ProtoMessage;
+    msg->begin_time = getticks();
+    msg->expire_time = getticks() + 1000;
+    msg->session_id = randomInt();
+    msg->header.msg_id = randomInt();
+    msg->msg_id = msg->header.msg_id;
 
+    auto len = req.ByteSizeLong();
+    msg->body.resize(len);
+    req.SerializeToArray(msg->body.data(), len);
+
+    return msg;
+}
+
+Status RangeTestFixture::getResult(google::protobuf::Message *resp) {
+    auto session_mock = dynamic_cast<SocketSessionMock*>(context_->SocketSession());
+    if (!session_mock->GetResult(resp)) {
+        return Status(Status::kUnexpected, "could not get result", "");
+    } else {
+        return Status::OK();
+    }
+}
+
+Status RangeTestFixture::TestInsert(DsInsertRequest &req, DsInsertResponse *resp) {
+    auto msg = NewMsg(req);
+    range_->Insert(msg, req);
+    return getResult(resp);
+}
+
+Status RangeTestFixture::TestSelect(DsSelectRequest& req, DsSelectResponse* resp) {
+    auto msg = NewMsg(req);
+    range_->Select(msg, req);
+    return getResult(resp);
+}
+
+Status RangeTestFixture::TestDelete(DsDeleteRequest& req, DsDeleteResponse* resp) {
+    auto msg = NewMsg(req);
+    range_->Delete(msg, req);
+    return getResult(resp);
+}
 
 
 } /* namespace helper */

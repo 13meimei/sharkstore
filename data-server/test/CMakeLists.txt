@@ -1,9 +1,11 @@
 include_directories(${PROJECT_SOURCE_DIR}/test)
 
 set(test_helper_SRCS
+    helper/mock/master_worker_mock.cpp
     helper/mock/raft_mock.cpp
     helper/mock/raft_server_mock.cpp
     helper/mock/socket_session_mock.cpp
+    helper/mock/range_context_mock.cpp
     helper/gen/test.pb.cc
     helper/helper_util.cpp
     helper/query_builder.cpp
