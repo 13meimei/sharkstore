@@ -214,7 +214,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
               prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
               watcher_map_it->second->key_version_, watcher_map.size());
 
-    if( clientVersion < watcher_map_it->second->key_version_  || watcher_map.size() == 0) {
+    if( clientVersion < watcher_map_it->second->key_version_ ) {
         return WATCH_WATCHER_NOT_NEED;
     }
 
