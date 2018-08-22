@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-char level[8] = "debug";
+char level[8] = "warn";
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;

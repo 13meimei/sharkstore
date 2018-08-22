@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 metapb::Range *genRange2();
 metapb::Range *genRange1();
 
-char level[8] = "debug";
+char level[8] = "warn";
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;

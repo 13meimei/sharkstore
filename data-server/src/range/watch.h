@@ -6,6 +6,7 @@ _Pragma("once");
 #include <common/socket_session.h>
 #include <common/ds_encoding.h>
 #include <common/ds_config.h>
+#include <watch/watcher.h>
 
 #include <frame/sf_logger.h>
 #include <mutex>
@@ -41,6 +42,19 @@ public:
     static int16_t  NextComparableBytes(const char *key, const int32_t &len, std::string &result);
 };
 
+class WatchUtil {
+public:
+
+    static bool GetHashKey(watch::WatcherPtr pWatcher, bool prefix, const int64_t &tableId, std::string *encodeKey) {
+
+        auto hashKeys = pWatcher->GetKeys(prefix);
+        watch::Watcher::EncodeKey(encodeKey, tableId, hashKeys);
+
+        return true;
+    }
+
+
+};
 
 
 }  // namespace range

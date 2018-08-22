@@ -109,8 +109,8 @@ public:
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
 
     //KV watch series
-    Status GetAndResp(const common::ProtoMessage *, watchpb::DsWatchRequest &, std::string &,
-                      std::string &, watchpb::DsWatchResponse *, uint64_t &, const bool &);
+    Status GetAndResp( watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey, const bool &prefix,
+                              int64_t &version, watchpb::DsWatchResponse *dsResp);
     void WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req);
     void PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
     void WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);

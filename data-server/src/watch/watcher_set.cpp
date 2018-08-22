@@ -351,8 +351,6 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
         }
     }
 
-
-
     int64_t endTime(getticks());
     FLOG_INFO("watcher del end: watch_id:[%" PRIu64 "] key: [%s] take time:%" PRId64 " ms",
               watcher_id, EncodeToHexString(key).c_str(), endTime - beginTime);

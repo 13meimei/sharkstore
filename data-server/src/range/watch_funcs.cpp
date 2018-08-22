@@ -7,43 +7,74 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-Status Range::GetAndResp( const common::ProtoMessage *msg, watchpb::DsWatchRequest &req, std::string &key, std::string &val,
-                          watchpb::DsWatchResponse *dsResp, uint64_t &version, const bool &prefix) {
+Status Range::GetAndResp( watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey, const bool &prefix,
+                          int64_t &version, watchpb::DsWatchResponse *dsResp) {
 
     version = 0;
-    Status ret = store_->Get(key, &val);
+    Status ret;
 
-    auto resp = dsResp->mutable_resp();
-    auto evt = resp->add_events();
-
-    resp->set_watchid(msg->session_id);
-    resp->set_code(static_cast<int>(ret.code()));
-
-    auto userKv = new watchpb::WatchKeyValue;
-    userKv->CopyFrom(req.req().kv());
-
-    auto err = std::make_shared<errorpb::Error>();
-    if(ret.ok()) {
-        //decode value
-        if(Status::kOk == WatchEncodeAndDecode::DecodeKv(funcpb::kFuncWatchGet, meta_.GetTableID(), userKv, key, val, err.get())) {
-            evt->set_type(watchpb::PUT);
-            evt->set_allocated_kv(userKv);
-            version = userKv->version();
-
-            RANGE_LOG_INFO("GetAndResp db_version: [%" PRIu64 "]", version);
-        } else {
-            RANGE_LOG_WARN("GetAndResp db_version: [%" PRIu64 "]", version);
-            ret = Status(Status::kInvalid);
+    if(prefix) {
+        //use iterator
+        std::string dbKeyEnd{""};
+        dbKeyEnd.assign(dbKey);
+        if (0 != WatchEncodeAndDecode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
+            //to do set error message
+            FLOG_ERROR("GetAndResp:NextComparableBytes error.");
+            return Status(Status::kUnknown);
         }
-    } else {
-        //consume version returning to user
-        //version = getcurrVersion(err.get());
-        //to do get raft index
-        evt->set_type(watchpb::DELETE);
-        userKv->set_version(version);
 
-        RANGE_LOG_INFO("GetAndResp code_: %s  version[%" PRId64 "]  key:%s",
-                  ret.ToString().c_str(), version, EncodeToHexString(key).c_str());
+
+        std::string hashKey("");
+        WatchUtil::GetHashKey(pWatcher, prefix, meta_.GetTableID(), &hashKey);
+        auto watcherServer = context_->RangServer()->watch_server_;
+        auto ws = watcherServer->GetWatcherSet_(hashKey);
+
+        auto result = ws->loadFromDb(store_.get(), watchpb::PUT, dbKey, dbKeyEnd, version, meta_.GetTableID(), dsResp);
+        if (result.first <= 0) {
+            delete dsResp;
+            dsResp = nullptr;
+        }
+
+    } else {
+
+        auto resp = dsResp->mutable_resp();
+        resp->set_watchid(pWatcher->GetWatcherId());
+        resp->set_code(static_cast<int>(ret.code()));
+        auto evt = resp->add_events();
+
+        std::string dbValue("");
+
+        ret = store_->Get(dbKey, &dbValue);
+        if (ret.ok()) {
+
+            evt->set_type(watchpb::PUT);
+
+            int64_t dbVersion(0);
+            std::string userValue("");
+            std::string ext("");
+            watch::Watcher::DecodeValue(&dbVersion, &userValue, &ext, dbValue);
+
+            auto userKv = new watchpb::WatchKeyValue;
+            for(auto userKey : req.kv().key()) {
+                userKv->add_key(userKey);
+            }
+            userKv->set_value(userValue);
+            userKv->set_version(dbVersion);
+            userKv->set_tableid(meta_.GetTableID());
+
+            version = dbVersion;
+
+            RANGE_LOG_INFO("GetAndResp ok, db_version: [%"
+                                   PRIu64
+                                   "]", dbVersion);
+
+        } else {
+
+            evt->set_type(watchpb::DELETE);
+
+            RANGE_LOG_INFO("GetAndResp code_: %s  key:%s",
+                           ret.ToString().c_str(), EncodeToHexString(dbKey).c_str());
+        }
     }
 
     return ret;
@@ -61,7 +92,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     auto header = ds_resp->mutable_header();
     std::string dbKey{""};
     std::string dbValue{""};
-    uint64_t dbVersion{0};
+    int64_t dbVersion{0};
 
     auto prefix = req.req().prefix();
     auto tmpKv = req.req().kv();
@@ -170,7 +201,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
         auto btime = get_micro_second();
         //to do get from db again
-        GetAndResp(msg, req, dbKey, dbValue, ds_resp, dbVersion, prefix);
+        GetAndResp(w_ptr, req.req(), dbKey, prefix, dbVersion, ds_resp);
         context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
                                        get_micro_second() - btime);
         w_ptr->Send(ds_resp);
@@ -774,24 +805,21 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
 int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg, bool prefix) {
 
-    bool groupFlag{false};
-
-    std::vector<watch::WatcherPtr> vecNotifyWatcher;
-    std::vector<watch::WatcherPtr> vecPrefixNotifyWatcher;
-
-    auto userKey = kv.key_size()>0?kv.key(0):"__NOFOUND__";
-    if(userKey == "__NOFOUND__") {
+    if(kv.key_size() == 0) {
         errMsg.assign("WatchNotify--key is empty.");
         return -1;
     }
+
+    std::vector<watch::WatcherPtr> vecNotifyWatcher;
+    std::vector<watch::WatcherPtr> vecPrefixNotifyWatcher;
 
     //continue to get prefix key
     std::vector<std::string *> decodeKeys;
     std::string hashKey("");
     std::string dbKey("");
 
-    bool hasPrefix{false};
-    if(prefix || kv.key_size() > 1) {
+    bool hasPrefix(prefix);
+    if(!hasPrefix && kv.key_size() > 1) {
         hasPrefix = true;
     }
 
@@ -823,9 +851,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     FLOG_DEBUG("WatchNotify haskkey:%s  key:%s", EncodeToHexString(hashKey).c_str(), EncodeToHexString(dbKey).c_str());
     if(hasPrefix) {
         auto value = std::make_shared<watch::CEventBufferValue>(kv, evtType, version);
-//        if(value->key_size()) {
-//            FLOG_DEBUG(">>>key is valid.");
-//        }
+
         if (!eventBuffer->enQueue(hashKey, value.get())) {
             FLOG_ERROR("load delete event kv to buffer error.");
         }
