@@ -203,6 +203,14 @@ func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
 	//		Sms:  r.Sms,
 	//	})
 	//}
+	log.Info("alarm server config: " +
+		"	server port: %v" +
+		"	remote alarm server addr: %v" +
+		"	mysql args: %v" +
+		"	jim url: %v" +
+		"	jim app addr: %v", conf.ServerPort,
+		conf.RemoteAlarmServerAddress, conf.MysqlArgs, conf.jimUrl, conf.jimApAddr)
+
 	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort,
 		conf.RemoteAlarmServerAddress, conf.MysqlArgs, conf.jimUrl, conf.jimApAddr)
 	if err != nil {
