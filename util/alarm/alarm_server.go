@@ -51,7 +51,6 @@ type Server struct {
 
 func (s *Server) jimDial() (redis.Conn, error) {
 	if (len(s.jimUrl) == 0 || len(s.jimApAddr) == 0) {
-		s.jimClientPool = nil
 		return nil, errors.New("no jim url or ap addr")
 	}
 
@@ -72,9 +71,6 @@ func (s *Server) jimDial() (redis.Conn, error) {
 }
 
 func (s *Server) jimSendCommand(commandName string, args ...interface{}) (interface{}, error) {
-	if (s.jimClientPool == nil) {
-		return nil, errors.New("no redis pool")
-	}
 	conn := s.jimClientPool.Get()
 	return conn.Do(commandName, args...)
 }
@@ -91,15 +87,13 @@ func newServer(ctx context.Context, alarmServerAddr string, sqlArgs, jimUrl, jim
 	s.sqlArgs = sqlArgs
 	s.jimUrl = jimUrl
 	s.jimApAddr = jimApAddr
-	s.jimClientPool = func() *redis.Pool {
-		return &redis.Pool{
-			MaxIdle: 3,
-			IdleTimeout: 240 * time.Second,
-			Dial: func() (redis.Conn, error) {
-				return s.jimDial()
-			},
-		}
-	}()
+	s.jimClientPool = &redis.Pool{
+		MaxIdle: 3,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			return s.jimDial()
+		},
+	}
 
 	go s.aliveCheckingAlarm()
 	return s
@@ -205,23 +199,28 @@ func (s *Server) parseHost(host string) ([]string, error) {
 }
 
 func (s *Server) loadAliveCheckingAppAddrs() error {
+	log.Debug("load cluster info from sharkstore cluster table ")
 	clusterInfos, err := s.getClusterInfo()
 	if err != nil {
 		log.Error("alive checking get cluster info failed: %v", err)
 		return err
 	}
 	for _, info := range clusterInfos {
+		log.Debug("info row: %v", info)
 		if len(info.remark) != 0 {
+			log.Debug("len info remark != 0")
 			continue // fixme domain host is vip
 		}
 
 		// do with gw
+		log.Debug("parse gateway host: %v", info.appGwHost)
 		gwAddrs, err := s.parseHost(info.appGwHost)
 		if err != nil {
 			log.Error("parse gateway domain failed: %v", err)
 			continue
 		}
 
+		log.Debug("parsed gateway host result: %v", gwAddrs)
 		for _, gwAddr := range gwAddrs {
 			s.addAliveCheckingAppAddr(APP_NAME_GATEWAY, fmt.Sprint(info.id), gwAddr)
 		}
@@ -349,7 +348,7 @@ func (s *Server) HandleAppPing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) aliveCheckingAlarm() {
-	log.Debug("alive checking alarm processing...")
+	log.Info("alive checking alarm processing...")
 
 	loadTicker := time.NewTicker(30 *time.Second)
 	checkTicker := time.NewTicker(10 *time.Second)
@@ -363,6 +362,7 @@ func (s *Server) aliveCheckingAlarm() {
 		case <-checkTicker.C:
 			appKeys := s.copyAliveCheckingAppKeys()
 			for _, key := range appKeys {
+				log.Debug("to check alive app key: %v", key)
 				// get app key from jimdb, if it is not in, then alarm
 				// exists return interger
 				reply, err := s.jimSendCommand("exists", key)
@@ -377,6 +377,7 @@ func (s *Server) aliveCheckingAlarm() {
 				}
 
 				if replyInt != 0 { // app key exists
+					log.Info("alive app key exists: %v", key)
 					continue
 				}
 
@@ -391,6 +392,7 @@ func (s *Server) aliveCheckingAlarm() {
 				samples = append(samples, NewSample("", 0, 0, info))
 				samplesJson := SamplesToJson(samples)
 
+				log.Debug("alive alarm samples json: %v", samplesJson)
 				if err := s.gateway.notify(Message{
 					ClusterId: func() int64 {
 						ret, _ :=strconv.ParseInt(clusterId, 10, 64)

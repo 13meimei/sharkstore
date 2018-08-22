@@ -25,8 +25,7 @@ class RunStatus;
 class RangeServer;
 class RunStatus;
 
-class ContextServer {
-public:
+struct ContextServer {
     uint64_t node_id = 0;
 
     Worker *worker = nullptr;
