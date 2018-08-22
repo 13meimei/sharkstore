@@ -214,7 +214,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
               prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
               watcher_map_it->second->key_version_, watcher_map.size());
 
-    if( clientVersion < watcher_map_it->second->key_version_ ) {
+    if( clientVersion < watcher_map_it->second->key_version_ && clientVersion != 0) {
         return WATCH_WATCHER_NOT_NEED;
     }
 
@@ -308,10 +308,10 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
         }
     }
 
-    /*
-    if (watchers->mapKeyWatcher.empty()) {
+
+    if (watcher_map_it->second->mapKeyWatcher.empty()) {
         watcher_map_.erase(watcher_map_it);
-    }*/
+    }
     int64_t endTime(getticks());
     FLOG_INFO("watcher del end: watch_id:[%" PRIu64 "] key: [%s] take time:%" PRId64 " ms",
               watcher_id, EncodeToHexString(key).c_str(), endTime - beginTime);
