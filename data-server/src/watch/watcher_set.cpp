@@ -335,7 +335,7 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
     }
 
     //to do clear version if delete event
-    if(evtType == watchpb::DELETE  && !prefixFlag) {
+    if(evtType == watchpb::DELETE  && watchers->mapKeyWatcher.size() == 0 && !prefixFlag) {
         watchers->key_version_ = 0;
     }
 
