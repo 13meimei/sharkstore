@@ -210,11 +210,11 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                       PRIu64
                       "] watcher version[%"
                       PRIu64
-                      "]",
+                      "]   watcher_count:%" PRId64,
               prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
-              watcher_map_it->second->key_version_);
+              watcher_map_it->second->key_version_, watcher_map.size());
 
-    if( clientVersion < watcher_map_it->second->key_version_ ) {
+    if( clientVersion < watcher_map_it->second->key_version_  || watcher_map.size() == 0) {
         return WATCH_WATCHER_NOT_NEED;
     }
 
@@ -342,6 +342,7 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
     if(watchers->mapKeyWatcher.size() > 0) {
         watchers->mapKeyWatcher.swap(watcherValue->mapKeyWatcher);
 
+        watcherMap.erase(itWatcherVal);
         FLOG_INFO("watcher get success,count:%" PRIu64 " key: [%s] watch_id[%" PRId64 "]",
                   watcherValue->mapKeyWatcher.size(), EncodeToHexString(key).c_str(), watcherValue->mapKeyWatcher.begin()->first );
         return WATCH_OK;
