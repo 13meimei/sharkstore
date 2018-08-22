@@ -132,7 +132,7 @@ int16_t WatchEncodeAndDecode::DecodeKv(funcpb::FunctionID funcId, const uint64_t
                     //decode value to kv
                     w.DecodeValue(&version, val.get(), ext.get(), db_value);
 
-                    FLOG_WARN(" version(decode from value)[%"
+                    FLOG_INFO(" version(decode from value)[%"
                                       PRIu64
                                       "] key_size:%d  encodevalue:%s", version, kv->key_size(), (*val).c_str());
 

@@ -209,7 +209,7 @@ TEST_F(WatchTest, watch_put_no_leader) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -231,7 +231,7 @@ TEST_F(WatchTest, watch_put_no_leader) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -291,7 +291,7 @@ TEST_F(WatchTest, watch_put_not_leader) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -313,7 +313,7 @@ TEST_F(WatchTest, watch_put_not_leader) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -374,7 +374,7 @@ TEST_F(WatchTest, watch_put_not_in_range) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -396,7 +396,7 @@ TEST_F(WatchTest, watch_put_not_in_range) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -466,7 +466,7 @@ TEST_F(WatchTest, watch_put_group_get_group) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -488,7 +488,7 @@ TEST_F(WatchTest, watch_put_group_get_group) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -592,7 +592,7 @@ TEST_F(WatchTest, watch_put_group_del_get_nothing) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -614,7 +614,7 @@ TEST_F(WatchTest, watch_put_group_del_get_nothing) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -759,7 +759,7 @@ TEST_F(WatchTest, watch_put_single) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -781,7 +781,7 @@ TEST_F(WatchTest, watch_put_single) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -841,7 +841,7 @@ TEST_F(WatchTest, watch_put_single) {
 //        range_server_->CreateRange(msg);
 //        ASSERT_FALSE(range_server_->ranges_.empty());
 //
-//        ASSERT_TRUE(range_server_->find(1) != nullptr);
+//        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 //
 //        std::vector<metapb::Range> metas;
 //        auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -863,7 +863,7 @@ TEST_F(WatchTest, watch_put_single) {
 //        range_server_->CreateRange(msg);
 //        ASSERT_FALSE(range_server_->ranges_.empty());
 //
-//        ASSERT_TRUE(range_server_->find(2) != nullptr);
+//        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 //
 //        std::vector<metapb::Range> metas;
 //        auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -935,7 +935,7 @@ TEST_F(WatchTest, pure_get_ok) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -957,7 +957,7 @@ TEST_F(WatchTest, pure_get_ok) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1057,7 +1057,7 @@ TEST_F(WatchTest, pure_get_group) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1079,7 +1079,7 @@ TEST_F(WatchTest, pure_get_group) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1170,7 +1170,7 @@ TEST_F(WatchTest, pure_get_prefix) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1192,7 +1192,7 @@ TEST_F(WatchTest, pure_get_prefix) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1256,7 +1256,7 @@ TEST_F(WatchTest, watch_get_again) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1278,7 +1278,7 @@ TEST_F(WatchTest, watch_get_again) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1457,7 +1457,7 @@ TEST_F(WatchTest, watch_delete) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(1) != nullptr);
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1479,7 +1479,7 @@ TEST_F(WatchTest, watch_delete) {
         range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
-        ASSERT_TRUE(range_server_->find(2) != nullptr);
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
 
         std::vector<metapb::Range> metas;
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
@@ -1747,7 +1747,7 @@ TEST_F(WatchTest, watch_delete) {
 
         range_server_->DeleteRange(msg);
 
-        ASSERT_TRUE(range_server_->find(1) == nullptr);
+        ASSERT_TRUE(range_server_->Find(1) == nullptr);
 
         schpb::DeleteRangeResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
@@ -1775,7 +1775,7 @@ TEST_F(WatchTest, watch_delete) {
 
         range_server_->DeleteRange(msg);
 
-        ASSERT_TRUE(range_server_->find(2) == nullptr);
+        ASSERT_TRUE(range_server_->Find(2) == nullptr);
 
         schpb::DeleteRangeResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);

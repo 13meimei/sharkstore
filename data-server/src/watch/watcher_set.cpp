@@ -128,6 +128,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
     if (watcher_map_it == key_watchers.end()) {
 
         std::string val;
+        std::string userKey("");
         std::string userVal("");
         std::string ext("");
         int64_t version(0);
@@ -161,6 +162,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
                     if(result.second) {
                         ret = Status(Status::kNotChange);
+                        version = clientVersion;
                     } else {
                         ret = Status(Status::kNotFound);
                     }
@@ -183,8 +185,39 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                     version = 0;
                     return WATCH_WATCHER_NOT_NEED;
                 }
+
+                //db有数据　用户版本为０　首次返回数据给client
+                if( ret.ok() && version > 0 && (clientVersion == 0 || clientVersion < version) ) {
+                    auto ds_resp = new watchpb::DsWatchResponse;
+                    auto resp = ds_resp->mutable_resp();
+
+                    resp->set_code(Status::kOk);
+                    resp->set_watchid(w_ptr->GetWatcherId());
+                    resp->set_scope(watchpb::RESPONSE_PART);
+
+                    auto evt = resp->add_events();
+                    evt->set_type(watchpb::PUT);
+                    evt->mutable_kv()->set_version(version);
+                    evt->mutable_kv()->set_value(userVal);
+
+                    std::vector<std::string *> vecKeys;
+                    watch::Watcher::DecodeKey(vecKeys, key);
+                    for(auto itKey:vecKeys) {
+                        evt->mutable_kv()->add_key(*itKey);
+                    }
+                    for(auto itKey:vecKeys) {
+                        delete itKey;
+                    }
+
+                    w_ptr->Send(ds_resp);
+                    return WATCH_OK;
+                }
             }
 
+            FLOG_DEBUG("AddWatcher(%s)  get result:%s start_version:%" PRId64 " db version[%" PRId64 "], key: %s",
+                       prefixFlag?"prefix":"single", ret.ToString().c_str(), clientVersion, version, EncodeToHexString(key).c_str());
+
+            //用户版本大于０　则返回kNotFound　client下次请求时，调整用户version为０
             if(ret.code() == Status::kNotFound && clientVersion > 0) {
                 auto ds_resp = new watchpb::DsWatchResponse;
                 ds_resp->mutable_resp()->set_code(Status::kNotFound);
@@ -196,27 +229,32 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         }
 
-        FLOG_DEBUG("AddWatcher(%s) start_version:%" PRId64 " db version[%" PRId64 "], key: %s",
-                   prefixFlag?"prefix":"single", clientVersion, version, EncodeToHexString(key).c_str());
         auto v = new WatcherValue;
         v->key_version_ = version;
         watcher_map_it = key_watchers.insert(std::make_pair(key, v)).first;
     }
     auto& watcher_map = watcher_map_it->second->mapKeyWatcher;
 
-    if( clientVersion < watcher_map_it->second->key_version_ ) {
+    FLOG_INFO("AddWatcher(%s) prompt version: watcher_id:[%"
+                      PRIu64
+                      "] key: [%s] start version[%"
+                      PRIu64
+                      "] watcher version[%"
+                      PRIu64
+                      "]   watcher_count:%" PRId64,
+              prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
+              watcher_map_it->second->key_version_, watcher_map.size());
 
-         FLOG_INFO("watcher add skip(%s): watcher_id:[%"
-                           PRIu64
-                           "] key: [%s] current version[%"
-                           PRIu64
-                           "] watcher version[%"
-                           PRIu64
-                           "]",
-                   prefixFlag?"prefix":"single", w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), clientVersion,
-                   watcher_map_it->second->key_version_);
-
-        return WATCH_WATCHER_NOT_NEED;
+    //用户版本为０　内存版本有效,返回数据给client; 内存版本无效，增加watcher
+    //用户版本非０　但小于内存版本,返回数据给client; 等于内存版本，增加watcher
+    if(clientVersion == 0) {
+        if(watcher_map_it->second->key_version_ > 0) {
+            return WATCH_WATCHER_NOT_NEED;
+        }
+    } else {
+        if(clientVersion < watcher_map_it->second->key_version_) {
+            return WATCH_WATCHER_NOT_NEED;
+        }
     }
 
     int64_t endTime(getticks());
@@ -307,12 +345,14 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
                           watcher_id, EncodeToHexString(key).c_str());
             }
         }
+
+        if (watcher_map_it->second->mapKeyWatcher.empty()) {
+            watcher_map_.erase(watcher_map_it);
+        }
     }
 
-    /*
-    if (watchers->mapKeyWatcher.empty()) {
-        watcher_map_.erase(watcher_map_it);
-    }*/
+
+
     int64_t endTime(getticks());
     FLOG_INFO("watcher del end: watch_id:[%" PRIu64 "] key: [%s] take time:%" PRId64 " ms",
               watcher_id, EncodeToHexString(key).c_str(), endTime - beginTime);
@@ -336,13 +376,14 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
     }
 
     //to do clear version if delete event
-    if(evtType == watchpb::DELETE  && !prefixFlag) {
+    if(evtType == watchpb::DELETE  && watchers->mapKeyWatcher.size() == 0 && !prefixFlag) {
         watchers->key_version_ = 0;
     }
 
     if(watchers->mapKeyWatcher.size() > 0) {
         watchers->mapKeyWatcher.swap(watcherValue->mapKeyWatcher);
 
+        watcherMap.erase(itWatcherVal);
         FLOG_INFO("watcher get success,count:%" PRIu64 " key: [%s] watch_id[%" PRId64 "]",
                   watcherValue->mapKeyWatcher.size(), EncodeToHexString(key).c_str(), watcherValue->mapKeyWatcher.begin()->first );
         return WATCH_OK;
