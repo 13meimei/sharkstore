@@ -207,8 +207,8 @@ func (s *Server) loadAliveCheckingAppAddrs() error {
 	}
 	for _, info := range clusterInfos {
 		log.Debug("info row: %v", info)
-		if len(info.remark) != 0 {
-			log.Debug("len info remark != 0")
+		if len(info.remark) == 0 || strings.Compare(info.remark, "NULL") == 0 {
+			log.Debug("len info remark[%v] != 0", info.remark)
 			continue // fixme domain host is vip
 		}
 
