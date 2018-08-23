@@ -227,8 +227,8 @@ type AlarmConfig struct {
 	MysqlArgs string		`toml:"mysql-args,omitempty" json:"mysql-args"`
 	//MessageGatewayAddress string	`toml:"message-gateway-address,omitempty" json:"message-gateway-address"`
 	//Receivers []*AlarmReceiver	`toml:"receivers,omitempty" json:"receivers"`
-	jimUrl string 			`toml:"jim-url,omitempty" json:"jim-url"`
-	jimApAddr string		`toml:"jim-ap-addr,omitempty" json:"jim-ap-addr"`
+	JimUrl string 			`toml:"jim-url,omitempty" json:"jim-url"`
+	JimApAddr string		`toml:"jim-ap-addr,omitempty" json:"jim-ap-addr"`
 }
 
 func (c *ClusterConfig) adjust() error {
