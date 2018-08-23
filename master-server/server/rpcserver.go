@@ -3,8 +3,6 @@ package server
 import (
 	"golang.org/x/net/context"
 	"model/pkg/mspb"
-	"util/log"
-	"time"
 )
 
 func (service *Server) checkClusterValid() *mspb.Error {

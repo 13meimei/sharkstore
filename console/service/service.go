@@ -18,6 +18,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 import (
+	"model/pkg/kvrpcpb"
 	"console/models"
 	"console/common"
 	"console/config"
@@ -2371,13 +2372,22 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 	for _, lockInfo := range reply.Values {
 		tInfo := new(models.LockShow)
 		tInfo.K = fmt.Sprintf("%v", lockInfo[0])
-		tInfo.V = fmt.Sprintf("%v", lockInfo[1]) //todo parse
+		value := fmt.Sprintf("%s", lockInfo[1])//todo parse
+		if len(value) > 0 {
+			newValue := new(kvrpcpb.LockValue)
+			if err = newValue.Unmarshal([]byte(value)); err != nil {
+				log.Warn("unmarshal value %v error %v", value, err)
+				tInfo.V = value
+			} else {
+				tInfo.V = string(newValue.GetValue())
+				tInfo.LockId = newValue.GetId()
+				tInfo.UpdTime = newValue.GetUpdateTime()
+				tInfo.ExpiredTime = newValue.GetDeleteTime()
+				//tInfo.Creator = newValue.get
+			}
+		}
 		tInfo.Version,_ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[2]), 10, 46)
 		tInfo.Extend = fmt.Sprintf("%v", lockInfo[3])
-		//tInfo.LockId = fmt.Sprintf("%v", lockInfo[2])
-		//tInfo.ExpiredTime, _ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[3]), 10, 46)
-		//tInfo.UpdTime, _ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[4]), 10, 46)
-		//tInfo.Creator = fmt.Sprintf("%v", lockInfo[5])
 		lockInfos = append(lockInfos, tInfo)
 	}
 	return lockInfos, nil
