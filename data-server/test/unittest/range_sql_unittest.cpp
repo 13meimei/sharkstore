@@ -116,8 +116,132 @@ protected:
     server::RangeServer     *range_server_;
 };
 
-TEST_F(RangeTestFixture, Test) {
-    range_->is_leader_ = true;
+
+TEST_F(RangeTestFixture, NoLeader) {
+    {
+        DsSelectRequest req;
+        MakeHeader(req.mutable_header());
+        DsSelectResponse resp;
+        auto s = TestSelect(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_not_leader());
+        ASSERT_EQ(resp.header().error().not_leader().range_id(), range_->id_);
+        ASSERT_FALSE(resp.header().error().not_leader().has_leader());
+    }
+    {
+        DsInsertRequest req;
+        MakeHeader(req.mutable_header());
+        DsInsertResponse resp;
+        auto s = TestInsert(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_not_leader());
+        ASSERT_EQ(resp.header().error().not_leader().range_id(), range_->id_);
+        ASSERT_FALSE(resp.header().error().not_leader().has_leader());
+    }
+    {
+        DsDeleteRequest req;
+        MakeHeader((req.mutable_header()));
+        DsDeleteResponse resp;
+        auto s = TestDelete(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_not_leader());
+        ASSERT_EQ(resp.header().error().not_leader().range_id(), range_->id_);
+        ASSERT_FALSE(resp.header().error().not_leader().has_leader());
+    }
+}
+
+TEST_F(RangeTestFixture, NotLeader) {
+    SetLeader(2);
+    {
+        DsSelectRequest req;
+        MakeHeader(req.mutable_header());
+        DsSelectResponse resp;
+        auto s = TestSelect(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_not_leader());
+        ASSERT_EQ(resp.header().error().not_leader().range_id(), range_->id_);
+        ASSERT_TRUE(resp.header().error().not_leader().has_leader());
+        ASSERT_EQ(resp.header().error().not_leader().leader().node_id(), 2);
+        ASSERT_EQ(resp.header().error().not_leader().leader().id(), GetPeerID(2));
+//      std::cout << resp.header().error().not_leader().DebugString() << std::endl;
+    }
+    {
+        DsInsertRequest req;
+        MakeHeader(req.mutable_header());
+        DsInsertResponse resp;
+        auto s = TestInsert(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_not_leader());
+        ASSERT_EQ(resp.header().error().not_leader().range_id(), range_->id_);
+        ASSERT_TRUE(resp.header().error().not_leader().has_leader());
+        ASSERT_EQ(resp.header().error().not_leader().leader().node_id(), 2);
+        ASSERT_EQ(resp.header().error().not_leader().leader().id(), GetPeerID(2));
+    }
+    {
+        DsDeleteRequest req;
+        MakeHeader((req.mutable_header()));
+        DsDeleteResponse resp;
+        auto s = TestDelete(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_not_leader());
+        ASSERT_EQ(resp.header().error().not_leader().range_id(), range_->id_);
+        ASSERT_TRUE(resp.header().error().not_leader().has_leader());
+        ASSERT_EQ(resp.header().error().not_leader().leader().node_id(), 2);
+        ASSERT_EQ(resp.header().error().not_leader().leader().id(), GetPeerID(2));
+    }
+}
+
+TEST_F(RangeTestFixture, StaleEpoch) {
+    SetLeader(range_->node_id_);
+    auto old_ver = range_->meta_.GetVersion();
+    auto s = Split();
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    auto old_meta = range_->options();
+    auto split_range = context_->FindRange(range_->split_range_id_);
+    ASSERT_TRUE(split_range != nullptr);
+    auto new_meta = split_range->options();
+    {
+        DsSelectRequest req;
+        MakeHeader(req.mutable_header(), old_ver);
+        DsSelectResponse resp;
+        auto s = TestSelect(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_stale_epoch());
+        auto &stale_err = resp.header().error().stale_epoch();
+        ASSERT_EQ(old_meta.ShortDebugString(), stale_err.old_range().ShortDebugString());
+        ASSERT_EQ(new_meta.ShortDebugString(), stale_err.new_range().ShortDebugString());
+    }
+    {
+        DsInsertRequest req;
+        MakeHeader(req.mutable_header(), old_ver);
+        DsInsertResponse resp;
+        auto s = TestInsert(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_stale_epoch());
+        auto &stale_err = resp.header().error().stale_epoch();
+        ASSERT_EQ(old_meta.ShortDebugString(), stale_err.old_range().ShortDebugString());
+        ASSERT_EQ(new_meta.ShortDebugString(), stale_err.new_range().ShortDebugString());
+    }
+    {
+        DsDeleteRequest req;
+        MakeHeader(req.mutable_header(), old_ver);
+        DsDeleteResponse resp;
+        auto s = TestDelete(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(resp.header().has_error());
+        ASSERT_TRUE(resp.header().error().has_stale_epoch());
+        auto &stale_err = resp.header().error().stale_epoch();
+        ASSERT_EQ(old_meta.ShortDebugString(), stale_err.old_range().ShortDebugString());
+        ASSERT_EQ(new_meta.ShortDebugString(), stale_err.new_range().ShortDebugString());
+    }
 }
 
 TEST_F(RangeSQLTest, Test) {

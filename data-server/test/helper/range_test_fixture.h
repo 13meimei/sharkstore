@@ -22,6 +22,12 @@ protected:
     void TearDown() override;
 
 protected:
+    // version=0表示传range当前version
+    void MakeHeader(RequestHeader *header, uint64_t version = 0);
+    void SetLeader(uint64_t leader);
+
+    Status Split();
+
     Status TestInsert(DsInsertRequest &req, DsInsertResponse *resp);
     Status TestSelect(DsSelectRequest& req, DsSelectResponse* resp);
     Status TestDelete(DsDeleteRequest& req, DsDeleteResponse* resp);
@@ -32,7 +38,8 @@ private:
 protected:
     std::unique_ptr<mock::RangeContextMock> context_;
     std::unique_ptr<Table> table_;
-    std::unique_ptr<dataserver::range::Range> range_;
+    std::shared_ptr<dataserver::range::Range> range_;
+    uint64_t term_ = 0;
 };
 
 } /* namespace helper */

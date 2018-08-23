@@ -7,17 +7,17 @@
 
 class RaftServerMock : public raft::RaftServer {
 public:
-    virtual Status Start() { return Status::OK(); }
-    virtual Status Stop() { return Status::OK(); }
-    virtual const RaftServerOptions& Options() const { return rop_; }
+    Status Start() override { return Status::OK(); }
+    Status Stop() override { return Status::OK(); }
+    const RaftServerOptions& Options() const { return rop_; }
 
-    virtual Status CreateRaft(const RaftOptions&, std::shared_ptr<Raft>* raft);
+    Status CreateRaft(const RaftOptions&, std::shared_ptr<Raft>* raft) override ;
 
-    virtual Status RemoveRaft(uint64_t id) override { return Status::OK(); }
+    Status RemoveRaft(uint64_t id) override { return Status::OK(); }
 
-    virtual Status DestroyRaft(uint64_t id, bool backup) override { return Status::OK(); }
+    Status DestroyRaft(uint64_t id, bool backup) override { return Status::OK(); }
 
-    virtual std::shared_ptr<Raft> FindRaft(uint64_t id) const {
+    std::shared_ptr<Raft> FindRaft(uint64_t id) const override {
         return std::shared_ptr<Raft>(nullptr);
     }
 

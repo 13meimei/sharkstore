@@ -34,6 +34,7 @@ public:
     Status Truncate();
 
     void SetEndKey(std::string end_key);
+    std::string GetEndKey() const;
 
     const std::vector<metapb::Column>& GetPrimaryKeys() const {
         return primary_keys_;
@@ -74,7 +75,7 @@ private:
     const std::string start_key_;
 
     std::string end_key_;
-    std::mutex key_lock_;
+    mutable std::mutex key_lock_;
 
     rocksdb::DB* db_;
     rocksdb::WriteOptions write_options_;

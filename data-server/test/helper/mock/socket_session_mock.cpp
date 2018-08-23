@@ -10,7 +10,7 @@ bool SocketSessionMock::GetResult(google::protobuf::Message *req) {
     if (result_.empty()) {
         return false;
     }
-    google::protobuf::io::ArrayInputStream input(result_.data(), result_.size());
+    google::protobuf::io::ArrayInputStream input(result_.data(), static_cast<int>(result_.size()));
     bool ret = req->ParseFromZeroCopyStream(&input);
     if (!ret) {
         return false;

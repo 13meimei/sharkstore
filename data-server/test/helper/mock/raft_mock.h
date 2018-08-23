@@ -10,20 +10,23 @@ class RaftMock : public Raft {
 public:
     RaftMock(const RaftOptions& ops);
 
-    virtual bool IsStopped() const { return false; }
+    bool IsStopped() const override { return false; }
 
-    virtual void GetLeaderTerm(uint64_t* leader, uint64_t* term) const;
-    virtual bool IsLeader() const { return true; }
-    virtual Status TryToLeader() { return Status::OK(); }
+    void SetLeaderTerm(uint64_t leader, uint64_t term);
+    void GetLeaderTerm(uint64_t* leader, uint64_t* term) const override;
+    bool IsLeader() const override;
+    Status TryToLeader() override { return Status::OK(); }
 
-    virtual Status Submit(std::string& cmd);
-    virtual Status ChangeMemeber(const ConfChange& conf);
+    Status Submit(std::string& cmd) override ;
+    Status ChangeMemeber(const ConfChange& conf) override ;
 
-    virtual void GetStatus(RaftStatus* status) const {}
+    void GetStatus(RaftStatus* status) const override {}
 
-    virtual void Truncate(uint64_t index) {}
+    void Truncate(uint64_t index) override {}
 
 private:
     RaftOptions ops_;
+    uint64_t leader_ = 0;
+    uint64_t term_ = 0;
 };
 #endif  //__RAFT_MOCK_H__

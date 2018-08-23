@@ -27,6 +27,9 @@ _Pragma("once");
 #include "submit.h"
 #include "range_logger.h"
 
+// for test friend class
+namespace sharkstore { namespace test { namespace helper { class RangeTestFixture; }}}
+
 namespace sharkstore {
 namespace dataserver {
 namespace range {
@@ -219,7 +222,7 @@ private:
     errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
 
 private:
-    friend class RangeTestFixture;
+    friend class ::sharkstore::test::helper::RangeTestFixture;
 
     static const int64_t kTimeTakeWarnThresoldUSec = 500000;
 

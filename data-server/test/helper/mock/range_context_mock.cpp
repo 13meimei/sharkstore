@@ -5,6 +5,7 @@
 #include "base/util.h"
 #include "storage/meta_store.h"
 #include "range/split_policy.h"
+#include "range/range.h"
 
 #include "master_worker_mock.h"
 #include "raft_server_mock.h"
@@ -70,11 +71,37 @@ void RangeContextMock::ScheduleCheckSize(uint64_t range_id) {
 
 }
 
+Status RangeContextMock::CreateRange(const metapb::Range& meta, uint64_t leader,
+                   uint64_t index, std::shared_ptr<Range> *result) {
+    std::lock_guard<std::mutex> lock(mu_);
+    auto it = ranges_.find(meta.id());
+    if (it != ranges_.end()) {
+        return Status(Status::kExisted);
+    }
+    auto rng = std::make_shared<Range>(this, meta);
+    auto s = rng->Initialize(leader, index);
+    if (!s.ok()) {
+        return s;
+    }
+    ranges_.emplace(meta.id(), rng);
+    if (result) {
+        *result = rng;
+    }
+    return Status::OK();
+}
+
 std::shared_ptr<Range> RangeContextMock::FindRange(uint64_t range_id) {
-    return nullptr;
+    std::lock_guard<std::mutex> lock(mu_);
+    auto it = ranges_.find(range_id);
+    if (it == ranges_.end()) {
+        return nullptr;
+    } else {
+        return it->second;
+    }
 }
 
 Status RangeContextMock::SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index) {
+    CreateRange(req.new_range(), req.leader(), raft_index);
     return Status::OK();
 }
 
