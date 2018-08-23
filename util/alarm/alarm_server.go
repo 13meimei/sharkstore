@@ -208,21 +208,20 @@ func (s *Server) loadAliveCheckingAppAddrs() error {
 	for _, info := range clusterInfos {
 		log.Debug("info row: %v", info)
 		if len(info.remark) == 0 || strings.Compare(info.remark, "NULL") == 0 {
+			// do with gw
+			log.Debug("parse gateway host: %v", info.appGwHost)
+			gwAddrs, err := s.parseHost(info.appGwHost)
+			if err != nil {
+				log.Error("parse gateway domain failed: %v", err)
+				continue
+			}
+
+			log.Debug("parsed gateway host result: %v", gwAddrs)
+			for _, gwAddr := range gwAddrs {
+				s.addAliveCheckingAppAddr(APP_NAME_GATEWAY, fmt.Sprint(info.id), gwAddr)
+			}
+		} else {
 			log.Debug("len info remark[%v] != 0", info.remark)
-			continue // fixme domain host is vip
-		}
-
-		// do with gw
-		log.Debug("parse gateway host: %v", info.appGwHost)
-		gwAddrs, err := s.parseHost(info.appGwHost)
-		if err != nil {
-			log.Error("parse gateway domain failed: %v", err)
-			continue
-		}
-
-		log.Debug("parsed gateway host result: %v", gwAddrs)
-		for _, gwAddr := range gwAddrs {
-			s.addAliveCheckingAppAddr(APP_NAME_GATEWAY, fmt.Sprint(info.id), gwAddr)
 		}
 	}
 
