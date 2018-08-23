@@ -1,9 +1,11 @@
 include_directories(${PROJECT_SOURCE_DIR}/test)
 
 set(test_helper_SRCS
+    helper/mock/master_worker_mock.cpp
     helper/mock/raft_mock.cpp
     helper/mock/raft_server_mock.cpp
     helper/mock/socket_session_mock.cpp
+    helper/mock/range_context_mock.cpp
     helper/gen/test.pb.cc
     helper/helper_util.cpp
     helper/query_builder.cpp
@@ -12,6 +14,11 @@ set(test_helper_SRCS
     helper/store_test_fixture.cpp
     helper/table.cpp
 )
+
+foreach(f IN LISTS test_helper_SRCS)
+    set_source_files_properties(${f} PROPERTIES
+            COMPILE_DEFINITIONS "__FNAME__=\"${f}\"")
+endforeach()
 
 add_library(shark-test-helper SHARED ${test_helper_SRCS})
 

@@ -155,12 +155,12 @@ func (c *Cluster) GetNodeId(ctx context.Context, req *mspb.GetNodeIdRequest) (*m
 			}
 			serverAddr := fmt.Sprintf("%s:%d", ip, req.GetServerPort())
 			raftAddr := fmt.Sprintf("%s:%d", ip, req.GetRaftPort())
-			httpAddr := fmt.Sprintf("%s:%d", ip, req.GetHttpPort())
+			httpAddr := fmt.Sprintf("%s:%d", ip, req.GetAdminPort())
 			node := &metapb.Node{
 				Id: 1,
 				ServerAddr: serverAddr,
 				RaftAddr: raftAddr,
-				HttpAddr: httpAddr,
+				AdminAddr: httpAddr,
 			}
 			c.nodes[1] = node
 		}

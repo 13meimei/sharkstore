@@ -74,6 +74,12 @@ func (service *Server) initHttpHandler() () {
 	s.Handle("/manage/node/upgrade", NewHandler(service.validRequest, service.handleNodeUpgrade))
 	s.Handle("/manage/node/setLogLevel", NewHandler(service.validRequest, service.handleNodeSetLogLevel))
 	s.Handle("/manage/node/getRangeTopo", NewHandler(service.validRequest, service.handleNodeGetRangeTopo))
+	s.Handle("/manage/node/getConfigOfNode", NewHandler(service.validRequest, service.handleNodeGetConfig))
+	s.Handle("/manage/node/setConfigOfNode", NewHandler(service.validRequest, service.handleNodeSetConfig))
+	s.Handle("/manage/node/getDsInfoOfNode", NewHandler(service.validRequest, service.handleNodeGetDsInfo))
+	s.Handle("/manage/node/clearQueueOfNode", NewHandler(service.validRequest, service.handleNodeClearQueue))
+	s.Handle("/manage/node/getPendingQueuesOfNode", NewHandler(service.validRequest, service.handleNodeGetPendingQueues))
+	s.Handle("/manage/node/flushDBOfNode", NewHandler(service.validRequest, service.handleNodeFlushDB))
 
 	s.Handle("/manage/scheduler/getall", NewHandler(service.validRequest, service.handleSchedulerGetAll))
 	s.Handle("/manage/scheduler/add", NewHandler(service.validRequest, service.handleAddScheduler))
@@ -113,6 +119,8 @@ func (service *Server) initHttpHandler() () {
 	s.Handle("/manage/range/offlineRange", NewHandler(service.validRequest, service.handleRangeOffline))
 	s.Handle("/manage/range/transfer", NewHandler(service.validRequest, service.handleRangeTransfer))
 	s.Handle("/manage/range/getOpsTopN", NewHandler(service.validRequest, service.handleRangeTopNQuery))
+	s.Handle("/manage/range/forceSplitRange", NewHandler(service.validRequest, service.handleRangeForceSplit))
+	s.Handle("/manage/range/forceCompactRange", NewHandler(service.validRequest, service.handleRangeForceCompact))
 
 	s.Handle("/manage/task/getall", NewHandler(service.validRequest, service.handleGetAllTask))
 	s.Handle("/manage/task/delete", NewHandler(service.validRequest, service.handleDeleteTask))

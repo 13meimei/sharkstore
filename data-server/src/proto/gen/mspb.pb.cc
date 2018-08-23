@@ -476,7 +476,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeIdRequest, header_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeIdRequest, server_port_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeIdRequest, raft_port_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeIdRequest, http_port_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeIdRequest, admin_port_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeIdRequest, version_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetNodeIdResponse, _internal_metadata_),
@@ -1101,108 +1101,108 @@ void AddDescriptorsImpl() {
       "eLoginRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Req"
       "uestHeader\022\017\n\007node_id\030\002 \001(\004\"9\n\021NodeLogin"
       "Response\022$\n\006header\030\001 \001(\0132\024.mspb.Response"
-      "Header\"\203\001\n\020GetNodeIdRequest\022#\n\006header\030\001 "
+      "Header\"\204\001\n\020GetNodeIdRequest\022#\n\006header\030\001 "
       "\001(\0132\023.mspb.RequestHeader\022\023\n\013server_port\030"
-      "\002 \001(\r\022\021\n\traft_port\030\003 \001(\r\022\021\n\thttp_port\030\004 "
-      "\001(\r\022\017\n\007version\030\005 \001(\t\"[\n\021GetNodeIdRespons"
-      "e\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\022"
-      "\017\n\007node_id\030\002 \001(\004\022\017\n\007clearup\030\003 \001(\010\"d\n\017Get"
-      "RouteRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Requ"
-      "estHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001"
-      "(\004\022\013\n\003key\030\004 \001(\014\"W\n\020GetRouteResponse\022$\n\006h"
-      "eader\030\001 \001(\0132\024.mspb.ResponseHeader\022\035\n\006rou"
-      "tes\030\002 \003(\0132\r.metapb.Route\"A\n\016GetNodeReque"
-      "st\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader\022"
-      "\n\n\002id\030\002 \001(\004\"S\n\017GetNodeResponse\022$\n\006header"
-      "\030\001 \001(\0132\024.mspb.ResponseHeader\022\032\n\004node\030\002 \001"
-      "(\0132\014.metapb.Node\"A\n\014GetDBRequest\022#\n\006head"
-      "er\030\001 \001(\0132\023.mspb.RequestHeader\022\014\n\004name\030\002 "
-      "\001(\t\"S\n\rGetDBResponse\022$\n\006header\030\001 \001(\0132\024.m"
-      "spb.ResponseHeader\022\034\n\002db\030\002 \001(\0132\020.metapb."
-      "DataBase\"[\n\017GetTableRequest\022#\n\006header\030\001 "
-      "\001(\0132\023.mspb.RequestHeader\022\017\n\007db_name\030\002 \001("
-      "\t\022\022\n\ntable_name\030\003 \001(\t\"[\n\023GetTableByIdReq"
-      "uest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeade"
-      "r\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\"V\n\020Ge"
-      "tTableResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Re"
-      "sponseHeader\022\034\n\005table\030\002 \001(\0132\r.metapb.Tab"
-      "le\"Z\n\024GetTableByIdResponse\022$\n\006header\030\001 \001"
-      "(\0132\024.mspb.ResponseHeader\022\034\n\005table\030\002 \001(\0132"
-      "\r.metapb.Table\"Y\n\021GetColumnsRequest\022#\n\006h"
-      "eader\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_i"
-      "d\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\"[\n\022GetColumnsR"
-      "esponse\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseH"
-      "eader\022\037\n\007columns\030\002 \003(\0132\016.metapb.Column\"p"
-      "\n\026GetColumnByNameRequest\022#\n\006header\030\001 \001(\013"
-      "2\023.mspb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010"
-      "table_id\030\003 \001(\004\022\020\n\010col_name\030\004 \001(\t\"_\n\027GetC"
-      "olumnByNameResponse\022$\n\006header\030\001 \001(\0132\024.ms"
-      "pb.ResponseHeader\022\036\n\006column\030\002 \001(\0132\016.meta"
-      "pb.Column\"l\n\024GetColumnByIdRequest\022#\n\006hea"
-      "der\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_id\030"
-      "\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\016\n\006col_id\030\004 \001(\004\""
-      "]\n\025GetColumnByIdResponse\022$\n\006header\030\001 \001(\013"
-      "2\024.mspb.ResponseHeader\022\036\n\006column\030\002 \001(\0132\016"
-      ".metapb.Column\"y\n\020AddColumnRequest\022#\n\006he"
-      "ader\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_id"
-      "\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\037\n\007columns\030\004 \003("
-      "\0132\016.metapb.Column\"Z\n\021AddColumnResponse\022$"
-      "\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\022\037\n\007"
-      "columns\030\002 \003(\0132\016.metapb.Column\"\\\n\024Truncat"
-      "eTableRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Req"
+      "\002 \001(\r\022\021\n\traft_port\030\003 \001(\r\022\022\n\nadmin_port\030\004"
+      " \001(\r\022\017\n\007version\030\005 \001(\t\"[\n\021GetNodeIdRespon"
+      "se\022$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader"
+      "\022\017\n\007node_id\030\002 \001(\004\022\017\n\007clearup\030\003 \001(\010\"d\n\017Ge"
+      "tRouteRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Req"
       "uestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 "
-      "\001(\004\"=\n\025TruncateTableResponse\022$\n\006header\030\001"
-      " \001(\0132\024.mspb.ResponseHeader\"M\n\025CreateData"
-      "baseRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Reque"
-      "stHeader\022\017\n\007db_name\030\002 \001(\t\">\n\026CreateDatab"
-      "aseResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Respo"
-      "nseHeader\"r\n\022CreateTableRequest\022#\n\006heade"
-      "r\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007db_name\030"
-      "\002 \001(\t\022\022\n\ntable_name\030\003 \001(\t\022\022\n\nproperties\030"
-      "\004 \001(\t\";\n\023CreateTableResponse\022$\n\006header\030\001"
-      " \001(\0132\024.mspb.ResponseHeader\"#\n\rRequestHea"
-      "der\022\022\n\ncluster_id\030\001 \001(\004\"@\n\016ResponseHeade"
-      "r\022\022\n\ncluster_id\030\001 \001(\004\022\032\n\005error\030\002 \001(\0132\013.m"
-      "spb.Error\"+\n\nLeaderHint\022\017\n\007address\030\001 \001(\t"
-      "\022\014\n\004term\030\002 \001(\004\"\n\n\010NoLeader\"P\n\005Error\022$\n\nn"
-      "ew_leader\030\002 \001(\0132\020.mspb.LeaderHint\022!\n\tno_"
-      "leader\030\003 \001(\0132\016.mspb.NoLeader2\241\n\n\010MsServe"
-      "r\022J\n\rNodeHeartbeat\022\032.mspb.NodeHeartbeatR"
-      "equest\032\033.mspb.NodeHeartbeatResponse\"\000\022M\n"
-      "\016RangeHeartbeat\022\033.mspb.RangeHeartbeatReq"
-      "uest\032\034.mspb.RangeHeartbeatResponse\"\000\022;\n\010"
-      "AskSplit\022\025.mspb.AskSplitRequest\032\026.mspb.A"
-      "skSplitResponse\"\000\022D\n\013ReportSplit\022\030.mspb."
-      "ReportSplitRequest\032\031.mspb.ReportSplitRes"
-      "ponse\"\000\022>\n\tNodeLogin\022\026.mspb.NodeLoginReq"
-      "uest\032\027.mspb.NodeLoginResponse\"\000\022>\n\tGetNo"
-      "deId\022\026.mspb.GetNodeIdRequest\032\027.mspb.GetN"
-      "odeIdResponse\"\000\022D\n\013GetMSLeader\022\030.mspb.Ge"
-      "tMSLeaderRequest\032\031.mspb.GetMSLeaderRespo"
-      "nse\"\000\022;\n\010GetRoute\022\025.mspb.GetRouteRequest"
-      "\032\026.mspb.GetRouteResponse\"\000\0228\n\007GetNode\022\024."
-      "mspb.GetNodeRequest\032\025.mspb.GetNodeRespon"
-      "se\"\000\0222\n\005GetDB\022\022.mspb.GetDBRequest\032\023.mspb"
-      ".GetDBResponse\"\000\022;\n\010GetTable\022\025.mspb.GetT"
-      "ableRequest\032\026.mspb.GetTableResponse\"\000\022G\n"
-      "\014GetTableById\022\031.mspb.GetTableByIdRequest"
-      "\032\032.mspb.GetTableByIdResponse\"\000\022A\n\nGetCol"
-      "umns\022\027.mspb.GetColumnsRequest\032\030.mspb.Get"
-      "ColumnsResponse\"\000\022P\n\017GetColumnByName\022\034.m"
-      "spb.GetColumnByNameRequest\032\035.mspb.GetCol"
-      "umnByNameResponse\"\000\022J\n\rGetColumnById\022\032.m"
-      "spb.GetColumnByIdRequest\032\033.mspb.GetColum"
-      "nByIdResponse\"\000\022J\n\rTruncateTable\022\032.mspb."
-      "TruncateTableRequest\032\033.mspb.TruncateTabl"
-      "eResponse\"\000\022>\n\tAddColumn\022\026.mspb.AddColum"
-      "nRequest\032\027.mspb.AddColumnResponse\"\000\022M\n\016C"
-      "reateDatabase\022\033.mspb.CreateDatabaseReque"
-      "st\032\034.mspb.CreateDatabaseResponse\"\000\022D\n\013Cr"
-      "eateTable\022\030.mspb.CreateTableRequest\032\031.ms"
-      "pb.CreateTableResponse\"\000b\006proto3"
+      "\001(\004\022\013\n\003key\030\004 \001(\014\"W\n\020GetRouteResponse\022$\n\006"
+      "header\030\001 \001(\0132\024.mspb.ResponseHeader\022\035\n\006ro"
+      "utes\030\002 \003(\0132\r.metapb.Route\"A\n\016GetNodeRequ"
+      "est\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHeader"
+      "\022\n\n\002id\030\002 \001(\004\"S\n\017GetNodeResponse\022$\n\006heade"
+      "r\030\001 \001(\0132\024.mspb.ResponseHeader\022\032\n\004node\030\002 "
+      "\001(\0132\014.metapb.Node\"A\n\014GetDBRequest\022#\n\006hea"
+      "der\030\001 \001(\0132\023.mspb.RequestHeader\022\014\n\004name\030\002"
+      " \001(\t\"S\n\rGetDBResponse\022$\n\006header\030\001 \001(\0132\024."
+      "mspb.ResponseHeader\022\034\n\002db\030\002 \001(\0132\020.metapb"
+      ".DataBase\"[\n\017GetTableRequest\022#\n\006header\030\001"
+      " \001(\0132\023.mspb.RequestHeader\022\017\n\007db_name\030\002 \001"
+      "(\t\022\022\n\ntable_name\030\003 \001(\t\"[\n\023GetTableByIdRe"
+      "quest\022#\n\006header\030\001 \001(\0132\023.mspb.RequestHead"
+      "er\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\"V\n\020G"
+      "etTableResponse\022$\n\006header\030\001 \001(\0132\024.mspb.R"
+      "esponseHeader\022\034\n\005table\030\002 \001(\0132\r.metapb.Ta"
+      "ble\"Z\n\024GetTableByIdResponse\022$\n\006header\030\001 "
+      "\001(\0132\024.mspb.ResponseHeader\022\034\n\005table\030\002 \001(\013"
+      "2\r.metapb.Table\"Y\n\021GetColumnsRequest\022#\n\006"
+      "header\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_"
+      "id\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\"[\n\022GetColumns"
+      "Response\022$\n\006header\030\001 \001(\0132\024.mspb.Response"
+      "Header\022\037\n\007columns\030\002 \003(\0132\016.metapb.Column\""
+      "p\n\026GetColumnByNameRequest\022#\n\006header\030\001 \001("
+      "\0132\023.mspb.RequestHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n"
+      "\010table_id\030\003 \001(\004\022\020\n\010col_name\030\004 \001(\t\"_\n\027Get"
+      "ColumnByNameResponse\022$\n\006header\030\001 \001(\0132\024.m"
+      "spb.ResponseHeader\022\036\n\006column\030\002 \001(\0132\016.met"
+      "apb.Column\"l\n\024GetColumnByIdRequest\022#\n\006he"
+      "ader\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_id"
+      "\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\016\n\006col_id\030\004 \001(\004"
+      "\"]\n\025GetColumnByIdResponse\022$\n\006header\030\001 \001("
+      "\0132\024.mspb.ResponseHeader\022\036\n\006column\030\002 \001(\0132"
+      "\016.metapb.Column\"y\n\020AddColumnRequest\022#\n\006h"
+      "eader\030\001 \001(\0132\023.mspb.RequestHeader\022\r\n\005db_i"
+      "d\030\002 \001(\004\022\020\n\010table_id\030\003 \001(\004\022\037\n\007columns\030\004 \003"
+      "(\0132\016.metapb.Column\"Z\n\021AddColumnResponse\022"
+      "$\n\006header\030\001 \001(\0132\024.mspb.ResponseHeader\022\037\n"
+      "\007columns\030\002 \003(\0132\016.metapb.Column\"\\\n\024Trunca"
+      "teTableRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Re"
+      "questHeader\022\r\n\005db_id\030\002 \001(\004\022\020\n\010table_id\030\003"
+      " \001(\004\"=\n\025TruncateTableResponse\022$\n\006header\030"
+      "\001 \001(\0132\024.mspb.ResponseHeader\"M\n\025CreateDat"
+      "abaseRequest\022#\n\006header\030\001 \001(\0132\023.mspb.Requ"
+      "estHeader\022\017\n\007db_name\030\002 \001(\t\">\n\026CreateData"
+      "baseResponse\022$\n\006header\030\001 \001(\0132\024.mspb.Resp"
+      "onseHeader\"r\n\022CreateTableRequest\022#\n\006head"
+      "er\030\001 \001(\0132\023.mspb.RequestHeader\022\017\n\007db_name"
+      "\030\002 \001(\t\022\022\n\ntable_name\030\003 \001(\t\022\022\n\nproperties"
+      "\030\004 \001(\t\";\n\023CreateTableResponse\022$\n\006header\030"
+      "\001 \001(\0132\024.mspb.ResponseHeader\"#\n\rRequestHe"
+      "ader\022\022\n\ncluster_id\030\001 \001(\004\"@\n\016ResponseHead"
+      "er\022\022\n\ncluster_id\030\001 \001(\004\022\032\n\005error\030\002 \001(\0132\013."
+      "mspb.Error\"+\n\nLeaderHint\022\017\n\007address\030\001 \001("
+      "\t\022\014\n\004term\030\002 \001(\004\"\n\n\010NoLeader\"P\n\005Error\022$\n\n"
+      "new_leader\030\002 \001(\0132\020.mspb.LeaderHint\022!\n\tno"
+      "_leader\030\003 \001(\0132\016.mspb.NoLeader2\241\n\n\010MsServ"
+      "er\022J\n\rNodeHeartbeat\022\032.mspb.NodeHeartbeat"
+      "Request\032\033.mspb.NodeHeartbeatResponse\"\000\022M"
+      "\n\016RangeHeartbeat\022\033.mspb.RangeHeartbeatRe"
+      "quest\032\034.mspb.RangeHeartbeatResponse\"\000\022;\n"
+      "\010AskSplit\022\025.mspb.AskSplitRequest\032\026.mspb."
+      "AskSplitResponse\"\000\022D\n\013ReportSplit\022\030.mspb"
+      ".ReportSplitRequest\032\031.mspb.ReportSplitRe"
+      "sponse\"\000\022>\n\tNodeLogin\022\026.mspb.NodeLoginRe"
+      "quest\032\027.mspb.NodeLoginResponse\"\000\022>\n\tGetN"
+      "odeId\022\026.mspb.GetNodeIdRequest\032\027.mspb.Get"
+      "NodeIdResponse\"\000\022D\n\013GetMSLeader\022\030.mspb.G"
+      "etMSLeaderRequest\032\031.mspb.GetMSLeaderResp"
+      "onse\"\000\022;\n\010GetRoute\022\025.mspb.GetRouteReques"
+      "t\032\026.mspb.GetRouteResponse\"\000\0228\n\007GetNode\022\024"
+      ".mspb.GetNodeRequest\032\025.mspb.GetNodeRespo"
+      "nse\"\000\0222\n\005GetDB\022\022.mspb.GetDBRequest\032\023.msp"
+      "b.GetDBResponse\"\000\022;\n\010GetTable\022\025.mspb.Get"
+      "TableRequest\032\026.mspb.GetTableResponse\"\000\022G"
+      "\n\014GetTableById\022\031.mspb.GetTableByIdReques"
+      "t\032\032.mspb.GetTableByIdResponse\"\000\022A\n\nGetCo"
+      "lumns\022\027.mspb.GetColumnsRequest\032\030.mspb.Ge"
+      "tColumnsResponse\"\000\022P\n\017GetColumnByName\022\034."
+      "mspb.GetColumnByNameRequest\032\035.mspb.GetCo"
+      "lumnByNameResponse\"\000\022J\n\rGetColumnById\022\032."
+      "mspb.GetColumnByIdRequest\032\033.mspb.GetColu"
+      "mnByIdResponse\"\000\022J\n\rTruncateTable\022\032.mspb"
+      ".TruncateTableRequest\032\033.mspb.TruncateTab"
+      "leResponse\"\000\022>\n\tAddColumn\022\026.mspb.AddColu"
+      "mnRequest\032\027.mspb.AddColumnResponse\"\000\022M\n\016"
+      "CreateDatabase\022\033.mspb.CreateDatabaseRequ"
+      "est\032\034.mspb.CreateDatabaseResponse\"\000\022D\n\013C"
+      "reateTable\022\030.mspb.CreateTableRequest\032\031.m"
+      "spb.CreateTableResponse\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 5992);
+      descriptor, 5993);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "mspb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -8956,7 +8956,7 @@ void NodeLoginResponse::set_allocated_header(::mspb::ResponseHeader* header) {
 const int GetNodeIdRequest::kHeaderFieldNumber;
 const int GetNodeIdRequest::kServerPortFieldNumber;
 const int GetNodeIdRequest::kRaftPortFieldNumber;
-const int GetNodeIdRequest::kHttpPortFieldNumber;
+const int GetNodeIdRequest::kAdminPortFieldNumber;
 const int GetNodeIdRequest::kVersionFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -8983,16 +8983,16 @@ GetNodeIdRequest::GetNodeIdRequest(const GetNodeIdRequest& from)
     header_ = NULL;
   }
   ::memcpy(&server_port_, &from.server_port_,
-    static_cast<size_t>(reinterpret_cast<char*>(&http_port_) -
-    reinterpret_cast<char*>(&server_port_)) + sizeof(http_port_));
+    static_cast<size_t>(reinterpret_cast<char*>(&admin_port_) -
+    reinterpret_cast<char*>(&server_port_)) + sizeof(admin_port_));
   // @@protoc_insertion_point(copy_constructor:mspb.GetNodeIdRequest)
 }
 
 void GetNodeIdRequest::SharedCtor() {
   version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&header_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&http_port_) -
-      reinterpret_cast<char*>(&header_)) + sizeof(http_port_));
+      reinterpret_cast<char*>(&admin_port_) -
+      reinterpret_cast<char*>(&header_)) + sizeof(admin_port_));
   _cached_size_ = 0;
 }
 
@@ -9041,8 +9041,8 @@ void GetNodeIdRequest::Clear() {
   }
   header_ = NULL;
   ::memset(&server_port_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&http_port_) -
-      reinterpret_cast<char*>(&server_port_)) + sizeof(http_port_));
+      reinterpret_cast<char*>(&admin_port_) -
+      reinterpret_cast<char*>(&server_port_)) + sizeof(admin_port_));
   _internal_metadata_.Clear();
 }
 
@@ -9096,14 +9096,14 @@ bool GetNodeIdRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // uint32 http_port = 4;
+      // uint32 admin_port = 4;
       case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &http_port_)));
+                 input, &admin_port_)));
         } else {
           goto handle_unusual;
         }
@@ -9168,9 +9168,9 @@ void GetNodeIdRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->raft_port(), output);
   }
 
-  // uint32 http_port = 4;
-  if (this->http_port() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->http_port(), output);
+  // uint32 admin_port = 4;
+  if (this->admin_port() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->admin_port(), output);
   }
 
   // string version = 5;
@@ -9214,9 +9214,9 @@ void GetNodeIdRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->raft_port(), target);
   }
 
-  // uint32 http_port = 4;
-  if (this->http_port() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->http_port(), target);
+  // uint32 admin_port = 4;
+  if (this->admin_port() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->admin_port(), target);
   }
 
   // string version = 5;
@@ -9275,11 +9275,11 @@ size_t GetNodeIdRequest::ByteSizeLong() const {
         this->raft_port());
   }
 
-  // uint32 http_port = 4;
-  if (this->http_port() != 0) {
+  // uint32 admin_port = 4;
+  if (this->admin_port() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt32Size(
-        this->http_port());
+        this->admin_port());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -9324,8 +9324,8 @@ void GetNodeIdRequest::MergeFrom(const GetNodeIdRequest& from) {
   if (from.raft_port() != 0) {
     set_raft_port(from.raft_port());
   }
-  if (from.http_port() != 0) {
-    set_http_port(from.http_port());
+  if (from.admin_port() != 0) {
+    set_admin_port(from.admin_port());
   }
 }
 
@@ -9357,7 +9357,7 @@ void GetNodeIdRequest::InternalSwap(GetNodeIdRequest* other) {
   swap(header_, other->header_);
   swap(server_port_, other->server_port_);
   swap(raft_port_, other->raft_port_);
-  swap(http_port_, other->http_port_);
+  swap(admin_port_, other->admin_port_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -9438,18 +9438,18 @@ void GetNodeIdRequest::set_raft_port(::google::protobuf::uint32 value) {
   // @@protoc_insertion_point(field_set:mspb.GetNodeIdRequest.raft_port)
 }
 
-// uint32 http_port = 4;
-void GetNodeIdRequest::clear_http_port() {
-  http_port_ = 0u;
+// uint32 admin_port = 4;
+void GetNodeIdRequest::clear_admin_port() {
+  admin_port_ = 0u;
 }
-::google::protobuf::uint32 GetNodeIdRequest::http_port() const {
-  // @@protoc_insertion_point(field_get:mspb.GetNodeIdRequest.http_port)
-  return http_port_;
+::google::protobuf::uint32 GetNodeIdRequest::admin_port() const {
+  // @@protoc_insertion_point(field_get:mspb.GetNodeIdRequest.admin_port)
+  return admin_port_;
 }
-void GetNodeIdRequest::set_http_port(::google::protobuf::uint32 value) {
+void GetNodeIdRequest::set_admin_port(::google::protobuf::uint32 value) {
   
-  http_port_ = value;
-  // @@protoc_insertion_point(field_set:mspb.GetNodeIdRequest.http_port)
+  admin_port_ = value;
+  // @@protoc_insertion_point(field_set:mspb.GetNodeIdRequest.admin_port)
 }
 
 // string version = 5;

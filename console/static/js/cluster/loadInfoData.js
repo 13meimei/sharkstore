@@ -321,7 +321,7 @@ app.controller('myClusterNodeInfo', function ($rootScope, $scope, $http, $timeou
                 valign: 'middle'
             }, {
                 title: 'heartbeat_addr',
-                field: 'http_addr',
+                field: 'admin_addr',
                 align: 'center',
                 valign: 'middle'
             }, {
@@ -369,7 +369,13 @@ app.controller('myClusterNodeInfo', function ($rootScope, $scope, $http, $timeou
                         "<button id=\"updateNodeStatus\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"修改状态\" onclick=\"updateNodeStatus('" + row.id + "');\">状态修改</button>&nbsp;&nbsp;",
                         "<button id=\"deleteNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"删除\" onclick=\"deleteNode(" + row.id + ");\">删除</button>&nbsp;&nbsp;",
                         "<button id=\"updateNodeLogLevel\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"修改日志级别\" onclick=\"updateNodeLogLevel('" + row.id + "');\">设置日志级别</button>&nbsp;&nbsp;",
-                        "<button id=\"getRangeTopoOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看range\" onclick=\"getRangeTopoOfNode('" + row.id + "');\">查看range</button>&nbsp;&nbsp;"
+                        "<button id=\"getRangeTopoOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看range\" onclick=\"getRangeTopoOfNode('" + row.id + "');\">查看range</button>&nbsp;&nbsp;",
+                        "<button id=\"getConfigOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看config\" onclick=\"getConfigOfNode('" + row.id + "');\">查看config</button>&nbsp;&nbsp;",
+                        "<button id=\"setConfigOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"设置config\" onclick=\"setConfigOfNode('" + row.id + "');\">设置config</button>&nbsp;&nbsp;",
+                        "<button id=\"getDsInfoOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"DS运行信息\" onclick=\"getDsInfoOfNode('" + row.id + "');\">DS运行信息</button>&nbsp;&nbsp;",
+                        "<button id=\"clearQueueOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"清理Queue\" onclick=\"clearQueueOfNode('" + row.id + "');\">清理Queue</button>&nbsp;&nbsp;",
+                        "<button id=\"getPendingQueuesOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"查看Pending任务\" onclick=\"getPendingQueuesOfNode('" + row.id + "');\">查看Pending任务</button>&nbsp;&nbsp;",
+                        "<button id=\"flushDBOfNode\" class=\"btn btn-primary btn-rounded\" type=\"button\" value==\"FlushDB\" onclick=\"flushDBOfNode('" + row.id + "');\">FlushDB</button>&nbsp;&nbsp;"
                     ].join('');
                 }
             }
@@ -659,6 +665,195 @@ function getRangeTopoOfNode(nodeId) {
             //获取集群id
             var clusterId = $('#clusterId').val();
             window.location.href = "/node/getRangeTopo?clusterId=" + clusterId + "&nodeId=" + nodeId;
+        });
+}
+
+function getConfigOfNode(nodeId) {
+    //获取集群id
+    var clusterId = $('#clusterId').val();
+    window.location.href = "/node/goConfigPage?clusterId=" + clusterId + "&nodeId=" + nodeId + "&isGet=true";
+}
+
+function setConfigOfNode(nodeId) {
+    //获取集群id
+    var clusterId = $('#clusterId').val();
+    window.location.href = "/node/goConfigPage?clusterId=" + clusterId + "&nodeId=" + nodeId + "&isGet=false";
+}
+
+function getDsInfoOfNode(nodeId) {
+    swal({
+            title: "获取DS运行信息",
+            text: "请输入path来查询",
+            type: "input",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "查询",
+            closeOnConfirm: false
+        },
+        function (inputValue) {
+            if (inputValue === false) return;
+            if (inputValue === "") {
+                swal.showInputError("你需要输入path");
+                return
+            }
+
+            var path = inputValue;
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/getDsInfoOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "dsInfoPath": path
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("DS运行信息", data.data, "success");
+                    } else {
+                        swal("获取DS运行信息失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("获取DS运行信息失败！", res, "error");
+                }
+            });
+        });
+}
+
+function clearQueueOfNode(nodeId) {
+    swal({
+            title: "选择清理类型",
+            text: "<select class='form-control' id='selectQueueType' style='height: 33px'><option value='0'>ALL</option><option value='1'>FAST_WORKER</option><option value='2'>SLOW_WORKER</option></select>",
+            html: true,
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false,
+        },
+        function () {
+            var queueType = $('#selectQueueType').val();
+            if (!hasText(queueType)) {
+                swal("请选择要清理的任务类型");
+                return
+            }
+            //获取集群id
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/clearQueueOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "queueType": queueType
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("清理DS任务队列成功！", "cleared=" + data.data, "success");
+                    } else {
+                        swal("清理DS任务队列失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("清理DS任务队列失败！", res, "error");
+                }
+            });
+        });
+}
+
+function getPendingQueuesOfNode(nodeId) {
+    swal({
+            title: "请指定类型和数量",
+            type: "input",
+            text: "<select class='form-control' id='selectPendingType' style='height: 33px'><option value='0'>ALL</option><option value='1'>INSERT</option><option value='2'>SELECT</option><option value='3'>POINT_SELECT</option><option value='4'>RANGE_SELECT</option></select>",
+            html: true,
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false
+        },
+        function (inputValue) {
+            var pendingType = $('#selectPendingType').val();
+            if (!hasText(pendingType)) {
+                swal("请选择要查看的Pending任务类型");
+                return
+            }
+            if (inputValue === false) return;
+            if (inputValue === "") {
+                swal.showInputError("请输入数量");
+                return
+            }
+            var count = inputValue;
+            //获取集群id
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/getPendingQueuesOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "pendingType": pendingType,
+                    "count": count
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("获取Pending任务队列成功！", data.data, "success");
+                    } else {
+                        swal("获取Pending任务队列失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("获取Pending任务队列失败！", res, "error");
+                }
+            });
+        });
+}
+
+function flushDBOfNode(nodeId) {
+    swal({
+            title: "Wait FlushDB?",
+            text: "<select class='form-control' id='selectWaitType' style='height: 33px'><option value='true'>True</option><option value='false'>False</option></select>",
+            html: true,
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "执行",
+            closeOnConfirm: false
+        },
+        function () {
+            var waitType = $('#selectWaitType').val();
+            if (!hasText(waitType)) {
+                swal("请选择是否等待");
+                return
+            }
+            //获取集群id
+            var clusterId = $('#clusterId').val();
+            $.ajax({
+                url: "/node/flushDBOfNode",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "nodeId": nodeId,
+                    "clusterId": clusterId,
+                    "wait": waitType
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("Flush DB 成功！", "Flush DB 成功!", "success");
+                    } else {
+                        swal("Flush DB 失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("Flush DB 失败！", res, "error");
+                }
+            });
         });
 }
 

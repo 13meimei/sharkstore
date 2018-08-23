@@ -8,13 +8,24 @@ namespace helper {
 
 using namespace sharkstore::dataserver;
 
-metapb::Range MakeRangeMeta(Table *t) {
+uint64_t GetPeerID(uint64_t node_id) {
+    return node_id + 100;
+}
+
+metapb::Range MakeRangeMeta(Table *t, size_t peers_num) {
     metapb::Range meta;
     meta.set_id(1);
-    meta.set_start_key(std::string("\x00", 1));
-    meta.set_end_key("\xff");
-    meta.mutable_range_epoch()->set_version(1);
-    meta.mutable_range_epoch()->set_conf_ver(1);
+    EncodeKeyPrefix(meta.mutable_start_key(), t->GetID());
+    EncodeKeyPrefix(meta.mutable_end_key(), t->GetID() + 1);
+
+    for (size_t i = 0; i < peers_num; ++i) {
+        auto peer = meta.add_peers();
+        peer->set_node_id(i + 1);
+        peer->set_id(GetPeerID(peer->node_id()));
+        peer->set_type(metapb::PeerType_Normal);
+    }
+    meta.mutable_range_epoch()->set_version(peers_num);
+    meta.mutable_range_epoch()->set_conf_ver(peers_num);
 
     meta.set_table_id(t->GetID());
     auto pks = t->GetPKs();

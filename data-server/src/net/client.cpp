@@ -1,4 +1,4 @@
-#include "rpc_client.h"
+#include "client.h"
 
 namespace sharkstore {
 namespace dataserver {

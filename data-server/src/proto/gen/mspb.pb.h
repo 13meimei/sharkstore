@@ -2325,11 +2325,11 @@ class GetNodeIdRequest : public ::google::protobuf::Message /* @@protoc_insertio
   ::google::protobuf::uint32 raft_port() const;
   void set_raft_port(::google::protobuf::uint32 value);
 
-  // uint32 http_port = 4;
-  void clear_http_port();
-  static const int kHttpPortFieldNumber = 4;
-  ::google::protobuf::uint32 http_port() const;
-  void set_http_port(::google::protobuf::uint32 value);
+  // uint32 admin_port = 4;
+  void clear_admin_port();
+  static const int kAdminPortFieldNumber = 4;
+  ::google::protobuf::uint32 admin_port() const;
+  void set_admin_port(::google::protobuf::uint32 value);
 
   // @@protoc_insertion_point(class_scope:mspb.GetNodeIdRequest)
  private:
@@ -2339,7 +2339,7 @@ class GetNodeIdRequest : public ::google::protobuf::Message /* @@protoc_insertio
   ::mspb::RequestHeader* header_;
   ::google::protobuf::uint32 server_port_;
   ::google::protobuf::uint32 raft_port_;
-  ::google::protobuf::uint32 http_port_;
+  ::google::protobuf::uint32 admin_port_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2eproto::TableStruct;
 };
@@ -7603,18 +7603,18 @@ inline void GetNodeIdRequest::set_raft_port(::google::protobuf::uint32 value) {
   // @@protoc_insertion_point(field_set:mspb.GetNodeIdRequest.raft_port)
 }
 
-// uint32 http_port = 4;
-inline void GetNodeIdRequest::clear_http_port() {
-  http_port_ = 0u;
+// uint32 admin_port = 4;
+inline void GetNodeIdRequest::clear_admin_port() {
+  admin_port_ = 0u;
 }
-inline ::google::protobuf::uint32 GetNodeIdRequest::http_port() const {
-  // @@protoc_insertion_point(field_get:mspb.GetNodeIdRequest.http_port)
-  return http_port_;
+inline ::google::protobuf::uint32 GetNodeIdRequest::admin_port() const {
+  // @@protoc_insertion_point(field_get:mspb.GetNodeIdRequest.admin_port)
+  return admin_port_;
 }
-inline void GetNodeIdRequest::set_http_port(::google::protobuf::uint32 value) {
+inline void GetNodeIdRequest::set_admin_port(::google::protobuf::uint32 value) {
   
-  http_port_ = value;
-  // @@protoc_insertion_point(field_set:mspb.GetNodeIdRequest.http_port)
+  admin_port_ = value;
+  // @@protoc_insertion_point(field_set:mspb.GetNodeIdRequest.admin_port)
 }
 
 // string version = 5;

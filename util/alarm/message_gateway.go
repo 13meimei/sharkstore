@@ -8,7 +8,6 @@ import (
 	"util/log"
 	"time"
 	"errors"
-	"fmt"
 	"io/ioutil"
 )
 
@@ -83,22 +82,22 @@ func NewMessageGateway(ctx context.Context, addr, alarmServerAddr string, receiv
 }
 
 func (gw *MessageGateway) send_(msg string) error {
-	req, err := http.NewRequest("POST", gw.address, strings.NewReader(msg))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("len", fmt.Sprint(len(msg)))
-	req.Header.Add("User-Agent", "Jimdb-Message-Sender")
-	req.Header.Set("Content-Type", "application/json;charset=utf-8")
-	req.Header.Set("Accept", "application/json,text/html,text/plain")
-	req.Header.Set("Accept-Charset", "utf-8,GBK")
-
-	resp, err := gw.client.Do(req)
-	//_, err = gw.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	//req, err := http.NewRequest("POST", gw.address, strings.NewReader(msg))
+	//if err != nil {
+	//	return err
+	//}
+	//req.Header.Set("len", fmt.Sprint(len(msg)))
+	//req.Header.Add("User-Agent", "Jimdb-Message-Sender")
+	//req.Header.Set("Content-Type", "application/json;charset=utf-8")
+	//req.Header.Set("Accept", "application/json,text/html,text/plain")
+	//req.Header.Set("Accept-Charset", "utf-8,GBK")
+	//
+	//resp, err := gw.client.Do(req)
+	////_, err = gw.client.Do(req)
+	//if err != nil {
+	//	return err
+	//}
+	//defer resp.Body.Close()
 	return nil
 }
 

@@ -146,10 +146,10 @@ set(SOURCES
     src/server/callback.cpp
     src/server/server.cpp
     src/server/worker.cpp
-    src/server/manager.cpp
     src/server/node_address.cpp
     src/server/raft_logger.cpp
     src/server/run_status.cpp
+    src/server/range_context_impl.cpp
     src/server/range_server.cpp
     src/server/version.cpp
     src/range/range.cpp
@@ -162,9 +162,11 @@ set(SOURCES
     src/range/insert.cpp
     src/range/delete.cpp
     src/range/split.cpp
+    src/range/split_policy.cpp
     src/range/peer.cpp
     src/range/snapshot.cpp
     src/range/kv_funcs.cpp
+    src/range/submit.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
     src/storage/iterator.cpp
@@ -180,7 +182,13 @@ set(SOURCES
     src/monitor/isystemstatus.cpp
     src/monitor/datacacl.cpp
     src/monitor/encodedata.cpp
+    src/monitor/histogram.cpp
     src/monitor/rangedata.cpp
+    src/monitor/statistics.cpp
+    src/admin/admin_server.cpp
+    src/admin/get_config.cpp
+    src/admin/get_info.cpp
+    src/admin/set_config.cpp
 )
 
 if (APPLE)
@@ -198,16 +206,12 @@ add_subdirectory(src/common)
 add_subdirectory(src/frame)
 add_subdirectory(src/proto)
 add_subdirectory(src/raft)
-
-OPTION (BUILD_NET "build sharkstore net" OFF)
-MESSAGE(STATUS BUILD_NET=${BUILD_NET})
-if (BUILD_NET)
-    add_subdirectory(src/net)
-endif()
+add_subdirectory(src/net)
 
 set (depend_LIBRARYS
     sharkstore-proto
     sharkstore-raft
+    sharkstore-net
     sharkstore-common
     sharkstore-frame
     sharkstore-lkqueue

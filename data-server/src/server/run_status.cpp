@@ -52,6 +52,7 @@ void RunStatus::run() {
         updateFSUsagePercent();
         printDBMetric();
         context_->worker->PrintQueueSize();
+        printStatistics();
 
         std::unique_lock<std::mutex> lock(mutex_);
         cond_.wait_for(lock,
@@ -69,7 +70,8 @@ bool RunStatus::GetFilesystemUsage(FileSystemUsage* usage) {
             usage->used_size = total - available;
             return true;
         } else {
-            FLOG_ERROR("collect filesystem usage error(invalid size: %lu:%lu) ", total, available);
+            FLOG_ERROR("collect filesystem usage error(invalid size: %" PRIu64 ":%" PRIu64 ") ",
+                    total, available);
             return false;
         }
     } else {
@@ -83,6 +85,11 @@ void RunStatus::updateFSUsagePercent() {
     if (GetFilesystemUsage(&usage)) {
         fs_usage_percent_ = usage.used_size * 100/ usage.total_size;
     }
+}
+
+void RunStatus::printStatistics() {
+    FLOG_INFO("\n%s", statistics_.ToString().c_str());
+    statistics_.Reset();
 }
 
 void RunStatus::printDBMetric() {
@@ -102,11 +109,11 @@ void RunStatus::printDBMetric() {
 
     auto stat = context_->db_stats;
     if (stat) {
-        FLOG_INFO("rocksdb row-cache stats: hit=%lu, miss=%lu",
+        FLOG_INFO("rocksdb row-cache stats: hit=%" PRIu64 ", miss=%" PRIu64,
                   stat->getAndResetTickerCount(rocksdb::ROW_CACHE_HIT),
                   stat->getAndResetTickerCount(rocksdb::ROW_CACHE_MISS));
 
-        FLOG_INFO("rocksdb block-cache stats: hit=%lu, miss=%lu",
+        FLOG_INFO("rocksdb block-cache stats: hit=%" PRIu64 ", miss=%" PRIu64,
                   stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_HIT),
                   stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_MISS));
 

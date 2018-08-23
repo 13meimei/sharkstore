@@ -29,6 +29,16 @@ cd libfastcommon
 sudo ./make.sh install
 ```
 
+## snappy
+```sh
+wget https://github.com/google/snappy/archive/1.1.7.tar.gz
+tar xvf 1.1.7.tar.gz
+cd snappy-1.1.7/
+mkdir build && cd build
+cmake .. -DSNAPPY_BUILD_TESTS=OFF -DCMAKE_CXX_FLAGS="-O2 -DNDEBUG -g -fPIC"
+sudo make install -j 4
+```
+
 ## rocksdb
 v5.11.3
 ```sh
@@ -37,7 +47,7 @@ tar xvf v5.11.3.tar.gz
 cd rocksdb-5.11.3
 mkdir build
 cd build
-cmake ..
+cmake .. -DWITH_SNAPPY=ON -DWITH_TESTS=OFF
 make -j `nproc`
 sudo make install
 ```
@@ -46,6 +56,16 @@ sudo make install
 ```sh
 git clone --depth 1 --branch v1.1.0 https://github.com/Tencent/rapidjson.git
 sudo cp -r rapidjson/include/rapidjson /usr/local/include/
+```
+
+## asio安装   
+```sh
+wget https://github.com/chriskohlhoff/asio/archive/asio-1-12-0.tar.gz
+tar xvf asio-1-12-0.tar.gz
+cd asio-asio-1-12-0/asio
+./autogen.sh
+env CXXFLAGS="-DASIO_STANDALONE -std=c++11" ./configure --without-boost
+sudo make install -j `nproc`
 ```
 
 ## gtest and gmock
@@ -62,9 +82,9 @@ sudo make install
 ## gperf tools
 v2.6.3
 ```sh
-wget https://github.com/gperftools/gperftools/releases/download/gperftools-2.6.3/gperftools-2.6.3.tar.gz
+wget https://github.com/gperftools/gperftools/archive/gperftools-2.6.3.tar.gz
 tar xvf gperftools-2.6.3.tar.gz
-cd gperftools-2.6.3
+cd gperftools-gperftools-2.6.3
 ./autogen.sh
 ./configure
 make -j `nproc`

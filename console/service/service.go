@@ -30,6 +30,7 @@ import (
 	"sync"
 	"crypto/md5"
 	"encoding/hex"
+	"model/pkg/ds_admin"
 )
 
 const (
@@ -944,6 +945,204 @@ func (s *Service) GetRangeTopoByNodeId(clusterId, nodeId int) (interface{}, erro
 	return getRangeTopoOfNodeResp.Data, nil
 }
 
+func (s *Service) GetConfigOfNode(clusterId, nodeId int, configKeys string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["nodeId"] = nodeId
+	reqParams["getConfigKey"] = configKeys
+
+	var getConfigOfNodeResp = struct {
+		Code int                      `json:"code"`
+		Msg  string                   `json:"message"`
+		Data []*ds_adminpb.ConfigItem `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/node/getConfigOfNode", reqParams, &getConfigOfNodeResp); err != nil {
+		return nil, err
+	}
+	if getConfigOfNodeResp.Code != 0 {
+		log.Error("get config of node[nodeId=%d, clusterId=%d] failed. err:[%v]", nodeId, clusterId, getConfigOfNodeResp)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getConfigOfNodeResp.Msg}
+	}
+	return getConfigOfNodeResp.Data, nil
+}
+
+func (s *Service) SetConfigOfNode(clusterId, nodeId int, setConfig string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["nodeId"] = nodeId
+	reqParams["setConfig"] = setConfig
+
+	var setConfigOfNodeResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/node/setConfigOfNode", reqParams, &setConfigOfNodeResp); err != nil {
+		return nil, err
+	}
+	if setConfigOfNodeResp.Code != 0 {
+		log.Error("set config of node[nodeId=%d, clusterId=%d] failed. err:[%v]", nodeId, clusterId, setConfigOfNodeResp)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: setConfigOfNodeResp.Msg}
+	}
+	return nil, nil
+}
+
+func (s *Service) GetDsInfoOfNode(clusterId, nodeId int, path string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["nodeId"] = nodeId
+	reqParams["dsInfoPath"] = path
+
+	var getDsInfoOfNodeResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+		Data string `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/node/getDsInfoOfNode", reqParams, &getDsInfoOfNodeResp); err != nil {
+		return nil, err
+	}
+	if getDsInfoOfNodeResp.Code != 0 {
+		log.Error("get ds_info of node[nodeId=%d, clusterId=%d] failed. err:[%v]", nodeId, clusterId, getDsInfoOfNodeResp)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getDsInfoOfNodeResp.Msg}
+	}
+	return getDsInfoOfNodeResp.Data, nil
+}
+
+func (s *Service) ClearQueueOfNode(clusterId, nodeId int, queueType string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["nodeId"] = nodeId
+	reqParams["queueType"] = queueType
+
+	var clearQueueOfNodeResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+		Data uint64 `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/node/clearQueueOfNode", reqParams, &clearQueueOfNodeResp); err != nil {
+		return nil, err
+	}
+	if clearQueueOfNodeResp.Code != 0 {
+		log.Error("clear queue of node[nodeId=%d, clusterId=%d] failed. err:[%v]", nodeId, clusterId, clearQueueOfNodeResp)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: clearQueueOfNodeResp.Msg}
+	}
+	return clearQueueOfNodeResp.Data, nil
+}
+
+func (s *Service) GetPendingQueuesOfNode(clusterId, nodeId int, pendingType, count string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["nodeId"] = nodeId
+	reqParams["pendingType"] = pendingType
+	reqParams["count"] = count
+
+	var getPendingQueuesOfNodeResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+		Data string `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/node/getPendingQueuesOfNode", reqParams, &getPendingQueuesOfNodeResp); err != nil {
+		return nil, err
+	}
+	if getPendingQueuesOfNodeResp.Code != 0 {
+		log.Error("get pending queues of node[nodeId=%d, clusterId=%d] failed. err:[%v]", nodeId, clusterId, getPendingQueuesOfNodeResp)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: getPendingQueuesOfNodeResp.Msg}
+	}
+	return getPendingQueuesOfNodeResp.Data, nil
+}
+
+func (s *Service) FlushDBOfNode(clusterId, nodeId int, wait bool) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["nodeId"] = nodeId
+	reqParams["wait"] = wait
+
+	var flushDBOfNodeResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/node/flushDBOfNode", reqParams, &flushDBOfNodeResp); err != nil {
+		return nil, err
+	}
+	if flushDBOfNodeResp.Code != 0 {
+		log.Error("flush db of node[nodeId=%d, clusterId=%d, wait=%t] failed. err:[%v]", nodeId, clusterId, wait, flushDBOfNodeResp)
+		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: flushDBOfNodeResp.Msg}
+	}
+	return nil, nil
+}
+
+
 func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover, autoSplit string) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
@@ -1692,6 +1891,73 @@ func (s *Service) BatchRecoverRange(clusterId int, dbName, tableName string) err
 		return fmt.Errorf(recoverRangeResp.Msg)
 	}
 	return nil
+}
+
+func (s *Service) ForceSplitRange(clusterId, rangeId int, dbName, tableName string) error {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return err
+	}
+	if info == nil {
+		return common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["dbName"] = dbName
+	reqParams["tableName"] = tableName
+	reqParams["rangeId"] = rangeId
+
+	var forceSplitRangeResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/range/forceSplitRange", reqParams, &forceSplitRangeResp); err != nil {
+		return err
+	}
+	if forceSplitRangeResp.Code != 0 {
+		log.Error("cluster[%d] db[%s] table[%s] rangeId[%s] force split failed. err:[%v]", clusterId, dbName, tableName, rangeId, forceSplitRangeResp)
+		return fmt.Errorf(forceSplitRangeResp.Msg)
+	}
+	return nil
+}
+
+func (s *Service) ForceCompactRange(clusterId, rangeId int, dbName, tableName string) (interface{}, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+
+	ts := time.Now().Unix()
+	sign := common.CalcMsReqSign(clusterId, info.ClusterToken, ts)
+
+	reqParams := make(map[string]interface{})
+	reqParams["d"] = ts
+	reqParams["s"] = sign
+	reqParams["dbName"] = dbName
+	reqParams["tableName"] = tableName
+	reqParams["rangeId"] = rangeId
+
+	var forceCompactRangeResp = struct {
+		Code int    `json:"code"`
+		Msg  string `json:"message"`
+		//Data []byte `json:"data"`
+	}{}
+	if err := sendGetReq(info.MasterUrl, "/manage/range/forceCompactRange", reqParams, &forceCompactRangeResp); err != nil {
+		return nil, err
+	}
+	if forceCompactRangeResp.Code != 0 {
+		log.Error("cluster[%d] db[%s] table[%s] rangeId[%s] force compact failed. err:[%v]", clusterId, dbName, tableName, rangeId, forceCompactRangeResp)
+		return nil, fmt.Errorf(forceCompactRangeResp.Msg)
+	}
+	return forceCompactRangeResp, nil
 }
 
 //迁移

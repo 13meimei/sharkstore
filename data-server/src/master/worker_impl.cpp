@@ -36,7 +36,7 @@ Status WorkerImpl::GetNodeId(mspb::GetNodeIdRequest& req, uint64_t *node_id, boo
         auto s = client_->GetNodeID(req, node_id, clearup);
         if (s.ok()) {
             FLOG_INFO(
-                    "[Master] GetNodeId successfully. node_id=%lu, clearup=%d",
+                    "[Master] GetNodeId successfully. node_id=%" PRIu64 ", clearup=%d",
                     *node_id, *clearup);
             return s;
         } else {
