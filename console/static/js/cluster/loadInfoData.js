@@ -683,7 +683,7 @@ function setConfigOfNode(nodeId) {
 function getDsInfoOfNode(nodeId) {
     swal({
             title: "获取DS运行信息",
-            text: "请输入path来查询",
+            text: "输入path查询，为空返回server信息",
             type: "input",
             showCancelButton: true,
             confirmButtonColor: "#DD6B55",
@@ -693,8 +693,9 @@ function getDsInfoOfNode(nodeId) {
         function (inputValue) {
             if (inputValue === false) return;
             if (inputValue === "") {
-                swal.showInputError("你需要输入path");
-                return
+                //swal.showInputError("你需要输入path");
+                //return
+                inputValue = "server"
             }
 
             var path = inputValue;
@@ -711,7 +712,13 @@ function getDsInfoOfNode(nodeId) {
                 },
                 success: function (data) {
                     if (data.code === 0) {
-                        swal("DS运行信息", data.data, "success");
+                        var info_html = "<textarea style='overflow: auto;width: 100%;height: 100px' readonly >" + data.data + "</textarea>";
+                        //swal("DS运行信息", info, "success");
+                        swal({title: "info",
+                            text: info_html,
+                            html: true,
+                            type: "success"
+                        });
                     } else {
                         swal("获取DS运行信息失败！", data.msg, "error");
                     }
