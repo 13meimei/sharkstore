@@ -95,7 +95,7 @@ int16_t WatchEncodeAndDecode::DecodeKv(funcpb::FunctionID funcId, const uint64_t
         int64_t version(0);
         keys.clear();
 
-        FLOG_DEBUG("DecodeKv dbKey:%s dbValue:%s", EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
+        //FLOG_DEBUG("DecodeKv dbKey:%s dbValue:%s", EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
         //FLOG_WARN("range[%" PRIu64 "] DecodeKv dbKey:%s dbValue:%s", meta_.id(), EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
         auto val = std::make_shared<std::string>("");
         auto ext = std::make_shared<std::string>("");

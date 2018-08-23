@@ -28,6 +28,8 @@ namespace watch {
 class CEventBufferValue;
 void printBufferValue(CEventBufferValue &val);
 
+using BufferReturnPair = std::pair<int32_t, std::pair<int32_t, int32_t>>;
+
 class CEventBufferValue {
 public:
     CEventBufferValue() = default;
@@ -125,7 +127,8 @@ public:
     CEventBuffer(const int &mapSize, const int &queueSize);
     ~CEventBuffer();
 
-    int32_t loadFromBuffer(const std::string &grpKey, int64_t uerVersion, std::vector<CEventBufferValue> &result);
+    //<hit cnt:version scope in buffer<from:to> >
+    BufferReturnPair loadFromBuffer(const std::string &grpKey, int64_t uerVersion, std::vector<CEventBufferValue> &result);
 
     bool enQueue(const std::string &grpKey, const CEventBufferValue *bufferValue);
 

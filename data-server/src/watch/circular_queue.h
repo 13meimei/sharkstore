@@ -26,6 +26,24 @@ namespace watch {
         //出队
         bool deQueue(T &element);
 
+        int32_t lowerVersion() {
+            if(isEmpty()) return 0;
+
+            return m_pQueue[m_iHead].version();
+        }
+
+        int32_t upperVersion() {
+            if(isEmpty()) return 0;
+
+            auto idx(m_iTail-1);
+            idx = idx<0?0:idx;
+
+            if(idx == m_iHead) idx = m_iLength - 1;
+
+            return m_pQueue[idx].version();
+        }
+
+
         int32_t getData(int64_t version, std::vector<T> &element);
         int64_t getUsedTime() {
             if(isEmpty()) {
@@ -97,6 +115,8 @@ namespace watch {
         m_iLength++;
         m_iTail++;
         m_iTail = m_iTail % m_iCapacity;
+
+        //std::cout << "enQueue...m_iTail:" << m_iTail << std::endl;
         return true;
     }
 
@@ -110,6 +130,8 @@ namespace watch {
         m_iLength--;
         m_iHead++;
         m_iHead = m_iHead % m_iCapacity;
+
+        //std::cout << "deQueue...m_iHead:" << m_iHead << std::endl;
         return true;
     }
 
@@ -141,40 +163,73 @@ namespace watch {
 
         if(isEmpty()) return -1;
 
-        if(version >= m_pQueue[m_iTail-1].version()) {
+        int32_t mid(0);
+        int32_t from(m_iHead), to(m_iTail - 1);
+        from = from<0?0:from;
+        to = to<0?0:to;
+
+        if(to == from) {
+            to = m_iLength - 1;
+        }
+
+        if(version >= m_pQueue[to].version()) {
             return 0;
         }
 
-        if(version < m_pQueue[m_iHead].version()) {
+        if(version < m_pQueue[from].version()) {
            // std::cout << "version:" << version << "head:" << m_iHead << "tail:" << m_iTail << "queue-version:" << m_pQueue[m_iTail].version() << std::endl;
             return -1;
         }
 
-        int32_t mid(0);
-        int32_t from(m_iHead), to(m_iTail-1);
+        auto count = m_iLength;
+        int32_t it = from;
+        int32_t step(0);
+        while (count > 0) {
+            step = count / 2;
 
-        while(from < to) {
+            it = from;
+            it += step;
 
-            mid = (from + to) / 2;
-            if (version == m_pQueue[mid].version()) {
-                from = mid;
-                break;
-            } else {
-                if (version > m_pQueue[mid].version()) {
-                    from = mid;
-                } else {
-                    break;
-                }
+            if (m_pQueue[it].version() < version) {
+                ++it;
+                it = it%m_iCapacity;
+                from = it;
+
+                count -= step + 1;
             }
-            if(mid == 0 || mid == 1) break;
+            else
+                count = step;
         }
 
-        for(int32_t i = from; i <= to; i++) {
-            if(version >= m_pQueue[i].version()) continue;
+        while(m_pQueue[from].version() > version) {
+            if(--from < 0) from = m_iLength - 1;
+
+            from = from%m_iCapacity;
+        }
+
+        for(auto i=from; i!=to; i++,i=i%m_iCapacity) {
+            count++;
+        }
+        count += 1;
+
+        //std::cout << "hit-version:" << version << "head[" << m_iHead << "]" << m_pQueue[m_iHead].version() << " tail[" << to << "] " << m_pQueue[to].version() << std::endl;
+        //std::cout << "cycle-count:" << count << " hit-version:" << version << "from[" << from << "]" << m_pQueue[from].version() << std::endl;
+
+        //count = m_iLength - from + 1;
+        for(int32_t i = from; count != 0; i++) {
+            count --;
+            if(version >= m_pQueue[i % m_iCapacity].version()) {
+                //std::cout << version << ">=" << m_pQueue[i % m_iCapacity].version() << "...continue" << std::endl;
+                if(0 == cnt) continue;
+
+                break;
+            }
+            std::cout << version << "<" << m_pQueue[i % m_iCapacity].version() << "...emplace" << std::endl;
 
             cnt++;
-            (m_pQueue + i)->setUpdateTime();
-            elements.emplace_back(*(m_pQueue + i));
+            (m_pQueue + i % m_iCapacity)->setUpdateTime();
+
+            elements.emplace_back(*(m_pQueue + i % m_iCapacity));
         }
 
         return cnt;

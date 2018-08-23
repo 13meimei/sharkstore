@@ -156,19 +156,26 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     watch::WatchCode wcode;
     if(prefix) {
         //to do load data from memory
-        std::string dbKeyEnd("");
-        dbKeyEnd.assign(dbKey);
+        //std::string dbKeyEnd("");
+        //dbKeyEnd.assign(dbKey);
 
-        if( 0 != WatchEncodeAndDecode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
-            //to do set error message
-            FLOG_ERROR("NextComparableBytes error.");
-            return;
-        }
+//        if( 0 != WatchEncodeAndDecode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
+//            //to do set error message
+//            FLOG_ERROR("NextComparableBytes error.");
+//            return;
+//        }
         auto hashKey = w_ptr->GetKeys();
+        std::string encode_key("");
+        w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
+
         std::vector<watch::CEventBufferValue> vecUpdKeys;
 
-        int32_t memCnt = eventBuffer->loadFromBuffer(*hashKey[0], clientVersion, vecUpdKeys);
-        RANGE_LOG_DEBUG("loadFromBuffer hit count[%" PRId32 "]  version:%" PRId64 , memCnt, clientVersion);
+
+        auto retPair = eventBuffer->loadFromBuffer(encode_key, clientVersion, vecUpdKeys);
+        int32_t memCnt(retPair.first);
+        auto verScope = retPair.second;
+        RANGE_LOG_DEBUG("loadFromBuffer key:%s hit count[%" PRId32 "] version scope:%" PRId32 "---%" PRId32 " client_version:%" PRId64 ,
+                        EncodeToHexString(encode_key).c_str(), memCnt, verScope.first, verScope.second, clientVersion);
 
         if(memCnt > 0) {
             auto resp = ds_resp->mutable_resp();
@@ -565,9 +572,17 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     watchpb::WatchKeyValue notifyKv;
     notifyKv.CopyFrom(req.kv());
 
-    int64_t version{0};
-    //version = getNextVersion(err);
+
+    static int64_t version{0};
     version = raftIdx;
+
+    //for test
+    //static std::atomic<int64_t> test_version = {0};
+    //test_version += 1;
+    ////////////////////////////////////////////////////////////
+    //version = test_version;
+    ///////////////////////////////////////////////////////////
+
     notifyKv.set_version(version);
     RANGE_LOG_DEBUG("ApplyWatchPut new version[%" PRIu64 "]", version);
 
@@ -848,7 +863,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         delete it;
     }
 
-    FLOG_DEBUG("WatchNotify haskkey:%s  key:%s", EncodeToHexString(hashKey).c_str(), EncodeToHexString(dbKey).c_str());
+    FLOG_DEBUG("WatchNotify haskkey:%s  key:%s version:%" PRId64, EncodeToHexString(hashKey).c_str(), EncodeToHexString(dbKey).c_str(), version);
     if(hasPrefix) {
         auto value = std::make_shared<watch::CEventBufferValue>(kv, evtType, version);
 
@@ -891,7 +906,13 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             std::vector<watch::CEventBufferValue> vecUpdKeys;
             vecUpdKeys.clear();
 
-            int32_t memCnt = eventBuffer->loadFromBuffer(hashKey, startVersion, vecUpdKeys);
+            auto retPair = eventBuffer->loadFromBuffer(hashKey, startVersion, vecUpdKeys);
+
+            int32_t memCnt(retPair.first);
+            auto verScope = retPair.second;
+            RANGE_LOG_DEBUG("loadFromBuffer key:%s hit count[%" PRId32 "] version scope:%" PRId32 "---%" PRId32 " client_version:%" PRId64 ,
+                            EncodeToHexString(hashKey).c_str(), memCnt, verScope.first, verScope.second, startVersion);
+
             if (0 == memCnt) {
                 FLOG_ERROR("doudbt no changing, notify %d/%"
                                    PRId32

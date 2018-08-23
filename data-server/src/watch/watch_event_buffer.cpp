@@ -48,24 +48,31 @@ CEventBuffer::~CEventBuffer() {
     clear_thread_.join();
 }
 
-int32_t CEventBuffer::loadFromBuffer(const std::string &grpKey,  int64_t userVersion,
-                                     std::vector<CEventBufferValue> &result) {
+BufferReturnPair  CEventBuffer::loadFromBuffer(const std::string &grpKey,  int64_t userVersion,
+                                 std::vector<CEventBufferValue> &result) {
 
     std::lock_guard<std::mutex> lock(buffer_mutex_);
 
     int32_t resultCnt{0};
+    BufferReturnPair retPair = std::make_pair(-1, std::make_pair(0,0));
 
     if(isEmpty() || userVersion == 0) {
-        return -1;
+        return retPair;
     }
+
+    int32_t from(0), to(0);
 
     auto it = mapGroupBuffer.find(grpKey);
     if(it != mapGroupBuffer.end()) {
         //to do 遍历获取版本范围内变更
         resultCnt = it->second->getData(userVersion, result);
+
+        from = it->second->lowerVersion();
+        to = it->second->upperVersion();
     }
 
-    return resultCnt;
+    retPair = std::make_pair(resultCnt, std::make_pair(from, to));
+    return retPair;
 }
 
 bool CEventBuffer::enQueue(const std::string &grpKey, const CEventBufferValue *bufferValue) {

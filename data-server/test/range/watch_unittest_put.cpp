@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 metapb::Range *genRange2();
 metapb::Range *genRange1();
 
-char level[8] = "warn";
+char level[8] = "debug";
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -263,9 +263,9 @@ protected:
             req.mutable_req()->mutable_kv()->add_key(key2);
         }
         req.mutable_req()->mutable_kv()->set_version(1);
-        req.mutable_req()->set_longpull(10000);
+        req.mutable_req()->set_longpull(5000);
         ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_startversion(800);
         req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
@@ -389,11 +389,11 @@ TEST_F(WatchTest, watch_put_group_get_group) {
             char szKey2[1000] = {0};
             sprintf(szKey2, "01004001%d", i);
             std::string key2(szKey2);
-            justPut(2, "01004001", key2, "01004001:value");
+            //justPut(2, "01004001", key2, "01004001:value");
             justPut(2, "0100400101", key2, "01004001:value");
 
             FLOG_DEBUG(">>>>>>>>>>>%d", i);
-            justWatch(2, "0100400102", "", true);
+            justWatch(2, "0100400101", "", true);
         }
 
 
