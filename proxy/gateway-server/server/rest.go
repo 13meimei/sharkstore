@@ -6,6 +6,7 @@ import (
 
 	"util/bufalloc"
 	"util/log"
+	"model/pkg/metapb"
 )
 
 type Field_ struct {
@@ -93,6 +94,11 @@ type Reply struct {
 	RowsAffected uint64          `json:"rowsaffected"`
 	Values       [][]interface{} `json:"values"`
 	Message      string          `json:"message"`
+}
+
+type TableProperty struct {
+	Columns []*metapb.Column `json:"columns"`
+	Regxs   []*metapb.Column `json:"regxs"`
 }
 
 func (q *Query) parseColumnNames() []string {

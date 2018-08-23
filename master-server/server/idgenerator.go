@@ -24,7 +24,7 @@ func NewClusterIDGenerator(store Store) IDGenerator {
 }
 
 func NewTablePkIdGenerator(tableId uint64, store Store) IDGenerator {
-	key := fmt.Sprintf("%s%d", TABLE_PK_INCREMENT_ID, tableId)
+	key := fmt.Sprintf("%s%d", TABLE_AUTO_INCREMENT_ID, tableId)
 	return &ClusterIDGenerator{idGenerator: NewIDGenerator([]byte(key), tableGenStep, store)}
 }
 

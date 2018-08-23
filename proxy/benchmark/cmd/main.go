@@ -141,27 +141,35 @@ func benchmark(s *server.Server) {
 			go insertTestData(s, concur, 10000, ip)
 		}
 	}
-	//select data
+
+	//insert data
 	if s.GetCfg().BenchConfig.Type == 2 {
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			go insertNoPkTestData(s, concur, 10000, ip)
+		}
+	}
+
+	//select data
+	if s.GetCfg().BenchConfig.Type == 3 {
 		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
 			go selectTest(s, concur, 10000, ip)
 		}
 	}
 
 	//correct and concurrent check
-	if s.GetCfg().BenchConfig.Type == 3 {
+	if s.GetCfg().BenchConfig.Type == 4 {
 		// when select, check elapsed time and correctness after updating
 		go correctCheck4Update(s)
 	}
 
-	if s.GetCfg().BenchConfig.Type == 4 {
+	if s.GetCfg().BenchConfig.Type == 5 {
 		// when select, check elapsed time and correctness after deleting
 		// when select, check elapsed time and correctness after inserting
 		go correctCheck4DelAndInsert(s)
 	}
 
 	//check the elapsed time and correctness after deleting at blob_db level
-	if s.GetCfg().BenchConfig.Type == 5 {
+	if s.GetCfg().BenchConfig.Type == 6 {
 		go correct4BatchDelete(s)
 	}
 }
@@ -191,7 +199,7 @@ func selectTest(s *server.Server, threadNo, total int, ip string) {
 		pks["user_name"] = user_name
 		pks["h"] = h
 		reply := api.Select(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, pks, nil)
-		log.Debug("%v", reply)
+		log.Debug("userName %s, h %v, select result:%v", user_name, h, reply)
 		if reply.Code == 0 && len(reply.Values) > 0 {
 			atomic.AddInt64(&stat.lastSelCount, 1)
 		} else {
@@ -199,7 +207,7 @@ func selectTest(s *server.Server, threadNo, total int, ip string) {
 			if reply.Code == 0 {
 				log.Debug("%v", reply)
 			} else {
-				log.Warn("%v", reply)
+				log.Warn("execute failed, %v", reply)
 			}
 
 		}
@@ -661,9 +669,24 @@ func createRows(h uint32, userName, passWord, realName string) [][]interface{} {
 	return rows
 }
 
+func createRowsNoPk(userName, passWord, realName string) [][]interface{} {
+	rows := make([][]interface{}, 0)
+	row := createRowNoPk(userName, passWord, realName)
+	rows = append(rows, row)
+	return rows
+}
+
 func createRow(h uint32, userName, passWord, realName string) []interface{} {
 	row := make([]interface{}, 0)
 	row = append(row, h)
+	row = append(row, userName)
+	row = append(row, passWord)
+	row = append(row, realName)
+	return row
+}
+
+func createRowNoPk(userName, passWord, realName string) []interface{} {
+	row := make([]interface{}, 0)
 	row = append(row, userName)
 	row = append(row, passWord)
 	row = append(row, realName)
@@ -696,4 +719,27 @@ func insertTestData(s *server.Server, threadNo, total int, ip string) {
 		}
 	}
 
+}
+
+func insertNoPkTestData(s *server.Server, threadNo, total int, ip string) {
+	real_name := randomString(s.GetCfg().BenchConfig.DataLen)
+	pass_word := "pw"
+	TableFieldsNoPk := []string{"user_name", "pass_word", "real_name"}
+	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+		user_name := getUserName(i, ip, threadNo)
+		rows := createRowsNoPk(user_name, pass_word, real_name)
+		for b := 1; b < s.GetCfg().BenchConfig.Batch; b++ {
+			row := createRowNoPk(fmt.Sprintf("%s-%d", user_name, b), pass_word, real_name)
+			rows = append(rows, row)
+		}
+		reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFieldsNoPk, rows)
+		log.Debug("%v", reply)
+		if reply.Code == 0 {
+			atomic.AddInt64(&stat.lastCount, 1)
+		} else {
+			atomic.AddInt64(&stat.errCount, 1)
+			//i = i - 1
+			log.Warn("error reply:%v", reply)
+		}
+	}
 }

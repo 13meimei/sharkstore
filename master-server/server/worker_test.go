@@ -95,7 +95,7 @@ func TestBalanceRangeOps(t *testing.T) {
 }
 
 func MockCluster(t *testing.T) *Cluster {
-	mockCluster := newBlotDbCluster(t, newMockIDAllocator())
+	mockCluster := newBoltDbCluster(t, newMockIDAllocator())
 	addNodes(mockCluster)
 	fmt.Println(fmt.Sprintf("current node size : %v", len(mockCluster.GetAllNode())))
 	return mockCluster
@@ -300,7 +300,7 @@ func newLevelDbCluster(t *testing.T, id IDGenerator) *Cluster {
 	return cluster
 }
 
-func newBlotDbCluster(t *testing.T, id IDGenerator) *Cluster {
+func newBoltDbCluster(t *testing.T, id IDGenerator) *Cluster {
 	initDataPath()
 	cfg := NewDefaultConfig()
 	log.InitFileLog(cfg.Log.Dir, cfg.Log.Module, cfg.Log.Level)

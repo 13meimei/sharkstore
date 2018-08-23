@@ -533,7 +533,7 @@ func (service *Server) handleAddColumns(ctx context.Context, req *mspb.AddColumn
 		return nil, errors.New("table is not existed")
 	}
 
-	cols, err := t.UpdateSchema(columns, service.cluster.store)
+	cols, err := t.UpdateSchema(columns, service.cluster)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("column add err %s", err.Error()))
 	}

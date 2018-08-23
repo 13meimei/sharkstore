@@ -6,7 +6,7 @@ import (
 )
 
 func TestNodeLogin(t *testing.T) {
-	cluster := newBlotDbCluster(t, newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	if cluster == nil {
 		return
 	}
@@ -65,7 +65,7 @@ func TestNodeLogin(t *testing.T) {
 }
 
 func TestDeleteNode(t *testing.T) {
-	cluster := newBlotDbCluster(t, newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	if cluster == nil {
 		return
 	}
@@ -132,7 +132,7 @@ func TestDeleteNode(t *testing.T) {
 }
 
 func TestFindNode(t *testing.T) {
-	cluster := newBlotDbCluster(t, newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 
 	// 第一步.　添加新的节点

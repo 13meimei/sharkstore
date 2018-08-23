@@ -216,7 +216,7 @@ func TestNodeFailOverNeverBorn(t *testing.T) {
 func createCluster(t *testing.T) (c *Cluster, s *Server) {
 	modifyDefault(1, 2, 5)
 
-	cluster := newBlotDbCluster(t, newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	server := new(Server)
 	server.cluster = cluster
 	return cluster, server

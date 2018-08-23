@@ -11,14 +11,13 @@ import (
 	"strconv"
 	"time"
 	"strings"
+	"util"
+	"sync"
 
 	"model/pkg/metapb"
 	"util/bufalloc"
 	"util/log"
-	"master-server/server"
 	"proxy/metric"
-	"util"
-	"sync"
 )
 
 type Response struct {
@@ -750,8 +749,8 @@ func (s *Server) handleCreateTable(w http.ResponseWriter, r *http.Request) {
 
 	dbname := query.DatabaseName
 	tablename := query.TableName
-	columns := func() *server.TableProperty {
-		properties := new(server.TableProperty)
+	columns := func() *TableProperty {
+		properties := new(TableProperty)
 		var cols []*metapb.Column
 		for _, col := range query.Columns {
 			cols = append(cols, &metapb.Column{
