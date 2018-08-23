@@ -20,33 +20,30 @@ var pageSize = 10;
             {field: '', radio: true, align: 'center'},
             {field: 'k', title: 'key', align: 'center'},
             {field: 'v', title: '配置', align: 'center'},
-            {field: 'lock_id', title: '锁客户端', align: 'center'},
+            {field: 'version', title: '版本', align: 'center'},
+            {field: 'extend', title: '扩展', align: 'center'},
+            {field: 'lock_id', title: '锁id', align: 'center'},
             {
                 field: 'expired_time', title: '过期时间', align: 'center',
                 formatter: function (value, row, index) {
+                    if(!hasText(value) || value == 0){
+                        return "";
+                    }
                     return value + "ms";
                 }
             },
+
             {
                 field: 'upd_time', title: '更新时间', align: 'center',
                 formatter: function (value, row, index) {
                     //调用下面方法进行时间戳格式化
+                    if(!hasText(value) || value == 0){
+                        return "";
+                    }
                     return formatDate((new Date(value)), "yyyy-MM-dd hh:mm:ss");
                 }
             },
-            {
-                field: 'delete_flag', title: '状态', align: 'center',
-                formatter: function (value, row, index) {
-                    if (value == 1) {
-                        return "已删除";
-                    } else if (value == 0) {
-                        return "未删除";
-                    } else {
-                        return "未知";
-                    }
-                }
-            },
-            {field: 'creator', title: '申请人', align: 'center'}
+            {field: 'creator', title: '客户端ip', align: 'center'}
         ],
         responseHandler: function (res) {
             if (res.code === 0) {

@@ -1,36 +1,32 @@
 package server
 
 import (
+	"golang.org/x/net/context"
 	"model/pkg/metapb"
 	"time"
 	"util/log"
-
-	"golang.org/x/net/context"
 )
 
 var (
 	Min_range_balance_num = 10
-	Min_range_adjust_num  = 50
 )
 
 type balanceNodeRangeWorker struct {
-	opt             *scheduleOption
-	limit           uint64
-	name            string
-	ctx             context.Context
-	cancel          context.CancelFunc
-	interval        time.Duration
-	defaultInterval time.Duration
+	opt      *scheduleOption
+	limit    uint64
+	name     string
+	ctx      context.Context
+	cancel   context.CancelFunc
+	interval time.Duration
 }
 
 func NewBalanceNodeRangeWorker(wm *WorkerManager, interval time.Duration) *balanceNodeRangeWorker {
 	ctx, cancel := context.WithCancel(wm.ctx)
 	return &balanceNodeRangeWorker{
-		name:            balanceRangeWorkerName,
-		ctx:             ctx,
-		cancel:          cancel,
-		interval:        interval,
-		defaultInterval: interval,
+		name:     balanceRangeWorkerName,
+		ctx:      ctx,
+		cancel:   cancel,
+		interval: interval,
 	}
 }
 func (w *balanceNodeRangeWorker) GetName() string {
@@ -111,8 +107,6 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 		return nil, nil, 0
 	}
 
-	w.adjustNextInterval(force, mostRangeNum, leastRangeNum, avgRangerNum)
-
 	//选节点的peer不在mostRangeNode的 range, 且该range  没有 peer在leastRangeNode 上
 	var rng *Range
 	for _, r := range mostRangeNode.GetAllRanges() {
@@ -174,15 +168,6 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 	}
 
 	return rng, rng.GetNodePeer(mostRangeNode.GetId()), leastRangeNode.GetId()
-}
-
-func (w *balanceNodeRangeWorker) adjustNextInterval(force bool, mostRangeNum, leastRangeNum uint32, avgRangeNum float64) {
-	adjustThreshold := maxFloat64(avgRangeNum/2, float64(Min_range_adjust_num))
-	if force || float64(mostRangeNum-leastRangeNum) > adjustThreshold {
-		w.interval = maxDuration(time.Duration(float64(w.interval)*scheduleIntervalFactor), minScheduleInterval)
-	} else {
-		w.interval = w.defaultInterval
-	}
 }
 
 //count node range average number,

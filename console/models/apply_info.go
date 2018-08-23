@@ -26,22 +26,36 @@ type SqlApply struct {
 }
 
 type LockInfo struct {
-	K     string `json:"k"`
-	V   string `json:"v"`
+	K       string `json:"k"`
+	V       string `json:"v"`
+	Version int64  `json:"version"`
+	Extend  int64  `json:"extend"`
+}
+
+type LockShow struct {
+	K           string `json:"k"`
+	V           string `json:"v"`
+	Version     int64  `json:"version"`
+	Extend      string `json:"extend"`
 	LockId      string `json:"lock_id"`
 	ExpiredTime int64  `json:"expired_time"`
 	UpdTime     int64  `json:"upd_time"`
-	DeleteFlag  int8   `json:"delete_flag"`
 	Creator     string `json:"creator"`
 }
 
 type ConfigureInfo struct {
+	K       string `json:"k"`
+	V       string `json:"v"`
+	Version string `json:"version"`
+	Extend  string `json:"extend"`
+}
+
+type ConfigureShow struct {
 	K          string `json:"k"`
 	V          string `json:"v"`
-	Version    string `json:"version"`
+	Version    int64  `json:"version"`
 	Extend     string `json:"extend"`
 	CreateTime int64  `json:"create_time"`
 	UpdTime    int64  `json:"upd_time"`
-	DeleteFlag int8   `json:"delete_flag"`
 	Creator    string `json:"creator"`
 }
