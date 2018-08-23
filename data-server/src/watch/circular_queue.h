@@ -168,6 +168,7 @@ namespace watch {
         from = from<0?0:from;
         to = to<0?0:to;
 
+        //from == to == 0
         if(to == from) {
             to = m_iLength - 1;
         }
@@ -177,7 +178,6 @@ namespace watch {
         }
 
         if(version < m_pQueue[from].version()) {
-           // std::cout << "version:" << version << "head:" << m_iHead << "tail:" << m_iTail << "queue-version:" << m_pQueue[m_iTail].version() << std::endl;
             return -1;
         }
 
@@ -189,6 +189,7 @@ namespace watch {
 
             it = from;
             it += step;
+            it = it%m_iCapacity;
 
             if (m_pQueue[it].version() < version) {
                 ++it;
@@ -201,12 +202,15 @@ namespace watch {
                 count = step;
         }
 
+        /*
         while(m_pQueue[from].version() > version) {
             if(--from < 0) from = m_iLength - 1;
 
             from = from%m_iCapacity;
-        }
 
+            std::cout << " hit-version:" << version << "from[" << from << "]" << m_pQueue[from].version() << std::endl;
+        }
+        */
         for(auto i=from; i!=to; i++,i=i%m_iCapacity) {
             count++;
         }
@@ -224,7 +228,7 @@ namespace watch {
 
                 break;
             }
-            std::cout << version << "<" << m_pQueue[i % m_iCapacity].version() << "...emplace" << std::endl;
+            //std::cout << version << "<" << m_pQueue[i % m_iCapacity].version() << "...emplace" << std::endl;
 
             cnt++;
             (m_pQueue + i % m_iCapacity)->setUpdateTime();

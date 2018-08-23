@@ -577,12 +577,13 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     version = raftIdx;
 
     //for test
-    //static std::atomic<int64_t> test_version = {0};
-    //test_version += 1;
-    ////////////////////////////////////////////////////////////
-    //version = test_version;
-    ///////////////////////////////////////////////////////////
-
+    if (0) {
+        static std::atomic<int64_t> test_version = {0};
+        test_version += 1;
+        ////////////////////////////////////////////////////////////
+        version = test_version;
+        ///////////////////////////////////////////////////////////
+    }
     notifyKv.set_version(version);
     RANGE_LOG_DEBUG("ApplyWatchPut new version[%" PRIu64 "]", version);
 
@@ -681,6 +682,16 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     uint64_t version{0};
     //version = getNextVersion(err);
     version = raftIdx;
+
+    //for test
+    if (0) {
+        static std::atomic<int64_t> test_version = {0};
+        test_version += 1;
+        ////////////////////////////////////////////////////////////
+        version = test_version;
+        ///////////////////////////////////////////////////////////
+    }
+
     notifyKv.set_version(version);
     RANGE_LOG_DEBUG("ApplyWatchDel new-version[%" PRIu64 "]", version);
 
@@ -767,19 +778,18 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
                                        get_micro_second() - btime);
 
-        if (!ret.ok()) {
-            FLOG_ERROR("ApplyWatchDel failed, code:%d, msg:%s , key:%s", ret.code(),
-                       ret.ToString().c_str(), EncodeToHexString(dbKey).c_str());
-            break;
-        }
-
-
         if (cmd.cmd_id().node_id() == node_id_ && delKeys[delKeys.size() - 1] == it) {
             auto resp = new watchpb::DsKvWatchDeleteResponse;
             resp->mutable_resp()->set_code(ret.code());
             ReplySubmit(cmd, resp, err, btime);
         } else if (err != nullptr) {
             delete err;
+            continue;
+        }
+
+        if (!ret.ok()) {
+            FLOG_ERROR("ApplyWatchDel failed, code:%d, msg:%s , key:%s", ret.code(),
+                       ret.ToString().c_str(), EncodeToHexString(dbKey).c_str());
             continue;
         }
 
@@ -925,7 +935,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 FLOG_DEBUG("notify %d/%"
                                    PRId32
                                    " loadFromBuffer key:%s  hit count:%"
-                                   PRId32, i, watchCnt, EncodeToHexString(dbKey).c_str(), memCnt);
+                                   PRId32, i+1, watchCnt, EncodeToHexString(dbKey).c_str(), memCnt);
 
 
                 auto resp = dsResp->mutable_resp();
@@ -951,7 +961,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                                   PRId32
                                   " key:%s version:%"
                                   PRId64,
-                          i, watchCnt, EncodeToHexString(dbKey).c_str(), startVersion);
+                          i+1, watchCnt, EncodeToHexString(dbKey).c_str(), startVersion);
                 //use iterator
                 std::string dbKeyEnd{""};
                 dbKeyEnd.assign(dbKey);

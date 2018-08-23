@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-char level[8] = "warn";
+char level[8] = "debug";
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -294,7 +294,7 @@ protected:
 
     }
 
-    void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, bool prefix = false)
+    void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, const int64_t &version = 0, bool prefix = false)
     {
         FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
         // begin test watch_get (key empty)
@@ -315,10 +315,10 @@ protected:
         if(!key2.empty()) {
             req.mutable_req()->mutable_kv()->add_key(key2);
         }
-        req.mutable_req()->mutable_kv()->set_version(1);
+        //req.mutable_req()->mutable_kv()->set_version(version);
         req.mutable_req()->set_longpull(5000);
         ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_startversion(version);
         req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
@@ -430,7 +430,7 @@ TEST_F(WatchTest, watch_get_exist_del) {
 
     {
         justPut(1, "01003001", "", "01003001:value");
-        justWatch(1, "01003001", "", false);
+        justWatch(1, "01003001", "", 1, false);
         justDel(1, "01003001", "", "");
 
     }
@@ -442,12 +442,12 @@ TEST_F(WatchTest, watch_get_group_exist_del) {
     {
         justPut(1, "01003001", "0100300102", "01003001:value");
         //add prefix watch
-        justWatch(1, "01003001", "", true);
+        justWatch(1, "01003001", "", 1, true);
         //delete trigger notify
         justDel(1, "01003001", "0100300102", "");
         justDel(1, "01003001", "0100300102", "");
 
-        justWatch(1, "01003001", "", true);
+        justWatch(1, "01003001", "", 3, true);
         justPut(1, "01003001", "0100300102", "01003001:value");
         justDel(1, "01003001", "0100300102", "");
     }
@@ -460,19 +460,20 @@ TEST_F(WatchTest, watch_get_group_prefix_exist_del) {
         justPut(1, "01003001", "0100300103", "01003001:value");
         justPut(1, "01003001", "0100300104", "01003001:value");
         justPut(1, "01003001", "0100300105", "01003001:value");
+         //当前version增至４
 
-        //add prefix watch
-        justWatch(1, "01003001", "", true);
-        //justWatch(1, "01003001", "", true);
+        //watch　start_version=3  命中内存直接Notify
+        justWatch(1, "01003001", "", 3, true);
+
         //delete trigger notify
         justDel(1, "01003001", "0100300102", "");
-        justWatch(1, "01003001", "", true);
+        justWatch(1, "01003001", "", 4, true);
         justDel(1, "01003001", "0100300103", "");
-        justWatch(1, "01003001", "", true);
+        justWatch(1, "01003001", "", 5, true);
         justDel(1, "01003001", "0100300104", "");
-        justWatch(1, "01003001", "", true);
+        justWatch(1, "01003001", "", 6, true);
         justDel(1, "01003001", "0100300105", "");
-        justWatch(1, "01003001", "", true);
+        justWatch(1, "01003001", "", 10, true);
         justDel(1, "01003001", "0100300106", "");
 
     }
@@ -482,11 +483,11 @@ TEST_F(WatchTest, watch_not_exist_key) {
 
     {
         //justPut(1, "01003001", "", "01003001:value");
-        justWatch(1, "0100300100001", "", false);
-        justDel(1, "0100300100001", "", "");
+        justWatch(1, "01003001000010000001", "", 1, false);
+        justDel(1, "01003001000010000001", "", "");
 
-        justWatch(1, "0100300100002", "", true);
-        justDel(1, "0100300100002", "abc", "def");
+        justWatch(1, "01003001000020000002", "", 1, true);
+        justDel(1, "01003001000020000002", "abc", "def");
     }
 
 }

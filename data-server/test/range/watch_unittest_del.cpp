@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-char level[8] = "WARN";
+char level[8] = "debug";
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -304,7 +304,7 @@ protected:
 
     }
 
-    void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, bool prefix = false)
+    void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, const int64_t version = 0, bool prefix = false)
     {
         FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
         // begin test watch_get (key empty)
@@ -328,7 +328,7 @@ protected:
         req.mutable_req()->mutable_kv()->set_version(1);
         req.mutable_req()->set_longpull(5000);
         ///////////////////////////////////////////////
-        req.mutable_req()->set_startversion(0);
+        req.mutable_req()->set_startversion(version);
         req.mutable_req()->set_prefix(prefix);
 
         auto len = req.ByteSizeLong();
@@ -459,6 +459,54 @@ TEST_F(WatchTest, watch_put_get_del_get_group) {
 
 }
 
+TEST_F(WatchTest, watch_del_single_watch) {
+
+    {
+        // begin test watch_put group (key ok)
+        FLOG_DEBUG("watch_put group mode.");
+        metapb::Range* rng = new metapb::Range;
+        range_server_->meta_store_->GetRange(1, rng);
+        FLOG_DEBUG("RANGE1  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
+
+        range_server_->meta_store_->GetRange(2, rng);
+        FLOG_DEBUG("RANGE2  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
+
+        for(auto i = 0; i < 20; i ++) {
+            char szKey2[1000] = {0};
+            sprintf(szKey2, "01004001%d", i);
+            std::string key2(szKey2);
+            //justPut(2, "01004001", key2, "01004001:value");
+            justPut(2, "0100400101", key2, "01004001:value");
+        }
+
+        for(auto i = 0; i < 40; i ++) {
+            char szKey2[1000] = {0};
+            sprintf(szKey2, "01004001%d", i);
+            std::string key2(szKey2);
+
+            justWatch(2, "0100400101", "", 30, true);
+
+            //触发Notify version>30时
+            justDel(2, "0100400101", key2, "");
+        }
+
+
+        sleep(15);
+        /*
+        for(auto i = 0; i < 110; i ++) {
+            char szKey2[1000] = {0};
+            sprintf(szKey2, "01004001%d", i);
+            std::string key2(szKey2);
+            justGet(2, "01004001", key2, "01004001:value");
+        }*/
+    }
+
+    //test get group
+
+
+}
+
+/*
 TEST_F(WatchTest, watch_del_benchmark) {
 
     FLOG_DEBUG("watch_del single mode.");
@@ -507,3 +555,4 @@ TEST_F(WatchTest, watch_get_benchmark) {
     FLOG_WARN("count:10000000 elapse:%" PRId64 "s average:%" PRId64 "/s", (endTime - bTime)/1000, 10000000/ ((endTime - bTime)/1000));
 
 }
+*/
