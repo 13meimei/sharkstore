@@ -55,8 +55,8 @@ const (
 
 var Columns = []*models.Column{
 	{Name: "k", DataType: 7, PrimaryKey: 1, Index: true},
-	{Name: "v", DataType: 7, Index: true},
 	{Name: "version", DataType: 4, Index: true},
+	{Name: "v", DataType: 7, Index: true},
 	{Name: "extend", DataType: 7, Index: true},
 }
 
