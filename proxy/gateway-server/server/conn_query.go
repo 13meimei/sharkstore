@@ -58,11 +58,13 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 		if err != nil {
 			metric.GsMetric.ProxyApiMetric(method, false, delay)
 			metric.GsMetric.ErrorLogMetric(sql)
+			golog.Warn("run sql [%v] error log: [%v]", sql, err)
 		} else {
 			metric.GsMetric.ProxyApiMetric(method, true, delay)
 		}
 		if delay > slowLogThreshold.Duration {
 			metric.GsMetric.SlowLogMetric(sql, delay)
+			golog.Warn("run sql [%v] slow log", sql)
 		}
 	}()
 
