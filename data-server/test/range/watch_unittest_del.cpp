@@ -19,6 +19,9 @@
 
 #include "watch/watcher.h"
 #include "common/socket_base.h"
+#include <vector>
+
+//#define private public
 
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
 
@@ -144,6 +147,10 @@ protected:
 
             ASSERT_TRUE(metas.size() == 2) << metas.size();
             // end test create range
+        }
+
+        for(int32_t i=0; i++<100;) {
+            vec_.push_back(i);
         }
 
     }
@@ -294,12 +301,12 @@ protected:
 
         ASSERT_FALSE(resp.header().has_error());
         if (hint == 0) {
-            EXPECT_TRUE(resp.kvs_size() == 0);
+            ASSERT_TRUE(resp.kvs_size() == 0);
         } else if (hint == 1) {
             if(resp.kvs_size())
-                EXPECT_TRUE(resp.kvs(0).value() == val);
+                ASSERT_TRUE(resp.kvs(0).value() == val);
         } else {
-            FLOG_DEBUG("skip hint...%d", hint);
+            FLOG_DEBUG("skip invalid hint...%d", hint);
         }
 
     }
@@ -351,6 +358,14 @@ protected:
 
     }
 
+    std::thread trd1;
+    std::thread trd2;
+    std::condition_variable cond_;
+    std::mutex mutex_;
+
+    std::vector<int32_t> vec_;
+    std::atomic<int32_t> cnt_;
+
 protected:
     server::ContextServer *context_;
     server::RangeServer *range_server_;
@@ -378,6 +393,7 @@ metapb::Range *genRange1() {
     watcher2.EncodeKey(&keyEnd, 1, keys);
 
     meta->set_id(1);
+    meta->set_table_id(1);
     //meta->set_start_key("01003");
     //meta->set_end_key("01004");
     meta->set_start_key(keyStart);
@@ -386,15 +402,13 @@ metapb::Range *genRange1() {
     meta->mutable_range_epoch()->set_conf_ver(1);
     meta->mutable_range_epoch()->set_version(1);
 
-    meta->set_table_id(1);
-
     auto peer = meta->add_peers();
     peer->set_id(1);
     peer->set_node_id(1);
 
-    peer = meta->add_peers();
-    peer->set_id(2);
-    peer->set_node_id(2);
+    //peer = meta->add_peers();
+    //peer->set_id(2);
+    //peer->set_node_id(2);
 
     return meta;
 }
@@ -436,17 +450,292 @@ metapb::Range *genRange2() {
     return meta;
 }
 
-TEST_F(WatchTest, watch_put_get_del_get_single) {
+#ifdef watch_put_and_get_single
+TEST_F(WatchTest, watch_put_and_get_single) {
 
-    {
-        justPut(1, "01003001", "", "03003001:value");
-        justGet(1, "01003001", "", "03003001:value", 1);
+//    {
+//        justPut(1, "01003001", "", "03003001:value");
+//        justGet(1, "01003001", "", "03003001:value", 1);
+//
+//        justDel(1, "01003001", "", "");
+//        justGet(1, "01003001", "", "", 0);
+//    }
 
-        justDel(1, "01003001", "", "");
-        justGet(1, "01003001", "", "", 0);
-    }
+
+
+    trd1 = std::thread([this]() {
+        static bool brkFlag(false);
+        do {
+            std::unique_lock<std::mutex> lock( mutex_ );
+
+            int32_t element(0);
+            if (!vec_.empty()) {
+                element = vec_.back();
+
+                FLOG_DEBUG("thread1>>>%" PRId32, element);
+
+                if (element % 2 == 0) {
+                    vec_.pop_back();
+                    justPut(1, "01003001", "", "03003001:value");
+
+                    cnt_.fetch_add(1);
+                    //cond_.wait(lock);
+                    cond_.notify_one();
+                } else {
+                    //cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                    cond_.wait(lock);
+                }
+
+            } else {
+                brkFlag = true;
+            }
+
+//            if(cnt_>=100) {
+//                FLOG_DEBUG("TRD1 OVER 100");
+//                brkFlag = true;
+//            }
+        }while(!brkFlag);
+
+    });
+
+    trd2 = std::thread([this]() {
+        static bool brkFlag(false);
+        do {
+            std::unique_lock<std::mutex> lock(mutex_);
+
+            int32_t element(0);
+            if (!vec_.empty()) {
+                element = vec_.back();
+
+                FLOG_DEBUG("thread2>>>%" PRId32, element);
+
+                if (element % 2 != 0) {
+                    vec_.pop_back();
+                    justGet(1, "01003001", "", "03003001:value", 1);
+
+                    cnt_.fetch_add(1);
+                    cond_.notify_one();
+                } else {
+                    //cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                    cond_.wait(lock);
+                }
+            } else {
+                brkFlag = true;
+            }
+
+//            if(cnt_>=100) {
+//                FLOG_DEBUG("TRD2 OVER 100");
+//                brkFlag = true;
+//            }
+        }while(!brkFlag);
+
+    });
+
+    trd1.join();
+    trd2.join();
+
+    int64_t cnt = cnt_;
+
+    FLOG_DEBUG("cnt:%" PRId64, cnt);
+
+
 }
+#endif
 
+
+#ifdef watch_put_watch_del_single
+TEST_F(WatchTest, watch_put_watch_del_single) {
+
+//    {
+//        justPut(1, "01003001", "", "03003001:value");
+//        justGet(1, "01003001", "", "03003001:value", 1);
+//
+//        justDel(1, "01003001", "", "");
+//        justGet(1, "01003001", "", "", 0);
+//    }
+
+
+
+    trd1 = std::thread([this]() {
+        static bool brkFlag(false);
+        do {
+            std::unique_lock<std::mutex> lock( mutex_ );
+
+            int32_t element(0);
+            if (!vec_.empty()) {
+                element = vec_.back();
+
+                FLOG_DEBUG("thread1>>>%" PRId32, element);
+
+                if (element % 2 == 0) {
+                    vec_.pop_back();
+                    justPut(1, "01003001", "", "03003001:value");
+                    justWatch(1, "01003001", "", 100, false);
+
+                    cnt_.fetch_add(1);
+                    //cond_.wait(lock);
+                    cond_.notify_one();
+                } else {
+                    //cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                    cond_.wait(lock);
+                }
+
+            } else {
+                brkFlag = true;
+            }
+
+//            if(cnt_>=100) {
+//                FLOG_DEBUG("TRD1 OVER 100");
+//                brkFlag = true;
+//            }
+        }while(!brkFlag);
+
+    });
+
+    trd2 = std::thread([this]() {
+        static bool brkFlag(false);
+        do {
+            std::unique_lock<std::mutex> lock(mutex_);
+
+            int32_t element(0);
+            if (!vec_.empty()) {
+                element = vec_.back();
+
+                FLOG_DEBUG("thread2>>>%" PRId32, element);
+
+                if (element % 2 != 0) {
+                    vec_.pop_back();
+                    //justGet(1, "01003001", "", "03003001:value", 1);
+                    justDel(1, "01003001", "", "", false);
+
+                    cnt_.fetch_add(1);
+                    cond_.notify_one();
+                } else {
+                    //cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                    cond_.wait(lock);
+                }
+            } else {
+                brkFlag = true;
+            }
+
+//            if(cnt_>=100) {
+//                FLOG_DEBUG("TRD2 OVER 100");
+//                brkFlag = true;
+//            }
+        }while(!brkFlag);
+
+    });
+
+    trd1.join();
+    trd2.join();
+
+    int64_t cnt = cnt_;
+
+    FLOG_DEBUG("cnt:%" PRId64, cnt);
+
+
+}
+#endif
+
+#define watch_put_watch_del_group
+#ifdef watch_put_watch_del_group
+TEST_F(WatchTest, watch_put_watch_del_group) {
+
+//    {
+//        justPut(1, "01003001", "", "03003001:value");
+//        justGet(1, "01003001", "", "03003001:value", 1);
+//
+//        justDel(1, "01003001", "", "");
+//        justGet(1, "01003001", "", "", 0);
+//    }
+
+
+
+    trd1 = std::thread([this]() {
+        static bool brkFlag(false);
+        do {
+            std::unique_lock<std::mutex> lock( mutex_ );
+
+            int32_t element(0);
+            if (!vec_.empty()) {
+                element = vec_.back();
+
+                FLOG_DEBUG("thread1>>>%" PRId32, element);
+
+                if (element % 2 == 0) {
+                    vec_.pop_back();
+                    justPut(1, "01003001", "01003001-aaa", "03003001:value");
+
+                    auto version = range_server_->Find(1)->apply_index_;
+
+                    justWatch(1, "01003001", "", version, true);
+
+                    cnt_.fetch_add(1);
+                    //cond_.wait(lock);
+                    cond_.notify_one();
+                } else {
+                    //cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                    cond_.wait(lock);
+                }
+
+            } else {
+                brkFlag = true;
+            }
+
+//            if(cnt_>=100) {
+//                FLOG_DEBUG("TRD1 OVER 100");
+//                brkFlag = true;
+//            }
+        }while(!brkFlag);
+
+    });
+
+    trd2 = std::thread([this]() {
+        static bool brkFlag(false);
+        do {
+            std::unique_lock<std::mutex> lock(mutex_);
+
+            int32_t element(0);
+            if (!vec_.empty()) {
+                element = vec_.back();
+
+                FLOG_DEBUG("thread2>>>%" PRId32, element);
+
+                if (element % 2 != 0) {
+                    vec_.pop_back();
+                    //justGet(1, "01003001", "", "03003001:value", 1);
+                    justDel(1, "01003001", "01003001-aaa", "", true);
+
+                    cnt_.fetch_add(1);
+                    cond_.notify_one();
+                } else {
+                    //cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                    cond_.wait(lock);
+                }
+            } else {
+                brkFlag = true;
+            }
+
+//            if(cnt_>=100) {
+//                FLOG_DEBUG("TRD2 OVER 100");
+//                brkFlag = true;
+//            }
+        }while(!brkFlag);
+
+    });
+
+    trd1.join();
+    trd2.join();
+
+    int64_t cnt = cnt_;
+
+    FLOG_DEBUG("cnt:%" PRId64, cnt);
+
+
+}
+#endif
+
+/*
 TEST_F(WatchTest, watch_put_get_del_get_group) {
 
         FLOG_DEBUG("watch_put single mode.");
@@ -492,19 +781,20 @@ TEST_F(WatchTest, watch_del_single_watch) {
 
 
         sleep(15);
-        /*
-        for(auto i = 0; i < 110; i ++) {
-            char szKey2[1000] = {0};
-            sprintf(szKey2, "01004001%d", i);
-            std::string key2(szKey2);
-            justGet(2, "01004001", key2, "01004001:value");
-        }*/
+
+//        for(auto i = 0; i < 110; i ++) {
+//            char szKey2[1000] = {0};
+//            sprintf(szKey2, "01004001%d", i);
+//            std::string key2(szKey2);
+//            justGet(2, "01004001", key2, "01004001:value");
+//        }
     }
 
     //test get group
 
 
 }
+*/
 
 /*
 TEST_F(WatchTest, watch_del_benchmark) {

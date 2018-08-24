@@ -566,7 +566,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     Status ret;
     errorpb::Error *err = nullptr;
 
-    RANGE_LOG_DEBUG("ApplyWatchPut begin");
+    //RANGE_LOG_DEBUG("ApplyWatchPut begin");
     auto &req = cmd.kv_watch_put_req();
     auto btime = get_micro_second();
     watchpb::WatchKeyValue notifyKv;
@@ -582,6 +582,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         test_version += 1;
         ////////////////////////////////////////////////////////////
         version = test_version;
+        apply_index_=version;
         ///////////////////////////////////////////////////////////
     }
     notifyKv.set_version(version);
@@ -671,7 +672,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     Status ret;
     errorpb::Error *err = nullptr;
 
-    RANGE_LOG_DEBUG("ApplyWatchDel begin");
+//    RANGE_LOG_DEBUG("ApplyWatchDel begin");
 
     auto &req = cmd.kv_watch_del_req();
     auto btime = get_micro_second();
@@ -685,10 +686,11 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
     //for test
     if (0) {
-        static std::atomic<int64_t> test_version = {0};
+        static std::atomic<int64_t> test_version = {1};
         test_version += 1;
         ////////////////////////////////////////////////////////////
         version = test_version;
+        apply_index_=version;
         ///////////////////////////////////////////////////////////
     }
 
@@ -782,6 +784,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
             auto resp = new watchpb::DsKvWatchDeleteResponse;
             resp->mutable_resp()->set_code(ret.code());
             ReplySubmit(cmd, resp, err, btime);
+
         } else if (err != nullptr) {
             delete err;
             continue;
