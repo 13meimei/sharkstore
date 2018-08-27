@@ -199,7 +199,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 2;
+        raft->SetLeaderTerm(2, 1);
         range_server_->ranges_[1]->is_leader_ = false;
 
         auto msg = new common::ProtoMessage;
@@ -236,7 +236,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -273,7 +273,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -308,7 +308,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -343,7 +343,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -379,13 +379,13 @@ TEST_F(RawTest, Raw) {
         range_server_->ranges_[1]->split_range_id_ = 2;
         {
             auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->ops_.leader = 1;
+            raft->SetLeaderTerm(1, 1);
             range_server_->ranges_[1]->is_leader_ = true;
         }
 
         {
             auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->ops_.leader = 1;
+            raft->SetLeaderTerm(1, 1);
             range_server_->ranges_[2]->is_leader_ = true;
         }
 
@@ -465,7 +465,7 @@ TEST_F(RawTest, Raw) {
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        ASSERT_FALSE(resp.header().has_error());
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().DebugString();
         ASSERT_TRUE(resp.resp().value() == "01004001:value");
 
         // end test raw_get
@@ -503,7 +503,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 0;
+        raft->SetLeaderTerm(0, 2);
         range_server_->ranges_[1]->is_leader_ = false;
 
         auto msg = new common::ProtoMessage;
@@ -539,7 +539,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 2;
+        raft->SetLeaderTerm(2, 2);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -575,7 +575,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -611,13 +611,13 @@ TEST_F(RawTest, Raw) {
         range_server_->ranges_[1]->split_range_id_ = 2;
         {
             auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->ops_.leader = 1;
+            raft->SetLeaderTerm(1, 1);
             range_server_->ranges_[1]->is_leader_ = true;
         }
 
         {
             auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->ops_.leader = 1;
+            raft->SetLeaderTerm(1, 1);
             range_server_->ranges_[2]->is_leader_ = true;
         }
 
@@ -679,7 +679,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 0;
+        raft->SetLeaderTerm(0, 1);
         range_server_->ranges_[1]->is_leader_ = false;
 
         auto msg = new common::ProtoMessage;
@@ -715,7 +715,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 2;
+        raft->SetLeaderTerm(2, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -751,7 +751,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -785,7 +785,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -819,7 +819,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -853,7 +853,7 @@ TEST_F(RawTest, Raw) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->is_leader_ = true;
 
         auto msg = new common::ProtoMessage;
@@ -888,13 +888,13 @@ TEST_F(RawTest, Raw) {
         range_server_->ranges_[1]->split_range_id_ = 2;
         {
             auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->ops_.leader = 1;
+            raft->SetLeaderTerm(1, 1);
             range_server_->ranges_[1]->is_leader_ = true;
         }
 
         {
             auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->ops_.leader = 1;
+            raft->SetLeaderTerm(1, 1);
             range_server_->ranges_[2]->is_leader_ = true;
         }
 

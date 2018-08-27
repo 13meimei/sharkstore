@@ -7,7 +7,7 @@
 #include "frame/sf_logger.h"
 
 bool SocketSessionMock::GetResult(google::protobuf::Message *req) {
-    if (result_.empty()) {
+    if (!pending_) {
         return false;
     }
     google::protobuf::io::ArrayInputStream input(result_.data(), static_cast<int>(result_.size()));
@@ -15,13 +15,14 @@ bool SocketSessionMock::GetResult(google::protobuf::Message *req) {
     if (!ret) {
         return false;
     } else {
-        result_.clear();
+        pending_ = false;
         return true;
     }
 }
 
 void SocketSessionMock::Send(ProtoMessage *msg, google::protobuf::Message *resp) {
     resp->SerializeToString(&result_);
+    pending_ = true;
     delete msg;
     delete resp;
 }
