@@ -29,18 +29,18 @@ WatcherSet::WatcherSet() {
                 if (w_ptr->IsSentResponse()) {
                     // repsonse is sent, delete watcher in map and queue
                     // delete in map
-                    WatcherKey encode_key;
-                    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys(false));
-                    if (w_ptr->GetType() == WATCH_KEY) {
-                        DelKeyWatcher(encode_key, w_ptr->GetWatcherId());
-                    } else {
-                        DelPrefixWatcher(encode_key, w_ptr->GetWatcherId());
-                    }
+//                    WatcherKey encode_key;
+//                    w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys(false));
+//                    if (w_ptr->GetType() == WATCH_KEY) {
+//                        DelKeyWatcher(encode_key, w_ptr->GetWatcherId());
+//                    } else {
+//                        DelPrefixWatcher(encode_key, w_ptr->GetWatcherId());
+//                    }
 
                     watcher_queue_.pop();
 
-                    FLOG_INFO("watcher is sent response, timer queue pop : watch_id:[%" PRIu64 "] key: [%s]",
-                               w_ptr->GetWatcherId(), EncodeToHexString(encode_key).c_str());
+                    FLOG_INFO("queue_size:%" PRId64 " watcher is sent response, timer queue pop : watch_id:[%" PRIu64 "]",
+                            watcher_queue_.size(), w_ptr->GetWatcherId());
                     w_ptr = nullptr;
                 } else {
                     break;
@@ -81,12 +81,12 @@ WatcherSet::WatcherSet() {
                 auto excEnd = get_micro_second();
                 //auto take_time = excEnd - waitBeginTime;
 
-                FLOG_INFO("key: [%s] wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
+                FLOG_INFO("queue_size:%" PRId64 " key: [%s] wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
                                    " execute take time: %" PRId64 " us,wait time:%" PRId64 " us",
-                           EncodeToHexString(encode_key).c_str(), w_ptr->GetMessage()->session_id, w_ptr->GetMsgId(),
+                           watcher_queue_.size(), EncodeToHexString(encode_key).c_str(), w_ptr->GetMessage()->session_id, w_ptr->GetMsgId(),
                            w_ptr->GetWatcherId(), excEnd-excBegin,excBegin-waitBeginTime);
 
-                FLOG_DEBUG("timeout: msg->begin_time:%" PRId64 "us expire:%" PRId64 "ms now:%" PRId64 "us",
+                FLOG_DEBUG("timeout: msg->begin_time:%" PRId64 "us expire:%" PRId64 "us now:%" PRId64 "us",
                            w_ptr->GetMessage()->begin_time, w_ptr->GetExpireTime(), excEnd);
 
 //                FLOG_INFO("watcher expire timeout, timer queue pop: session_id: %" PRId64 " watch_id:[%" PRIu64 "] key: [%s]",
@@ -269,8 +269,8 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         code = WATCH_OK;
 
-        FLOG_INFO("watcher add success, count:%" PRIu64 " watcher_id[%" PRIu64 "] key: [%s]  take time:%" PRId64 " ms",
-                  watcher_map_it->second->mapKeyWatcher.size(), w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), endTime - beginTime);
+        FLOG_INFO("watcher add success, count:%" PRIu64 " queue_size:%" PRId64 " watcher_id[%" PRIu64 "] key: [%s]  take time:%" PRId64 " ms",
+                  watcher_map_it->second->mapKeyWatcher.size(), watcher_queue_.size(), w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), endTime - beginTime);
     } else {
         code = WATCH_WATCHER_EXIST;
 
