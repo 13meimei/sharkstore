@@ -26,7 +26,7 @@ int32_t CEventBuffer::milli_timeout_ = EVENT_BUFFER_TIME_OUT;
 
 CEventBuffer::CEventBuffer() {
     mapGroupBuffer.clear();
-    create_thread();
+//    create_thread();
 }
 
 CEventBuffer::CEventBuffer(const int &mapSize, const int &queueSize) {
@@ -37,7 +37,7 @@ CEventBuffer::CEventBuffer(const int &mapSize, const int &queueSize) {
     queue_capacity_ = queue_capacity_>0?queue_capacity_:DEFAULT_EVENT_QUEUE_SIZE;
 
     mapGroupBuffer.clear();
-    create_thread();
+//    create_thread();
 }
 
 CEventBuffer::~CEventBuffer() {
@@ -45,7 +45,7 @@ CEventBuffer::~CEventBuffer() {
         delete it.second;
     }
     loop_flag_ = false;
-    clear_thread_.join();
+//    clear_thread_.join();
 }
 
 BufferReturnPair  CEventBuffer::loadFromBuffer(const std::string &grpKey,  int64_t userVersion,
