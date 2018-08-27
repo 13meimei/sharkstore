@@ -7,6 +7,7 @@ _Pragma("once");
 #include "iterator.h"
 #include "metric.h"
 #include "proto/gen/kvrpcpb.pb.h"
+#include "proto/gen/watchpb.pb.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -14,6 +15,7 @@ namespace storage {
 
 // 行前缀长度: 1字节特殊标记+8字节table id
 static const size_t kRowPrefixLength = 9;
+static const unsigned char kStoreKVPrefixByte = '\x01';
 
 class Store {
 public:
@@ -33,7 +35,14 @@ public:
     Status DeleteRows(const kvrpcpb::DeleteRequest& req, uint64_t* affected);
     Status Truncate();
 
+    Status WatchPut(const watchpb::KvWatchPutRequest& req, int64_t version);
+    Status WatchDelete(const watchpb::KvWatchDeleteRequest& req);
+    Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req,
+            watchpb::DsKvWatchGetMultiResponse *resp);
+    Status WatchScan();
+
     void SetEndKey(std::string end_key);
+    std::string GetEndKey() const;
 
     const std::vector<metapb::Column>& GetPrimaryKeys() const {
         return primary_keys_;
@@ -69,12 +78,18 @@ private:
     void addMetricRead(uint64_t keys, uint64_t bytes);
     void addMetricWrite(uint64_t keys, uint64_t bytes);
 
+    std::string encodeWatchKey(const watchpb::WatchKeyValue& kv) const;
+    std::string encodeWatchValue(const watchpb::WatchKeyValue& kv, int64_t version) const;
+    bool decodeWatchKey(const std::string& key, watchpb::WatchKeyValue *kv) const;
+    bool decodeWatchValue(const std::string& value, watchpb::WatchKeyValue *kv) const;
+
 private:
-    const uint64_t range_id_;
+    const uint64_t table_id_ = 0;
+    const uint64_t range_id_ = 0;
     const std::string start_key_;
 
     std::string end_key_;
-    std::mutex key_lock_;
+    mutable std::mutex key_lock_;
 
     rocksdb::DB* db_;
     rocksdb::WriteOptions write_options_;

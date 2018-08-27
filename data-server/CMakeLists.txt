@@ -166,6 +166,8 @@ set(SOURCES
     src/range/peer.cpp
     src/range/snapshot.cpp
     src/range/kv_funcs.cpp
+	src/range/watch.cpp
+	src/range/watch_funcs.cpp
     src/range/submit.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
@@ -175,6 +177,7 @@ set(SOURCES
     src/storage/row_decoder.cpp
     src/storage/row_fetcher.cpp
     src/storage/store.cpp
+    src/storage/store_watch.cpp
     src/master/client.cpp
     src/master/connection.cpp
     src/master/rpc_types.cpp
@@ -184,6 +187,10 @@ set(SOURCES
     src/monitor/encodedata.cpp
     src/monitor/histogram.cpp
     src/monitor/rangedata.cpp
+	src/watch/watcher.cpp
+	src/watch/watcher_set.cpp
+	src/watch/watch_server.cpp
+	src/watch/watch_event_buffer.cpp
     src/monitor/statistics.cpp
     src/admin/admin_server.cpp
     src/admin/get_config.cpp
@@ -236,7 +243,7 @@ foreach(f IN LISTS SOURCES)
         COMPILE_DEFINITIONS "__FNAME__=\"${fname}\"") 
 endforeach() 
 
-add_executable(data-server ${SOURCES})
+add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(

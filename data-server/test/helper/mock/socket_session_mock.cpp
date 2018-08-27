@@ -7,12 +7,22 @@
 #include "frame/sf_logger.h"
 
 bool SocketSessionMock::GetResult(google::protobuf::Message *req) {
-    google::protobuf::io::ArrayInputStream input(result_.data(), result_.size());
-    return req->ParseFromZeroCopyStream(&input);
+    if (!pending_) {
+        return false;
+    }
+    google::protobuf::io::ArrayInputStream input(result_.data(), static_cast<int>(result_.size()));
+    bool ret = req->ParseFromZeroCopyStream(&input);
+    if (!ret) {
+        return false;
+    } else {
+        pending_ = false;
+        return true;
+    }
 }
 
 void SocketSessionMock::Send(ProtoMessage *msg, google::protobuf::Message *resp) {
     resp->SerializeToString(&result_);
+    pending_ = true;
     delete msg;
     delete resp;
 }

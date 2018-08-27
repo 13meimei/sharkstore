@@ -21,6 +21,7 @@ public:
     bool GetResult(google::protobuf::Message *req);
 
 private:
+    bool pending_ = false;
     std::string result_;
 };
 

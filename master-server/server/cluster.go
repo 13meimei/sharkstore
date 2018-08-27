@@ -481,9 +481,11 @@ func (c *Cluster) DeleteTable(dbName, tableName string, fast bool) (*Table, erro
 	key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
 	batch.Put(key, tbData)
 	// close auto switch
-	key = []byte(fmt.Sprintf(PREFIX_AUTO_TRANSFER_TABLE, table.GetId()))
+	key = []byte(fmt.Sprintf("%s%d", PREFIX_AUTO_TRANSFER_TABLE, table.GetId()))
 	batch.Delete(key)
-	key = []byte(fmt.Sprintf(PREFIX_AUTO_FAILOVER_TABLE, table.GetId()))
+	key = []byte(fmt.Sprintf("%s%d", PREFIX_AUTO_FAILOVER_TABLE, table.GetId()))
+	batch.Delete(key)
+	key = []byte(fmt.Sprintf("%s%d", TABLE_AUTO_INCREMENT_ID, table.GetId()))
 	batch.Delete(key)
 	err := batch.Commit()
 	if err != nil {
@@ -516,8 +518,7 @@ func (c *Cluster) CancelTable(dbName, tName string) error {
 		return ErrNotCancel
 	}
 	if table.Status == metapb.TableStatus_TablePrepare {
-		key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
-		if err := c.store.Delete(key); err != nil {
+		if err := c.deleteTable(table.GetId()); err != nil {
 			log.Error("MS scheduler delete expired table:[%s][%d] from store is failed.",
 				table.GetName(), table.GetId())
 			return err

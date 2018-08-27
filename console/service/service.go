@@ -18,18 +18,18 @@ import (
 	"github.com/satori/go.uuid"
 )
 import (
+	"model/pkg/ds_admin"
+	"model/pkg/kvrpcpb"
 	"console/models"
 	"console/common"
 	"console/config"
+	"console/right"
 	"util/log"
-	"util/ttlcache"
-
 	"strconv"
 	"errors"
 	"sync"
 	"crypto/md5"
 	"encoding/hex"
-	"model/pkg/ds_admin"
 )
 
 const (
@@ -52,25 +52,11 @@ const (
 	LOCK_CLIENT_NAMESPACE_PREFIX = ""
 )
 
-var lockColumns = []*models.Column{
+var Columns = []*models.Column{
 	{Name: "k", DataType: 7, PrimaryKey: 1, Index: true},
+	{Name: "version", DataType: 4, Index: true},
 	{Name: "v", DataType: 7, Index: true},
-	{Name: "lock_id", DataType: 7, Index: true},
-	{Name: "expired_time", DataType: 4, Index: true},
-	{Name: "upd_time", DataType: 4, Index: true},
-	{Name: "delete_flag", DataType: 3, Index: true},
-	{Name: "creator", DataType: 7, Index: true},
-}
-
-var configureColumns = []*models.Column{
-	{Name: "k", DataType: 7, PrimaryKey: 1, Index: true},
-	{Name: "v", DataType: 7, Index: true},
-	{Name: "version", DataType: 7, Index: true},
 	{Name: "extend", DataType: 7, Index: true},
-	{Name: "create_time", DataType: 4, Index: true},
-	{Name: "upd_time", DataType: 4, Index: true},
-	{Name: "delete_flag", DataType: 3, Index: true},
-	{Name: "creator", DataType: 7, Index: true},
 }
 
 var serviceInstance *Service = nil
@@ -78,7 +64,6 @@ var serviceInstance *Service = nil
 type Service struct {
 	config     *config.Config
 	db         *sql.DB
-	adminCache *ttlcache.TTLCache
 }
 
 func NewService() *Service {
@@ -2208,26 +2193,19 @@ func (s *Service) SetMasterLogLevel(clusterId int, logLevel string) (error) {
 }
 
 func (s *Service) IsAdmin(userName string) (bool, error) {
-	flag, find := s.adminCache.Get(userName)
-	if find {
-		log.Info("enter cache")
-		return flag.(bool), nil
+	userInfo, err := right.GetUserCluster(s.GetDb(), userName)
+	if err != nil {
+		log.Error("user %v isAdmin error, %v", userName, err)
+		return false, err
 	}
-	log.Info("enter db query")
-	var exist bool
-	var user string
-	if err := s.db.QueryRow(fmt.Sprintf(`SELECT user_name  FROM %s WHERE user_name="%s" and privilege = 1`, TABLE_NAME_PRIVILEGE, userName)).
-		Scan(&(user)); err != nil {
-		if err != sql.ErrNoRows {
-			log.Error("db queryrow is failed. err:[%v]", err)
-			return false, common.DB_ERROR
+	if userInfo != nil {
+		for _, right := range userInfo.Right {
+			if right == 1 {
+				return true, nil
+			}
 		}
 	}
-	if len(user) > 0 {
-		exist = true
-	}
-	s.adminCache.Put(userName, exist)
-	return exist, nil
+	return false, nil
 }
 
 //=============sql apply start==============
@@ -2519,7 +2497,7 @@ func (s *Service) AuditLockNsp(ids []string, status int, auditor string) error {
 				return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: fmt.Sprintf("exist table %v in cluster %v", info.TableName, info.ClusterId)}
 			}
 
-			tableInfo, err := s.CreateTable(info.ClusterId, info.DbName, info.TableName, "", "", lockColumns, nil)
+			tableInfo, err := s.CreateTable(info.ClusterId, info.DbName, info.TableName, "", "", Columns, nil)
 			if err != nil {
 				log.Warn("create lock  table %v on cluster %v failed, err: %v", info.TableName, info.ClusterId, err)
 				return err
@@ -2595,7 +2573,7 @@ func (s *Service) GetLockClusterList() ([]*models.ClusterInfo, error) {
 }
 
 //go by http command
-func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.LockInfo, error) {
+func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.LockShow, error) {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return nil, err
@@ -2632,7 +2610,7 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 		TableName:    tableName,
 		Command: &models.Command{
 			Type:   "get",
-			Field:  []string{"k", "v", "lock_id", "expired_time", "upd_time", "delete_flag", "creator"},
+			Field:  []string{"k", "v", "version", "extend"},
 			Filter: filter,
 		},
 	}
@@ -2647,17 +2625,26 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 
 	log.Info("result: %v", reply)
 
-	var lockInfos []*models.LockInfo
+	var lockInfos []*models.LockShow
 	for _, lockInfo := range reply.Values {
-		tInfo := new(models.LockInfo)
+		tInfo := new(models.LockShow)
 		tInfo.K = fmt.Sprintf("%v", lockInfo[0])
-		tInfo.V = fmt.Sprintf("%v", lockInfo[1])
-		tInfo.LockId = fmt.Sprintf("%v", lockInfo[2])
-		tInfo.ExpiredTime, _ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[3]), 10, 46)
-		tInfo.UpdTime, _ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[4]), 10, 46)
-		deleteFlag, _ := strconv.ParseInt(fmt.Sprintf("%v", lockInfo[5]), 10, 46)
-		tInfo.DeleteFlag = int8(deleteFlag)
-		tInfo.Creator = fmt.Sprintf("%v", lockInfo[6])
+		value := fmt.Sprintf("%s", lockInfo[1])//todo parse
+		if len(value) > 0 {
+			newValue := new(kvrpcpb.LockValue)
+			if err = newValue.Unmarshal([]byte(value)); err != nil {
+				log.Warn("unmarshal value %v error %v", value, err)
+				tInfo.V = value
+			} else {
+				tInfo.V = string(newValue.GetValue())
+				tInfo.LockId = newValue.GetId()
+				tInfo.UpdTime = newValue.GetUpdateTime()
+				tInfo.ExpiredTime = newValue.GetDeleteTime()
+				//tInfo.Creator = newValue.get
+			}
+		}
+		tInfo.Version,_ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[2]), 10, 46)
+		tInfo.Extend = fmt.Sprintf("%v", lockInfo[3])
 		lockInfos = append(lockInfos, tInfo)
 	}
 	return lockInfos, nil
@@ -2771,7 +2758,7 @@ func (s *Service) GetClusterInfo(clusterId int) (*models.ClusterInfo, error) {
 		} else {
 			urlArray = strings.Split(info.MasterUrl, ":")
 		}
-		clusterInfo.MasterUrl = urlArray[0]
+		clusterInfo.MasterUrl = fmt.Sprintf("%s:%d", urlArray[0], s.config.DomainRpcPort)
 	}
 	return clusterInfo, nil
 }
@@ -2810,7 +2797,7 @@ func (s *Service) GetConfigureClusterList() ([]*models.ClusterInfo, error) {
 }
 
 //go by http command
-func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.ConfigureInfo, error) {
+func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.ConfigureShow, error) {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return nil, err
@@ -2847,7 +2834,7 @@ func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageI
 		TableName:    tableName,
 		Command: &models.Command{
 			Type:   "get",
-			Field:  []string{"k", "v", "version", "extend", "create_time", "upd_time", "delete_flag", "creator"},
+			Field:  []string{"k", "v", "version", "extend"},
 			Filter: filter,
 		},
 	}
@@ -2862,18 +2849,16 @@ func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageI
 
 	log.Info("result: %v", reply)
 
-	var configureInfos []*models.ConfigureInfo
+	var configureInfos []*models.ConfigureShow
 	for _, confInfo := range reply.Values {
-		tInfo := new(models.ConfigureInfo)
+		tInfo := new(models.ConfigureShow)
 		tInfo.K = fmt.Sprintf("%v", confInfo[0])
-		tInfo.V = fmt.Sprintf("%v", confInfo[1])
-		tInfo.Version = fmt.Sprintf("%v", confInfo[2])
+		tInfo.V = fmt.Sprintf("%v", confInfo[1]) //todo parse
+		tInfo.Version,_ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[2]), 10, 46)
 		tInfo.Extend = fmt.Sprintf("%v", confInfo[3])
-		tInfo.CreateTime, _ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[4]), 10, 46)
-		tInfo.UpdTime, _ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[5]), 10, 46)
-		deleteFlag, _ := strconv.ParseInt(fmt.Sprintf("%v", confInfo[6]), 10, 46)
-		tInfo.DeleteFlag = int8(deleteFlag)
-		tInfo.Creator = fmt.Sprintf("%v", confInfo[7])
+		//tInfo.CreateTime, _ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[4]), 10, 46)
+		//tInfo.UpdTime, _ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[5]), 10, 46)
+		//tInfo.Creator = fmt.Sprintf("%v", confInfo[7])
 		configureInfos = append(configureInfos, tInfo)
 	}
 	return configureInfos, nil
@@ -2899,7 +2884,7 @@ func (s *Service) AuditConfigureNsp(ids []string, status int, auditor string) er
 				return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: fmt.Sprintf("exist table %v in cluster %v", info.TableName, info.ClusterId)}
 			}
 
-			tableInfo, err := s.CreateTable(info.ClusterId, info.DbName, info.TableName, "", "", configureColumns, nil)
+			tableInfo, err := s.CreateTable(info.ClusterId, info.DbName, info.TableName, "", "", Columns, nil)
 			if err != nil {
 				log.Warn("create configure  table %v on cluster %v failed, err: %v", info.TableName, info.ClusterId, err)
 				return err
@@ -3526,6 +3511,5 @@ func InitService(c *config.Config) {
 	serviceInstance = &Service{
 		config:     c,
 		db:         db,
-		adminCache: ttlcache.NewTTLCache(2 * time.Minute),
 	}
 }

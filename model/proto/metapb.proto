@@ -178,11 +178,12 @@ message Column {
     int32 ordinal              = 9;
     // 索引 Binary不支持索引，其他类型列默认均是索引列
     bool index                 = 10;
-    // 自增 bool auto_increment
     // 唯一键 bool unique
 
     bytes default_value        = 11;
     string properties          = 12;
+    //自增
+    bool auto_increment        = 13;
 }
 
 message Primary {

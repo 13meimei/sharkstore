@@ -7,6 +7,7 @@ _Pragma("once");
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "stats.h"
 #include "split_policy.h"
+#include "server/context_server.h"
 
 namespace sharkstore {
 
@@ -38,15 +39,16 @@ public:
     virtual storage::MetaStore* MetaStore() = 0;
     virtual common::SocketSession* SocketSession() = 0;
     virtual RangeStats* Statistics() = 0;
+    virtual server::RangeServer* RangServer() = 0;
 
     // filesystem usage percent for check writable
-    virtual uint64_t GetFSUsagePercent() const { return 0; }
+    virtual uint64_t GetFSUsagePercent() const = 0;
 
-    virtual void ScheduleHeartbeat(uint64_t range_id, bool delay) {}
-    virtual void ScheduleCheckSize(uint64_t range_id) {}
+    virtual void ScheduleHeartbeat(uint64_t range_id, bool delay) = 0;
+    virtual void ScheduleCheckSize(uint64_t range_id) = 0;
 
     // range manage
-    virtual std::shared_ptr<Range> FindRange(uint64_t range_id) { return nullptr; }
+    virtual std::shared_ptr<Range> FindRange(uint64_t range_id) = 0;
 
     // split
     virtual Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index) {

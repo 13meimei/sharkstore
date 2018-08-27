@@ -13,7 +13,6 @@ import (
 	"util/deepcopy"
 	"util/log"
 
-	"github.com/gogo/protobuf/proto"
 	"golang.org/x/net/context"
 )
 
@@ -21,11 +20,16 @@ var (
 	MAX_COLUMN_NAME_LENGTH = 128
 )
 
-var PREFIX_AUTO_TRANSFER_TABLE string = fmt.Sprintf("$auto_transfer_table_%d")
-var PREFIX_AUTO_FAILOVER_TABLE string = fmt.Sprintf("$auto_failover_table_%d")
+var PREFIX_AUTO_TRANSFER_TABLE string = fmt.Sprintf("$auto_transfer_table_")
+var PREFIX_AUTO_FAILOVER_TABLE string = fmt.Sprintf("$auto_failover_table_")
+var TABLE_AUTO_INCREMENT_ID string = fmt.Sprintf("$auto_increment_table_")
 
 type Table struct {
 	*metapb.Table
+	//自增id
+	idGenerator IDGenerator
+	//geneLock
+
 	// 表属性锁
 	schemaLock sync.RWMutex
 	// 路由锁
@@ -60,6 +64,21 @@ func (t *Table) GenColId() uint64 {
 	defer t.lock.Unlock()
 	t.maxColId++
 	return t.maxColId
+}
+
+func (t *Table) GetAutoIncId(store Store, size uint32) ([]uint64, error) {
+	t.getGenerator(store)
+	return t.idGenerator.GetBatchIds(size)
+}
+
+func (t *Table) getGenerator(store Store){
+	if t.idGenerator == nil {
+		t.lock.Lock()
+		defer t.lock.Unlock()
+		if t.idGenerator == nil {
+			t.idGenerator = NewTablePkIdGenerator(t.GetId(), store)
+		}
+	}
 }
 
 type TableProperty struct {
@@ -189,7 +208,7 @@ func checkTTLDataType(dataType metapb.DataType) bool {
 	return metapb.DataType_BigInt == dataType
 }
 
-func (t *Table) UpdateSchema(columns []*metapb.Column, store Store) ([]*metapb.Column, error) {
+func (t *Table) UpdateSchema(columns []*metapb.Column, cluster *Cluster) ([]*metapb.Column, error) {
 	t.schemaLock.Lock()
 	defer t.schemaLock.Unlock()
 	table := deepcopy.Iface(t.Table).(*metapb.Table)
@@ -237,15 +256,7 @@ func (t *Table) UpdateSchema(columns []*metapb.Column, store Store) ([]*metapb.C
 	table.Columns = allCols
 	table.Properties = props
 	table.Epoch.ConfVer++
-	data, err := proto.Marshal(table)
-	if err != nil {
-		return nil, err
-	}
-	batch := store.NewBatch()
-	key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, t.GetId()))
-	batch.Put(key, data)
-	err = batch.Commit()
-	if err != nil {
+	if err := cluster.storeTable(table); err != nil {
 		return nil, err
 	}
 	t.Table = table

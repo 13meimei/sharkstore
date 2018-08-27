@@ -12,6 +12,7 @@ set (proto_SOURCES
     gen/statspb.pb.cc
     gen/taskpb.pb.cc
     gen/timestamp.pb.cc
+    gen/watchpb.pb.cc
 )
 
 add_library(sharkstore-proto STATIC ${proto_SOURCES})

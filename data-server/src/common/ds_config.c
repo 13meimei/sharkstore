@@ -378,6 +378,25 @@ static int load_metric_config(IniContext *ini_context) {
     return 0;
 }
 
+static int load_watch_config(IniContext *ini_context) {
+    char *section = "watch";
+
+    ds_config.watch_config.buffer_map_size =
+            iniGetIntValue(section, "buffer_map_size", ini_context, 10);
+    if (ds_config.watch_config.buffer_map_size <= 0) {
+        ds_config.watch_config.buffer_map_size = 10;
+    }
+
+    ds_config.watch_config.buffer_queue_size =
+            iniGetIntValue(section, "buffer_queue_size", ini_context, 100);
+    if (ds_config.watch_config.buffer_queue_size <= 0) {
+        ds_config.watch_config.buffer_queue_size = 100;
+    }
+
+    return 0;
+}
+
+
 static int load_heartbeat_config(IniContext *ini_context) {
     char *section = "heartbeat";
 
@@ -475,6 +494,10 @@ int load_from_conf_file(IniContext *ini_context, const char *filename) {
     }
 
     if (load_metric_config(ini_context) != 0) {
+        return -1;
+    }
+
+    if(load_watch_config(ini_context) != 0) {
         return -1;
     }
 

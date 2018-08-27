@@ -1877,84 +1877,84 @@ func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		log.Warn("create database %s failed, err %v", fbase, err)
 	}
-	// cluster_meta
-	parseColumn(cluster_meta)
-	_, err = cluster.CreateTable(fbase, "cluster_meta", cluster_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "cluster_meta", err)
-	}
-	// cluster_net
-	parseColumn(cluster_net)
-	_, err = cluster.CreateTable(fbase, "cluster_net", cluster_net, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "cluster_net", err)
-	}
-	// cluster_slowlog
-	parseColumn(cluster_slowlog)
-	_, err = cluster.CreateTable(fbase, "cluster_slowlog", cluster_slowlog, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "cluster_slowlog", err)
-	}
-	// mac_meta
-	parseColumn(mac_meta)
-	_, err = cluster.CreateTable(fbase, "mac_meta", mac_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "mac_meta", err)
-	}
-	// mac_disk
-	parseColumn(mac_disk)
-	_, err = cluster.CreateTable(fbase, "mac_disk", mac_disk, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "mac_disk", err)
-	}
-	// mac_mem
-	parseColumn(mac_mem)
-	_, err = cluster.CreateTable(fbase, "mac_mem", mac_mem, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "mac_mem", err)
-	}
-	// mac_net
-	parseColumn(mac_net)
-	_, err = cluster.CreateTable(fbase, "mac_net", mac_net, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "mac_net", err)
-	}
-	// process_meta
-	parseColumn(process_meta)
-	_, err = cluster.CreateTable(fbase, "process_meta", process_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "process_meta", err)
-	}
-	// process_disk
-	parseColumn(process_disk)
-	_, err = cluster.CreateTable(fbase, "process_disk", process_disk, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "process_disk", err)
-	}
-	// process_ds
-	parseColumn(process_ds)
-	_, err = cluster.CreateTable(fbase, "process_ds", process_ds, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "process_ds", err)
-	}
-	// process_net
-	parseColumn(process_net)
-	_, err = cluster.CreateTable(fbase, "process_net", process_net, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "process_net", err)
-	}
-	// db_meta
-	parseColumn(db_meta)
-	_, err = cluster.CreateTable(fbase, "db_meta", db_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "db_meta", err)
-	}
-	// table_meta
-	parseColumn(table_meta)
-	_, err = cluster.CreateTable(fbase, "table_meta", table_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "table_meta", err)
-	}
+	//// cluster_meta
+	//parseColumn(cluster_meta)
+	//_, err = cluster.CreateTable(fbase, "cluster_meta", cluster_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "cluster_meta", err)
+	//}
+	//// cluster_net
+	//parseColumn(cluster_net)
+	//_, err = cluster.CreateTable(fbase, "cluster_net", cluster_net, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "cluster_net", err)
+	//}
+	//// cluster_slowlog
+	//parseColumn(cluster_slowlog)
+	//_, err = cluster.CreateTable(fbase, "cluster_slowlog", cluster_slowlog, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "cluster_slowlog", err)
+	//}
+	//// mac_meta
+	//parseColumn(mac_meta)
+	//_, err = cluster.CreateTable(fbase, "mac_meta", mac_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "mac_meta", err)
+	//}
+	//// mac_disk
+	//parseColumn(mac_disk)
+	//_, err = cluster.CreateTable(fbase, "mac_disk", mac_disk, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "mac_disk", err)
+	//}
+	//// mac_mem
+	//parseColumn(mac_mem)
+	//_, err = cluster.CreateTable(fbase, "mac_mem", mac_mem, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "mac_mem", err)
+	//}
+	//// mac_net
+	//parseColumn(mac_net)
+	//_, err = cluster.CreateTable(fbase, "mac_net", mac_net, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "mac_net", err)
+	//}
+	//// process_meta
+	//parseColumn(process_meta)
+	//_, err = cluster.CreateTable(fbase, "process_meta", process_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "process_meta", err)
+	//}
+	//// process_disk
+	//parseColumn(process_disk)
+	//_, err = cluster.CreateTable(fbase, "process_disk", process_disk, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "process_disk", err)
+	//}
+	//// process_ds
+	//parseColumn(process_ds)
+	//_, err = cluster.CreateTable(fbase, "process_ds", process_ds, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "process_ds", err)
+	//}
+	//// process_net
+	//parseColumn(process_net)
+	//_, err = cluster.CreateTable(fbase, "process_net", process_net, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "process_net", err)
+	//}
+	//// db_meta
+	//parseColumn(db_meta)
+	//_, err = cluster.CreateTable(fbase, "db_meta", db_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "db_meta", err)
+	//}
+	//// table_meta
+	//parseColumn(table_meta)
+	//_, err = cluster.CreateTable(fbase, "table_meta", table_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "table_meta", err)
+	//}
 	// fbase_cluster
 	parseColumn(fbase_cluster)
 	_, err = cluster.CreateTable(fbase, "fbase_cluster", fbase_cluster, nil, false, nil)

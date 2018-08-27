@@ -182,7 +182,7 @@ void Worker::DealTask(common::ProtoMessage *task) {
 
 void Worker::Clean(HashQueue &hash_queue) {
     for (auto mq : hash_queue.msg_queue) {
-        common::ProtoMessage *task;
+        common::ProtoMessage *task = nullptr;
         while (mq->msg_queue.try_dequeue(task)) {
             delete task;
         }
@@ -215,7 +215,8 @@ size_t Worker::ClearQueue(bool fast, bool slow) {
 
 // 0: fast queue; 1: slow queue;
 int Worker::FuncType(common::ProtoMessage *msg) {
-    if (msg->header.func_id == funcpb::FunctionID::kFuncSelect) {
+    if (msg->header.func_id == funcpb::FunctionID::kFuncSelect || 
+        msg->header.func_id == funcpb::FunctionID::kFuncWatchGet ) {
         return 1;
     }
 

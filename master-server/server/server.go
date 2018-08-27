@@ -194,7 +194,7 @@ func (service *Server) InitMasterServer(conf *Config) {
 		service.server = s
 	}
 	service.initHttpHandler()
-	if "" != conf.Alarm.ServerAddress {
+	if len(conf.Alarm.ServerAddress) != 0 {
 		service.alarmClient, err = alarm.NewAlarmClient(conf.Alarm.ServerAddress)
 		if err != nil {
 			log.Fatal("create alarm client failed, err[%v]", err)
@@ -204,15 +204,31 @@ func (service *Server) InitMasterServer(conf *Config) {
 }
 
 func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
-	var alarmReceivers []*alarm.User
-	for _, r := range conf.Receivers {
-		alarmReceivers = append(alarmReceivers, &alarm.User{
-			Mail: r.Mail,
-			Sms:  r.Sms,
-		})
+	//var alarmReceivers []*alarm.User
+	//for _, r := range conf.Receivers {
+	//	alarmReceivers = append(alarmReceivers, &alarm.User{
+	//		Mail: r.Mail,
+	//		Sms:  r.Sms,
+	//	})
+	//}
+	log.Info("alarm server config: \n" +
+		"	server port: %v\n" +
+		"	remote alarm server addr: %v\n" +
+		"	mysql args: %v\n" +
+		"	jim url: %v\n" +
+		"	jim app addr: %v\n", conf.ServerPort,
+		conf.RemoteAlarmServerAddress, conf.MysqlArgs, conf.JimUrl, conf.JimApAddr)
+
+	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort,
+		conf.RemoteAlarmServerAddress, conf.MysqlArgs, conf.JimUrl, conf.JimApAddr)
+	if err != nil {
+		log.Error("alarm.NewAlarmServer failed, err: [%v]", err)
+		return nil
 	}
-	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort, conf.MessageGatewayAddress, conf.RemoteAlarmServerAddress, alarm.NewSimpleReceiver(alarmReceivers))
-	return err
+
+	// app ping url, for alive alarm
+	service.server.Handle("/app/ping", service.alarmServer.HandleAppPing)
+	return nil
 }
 
 func (service *Server) InitMetricServer(conf *Config) {
@@ -234,7 +250,7 @@ func (service *Server) InitMetricServer(conf *Config) {
 	}
 	service.metricServer = metric.NewMetric(service.server, store, conf.Threshold)
 
-	if "" != conf.Alarm.ServerAddress {
+	if len(conf.Alarm.ServerAddress) != 0 {
 		var err error
 		service.alarmClient, err = alarm.NewAlarmClient(conf.Alarm.ServerAddress)
 		if err != nil {

@@ -25,11 +25,9 @@ func (service *Server) handleGetRoute(ctx context.Context, req *mspb.GetRouteReq
 
 	if table, find := cluster.FindTableById(req.GetTableId()); find {
 		if table.Status != metapb.TableStatus_TableRunning {
-			if !find {
-				log.Warn("table[%d] not ready for work", req.GetTableId())
-				err = ErrNotExistTable
-				return
-			}
+			log.Warn("table[%d] not ready for work", req.GetTableId())
+			err = ErrNotExistTable
+			return
 		}
 		ranges := cluster.MultipleSearchRanges(key, max)
 		if ranges == nil {
@@ -65,7 +63,9 @@ func (service *Server) handleGetRoute(ctx context.Context, req *mspb.GetRouteReq
 			}
 		}
 	} else {
-		log.Warn("get route table not found %d", req.GetTableId())
+		log.Warn("get route: table %d not found", req.GetTableId())
+		err = ErrNotExistTable
+		return
 	}
 	resp = new(mspb.GetRouteResponse)
 	resp.Header = &mspb.ResponseHeader{}
@@ -533,7 +533,7 @@ func (service *Server) handleAddColumns(ctx context.Context, req *mspb.AddColumn
 		return nil, errors.New("table is not existed")
 	}
 
-	cols, err := t.UpdateSchema(columns, service.cluster.store)
+	cols, err := t.UpdateSchema(columns, service.cluster)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("column add err %s", err.Error()))
 	}
@@ -554,7 +554,7 @@ func (service *Server) handleGetColumnByName(ctx context.Context, req *mspb.GetC
 	}
 	t, ok := service.cluster.FindTableById(tId)
 	if !ok {
-		return nil, errors.New("table is not existed")
+		return nil, ErrNotExistTable
 	}
 	c, ok := t.GetColumnByName(name)
 	if !ok {
@@ -653,5 +653,33 @@ func (service *Server) handleCreateTable(ctx context.Context, req *mspb.CreateTa
 		return
 	}
 	log.Info("create table[%s:%s] success", req.GetDbName(), req.GetTableName())
+	return
+}
+
+func (service *Server) handleAutoIncId(ctx context.Context, req *mspb.GetAutoIncIdRequest) (resp *mspb.GetAutoIncIdResponse, err error) {
+	cluster := service.cluster
+	ids := make([]uint64, 0)
+	if table, find := cluster.FindTableById(req.GetTableId()); find {
+		if table.Status != metapb.TableStatus_TableRunning {
+			log.Warn("table[%d] not ready for work", req.GetTableId())
+			err = ErrNotExistTable
+			return
+		}
+		size := req.GetSize_()
+		if size == 0 {
+			size = 1
+		}
+		ids, err = table.GetAutoIncId(service.store, size)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		log.Warn("get auto_increment id: table %d not found", req.GetTableId())
+		err = ErrNotExistTable
+		return
+	}
+	resp = new(mspb.GetAutoIncIdResponse)
+	resp.Header = &mspb.ResponseHeader{}
+	resp.Ids = ids
 	return
 }
