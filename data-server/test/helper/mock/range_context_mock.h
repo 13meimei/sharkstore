@@ -6,6 +6,7 @@ _Pragma("once");
 #include "range/context.h"
 #include "raft/server.h"
 #include "master/worker.h"
+#include "watch/watch_server.h"
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -25,11 +26,12 @@ public:
     SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
 
     rocksdb::DB *DBInstance() override { return db_; }
-    virtual master::Worker* MasterClient() override { return master_worker_.get(); }
-    virtual raft::RaftServer* RaftServer() override { return raft_server_.get(); }
-    virtual storage::MetaStore* MetaStore() override { return meta_store_.get(); }
-    virtual common::SocketSession* SocketSession() override { return socket_session_.get(); }
-    virtual RangeStats* Statistics() override { return range_stats_.get(); }
+    master::Worker* MasterClient() override { return master_worker_.get(); }
+    raft::RaftServer* RaftServer() override { return raft_server_.get(); }
+    storage::MetaStore* MetaStore() override { return meta_store_.get(); }
+    common::SocketSession* SocketSession() override { return socket_session_.get(); }
+    RangeStats* Statistics() override { return range_stats_.get(); }
+    watch::WatchServer* WatchServer() override { return watch_server_.get(); }
 
     void SetFSUsagePercent(uint64_t value) { fs_usage_percent_ = value; }
     uint64_t GetFSUsagePercent() const override { return fs_usage_percent_.load(); }
@@ -51,6 +53,7 @@ private:
     std::unique_ptr<common::SocketSession> socket_session_;
     std::unique_ptr<RangeStats> range_stats_;
     std::unique_ptr<SplitPolicy> split_policy_;
+    std::unique_ptr<watch::WatchServer> watch_server_;
 
     std::atomic<uint64_t> fs_usage_percent_ = {0};
 

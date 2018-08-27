@@ -124,6 +124,9 @@ TEST(Util, NextComparable) {
         std::string str = "\x01\x02\xFF\xFE\xFF";
         auto ret = NextComparable(str);
         ASSERT_EQ(ret, "\x01\x02\xFF\xFF");
+    }
+}
+
 TEST(Util, MiddleKey) {
     {
         std::string left, right;
