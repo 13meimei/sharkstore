@@ -18,19 +18,18 @@ import (
 	"github.com/satori/go.uuid"
 )
 import (
+	"model/pkg/ds_admin"
 	"model/pkg/kvrpcpb"
 	"console/models"
 	"console/common"
 	"console/config"
+	"console/right"
 	"util/log"
-	"util/ttlcache"
-
 	"strconv"
 	"errors"
 	"sync"
 	"crypto/md5"
 	"encoding/hex"
-	"model/pkg/ds_admin"
 )
 
 const (
@@ -55,8 +54,8 @@ const (
 
 var Columns = []*models.Column{
 	{Name: "k", DataType: 7, PrimaryKey: 1, Index: true},
-	{Name: "v", DataType: 7, Index: true},
 	{Name: "version", DataType: 4, Index: true},
+	{Name: "v", DataType: 7, Index: true},
 	{Name: "extend", DataType: 7, Index: true},
 }
 
@@ -65,7 +64,6 @@ var serviceInstance *Service = nil
 type Service struct {
 	config     *config.Config
 	db         *sql.DB
-	adminCache *ttlcache.TTLCache
 }
 
 func NewService() *Service {
@@ -2195,26 +2193,19 @@ func (s *Service) SetMasterLogLevel(clusterId int, logLevel string) (error) {
 }
 
 func (s *Service) IsAdmin(userName string) (bool, error) {
-	flag, find := s.adminCache.Get(userName)
-	if find {
-		log.Info("enter cache")
-		return flag.(bool), nil
+	userInfo, err := right.GetUserCluster(s.GetDb(), userName)
+	if err != nil {
+		log.Error("user %v isAdmin error, %v", userName, err)
+		return false, err
 	}
-	log.Info("enter db query")
-	var exist bool
-	var user string
-	if err := s.db.QueryRow(fmt.Sprintf(`SELECT user_name  FROM %s WHERE user_name="%s" and privilege = 1`, TABLE_NAME_PRIVILEGE, userName)).
-		Scan(&(user)); err != nil {
-		if err != sql.ErrNoRows {
-			log.Error("db queryrow is failed. err:[%v]", err)
-			return false, common.DB_ERROR
+	if userInfo != nil {
+		for _, right := range userInfo.Right {
+			if right == 1 {
+				return true, nil
+			}
 		}
 	}
-	if len(user) > 0 {
-		exist = true
-	}
-	s.adminCache.Put(userName, exist)
-	return exist, nil
+	return false, nil
 }
 
 //=============sql apply start==============
@@ -2767,7 +2758,7 @@ func (s *Service) GetClusterInfo(clusterId int) (*models.ClusterInfo, error) {
 		} else {
 			urlArray = strings.Split(info.MasterUrl, ":")
 		}
-		clusterInfo.MasterUrl = urlArray[0]
+		clusterInfo.MasterUrl = fmt.Sprintf("%s:%d", urlArray[0], s.config.DomainRpcPort)
 	}
 	return clusterInfo, nil
 }
@@ -3520,6 +3511,5 @@ func InitService(c *config.Config) {
 	serviceInstance = &Service{
 		config:     c,
 		db:         db,
-		adminCache: ttlcache.NewTTLCache(2 * time.Minute),
 	}
 }
