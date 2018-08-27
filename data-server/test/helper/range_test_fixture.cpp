@@ -19,7 +19,7 @@ using namespace google::protobuf;
 
 void RangeTestFixture::SetUp() {
     log_init2();
-    char level[] = "DEBUG";
+    char level[] = "CRIT";
     set_log_level(level);
 
     table_ = CreateAccountTable();
@@ -155,7 +155,23 @@ Status RangeTestFixture::Split() {
         }
     }
 
-    std::cout << split_meta.DebugString() << std::endl;
+//    // 检查meta store
+//    std::vector<metapb::Range> metas;
+//    auto s = context_->MetaStore()->GetAllRange(&metas);
+//    if (!s.ok()) {
+//        return s;
+//    }
+//    if (metas.size() != 2) {
+//        return Status(Status::kUnexpected, "meta storage size", std::to_string(metas.size()));
+//    }
+//    if (metas[0].ShortDebugString() != meta.ShortDebugString()) {
+//        return Status(Status::kUnexpected, "meta storage", metas[0].ShortDebugString());
+//    }
+//    if (metas[1].ShortDebugString() != split_meta.ShortDebugString()) {
+//        return Status(Status::kUnexpected, "meta storage", metas[1].ShortDebugString());
+//    }
+
+//    std::cout << split_meta.DebugString() << std::endl;
 
     return Status::OK();
 }
@@ -185,6 +201,10 @@ Status RangeTestFixture::TestDelete(DsDeleteRequest& req, DsDeleteResponse* resp
     auto msg = NewMsg(req);
     range_->Delete(msg, req);
     return getResult(resp);
+}
+
+void RangeTestFixture::SetLogLevel(char *level) {
+    set_log_level(level);
 }
 
 
