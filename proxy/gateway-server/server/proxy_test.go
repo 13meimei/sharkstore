@@ -1156,13 +1156,21 @@ func TestProxyInsert(t *testing.T) {
 	table := makeTestTable(columns)
 	start := util.EncodeStorePrefix(util.Store_Prefix_KV, table.GetId())
 	r := util.BytesPrefix(start)
+	var pks []*metapb.Column
+	for _, col := range table.Columns {
+		if col.Name == "id" {
+			pks = append(pks, col)
+			break
+		}
+	}
 	rng := &metapb.Range{
-		Id:         1,
-		TableId:    1,
-		StartKey:   r.Start,
-		EndKey:     r.Limit,
-		RangeEpoch: &metapb.RangeEpoch{ConfVer: 1, Version: 1},
-		Peers:      []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+		Id:          1,
+		TableId:     1,
+		StartKey:    r.Start,
+		EndKey:      r.Limit,
+		RangeEpoch:  &metapb.RangeEpoch{ConfVer: 1, Version: 1},
+		Peers:       []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+		PrimaryKeys: pks,
 	}
 	p := newTestProxy(db, table, rng)
 
@@ -1171,11 +1179,78 @@ func TestProxyInsert(t *testing.T) {
 	// testProxySelect(t, p, [][]string{}, "select * from "+testTableName+" where id > 1 and id < 100")
 
 	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075)")
-	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(iD,nAMe,bAlaNce) values(3, 'myname3', 3.1)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(iD,nAMe,bAlaNce) values(4, 'myname4', NULL)")
+	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(2, 'myname', 0.0075),(3, 'myname', 0.0075)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(4, 'myname', 0.0075)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(5, 'myname2', 1)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(iD,nAMe,bAlaNce) values(6, 'myname3', 3.1)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(iD,nAMe,bAlaNce) values(7, 'myname4', 2)")
+
+	expected := [][]string{
+		[]string{"1", "myname", "0.0075"},
+		[]string{"2", "myname", "0.0075"},
+		[]string{"3", "myname", "0.0075"},
+		[]string{"4", "myname", "0.0075"},
+		[]string{"5", "myname2", "1"},
+		[]string{"6", "myname3", "3.1"},
+		[]string{"7", "myname4", "2"},
+	}
+	testProxySelect(t, p, expected, "select * from "+testTableName)
+}
+
+func TestProxyInsert_AutoIncrement(t *testing.T) {
+	//log.InitFileLog(logPath, "proxy", "debug")
+	//autoIncrement only is tinyint,
+	columns := []*columnInfo{
+		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true, autoInc: true},
+		&columnInfo{name: "name", typ: metapb.DataType_Varchar},
+		&columnInfo{name: "balance", typ: metapb.DataType_Double},
+	}
+	db := &metapb.DataBase{Name: testDBName, Id: 1}
+	table := makeTestTable(columns)
+	start := util.EncodeStorePrefix(util.Store_Prefix_KV, table.GetId())
+	r := util.BytesPrefix(start)
+	var pks []*metapb.Column
+	for _, col := range table.Columns {
+		if col.Name == "id" {
+			pks = append(pks, col)
+			break
+		}
+	}
+	rng := &metapb.Range{
+		Id:          1,
+		TableId:     1,
+		StartKey:    r.Start,
+		EndKey:      r.Limit,
+		RangeEpoch:  &metapb.RangeEpoch{ConfVer: 1, Version: 1},
+		Peers:       []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+		PrimaryKeys: pks,
+	}
+	p := newTestProxy(db, table, rng)
+
+	defer CloseMock(p)
+	defer p.Close()
+	testProxySelect(t, p, [][]string{}, "select * from "+testTableName+" where id > 1 and id < 100")
+
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(name,balance) values('myname', 0.0075)")
+	testProxyInsert(t, p, 3, "insert into "+testTableName+"(name,balance) values('myname', 0.0075),('myname', 0.0075), ('myname', 0.0075)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(name,balance) values('myname', 0.0075)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(name,balance) values('myname2', 1)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(nAMe,bAlaNce) values('myname3', 3.1)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(nAMe,bAlaNce) values('myname4', 2)")
+	//
+	// select and check
+	expected := [][]string{
+		[]string{"1", "myname", "0.0075"},
+		[]string{"2", "myname", "0.0075"},
+		[]string{"3", "myname", "0.0075"},
+		[]string{"4", "myname", "0.0075"},
+		[]string{"5", "myname", "0.0075"},
+		[]string{"6", "myname2", "1"},
+		[]string{"7", "myname3", "3.1"},
+		[]string{"8", "myname4", "2"},
+	}
+	testProxySelect(t, p, expected, "select * from "+testTableName)
+
 }
 
 func TestProxyInsertOneRowWithRangeChange(t *testing.T) {
@@ -1226,7 +1301,6 @@ func TestProxyInsertOneRowWithRangeChange(t *testing.T) {
 	//time.Sleep(time.Second*5)
 }
 
-
 func TestProxyInsertOneRowWithErrorNode(t *testing.T) {
 	log.InitFileLog(logPath, "proxy", "debug")
 	columns := []*columnInfo{
@@ -1253,8 +1327,8 @@ func TestProxyInsertOneRowWithErrorNode(t *testing.T) {
 	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
 	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
 
-	oldRng :=deepcopy.Iface(rng).(*metapb.Range)
-	newRng :=deepcopy.Iface(rng).(*metapb.Range)
+	oldRng := deepcopy.Iface(rng).(*metapb.Range)
+	newRng := deepcopy.Iface(rng).(*metapb.Range)
 	var peers []*metapb.Peer
 	peers = append(peers, &metapb.Peer{Id: 3, NodeId: 2})
 	newRng.Peers = peers
@@ -1586,7 +1660,6 @@ func TestRowDeleteRoutChange(t *testing.T) {
 	testProxySelect(t, p, expected, "select * from "+testTableName)
 
 }
-
 
 func TestAllDeleteRoutChange(t *testing.T) {
 	log.InitFileLog(logPath, "proxy", "debug")

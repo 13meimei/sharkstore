@@ -631,7 +631,7 @@ void Range::LockWatch(common::ProtoMessage *msg,
         int64_t expireTime = (req.req().longpull() > 0)?get_micro_second() + req.req().longpull()*1000:msg->expire_time*1000;
 
         auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, msg);
-        auto w_code = context_->RangServer()->watch_server_->AddKeyWatcher(w_ptr, store_.get());
+        auto w_code = context_->WatchServer()->AddKeyWatcher(w_ptr, store_.get());
         if (w_code != watch::WATCH_OK) {
             FLOG_WARN("LockWatch error: lock [%s] add key watcher failed",
                       EncodeToHexString(encode_key).c_str());

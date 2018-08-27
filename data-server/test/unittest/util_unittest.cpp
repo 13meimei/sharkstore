@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "base/util.h"
+#include "helper/helper_util.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -14,6 +15,7 @@ int main(int argc, char* argv[]) {
 namespace {
 
 using namespace sharkstore;
+using namespace sharkstore::test::helper;
 
 TEST(Util, Hex) {
     std::string str;
@@ -28,7 +30,6 @@ TEST(Util, Hex) {
     }
     std::string hex = EncodeToHex(str);
     ASSERT_EQ(hex, expected_hex);
-    std::cout << "hex: " << hex << std::endl;
 
     std::string decoded_str;
     auto ret = DecodeFromHex(hex, &decoded_str);
@@ -123,6 +124,57 @@ TEST(Util, NextComparable) {
         std::string str = "\x01\x02\xFF\xFE\xFF";
         auto ret = NextComparable(str);
         ASSERT_EQ(ret, "\x01\x02\xFF\xFF");
+    }
+}
+
+TEST(Util, MiddleKey) {
+    {
+        std::string left, right;
+        EncodeKeyPrefix(&left, 1);
+        EncodeKeyPrefix(&right, 2);
+        auto mid = FindMiddle(left, right);
+        ASSERT_FALSE(mid.empty());
+        ASSERT_EQ(mid, std::string("\x01\x00\x00\x00\x00\x00\x00\x00\x01\x80", 10));
+        ASSERT_LT(left, mid);
+        ASSERT_LT(mid, right);
+
+        mid = FindMiddle(right, left);
+        ASSERT_TRUE(mid.empty());
+    }
+    {
+        std::string left, right;
+        auto mid = FindMiddle(left, right);
+        ASSERT_TRUE(mid.empty());
+    }
+    {
+        std::string left;
+        std::string right("\x12");
+        auto mid = FindMiddle(left, right);
+        ASSERT_FALSE(mid.empty());
+        ASSERT_LT(left, mid);
+        ASSERT_LT(mid, right);
+        std::cout << EncodeToHex(mid) << std::endl;
+    }
+    {
+        std::string left("a");
+        std::string right("c");
+        auto mid = FindMiddle(left, right);
+        ASSERT_EQ(mid, "b") << EncodeToHex(mid);
+    }
+    {
+        std::string left("122a");
+        std::string right("122c");
+        auto mid = FindMiddle(left, right);
+        ASSERT_EQ(mid, "122b") << EncodeToHex(mid);
+    }
+    {
+        std::string left("122a");
+        std::string right("122cd");
+        auto mid = FindMiddle(left, right);
+        ASSERT_FALSE(mid.empty());
+        ASSERT_LT(left, mid);
+        ASSERT_LT(mid, right);
+        std::cout << EncodeToHex(mid) << std::endl;
     }
 }
 

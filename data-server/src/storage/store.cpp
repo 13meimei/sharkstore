@@ -338,6 +338,11 @@ void Store::SetEndKey(std::string end_key) {
     end_key_ = std::move(end_key);
 }
 
+std::string Store::GetEndKey() const {
+    std::unique_lock<std::mutex> lock(key_lock_);
+    return end_key_;
+}
+
 uint64_t Store::StatisSize(std::string& split_key, uint64_t split_size) {
     uint64_t len = 0;
 

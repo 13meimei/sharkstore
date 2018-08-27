@@ -40,12 +40,18 @@ var PREFIX_AUTO_FAILOVER_UNABLE string = fmt.Sprintf("schema%sauto_failover_unab
 var PREFIX_AUTO_SPLIT_UNABLE string = fmt.Sprintf("schema%sauto_split_unable%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 var PREFIX_METRIC string = fmt.Sprintf("schema%smetric_send%s", SCHEMA_SPLITOR, SCHEMA_SPLITOR)
 
+const (
+	dsAdminPoolSize = 2
+	dsAdminToken    = ""
+)
+
 type Cluster struct {
 	clusterId uint64
 	nodeId    uint64
 	leader    *Peer
 
-	cli client.SchClient
+	cli      client.SchClient
+	adminCli client.AdminClient
 
 	idGener IDGenerator
 	opt     *scheduleOption
@@ -97,6 +103,7 @@ func NewCluster(clusterId, nodeId uint64, store Store, opt *scheduleOption) *Clu
 		clusterId:       clusterId,
 		nodeId:          nodeId,
 		cli:             client.NewSchRPCClient(),
+		adminCli:        client.NewAdminClient(dsAdminToken, dsAdminPoolSize),
 		store:           store,
 		opt:             opt,
 		dbs:             NewDbCache(),
@@ -474,9 +481,11 @@ func (c *Cluster) DeleteTable(dbName, tableName string, fast bool) (*Table, erro
 	key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
 	batch.Put(key, tbData)
 	// close auto switch
-	key = []byte(fmt.Sprintf(PREFIX_AUTO_TRANSFER_TABLE, table.GetId()))
+	key = []byte(fmt.Sprintf("%s%d", PREFIX_AUTO_TRANSFER_TABLE, table.GetId()))
 	batch.Delete(key)
-	key = []byte(fmt.Sprintf(PREFIX_AUTO_FAILOVER_TABLE, table.GetId()))
+	key = []byte(fmt.Sprintf("%s%d", PREFIX_AUTO_FAILOVER_TABLE, table.GetId()))
+	batch.Delete(key)
+	key = []byte(fmt.Sprintf("%s%d", TABLE_AUTO_INCREMENT_ID, table.GetId()))
 	batch.Delete(key)
 	err := batch.Commit()
 	if err != nil {
@@ -509,8 +518,7 @@ func (c *Cluster) CancelTable(dbName, tName string) error {
 		return ErrNotCancel
 	}
 	if table.Status == metapb.TableStatus_TablePrepare {
-		key := []byte(fmt.Sprintf("%s%d", PREFIX_TABLE, table.GetId()))
-		if err := c.store.Delete(key); err != nil {
+		if err := c.deleteTable(table.GetId()); err != nil {
 			log.Error("MS scheduler delete expired table:[%s][%d] from store is failed.",
 				table.GetName(), table.GetId())
 			return err

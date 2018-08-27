@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"master-server/http_reply"
+	"model/pkg/ds_admin"
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
 	"util"
@@ -410,7 +411,7 @@ func (service *Server) handleNodeSetLogLevel(w http.ResponseWriter, r *http.Requ
 	var id uint64
 	var err error
 	if id, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
-		log.Error("http upgrade node: %v", err.Error())
+		log.Error("http set log level of node: %v", err.Error())
 		reply.Code = -1
 		reply.Message = err.Error()
 		return
@@ -426,6 +427,338 @@ func (service *Server) handleNodeSetLogLevel(w http.ResponseWriter, r *http.Requ
 
 	if err := service.cluster.setNodeLogLevelRemote(id, logLevel); err != nil {
 		log.Error("http set node log level failed. error:[%v]", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	return
+}
+
+func (service *Server) handleNodeSetConfig(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	var nodeId uint64
+	var err error
+	if nodeId, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
+		log.Error("http set config of node: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	configString := r.FormValue("setConfig")
+	if configString == "" {
+		log.Error("setConfigs cannot be empty.")
+		reply.Code = -1
+		reply.Message = "setConfigs cannot be empty."
+		return
+	}
+
+	var configArray []ds_adminpb.ConfigItem
+	if err = json.Unmarshal([]byte(configString), &configArray); err != nil {
+		log.Error("configs json parse error: %v", err.Error())
+		reply.Code = -1
+		reply.Message = "configs json parse error: " + err.Error()
+		return
+	}
+
+	var configs []*ds_adminpb.ConfigItem
+	for _, configItem := range configArray {
+		item := deepcopy.Iface(configItem).(ds_adminpb.ConfigItem)
+		configs = append(configs, &item)
+	}
+	if err = service.cluster.setConfigRemote(nodeId, configs); err != nil {
+		log.Error("http set node config failed. error:[%v]", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	return
+}
+
+func (service *Server) handleNodeGetConfig(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	var nodeId uint64
+	var err error
+	if nodeId, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
+		log.Error("http get config of node: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	keyString := r.FormValue("getConfigKey")
+	if keyString == "" {
+		log.Error("config key cannot be empty.")
+		reply.Code = -1
+		reply.Message = "config key cannot be empty."
+		return
+	}
+
+	var keyArray []ds_adminpb.ConfigKey
+	if err = json.Unmarshal([]byte(keyString), &keyArray); err != nil {
+		log.Error("config key json parse error: %v", err.Error())
+		reply.Code = -1
+		reply.Message = "config key json parse error: " + err.Error()
+		return
+	}
+
+	var keys []*ds_adminpb.ConfigKey
+	for _, configKey := range keyArray {
+		key := deepcopy.Iface(configKey).(ds_adminpb.ConfigKey)
+		keys = append(keys, &key)
+	}
+	resp, err := service.cluster.getConfigRemote(nodeId, keys)
+	if err != nil {
+		log.Error("http get node config failed. error:[%v]", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	//configBytes, err := json.Marshal(resp.Configs)
+	//if err != nil {
+	//	log.Error("http get node config failed. error:[%v]", err.Error())
+	//	reply.Code = -1
+	//	reply.Message = err.Error()
+	//	return
+	//}
+	//reply.Data = string(configBytes)
+	reply.Data = resp.Configs
+	return
+}
+
+func (service *Server) handleNodeGetDsInfo(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	var nodeId uint64
+	var err error
+	if nodeId, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
+		log.Error("http get ds_info of node: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	path := r.FormValue("dsInfoPath")
+	if path == "" {
+		log.Error("http get ds_info of node error: path is empty")
+		reply.Code = -1
+		reply.Message = "http get ds_info of node error: path is empty"
+		return
+	}
+
+	resp, err := service.cluster.getDsInfoRemote(nodeId, path)
+	if err != nil {
+		log.Error("http get ds_info failed. error:[%v]", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	reply.Data = resp.Data
+	return
+}
+
+func (service *Server) handleRangeForceSplit(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	var err error
+	rangeId, err := strconv.ParseUint(r.FormValue(HTTP_RANGE_ID), 10, 64)
+	if err != nil {
+		log.Error("http range force split error: %s", http_error_invalid_parameter)
+		reply.Code = HTTP_ERROR_INVALID_PARAM
+		reply.Message = http_error_invalid_parameter
+		return
+	}
+	rng := service.cluster.FindRange(rangeId)
+	if rng == nil {
+		log.Error("http range force split error: %s", http_error_range_find)
+		reply.Code = HTTP_ERROR_RANGE_FIND
+		reply.Message = http_error_range_find
+		return
+	}
+
+	node := service.cluster.FindNodeById(rng.Leader.NodeId)
+	if node == nil {
+		log.Error("http range force split error: %s", http_error_node_find)
+		reply.Code = HTTP_ERROR_NODE_FIND
+		reply.Message = http_error_node_find
+		return
+	}
+
+	err = service.cluster.ForceSplitRemote(node.GetAdminAddr(), rangeId, rng.GetRangeEpoch().GetVersion())
+	if err != nil {
+		log.Error("http range force split failed. error:[%v]", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	return
+}
+
+func (service *Server) handleRangeForceCompact(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	var err error
+	rangeId, err := strconv.ParseUint(r.FormValue(HTTP_RANGE_ID), 10, 64)
+	if err != nil {
+		log.Error("http range force compact error: %s", http_error_invalid_parameter)
+		reply.Code = HTTP_ERROR_INVALID_PARAM
+		reply.Message = http_error_invalid_parameter
+		return
+	}
+	rng := service.cluster.FindRange(rangeId)
+	if rng == nil {
+		log.Error("http range force compact error: %s", http_error_range_find)
+		reply.Code = HTTP_ERROR_RANGE_FIND
+		reply.Message = http_error_range_find
+		return
+	}
+
+	node := service.cluster.FindNodeById(rng.Leader.NodeId)
+	if node == nil {
+		log.Error("http range force compact error: %s", http_error_node_find)
+		reply.Code = HTTP_ERROR_NODE_FIND
+		reply.Message = http_error_node_find
+		return
+	}
+
+	_, err = service.cluster.ForceCompactRemote(node.GetAdminAddr(), rangeId)
+	if err != nil {
+		log.Error("http range force compact failed. error:[%v]", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	// we haven't use the resp now
+	//reply.Data = resp.EndKey
+	return
+}
+
+func (service *Server) handleNodeClearQueue(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	var nodeId uint64
+	var err error
+	if nodeId, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
+		log.Error("http node clear queue: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	var queueType ds_adminpb.ClearQueueRequest_QueueType
+	queueTypeInt, err := strconv.ParseInt(r.FormValue("queueType"), 10, 64)
+	if err != nil {
+		log.Error("http node clear queue: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	switch queueTypeInt {
+	case 2:
+		queueType = ds_adminpb.ClearQueueRequest_SLOW_WORKER
+	case 1:
+		queueType = ds_adminpb.ClearQueueRequest_FAST_WORKER
+	case 0:
+	default:
+		queueType = ds_adminpb.ClearQueueRequest_ALL
+	}
+
+	resp, err := service.cluster.clearQueueRemote(nodeId, queueType)
+	if err != nil {
+		log.Error("http node clear queue[type=%v] failed. error:[%v]", queueType, err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	reply.Data = resp.Cleared
+	return
+}
+
+func (service *Server) handleNodeGetPendingQueues(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	var pendingType ds_adminpb.GetPendingsRequest_PendingType
+	var nodeId, count, pendingTypeInt uint64
+	var err error
+	if nodeId, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
+		log.Error("http node clear queue: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	if count, err = strconv.ParseUint(r.FormValue("count"), 10, 64); err != nil {
+		log.Error("http node clear queue: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	if pendingTypeInt, err = strconv.ParseUint(r.FormValue("pendingType"), 10, 64); err != nil {
+		log.Error("http node clear queue: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	switch pendingTypeInt {
+	case 4:
+		pendingType = ds_adminpb.GetPendingsRequest_RANGE_SELECT
+	case 3:
+		pendingType = ds_adminpb.GetPendingsRequest_PONIT_SELECT
+	case 2:
+		pendingType = ds_adminpb.GetPendingsRequest_SELECT
+	case 1:
+		pendingType = ds_adminpb.GetPendingsRequest_INSERT
+	case 0:
+	default:
+		pendingType = ds_adminpb.GetPendingsRequest_ALL
+	}
+
+	resp, err := service.cluster.getPendingQueuesRemote(nodeId, pendingType, count)
+	if err != nil {
+		log.Error("http node get pending queue[type=%v, count=%d] failed. error:[%v]", pendingType, count, err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+	reply.Data = resp.Desc
+	return
+}
+
+func (service *Server) handleNodeFlushDB(w http.ResponseWriter, r *http.Request) {
+	reply := &httpReply{}
+	defer sendReply(w, reply)
+
+	var nodeId uint64
+	var err error
+	if nodeId, err = strconv.ParseUint(r.FormValue(HTTP_NODE_ID), 10, 64); err != nil {
+		log.Error("http node flush db: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	wait, err := strconv.ParseBool(r.FormValue("wait"))
+	if err != nil {
+		log.Error("http node flush db: %v", err.Error())
+		reply.Code = -1
+		reply.Message = err.Error()
+		return
+	}
+
+	err = service.cluster.flushDBRemote(nodeId, wait)
+	if err != nil {
+		log.Error("http node flush db failed. error:[%v]", err.Error())
 		reply.Code = -1
 		reply.Message = err.Error()
 		return
@@ -1544,84 +1877,84 @@ func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		log.Warn("create database %s failed, err %v", fbase, err)
 	}
-	// cluster_meta
-	parseColumn(cluster_meta)
-	_, err = cluster.CreateTable(fbase, "cluster_meta", cluster_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "cluster_meta", err)
-	}
-	// cluster_net
-	parseColumn(cluster_net)
-	_, err = cluster.CreateTable(fbase, "cluster_net", cluster_net, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "cluster_net", err)
-	}
-	// cluster_slowlog
-	parseColumn(cluster_slowlog)
-	_, err = cluster.CreateTable(fbase, "cluster_slowlog", cluster_slowlog, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "cluster_slowlog", err)
-	}
-	// mac_meta
-	parseColumn(mac_meta)
-	_, err = cluster.CreateTable(fbase, "mac_meta", mac_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "mac_meta", err)
-	}
-	// mac_disk
-	parseColumn(mac_disk)
-	_, err = cluster.CreateTable(fbase, "mac_disk", mac_disk, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "mac_disk", err)
-	}
-	// mac_mem
-	parseColumn(mac_mem)
-	_, err = cluster.CreateTable(fbase, "mac_mem", mac_mem, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "mac_mem", err)
-	}
-	// mac_net
-	parseColumn(mac_net)
-	_, err = cluster.CreateTable(fbase, "mac_net", mac_net, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "mac_net", err)
-	}
-	// process_meta
-	parseColumn(process_meta)
-	_, err = cluster.CreateTable(fbase, "process_meta", process_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "process_meta", err)
-	}
-	// process_disk
-	parseColumn(process_disk)
-	_, err = cluster.CreateTable(fbase, "process_disk", process_disk, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "process_disk", err)
-	}
-	// process_ds
-	parseColumn(process_ds)
-	_, err = cluster.CreateTable(fbase, "process_ds", process_ds, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "process_ds", err)
-	}
-	// process_net
-	parseColumn(process_net)
-	_, err = cluster.CreateTable(fbase, "process_net", process_net, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "process_net", err)
-	}
-	// db_meta
-	parseColumn(db_meta)
-	_, err = cluster.CreateTable(fbase, "db_meta", db_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "db_meta", err)
-	}
-	// table_meta
-	parseColumn(table_meta)
-	_, err = cluster.CreateTable(fbase, "table_meta", table_meta, nil, false, nil)
-	if err != nil {
-		log.Warn("create table %s %s failed, err %v", fbase, "table_meta", err)
-	}
+	//// cluster_meta
+	//parseColumn(cluster_meta)
+	//_, err = cluster.CreateTable(fbase, "cluster_meta", cluster_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "cluster_meta", err)
+	//}
+	//// cluster_net
+	//parseColumn(cluster_net)
+	//_, err = cluster.CreateTable(fbase, "cluster_net", cluster_net, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "cluster_net", err)
+	//}
+	//// cluster_slowlog
+	//parseColumn(cluster_slowlog)
+	//_, err = cluster.CreateTable(fbase, "cluster_slowlog", cluster_slowlog, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "cluster_slowlog", err)
+	//}
+	//// mac_meta
+	//parseColumn(mac_meta)
+	//_, err = cluster.CreateTable(fbase, "mac_meta", mac_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "mac_meta", err)
+	//}
+	//// mac_disk
+	//parseColumn(mac_disk)
+	//_, err = cluster.CreateTable(fbase, "mac_disk", mac_disk, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "mac_disk", err)
+	//}
+	//// mac_mem
+	//parseColumn(mac_mem)
+	//_, err = cluster.CreateTable(fbase, "mac_mem", mac_mem, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "mac_mem", err)
+	//}
+	//// mac_net
+	//parseColumn(mac_net)
+	//_, err = cluster.CreateTable(fbase, "mac_net", mac_net, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "mac_net", err)
+	//}
+	//// process_meta
+	//parseColumn(process_meta)
+	//_, err = cluster.CreateTable(fbase, "process_meta", process_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "process_meta", err)
+	//}
+	//// process_disk
+	//parseColumn(process_disk)
+	//_, err = cluster.CreateTable(fbase, "process_disk", process_disk, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "process_disk", err)
+	//}
+	//// process_ds
+	//parseColumn(process_ds)
+	//_, err = cluster.CreateTable(fbase, "process_ds", process_ds, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "process_ds", err)
+	//}
+	//// process_net
+	//parseColumn(process_net)
+	//_, err = cluster.CreateTable(fbase, "process_net", process_net, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "process_net", err)
+	//}
+	//// db_meta
+	//parseColumn(db_meta)
+	//_, err = cluster.CreateTable(fbase, "db_meta", db_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "db_meta", err)
+	//}
+	//// table_meta
+	//parseColumn(table_meta)
+	//_, err = cluster.CreateTable(fbase, "table_meta", table_meta, nil, false, nil)
+	//if err != nil {
+	//	log.Warn("create table %s %s failed, err %v", fbase, "table_meta", err)
+	//}
 	// fbase_cluster
 	parseColumn(fbase_cluster)
 	_, err = cluster.CreateTable(fbase, "fbase_cluster", fbase_cluster, nil, false, nil)
@@ -3028,7 +3361,7 @@ func (service *Server) handleTableGetRoute(w http.ResponseWriter, r *http.Reques
 			State:      int32(rng.State),
 			DbName:     table.GetDbName(),
 			TableName:  table.GetName(),
-			TableId:  table.GetId(),
+			TableId:    table.GetId(),
 			LastHbTime: rng.LastHbTimeTS.Format("2006-01-02 15:04:05"),
 		}
 		route := &Route{
@@ -3445,7 +3778,7 @@ func (service *Server) handleTableTopologyQuery(w http.ResponseWriter, r *http.R
 }
 
 //set metric send config
-func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) () {
+func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 	interval := r.FormValue("interval")
@@ -3465,7 +3798,7 @@ func (service *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Requ
 }
 
 //get metric send config
-func (service *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) () {
+func (service *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) {
 	reply := &httpReply{}
 	defer sendReply(w, reply)
 

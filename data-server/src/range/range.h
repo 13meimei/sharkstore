@@ -36,6 +36,9 @@ _Pragma("once");
 #include "submit.h"
 #include "range_logger.h"
 
+// for test friend class
+namespace sharkstore { namespace test { namespace helper { class RangeTestFixture; }}}
+
 namespace sharkstore {
 namespace dataserver {
 namespace range {
@@ -80,6 +83,8 @@ public:
     void TransferLeader();
     void GetPeerInfo(raft::RaftStatus *raft_status);
     uint64_t GetPeerID() const;
+
+    Status ForceSplit(uint64_t version, std::string* split_key);
 
     // lock
     kvrpcpb::LockValue *LockGet(const std::string &key);
@@ -234,6 +239,8 @@ public:
     };
     void SetRealSize(uint64_t rsize) { real_size_ = rsize; }
     void GetReplica(metapb::Replica *rep);
+    uint64_t GetSplitRangeID() const { return split_range_id_; }
+    size_t GetSubmitQueueSize() const { return submit_queue_.Size(); }
 
     void setLeaderFlag(bool flag) {
         is_leader_ = flag;
@@ -259,6 +266,8 @@ private:
     errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
 
 private:
+    friend class ::sharkstore::test::helper::RangeTestFixture;
+
     int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg, bool prefix = false);
     int32_t loadFromDb(const watchpb::EventType &evtType,
                        const std::string &fromKey,

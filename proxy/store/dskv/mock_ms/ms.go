@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"net/http"
 	"encoding/json"
+	"sync/atomic"
 
 	"google.golang.org/grpc"
 	"model/pkg/mspb"
@@ -20,6 +21,7 @@ import (
 	"pkg-go/ds_client"
 )
 
+var idBase uint64
 type Cluster struct {
 	id       uint64
 	db       *DbCache
@@ -153,12 +155,12 @@ func (c *Cluster) GetNodeId(ctx context.Context, req *mspb.GetNodeIdRequest) (*m
 			}
 			serverAddr := fmt.Sprintf("%s:%d", ip, req.GetServerPort())
 			raftAddr := fmt.Sprintf("%s:%d", ip, req.GetRaftPort())
-			httpAddr := fmt.Sprintf("%s:%d", ip, req.GetHttpPort())
+			httpAddr := fmt.Sprintf("%s:%d", ip, req.GetAdminPort())
 			node := &metapb.Node{
 				Id: 1,
 				ServerAddr: serverAddr,
 				RaftAddr: raftAddr,
-				HttpAddr: httpAddr,
+				AdminAddr: httpAddr,
 			}
 			c.nodes[1] = node
 		}
@@ -231,6 +233,17 @@ func (c *Cluster) CreateTable(ctx context.Context, req *mspb.CreateTableRequest)
 	return nil, nil
 }
 
+func (c *Cluster) GetAutoIncId(ctx context.Context, req *mspb.GetAutoIncIdRequest) (*mspb.GetAutoIncIdResponse, error) {
+	log.Info("ms mock: get auto_increment id")
+	size := req.GetSize_()
+	ids := make([]uint64, 0)
+	for len(ids) < int(size) {
+		ids = append(ids, atomic.AddUint64(&idBase, 1))
+	}
+	log.Info("auto_increment ids : %v", ids)
+	resp := &mspb.GetAutoIncIdResponse{Header: &mspb.ResponseHeader{}, Ids: ids}
+	return resp, nil
+}
 
 type HttpReply httpReply
 

@@ -48,4 +48,6 @@ enum FunctionID {
   kFuncSetNodeLogLevel      = 1006;
   kFuncOfflineRange         = 1007;
   kFuncReplaceRange         = 1008;
+
+  kFuncAdmin                = 2001;
 }

@@ -18,6 +18,8 @@ import (
 
 	"runtime"
 
+	"model/pkg/ds_admin"
+
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/net/context"
 )
@@ -87,6 +89,7 @@ func init() {
 	msgType[uint16(funcpb.FunctionID_kFuncUnlockForce)] = &MsgTypeGroup{0x02, 0x12}
 
 	msgType[uint16(funcpb.FunctionID_kFuncKvSet)] = &MsgTypeGroup{0x02, 0x12}
+
 	msgType[uint16(funcpb.FunctionID_kFuncCreateRange)] = &MsgTypeGroup{0x01, 0x11}
 	msgType[uint16(funcpb.FunctionID_kFuncDeleteRange)] = &MsgTypeGroup{0x01, 0x11}
 	msgType[uint16(funcpb.FunctionID_kFuncRangeTransferLeader)] = &MsgTypeGroup{0x01, 0x11}
@@ -95,6 +98,7 @@ func init() {
 	msgType[uint16(funcpb.FunctionID_kFuncSetNodeLogLevel)] = &MsgTypeGroup{0x01, 0x11}
 	msgType[uint16(funcpb.FunctionID_kFuncOfflineRange)] = &MsgTypeGroup{0x01, 0x11}
 	msgType[uint16(funcpb.FunctionID_kFuncReplaceRange)] = &MsgTypeGroup{0x01, 0x11}
+	msgType[uint16(funcpb.FunctionID_kFuncAdmin)] = &MsgTypeGroup{0x01, 0x11}
 }
 
 func getMsgType(funcId uint16) *MsgTypeGroup {
@@ -167,6 +171,9 @@ type RpcClient interface {
 	SetNodeLogLevel(ctx context.Context, in *schpb.SetNodeLogLevelRequest) (*schpb.SetNodeLogLevelResponse, error)
 	OfflineRange(ctx context.Context, in *schpb.OfflineRangeRequest) (*schpb.OfflineRangeResponse, error)
 	ReplaceRange(ctx context.Context, in *schpb.ReplaceRangeRequest) (*schpb.ReplaceRangeResponse, error)
+
+	// ds_admin
+	Admin(ctx context.Context, in *ds_adminpb.AdminRequest) (*ds_adminpb.AdminResponse, error)
 
 	Close()
 }
@@ -768,6 +775,17 @@ func (c *DSRpcClient) ReplaceRange(ctx context.Context, in *schpb.ReplaceRangeRe
 	out := new(schpb.ReplaceRangeResponse)
 	_, err := c.execute(uint16(funcpb.FunctionID_kFuncReplaceRange), ctx, in, out)
 	//in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+// Admin admin
+func (c *DSRpcClient) Admin(ctx context.Context, in *ds_adminpb.AdminRequest) (*ds_adminpb.AdminResponse, error) {
+	out := new(ds_adminpb.AdminResponse)
+	_, err := c.execute(uint16(funcpb.FunctionID_kFuncAdmin), ctx, in, out)
 	if err != nil {
 		return nil, err
 	} else {

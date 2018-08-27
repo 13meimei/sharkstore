@@ -57,7 +57,7 @@ type DsNode struct {
 	// raft　服务地址
 	RaftAddr string `json:"raft_addr,omitempty"`
 	// http 管理地址
-	HttpAddr string `json:"http_addr,omitempty"`
+	AdminAddr string `json:"admin_addr,omitempty"`
 	State    int32  `json:"state,omitempty"`
 	Version  string `json:"version,omitempty"`
 }

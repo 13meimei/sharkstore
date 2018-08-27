@@ -80,9 +80,28 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 		return nil, err
 	}
 	// 检查是否缺少主键列
-	if err := p.checkPKMissing(t, colMap); err != nil {
+	pkName, err := p.checkPKMissing(t, colMap)
+	if err != nil {
 		log.Error("[insert] table %s.%s missing column(%v)", db, tableName, err)
 		return nil, err
+	}
+	//填充自增id值
+	if len(pkName) > 0 {
+		maxSize := len(colMap)
+		colMap[pkName] = maxSize
+		ids, err := p.msCli.GetAutoIncId(t.GetDbId(), t.GetId(), uint32(len(rows)))
+		if err != nil {
+			log.Error("[insert] table %s.%s get auto_increment value err, %v", db, tableName, err)
+			return nil, err
+		}
+		if len(ids) != len(rows) {
+			log.Error("[insert] table %s.%s get auto_increment value err, %v", db, tableName, err)
+			return nil, fmt.Errorf("get auto increment id size %d not equal insert size %d", len(ids), len(rows))
+		}
+		for i, row := range rows {
+			row = append(row, []byte(fmt.Sprintf("%v", ids[i])))
+			rows[i] = row
+		}
 	}
 
 	//parseTime = time.Now()
@@ -166,15 +185,20 @@ func (p *Proxy) matchInsertValues(t *Table, cols []string) (colMap map[string]in
 	return
 }
 
-// 检查插入时是否少了某列
-func (p *Proxy) checkPKMissing(t *Table, colMap map[string]int) error {
+// 检查插入时是否少了主键列： 如果缺少的列是自增id，返回要填充的col
+func (p *Proxy) checkPKMissing(t *Table, colMap map[string]int) (string, error) {
+	var pkName string
 	// 是否缺少主键
 	for _, pk := range t.PKS() {
 		if _, ok := colMap[pk]; !ok {
-			return fmt.Errorf("pk(%s) is required for insert", pk)
+			if col := t.FindColumn(pk); col != nil && col.AutoIncrement { //表定义时建，限制只能有一个主键列为自增
+				pkName = pk
+				continue
+			}
+			return "", fmt.Errorf("pk(%s) is required for insert", pk)
 		}
 	}
-	return nil
+	return pkName, nil
 }
 
 // EncodeRow 编码一行

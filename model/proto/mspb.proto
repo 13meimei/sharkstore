@@ -31,6 +31,7 @@ service MsServer {
     rpc AddColumn(AddColumnRequest) returns (AddColumnResponse) {}
     rpc CreateDatabase(CreateDatabaseRequest) returns (CreateDatabaseResponse) {}
     rpc CreateTable(CreateTableRequest) returns (CreateTableResponse) {}
+    rpc GetAutoIncId(GetAutoIncIdRequest) returns (GetAutoIncIdResponse) {}
 }
 
 message MSLeader {
@@ -192,7 +193,7 @@ message GetNodeIdRequest {
     RequestHeader header       = 1;
     uint32      server_port    = 2;
     uint32      raft_port      = 3;
-    uint32      http_port      = 4;
+    uint32      admin_port     = 4;
     string      version        = 5;
 }
 
@@ -334,6 +335,18 @@ message CreateTableResponse {
     ResponseHeader header           = 1;
 }
 
+message GetAutoIncIdRequest {
+    RequestHeader header     = 1;
+    uint64 db_id             = 2;
+    uint64 table_id          = 3;
+    uint32 size              = 4;
+}
+
+message GetAutoIncIdResponse {
+    ResponseHeader header           = 1;
+    repeated uint64  ids            = 2;
+}
+
 message RequestHeader {
     uint64 cluster_id         = 1;
 }
@@ -355,3 +368,4 @@ message Error {
     LeaderHint new_leader     = 2;
     NoLeader   no_leader      = 3;
 }
+

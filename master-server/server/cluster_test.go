@@ -2,12 +2,15 @@ package server
 
 import (
 	"testing"
-	"model/pkg/metapb"
+	"encoding/binary"
 	"encoding/json"
-	"util/deepcopy"
 	"time"
 	"fmt"
 	"util/assert"
+	"util/deepcopy"
+	"proxy/store/dskv/mock_ds"
+	"model/pkg/mspb"
+	"model/pkg/metapb"
 )
 
 var (
@@ -22,7 +25,7 @@ var (
 )
 
 func TestCreateTable(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
@@ -46,10 +49,39 @@ func TestCreateTable(t *testing.T) {
 		t.Error("test failed")
 		return
 	}
+
+	//create table range
+	cluster.AddCreateTableWorker()
+
+	nodeM := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060", State: metapb.NodeState_N_Login}
+	ds := mock_ds.NewDsRpcServer(nodeM.ServerAddr, dsPath)
+	go ds.Start()
+	node := NewNode(nodeM)
+	cluster.lock.Lock()
+	err = cluster.AddNode(node)
+	cluster.lock.Unlock()
+	node.stats = &mspb.NodeStats{Available: 90, Capacity: 100}
+
+	for {
+		time.Sleep(2 * time.Second)
+		if table.Status != metapb.TableStatus_TableInit {
+			break
+		}
+	}
+	if len(cluster.GetTableAllRanges(table.GetId())) == 0 {
+		t.Fatal("table ranges number == 0")
+	}
+
+	tt, err = cluster.loadTable(table.GetId())
+	if tt == nil {
+		t.Error("test failed")
+		return
+	}
+	t.Logf("table meta from store: %v", tt)
 }
 
 func TestDeleteTableFast(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
@@ -78,10 +110,18 @@ func TestDeleteTableFast(t *testing.T) {
 		t.Error("test failed")
 		return
 	}
+
+	tableM, err := cluster.loadTable(table.GetId())
+	if err != nil {
+		t.Error("test failed")
+		return
+	}
+	assert.Equal(t, tableM.Status, metapb.TableStatus_TableDeleting, "table delete status err")
+	t.Logf("table delete time %v", binary.BigEndian.Uint64(tableM.Expand))
 }
 
 func TestDeleteTableSlow(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
@@ -152,7 +192,7 @@ func TestCreateTableSqlParse(t *testing.T) {
 }
 
 func TestCreateTableWithLetterRangeKeys(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
 		t.Fatalf("create db error: %v", err)
@@ -185,7 +225,7 @@ func TestCreateTableWithLetterRangeKeys(t *testing.T) {
 }
 
 func TestCreateTableWithNumericRangeKeys(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
 		t.Fatalf("create db error: %v", err)
@@ -218,7 +258,7 @@ func TestCreateTableWithNumericRangeKeys(t *testing.T) {
 }
 
 func TestCreateTableWithRangeNumber1(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
 		t.Fatalf("create db error: %v", err)
@@ -254,7 +294,7 @@ func TestCreateTableWithRangeNumber1(t *testing.T) {
 }
 
 func TestCreateTableWithRangeNumber2(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
 		t.Fatalf("create db error: %v", err)
@@ -290,7 +330,7 @@ func TestCreateTableWithRangeNumber2(t *testing.T) {
 }
 
 func TestCreateTableWithRangeNumber3(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
 		t.Fatalf("create db error: %v", err)
@@ -326,7 +366,7 @@ func TestCreateTableWithRangeNumber3(t *testing.T) {
 }
 
 func TestTableColumnEdit(t *testing.T) {
-	cluster := newLocalCluster(newMockIDAllocator())
+	cluster := newBoltDbCluster(t, newMockIDAllocator())
 	defer closeLocalCluster(cluster)
 	if _, err := cluster.CreateDatabase(DB_NAME, ""); err != nil {
 		t.Fatalf("create db error: %v", err)

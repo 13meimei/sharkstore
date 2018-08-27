@@ -298,13 +298,12 @@ func (svr *DsRpcServer) query(msg *dsClient.Message) {
 	if err != nil {
 		resp = &kvrpcpb.DsSelectResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "decode select failed"}}}
 	}else{
-		rngEpoch := req.Header.GetRangeEpoch();
+		rngEpoch := req.Header.GetRangeEpoch()
 		rangeId := req.Header.GetRangeId()
 		rng := svr.GetRange(rangeId)
 		log.Info("query range:%d,startKey:%v,endKey:%v",rangeId,rng.StartKey,rng.EndKey)
 		if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
-
-
+			
 			it := svr.store.NewIterator(rng.StartKey, rng.EndKey)
 			rows := make([]*kvrpcpb.Row, 0)
 
@@ -359,6 +358,7 @@ func (svr *DsRpcServer) query(msg *dsClient.Message) {
 			resp = &kvrpcpb.DsSelectResponse{Header: &kvrpcpb.ResponseHeader{}}
 			resp.Resp = &kvrpcpb.SelectResponse{}
 			resp.Resp.Rows = rows
+			resp.Resp.Offset = uint64(len(rows))
 		}else{
 			resp = &kvrpcpb.DsSelectResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.SelectResponse{Code: 1,}}
 

@@ -85,12 +85,13 @@ enum FunctionID {
   kFuncSetNodeLogLevel = 1006,
   kFuncOfflineRange = 1007,
   kFuncReplaceRange = 1008,
+  kFuncAdmin = 2001,
   FunctionID_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   FunctionID_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool FunctionID_IsValid(int value);
 const FunctionID FunctionID_MIN = kFuncHeartbeat;
-const FunctionID FunctionID_MAX = kFuncReplaceRange;
+const FunctionID FunctionID_MAX = kFuncAdmin;
 const int FunctionID_ARRAYSIZE = FunctionID_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* FunctionID_descriptor();

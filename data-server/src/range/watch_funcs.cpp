@@ -26,7 +26,7 @@ Status Range::GetAndResp( watch::WatcherPtr pWatcher, const watchpb::WatchCreate
 
         std::string hashKey("");
         WatchUtil::GetHashKey(pWatcher, prefix, meta_.GetTableID(), &hashKey);
-        auto watcherServer = context_->RangServer()->watch_server_;
+        auto watcherServer = context_->WatchServer();
         auto ws = watcherServer->GetWatcherSet_(hashKey);
 
         auto result = ws->loadFromDb(store_.get(), watchpb::PUT, dbKey, dbKeyEnd, version, meta_.GetTableID(), dsResp);
@@ -137,7 +137,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     auto clientVersion = req.req().startversion();
 
     //to do add watch
-    auto watch_server = context_->RangServer()->watch_server_;
+    auto watch_server = context_->WatchServer();
     std::vector<watch::WatcherKey*> keys;
 
     for (auto i = 0; i < tmpKv.key_size(); i++) {
@@ -887,7 +887,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
     auto dbValue = kv.value();
     int64_t currDbVersion{version};
-    auto watch_server = context_->RangServer()->watch_server_;
+    auto watch_server = context_->WatchServer();
 
     watch_server->GetKeyWatchers(evtType, vecNotifyWatcher, hashKey, dbKey, currDbVersion);
 
@@ -974,7 +974,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                     return -1;
                 }
                 //RANGE_LOG_DEBUG("WatchNotify key scope %s---%s", EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbKeyEnd).c_str());
-                auto watcherServer = context_->RangServer()->watch_server_;
+                auto watcherServer = context_->WatchServer();
                 auto ws = watcherServer->GetWatcherSet_(hashKey);
 
                 auto result = ws->loadFromDb(store_.get(), evtType, dbKey, dbKeyEnd, startVersion, meta_.GetTableID(), dsResp);
@@ -1000,7 +1000,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
 
 int32_t Range::SendNotify( watch::WatcherPtr w, watchpb::DsWatchResponse *ds_resp, bool prefix)
 {
-    auto watch_server = context_->RangServer()->watch_server_;
+    auto watch_server = context_->WatchServer();
     auto resp = ds_resp->mutable_resp();
     auto w_id = w->GetWatcherId();
 

@@ -541,6 +541,32 @@ func (r *Router) StartRouter() *gin.Engine {
 			})
 		})
 
+		group.GET("/node/goConfigPage", func(c *gin.Context) {
+			cid := c.Query("clusterId")
+			if cid == "" {
+				html404(c)
+				return
+			}
+			nodeId := c.Query("nodeId")
+			if nodeId == "" {
+				html404(c)
+				return
+			}
+
+			isGet := c.Query("isGet")
+			if isGet == "" {
+				html404(c)
+				return
+			}
+
+			c.HTML(http.StatusOK, "node_get_set_config.html", gin.H{
+				"basePath":  r.staticRootDir,
+				"clusterId": cid,
+				"nodeId":   nodeId,
+				"isGet":     isGet,
+			})
+		})
+
 		group.GET("/page/cluster/viewRangeOpsTopN", func(c *gin.Context) {
 			cid := c.Query("clusterId")
 			if cid == "" {
@@ -787,6 +813,24 @@ func (r *Router) StartRouter() *gin.Engine {
 		router.GET(controllers.NODE_GET_RANGE_TOPOLOGY, func(c *gin.Context) {
 			handleAction(c, controllers.NewNodeRangeTopo())
 		})
+		router.POST(controllers.NODE_GET_CONFIG, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeGetConfig())
+		})
+		router.POST(controllers.NODE_SET_CONFIG, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeSetConfig())
+		})
+		router.POST(controllers.NODE_GET_DS_INFO, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeGetDsInfo())
+		})
+		router.POST(controllers.NODE_CLEAR_QUEUE, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeClearQueue())
+		})
+		router.POST(controllers.NODE_GET_PENDING_QUEUES, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeGetPendingQueues())
+		})
+		router.POST(controllers.NODE_FLUSH_DB, func(c *gin.Context) {
+			handleAction(c, controllers.NewNodeFlushDB())
+		})
 		router.POST(controllers.RANGE_PEERDEL, func(c *gin.Context) {
 			handleAction(c, controllers.NewPeerDelete())
 		})
@@ -816,6 +860,12 @@ func (r *Router) StartRouter() *gin.Engine {
 		})
 		router.POST(controllers.RANGE_REPLACE_RANGE, func(c *gin.Context) {
 			handleAction(c, controllers.NewRangeRebuild())
+		})
+		router.POST(controllers.RANGE_FORCE_SPLIT, func(c *gin.Context) {
+			handleAction(c, controllers.NewRangeForceSplit())
+		})
+		router.POST(controllers.RANGE_FORCE_COMPACT, func(c *gin.Context) {
+			handleAction(c, controllers.NewRangeForceCompact())
 		})
 		router.POST(controllers.RANGE_DELETE_RANGE, func(c *gin.Context) {
 			handleAction(c, controllers.NewRangeDelete())

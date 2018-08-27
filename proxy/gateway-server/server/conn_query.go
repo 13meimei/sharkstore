@@ -171,7 +171,6 @@ func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) er
 		golog.Error("insert failed, err[%v]", err)
 		return c.writeError(err)
 	}
-	//TODO:return execut nums
 	golog.Debug("insert success")
 	return c.writeOK(ret)
 }
