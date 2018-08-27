@@ -298,4 +298,66 @@ int ParseBytesValue(const char* str, int64_t* value) {
     return 0;
 }
 
+
+
+static size_t commonPrefixLen(const std::string& left, const std::string& right) {
+    size_t common_len = 0;
+    auto len = std::min(left.size(), right.size());
+    for (size_t i = 0; i < len; ++i) {
+        if (left[i] == right[i]) {
+            ++common_len;
+        } else {
+            break;
+        }
+    }
+    return common_len;
+}
+
+static uint64_t approximateInt(const std::string& str, size_t offset) {
+    uint64_t val = 0;
+    for (int i = 0; i < 8; i++) {
+        auto ch = offset < str.size() ?
+                static_cast<uint8_t>(str[offset]) :
+                static_cast<uint8_t>(0);
+        val <<= 8;
+        val += ch;
+        ++offset;
+    }
+    return val;
+}
+
+static std::string approximateStr(uint64_t value) {
+    std::string result;
+    result.push_back(static_cast<char>(value >> 56));
+    result.push_back(static_cast<char>(value >> 48));
+    result.push_back(static_cast<char>(value >> 40));
+    result.push_back(static_cast<char>(value >> 32));
+    result.push_back(static_cast<char>(value >> 24));
+    result.push_back(static_cast<char>(value >> 16));
+    result.push_back(static_cast<char>(value >> 8));
+    result.push_back(static_cast<char>(value));
+    return result;
+}
+
+std::string FindMiddle(const std::string& left, const std::string& right) {
+    if (left >= right) {
+        return "";
+    }
+    auto common_len = commonPrefixLen(left, right);
+    auto left_val = static_cast<double>(approximateInt(left, common_len));
+    auto right_val = static_cast<double>(approximateInt(right, common_len));
+    auto mid_val = static_cast<uint64_t>((left_val + right_val) / 2);
+
+    std::string result;
+    if (common_len > 0) {
+        result.assign(left.begin(), left.begin() + common_len);
+    }
+    result += approximateStr(mid_val);
+    while (!result.empty() && result.back() == '\0') {
+        result.pop_back();
+    }
+
+    return result;
+}
+
 } /* namespace sharkstore */

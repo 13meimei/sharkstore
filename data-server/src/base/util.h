@@ -31,4 +31,7 @@ void AnnotateThread(pthread_t handle, const char *name);
 
 int ParseBytesValue(const char* str, int64_t* value);
 
+// left should less than right
+std::string FindMiddle(const std::string& left, const std::string& right);
+
 } /* namespace sharkstore */

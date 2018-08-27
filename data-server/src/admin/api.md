@@ -71,7 +71,7 @@
 
 ## ForceSplit
 强制分裂某个range     
-// TODO: 待实现
+// TODO: 暂不支持保留第一主键在同一个range的分裂
 ##  Compaction
 手动compaction，可选指定compaction某个range范围内的数据。      
 不指定compaction整个db。

@@ -1,5 +1,6 @@
 #include "range.h"
 
+#include <sstream>
 #include "frame/sf_util.h"
 #include "master/worker.h"
 #include "server/range_server.h"
@@ -216,8 +217,39 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
     return ret;
 }
 
-Status Range::ForceSplit(uint64_t version, std::string *split_key) {
-    return Status(Status::kNotSupported);
+Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
+    auto meta = meta_.Get();
+    if (meta.range_epoch().version() != version) {
+        std::ostringstream ss;
+        ss << "request version: " << version << ", ";
+        ss << "current version: " << meta.range_epoch().version();
+        return Status(Status::kStaleEpoch, "force split", ss.str());
+    }
+
+    std::string split_key;
+    if (context_->GetSplitPolicy()->GetSplitKeyType() == SplitKeyType::kKeepFirstPart) {
+        // TODO:
+        return Status(Status::kNotSupported);
+    } else {
+        split_key = FindMiddle(meta.start_key(), meta.end_key());
+    }
+
+    if (split_key.empty() || split_key <= meta.start_key() || split_key >= meta.end_key()) {
+        std::ostringstream ss;
+        ss << "begin key: " << EncodeToHex(meta.start_key()) << ", ";
+        ss << "end key: " << EncodeToHex(meta.end_key()) << ", ";
+        ss << "split key: " << EncodeToHex(split_key);
+        return Status(Status::kUnknown, "could not find split key", ss.str());
+    }
+
+    RANGE_LOG_INFO("Force split, start AskSplit. split key: [%s-%s]-%s, version: %" PRIu64,
+            EncodeToHex(meta.start_key()).c_str(), EncodeToHex(meta.end_key()).c_str(),
+            EncodeToHex(split_key).c_str(), version);
+
+    *result_split_key = split_key;
+    AskSplit(std::move(split_key), std::move(meta));
+
+    return Status::OK();
 }
 
 }  // namespace range
