@@ -590,6 +590,63 @@ void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
     context_->SocketSession()->Send(msg, ds_resp);
 }
 
+/*
+void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req) {
+    errorpb::Error *err = nullptr;
+    auto ds_resp = new watchpb::DsWatchResponse;
+
+    do {
+        if (!VerifyLeader(err)) {
+            break;
+        }
+
+        auto &key = req.req().key();
+        if (key.empty()) {
+            FLOG_WARN("range[%" PRIu64 "] watch error: key empty", meta_.id());
+            err = KeyNotInRange(key);
+            break;
+        }
+
+        auto epoch = req.header().range_epoch();
+        bool in_range = KeyInRange(key);
+        bool is_equal = EpochIsEqual(epoch);
+
+        if (!in_range) {
+            if (is_equal) {
+                err = KeyNotInRange(key);
+                break;
+            }
+        }
+
+        auto resp = ds_resp->mutable_resp();
+        std::string value;
+
+        auto ret = store_->Get(req.req().key(), &value);
+        if (ret.code() != sharkstore::Status::OK()) {
+            FLOG_ERROR("range[%" PRIu64 "] watch error: %s", meta_.id(), err->message().c_str());
+            err = Error("store get failed");
+            break;
+        }
+
+        // todo check key VERSION
+
+        // do not send response at this time.
+        // do send when watch event happend or timeout.
+        AddKeyWatcher(req.req().key(), msg);
+        return;
+
+    } while (false);
+
+    if (err != nullptr) {
+        FLOG_WARN("range[%" PRIu64 "] watch error: %s", meta_.id(), err->message().c_str());
+
+        context_->socket_session->SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
+        context_->socket_session->Send(msg, ds_resp);
+    }
+
+}*/
+
+
 }
 }
 }  // for namespace

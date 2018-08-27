@@ -994,6 +994,10 @@ func (m *Metric) handleTcpDbMetric(w http.ResponseWriter, r *http.Request) {
 	go m.work(c)
 }
 
+func (m *Metric) handleAppPing(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func (m *Metric) handleTcpTableMetric(w http.ResponseWriter, r *http.Request) {
 	clusterId, err := strconv.ParseUint(r.FormValue("clusterId"), 10, 64)
 	if err != nil {

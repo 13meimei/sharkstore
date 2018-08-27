@@ -8,6 +8,7 @@ _Pragma("once");
 
 #include "socket_base.h"
 #include "ds_proto.h"
+#include "frame/sf_util.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -21,6 +22,20 @@ struct ProtoMessage {
     ds_header_t header;
     SocketBase *socket = nullptr;
     std::vector<char> body;
+
+    ProtoMessage(){};
+    explicit ProtoMessage(int64_t expire): expire_time(getticks()+expire) {};
+    virtual ~ProtoMessage(){};
+    ProtoMessage(const struct ProtoMessage &other) {
+        this->session_id = other.session_id;
+        this->begin_time = other.begin_time;
+        this->expire_time = other.expire_time;
+        this->msg_id = other.msg_id;
+        this->header = other.header;
+        this->socket = other.socket;
+        this->body.assign(other.body.begin(), other.body.end());
+    }
+
 };
 
 // 从报文数据中解析生成ProtoMessage

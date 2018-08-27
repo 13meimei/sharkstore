@@ -10,6 +10,8 @@ _Pragma("once");
 #include "base/shared_mutex.h"
 #include "base/util.h"
 
+#include "common/generater.h"
+#include "common/ds_encoding.h"
 #include "common/socket_session.h"
 
 #include "storage/store.h"
@@ -21,6 +23,13 @@ _Pragma("once");
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/mspb.pb.h"
+#include "proto/gen/raft_cmdpb.pb.h"
+#include "proto/gen/watchpb.pb.h"
+
+#include "server/context_server.h"
+#include "server/run_status.h"
+#include "watch/watch_event_buffer.h"
+#include "watch/watcher.h"
 
 #include "meta_keeper.h"
 #include "context.h"
@@ -33,6 +42,19 @@ namespace sharkstore { namespace test { namespace helper { class RangeTestFixtur
 namespace sharkstore {
 namespace dataserver {
 namespace range {
+
+const int DEFAULT_LOCK_DELETE_TIME_MILLSEC = 3000;
+enum {
+    LOCK_OK = 0,
+    LOCK_NOT_EXIST = Status::kNotFound,
+    LOCK_EXISTED,
+    LOCK_ID_MISMATCHED,
+    LOCK_IS_FORCE_UNLOCKED,
+    LOCK_STORE_FAILED,
+    LOCK_EPOCH_ERROR,
+    LOCK_TIME_OUT = Status::kTimedOut,  //value 7 same with defined in status.h
+    LOCK_PARAMETER_ERROR
+};
 
 class Range : public raft::StateMachine, public std::enable_shared_from_this<Range> {
 public:
@@ -70,6 +92,7 @@ public:
     void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
     void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
     void UnlockForce(common::ProtoMessage *msg, kvrpcpb::DsUnlockForceRequest &req);
+    void LockWatch(common::ProtoMessage *msg, watchpb::DsWatchRequest& req);
     void LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req);
 
     // KV
@@ -80,7 +103,7 @@ public:
     void Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req);
     void Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req);
     void Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
-
+    
     void KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req);
     void KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req);
     void KVBatchSet(common::ProtoMessage *msg, kvrpcpb::DsKvBatchSetRequest &req);
@@ -90,6 +113,20 @@ public:
     void KVRangeDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRangeDeleteRequest &req);
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
 
+    //KV watch series
+    Status GetAndResp( watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey, const bool &prefix,
+                              int64_t &version, watchpb::DsWatchResponse *dsResp);
+    void WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req);
+    void PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
+    void WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
+    void WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
+    bool WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
+    bool WatchDeleteSubmit(common::ProtoMessage *msg,
+                            watchpb::DsKvWatchDeleteRequest &req);
+
+    watch::CEventBuffer *getEventBuffer() {
+        return  eventBuffer;
+    }
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
     kvrpcpb::SelectResponse *SelectResp(const kvrpcpb::DsSelectRequest &req);
@@ -109,7 +146,7 @@ private:
     bool RawPutTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
     bool RawDeleteTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
     bool DeleteTry(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
-
+    
 private:
     Status Submit(const raft_cmdpb::Command &cmd);
 
@@ -120,6 +157,9 @@ private:
 
     Status ApplyRawPut(const raft_cmdpb::Command &cmd);
     Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
+
+    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
+    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
 
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
     Status ApplyDelete(const raft_cmdpb::Command &cmd);
@@ -149,7 +189,7 @@ private:
     int64_t checkMaxCount(int64_t maxCount) {
         if (maxCount <= 0) maxCount = std::numeric_limits<int64_t>::max();
         if (maxCount > max_count_) {
-            FLOG_WARN("%ld exceeded maxCount(%ld)", maxCount, max_count_);
+            //FLOG_WARN("%ld exceeded maxCount(%ld)", maxCount, max_count_);
             maxCount = max_count_;
         }
         return maxCount;
@@ -202,6 +242,10 @@ public:
     uint64_t GetSplitRangeID() const { return split_range_id_; }
     size_t GetSubmitQueueSize() const { return submit_queue_.Size(); }
 
+    void setLeaderFlag(bool flag) {
+        is_leader_ = flag;
+    }
+
 private:
     bool VerifyLeader(errorpb::Error *&err);
     bool CheckWriteable();
@@ -224,7 +268,16 @@ private:
 private:
     friend class ::sharkstore::test::helper::RangeTestFixture;
 
-    static const int64_t kTimeTakeWarnThresoldUSec = 500000;
+    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg, bool prefix = false);
+    int32_t loadFromDb(const watchpb::EventType &evtType,
+                       const std::string &fromKey,
+                       const std::string &endKey,
+                       const int64_t &startVersion,
+                       watchpb::DsWatchResponse *dsResp);
+    int32_t SendNotify( watch::WatcherPtr w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
+
+private:
+    static const int kTimeTakeWarnThresoldUSec = 500000;
 
     RangeContext* context_ = nullptr;
     const uint64_t node_id_ = 0;
@@ -245,6 +298,7 @@ private:
     std::atomic<uint64_t> statis_size_ = {0};
     uint64_t split_range_id_ = 0;
 
+    watch::CEventBuffer *eventBuffer = nullptr;
     SubmitQueue submit_queue_;
 
     std::unique_ptr<storage::Store> store_;

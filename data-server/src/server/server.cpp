@@ -5,7 +5,6 @@
 
 #include "common/ds_config.h"
 #include "common/socket_session_impl.h"
-#include "frame/sf_logger.h"
 
 #include "master/worker_impl.h"
 #include "admin/admin_server.h"

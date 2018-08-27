@@ -7,6 +7,7 @@ _Pragma("once");
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "stats.h"
 #include "split_policy.h"
+#include "server/context_server.h"
 
 namespace sharkstore {
 
@@ -38,6 +39,7 @@ public:
     virtual storage::MetaStore* MetaStore() = 0;
     virtual common::SocketSession* SocketSession() = 0;
     virtual RangeStats* Statistics() = 0;
+    virtual server::RangeServer* RangServer() = 0;
 
     // filesystem usage percent for check writable
     virtual uint64_t GetFSUsagePercent() const = 0;

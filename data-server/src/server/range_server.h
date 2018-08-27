@@ -19,7 +19,8 @@
 #include "range/range.h"
 #include "storage/meta_store.h"
 
-#include "context_server.h"
+#include "server/context_server.h"
+#include "watch/watch_server.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -67,11 +68,20 @@ private:
     void Select(common::ProtoMessage *msg);
     void Delete(common::ProtoMessage *msg);
 
+    //get and watch
+    void WatchGet(common::ProtoMessage *msg);
+    //just get single key or key with prefix  
+    void PureGet(common::ProtoMessage *msg);
+    //put and trigger watch response  
+    void WatchPut(common::ProtoMessage *msg);
+    //delete and trigger watch response
+    void WatchDel(common::ProtoMessage *msg);
+
     void Lock(common::ProtoMessage *msg);
     void LockUpdate(common::ProtoMessage *msg);
     void Unlock(common::ProtoMessage *msg);
     void UnlockForce(common::ProtoMessage *msg);
-    void LockScan(common::ProtoMessage *msg);
+    void LockWatch(common::ProtoMessage *msg);
 
     void KVSet(common::ProtoMessage *msg);
     void KVGet(common::ProtoMessage *msg);
@@ -139,6 +149,9 @@ private:
 
     ContextServer *context_ = nullptr;
     std::unique_ptr<range::RangeContext> range_context_;
+
+public:
+    watch::WatchServer* watch_server_;
 };
 
 }  // namespace server

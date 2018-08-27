@@ -20,15 +20,20 @@ static const int kDownPeerThresholdSecs = 50;
 static const uint64_t kStopWriteFsUsagePercent = 92;
 
 Range::Range(RangeContext* context, const metapb::Range &meta) :
-    context_(context),
-    node_id_(context_->GetNodeID()),
-    id_(meta.id()),
-    start_key_(meta.start_key()),
-    meta_(meta),
-    store_(new storage::Store(meta, context->DBInstance())) {
+	context_(context),
+	node_id_(context_->GetNodeID()),
+	id_(meta.id()),
+	start_key_(meta.start_key()),
+	meta_(meta),
+	store_(new storage::Store(meta, context->DBInstance())) {
+    eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
+                                        ds_config.watch_config.buffer_queue_size);
 }
 
-Range::~Range() {}
+
+Range::~Range() {
+    delete eventBuffer;
+}
 
 Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     // 加载apply位置
@@ -210,6 +215,10 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
             return ApplyKVBatchDelete(cmd);
         case raft_cmdpb::CmdType::KvRangeDel:
             return ApplyKVRangeDelete(cmd);
+        case raft_cmdpb::CmdType::KvWatchPut:
+            return ApplyWatchPut(cmd, index);
+        case raft_cmdpb::CmdType::KvWatchDel:
+            return ApplyWatchDel(cmd, index);
         default:
             RANGE_LOG_ERROR("Apply cmd type error %s", CmdType_Name(cmd.cmd_type()).c_str());
             return Status(Status::kNotSupported, "cmd type not supported", "");
@@ -512,6 +521,7 @@ void Range::ClearExpiredContext() {
         }
     }
 }
+
 
 errorpb::Error *Range::NoLeaderError() {
     errorpb::Error *err = new errorpb::Error;

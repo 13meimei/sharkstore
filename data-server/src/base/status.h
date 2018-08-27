@@ -35,6 +35,8 @@ public:
         kUnexpected = 23,
         kOutOfBound = 24,
 
+        kNotChange = 25,
+
         kUnknown = 255,
     };
 

@@ -22,6 +22,7 @@ public:
     storage::MetaStore* MetaStore() override { return server_->meta_store; }
     common::SocketSession* SocketSession() override { return server_->socket_session; }
     range::RangeStats* Statistics() override { return server_->run_status; }
+	RangeServer* RangServer() override { return server_->range_server; }
 
     uint64_t GetFSUsagePercent() const override;
 

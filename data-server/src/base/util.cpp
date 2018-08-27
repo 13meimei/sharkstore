@@ -125,6 +125,22 @@ std::string SliceSeparate(const std::string &l, const std::string &r, size_t max
     return r.substr(0, len + 1);
 }
 
+std::string NextComparable(const std::string& str) {
+    std::string result;
+    if (!str.empty()) {
+        result.reserve(str.size());
+    }
+    for (auto it = str.crbegin(); it != str.crend(); ++it) {
+        auto ch = static_cast<uint8_t>(*it);
+        if (ch < 0xff) {
+            result.assign(str.cbegin(), it.base());
+            result.back() = static_cast<char>(ch + 1);
+            return result;
+        }
+    }
+    return result;
+}
+
 #ifdef __linux__
 static const char kPathSeparator = '/';
 #elif defined(__APPLE__)

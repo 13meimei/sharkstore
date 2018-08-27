@@ -1660,6 +1660,12 @@ class Column : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   ::google::protobuf::int32 scale() const;
   void set_scale(::google::protobuf::int32 value);
 
+  // uint64 primary_key = 8;
+  void clear_primary_key();
+  static const int kPrimaryKeyFieldNumber = 8;
+  ::google::protobuf::uint64 primary_key() const;
+  void set_primary_key(::google::protobuf::uint64 value);
+
   // int32 precision = 6;
   void clear_precision();
   static const int kPrecisionFieldNumber = 6;
@@ -1684,11 +1690,11 @@ class Column : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   bool index() const;
   void set_index(bool value);
 
-  // uint64 primary_key = 8;
-  void clear_primary_key();
-  static const int kPrimaryKeyFieldNumber = 8;
-  ::google::protobuf::uint64 primary_key() const;
-  void set_primary_key(::google::protobuf::uint64 value);
+  // bool auto_increment = 13;
+  void clear_auto_increment();
+  static const int kAutoIncrementFieldNumber = 13;
+  bool auto_increment() const;
+  void set_auto_increment(bool value);
 
   // int32 ordinal = 9;
   void clear_ordinal();
@@ -1706,11 +1712,12 @@ class Column : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   ::google::protobuf::uint64 id_;
   int data_type_;
   ::google::protobuf::int32 scale_;
+  ::google::protobuf::uint64 primary_key_;
   ::google::protobuf::int32 precision_;
   bool unsigned__;
   bool nullable_;
   bool index_;
-  ::google::protobuf::uint64 primary_key_;
+  bool auto_increment_;
   ::google::protobuf::int32 ordinal_;
   mutable int _cached_size_;
   friend struct protobuf_metapb_2eproto::TableStruct;
@@ -3667,6 +3674,20 @@ inline void Column::set_allocated_properties(::std::string* properties) {
   }
   properties_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), properties);
   // @@protoc_insertion_point(field_set_allocated:metapb.Column.properties)
+}
+
+// bool auto_increment = 13;
+inline void Column::clear_auto_increment() {
+  auto_increment_ = false;
+}
+inline bool Column::auto_increment() const {
+  // @@protoc_insertion_point(field_get:metapb.Column.auto_increment)
+  return auto_increment_;
+}
+inline void Column::set_auto_increment(bool value) {
+  
+  auto_increment_ = value;
+  // @@protoc_insertion_point(field_set:metapb.Column.auto_increment)
 }
 
 // -------------------------------------------------------------------

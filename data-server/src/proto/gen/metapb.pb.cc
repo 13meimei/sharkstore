@@ -231,6 +231,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Column, index_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Column, default_value_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Column, properties_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Column, auto_increment_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Primary, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -275,9 +276,9 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 70, -1, sizeof(Route)},
   { 77, -1, sizeof(DataBase)},
   { 87, -1, sizeof(Column)},
-  { 104, -1, sizeof(Primary)},
-  { 111, -1, sizeof(TableEpoch)},
-  { 118, -1, sizeof(Table)},
+  { 105, -1, sizeof(Primary)},
+  { 112, -1, sizeof(TableEpoch)},
+  { 119, -1, sizeof(Table)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -395,41 +396,42 @@ void AddDescriptorsImpl() {
       "2\r.metapb.Range\022\034\n\006leader\030\002 \001(\0132\014.metapb"
       ".Peer\"^\n\010DataBase\022\014\n\004name\030\001 \001(\t\022\n\n\002id\030\002 "
       "\001(\004\022\022\n\nproperties\030\003 \001(\t\022\017\n\007version\030\004 \001(\004"
-      "\022\023\n\013create_time\030\005 \001(\003\"\355\001\n\006Column\022\014\n\004name"
+      "\022\023\n\013create_time\030\005 \001(\003\"\205\002\n\006Column\022\014\n\004name"
       "\030\001 \001(\t\022\n\n\002id\030\002 \001(\004\022#\n\tdata_type\030\003 \001(\0162\020."
       "metapb.DataType\022\020\n\010unsigned\030\004 \001(\010\022\r\n\005sca"
       "le\030\005 \001(\005\022\021\n\tprecision\030\006 \001(\005\022\020\n\010nullable\030"
       "\007 \001(\010\022\023\n\013primary_key\030\010 \001(\004\022\017\n\007ordinal\030\t "
       "\001(\005\022\r\n\005index\030\n \001(\010\022\025\n\rdefault_value\030\013 \001("
-      "\014\022\022\n\nproperties\030\014 \001(\t\"=\n\007Primary\022\023\n\013colu"
-      "mn_name\030\001 \001(\t\022\035\n\004next\030\002 \001(\0132\017.metapb.Pri"
-      "mary\"/\n\nTableEpoch\022\020\n\010conf_ver\030\001 \001(\004\022\017\n\007"
-      "version\030\002 \001(\004\"\230\002\n\005Table\022\014\n\004name\030\001 \001(\t\022\017\n"
-      "\007db_name\030\002 \001(\t\022\r\n\005db_id\030\003 \001(\004\022\n\n\002id\030\004 \001("
-      "\004\022\022\n\nproperties\030\005 \001(\t\022\037\n\007columns\030\006 \003(\0132\016"
-      ".metapb.Column\022!\n\005epoch\030\007 \001(\0132\022.metapb.T"
-      "ableEpoch\022\035\n\005regxs\030\010 \003(\0132\016.metapb.Column"
-      "\022\023\n\013create_time\030\t \001(\003\022\024\n\014pk_dup_check\030\n "
-      "\001(\010\022#\n\006status\030\013 \001(\0162\023.metapb.TableStatus"
-      "\022\016\n\006expand\030\014 \001(\014*s\n\tNodeState\022\r\n\tN_Inval"
-      "id\020\000\022\013\n\007N_Login\020\001\022\014\n\010N_Logout\020\002\022\r\n\tN_Off"
-      "line\020\003\022\017\n\013N_Tombstone\020\004\022\r\n\tN_Upgrade\020\005\022\r"
-      "\n\tN_Initial\020\006*\214\001\n\nRangeState\022\r\n\tR_Invali"
-      "d\020\000\022\n\n\006R_Init\020\001\022\014\n\010R_Normal\020\002\022\013\n\007R_Split"
-      "\020\003\022\013\n\007R_Merge\020\004\022\014\n\010R_Remove\020\005\022\016\n\nR_LoadS"
-      "nap\020\006\022\016\n\nR_Abnormal\020\007\022\r\n\tR_Offline\020\010*K\n\010"
-      "PeerType\022\024\n\020PeerType_Invalid\020\000\022\023\n\017PeerTy"
-      "pe_Normal\020\001\022\024\n\020PeerType_Learner\020\002*\220\001\n\010Da"
-      "taType\022\013\n\007Invalid\020\000\022\013\n\007Tinyint\020\001\022\014\n\010Smal"
-      "lint\020\002\022\007\n\003Int\020\003\022\n\n\006BigInt\020\004\022\t\n\005Float\020\005\022\n"
-      "\n\006Double\020\006\022\013\n\007Varchar\020\007\022\n\n\006Binary\020\010\022\010\n\004D"
-      "ate\020\t\022\r\n\tTimeStamp\020\n*v\n\013TableStatus\022\020\n\014T"
-      "ableInvalid\020\000\022\r\n\tTableInit\020\001\022\020\n\014TablePre"
-      "pare\020\002\022\020\n\014TableRunning\020\003\022\017\n\013TableDelete\020"
-      "\004\022\021\n\rTableDeleting\020\005b\006proto3"
+      "\014\022\022\n\nproperties\030\014 \001(\t\022\026\n\016auto_increment\030"
+      "\r \001(\010\"=\n\007Primary\022\023\n\013column_name\030\001 \001(\t\022\035\n"
+      "\004next\030\002 \001(\0132\017.metapb.Primary\"/\n\nTableEpo"
+      "ch\022\020\n\010conf_ver\030\001 \001(\004\022\017\n\007version\030\002 \001(\004\"\230\002"
+      "\n\005Table\022\014\n\004name\030\001 \001(\t\022\017\n\007db_name\030\002 \001(\t\022\r"
+      "\n\005db_id\030\003 \001(\004\022\n\n\002id\030\004 \001(\004\022\022\n\nproperties\030"
+      "\005 \001(\t\022\037\n\007columns\030\006 \003(\0132\016.metapb.Column\022!"
+      "\n\005epoch\030\007 \001(\0132\022.metapb.TableEpoch\022\035\n\005reg"
+      "xs\030\010 \003(\0132\016.metapb.Column\022\023\n\013create_time\030"
+      "\t \001(\003\022\024\n\014pk_dup_check\030\n \001(\010\022#\n\006status\030\013 "
+      "\001(\0162\023.metapb.TableStatus\022\016\n\006expand\030\014 \001(\014"
+      "*s\n\tNodeState\022\r\n\tN_Invalid\020\000\022\013\n\007N_Login\020"
+      "\001\022\014\n\010N_Logout\020\002\022\r\n\tN_Offline\020\003\022\017\n\013N_Tomb"
+      "stone\020\004\022\r\n\tN_Upgrade\020\005\022\r\n\tN_Initial\020\006*\214\001"
+      "\n\nRangeState\022\r\n\tR_Invalid\020\000\022\n\n\006R_Init\020\001\022"
+      "\014\n\010R_Normal\020\002\022\013\n\007R_Split\020\003\022\013\n\007R_Merge\020\004\022"
+      "\014\n\010R_Remove\020\005\022\016\n\nR_LoadSnap\020\006\022\016\n\nR_Abnor"
+      "mal\020\007\022\r\n\tR_Offline\020\010*K\n\010PeerType\022\024\n\020Peer"
+      "Type_Invalid\020\000\022\023\n\017PeerType_Normal\020\001\022\024\n\020P"
+      "eerType_Learner\020\002*\220\001\n\010DataType\022\013\n\007Invali"
+      "d\020\000\022\013\n\007Tinyint\020\001\022\014\n\010Smallint\020\002\022\007\n\003Int\020\003\022"
+      "\n\n\006BigInt\020\004\022\t\n\005Float\020\005\022\n\n\006Double\020\006\022\013\n\007Va"
+      "rchar\020\007\022\n\n\006Binary\020\010\022\010\n\004Date\020\t\022\r\n\tTimeSta"
+      "mp\020\n*v\n\013TableStatus\022\020\n\014TableInvalid\020\000\022\r\n"
+      "\tTableInit\020\001\022\020\n\014TablePrepare\020\002\022\020\n\014TableR"
+      "unning\020\003\022\017\n\013TableDelete\020\004\022\021\n\rTableDeleti"
+      "ng\020\005b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 2148);
+      descriptor, 2172);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "metapb.proto", &protobuf_RegisterTypes);
 }
@@ -5444,6 +5446,7 @@ const int Column::kOrdinalFieldNumber;
 const int Column::kIndexFieldNumber;
 const int Column::kDefaultValueFieldNumber;
 const int Column::kPropertiesFieldNumber;
+const int Column::kAutoIncrementFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Column::Column()
@@ -5717,6 +5720,20 @@ bool Column::MergePartialFromCodedStream(
         break;
       }
 
+      // bool auto_increment = 13;
+      case 13: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(104u /* 104 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &auto_increment_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -5815,6 +5832,11 @@ void Column::SerializeWithCachedSizes(
       12, this->properties(), output);
   }
 
+  // bool auto_increment = 13;
+  if (this->auto_increment() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(13, this->auto_increment(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -5904,6 +5926,11 @@ void Column::SerializeWithCachedSizes(
         12, this->properties(), target);
   }
 
+  // bool auto_increment = 13;
+  if (this->auto_increment() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(13, this->auto_increment(), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -5962,6 +5989,13 @@ size_t Column::ByteSizeLong() const {
         this->scale());
   }
 
+  // uint64 primary_key = 8;
+  if (this->primary_key() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->primary_key());
+  }
+
   // int32 precision = 6;
   if (this->precision() != 0) {
     total_size += 1 +
@@ -5984,11 +6018,9 @@ size_t Column::ByteSizeLong() const {
     total_size += 1 + 1;
   }
 
-  // uint64 primary_key = 8;
-  if (this->primary_key() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::UInt64Size(
-        this->primary_key());
+  // bool auto_increment = 13;
+  if (this->auto_increment() != 0) {
+    total_size += 1 + 1;
   }
 
   // int32 ordinal = 9;
@@ -6048,6 +6080,9 @@ void Column::MergeFrom(const Column& from) {
   if (from.scale() != 0) {
     set_scale(from.scale());
   }
+  if (from.primary_key() != 0) {
+    set_primary_key(from.primary_key());
+  }
   if (from.precision() != 0) {
     set_precision(from.precision());
   }
@@ -6060,8 +6095,8 @@ void Column::MergeFrom(const Column& from) {
   if (from.index() != 0) {
     set_index(from.index());
   }
-  if (from.primary_key() != 0) {
-    set_primary_key(from.primary_key());
+  if (from.auto_increment() != 0) {
+    set_auto_increment(from.auto_increment());
   }
   if (from.ordinal() != 0) {
     set_ordinal(from.ordinal());
@@ -6098,11 +6133,12 @@ void Column::InternalSwap(Column* other) {
   swap(id_, other->id_);
   swap(data_type_, other->data_type_);
   swap(scale_, other->scale_);
+  swap(primary_key_, other->primary_key_);
   swap(precision_, other->precision_);
   swap(unsigned__, other->unsigned__);
   swap(nullable_, other->nullable_);
   swap(index_, other->index_);
-  swap(primary_key_, other->primary_key_);
+  swap(auto_increment_, other->auto_increment_);
   swap(ordinal_, other->ordinal_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
@@ -6399,6 +6435,20 @@ void Column::set_allocated_properties(::std::string* properties) {
   }
   properties_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), properties);
   // @@protoc_insertion_point(field_set_allocated:metapb.Column.properties)
+}
+
+// bool auto_increment = 13;
+void Column::clear_auto_increment() {
+  auto_increment_ = false;
+}
+bool Column::auto_increment() const {
+  // @@protoc_insertion_point(field_get:metapb.Column.auto_increment)
+  return auto_increment_;
+}
+void Column::set_auto_increment(bool value) {
+  
+  auto_increment_ = value;
+  // @@protoc_insertion_point(field_set:metapb.Column.auto_increment)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

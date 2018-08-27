@@ -2,6 +2,7 @@
 
 #include "base/util.h"
 #include "helper/store_test_fixture.h"
+#include "proto/gen/watchpb.pb.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -622,6 +623,133 @@ TEST_F(StoreTest, DeleteWhere) {
             {rows_.cbegin() + 4, rows_.cend()}
     );
     ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
+
+
+TEST_F(StoreTest, Watch) {
+    {
+        watchpb::KvWatchPutRequest req;
+        req.mutable_kv()->add_key("a");
+        req.mutable_kv()->add_key("b");
+        req.mutable_kv()->add_key("c1");
+        req.mutable_kv()->set_value("value1");
+        auto s = store_->WatchPut(req, 100);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+    {
+        watchpb::KvWatchPutRequest req;
+        req.mutable_kv()->add_key("a");
+        req.mutable_kv()->add_key("b");
+        req.mutable_kv()->add_key("c2");
+        req.mutable_kv()->set_value("value2");
+        auto s = store_->WatchPut(req, 101);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+    {
+        watchpb::KvWatchPutRequest req;
+        req.mutable_kv()->add_key("a");
+        req.mutable_kv()->add_key("d");
+        req.mutable_kv()->set_value("value3");
+        auto s = store_->WatchPut(req, 102);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+    // get one
+    {
+        watchpb::DsKvWatchGetMultiRequest req;
+        req.mutable_kv()->add_key("a");
+        req.mutable_kv()->add_key("b");
+        req.mutable_kv()->add_key("c1");
+        watchpb::DsKvWatchGetMultiResponse resp;
+        auto s = store_->WatchGet(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(resp.kvs_size(), 1);
+        const auto& kv = resp.kvs(0);
+        ASSERT_EQ(kv.key_size(), 3);
+        ASSERT_EQ(kv.key(0), "a");
+        ASSERT_EQ(kv.key(1), "b");
+        ASSERT_EQ(kv.key(2), "c1");
+        ASSERT_EQ(kv.value(), "value1");
+        ASSERT_EQ(kv.version(), 100);
+    }
+
+    // get prefix
+    {
+        watchpb::DsKvWatchGetMultiRequest req;
+        req.mutable_kv()->add_key("a");
+        req.mutable_kv()->add_key("b");
+        req.set_prefix(true);
+        watchpb::DsKvWatchGetMultiResponse resp;
+        auto s = store_->WatchGet(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(resp.kvs_size(), 2);
+        const auto& kv = resp.kvs(0);
+        ASSERT_EQ(kv.key_size(), 3);
+        ASSERT_EQ(kv.key(0), "a");
+        ASSERT_EQ(kv.key(1), "b");
+        ASSERT_EQ(kv.key(2), "c1");
+        ASSERT_EQ(kv.value(), "value1");
+        ASSERT_EQ(kv.version(), 100);
+
+        const auto& kv2 = resp.kvs(1);
+        ASSERT_EQ(kv2.key_size(), 3);
+        ASSERT_EQ(kv2.key(0), "a");
+        ASSERT_EQ(kv2.key(1), "b");
+        ASSERT_EQ(kv2.key(2), "c2");
+        ASSERT_EQ(kv2.value(), "value2");
+        ASSERT_EQ(kv2.version(), 101);
+    }
+    {
+        watchpb::DsKvWatchGetMultiRequest req;
+        req.mutable_kv()->add_key("a");
+        req.set_prefix(true);
+        watchpb::DsKvWatchGetMultiResponse resp;
+        auto s = store_->WatchGet(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(resp.kvs_size(), 3);
+        const auto& kv = resp.kvs(0);
+        ASSERT_EQ(kv.key_size(), 3);
+        ASSERT_EQ(kv.key(0), "a");
+        ASSERT_EQ(kv.key(1), "b");
+        ASSERT_EQ(kv.key(2), "c1");
+        ASSERT_EQ(kv.value(), "value1");
+        ASSERT_EQ(kv.version(), 100);
+
+        const auto& kv2 = resp.kvs(1);
+        ASSERT_EQ(kv2.key_size(), 3);
+        ASSERT_EQ(kv2.key(0), "a");
+        ASSERT_EQ(kv2.key(1), "b");
+        ASSERT_EQ(kv2.key(2), "c2");
+        ASSERT_EQ(kv2.value(), "value2");
+        ASSERT_EQ(kv2.version(), 101);
+
+        const auto& kv3 = resp.kvs(2);
+        ASSERT_EQ(kv3.key_size(), 2);
+        ASSERT_EQ(kv3.key(0), "a");
+        ASSERT_EQ(kv3.key(1), "d");
+        ASSERT_EQ(kv3.value(), "value3");
+        ASSERT_EQ(kv3.version(), 102);
+    }
+
+    // delete, then not found
+    {
+        watchpb::KvWatchDeleteRequest req;
+        req.mutable_kv()->add_key("a");
+        req.mutable_kv()->add_key("b");
+        req.mutable_kv()->add_key("c1");
+        auto s = store_->WatchDelete(req);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+    {
+        watchpb::DsKvWatchGetMultiRequest req;
+        req.mutable_kv()->add_key("a");
+        req.mutable_kv()->add_key("b");
+        req.mutable_kv()->add_key("c1");
+        watchpb::DsKvWatchGetMultiResponse resp;
+        auto s = store_->WatchGet(req, &resp);
+        ASSERT_EQ(s.code(), sharkstore::Status::kNotFound);
+    }
 }
 
 

@@ -16,6 +16,7 @@ namespace storage {
 static const std::string kRangeMetaPrefix = "\x02";
 static const std::string kRangeApplyPrefix = "\x03";
 static const std::string kNodeIDKey = "\x04NodeID";
+static const std::string kRangeVersionPrefix = "\x05";
 
 class MetaStore {
 public:
@@ -30,6 +31,9 @@ public:
 
     Status SaveNodeID(uint64_t node_id);
     Status GetNodeID(uint64_t* node_id);
+
+    Status SaveVersionID(const uint64_t &range_id, int64_t ver_id);
+    Status GetVersionID(const uint64_t &range_id, int64_t* ver_id);
 
     Status GetAllRange(std::vector<metapb::Range>* range_metas);
     Status GetRange(uint64_t range_id, metapb::Range* meta);
