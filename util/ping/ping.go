@@ -29,14 +29,19 @@ func getAppInfo() (app string, ip []string) {
 	return app, ip
 }
 
-func Ping(clusterId, pingBaseUrl string, ping_interval int64) {
+func Ping(clusterId string, port int64, pingBaseUrl string, ping_interval int64) {
 	app, ips := getAppInfo()
 	if len(ips) == 0 {
 		return
 	}
 
-	url := fmt.Sprintf(`http://%s/app/ping?cluster_id=%s&app_name=%s&ip_addrs=%s&ping_interval=%d`,
-		pingBaseUrl, clusterId, app, strings.Join(ips, ","), ping_interval)
+	url := fmt.Sprintf(`http://%s/app/ping?cluster_id=%s&app_name=%s&ip_addrs=%s&port=%d&ping_interval=%d`,
+		pingBaseUrl,
+		clusterId,
+		app,
+		strings.Join(ips, ","),
+		port,
+		ping_interval)
 
 	timer := time.NewTicker(time.Duration(ping_interval) * time.Second)
 	for {
