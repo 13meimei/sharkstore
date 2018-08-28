@@ -899,6 +899,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         auto resp = dsResp->mutable_resp();
         auto evt = resp->add_events();
         evt->set_allocated_kv(new  watchpb::WatchKeyValue(kv));
+        evt->mutable_kv()->set_version(currDbVersion);
         evt->set_type(evtType);
 
         SendNotify(vecNotifyWatcher[i], dsResp);
