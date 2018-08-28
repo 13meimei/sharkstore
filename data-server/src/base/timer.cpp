@@ -17,9 +17,7 @@ void TimerQueue::Push(const std::shared_ptr<Timer>& timer, int timeout_msec) {
 
     std::lock_guard<std::mutex> lock(mu_);
     queue_.push(item);
-    if (queue_.top().expire_at == item.expire_at) {
-        cond_.notify_one();
-    }
+    cond_.notify_one();
 }
 
 void TimerQueue::Stop() {

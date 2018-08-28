@@ -2,6 +2,7 @@
 #include "helper/cpp_permission.h"
 
 #include <fastcommon/shared_func.h>
+#include <common/ds_config.h>
 #include "base/status.h"
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -15,6 +16,7 @@
 
 #include "helper/mock/raft_server_mock.h"
 #include "helper/mock/socket_session_mock.h"
+#include "helper/table.h"
 #include "range/range.h"
 
 #include "watch/watcher.h"
@@ -96,6 +98,7 @@ protected:
         context_->raft_server = new RaftServerMock;
         context_->run_status = new server::RunStatus;
 
+        ds_config.range_config.recover_concurrency = 1;
         range_server_->Init(context_);
         now = getticks();
     }
@@ -155,6 +158,12 @@ metapb::Range *genRange1() {
     peer->set_id(2);
     peer->set_node_id(2);
 
+    auto pks = sharkstore::test::helper::CreateAccountTable()->GetPKs();
+    for (const auto& pk : pks) {
+        auto p = meta->add_primary_keys();
+        p->CopyFrom(pk);
+    }
+
     return meta;
 }
 
@@ -191,6 +200,12 @@ metapb::Range *genRange2() {
     auto peer = meta->add_peers();
     peer->set_id(1);
     peer->set_node_id(1);
+
+    auto pks = sharkstore::test::helper::CreateAccountTable()->GetPKs();
+    for (const auto& pk : pks) {
+        auto p = meta->add_primary_keys();
+        p->CopyFrom(pk);
+    }
 
     return meta;
 }
@@ -503,7 +518,7 @@ TEST_F(WatchTest, watch_put_group_get_group) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
@@ -538,7 +553,7 @@ TEST_F(WatchTest, watch_put_group_get_group) {
     FLOG_DEBUG("pure_get group..." );
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         // begin test pure_get(ok)
@@ -629,7 +644,7 @@ TEST_F(WatchTest, watch_put_group_del_get_nothing) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
@@ -665,7 +680,7 @@ TEST_F(WatchTest, watch_put_group_del_get_nothing) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
@@ -704,7 +719,7 @@ TEST_F(WatchTest, watch_put_group_del_get_nothing) {
     FLOG_DEBUG("pure_get group...nothign" );
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         // begin test pure_get(ok)
@@ -795,7 +810,7 @@ TEST_F(WatchTest, watch_put_single) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
@@ -969,7 +984,7 @@ TEST_F(WatchTest, pure_get_ok) {
     std::cout << "pure_get ...ok" << '\n';
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[2]->setLeaderFlag(true);
 
         metapb::Range* rng = new metapb::Range;
@@ -1091,7 +1106,7 @@ TEST_F(WatchTest, pure_get_group) {
     FLOG_DEBUG("pure_get ...group ok");
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         // begin test watch_get (ok)
@@ -1204,7 +1219,7 @@ TEST_F(WatchTest, pure_get_prefix) {
     FLOG_DEBUG("pure_get ...prefix ok");
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         // begin test pure_get(ok)
@@ -1296,7 +1311,7 @@ TEST_F(WatchTest, watch_get_again) {
         msg->socket = &socket_;
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         watchpb::DsWatchRequest req;
@@ -1336,7 +1351,7 @@ TEST_F(WatchTest, watch_get_again) {
     FLOG_DEBUG("watch_get group...ok");
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         // begin test watch_get(ok)
@@ -1381,7 +1396,7 @@ TEST_F(WatchTest, watch_get_again) {
     std::cout << "watch_get ...ok" << '\n';
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[2]->setLeaderFlag(true);
 
         // begin test watch_get (ok)
@@ -1511,7 +1526,7 @@ TEST_F(WatchTest, watch_delete) {
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         range_server_->WatchGet(msg);
@@ -1534,7 +1549,7 @@ TEST_F(WatchTest, watch_delete) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[2]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
@@ -1575,7 +1590,7 @@ TEST_F(WatchTest, watch_delete) {
 
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
@@ -1614,13 +1629,13 @@ TEST_F(WatchTest, watch_delete) {
         range_server_->ranges_[1]->split_range_id_ = 2;
         {
             auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->ops_.leader = 1;
+            raft->SetLeaderTerm(1, 1);
             range_server_->ranges_[1]->setLeaderFlag(true);
         }
 
         {
             auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->ops_.leader = 1;
+            raft->SetLeaderTerm(1, 1);
             range_server_->ranges_[2]->setLeaderFlag(true);
         }
 
@@ -1655,7 +1670,7 @@ TEST_F(WatchTest, watch_delete) {
 
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         // begin test watch_get(ensure watch delete)
@@ -1692,7 +1707,7 @@ TEST_F(WatchTest, watch_delete) {
 
     {
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[2]->setLeaderFlag(true);
 
         // begin test watch_get (ensure watch delete)
