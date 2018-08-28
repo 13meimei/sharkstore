@@ -52,9 +52,8 @@ public:
     virtual std::shared_ptr<Range> FindRange(uint64_t range_id) = 0;
 
     // split
-    virtual Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index) {
-        return Status(Status::kNotSupported);
-    }
+    virtual Status SplitRange(uint64_t range_id,
+            const raft_cmdpb::SplitRequest &req, uint64_t raft_index) = 0;
 };
 
 }  // namespace range
