@@ -71,7 +71,7 @@ func (t *Table) GetAutoIncId(store Store, size uint32) ([]uint64, error) {
 	return t.idGenerator.GetBatchIds(size)
 }
 
-func (t *Table) getGenerator(store Store){
+func (t *Table) getGenerator(store Store) {
 	if t.idGenerator == nil {
 		t.lock.Lock()
 		defer t.lock.Unlock()
@@ -188,7 +188,7 @@ func (t *Table) MergeColumn(source []*metapb.Column, cluster *Cluster) error {
 	var tartCols []*metapb.Column
 	for _, col := range table.GetColumns() {
 		_, found := newColMap[col.GetName()]
-		if col.PrimaryKey == 1 || found{
+		if col.PrimaryKey == 1 || found {
 			tartCols = append(tartCols, col)
 		}
 	}
@@ -664,7 +664,7 @@ func deleteRange(c *Cluster, rang *Range) error {
 
 	nodes := c.getRangeNodes(rang)
 	for _, node := range nodes {
-		if err := c.cli.DeleteRange(node.GetServerAddr(), rang.GetId()); err != nil {
+		if err := c.cli.DeleteRange(node.GetServerAddr(), rang.GetId(), 0); err != nil {
 			return errors.New(fmt.Sprintf("delete range id[%v] addr[%v]do rpc failed: %v",
 				node.GetServerAddr(), rang.GetId(), err))
 		}
