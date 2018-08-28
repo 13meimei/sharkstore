@@ -482,8 +482,8 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 			return nil, err
 		}
 		if len(ids) != len(rows) {
-			log.Error("[insert] table %s.%s get auto_increment value err, %v", db, tableName, err)
-			return nil, fmt.Errorf("get auto increment id size %d not equal insert size %d", len(ids), len(rows))
+			log.Error("[insert] table %s.%s get auto_increment id size %d not equal insert size %d", db, tableName, len(ids), len(rows))
+			return nil, fmt.Errorf("get auto_increment id size %d not equal insert size %d", len(ids), len(rows))
 		}
 		for i, row := range rows {
 			row = append(row, []byte(fmt.Sprintf("%v", ids[i])))

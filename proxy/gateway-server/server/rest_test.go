@@ -538,3 +538,87 @@ func TestRestKVCommand(t *testing.T) {
 	//assert.Equal(t, reply.Code, 0, "code")
 	//assert.Equal(t, len(reply.Values), 1, "value")
 }
+
+//support
+func TestRestInsert(t *testing.T) {
+	//log.InitFileLog(logPath, "proxy", "debug")
+	columns := []*columnInfo{
+		&columnInfo{name: "k", typ: metapb.DataType_Varchar, isPK: true},
+		&columnInfo{name: "v", typ: metapb.DataType_Varchar},
+	}
+	db := &metapb.DataBase{Name: testDBName, Id: 1}
+	tt := makeTestTable(columns)
+	start := util.EncodeStorePrefix(util.Store_Prefix_KV, tt.GetId())
+	var pks []*metapb.Column
+	for _, col := range tt.Columns {
+		if col.Name == "k" {
+			pks = append(pks, col)
+			break
+		}
+	}
+	r := util.BytesPrefix(start)
+	rng := &metapb.Range{
+		Id:         1,
+		TableId:    1,
+		StartKey:   r.Start,
+		EndKey:     r.Limit,
+		RangeEpoch: &metapb.RangeEpoch{ConfVer: 1, Version: 1},
+		Peers:      []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+	}
+	rng.PrimaryKeys = pks
+	p := newTestProxy(db, tt, rng)
+	defer CloseMock(p)
+	defer p.Close()
+
+	table := p.router.FindTable(testDBName, testTableName)
+	columnNames := []string{"k", "v"}
+
+	content, err := ZipFile("../conf/config.zip")
+	if err != nil {
+		t.Fatalf("read zip file err %v", err)
+	}
+
+	// test set
+	setQuery := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			Field: columnNames,
+			Values: [][]interface{}{
+				[]interface{}{"key1", content},
+			},
+		},
+	}
+
+	testSetCommand(t, setQuery, table, p, &Reply{
+		Code:         0,
+		RowsAffected: 1,
+	})
+
+
+	// test getll
+	sql := "select k,v from " + testTableName
+	sqlstmt, err := sqlparser.Parse(sql)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stmt, ok := sqlstmt.(*sqlparser.Select)
+	if !ok {
+		t.Fatalf("not select stamentent: %s", sql)
+	}
+
+	getQuery := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			Field: columnNames,
+		},
+	}
+	filter_ := testGetFilter(t, getQuery, table, p, stmt)
+
+	expected := [][]interface{}{
+		[]interface{}{"key1", content},
+	}
+	testGetCommand(t, table, p, filter_, stmt, expected, nil, nil, columnNames)
+
+}

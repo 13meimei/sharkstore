@@ -4,9 +4,13 @@ import (
 	"testing"
 	"fmt"
 	"strconv"
-	"util/deepcopy"
+	"os"
+	"bufio"
+	"strings"
+	"io"
 	"util"
 	"util/log"
+	"util/deepcopy"
 	"model/pkg/metapb"
 )
 
@@ -1130,6 +1134,7 @@ func TestProxyAdminRoute(t *testing.T) {
 		[]string{fmt.Sprintf("%d", rng.GetId()), string(skey), string(ekey), "1", "127.0.0.1:6060", fmt.Sprintf("%d:%d", rng.RangeEpoch.ConfVer, rng.RangeEpoch.Version)},
 	}, fmt.Sprintf("admin route('show', '%s')", testTableName))
 }
+
 //
 //func TestProxyRoute(t *testing.T){
 //	conf := new(Config)
@@ -1250,7 +1255,73 @@ func TestProxyInsert_AutoIncrement(t *testing.T) {
 		[]string{"8", "myname4", "2"},
 	}
 	testProxySelect(t, p, expected, "select * from "+testTableName)
+}
 
+//no support
+func TestProxyInsert_Binary(t *testing.T) {
+	columns := []*columnInfo{
+		&columnInfo{name: "k", typ: metapb.DataType_Varchar, isPK: true},
+		&columnInfo{name: "v", typ: metapb.DataType_Binary},
+	}
+	db := &metapb.DataBase{Name: testDBName, Id: 1}
+	table := makeTestTable(columns)
+	start := util.EncodeStorePrefix(util.Store_Prefix_KV, table.GetId())
+	r := util.BytesPrefix(start)
+	var pks []*metapb.Column
+	for _, col := range table.Columns {
+		if col.Name == "k" {
+			pks = append(pks, col)
+			break
+		}
+	}
+	rng := &metapb.Range{
+		Id:          1,
+		TableId:     1,
+		StartKey:    r.Start,
+		EndKey:      r.Limit,
+		RangeEpoch:  &metapb.RangeEpoch{ConfVer: 1, Version: 1},
+		Peers:       []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+		PrimaryKeys: pks,
+	}
+	p := newTestProxy(db, table, rng)
+
+	defer CloseMock(p)
+	defer p.Close()
+
+	content, err := ZipFile("../conf/config.zip")
+	if err != nil {
+		t.Fatalf("read zip file err %v", err)
+	}
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(k,v) values('key1', " + content+ ")")
+
+	//
+	// select and check
+	expected := [][]string{
+		[]string{"key1", content},
+	}
+	testProxySelect(t, p, expected, "select * from "+testTableName)
+
+}
+
+func ZipFile(zipPath string) (string, error) {
+	f, err := os.Open(zipPath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	rd := bufio.NewReader(f)
+
+	var lines []string
+	for {
+		line, err := rd.ReadString('\n')
+		if err != nil && io.EOF == err {
+			break
+		}
+		lines = append(lines, line)
+	}
+	content := strings.Join(lines, "")
+	return content, nil
 }
 
 func TestProxyInsertOneRowWithRangeChange(t *testing.T) {
