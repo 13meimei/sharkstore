@@ -20,7 +20,7 @@ public:
     Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, common::ProtoMessage*);
     Watcher(uint64_t, const std::vector<WatcherKey*>&);
     virtual ~Watcher();
-    //bool operator>(const Watcher* other) const;
+    bool operator>(const Watcher* other) const;
     void setBufferFlag(const int64_t &flag){
         buffer_flag_ = flag;
     }
@@ -90,7 +90,7 @@ public:
 template <class T>
 struct Greater {
     bool operator()(const T& a, const T& b) {
-        return a->GetMessage()->expire_time > b->GetMessage()->expire_time;
+        return a->GetExpireTime() > b->GetExpireTime();
         //return a > b;
     }
 };

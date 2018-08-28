@@ -18,6 +18,7 @@
 #include "range/range.h"
 
 #include "watch/watcher.h"
+#include "watch/watcher_set.h"
 #include "common/socket_base.h"
 
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
@@ -30,7 +31,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-char level[8] = "warn";
+char level[8] = "debug";
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -368,35 +369,35 @@ metapb::Range *genRange2() {
     return meta;
 }
 
-TEST_F(WatchTest, pure_get_normal) {
-
-    metapb::Range* rng = new metapb::Range;
-    range_server_->meta_store_->GetRange(1, rng);
-    FLOG_DEBUG("RANGE1  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
-
-    range_server_->meta_store_->GetRange(2, rng);
-    FLOG_DEBUG("RANGE2  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
-
-
-    FLOG_DEBUG("pure_get ...");
-    {
-        justPut(2, "01004001", "", "01004001:value");
-        justGet(2, "01004001", "", "01004001:value");
-    }
-
-}
-
-
-TEST_F(WatchTest, pure_get_group) {
-
-    FLOG_DEBUG("pure_get group ...");
-    {
-        justPut(1, "01003001", "01003002", "01003001:value");
-        justGet(1, "01003001", "01003002", "01003001:value");
-
-    }
-
-}
+//TEST_F(WatchTest, pure_get_normal) {
+//
+//    metapb::Range* rng = new metapb::Range;
+//    range_server_->meta_store_->GetRange(1, rng);
+//    FLOG_DEBUG("RANGE1  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
+//
+//    range_server_->meta_store_->GetRange(2, rng);
+//    FLOG_DEBUG("RANGE2  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
+//
+//
+//    FLOG_DEBUG("pure_get ...");
+//    {
+//        justPut(2, "01004001", "", "01004001:value");
+//        justGet(2, "01004001", "", "01004001:value");
+//    }
+//
+//}
+//
+//
+//TEST_F(WatchTest, pure_get_group) {
+//
+//    FLOG_DEBUG("pure_get group ...");
+//    {
+//        justPut(1, "01003001", "01003002", "01003001:value");
+//        justGet(1, "01003001", "01003002", "01003001:value");
+//
+//    }
+//
+//}
 
 
 //TEST_F(WatchTest, pure_get_prefix) {
@@ -410,20 +411,70 @@ TEST_F(WatchTest, pure_get_group) {
 //}
 
 
-TEST_F(WatchTest, watch_get_again) {
+//TEST_F(WatchTest, watch_get_again) {
+//
+//    FLOG_DEBUG("watch_get ...");
+//    {
+//        //justGet(1, "01003001", "", "01003001:value");
+//        //justGet(1, "01003001", "01003002", "01003001:value");
+//        // end test watch_get
+//
+//        justPut(2, "01004001", "", "01004001:value");
+//        justGet(2, "01004001", "", "01004001:value");
+//
+//        justPut(2, "01004001", "01004002", "01004001:value");
+//        justGet(2, "01004001", "01004002", "01004001:value");
+//    }
+//
+//}
 
-    FLOG_DEBUG("watch_get ...");
+
+TEST_F(WatchTest, test_priority_queue) {
+
+
     {
+        #define QUEUE_CAPACITY 100
+
+        watch::PriorityQueue<watch::WatcherPtr>   watcher_queue;
+
+        int64_t cnt(QUEUE_CAPACITY);
+        std::string keys("");
+        char tmp[10] = {0};
+        std::vector<watch::WatcherKey*> vecKey;
+
+        while (cnt > 0) {
+
+            int64_t expireTime = get_micro_second() + 5000000;
+            sprintf(tmp, "a_%ld", cnt);
+            keys.assign(tmp);
+
+            vecKey.clear();
+            vecKey.push_back(new std::string(keys));
+
+            // begin test watch_get (key empty)
+            auto msg = new common::ProtoMessage;
+            msg->expire_time = getticks() + 5000;
+            msg->session_id = 1;
+            msg->socket = &socket_;
+            msg->begin_time = get_micro_second();
+            msg->msg_id = cnt + 100;
+
+            auto w_ptr = std::make_shared<watch::Watcher>(watch::WATCH_KEY, 1, vecKey, 0, expireTime, msg);
+
+            watcher_queue.push(w_ptr);
+            cnt--;
+        }
+
+        ASSERT_TRUE(watcher_queue.size() == QUEUE_CAPACITY);
+
+        while(!watcher_queue.empty()) {
+             FLOG_DEBUG("expire_time:%" PRId64, watcher_queue.top()->expire_time_);
+            watcher_queue.pop();
+        }
+
         //justGet(1, "01003001", "", "01003001:value");
         //justGet(1, "01003001", "01003002", "01003001:value");
         // end test watch_get
-
-        justPut(2, "01004001", "", "01004001:value");
-        justGet(2, "01004001", "", "01004001:value");
-
-        justPut(2, "01004001", "01004002", "01004001:value");
-        justGet(2, "01004001", "01004002", "01004001:value");
     }
 
 }
-
