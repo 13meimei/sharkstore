@@ -163,6 +163,7 @@ protected:
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
         raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[rangeId]->setLeaderFlag(true);
 
         // begin test pure_get(ok)
@@ -207,8 +208,9 @@ protected:
         FLOG_DEBUG("justPut...range:%d key1:%s  key2:%s  value:%s", rangeId, key1.c_str(), key2.c_str() , value.c_str());
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[rangeId]->setLeaderFlag(true);
+        raft->ops_.leader = 1 ;
+        raft->SetLeaderTerm(1, 1);
+        range_server_->ranges_[rangeId]->is_leader_ = true;
 
         // begin test watch_get (ok)
         auto msg1 = new common::ProtoMessage;
@@ -244,6 +246,11 @@ protected:
     void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, bool prefix = false)
     {
         FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
+        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
+        range_server_->ranges_[rangeId]->is_leader_ = true;
+
         // begin test watch_get (key empty)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 3000;
@@ -265,6 +272,7 @@ protected:
         req.mutable_req()->mutable_kv()->set_version(1);
         req.mutable_req()->set_longpull(5000);
         ///////////////////////////////////////////////
+        //传入大版本号，用于让watcher添加成功
         req.mutable_req()->set_startversion(800);
         req.mutable_req()->set_prefix(prefix);
 
@@ -272,17 +280,15 @@ protected:
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
+
 
         range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        FLOG_DEBUG("watch_get RESP:%s", resp.DebugString().c_str());
+        //version为０时，增加watcher成功，则不会有返回．　客户端版本滞后时，才有返回
+        //ASSERT_TRUE(session_mock->GetResult(&resp));
+        //FLOG_DEBUG("watch_get RESP:%s", resp.DebugString().c_str());
         ASSERT_FALSE(resp.header().has_error());
         //ASSERT_TRUE(resp.header().error().has_key_not_in_range());
 
@@ -329,9 +335,9 @@ metapb::Range *genRange1() {
     peer->set_id(1);
     peer->set_node_id(1);
 
-    peer = meta->add_peers();
-    peer->set_id(2);
-    peer->set_node_id(2);
+//    peer = meta->add_peers();
+//    peer->set_id(2);
+//    peer->set_node_id(2);
 
     return meta;
 }

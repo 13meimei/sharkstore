@@ -162,6 +162,7 @@ protected:
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
         raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[rangeId]->setLeaderFlag(true);
 
         // begin test watch_get (ok)
@@ -203,6 +204,7 @@ protected:
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
@@ -242,6 +244,7 @@ protected:
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
         raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[rangeId]->setLeaderFlag(true);
 
         // begin test pure_get(ok)
