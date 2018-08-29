@@ -315,12 +315,12 @@ app.controller('myClusterNodeInfo', function ($rootScope, $scope, $http, $timeou
                 align: 'center',
                 valign: 'middle',
             }, {
-                title: 'address',
+                title: 'server_address',
                 field: 'server_addr',
                 align: 'center',
                 valign: 'middle'
             }, {
-                title: 'heartbeat_addr',
+                title: 'admin_addr',
                 field: 'admin_addr',
                 align: 'center',
                 valign: 'middle'

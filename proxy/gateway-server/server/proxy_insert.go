@@ -87,8 +87,7 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 	}
 	//填充自增id值
 	if len(pkName) > 0 {
-		maxSize := len(colMap)
-		colMap[pkName] = maxSize
+		colMap[pkName] = len(colMap)
 		ids, err := p.msCli.GetAutoIncId(t.GetDbId(), t.GetId(), uint32(len(rows)))
 		if err != nil {
 			log.Error("[insert] table %s.%s get auto_increment value err, %v", db, tableName, err)

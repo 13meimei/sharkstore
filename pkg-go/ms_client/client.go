@@ -755,8 +755,8 @@ func (c *RPCClient) getConn() (*Conn, error) {
 						cli := mspb.NewMsServerClient(conn)
 						pool[leader] = &Conn{addr: leader, conn: conn, Cli: cli}
 						c.pool = pool
-						c.leader = leader
 					}
+					c.leader = leader
 				}
 			}
 			return nil
