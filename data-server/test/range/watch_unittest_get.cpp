@@ -25,13 +25,17 @@
 metapb::Range *genRange2();
 metapb::Range *genRange1();
 
+char level[8] = "WARN";
+
+
 int main(int argc, char *argv[]) {
+    if(argc > 1)
+        strcpy(level, argv[1]);
+
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
 
-
-char level[8] = "debug";
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -170,6 +174,7 @@ protected:
         auto msg1 = new common::ProtoMessage;
         //put first
         msg1->expire_time = getticks() + 1000;
+        msg1->begin_time = get_micro_second();
         msg1->session_id = 1;
         msg1->socket = &socket_;
         watchpb::DsKvWatchPutRequest req1;
@@ -196,7 +201,7 @@ protected:
         return;
     }
 
-    void justDel(const int16_t &rangeId, const std::string &key1, const std::string &key2, const std::string &value)
+    void justDel(const int16_t &rangeId, const std::string &key1, const std::string &key2, const std::string &value, bool prefix = false)
     {
         FLOG_DEBUG("justDel...range:%d key1:%s  key2:%s", rangeId, key1.c_str(), key2.c_str() );
 
@@ -209,9 +214,12 @@ protected:
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
+        msg->expire_time = getticks() + 3000;
         msg->session_id = 1;
         msg->socket = &socket_;
+        msg->begin_time = get_micro_second();
+        msg->msg_id = 20180813;
+
         watchpb::DsKvWatchDeleteRequest req;
 
         req.mutable_header()->set_range_id(rangeId);
@@ -221,6 +229,11 @@ protected:
         req.mutable_req()->mutable_kv()->add_key(key1);
         if(!key2.empty())
             req.mutable_req()->mutable_kv()->add_key(key2);
+
+        req.mutable_req()->mutable_kv()->set_version(1);
+
+        req.mutable_req()->set_prefix(prefix);
+
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
@@ -239,7 +252,7 @@ protected:
 
     }
 
-    void justGet(const int16_t &rangeId, const std::string key1, const std::string &key2, const std::string& val, bool prefix = false)
+    void justGet(const int16_t &rangeId, const std::string key1, const std::string &key2, const std::string& val, const int32_t& cnt, bool prefix = false)
     {
         FLOG_DEBUG("justGet...range:%d key1:%s  key2:%s  value:%s", rangeId, key1.c_str(), key2.c_str() , val.c_str());
 
@@ -251,6 +264,7 @@ protected:
         // begin test pure_get(ok)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 1000;
+        msg->begin_time = get_micro_second();
         msg->session_id = 1;
         watchpb::DsKvWatchGetMultiRequest req;
 
@@ -275,13 +289,20 @@ protected:
 
         watchpb::DsKvWatchGetMultiResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+
+        //cnt为０时，仍返回编码ＯＫ　　kvs_size() == 0
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        FLOG_DEBUG("PureGet RESP:%s", resp.DebugString().c_str());
+        FLOG_DEBUG(">>>PureGet RESP:%s", resp.DebugString().c_str());
 
         ASSERT_FALSE(resp.header().has_error());
-        EXPECT_TRUE(resp.kvs(0).value() == val);
+        ASSERT_TRUE(resp.code() == 0);
+        EXPECT_TRUE(resp.kvs_size() == cnt);
 
+        if (cnt && resp.kvs_size()) {
+            for(auto i = 0; i<cnt; i++)
+                EXPECT_TRUE(resp.kvs(i).value() == val);
+        }
     }
 
 protected:
@@ -369,69 +390,50 @@ metapb::Range *genRange2() {
     return meta;
 }
 
-//TEST_F(WatchTest, pure_get_normal) {
-//
-//    metapb::Range* rng = new metapb::Range;
-//    range_server_->meta_store_->GetRange(1, rng);
-//    FLOG_DEBUG("RANGE1  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
-//
-//    range_server_->meta_store_->GetRange(2, rng);
-//    FLOG_DEBUG("RANGE2  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
-//
-//
-//    FLOG_DEBUG("pure_get ...");
-//    {
-//        justPut(2, "01004001", "", "01004001:value");
-//        justGet(2, "01004001", "", "01004001:value");
-//    }
-//
-//}
-//
-//
-//TEST_F(WatchTest, pure_get_group) {
-//
-//    FLOG_DEBUG("pure_get group ...");
-//    {
-//        justPut(1, "01003001", "01003002", "01003001:value");
-//        justGet(1, "01003001", "01003002", "01003001:value");
-//
-//    }
-//
-//}
+TEST_F(WatchTest, pure_get_single) {
+
+    metapb::Range* rng = new metapb::Range;
+    range_server_->meta_store_->GetRange(1, rng);
+    FLOG_DEBUG("RANGE1  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
+
+    range_server_->meta_store_->GetRange(2, rng);
+    FLOG_DEBUG("RANGE2  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
 
 
-//TEST_F(WatchTest, pure_get_prefix) {
-//
-//    FLOG_DEBUG("pure_get prefix ...");
-//    {
-//        justPut(1, "01003001", "", "01003001:value");
-//        justPut(1, "0100300102", "", "0100300102:value");
-//        justGet(1, "01003001", "01003002", "01003001:value");
-//    }
-//}
+    FLOG_DEBUG("pure_get begin...");
+    {
+        justPut(2, "01004001", "", "01004001:value");
+        justGet(2, "01004001", "", "01004001:value", 1);
+    }
+
+}
 
 
-//TEST_F(WatchTest, watch_get_again) {
-//
-//    FLOG_DEBUG("watch_get ...");
-//    {
-//        //justGet(1, "01003001", "", "01003001:value");
-//        //justGet(1, "01003001", "01003002", "01003001:value");
-//        // end test watch_get
-//
-//        justPut(2, "01004001", "", "01004001:value");
-//        justGet(2, "01004001", "", "01004001:value");
-//
-//        justPut(2, "01004001", "01004002", "01004001:value");
-//        justGet(2, "01004001", "01004002", "01004001:value");
-//    }
-//
-//}
+TEST_F(WatchTest, pure_get_group) {
 
+    FLOG_DEBUG("pure_get group begin...");
+    {
+        std::string value("01003001:value");
 
+        justPut(1, "01003001", "01003002", "01003001:value");
+        justGet(1, "01003001", "01003002", "01003001:value", true);
+
+        //查询不存在的元素
+        justDel(1, "01003001", "", "", true);
+        justGet(1, "01003001", "", "01003001:value", 0, true);
+
+        //放置３个元素，判断返回元素个数
+        justPut(1, "01003001", "0100300101", value);
+        justPut(1, "01003001", "0100300102", value);
+        justPut(1, "01003001", "0100300103", value);
+        justGet(1, "01003001", "", "01003001:value", 3, true);
+
+    }
+
+}
+
+//测试优先级队列元素是否按失效时间排序，先失效元素在对头
 TEST_F(WatchTest, test_priority_queue) {
-
-
     {
         #define QUEUE_CAPACITY 100
 
@@ -467,14 +469,51 @@ TEST_F(WatchTest, test_priority_queue) {
 
         ASSERT_TRUE(watcher_queue.size() == QUEUE_CAPACITY);
 
+        int64_t oldTime(0);
         while(!watcher_queue.empty()) {
-             FLOG_DEBUG("expire_time:%" PRId64, watcher_queue.top()->expire_time_);
+            int64_t currTime(0);
+            if(0== oldTime) {
+                oldTime = watcher_queue.top()->expire_time_;
+            } else {
+                currTime = watcher_queue.top()->expire_time_;
+                ASSERT_TRUE(currTime >= oldTime);
+
+                oldTime = currTime;
+            }
+            //FLOG_DEBUG("expire_time:%" PRId64, oldTime);
+
             watcher_queue.pop();
         }
 
-        //justGet(1, "01003001", "", "01003001:value");
-        //justGet(1, "01003001", "01003002", "01003001:value");
-        // end test watch_get
     }
 
 }
+
+
+#undef watch_get_benchmark
+#ifdef watch_get_benchmark
+TEST_F(WatchTest, watch_get_benchmark) {
+
+    justDel(1, "01003001", "", "", true);
+    justPut(1, "01003001", "", "03003001:value");
+
+    int64_t count(1000000);
+    int64_t bTime(getticks());
+    for (int i = 0; i < count; i++) {
+        justGet(1, "01003001", "", "03003001:value", 1, false);
+    }
+    int64_t endTime(getticks());
+    FLOG_WARN("count:%" PRId64 " elapse:%" PRId64 "s average:%" PRId64 "/s",count, (endTime - bTime)/1000, count/ ((endTime - bTime)/1000));
+
+}
+#endif
+
+/*
+TEST_F(WatchTest, test_info) {
+    FLOG_WARN("-------------------------------------------------------");
+    FLOG_WARN("pure_get_single 单key查询");
+    FLOG_WARN("pure_get_group　前缀查询,查询不存在的key");
+    FLOG_WARN("test_priority_queue 超时队列元素排序效果测试");
+    FLOG_WARN("-------------------------------------------------------");
+}
+*/

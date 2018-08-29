@@ -152,48 +152,7 @@ public:
         return (mapGroupBuffer.size() == MAX_EVENT_BUFFER_MAP_SIZE);
     }
 
-    void create_thread() {
-        if(1) return;
 
-        if(thread_flag_) {
-            thread_flag_ = false;
-            clear_thread_ = std::thread([this]() {
-                while(loop_flag_) {
-                    std::unique_lock<std::mutex> lock(buffer_mutex_);
-
-                    if(mapGroupBuffer.empty()) {
-                        buffer_cond_.wait_for(lock, std::chrono::milliseconds(1000));
-                    }
-
-                    //to do pop timeout data from queue
-                    for(auto itMap:mapGroupBuffer) {
-                        if(itMap.second->isEmpty())
-                            continue;
-
-                        int32_t popCnt{0};
-                        int32_t sleepTime(5000000);
-                        for(auto i = 0; i < itMap.second->length(); i++) {
-                            sleepTime = getticks() - itMap.second->getUsedTime();
-                            if (sleepTime > milli_timeout_) {
-                                CEventBufferValue elem;
-                                itMap.second->deQueue(elem);
-                                popCnt++;
-                                sleepTime = 5000000;
-                            } else {
-                                break;
-                            }
-                        }
-                        FLOG_INFO("key:%s left time:%" PRId32 " pop number:%" PRId32 ,
-                                  EncodeToHexString(itMap.first.key_).c_str(), sleepTime, popCnt);
-
-                        usleep(sleepTime*1000);
-                    }
-
-                    buffer_cond_.wait_for(lock, std::chrono::milliseconds(1000));
-                }
-            });
-        }
-    }
 
 
 private:
