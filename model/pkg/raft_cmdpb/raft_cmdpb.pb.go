@@ -22,21 +22,15 @@
 */
 package raft_cmdpb
 
-import (
-	"fmt"
-	"io"
-	"math"
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import metapb "model/pkg/metapb"
+import kvrpcpb "model/pkg/kvrpcpb"
+import _ "github.com/gogo/protobuf/gogoproto"
+import watchpb "model/pkg/watchpb"
 
-	proto "github.com/golang/protobuf/proto"
-
-	metapb "model/pkg/metapb"
-
-	kvrpcpb "model/pkg/kvrpcpb"
-
-	_ "github.com/gogo/protobuf/gogoproto"
-
-	watchpb "model/pkg/watchpb"
-)
+import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
