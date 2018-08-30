@@ -134,6 +134,12 @@ func (s *Server) HandleAppPing(w http.ResponseWriter, r *http.Request) {
 		log.Error(resp)
 		return
 	}
+	log.Info("handle app ping detail args: \n" +
+		"app_name: [%v]\n" +
+		"cluster_id: [%v]\n" +
+		"id_addrs: [%v]\n" +
+		"port: [%v]\n" +
+		"ping_interval: [%v]", appName, appClusterId, ipAddrs, port, ttl)
 
 	for _, ip := range ipsArr {
 		appAddr := fmt.Sprintf("%v:%v", ip, port)
@@ -153,8 +159,8 @@ func (s *Server) HandleAppPing(w http.ResponseWriter, r *http.Request) {
 			log.Error(resp)
 			return
 		}
-		if (strings.Compare(replyStr, "ok") != 0) {
-			resp = fmt.Sprintf("jim command setex reply is not ok")
+		if (strings.Compare(strings.ToLower(replyStr), "ok") != 0) {
+			resp = fmt.Sprintf("jim command setex reply is not ok, reply is [%v]", replyStr)
 			log.Error(resp)
 			return
 		}
