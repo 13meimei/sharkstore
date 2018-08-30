@@ -29,15 +29,16 @@ public:
     }
 
 private:
-    uint64_t                    table_id_;
+    uint64_t                    table_id_ = 0;
     std::vector<std::string*>   keys_;
     std::vector<std::string*>   keys_hash_;
     int64_t                    key_version_ = 0;
     common::ProtoMessage*       message_ = nullptr;
     WatchType                   type_ = WATCH_KEY;
-    WatcherId                   watcher_id_;
-    int64_t                     msg_id_;
-    int64_t                     expire_time_;
+    WatcherId                   watcher_id_ = 0;
+    int64_t                     session_id_ = 0;
+    int64_t                     msg_id_ = 0;
+    int64_t                     expire_time_ = 0;
     //prefix mode:
     // 0 key has no changing, need to add watcher
     // -1 key version is lower than buffer or buffer is empty, need to get all from db
@@ -64,8 +65,8 @@ public:
     int64_t getKeyVersion() const {
         return key_version_;
     }
-    int64_t getSessionId() const{
-        return message_->session_id;
+    int64_t GetSessionId() const{
+        return session_id_;
     }
 
     int64_t GetMsgId() const {
