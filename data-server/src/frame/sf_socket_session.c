@@ -267,7 +267,8 @@ int sf_send_task_finish(sf_socket_session_t *session, int64_t session_id) {
             ret = sf_set_request_timeout(entry->stask);
         } else {
             //todo ? why call this
-            ret = sf_add_send_notify(entry->stask);
+            //ret = sf_add_send_notify(entry->stask);
+            ret = sf_set_send_event(entry->stask);
         }
     } while (false);
 
