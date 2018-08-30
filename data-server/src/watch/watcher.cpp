@@ -60,7 +60,7 @@ void Watcher::Send(google::protobuf::Message* resp) {
 
     FLOG_DEBUG("before send, session_id: %" PRId64 ",task msgid: %" PRId64
                " execute take time: %d us",
-               message_->session_id, message_->msg_id, take_time);
+               message_->session_id, message_->header.msg_id, take_time);
 
 
     common::SocketSessionImpl session;
