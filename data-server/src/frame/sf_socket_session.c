@@ -145,6 +145,7 @@ int sf_send_task_push(sf_socket_session_t *session, response_buff_t *buff) {
         }
 
         if (entry->state == SS_CLOSED) {
+            FLOG_WARN("session is closed, session_id: %" PRId64, buff->session_id);
             delete_response_buff(buff);
             ret = -1;
             break;
