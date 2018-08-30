@@ -46,6 +46,7 @@ protected:
         context_->range_server = range_server_;
         context_->socket_session = new SocketSessionMock;
         context_->raft_server = new RaftServerMock;
+        context_->run_status = new server::RunStatus;
 
         range_server_->Init(context_);
     }

@@ -44,9 +44,8 @@ public:
     bool GetFilesystemUsage(FileSystemUsage* usage);
     uint64_t GetFilesystemUsedPercent() const { return fs_usage_percent_.load();}
 
-    void IncrLeaderCount() override { ++leader_count_; }
-    void DecrLeaderCount() override { --leader_count_; }
-    uint64_t GetLeaderCount() const { return leader_count_; }
+    void ReportLeader(uint64_t range_id, bool is_leader) override;
+    uint64_t GetLeaderCount() const;
 
     void IncrSplitCount() override { ++split_count_; }
     void DecrSplitCount() override { --split_count_; }
@@ -54,7 +53,7 @@ public:
 
 private:
     void run();
-    void updateFSUsagePercent();
+    void collectDiskUsage();
     void printStatistics();
     void printDBMetric();
 
@@ -65,9 +64,10 @@ private:
     monitor::Statistics statistics_;
 
     std::atomic<uint64_t> fs_usage_percent_ = {0};
-
-    std::atomic<uint64_t> leader_count_ = {0};
     std::atomic<uint64_t> split_count_ = {0};
+
+    std::set<uint64_t> leaders_;
+    mutable std::mutex leaders_mu_;
 
     std::mutex mutex_;
     std::condition_variable cond_;

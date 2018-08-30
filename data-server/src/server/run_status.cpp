@@ -49,7 +49,7 @@ void RunStatus::Stop() {
 
 void RunStatus::run() {
     while (g_continue_flag) {
-        updateFSUsagePercent();
+        collectDiskUsage();
         printDBMetric();
         context_->worker->PrintQueueSize();
         printStatistics();
@@ -80,7 +80,22 @@ bool RunStatus::GetFilesystemUsage(FileSystemUsage* usage) {
     }
 }
 
-void RunStatus::updateFSUsagePercent() {
+void RunStatus::ReportLeader(uint64_t range_id, bool is_leader) {
+    std::lock_guard<std::mutex> lock(leaders_mu_);
+    if (is_leader) {
+        leaders_.insert(range_id);
+    } else {
+        leaders_.erase(range_id);
+    }
+}
+
+uint64_t RunStatus::GetLeaderCount() const {
+    std::lock_guard<std::mutex> lock(leaders_mu_);
+    return leaders_.size();
+}
+
+// 定时采集磁盘使用率
+void RunStatus::collectDiskUsage() {
     FileSystemUsage usage;
     if (GetFilesystemUsage(&usage)) {
         fs_usage_percent_ = usage.used_size * 100/ usage.total_size;
