@@ -9,7 +9,6 @@ import (
 	"time"
 	"net"
 	"util/log"
-	"util/deepcopy"
 	"github.com/gomodule/redigo/redis"
 )
 
@@ -97,7 +96,7 @@ func (s *Server) aliveCheckingAlarm() {
 			}
 
 		case <-checkTicker.C:
-			appKeys := s.copyAliveCheckingAppKeys()
+			appKeys := s.swapAliveCheckingAppKeys()
 			for _, key := range appKeys {
 				log.Debug("to check alive app key: %v", key)
 				// get app key from jimdb, if it is not in, then alarm
@@ -159,15 +158,15 @@ func (s *Server) addAliveCheckingAppAddr(appName, clusterId, appAddr string) {
 	s.aliveCheckingAppKeys = append(s.aliveCheckingAppKeys, appKey)
 }
 
-func (s *Server) copyAliveCheckingAppKeys() (ret []aliveAppKey) {
+func (s *Server) swapAliveCheckingAppKeys() (ret []aliveAppKey) {
 	s.aliveCheckingLock.Lock()
 	defer s.aliveCheckingLock.Unlock()
 
-	if (len(s.aliveCheckingAppKeys) == 0) {
+	if len(s.aliveCheckingAppKeys) == 0 {
 		return
 	}
 
-	ret = deepcopy.Iface(s.aliveCheckingAppKeys).([]aliveAppKey)
+	ret = s.aliveCheckingAppKeys
 	s.aliveCheckingAppKeys = nil
 	return
 }
