@@ -38,10 +38,7 @@ func NewLockGetAllNspAction() *LockGetAllNspAction {
 }
 func (ctrl *LockGetAllNspAction) Execute(c *gin.Context) (interface{}, error) {
 	userName := sessions.Default(c).Get("user_name").(string)
-	isAdmin, err := service.NewService().IsAdmin(userName)
-	if err != nil {
-		return nil, common.NO_USER
-	}
+	isAdmin, _ := service.NewService().IsAdmin(userName)
 	log.Debug("user [%v] get lock namespace apply list, isAdmin: %v", userName, isAdmin)
 	pageInfo, err := common.GetPagerInfo(c)
 	if err != nil {

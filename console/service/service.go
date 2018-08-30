@@ -2336,7 +2336,7 @@ func (s *Service) GetAllNamespace(userName string, isAdmin bool, pageInfo *model
 			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
 		}
 	}
-	log.Debug("get all apply lock namespace: %s", selectSql)
+	log.Debug("get all apply namespace: %s", selectSql)
 
 	var totalRecord int
 	if err := s.db.QueryRow(countSql).
@@ -2618,7 +2618,9 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
 		return nil, err
 	}
-	if reply.Code != 0 {
+	if reply.Code == 5 {
+		return nil, nil
+	} else if reply.Code != 0 {
 		log.Error("get cluster[%d] lock list failed. err:[%v]", clusterId, reply)
 		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
 	}
@@ -2842,7 +2844,9 @@ func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageI
 	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
 		return nil, err
 	}
-	if reply.Code != 0 {
+	if reply.Code == 5 {//table no exist
+		return nil, nil
+	} else if reply.Code != 0 {
 		log.Error("get cluster[%d] configure list failed. err:[%v]", clusterId, reply)
 		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
 	}
