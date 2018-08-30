@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"model/pkg/alarmpb"
 	"github.com/gomodule/redigo/redis"
+	"encoding/json"
 )
 
 func TestAlarmGrpc(t *testing.T) {
@@ -165,5 +166,29 @@ func TestAlarmGetClusterInfo(t *testing.T) {
 		fmt.Println("info: ", info)
 	}
 
+}
+
+func TestClusterRemarkJson1(t *testing.T) {
+	{
+	remark := &clusterRemark{
+		GatewayAddrsAlarmEnable: true,
+		GatewayAddrs: []string{"127.0.0.1:9090", "127.0.0.1:9999"},
+	}
+	data, err := json.Marshal(remark)
+	if err != nil {
+		t.Fatal("json marshal error: ", err)
+	}
+	fmt.Println("json bytes: ", string(data))
+	}
+
+	{
+	data := []byte(`{"master-addr-alarm-enable":false,"master-addrs":null,"gateway-addr-alarm-enable":false,"gateway-addrs":["11.3.82.133","11.3.82.135","11.3.83.106"]}`)
+
+	var remark clusterRemark
+	if err := json.Unmarshal(data, &remark); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	fmt.Println("unmarshal ok")
+	}
 }
 

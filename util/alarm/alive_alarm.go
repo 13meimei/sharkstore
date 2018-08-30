@@ -60,10 +60,10 @@ func (s *Server) loadAliveCheckingAppAddrs() error {
 			}
 		} else {
 			// according ipAddrs in remark
-			log.Debug("len info remark", info.remark)
+			log.Debug("len info remark: %v", info.remark)
 
 			var remark clusterRemark
-			if err := json.Unmarshal([]byte(info.remark), remark); err != nil {
+			if err := json.Unmarshal([]byte(info.remark), &remark); err != nil {
 				log.Error("remark [%v] unmarshal failed: %v", info.remark, err)
 				continue
 			}
