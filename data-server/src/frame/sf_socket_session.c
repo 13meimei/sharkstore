@@ -268,7 +268,11 @@ int sf_send_task_finish(sf_socket_session_t *session, int64_t session_id) {
         } else {
             //todo ? why call this
             //ret = sf_add_send_notify(entry->stask);
-            ret = sf_set_send_event(entry->stask);
+            if(__sync_bool_compare_and_swap(&entry->is_attach, false, true)) {
+                ret = sf_set_send_event(entry->stask);
+            } else {
+                ret = 0;
+            }
         }
     } while (false);
 
