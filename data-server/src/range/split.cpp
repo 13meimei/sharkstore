@@ -219,7 +219,8 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
 
 Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
     auto meta = meta_.Get();
-    if (meta.range_epoch().version() != version) {
+    // check version when version ne zero
+    if (version != 0 && meta.range_epoch().version() != version) {
         std::ostringstream ss;
         ss << "request version: " << version << ", ";
         ss << "current version: " << meta.range_epoch().version();
@@ -244,7 +245,7 @@ Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
 
     RANGE_LOG_INFO("Force split, start AskSplit. split key: [%s-%s]-%s, version: %" PRIu64,
             EncodeToHex(meta.start_key()).c_str(), EncodeToHex(meta.end_key()).c_str(),
-            EncodeToHex(split_key).c_str(), version);
+            EncodeToHex(split_key).c_str(), meta.range_epoch().version());
 
     *result_split_key = split_key;
     AskSplit(std::move(split_key), std::move(meta));
