@@ -97,7 +97,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     auto prefix = req.req().prefix();
     auto tmpKv = req.req().kv();
 
-    RANGE_LOG_DEBUG("WatchGet begin  msgid: %" PRId64 " session_id: %" PRId64, msg->msg_id, msg->session_id);
+    RANGE_LOG_DEBUG("WatchGet begin  msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
     do {
         if (!VerifyLeader(err)) {
@@ -237,7 +237,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     int64_t maxVersion(0);
     auto prefix = req.prefix();
 
-    RANGE_LOG_DEBUG("PureGet beginmsgid: %" PRId64 " session_id: %" PRId64, msg->msg_id, msg->session_id);
+    RANGE_LOG_DEBUG("PureGet beginmsgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
     do {
         if (!VerifyLeader(err)) {
@@ -356,7 +356,7 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
-    RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " session_id: %" PRId64, msg->msg_id, msg->session_id);
+    RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
     if (!CheckWriteable()) {
         auto resp = new watchpb::DsKvWatchPutResponse;
@@ -448,7 +448,7 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
-    RANGE_LOG_DEBUG("WatchDel begin, msgid: %" PRId64 " session_id: %" PRId64, msg->msg_id, msg->session_id);
+    RANGE_LOG_DEBUG("WatchDel begin, msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
     if (!CheckWriteable()) {
         auto resp = new watchpb::DsKvWatchDeleteResponse;
