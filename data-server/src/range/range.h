@@ -274,7 +274,7 @@ private:
                        const std::string &endKey,
                        const int64_t &startVersion,
                        watchpb::DsWatchResponse *dsResp);
-    int32_t SendNotify( watch::WatcherPtr w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
+    int32_t SendNotify( watch::WatcherPtr& w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
 
 private:
     static const int kTimeTakeWarnThresoldUSec = 500000;

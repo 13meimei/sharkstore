@@ -999,7 +999,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
     return watchCnt;
 }
 
-int32_t Range::SendNotify( watch::WatcherPtr w, watchpb::DsWatchResponse *ds_resp, bool prefix)
+int32_t Range::SendNotify( watch::WatcherPtr& w, watchpb::DsWatchResponse *ds_resp, bool prefix)
 {
     auto watch_server = context_->WatchServer();
     auto resp = ds_resp->mutable_resp();
