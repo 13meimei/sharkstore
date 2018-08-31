@@ -4,12 +4,14 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-std::string SplitKeyTypeName(SplitKeyType type) {
-    switch (type) {
-        case SplitKeyType::kNormal:
+std::string SplitKeyModeName(SplitKeyMode mode) {
+    switch (mode) {
+        case SplitKeyMode::kNormal:
             return "normal";
-        case SplitKeyType::kKeepFirstPart:
-            return "keep first part";
+        case SplitKeyMode::kRedis:
+            return "redis";
+        case SplitKeyMode::kLockWatch:
+            return "lock-watch";
         default:
             return "<unknown>";
     };
@@ -17,12 +19,12 @@ std::string SplitKeyTypeName(SplitKeyType type) {
 
 class DisableSplitPolicy : public SplitPolicy {
 public:
-    std::string Name() const override { return "DisableSplit"; }
-    bool Enabled() const override { return false; }
+    std::string Description() const override { return "DisableSplit"; }
+    bool IsEnabled() const override { return false; }
     uint64_t CheckSize() const override { return 0; }
     uint64_t SplitSize() const override { return 0; }
     uint64_t MaxSize() const override { return 0; }
-    SplitKeyType GetSplitKeyType() override { return SplitKeyType::kNormal; }
+    SplitKeyMode KeyMode() const override { return SplitKeyMode::kNormal; }
 };
 
 std::unique_ptr<SplitPolicy> NewDisableSplitPolicy() {
