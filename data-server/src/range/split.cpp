@@ -42,8 +42,13 @@ void Range::ResetStatisSize() {
     auto s = store_->StatSize(policy->SplitSize(), policy->KeyMode(),
             &total_size , &split_key);
     statis_flag_ = false;
+    statis_size_ = 0;
     if (!s.ok()) {
-        RANGE_LOG_ERROR("StatSize failed: %s", s.ToString().c_str());
+        if (s.code() == Status::kUnexpected) {
+            RANGE_LOG_INFO("StatSize failed: %s", s.ToString().c_str());
+        } else {
+            RANGE_LOG_ERROR("StatSize failed: %s", s.ToString().c_str());
+        }
         return;
     }
     real_size_ = total_size;
@@ -63,7 +68,6 @@ void Range::ResetStatisSize() {
         return;
     }
 
-    statis_size_ = 0;
     // when real size >= max size, we need split with split size
     if (real_size_ >= context_->GetSplitPolicy()->MaxSize()) {
         return AskSplit(std::move(split_key), std::move(meta));
