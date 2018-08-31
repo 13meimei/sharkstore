@@ -554,7 +554,7 @@ TEST_F(WatchTest, watch_put_del_watch_group) {
                     auto version = range_server_->Find(1)->apply_index_;
 
                     justWatch(1, "01003001", "", 5000, version, true);
-
+                    sleep(6);
                     cnt_.fetch_add(1);
                     //cond_.wait(lock);
                     cond_.notify_one();
