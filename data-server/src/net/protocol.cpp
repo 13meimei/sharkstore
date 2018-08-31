@@ -8,7 +8,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace net {
 
-void Head::SetFrom(const Head& req) {
+void Head::SetResp(const Head& req) {
     func_id = req.func_id;
     msg_id = req.msg_id;
     proto_type = req.proto_type;

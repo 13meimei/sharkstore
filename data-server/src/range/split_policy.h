@@ -8,26 +8,29 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-enum class SplitKeyType {
+enum class SplitKeyMode {
     kNormal = 0,
-    kKeepFirstPart, // 保持key第一部分相同的不分开
+    kRedis = 1,
+    kLockWatch = 2,
+
+    kInvalid = 255,
 };
 
-std::string SplitKeyTypeName(SplitKeyType type);
+std::string SplitKeyModeName(SplitKeyMode mode);
 
 class SplitPolicy {
 public:
+    SplitPolicy() = default;
     virtual ~SplitPolicy() = default;
 
-    virtual std::string Name() const = 0;
-
-    virtual bool Enabled() const = 0;
+    virtual bool IsEnabled() const = 0;
+    virtual std::string Description() const = 0;
 
     virtual uint64_t CheckSize() const = 0;
     virtual uint64_t SplitSize() const = 0;
     virtual uint64_t MaxSize() const = 0;
 
-    virtual SplitKeyType GetSplitKeyType() = 0;
+    virtual SplitKeyMode KeyMode() const = 0;
 };
 
 std::unique_ptr<SplitPolicy> NewDisableSplitPolicy();

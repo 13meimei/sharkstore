@@ -11,9 +11,11 @@ namespace server {
 
 class DefaultSplitPolicy : public range::SplitPolicy {
 public:
-    std::string Name() const override { return "Default"; }
+    bool IsEnabled() const override { return true; }
 
-    bool Enabled() const override { return true; }
+    std::string Description() const override {
+        return std::string("Default/") + range::SplitKeyModeName(KeyMode());
+    }
 
     uint64_t CheckSize() const override {
         return ds_config.range_config.check_size;
@@ -27,9 +29,17 @@ public:
         return ds_config.range_config.max_size;
     }
 
-    range::SplitKeyType GetSplitKeyType() override {
-        return ds_config.range_config.access_mode == 0 ?
-            range::SplitKeyType::kNormal : range::SplitKeyType::kKeepFirstPart;
+    range::SplitKeyMode KeyMode() const override {
+        switch (ds_config.range_config.access_mode) {
+            case 0:
+                return range::SplitKeyMode::kNormal;
+            case 1:
+                return range::SplitKeyMode::kRedis;
+            case 2:
+                return range::SplitKeyMode::kLockWatch;
+            default:
+                return range::SplitKeyMode::kInvalid;
+        }
     }
 };
 

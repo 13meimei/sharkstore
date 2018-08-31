@@ -101,8 +101,8 @@ void Session::readHead() {
 void Session::readBody() {
     if (head_.body_length == 0) {
         if (head_.func_id == kHeartbeatFuncID) { // response heartbeat
-            auto msg = std::make_shared<Message>();
-            msg->head.SetFrom(head_);
+            auto msg = NewMessage();
+            msg->head.SetResp(head_);
             Write(msg);
         }
         readHead();
