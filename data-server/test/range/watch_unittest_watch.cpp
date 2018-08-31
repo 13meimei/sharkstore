@@ -24,13 +24,22 @@
 metapb::Range *genRange2();
 metapb::Range *genRange1();
 
+char level[8] = "debug";
+
+
 int main(int argc, char *argv[]) {
+
+
+    if(argc > 1)
+        strcpy(level, argv[1]);
+
     testing::InitGoogleTest(&argc, argv);
+
     return RUN_ALL_TESTS();
 }
 
 
-char level[8] = "debug";
+#define VEC_SIZE 100
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -100,6 +109,10 @@ protected:
         range_server_->Init(context_);
         now = getticks();
 
+        for(auto i = 0; i++ < VEC_SIZE;) {
+            vec_.push_back(i);
+        }
+
 
         {
             // begin test create range
@@ -163,6 +176,7 @@ protected:
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
         raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[rangeId]->setLeaderFlag(true);
 
         // begin test watch_get (ok)
@@ -193,12 +207,13 @@ protected:
         watchpb::DsKvWatchPutResponse resp1;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp1));
-        FLOG_DEBUG("watch_put first response: %s", resp1.DebugString().c_str());
+        //FLOG_DEBUG("watch_put first response: %s", resp1.DebugString().c_str());
+        ASSERT_TRUE(resp1.resp().code() == 0);
 
         return;
     }
 
-    void justDel(const int16_t &rangeId, const std::string &key1, const std::string &key2, const std::string &value)
+    void justDel(const int16_t &rangeId, const std::string &key1, const std::string &key2, const std::string &value, const int16_t& existFlag = 0, bool prefix = false)
     {
         FLOG_DEBUG("justDel...range:%d key1:%s  key2:%s", rangeId, key1.c_str(), key2.c_str() );
 
@@ -207,6 +222,7 @@ protected:
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
         auto msg = new common::ProtoMessage;
@@ -228,6 +244,8 @@ protected:
 
         req.mutable_req()->mutable_kv()->set_version(1);
 
+        req.mutable_req()->set_prefix(prefix);
+
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
@@ -238,30 +256,31 @@ protected:
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
+        //FLOG_WARN("DEL resp.code:%d", resp.resp().code());
 
+        //code 0 存在 code１　不存在
+        ASSERT_TRUE(resp.resp().code() == existFlag);
+//        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
         ASSERT_FALSE(resp.header().has_error());
 
         // end test watch_delete
 
     }
 
-    void justGet(const int16_t &rangeId, const std::string key1, const std::string &key2, const std::string& val, bool prefix = false)
+    void justGet(const int16_t &rangeId, const std::string key1, const std::string &key2, const std::string& val, const int32_t& cnt, bool prefix = false)
     {
         FLOG_DEBUG("justGet...range:%d key1:%s  key2:%s  value:%s", rangeId, key1.c_str(), key2.c_str() , val.c_str());
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
         raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[rangeId]->setLeaderFlag(true);
 
         // begin test pure_get(ok)
         auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 3000;
-        msg->session_id = 1;
-        msg->socket = &socket_;
+        msg->expire_time = getticks() + 1000;
         msg->begin_time = get_micro_second();
-        msg->msg_id = 20180813;
-
+        msg->session_id = 1;
         watchpb::DsKvWatchGetMultiRequest req;
 
         req.set_prefix(prefix);
@@ -285,18 +304,29 @@ protected:
 
         watchpb::DsKvWatchGetMultiResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+
+        //cnt为０时，仍返回编码ＯＫ　　kvs_size() == 0
         ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        FLOG_DEBUG("PureGet RESP:%s", resp.DebugString().c_str());
+        FLOG_DEBUG(">>>PureGet RESP:%s", resp.DebugString().c_str());
 
         ASSERT_FALSE(resp.header().has_error());
-        EXPECT_TRUE(resp.kvs(0).value() == val);
+        EXPECT_TRUE(resp.kvs_size() == cnt);
 
+        if (cnt && resp.kvs_size()) {
+            for(auto i = 0; i<cnt; i++)
+                EXPECT_TRUE(resp.kvs(i).value() == val);
+        }
     }
 
-    void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, const int64_t &version = 0, bool prefix = false)
+    void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, const int64_t &timeout, const int64_t &version = 0, bool prefix = false)
     {
         FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
+        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
+        range_server_->ranges_[rangeId]->is_leader_ = true;
+
         // begin test watch_get (key empty)
         auto msg = new common::ProtoMessage;
         msg->expire_time = getticks() + 3000;
@@ -316,7 +346,7 @@ protected:
             req.mutable_req()->mutable_kv()->add_key(key2);
         }
         //req.mutable_req()->mutable_kv()->set_version(version);
-        req.mutable_req()->set_longpull(5000);
+        req.mutable_req()->set_longpull(timeout);
         ///////////////////////////////////////////////
         req.mutable_req()->set_startversion(version);
         req.mutable_req()->set_prefix(prefix);
@@ -325,21 +355,28 @@ protected:
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->ops_.leader = 1;
-        range_server_->ranges_[1]->setLeaderFlag(true);
-
         range_server_->WatchGet(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
 
-        FLOG_DEBUG("watch_get RESP:%s", resp.DebugString().c_str());
         ASSERT_FALSE(resp.header().has_error());
         //ASSERT_TRUE(resp.header().error().has_key_not_in_range());
 
     }
+
+
+
+    std::thread trd1;
+    std::thread trd2;
+    std::condition_variable cond_;
+    std::mutex mutex_;
+
+    std::vector<int64_t> vec_;
+    std::vector<std::string> str_vec_;
+    std::atomic<int32_t> cnt_;
+
+
 protected:
     server::ContextServer *context_;
     server::RangeServer *range_server_;
@@ -426,80 +463,160 @@ metapb::Range *genRange2() {
 }
 
 
-TEST_F(WatchTest, watch_get_exist_del) {
+TEST_F(WatchTest, watch_exist_singlekey_test) {
+    justPut(1, "01003001", "", "01003001:value");
+    justWatch(1, "01003001", "", 5000, 0, false);
+    //wait timeout
+    sleep(6);
 
-    {
-        justPut(1, "01003001", "", "01003001:value");
-        justWatch(1, "01003001", "", 1, false);
-        justDel(1, "01003001", "", "");
+    justWatch(1, "01003001", "", 5000, 0, false);
+    justDel(1, "01003001", "", "");
 
-    }
+}
+
+TEST_F(WatchTest, watch_notexist_singlekey_test) {
+    //justPut(1, "01003001", "", "01003001:value");
+    //del exists key
+    justDel(1, "01003001", "", "", 0, true);
+    //watch not exist key ,expect fail due to version is not 0
+    justWatch(1, "01003001", "", 5000, 1, false);
+
+    //watch success
+    justWatch(1, "01003001", "", 5000, 0, false);
+    //wait timeout response
+    sleep(6);
+
+    //watch again
+    justWatch(1, "01003001", "", 5000, 1, false);
+    justPut(1, "01003001", "", "01003001:value");
 
 }
 
 
-TEST_F(WatchTest, watch_get_group_exist_del) {
-    {
-        justPut(1, "01003001", "0100300102", "01003001:value");
-        //add prefix watch
-        justWatch(1, "01003001", "", 1, true);
-        //delete trigger notify
-        justDel(1, "01003001", "0100300102", "");
-        justDel(1, "01003001", "0100300102", "");
+TEST_F(WatchTest, watch_exist_groupkey_test) {
 
-        justWatch(1, "01003001", "", 3, true);
-        justPut(1, "01003001", "0100300102", "01003001:value");
-        justDel(1, "01003001", "0100300102", "");
-    }
-}
+    //justPut(1, "01003001", "0100300102", "01003001:value");
+    justDel(1, "01003001", "", "", 0, true);
+    //add prefix watch
+    justWatch(1, "01003001", "", 5000, 0, true);
+    //delete trigger notify
+    justDel(1, "01003001", "0100300102", "", 0);
+    //nothing
+    justDel(1, "01003001", "0100300102", "", 0);
 
-
-TEST_F(WatchTest, watch_get_group_prefix_exist_del) {
-    {
-        justPut(1, "01003001", "0100300102", "01003001:value");
-        justPut(1, "01003001", "0100300103", "01003001:value");
-        justPut(1, "01003001", "0100300104", "01003001:value");
-        justPut(1, "01003001", "0100300105", "01003001:value");
-         //当前version增至４
-
-        //watch　start_version=3  命中内存直接Notify
-        justWatch(1, "01003001", "", 3, true);
-
-        //delete trigger notify
-        justDel(1, "01003001", "0100300102", "");
-        justWatch(1, "01003001", "", 4, true);
-        justDel(1, "01003001", "0100300103", "");
-        justWatch(1, "01003001", "", 5, true);
-        justDel(1, "01003001", "0100300104", "");
-        justWatch(1, "01003001", "", 6, true);
-        justDel(1, "01003001", "0100300105", "");
-        justWatch(1, "01003001", "", 10, true);
-        justDel(1, "01003001", "0100300106", "");
-
-    }
-}
-
-TEST_F(WatchTest, watch_not_exist_key) {
-
-    {
-        //justPut(1, "01003001", "", "01003001:value");
-        justWatch(1, "01003001000010000001", "", 1, false);
-        justDel(1, "01003001000010000001", "", "");
-
-        justWatch(1, "01003001000020000002", "", 1, true);
-        justDel(1, "01003001000020000002", "abc", "def");
-    }
+    //watch not exists key
+    justWatch(1, "0100300101", "", 5000, 0, true);
+    //put trigger watch
+    justPut(1, "0100300101", "0100300102", "01003001:value");
+    //del trigger nothing
+    justDel(1, "0100300101", "0100300102", "", 0);
 
 }
-/*
-TEST_F(WatchTest, watch_exist_single_key) {
 
-    {
-        justPut(1, "01003001", "", "01003001:value");
-        justWatch(1, "01003001", "", false);
-        justDel(1, "01003001", "", "");
+TEST_F(WatchTest, watch_notexist_groupkey_test) {
 
-    }
+    justPut(1, "01003001", "0100300102", "01003001:value");
+    //add prefix watch
+    justWatch(1, "01003001", "", 5000, 0, true);
+    //delete trigger notify
+    justDel(1, "01003001", "0100300102", "");
+    //nothing
+    justDel(1, "01003001", "0100300102", "", 0);
+
+    //watch not exists key
+    justWatch(1, "0100300101", "", 5000, 0, true);
+    //put trigger watch
+    justPut(1, "0100300101", "0100300102", "01003001:value");
+    //del trigger nothing
+    justDel(1, "0100300101", "0100300102", "");
 
 }
-*/
+
+#define watch_put_del_watch_group
+#ifdef watch_put_del_watch_group
+TEST_F(WatchTest, watch_put_del_watch_group) {
+
+    trd1 = std::thread([this]() {
+        static bool brkFlag(false);
+        do {
+            std::unique_lock<std::mutex> lock( mutex_ );
+
+            int32_t element(0);
+            if (!vec_.empty()) {
+                element = vec_.back();
+
+                FLOG_DEBUG("thread1>>>%" PRId32, element);
+
+                if (element % 2 == 0) {
+                    vec_.pop_back();
+                    justPut(1, "01003001", "01003001-aaa", "03003001:value");
+
+                    auto version = range_server_->Find(1)->apply_index_;
+
+                    justWatch(1, "01003001", "", 5000, version, true);
+                    sleep(6);
+                    cnt_.fetch_add(1);
+                    //cond_.wait(lock);
+                    cond_.notify_one();
+                } else {
+                    //cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                    cond_.wait(lock);
+                }
+
+            } else {
+                brkFlag = true;
+            }
+
+//            if(cnt_>=100) {
+//                FLOG_DEBUG("TRD1 OVER 100");
+//                brkFlag = true;
+//            }
+        }while(!brkFlag);
+
+    });
+
+    trd2 = std::thread([this]() {
+        static bool brkFlag(false);
+        do {
+            std::unique_lock<std::mutex> lock(mutex_);
+
+            int32_t element(0);
+            if (!vec_.empty()) {
+                element = vec_.back();
+
+                FLOG_DEBUG("thread2>>>%" PRId32, element);
+
+                if (element % 2 != 0) {
+                    vec_.pop_back();
+                    //justGet(1, "01003001", "", "03003001:value", 1);
+                    justDel(1, "01003001", "01003001-aaa", "", 0, true);
+
+                    cnt_.fetch_add(1);
+                    cond_.notify_one();
+                } else {
+                    //cond_.wait_for(lock, std::chrono::milliseconds(1000));
+                    cond_.wait(lock);
+                }
+            } else {
+                brkFlag = true;
+            }
+
+//            if(cnt_>=100) {
+//                FLOG_DEBUG("TRD2 OVER 100");
+//                brkFlag = true;
+//            }
+        }while(!brkFlag);
+
+    });
+
+    trd1.join();
+    trd2.join();
+
+    int64_t cnt = cnt_;
+
+    FLOG_DEBUG("cnt:%" PRId64, cnt);
+
+
+}
+#endif
+

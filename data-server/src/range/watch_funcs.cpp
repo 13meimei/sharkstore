@@ -97,7 +97,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     auto prefix = req.req().prefix();
     auto tmpKv = req.req().kv();
 
-    RANGE_LOG_DEBUG("WatchGet begin");
+    RANGE_LOG_DEBUG("WatchGet begin  msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
     do {
         if (!VerifyLeader(err)) {
@@ -237,7 +237,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     int64_t maxVersion(0);
     auto prefix = req.prefix();
 
-    RANGE_LOG_DEBUG("PureGet begin");
+    RANGE_LOG_DEBUG("PureGet beginmsgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
     do {
         if (!VerifyLeader(err)) {
@@ -356,7 +356,7 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
-    RANGE_LOG_DEBUG("session_id:%" PRId64 " WatchPut begin", msg->session_id);
+    RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
     if (!CheckWriteable()) {
         auto resp = new watchpb::DsKvWatchPutResponse;
@@ -448,7 +448,7 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
-    RANGE_LOG_DEBUG("WatchDel begin");
+    RANGE_LOG_DEBUG("WatchDel begin, msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
     if (!CheckWriteable()) {
         auto resp = new watchpb::DsKvWatchDeleteResponse;
@@ -648,6 +648,16 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         auto resp = new watchpb::DsKvWatchPutResponse;
         resp->mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
+
+        //notify watcher
+        std::string errMsg("");
+        int32_t retCnt = WatchNotify(watchpb::PUT, req.kv(), version, errMsg);
+        if (retCnt < 0) {
+            FLOG_ERROR("WatchNotify-put failed, ret:%d, msg:%s", retCnt, errMsg.c_str());
+        } else {
+            FLOG_DEBUG("WatchNotify-put success, count:%d, msg:%s", retCnt, errMsg.c_str());
+        }
+
     } else if (err != nullptr) {
         delete err;
         return ret;
@@ -655,15 +665,6 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
     int64_t endTime(getticks());
     FLOG_DEBUG("ApplyWatchPut key[%s], take time:%" PRId64 " ms", EncodeToHexString(dbKey).c_str(), endTime - beginTime);
-
-    //notify watcher
-    std::string errMsg("");
-    int32_t retCnt = WatchNotify(watchpb::PUT, req.kv(), version, errMsg);
-    if (retCnt < 0) {
-        FLOG_ERROR("WatchNotify-put failed, ret:%d, msg:%s", retCnt, errMsg.c_str());
-    } else {
-        FLOG_DEBUG("WatchNotify-put success, count:%d, msg:%s", retCnt, errMsg.c_str());
-    }
 
     return ret;
 }
@@ -716,15 +717,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         watch::Watcher::EncodeValue(&dbValue, version, &req.kv().value(), &extend);
     }
 
-//    if (Status::kOk != WatchEncodeAndDecode::EncodeKv(funcpb::kFuncWatchDel, meta_.GetTableID(), notifyKv, dbKey, dbValue, err)) {
-//        //to do response error
-//        //SendError()
-//        FLOG_WARN("EncodeKv failed, key:%s ", notifyKv.key(0).c_str());
-//        ;
-//    }
-
     std::vector<std::string> delKeys;
-
 
     if (!KeyInRange(dbKey, err)) {
         FLOG_WARN("ApplyWatchDel failed, key:%s not in range.", dbKey.data());
@@ -770,17 +763,22 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 //                               ret.ToString().c_str(), EncodeToHexString(dbKey).c_str());
 //                    break;
 //                }
+
+    auto keySize(delKeys.size());
+    int64_t idx(0);
+
     std::vector<std::string*> vecKeys;
     for(auto it : delKeys) {
+        idx++;
+        FLOG_DEBUG("execute delte...[%" PRId64 "/%" PRIu64 "]", idx, keySize);
 
         auto btime = get_micro_second();
-
         ret = store_->Delete(it);
-
         context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
                                        get_micro_second() - btime);
 
-        if (cmd.cmd_id().node_id() == node_id_ && delKeys[delKeys.size() - 1] == it) {
+        if (cmd.cmd_id().node_id() == node_id_ && delKeys[keySize-1] == it) {
+            //FLOG_DEBUG("Delete:%s del key:%s---last key:%s", ret.ToString().c_str(), EncodeToHexString(it).c_str(), EncodeToHexString(delKeys[keySize-1]).c_str());
             auto resp = new watchpb::DsKvWatchDeleteResponse;
             resp->mutable_resp()->set_code(ret.code());
             ReplySubmit(cmd, resp, err, btime);
@@ -798,32 +796,34 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
         FLOG_DEBUG("store->Delete->ret.code:%s", ret.ToString().c_str());
 
-        notifyKv.clear_key();
+        if (cmd.cmd_id().node_id() == node_id_) {
+            notifyKv.clear_key();
+            vecKeys.clear();
+            watch::Watcher::DecodeKey(vecKeys, it);
+            for (auto key:vecKeys) {
+                notifyKv.add_key(*key);
+            }
+            for (auto key:vecKeys) {
+                delete key;
+            }
 
-        vecKeys.clear();
-        watch::Watcher::DecodeKey(vecKeys, it);
-        for(auto key:vecKeys) {
-            notifyKv.add_key(*key);
-        }
-        for(auto key:vecKeys) {
-            delete key;
-        }
-
-        //notify watcher
-        int32_t retCnt(0);
-        std::string errMsg("");
-        retCnt = WatchNotify(watchpb::DELETE, notifyKv, version, errMsg, prefix);
-        if (retCnt < 0) {
-            FLOG_ERROR("WatchNotify-del failed, ret:%d, msg:%s", retCnt, errMsg.c_str());
-        } else {
-            FLOG_DEBUG("WatchNotify-del success, watch_count:%d, msg:%s", retCnt, errMsg.c_str());
+            //notify watcher
+            int32_t retCnt(0);
+            std::string errMsg("");
+            retCnt = WatchNotify(watchpb::DELETE, notifyKv, version, errMsg, prefix);
+            if (retCnt < 0) {
+                FLOG_ERROR("WatchNotify-del failed, ret:%d, msg:%s", retCnt, errMsg.c_str());
+            } else {
+                FLOG_DEBUG("WatchNotify-del success, watch_count:%d, msg:%s", retCnt, errMsg.c_str());
+            }
         }
 
     }
 
-    if(prefix && cmd.cmd_id().node_id() == node_id_ && delKeys.size() == 0) {
+    if(prefix && cmd.cmd_id().node_id() == node_id_ && keySize == 0) {
         auto resp = new watchpb::DsKvWatchDeleteResponse;
-        ret = Status(Status::kNotFound);
+        //Delete没有失败,统一返回ok
+        ret = Status(Status::kOk);
         resp->mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
     }
@@ -899,6 +899,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
         auto resp = dsResp->mutable_resp();
         auto evt = resp->add_events();
         evt->set_allocated_kv(new  watchpb::WatchKeyValue(kv));
+        evt->mutable_kv()->set_version(currDbVersion);
         evt->set_type(evtType);
 
         SendNotify(vecNotifyWatcher[i], dsResp);
@@ -929,7 +930,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
             if (0 == memCnt) {
                 FLOG_ERROR("doudbt no changing, notify %d/%"
                                    PRId32
-                                   " key:%s", i, watchCnt, EncodeToHexString(dbKey).c_str());
+                                   " key:%s", i+1, watchCnt, EncodeToHexString(dbKey).c_str());
 
                 delete dsResp;
                 dsResp = nullptr;
@@ -984,7 +985,7 @@ int32_t Range::WatchNotify(const watchpb::EventType evtType, const watchpb::Watc
                 }
 
                 //scopeFlag = 1;
-                FLOG_DEBUG("notify %d/%" PRId32 " load from db, db-count:%" PRId32 " key:%s ", i, watchCnt, result.first, EncodeToHexString(dbKey).c_str());
+                FLOG_DEBUG("notify %d/%" PRId32 " load from db, db-count:%" PRId32 " key:%s ", i+1, watchCnt, result.first, EncodeToHexString(dbKey).c_str());
 
             }
 

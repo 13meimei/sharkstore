@@ -12,6 +12,7 @@
 #include <rocksdb/utilities/blob_db/blob_db.h>
 #include <rocksdb/rate_limiter.h>
 #include <fastcommon/shared_func.h>
+#include <common/ds_config.h>
 
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -81,7 +82,9 @@ int RangeServer::Init(ContextServer *context) {
         return -1;
     }
 
-    watch_server_ = new watch::WatchServer(8);
+
+
+    watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
     FLOG_INFO("RangeServer Init end ...");
 
     return 0;
