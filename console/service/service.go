@@ -2367,14 +2367,14 @@ func (s *Service) GetAllNamespace(userName string, isAdmin bool, pageInfo *model
 }
 
 func (s *Service) GetNamespaceById(applyId, storeTable string) (*models.NamespaceApply, error) {
-	querySql := fmt.Sprintf(`select id, db_name, table_name, cluster_id, status, applyer, auditor, create_time from %s where id = "%s" `,
+	querySql := fmt.Sprintf(`select id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time from %s where id = "%s" `,
 		storeTable, applyId)
 
 	log.Debug("get single apply namespace info: %s", querySql)
 
 	info := new(models.NamespaceApply)
 	if err := s.db.QueryRow(querySql).
-		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
+		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.DbId),  &(info.TableId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
 		if err == sql.ErrNoRows {
 			log.Error("db row not exists. ")
 			return nil, nil
