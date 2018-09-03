@@ -171,7 +171,7 @@ int sf_send_task_push(sf_socket_session_t *session, response_buff_t *buff) {
                 delete_response_buff(buff);
                 ret = -1;
             } else {
-                FLOG_DEBUG("ip: %s, fd: %d, session_id: %" PRId64 " msg_id: %" PRId64 " buff:%p enqueue",
+                FLOG_DEBUG("ip: %s, fd: %d, session_id: %" PRId64 " msgid: %" PRId64 " buff:%p enqueue",
                         entry->stask->client_ip, entry->stask->event.fd, entry->session_id, buff->msg_id, buff);
                 ret = 0;
             }
@@ -258,7 +258,7 @@ int sf_send_task_finish(sf_socket_session_t *session, int64_t session_id) {
             pthread_rwlock_unlock(&entry->session_lock);
         }
 
-        FLOG_DEBUG("ip: %s, fd: %d, session_id: %" PRId64 " msg_id: %" PRId64 " buff:%p  ready to send",
+        FLOG_DEBUG("ip: %s, fd: %d, session_id: %" PRId64 " msgid: %" PRId64 " buff:%p  ready to send",
                 entry->stask->client_ip, entry->stask->event.fd, entry->session_id, buff->msg_id, buff);
 
         sf_set_send_buff(entry->stask, buff);
