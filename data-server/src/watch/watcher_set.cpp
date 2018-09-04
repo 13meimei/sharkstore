@@ -7,6 +7,10 @@
 #include "common/socket_session_impl.h"
 #include "frame/sf_logger.h"
 
+#include <pthread.h>
+#include <error.h>
+#include <errno.h>
+
 namespace sharkstore {
 namespace dataserver {
 namespace watch {
@@ -94,6 +98,22 @@ WatcherSet::WatcherSet() {
         }
         FLOG_DEBUG("thread exit...");
     });
+
+    auto handle = watcher_timer_.native_handle();
+    char timer_name[32] = {0};
+    snprintf(timer_name, 32, "watcher_timer");
+    AnnotateThread(handle, timer_name);
+
+    struct sched_param my_param;
+
+    int policy;
+    pthread_getschedparam(watcher_timer_.native_handle(), &policy, &my_param);
+    my_param.sched_priority = 21;
+
+    if(pthread_setschedparam(watcher_timer_.native_handle(), SCHED_RR, &my_param) != 0) {
+        FLOG_WARN("pthread_setschedparam failed:%s", strerror(errno));
+    }
+
 }
 
 WatcherSet::~WatcherSet() {
