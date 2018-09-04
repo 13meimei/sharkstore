@@ -18,7 +18,7 @@ void Range::CheckSplit(uint64_t size) {
     statis_size_ += size;
 
     // split disabled
-    if (!context_->GetSplitPolicy()->Enabled()) {
+    if (!context_->GetSplitPolicy()->IsEnabled()) {
         return;
     }
 
@@ -34,47 +34,59 @@ void Range::ResetStatisSize() {
     // amicable sequence writing and random writing
     // const static uint64_t split_size = ds_config.range_config.split_size >>
     // 1;
+    auto policy = context_->GetSplitPolicy();
     auto meta = meta_.Get();
 
+    uint64_t total_size = 0;
     std::string split_key;
-    auto type = context_->GetSplitPolicy()->GetSplitKeyType();
-    if (type == SplitKeyType::kNormal) {
-        real_size_ = store_->StatisSize(split_key, context_->GetSplitPolicy()->SplitSize());
-    } else {
-        real_size_ = store_->StatisSize(split_key, context_->GetSplitPolicy()->SplitSize(), true);
+    auto s = store_->StatSize(policy->SplitSize(), policy->KeyMode(),
+            &total_size , &split_key);
+    statis_flag_ = false;
+    statis_size_ = 0;
+    if (!s.ok()) {
+        if (s.code() == Status::kUnexpected) {
+            RANGE_LOG_INFO("StatSize failed: %s", s.ToString().c_str());
+        } else {
+            RANGE_LOG_ERROR("StatSize failed: %s", s.ToString().c_str());
+        }
+        return;
+    }
+    real_size_ = total_size;
+    if (split_key <= meta.start_key() || split_key >= meta.end_key()) {
+        RANGE_LOG_ERROR("StatSize invalid split key: %s vs scope[%s-%s]",
+                EncodeToHex(split_key).c_str(),
+                EncodeToHex(meta.start_key()).c_str(),
+                EncodeToHex(meta.end_key()).c_str());
+        return ;
     }
 
-    RANGE_LOG_DEBUG("policy: %s/%s, real size: %" PRIu64,
-            context_->GetSplitPolicy()->Name().c_str(),
-            SplitKeyTypeName(type).c_str(), real_size_);
-
-    statis_flag_ = false;
+    RANGE_LOG_INFO("StatSize policy: %s, real size: %" PRIu64 ", split key: %s",
+            policy->Description().c_str(), real_size_, EncodeToHex(split_key).c_str());
 
     if (!EpochIsEqual(meta.range_epoch())) {
-        RANGE_LOG_WARN("ResetStatisSize epoch is changed");
+        RANGE_LOG_WARN("StatSize epoch is changed");
         return;
     }
 
-    statis_size_ = 0;
     // when real size >= max size, we need split with split size
     if (real_size_ >= context_->GetSplitPolicy()->MaxSize()) {
         return AskSplit(std::move(split_key), std::move(meta));
     }
 }
 
-void Range::AskSplit(std::string &&key, metapb::Range&& meta) {
+void Range::AskSplit(std::string &&key, metapb::Range&& meta, bool force) {
     assert(!key.empty());
     assert(key >= meta.start_key());
     assert(key < meta.end_key());
 
-    RANGE_LOG_INFO("AskSplit, version: %" PRIu64 ", key: %s, policy: %s/%s",
+    RANGE_LOG_INFO("AskSplit, version: %" PRIu64 ", key: %s, policy: %s",
             meta.range_epoch().version(), EncodeToHex(key).c_str(),
-            context_->GetSplitPolicy()->Name().c_str(),
-            SplitKeyTypeName(context_->GetSplitPolicy()->GetSplitKeyType()).c_str());
+            context_->GetSplitPolicy()->Description().c_str());
 
     mspb::AskSplitRequest ask;
     ask.set_allocated_range(new metapb::Range(std::move(meta)));
     ask.set_split_key(std::move(key));
+    ask.set_force(force);
     context_->MasterClient()->AsyncAskSplit(ask);
 }
 
@@ -219,7 +231,8 @@ Status Range::ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index) {
 
 Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
     auto meta = meta_.Get();
-    if (meta.range_epoch().version() != version) {
+    // check version when version ne zero
+    if (version != 0 && meta.range_epoch().version() != version) {
         std::ostringstream ss;
         ss << "request version: " << version << ", ";
         ss << "current version: " << meta.range_epoch().version();
@@ -227,9 +240,10 @@ Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
     }
 
     std::string split_key;
-    if (context_->GetSplitPolicy()->GetSplitKeyType() == SplitKeyType::kKeepFirstPart) {
-        // TODO:
-        return Status(Status::kNotSupported);
+    auto mode = context_->GetSplitPolicy()->KeyMode();
+    if (mode != SplitKeyMode::kNormal) {
+        // TODO: support unnormal mode
+        return Status(Status::kNotSupported, "split key mode", SplitKeyModeName(mode));
     } else {
         split_key = FindMiddle(meta.start_key(), meta.end_key());
     }
@@ -244,10 +258,10 @@ Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
 
     RANGE_LOG_INFO("Force split, start AskSplit. split key: [%s-%s]-%s, version: %" PRIu64,
             EncodeToHex(meta.start_key()).c_str(), EncodeToHex(meta.end_key()).c_str(),
-            EncodeToHex(split_key).c_str(), version);
+            EncodeToHex(split_key).c_str(), meta.range_epoch().version());
 
     *result_split_key = split_key;
-    AskSplit(std::move(split_key), std::move(meta));
+    AskSplit(std::move(split_key), std::move(meta), true);
 
     return Status::OK();
 }

@@ -87,7 +87,7 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     }
 
     if (leader == node_id_) {
-        context_->Statistics()->IncrLeaderCount();
+        context_->Statistics()->ReportLeader(id_, true);
         is_leader_ = true;
     }
 
@@ -96,6 +96,8 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
 
 Status Range::Shutdown() {
     valid_ = false;
+
+    context_->Statistics()->ReportLeader(id_, false);
 
     // 删除raft
     auto s = context_->RaftServer()->RemoveRaft(id_);
@@ -161,7 +163,8 @@ bool Range::PushHeartBeatMessage() {
         peer_status->set_commit(pr.second.commit);
         // 检查down peers
         if (pr.second.inactive_seconds > kDownPeerThresholdSecs) {
-            peer_status->set_down_seconds(pr.second.inactive_seconds);
+            peer_status->set_down_seconds(
+                    static_cast<uint64_t>(pr.second.inactive_seconds));
         }
         peer_status->set_snapshotting(pr.second.snapshotting);
     }
@@ -311,22 +314,15 @@ void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
         return;
     }
 
-    if (leader == node_id_) {
-        if (!is_leader_) {  // check leader to leader
-            is_leader_ = true;
-
+    bool prev_is_leader = is_leader_;
+    is_leader_ = (leader == node_id_);
+    if (is_leader_) {
+        if (!prev_is_leader) {
             store_->ResetMetric();
-
-            context_->ScheduleHeartbeat(id_, false);
-            context_->Statistics()->IncrLeaderCount();
         }
-
-    } else {
-        if (is_leader_) {
-            is_leader_ = false;
-            context_->Statistics()->DecrLeaderCount();
-        }
+        context_->ScheduleHeartbeat(id_, false);
     }
+    context_->Statistics()->ReportLeader(id_, is_leader_.load());
 }
 
 std::shared_ptr<raft::Snapshot> Range::GetSnapshot() {
@@ -401,6 +397,8 @@ Status Range::Destroy() {
     valid_ = false;
 
     ClearExpiredContext();
+
+    context_->Statistics()->ReportLeader(id_, false);
 
     // 销毁raft
     auto s = context_->RaftServer()->DestroyRaft(id_);

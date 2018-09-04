@@ -393,6 +393,12 @@ static int load_watch_config(IniContext *ini_context) {
         ds_config.watch_config.buffer_queue_size = 100;
     }
 
+    ds_config.watch_config.watcher_set_size =
+            iniGetIntValue(section, "watcher_set_size", ini_context, 8);
+    if (ds_config.watch_config.buffer_queue_size <= 0) {
+        ds_config.watch_config.buffer_queue_size = 8;
+    }
+
     return 0;
 }
 

@@ -11,6 +11,7 @@ int main(int argc, char* argv[]) {
 
 namespace {
 
+using namespace sharkstore;
 using namespace sharkstore::test::helper;
 using namespace sharkstore::dataserver;
 
@@ -19,7 +20,7 @@ class StoreTest : public StoreTestFixture {
 public:
     StoreTest() : StoreTestFixture(CreateAccountTable()) {}
 
-    void InsertSomeRows() {
+    void InsertSomeRows(uint64_t *total_bytes = nullptr) {
         for (int i = 1; i <= 100; ++i) {
             std::vector<std::string> row;
             row.push_back(std::to_string(i));
@@ -31,7 +32,7 @@ public:
             row.push_back(std::to_string(100 + i));
             rows_.push_back(std::move(row));
         }
-        auto s = testInsert(rows_);
+        auto s = testInsert(rows_, total_bytes);
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
 
@@ -749,6 +750,119 @@ TEST_F(StoreTest, Watch) {
         watchpb::DsKvWatchGetMultiResponse resp;
         auto s = store_->WatchGet(req, &resp);
         ASSERT_EQ(s.code(), sharkstore::Status::kNotFound);
+    }
+}
+
+TEST_F(StoreTest, Split) {
+    // parse watch key
+    {
+        // one key
+        for (int i = 0; i < 50; ++i) {
+            auto len = 10 + randomInt() % 100;
+            auto s = testParseWatchSplitKey({randomString(len)});
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+        // multi key
+        for (int i = 0; i <= 50; ++i) {
+            std::vector<std::string> keys;
+            auto keys_len = 1 + randomInt() % 20;
+            for (auto j = 0; j < keys_len; ++j) {
+                auto len = 10 + randomInt() % 100;
+                keys.push_back(randomString(len));
+            }
+            auto s = testParseWatchSplitKey(keys);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+    }
+    // test sql stat size
+    {
+        uint64_t total_size = 0;
+        InsertSomeRows(&total_size);
+        uint64_t real_size = 0;
+        std::string split_key;
+        auto s = store_->StatSize(100, range::SplitKeyMode::kNormal, &real_size, &split_key);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(real_size, total_size);
+        std::cout << EncodeToHex(split_key) << std::endl;
+        ASSERT_LT(meta_.start_key(), split_key);
+        ASSERT_LT(split_key, meta_.end_key());
+
+        auto size = statSizeUntil(split_key);
+        ASSERT_LE(100, size);
+        ASSERT_LE(size, total_size);
+    }
+    // test watch split
+    {
+        auto s = store_->Truncate();
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        {
+            watchpb::KvWatchPutRequest req;
+            req.mutable_kv()->add_key("a");
+            req.mutable_kv()->add_key("b");
+            req.mutable_kv()->add_key("c1");
+            req.mutable_kv()->set_value("value1aaaaaaaaaaaaaaaaaaaaa");
+            auto s = store_->WatchPut(req, 100);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+        {
+            watchpb::KvWatchPutRequest req;
+            req.mutable_kv()->add_key("a");
+            req.mutable_kv()->add_key("b");
+            req.mutable_kv()->add_key("c2");
+            req.mutable_kv()->set_value("value2");
+            auto s = store_->WatchPut(req, 101);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+        {
+            watchpb::KvWatchPutRequest req;
+            req.mutable_kv()->add_key("a");
+            req.mutable_kv()->add_key("d");
+            req.mutable_kv()->set_value("value3");
+            auto s = store_->WatchPut(req, 102);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+        uint64_t real_size = 0;
+        std::string split_key;
+        s = store_->StatSize(20, range::SplitKeyMode::kLockWatch, &real_size, &split_key);
+        ASSERT_EQ(s.code(), Status::kNotFound);
+    }
+    // test watch split
+    {
+        auto s = store_->Truncate();
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        {
+            watchpb::KvWatchPutRequest req;
+            req.mutable_kv()->add_key("a");
+            req.mutable_kv()->add_key("b");
+            req.mutable_kv()->add_key("c1");
+            req.mutable_kv()->set_value("value1aaaaaaaaaaaaaaaaaaaaa");
+            auto s = store_->WatchPut(req, 100);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+        {
+            watchpb::KvWatchPutRequest req;
+            req.mutable_kv()->add_key("a");
+            req.mutable_kv()->add_key("b");
+            req.mutable_kv()->add_key("c2");
+            req.mutable_kv()->set_value("value2");
+            auto s = store_->WatchPut(req, 101);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+        {
+            watchpb::KvWatchPutRequest req;
+            req.mutable_kv()->add_key("d");
+            req.mutable_kv()->add_key("d");
+            req.mutable_kv()->set_value("value3");
+            auto s = store_->WatchPut(req, 102);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+        uint64_t real_size = 0;
+        std::string split_key;
+        s = store_->StatSize(20, range::SplitKeyMode::kLockWatch, &real_size, &split_key);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(split_key, encodeWatchKey({"d"}));
     }
 }
 

@@ -91,7 +91,7 @@ void AdminServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg)
     }
 
     auto resp_msg = net::NewMessage();
-    resp_msg->head.SetFrom(msg->head);
+    resp_msg->head.SetResp(msg->head);
     resp_msg->body.resize(resp.ByteSizeLong());
     resp.SerializeToArray(resp_msg->body.data(), static_cast<int>(resp_msg->body.size()));
     auto conn = ctx.session.lock();

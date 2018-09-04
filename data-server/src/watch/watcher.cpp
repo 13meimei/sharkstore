@@ -11,7 +11,7 @@ namespace watch {
 ////////////////////////////////////// watcher //////////////////////////////////////
 
 Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, common::ProtoMessage* msg):
-        table_id_(table_id), key_version_(version), message_(msg), watcher_id_(msg->session_id), msg_id_(msg->msg_id), expire_time_(expire_time) {
+        table_id_(table_id), key_version_(version), message_(msg), watcher_id_(msg->session_id), session_id_(msg->session_id), msg_id_(msg->header.msg_id), expire_time_(expire_time) {
     for (auto k: keys) {
         keys_.push_back(std::move(new WatcherKey(*k)));
     }
@@ -21,7 +21,7 @@ Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const 
 }
 
 Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, common::ProtoMessage* msg):
-        table_id_(table_id), key_version_(version), message_(msg), type_(type), watcher_id_(msg->session_id), msg_id_(msg->msg_id), expire_time_(expire_time) {
+        table_id_(table_id), key_version_(version), message_(msg), type_(type), watcher_id_(msg->session_id),  session_id_(msg->session_id), msg_id_(msg->header.msg_id), expire_time_(expire_time) {
     for (auto k: keys) {
         keys_.push_back(std::move(new WatcherKey(*k)));
     }
@@ -44,11 +44,12 @@ Watcher::~Watcher() {
         delete k;
     }*/
 }
-/*
+
 bool Watcher::operator>(const Watcher* other) const {
-    return this->message_->expire_time > other->message_->expire_time;
+    //return this->message_->expire_time > other->message_->expire_time;
+    return this->expire_time_ > other->expire_time_;
 }
-*/
+
 void Watcher::Send(google::protobuf::Message* resp) {
     std::lock_guard<std::mutex> lock(send_lock_);
     if (sent_response_flag) {
@@ -59,12 +60,13 @@ void Watcher::Send(google::protobuf::Message* resp) {
 
     FLOG_DEBUG("before send, session_id: %" PRId64 ",task msgid: %" PRId64
                " execute take time: %d us",
-               message_->session_id, message_->msg_id, take_time);
+               message_->session_id, message_->header.msg_id, take_time);
 
 
     common::SocketSessionImpl session;
     session.Send(message_, resp);
 
+    message_ = nullptr;
     sent_response_flag = true;
 }
 

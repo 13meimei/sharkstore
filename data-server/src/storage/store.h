@@ -6,8 +6,12 @@ _Pragma("once");
 
 #include "iterator.h"
 #include "metric.h"
+#include "range/split_policy.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
+
+// test fixture forward declare for friend class
+namespace sharkstore { namespace test { namespace helper { class StoreTestFixture; }}}
 
 namespace sharkstore {
 namespace dataserver {
@@ -48,12 +52,12 @@ public:
         return primary_keys_;
     }
 
-    uint64_t StatisSize(std::string& split_key, uint64_t split_size);
-    uint64_t StatisSize(std::string& split_key, uint64_t split_size,
-                        bool decode);  // fjf 2018-01-31
-
     void ResetMetric() { metric_.Reset(); }
     void CollectMetric(MetricStat* stat) { metric_.Collect(stat); }
+
+    // 统计存储实际大小，并且根据split_size返回中间key
+    Status StatSize(uint64_t split_size, range::SplitKeyMode mode,
+            uint64_t *real_size, std::string *split_key);
 
 public:
     Iterator* NewIterator(const ::kvrpcpb::Scope& scope);
@@ -69,6 +73,7 @@ public:
 
 private:
     friend class RowFetcher;
+    friend class ::sharkstore::test::helper::StoreTestFixture;
 
     Status selectSimple(const kvrpcpb::SelectRequest& req,
                         kvrpcpb::SelectResponse* resp);
@@ -82,6 +87,8 @@ private:
     std::string encodeWatchValue(const watchpb::WatchKeyValue& kv, int64_t version) const;
     bool decodeWatchKey(const std::string& key, watchpb::WatchKeyValue *kv) const;
     bool decodeWatchValue(const std::string& value, watchpb::WatchKeyValue *kv) const;
+
+    Status parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key);
 
 private:
     const uint64_t table_id_ = 0;

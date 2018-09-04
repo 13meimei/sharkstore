@@ -18,7 +18,7 @@ type SchClient interface {
 	Close() error
 	// SendKVReq sends kv request.
 	CreateRange(addr string, r *metapb.Range) error
-	DeleteRange(addr string, rangeId uint64) error
+	DeleteRange(addr string, rangeId uint64, peerID uint64) error
 	TransferLeader(addr string, rangeId uint64) error
 	UpdateRange(addr string, r *metapb.Range) error
 	GetPeerInfo(addr string, rangeId uint64) (*schpb.GetPeerInfoResponse, error)
@@ -81,7 +81,7 @@ func (c *SchRpcClient) CreateRange(addr string, r *metapb.Range) error {
 	return nil
 }
 
-func (c *SchRpcClient) DeleteRange(addr string, rangeId uint64) error {
+func (c *SchRpcClient) DeleteRange(addr string, rangeId uint64, peerID uint64) error {
 	conn, err := c.getConn(addr)
 	if err != nil {
 		return err
@@ -89,6 +89,7 @@ func (c *SchRpcClient) DeleteRange(addr string, rangeId uint64) error {
 	req := &schpb.DeleteRangeRequest{
 		Header:  &schpb.RequestHeader{},
 		RangeId: rangeId,
+		PeerId:  peerID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), ReadTimeoutShort)
 	defer cancel()

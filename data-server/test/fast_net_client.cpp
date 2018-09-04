@@ -64,7 +64,7 @@ static int64_t get_proto_head(ds_proto_header_t *proto_header, int len) {
     header.msg_type = 10;
     header.func_id = 10;
     header.proto_type = 1;
-    header.stream_hash = 0;
+    header.flags = 0;
 
     ds_serialize_header(&header, proto_header);
     return id;

@@ -34,19 +34,15 @@
 */
 package statspb
 
-import (
-	"fmt"
-	"io"
-	"math"
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import _ "github.com/gogo/protobuf/gogoproto"
+import mspb "model/pkg/mspb"
 
-	proto "github.com/golang/protobuf/proto"
+import binary "encoding/binary"
 
-	_ "github.com/gogo/protobuf/gogoproto"
-
-	mspb "model/pkg/mspb"
-
-	binary "encoding/binary"
-)
+import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal

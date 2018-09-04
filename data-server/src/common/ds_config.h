@@ -86,6 +86,7 @@ typedef struct ds_config_s {
     struct {
         int buffer_map_size;
         int buffer_queue_size;
+        int watcher_set_size;
     } watch_config;
 
     sf_socket_thread_config_t manager_config;  // manager thread config

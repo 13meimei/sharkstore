@@ -2336,7 +2336,7 @@ func (s *Service) GetAllNamespace(userName string, isAdmin bool, pageInfo *model
 			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
 		}
 	}
-	log.Debug("get all apply lock namespace: %s", selectSql)
+	log.Debug("get all apply namespace: %s", selectSql)
 
 	var totalRecord int
 	if err := s.db.QueryRow(countSql).
@@ -2367,14 +2367,14 @@ func (s *Service) GetAllNamespace(userName string, isAdmin bool, pageInfo *model
 }
 
 func (s *Service) GetNamespaceById(applyId, storeTable string) (*models.NamespaceApply, error) {
-	querySql := fmt.Sprintf(`select id, db_name, table_name, cluster_id, status, applyer, auditor, create_time from %s where id = "%s" `,
+	querySql := fmt.Sprintf(`select id, db_name, table_name, cluster_id, db_id, table_id, status, applyer, auditor, create_time from %s where id = "%s" `,
 		storeTable, applyId)
 
 	log.Debug("get single apply namespace info: %s", querySql)
 
 	info := new(models.NamespaceApply)
 	if err := s.db.QueryRow(querySql).
-		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
+		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.DbId),  &(info.TableId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
 		if err == sql.ErrNoRows {
 			log.Error("db row not exists. ")
 			return nil, nil
@@ -2618,7 +2618,9 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
 		return nil, err
 	}
-	if reply.Code != 0 {
+	if reply.Code == 5 {
+		return nil, nil
+	} else if reply.Code != 0 {
 		log.Error("get cluster[%d] lock list failed. err:[%v]", clusterId, reply)
 		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
 	}
@@ -2842,7 +2844,9 @@ func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageI
 	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
 		return nil, err
 	}
-	if reply.Code != 0 {
+	if reply.Code == 5 {//table no exist
+		return nil, nil
+	} else if reply.Code != 0 {
 		log.Error("get cluster[%d] configure list failed. err:[%v]", clusterId, reply)
 		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
 	}

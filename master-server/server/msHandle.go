@@ -311,7 +311,7 @@ func (service *Server) handleRangeHeartbeat(ctx context.Context, req *mspb.Range
 func (service *Server) handleAskSplit(ctx context.Context, req *mspb.AskSplitRequest) (resp *mspb.AskSplitResponse, err error) {
 	cluster := service.cluster
 	//集群不允许分裂
-	if cluster.autoSplitUnable {
+	if !req.GetForce() && cluster.autoSplitUnable {
 		log.Debug("cluster is not allowed split")
 		err = ErrNotAllowSplit
 		return

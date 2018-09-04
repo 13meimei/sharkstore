@@ -3,6 +3,7 @@ _Pragma("once");
 #include "range/context.h"
 #include "context_server.h"
 #include "run_status.h"
+#include "range_server.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -22,7 +23,7 @@ public:
     storage::MetaStore* MetaStore() override { return server_->meta_store; }
     common::SocketSession* SocketSession() override { return server_->socket_session; }
     range::RangeStats* Statistics() override { return server_->run_status; }
-	RangeServer* RangServer() override { return server_->range_server; }
+	watch::WatchServer* WatchServer() override { return server_->range_server->watch_server_; }
 
     uint64_t GetFSUsagePercent() const override;
 

@@ -3453,7 +3453,7 @@ func (service *Server) handlePeerDeleteForce(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := service.cluster.cli.DeleteRange(node.GetServerAddr(), rangeId); err != nil {
+	if err := service.cluster.cli.DeleteRange(node.GetServerAddr(), rangeId, peerId); err != nil {
 		log.Error("http range del peer node %v: do delete error: %v", peer.GetNodeId(), err)
 		reply.Code = HTTP_ERROR
 		reply.Message = fmt.Sprintf("delete range %v peer %v (%v) error: %v", rangeId, peerId, node.GetServerAddr(), err)

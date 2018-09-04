@@ -183,7 +183,7 @@ private:
 
     // split func
     void CheckSplit(uint64_t size);
-    void AskSplit(std::string &&key, metapb::Range&& meta);
+    void AskSplit(std::string &&key, metapb::Range&& meta, bool force = false);
     void ReportSplit(const metapb::Range &new_range);
 
     int64_t checkMaxCount(int64_t maxCount) {

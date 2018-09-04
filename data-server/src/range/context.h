@@ -18,6 +18,7 @@ namespace dataserver {
 namespace master { class Worker; }
 namespace storage { class MetaStore; }
 namespace common { class SocketSession; }
+namespace watch { class WatchServer; }
 
 namespace range {
 
@@ -39,7 +40,7 @@ public:
     virtual storage::MetaStore* MetaStore() = 0;
     virtual common::SocketSession* SocketSession() = 0;
     virtual RangeStats* Statistics() = 0;
-    virtual server::RangeServer* RangServer() = 0;
+    virtual watch::WatchServer* WatchServer() = 0;
 
     // filesystem usage percent for check writable
     virtual uint64_t GetFSUsagePercent() const = 0;
@@ -51,9 +52,8 @@ public:
     virtual std::shared_ptr<Range> FindRange(uint64_t range_id) = 0;
 
     // split
-    virtual Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index) {
-        return Status(Status::kNotSupported);
-    }
+    virtual Status SplitRange(uint64_t range_id,
+            const raft_cmdpb::SplitRequest &req, uint64_t raft_index) = 0;
 };
 
 }  // namespace range

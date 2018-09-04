@@ -1,11 +1,16 @@
 #include "store_test_fixture.h"
 
+#include "base/util.h"
+
 #include "query_parser.h"
 #include "helper_util.h"
 
 namespace sharkstore {
 namespace test {
 namespace helper {
+
+using namespace ::sharkstore::dataserver::range;
+using namespace ::sharkstore::dataserver::storage;
 
 StoreTestFixture::StoreTestFixture(std::unique_ptr<Table> t) :
     table_(std::move(t)) {
@@ -66,7 +71,7 @@ Status StoreTestFixture::testSelect(
     return Status::OK();
 }
 
-Status StoreTestFixture::testInsert(const std::vector<std::vector<std::string>> &rows) {
+Status StoreTestFixture::testInsert(const std::vector<std::vector<std::string>> &rows, uint64_t *insert_bytes) {
     InsertRequestBuilder builder(table_.get());
     builder.AddRows(rows);
     auto req = builder.Build();
@@ -80,6 +85,13 @@ Status StoreTestFixture::testInsert(const std::vector<std::vector<std::string>> 
         return Status(Status::kUnexpected, "insert affected",
                 std::string("expected: ") + std::to_string(rows.size()) +
                 ", actual: " + std::to_string(affected));
+    }
+    if (insert_bytes != nullptr) {
+        *insert_bytes = 0;
+        for (const auto& row: req.rows()) {
+            *insert_bytes += row.key().size();
+            *insert_bytes += row.value().size();
+        }
     }
     return Status::OK();
 }
@@ -102,6 +114,49 @@ Status StoreTestFixture::testDelete(const std::function<void(DeleteRequestBuilde
                       ", actual: " + std::to_string(actual_affected));
     }
     return Status::OK();
+}
+
+std::string StoreTestFixture::encodeWatchKey(const std::vector<std::string>& keys) {
+    watchpb::WatchKeyValue kv;
+    for (const auto& key: keys) {
+        kv.add_key(key);
+    }
+    return store_->encodeWatchKey(kv);
+}
+
+Status StoreTestFixture::testParseWatchSplitKey(const std::vector<std::string>& keys) {
+    assert(!keys.empty());
+
+    watchpb::WatchKeyValue kv;
+    for (const auto& key: keys) {
+        kv.add_key(key);
+    }
+    std::string enc_key = store_->encodeWatchKey(kv);
+    std::string split_key;
+    auto s = store_->parseSplitKey(enc_key, SplitKeyMode::kLockWatch, &split_key);
+    if (!s.ok()) {
+        return s;
+    }
+
+    watchpb::WatchKeyValue expected_kv;
+    expected_kv.add_key(keys[0]);
+    std::string expected_split_key = store_->encodeWatchKey(expected_kv);
+    if (split_key != expected_split_key) {
+        return Status(Status::kUnexpected, EncodeToHex(split_key), EncodeToHex(expected_split_key));
+    }
+
+    return Status::OK();
+}
+
+uint64_t StoreTestFixture::statSizeUntil(const std::string& end) {
+    uint64_t size = 0;
+    std::unique_ptr<Iterator> it(store_->NewIterator("", end));
+    while (it->Valid()) {
+        size += it->key_size();
+        size += it->value_size();
+        it->Next();
+    }
+    return size;
 }
 
 } /* namespace helper */

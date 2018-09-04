@@ -86,9 +86,9 @@ static Status getRangeInfo(ContextServer* ctx, const vector<string>& path, JsonW
     writer.Key("conf_ver");
     writer.Uint64(meta.range_epoch().conf_ver());
     writer.Key("start_key");
-    writer.String(meta.start_key().c_str());
+    writer.String(EncodeToHex(meta.start_key()).c_str());
     writer.Key("end_key");
-    writer.String(meta.end_key().c_str());
+    writer.String(EncodeToHex(meta.end_key()).c_str());
     writer.Key("peers");
     writer.StartArray();
     for (const auto& peer: meta.peers()) {

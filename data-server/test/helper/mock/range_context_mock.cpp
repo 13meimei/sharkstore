@@ -54,6 +54,9 @@ Status RangeContextMock::Init() {
     // split policy
     split_policy_ = NewDisableSplitPolicy();
 
+    // watch server
+    watch_server_.reset(new watch::WatchServer);
+
     return Status::OK();
 }
 

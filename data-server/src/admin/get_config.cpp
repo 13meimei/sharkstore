@@ -27,6 +27,7 @@ using ConfigGeterMap = std::map<std::string, std::function<std::string()>> ;
 static const ConfigGeterMap cfg_getters = {
         // log
         {"log.level", []{ return std::string(get_log_level_name(g_log_context.log_level)); }},
+        {"log.log_level", []{ return std::string(get_log_level_name(g_log_context.log_level)); }},
 
         // rocksdb
         ADD_CFG_GETTER_STR(rocksdb, path),

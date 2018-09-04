@@ -57,12 +57,12 @@ private:
         HashQueue() : all_msg_size(0) {}
     };
 
+    bool isSlow(common::ProtoMessage *msg);
+
     void DealTask(common::ProtoMessage *task);
     void Clean(HashQueue &hash_queue);
 
     void StartWorker(std::vector<std::thread> &worker, HashQueue & hash_queue, int num);
-    // 0: fast queue; 1: slow queue; 2: thread queue
-    int FuncType(common::ProtoMessage *msg);
 
 private:
     std::atomic<uint64_t> slot_seed_;

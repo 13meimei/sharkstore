@@ -29,23 +29,17 @@
 */
 package alarmpb
 
-import (
-	"fmt"
-	"io"
-	"math"
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import _ "github.com/gogo/protobuf/gogoproto"
+import taskpb "model/pkg/taskpb"
+import metapb "model/pkg/metapb"
 
-	proto "github.com/golang/protobuf/proto"
+import context "golang.org/x/net/context"
+import grpc "google.golang.org/grpc"
 
-	_ "github.com/gogo/protobuf/gogoproto"
-
-	taskpb "model/pkg/taskpb"
-
-	metapb "model/pkg/metapb"
-
-	context "golang.org/x/net/context"
-
-	grpc "google.golang.org/grpc"
-)
+import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
