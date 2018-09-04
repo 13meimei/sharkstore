@@ -85,6 +85,7 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 		log.Error("[insert] table %s.%s missing column(%v)", db, tableName, err)
 		return nil, err
 	}
+	lasInsertId := uint64(0)
 	//填充自增id值
 	if len(pkName) > 0 {
 		colMap[pkName] = len(colMap)
@@ -101,6 +102,7 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 			row = append(row, []byte(fmt.Sprintf("%v", ids[i])))
 			rows[i] = row
 		}
+		lasInsertId = uint64(ids[len(rows)-1])
 	}
 
 	//parseTime = time.Now()
@@ -124,6 +126,7 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 		return nil, resErr
 	}
 	res.AffectedRows = affected
+	res.InsertId = lasInsertId
 	res.Status = 0
 	return res, nil
 }
