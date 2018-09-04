@@ -1,0 +1,91 @@
+syntax = "proto3";
+package alarmpb2;
+
+import "gogoproto/gogo.proto";
+
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+enum AlarmResponseCode {
+    ALARM_OK        = 0;
+    ALARM_ERROR     = 1;
+}
+
+enum AlarmType {
+    APP_HEARTBEAT       = 0;
+    APP_NOT_ALIVE       = 1;
+    GATEWAY_SLOWLOG     = 2;
+    GATEWAY_ERRORLOG    = 3;
+}
+
+enum AlarmValueCompareType {
+    EQUAL           = 0;
+    GREATER_THAN    = 1;
+    LESS_THAN       = 2;
+    NOT_EQUAL           = 3;
+    NOT_GREATER_THAN    = 4;
+    NOT_LESS_THAN       = 5;
+}
+
+service Alarm {
+    rpc Alarm(AlarmRequest) returns (AlarmResponse) {}
+}
+
+// request
+message AlarmRequest {
+    RequestHeader header        = 1;
+
+    AppHeartbeatRequest app_heartbeat           = 2;
+    AppNotAliveRequest app_not_alive            = 3;
+    GatewaySlowLogRequest gw_slow_log           = 4;
+    GatewayErrorLogRequest gw_error_log         = 5;
+}
+
+message RequestHeader {
+    AlarmType type              = 1;
+
+    int64 cluster_id            = 2;
+    string ip_addr              = 3;
+}
+
+//
+message AppHeartbeatRequest {
+    string app_name             = 1;
+    int64 hb_interval_time      = 2;
+}
+
+//
+message AppNotAliveRequest {
+    string app_name             = 1;
+    string alive_check_time     = 2;
+}
+
+//
+message GatewaySlowLogRequest {
+    repeated string slow_log             = 1;
+}
+
+//
+message GatewayErrorLogRequest {
+    repeated string error_log            = 1;
+}
+
+//
+message GatewayInputOpsRequest {
+    double alarm_value              = 1;
+    AlarmValueCompareType cmp_type  = 2;
+
+}
+
+// response
+message AlarmResponse {
+    ResponseHeader header       = 1;
+}
+
+message ResponseHeader {
+    int64 code          = 1;
+    string error        = 2;
+}
+
