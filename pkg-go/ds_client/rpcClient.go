@@ -5,20 +5,18 @@ import (
 	"errors"
 	"io"
 	"net"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"model/pkg/ds_admin"
 	"model/pkg/funcpb"
 	"model/pkg/kvrpcpb"
 	"model/pkg/schpb"
 	"model/pkg/watchpb"
 	"pkg-go/util"
 	"util/log"
-
-	"runtime"
-
-	"model/pkg/ds_admin"
 
 	"github.com/gogo/protobuf/proto"
 	"golang.org/x/net/context"
@@ -179,11 +177,11 @@ type RpcClient interface {
 }
 
 type Message struct {
-	msgId      uint64
-	msgType    uint16
-	funcId     uint16
-	streamHash uint8
-	protoType  uint8
+	msgId     uint64
+	msgType   uint16
+	funcId    uint16
+	flags     uint8
+	protoType uint8
 	// 相对时间，单位毫秒
 	timeout uint32
 	data    []byte
@@ -216,12 +214,12 @@ func (m *Message) SetMsgId(msgId uint64) {
 	m.msgId = msgId
 }
 
-func (m *Message) GetStreamHash() uint8 {
-	return m.streamHash
+func (m *Message) GetFlags() uint8 {
+	return m.flags
 }
 
-func (m *Message) SetStreamHash(streamHash uint8) {
-	m.streamHash = streamHash
+func (m *Message) SetFlags(flags uint8) {
+	m.flags = flags
 }
 
 func (m *Message) GetProtoType() uint8 {
@@ -415,6 +413,10 @@ func (c *DSRpcClient) GetClientId() int64 {
 }
 
 func (c *DSRpcClient) execute(funId uint16, ctx context.Context, in proto.Message, out proto.Message) (uint64, error) {
+	return c.executeWithFlags(funId, ctx, in, out, 0)
+}
+
+func (c *DSRpcClient) executeWithFlags(funId uint16, ctx context.Context, in proto.Message, out proto.Message, flags uint8) (uint64, error) {
 	data, err := proto.Marshal(in)
 	if err != nil {
 		return 0, err
@@ -435,6 +437,7 @@ func (c *DSRpcClient) execute(funId uint16, ctx context.Context, in proto.Messag
 		msgType: getMsgType(funId).GetRequestMsgType(),
 		funcId:  uint16(funId),
 		timeout: uint32(timeout),
+		flags:   flags,
 		ctx:     ctx,
 		data:    data,
 	}
@@ -496,7 +499,11 @@ func (c *DSRpcClient) KvRawExecute(ctx context.Context, in *kvrpcpb.DsKvRawExecu
 
 func (c *DSRpcClient) Select(ctx context.Context, in *kvrpcpb.DsSelectRequest) (*kvrpcpb.DsSelectResponse, error) {
 	out := new(kvrpcpb.DsSelectResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncSelect), ctx, in, out)
+	var fastFlag uint8
+	if len(in.GetReq().GetKey()) > 0 {
+		fastFlag = 1
+	}
+	msgId, err := c.executeWithFlags(uint16(funcpb.FunctionID_kFuncSelect), ctx, in, out, fastFlag)
 	in.GetHeader().TraceId = msgId
 	if err != nil {
 		return nil, err

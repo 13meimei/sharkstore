@@ -150,23 +150,16 @@ void Worker::Push(common::ProtoMessage *task) {
         return;
     }
 
-    int type = FuncType(task);
-
-    if (type == 0) {
-        auto slot = ++slot_seed_ % ds_config.fast_worker_num;
-        auto mq = fast_queue_.msg_queue[slot];
-
-        mq->msg_queue.enqueue(task);
-
-        ++fast_queue_.all_msg_size;
-
-    } else if (type == 1) {
+    if (isSlow(task)) {
         auto slot = ++slot_seed_ % ds_config.slow_worker_num;
         auto mq = slow_queue_.msg_queue[slot];
-
         mq->msg_queue.enqueue(task);
-
         ++slow_queue_.all_msg_size;
+    } else {
+        auto slot = ++slot_seed_ % ds_config.fast_worker_num;
+        auto mq = fast_queue_.msg_queue[slot];
+        mq->msg_queue.enqueue(task);
+        ++fast_queue_.all_msg_size;
     }
 }
 
@@ -213,14 +206,19 @@ size_t Worker::ClearQueue(bool fast, bool slow) {
     return count;
 }
 
-// 0: fast queue; 1: slow queue;
-int Worker::FuncType(common::ProtoMessage *msg) {
-    if (msg->header.func_id == funcpb::FunctionID::kFuncSelect || 
-        msg->header.func_id == funcpb::FunctionID::kFuncWatchGet ) {
-        return 1;
+bool Worker::isSlow(sharkstore::dataserver::common::ProtoMessage *msg) {
+    if ((msg->header.flags & FAST_WORKER_FLAG) != 0) {
+        return false;
     }
-
-    return 0;
+    switch (msg->header.func_id) {
+        case funcpb::FunctionID::kFuncSelect:
+        case funcpb::FunctionID::kFuncWatchGet:
+        case funcpb::FunctionID::kFuncKvRangeDel:
+        case funcpb::FunctionID::kFuncKvScan :
+            return true;
+        default:
+            return false;
+    }
 }
 
 void Worker::PrintQueueSize() {

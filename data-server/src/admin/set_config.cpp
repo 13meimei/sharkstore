@@ -60,6 +60,7 @@ static Status setLogLevel(server::ContextServer* ctx, const std::string& value) 
 static const ConfigSetFuncMap cfg_set_funcs = {
         // log level
         {"log.level",        setLogLevel},
+        {"log.log_level",    setLogLevel},
 
         // range split
         SET_RANGE_SIZE(check_size),

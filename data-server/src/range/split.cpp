@@ -74,7 +74,7 @@ void Range::ResetStatisSize() {
     }
 }
 
-void Range::AskSplit(std::string &&key, metapb::Range&& meta) {
+void Range::AskSplit(std::string &&key, metapb::Range&& meta, bool force) {
     assert(!key.empty());
     assert(key >= meta.start_key());
     assert(key < meta.end_key());
@@ -86,6 +86,7 @@ void Range::AskSplit(std::string &&key, metapb::Range&& meta) {
     mspb::AskSplitRequest ask;
     ask.set_allocated_range(new metapb::Range(std::move(meta)));
     ask.set_split_key(std::move(key));
+    ask.set_force(force);
     context_->MasterClient()->AsyncAskSplit(ask);
 }
 
@@ -260,7 +261,7 @@ Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
             EncodeToHex(split_key).c_str(), meta.range_epoch().version());
 
     *result_split_key = split_key;
-    AskSplit(std::move(split_key), std::move(meta));
+    AskSplit(std::move(split_key), std::move(meta), true);
 
     return Status::OK();
 }
