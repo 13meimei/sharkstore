@@ -1630,6 +1630,12 @@ class AskSplitRequest : public ::google::protobuf::Message /* @@protoc_insertion
   ::metapb::Range* release_range();
   void set_allocated_range(::metapb::Range* range);
 
+  // bool force = 4;
+  void clear_force();
+  static const int kForceFieldNumber = 4;
+  bool force() const;
+  void set_force(bool value);
+
   // @@protoc_insertion_point(class_scope:mspb.AskSplitRequest)
  private:
 
@@ -1637,6 +1643,7 @@ class AskSplitRequest : public ::google::protobuf::Message /* @@protoc_insertion
   ::google::protobuf::internal::ArenaStringPtr split_key_;
   ::mspb::RequestHeader* header_;
   ::metapb::Range* range_;
+  bool force_;
   mutable int _cached_size_;
   friend struct protobuf_mspb_2eproto::TableStruct;
 };
@@ -7319,6 +7326,20 @@ inline void AskSplitRequest::set_allocated_split_key(::std::string* split_key) {
   }
   split_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), split_key);
   // @@protoc_insertion_point(field_set_allocated:mspb.AskSplitRequest.split_key)
+}
+
+// bool force = 4;
+inline void AskSplitRequest::clear_force() {
+  force_ = false;
+}
+inline bool AskSplitRequest::force() const {
+  // @@protoc_insertion_point(field_get:mspb.AskSplitRequest.force)
+  return force_;
+}
+inline void AskSplitRequest::set_force(bool value) {
+  
+  force_ = value;
+  // @@protoc_insertion_point(field_set:mspb.AskSplitRequest.force)
 }
 
 // -------------------------------------------------------------------

@@ -150,6 +150,7 @@ message AskSplitRequest {
     metapb.Range range   = 2;
 
     bytes split_key      = 3;
+    bool force           = 4;
 }
 
 message AskSplitResponse {
