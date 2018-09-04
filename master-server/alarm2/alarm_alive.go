@@ -5,11 +5,18 @@ import (
 	"strings"
 	"strconv"
 	"errors"
+	"time"
+	"context"
 )
 
 type aliveKey string
 
-
+const (
+	ALIVEKEY_GATEWAY 		= "gateway"
+	ALIVEKEY_MASTER 		= "master"
+	ALIVEKEY_METRIC 		= "metric"
+	ALIVEKEY_JOIN_LETTER 	= "_"
+)
 
 func (key aliveKey) splitAliveKey() (appName string, clusterId int64, appAddr string, err error) {
 	strs := strings.Split(string(key), ALIVEKEY_JOIN_LETTER)
@@ -44,4 +51,21 @@ func newAliveKey(appName string, clusterId int64, appAddr string) (key aliveKey,
 		err = errors.New("unknown appname prefix")
 	}
 	return
+}
+
+func (s *Server) aliveChecking() {
+	ctx, cancel := context.WithCancel(s.context)
+	defer cancel()
+	duration := s.conf.AppAliveCheckingDurationSec
+	t := time.NewTimer(duration)
+	for {
+		select {
+		case <-t.C:
+			// todo
+
+			t.Reset(duration)
+		case <-ctx.Done():
+			return
+		}
+	}
 }

@@ -32,6 +32,8 @@ type Server struct {
 	jimClient 	*redis.Pool
 	mysqlClient *sql.DB
 
+	context context.Context
+
 	app 		appMap
 	globalRule 	globalRuleMap
 	clusterRule clusterRuleMap
@@ -53,6 +55,7 @@ func newServer(conf *Alarm2ServerConfig) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.context = context.Background()
 
 	return s, nil
 }
@@ -74,6 +77,7 @@ func NewAlarmServer2(conf *Alarm2ServerConfig) (*Server, error) {
 	go s.Serve(lis) // rpc server
 
 	go server.timingDbPulling()
+	go server.aliveChecking()
 	return server, nil
 }
 
