@@ -206,7 +206,7 @@ message DsSelectResponse {
 message KeyValue {
     bytes Key       = 1; // 编码后的主键
     bytes Value     = 2; // 编码后的列值（所有非主键列）
-    int64 ExpireAt  = 3; // 过期时间（绝对时间，纳秒值）
+    int64 TTL       = 3; // 相对时间（时间，秒）
 }
 
 message DsInsertRequest {
