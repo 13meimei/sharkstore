@@ -173,6 +173,8 @@ void print_rocksdb_config() {
               "\n\tenable_garbage_collection: %d"
               "\n\tblob_gc_percent: %d"
               "\n\tblob_compression: %d"
+              "\n\tblob_cache_size: %lu"
+              "\n\tblob_ttl_range: %" PRIu64
               "\n\tttl: %d"
               "\n\tenable_stats: %d"
               "\n\tenable_debug_log: %d"
@@ -207,6 +209,8 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.enable_garbage_collection,
               ds_config.rocksdb_config.blob_gc_percent,
               ds_config.rocksdb_config.blob_compression,
+              ds_config.rocksdb_config.blob_cache_size,
+              ds_config.rocksdb_config.blob_ttl_range,
               ds_config.rocksdb_config.ttl,
               ds_config.rocksdb_config.enable_stats,
               ds_config.rocksdb_config.enable_debug_log
