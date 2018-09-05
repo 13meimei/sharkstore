@@ -127,6 +127,8 @@ static int load_rocksdb_config(IniContext *ini_context) {
         return -1;
     }
     ds_config.rocksdb_config.blob_compression = load_integer_value_atleast(ini_context, section, "blob_compression", 0, 0);
+    ds_config.rocksdb_config.blob_cache_size = load_bytes_value_ne(ini_context, section, "blob_cache_size", 0);
+    ds_config.rocksdb_config.blob_ttl_range = (uint64_t)load_integer_value_atleast(ini_context, section, "blob_ttl_range", 3600, 60);
 
     ds_config.rocksdb_config.ttl = load_integer_value_atleast(ini_context, section, "ttl", 0, 0);
 
