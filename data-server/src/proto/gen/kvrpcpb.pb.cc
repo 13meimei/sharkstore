@@ -1991,7 +1991,7 @@ void AddDescriptorsImpl() {
       "Response\"J\n\016SelectResponse\022\014\n\004code\030\001 \001(\005"
       "\022\032\n\004rows\030\002 \003(\0132\014.kvrpcpb.Row\022\016\n\006offset\030\003"
       " \001(\004\"3\n\010KeyValue\022\013\n\003Key\030\001 \001(\014\022\r\n\005Value\030\002"
-      " \001(\014\022\013\n\003TTL\030\003 \001(\003\"^\n\017DsInsertRequest\022&\n\006"
+      " \001(\014\022\013\n\003TTL\030\003 \001(\004\"^\n\017DsInsertRequest\022&\n\006"
       "header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022#\n\003"
       "req\030\002 \001(\0132\026.kvrpcpb.InsertRequest\"b\n\020DsI"
       "nsertResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb."
@@ -13563,7 +13563,7 @@ KeyValue::KeyValue(const KeyValue& from)
 void KeyValue::SharedCtor() {
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ttl_ = GOOGLE_LONGLONG(0);
+  ttl_ = GOOGLE_ULONGLONG(0);
   _cached_size_ = 0;
 }
 
@@ -13608,7 +13608,7 @@ void KeyValue::Clear() {
 
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ttl_ = GOOGLE_LONGLONG(0);
+  ttl_ = GOOGLE_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -13646,13 +13646,13 @@ bool KeyValue::MergePartialFromCodedStream(
         break;
       }
 
-      // int64 TTL = 3;
+      // uint64 TTL = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
                  input, &ttl_)));
         } else {
           goto handle_unusual;
@@ -13698,9 +13698,9 @@ void KeyValue::SerializeWithCachedSizes(
       2, this->value(), output);
   }
 
-  // int64 TTL = 3;
+  // uint64 TTL = 3;
   if (this->ttl() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(3, this->ttl(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->ttl(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -13731,9 +13731,9 @@ void KeyValue::SerializeWithCachedSizes(
         2, this->value(), target);
   }
 
-  // int64 TTL = 3;
+  // uint64 TTL = 3;
   if (this->ttl() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(3, this->ttl(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->ttl(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -13767,10 +13767,10 @@ size_t KeyValue::ByteSizeLong() const {
         this->value());
   }
 
-  // int64 TTL = 3;
+  // uint64 TTL = 3;
   if (this->ttl() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int64Size(
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->ttl());
   }
 
@@ -13961,15 +13961,15 @@ void KeyValue::set_allocated_value(::std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.KeyValue.Value)
 }
 
-// int64 TTL = 3;
+// uint64 TTL = 3;
 void KeyValue::clear_ttl() {
-  ttl_ = GOOGLE_LONGLONG(0);
+  ttl_ = GOOGLE_ULONGLONG(0);
 }
-::google::protobuf::int64 KeyValue::ttl() const {
+::google::protobuf::uint64 KeyValue::ttl() const {
   // @@protoc_insertion_point(field_get:kvrpcpb.KeyValue.TTL)
   return ttl_;
 }
-void KeyValue::set_ttl(::google::protobuf::int64 value) {
+void KeyValue::set_ttl(::google::protobuf::uint64 value) {
   
   ttl_ = value;
   // @@protoc_insertion_point(field_set:kvrpcpb.KeyValue.TTL)

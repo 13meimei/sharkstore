@@ -3910,11 +3910,11 @@ class KeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
 
-  // int64 TTL = 3;
+  // uint64 TTL = 3;
   void clear_ttl();
   static const int kTTLFieldNumber = 3;
-  ::google::protobuf::int64 ttl() const;
-  void set_ttl(::google::protobuf::int64 value);
+  ::google::protobuf::uint64 ttl() const;
+  void set_ttl(::google::protobuf::uint64 value);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.KeyValue)
  private:
@@ -3922,7 +3922,7 @@ class KeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::google::protobuf::internal::ArenaStringPtr value_;
-  ::google::protobuf::int64 ttl_;
+  ::google::protobuf::uint64 ttl_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -13961,15 +13961,15 @@ inline void KeyValue::set_allocated_value(::std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.KeyValue.Value)
 }
 
-// int64 TTL = 3;
+// uint64 TTL = 3;
 inline void KeyValue::clear_ttl() {
-  ttl_ = GOOGLE_LONGLONG(0);
+  ttl_ = GOOGLE_ULONGLONG(0);
 }
-inline ::google::protobuf::int64 KeyValue::ttl() const {
+inline ::google::protobuf::uint64 KeyValue::ttl() const {
   // @@protoc_insertion_point(field_get:kvrpcpb.KeyValue.TTL)
   return ttl_;
 }
-inline void KeyValue::set_ttl(::google::protobuf::int64 value) {
+inline void KeyValue::set_ttl(::google::protobuf::uint64 value) {
   
   ttl_ = value;
   // @@protoc_insertion_point(field_set:kvrpcpb.KeyValue.TTL)
