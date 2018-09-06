@@ -49,14 +49,6 @@ message GetMSLeaderResponse {
     MSLeader leader                 = 2;
 }
 
-message PeerStatus {
-    metapb.Peer peer    = 1;
-    uint64 index        = 2;
-    uint64 commit       = 3;
-    uint64 down_seconds = 4;
-    bool snapshotting   = 5;
-}
-
 message RangeStats {
     // Bytes read/written during this period.
     uint64 bytes_written                    = 1;
@@ -80,7 +72,7 @@ message RangeHeartbeatRequest {
     // leader term
     uint64 term                           = 7;
     // replica status
-    repeated PeerStatus peers_status      = 8;
+    repeated metapb.PeerStatus peers_status      = 8;
 }
 
 message RangeHeartbeatResponse {

@@ -83,6 +83,14 @@ message Peer {
     // more attributes......
 }
 
+message PeerStatus {
+    metapb.Peer peer    = 1;
+    uint64 index        = 2;
+    uint64 commit       = 3;
+    uint64 down_seconds = 4;
+    bool snapshotting   = 5;
+}
+
 message Replica {
     uint64 range_id      = 1;
     Peer   peer          = 2;
