@@ -39,6 +39,7 @@ message ResponseHeader {
     // which can be used by the receiver to update its local HLC.
     timestamp.Timestamp now        = 4;
     errorpb.Error     error        = 5;
+    uint64 apply_index             = 6;
 }
 
 message DsKvRawGetRequest {

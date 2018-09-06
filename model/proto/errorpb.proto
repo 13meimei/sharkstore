@@ -46,9 +46,10 @@ message StaleRange {
     metapb.Range range = 1;
 }
 
-message StaleReadIndex {
-    uint64 old_index = 1;
-    uint64 new_index = 2;
+// 副本进度落后
+message LaggingReplica {
+    uint64 read_index     = 1; // 期望的进度
+    uint64 replica_index  = 2; // 副本当前实际进度
 }
 
 message ServerIsBusy {
@@ -72,5 +73,5 @@ message Error {
     Timeout             timeout                 = 9;
     RaftFail            raft_fail               = 10;
     StaleRange          stale_range             = 11;
-    StaleReadIndex      stale_read_index        = 12;
+    LaggingReplica      lagging_replica         = 12;
 }
