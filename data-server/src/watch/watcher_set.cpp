@@ -104,13 +104,14 @@ WatcherSet::WatcherSet() {
     snprintf(timer_name, 32, "watcher_timer");
     AnnotateThread(handle, timer_name);
 
-    struct sched_param my_param;
+    struct sched_param param;
 
     int policy;
-    pthread_getschedparam(watcher_timer_.native_handle(), &policy, &my_param);
-    my_param.sched_priority = 21;
+    pthread_getschedparam(watcher_timer_.native_handle(), &policy, &param);
+    param.sched_priority = ds_config.watch_config.watcher_thread_priority;
 
-    if(pthread_setschedparam(watcher_timer_.native_handle(), SCHED_RR, &my_param) != 0) {
+    FLOG_INFO("watcher_timer thread priority:%d", ds_config.watch_config.watcher_thread_priority);
+    if(pthread_setschedparam(watcher_timer_.native_handle(), SCHED_RR, &param) != 0) {
         FLOG_WARN("pthread_setschedparam failed:%s", strerror(errno));
     }
 

@@ -91,8 +91,12 @@ protected:
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
 
+        ds_config.watch_config.watcher_thread_priority = 23;
+
         sf_socket_thread_config_t config;
         sf_socket_status_t status = {0};
+
+        config.send_thread_priority = 40;
 
         socket_.Init(&config, &status);
 
