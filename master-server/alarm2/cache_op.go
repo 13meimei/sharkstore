@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
+	"strings"
 )
 
 func (s *Server) newJimClient() *redis.Pool {
@@ -43,4 +44,31 @@ func (s *Server) jimDial() (redis.Conn, error) {
 func (s *Server) jimCommand(commandName string, args ...interface{}) (interface{}, error) {
 	conn := s.jimClient.Get()
 	return conn.Do(commandName, args...)
+}
+
+func (s *Server) jimGetCommand(key string) error {
+
+	reply, err := s.jimCommand("get", key)
+	if err != nil {
+		return err
+	}
+	if _, err := redis.String(reply, err); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) jimSetexCommand(key, value string, expireTime int64) error {
+	reply, err := s.jimCommand("setex", key, expireTime, value)
+	if err != nil {
+		return err
+	}
+	replyStr, err := redis.String(reply, err)
+	if err != nil {
+		return err
+	}
+	if strings.Compare(strings.ToLower(replyStr), "ok") != 0 {
+		return err
+	}
+	return nil
 }

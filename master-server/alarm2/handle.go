@@ -24,6 +24,10 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 
 	// setex key with ttl ping_interval to jimdb
 	reply, err := s.jimCommand("setex", aliveKey, req.GetHbIntervalTime()*2, "")
+	if err != nil {
+		//log.Error("jim setex command error: %v", err)
+		return
+	}
 	replyStr, err := redis.String(reply, err)
 	if err != nil {
 		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ALARM_ERROR)
@@ -124,10 +128,20 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 	}
 
 	// visit cache
-	key, err := newCacheKey(req.GetRuleName(), header.GetAppName(), header.GetClusterId(), header.GetIpAddr())
+	ruleKey, err := newCacheKey(req.GetRuleName(), header.GetAppName(), header.GetClusterId(), header.GetIpAddr())
 	if err != nil {
-
 		// todo
+	}
+	reply, err := s.jimCommand("get", ruleKey)
+	if err != nil {
+		// todo
+	}
+	if _, err := redis.String(reply, err); err != nil {
+		// nil
+		// todo
+	} else {
+		// not nil
+
 	}
 
 	return &alarmpb2.AlarmResponse{}, nil
