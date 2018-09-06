@@ -300,9 +300,12 @@ Status Range::SubmitCmd(common::ProtoMessage *msg, const kvrpcpb::RequestHeader&
 
     auto ret = Submit(cmd);
     if (!ret.ok()) {
-        submit_queue_.Remove(cmd.cmd_id().seq());
+        auto ctx = submit_queue_.Remove(seq);
+        if (ctx) {
+            // submit失败，会发送错误，msg将由session释放
+            ctx->ClearMsg();
+        }
     }
-
     return ret;
 }
 
