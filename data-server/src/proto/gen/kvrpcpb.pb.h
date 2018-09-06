@@ -691,6 +691,12 @@ class RequestHeader : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::uint64 range_id() const;
   void set_range_id(::google::protobuf::uint64 value);
 
+  // uint64 read_index = 6;
+  void clear_read_index();
+  static const int kReadIndexFieldNumber = 6;
+  ::google::protobuf::uint64 read_index() const;
+  void set_read_index(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:kvrpcpb.RequestHeader)
  private:
 
@@ -700,6 +706,7 @@ class RequestHeader : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::uint64 cluster_id_;
   ::google::protobuf::uint64 trace_id_;
   ::google::protobuf::uint64 range_id_;
+  ::google::protobuf::uint64 read_index_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -11583,6 +11590,20 @@ inline void RequestHeader::set_allocated_range_epoch(::metapb::RangeEpoch* range
     
   }
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.RequestHeader.range_epoch)
+}
+
+// uint64 read_index = 6;
+inline void RequestHeader::clear_read_index() {
+  read_index_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 RequestHeader::read_index() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.RequestHeader.read_index)
+  return read_index_;
+}
+inline void RequestHeader::set_read_index(::google::protobuf::uint64 value) {
+  
+  read_index_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.RequestHeader.read_index)
 }
 
 // -------------------------------------------------------------------

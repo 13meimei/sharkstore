@@ -25,6 +25,7 @@ message RequestHeader {
     uint64 trace_id                = 3;
     uint64 range_id                = 4;
     metapb.RangeEpoch range_epoch  = 5;
+    uint64 read_index              = 6;
 }
 
 message ResponseHeader {

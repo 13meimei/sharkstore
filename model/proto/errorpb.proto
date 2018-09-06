@@ -46,6 +46,11 @@ message StaleRange {
     metapb.Range range = 1;
 }
 
+message StaleReadIndex {
+    uint64 old_index = 1;
+    uint64 new_index = 2;
+}
+
 message ServerIsBusy {
     string reason = 1;
 }
@@ -67,4 +72,5 @@ message Error {
     Timeout             timeout                 = 9;
     RaftFail            raft_fail               = 10;
     StaleRange          stale_range             = 11;
+    StaleReadIndex      stale_read_index        = 12;
 }

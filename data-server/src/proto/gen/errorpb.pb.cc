@@ -58,6 +58,11 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<StaleRange>
      _instance;
 } _StaleRange_default_instance_;
+class StaleReadIndexDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<StaleReadIndex>
+     _instance;
+} _StaleReadIndex_default_instance_;
 class ServerIsBusyDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<ServerIsBusy>
@@ -79,7 +84,7 @@ namespace protobuf_errorpb_2eproto {
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[11];
+::google::protobuf::Metadata file_level_metadata[12];
 
 }  // namespace
 
@@ -94,6 +99,7 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::AuxillaryParseTableField
 };
 PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
     TableStruct::schema[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
@@ -160,6 +166,13 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StaleRange, range_),
   ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StaleReadIndex, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StaleReadIndex, old_index_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StaleReadIndex, new_index_),
+  ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerIsBusy, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -188,6 +201,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, timeout_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, raft_fail_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, stale_range_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, stale_read_index_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(NotLeader)},
@@ -198,9 +212,10 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 33, -1, sizeof(RaftFail)},
   { 38, -1, sizeof(StaleEpoch)},
   { 45, -1, sizeof(StaleRange)},
-  { 51, -1, sizeof(ServerIsBusy)},
-  { 57, -1, sizeof(EntryTooLarge)},
-  { 64, -1, sizeof(Error)},
+  { 51, -1, sizeof(StaleReadIndex)},
+  { 58, -1, sizeof(ServerIsBusy)},
+  { 64, -1, sizeof(EntryTooLarge)},
+  { 71, -1, sizeof(Error)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -212,6 +227,7 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_RaftFail_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_StaleEpoch_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_StaleRange_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_StaleReadIndex_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_ServerIsBusy_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_EntryTooLarge_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_Error_default_instance_),
@@ -235,7 +251,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 11);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 12);
 }
 
 }  // namespace
@@ -260,7 +276,9 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_StaleEpoch_default_instance_);_StaleRange_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_StaleRange_default_instance_);_ServerIsBusy_default_instance_._instance.DefaultConstruct();
+      &_StaleRange_default_instance_);_StaleReadIndex_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_StaleReadIndex_default_instance_);_ServerIsBusy_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_ServerIsBusy_default_instance_);_EntryTooLarge_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -296,6 +314,8 @@ void TableStruct::InitDefaultsImpl() {
       ::errorpb::RaftFail::internal_default_instance());
   _Error_default_instance_._instance.get_mutable()->stale_range_ = const_cast< ::errorpb::StaleRange*>(
       ::errorpb::StaleRange::internal_default_instance());
+  _Error_default_instance_._instance.get_mutable()->stale_read_index_ = const_cast< ::errorpb::StaleReadIndex*>(
+      ::errorpb::StaleReadIndex::internal_default_instance());
 }
 
 void InitDefaults() {
@@ -316,24 +336,27 @@ void AddDescriptorsImpl() {
       "\"\n\n\010RaftFail\"P\n\nStaleEpoch\022 \n\told_range\030"
       "\001 \001(\0132\r.metapb.Range\022 \n\tnew_range\030\002 \001(\0132"
       "\r.metapb.Range\"*\n\nStaleRange\022\034\n\005range\030\001 "
-      "\001(\0132\r.metapb.Range\"\036\n\014ServerIsBusy\022\016\n\006re"
-      "ason\030\001 \001(\t\"5\n\rEntryTooLarge\022\020\n\010range_id\030"
-      "\001 \001(\004\022\022\n\nentry_size\030\002 \001(\004\"\316\003\n\005Error\022\017\n\007m"
-      "essage\030\001 \001(\t\022&\n\nnot_leader\030\002 \001(\0132\022.error"
-      "pb.NotLeader\022,\n\rstale_command\030\003 \001(\0132\025.er"
-      "rorpb.StaleCommand\022/\n\017range_not_found\030\004 "
-      "\001(\0132\026.errorpb.RangeNotFound\0220\n\020key_not_i"
-      "n_range\030\005 \001(\0132\026.errorpb.KeyNotInRange\022(\n"
-      "\013stale_epoch\030\006 \001(\0132\023.errorpb.StaleEpoch\022"
-      "-\n\016server_is_busy\030\007 \001(\0132\025.errorpb.Server"
-      "IsBusy\022/\n\017entry_too_large\030\010 \001(\0132\026.errorp"
-      "b.EntryTooLarge\022!\n\007timeout\030\t \001(\0132\020.error"
-      "pb.Timeout\022$\n\traft_fail\030\n \001(\0132\021.errorpb."
-      "RaftFail\022(\n\013stale_range\030\013 \001(\0132\023.errorpb."
-      "StaleRangeb\006proto3"
+      "\001(\0132\r.metapb.Range\"6\n\016StaleReadIndex\022\021\n\t"
+      "old_index\030\001 \001(\004\022\021\n\tnew_index\030\002 \001(\004\"\036\n\014Se"
+      "rverIsBusy\022\016\n\006reason\030\001 \001(\t\"5\n\rEntryTooLa"
+      "rge\022\020\n\010range_id\030\001 \001(\004\022\022\n\nentry_size\030\002 \001("
+      "\004\"\201\004\n\005Error\022\017\n\007message\030\001 \001(\t\022&\n\nnot_lead"
+      "er\030\002 \001(\0132\022.errorpb.NotLeader\022,\n\rstale_co"
+      "mmand\030\003 \001(\0132\025.errorpb.StaleCommand\022/\n\017ra"
+      "nge_not_found\030\004 \001(\0132\026.errorpb.RangeNotFo"
+      "und\0220\n\020key_not_in_range\030\005 \001(\0132\026.errorpb."
+      "KeyNotInRange\022(\n\013stale_epoch\030\006 \001(\0132\023.err"
+      "orpb.StaleEpoch\022-\n\016server_is_busy\030\007 \001(\0132"
+      "\025.errorpb.ServerIsBusy\022/\n\017entry_too_larg"
+      "e\030\010 \001(\0132\026.errorpb.EntryTooLarge\022!\n\007timeo"
+      "ut\030\t \001(\0132\020.errorpb.Timeout\022$\n\traft_fail\030"
+      "\n \001(\0132\021.errorpb.RaftFail\022(\n\013stale_range\030"
+      "\013 \001(\0132\023.errorpb.StaleRange\0221\n\020stale_read"
+      "_index\030\014 \001(\0132\027.errorpb.StaleReadIndexb\006p"
+      "roto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 978);
+      descriptor, 1085);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "errorpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -2844,6 +2867,316 @@ void StaleRange::set_allocated_range(::metapb::Range* range) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int StaleReadIndex::kOldIndexFieldNumber;
+const int StaleReadIndex::kNewIndexFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+StaleReadIndex::StaleReadIndex()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_errorpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:errorpb.StaleReadIndex)
+}
+StaleReadIndex::StaleReadIndex(const StaleReadIndex& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::memcpy(&old_index_, &from.old_index_,
+    static_cast<size_t>(reinterpret_cast<char*>(&new_index_) -
+    reinterpret_cast<char*>(&old_index_)) + sizeof(new_index_));
+  // @@protoc_insertion_point(copy_constructor:errorpb.StaleReadIndex)
+}
+
+void StaleReadIndex::SharedCtor() {
+  ::memset(&old_index_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&new_index_) -
+      reinterpret_cast<char*>(&old_index_)) + sizeof(new_index_));
+  _cached_size_ = 0;
+}
+
+StaleReadIndex::~StaleReadIndex() {
+  // @@protoc_insertion_point(destructor:errorpb.StaleReadIndex)
+  SharedDtor();
+}
+
+void StaleReadIndex::SharedDtor() {
+}
+
+void StaleReadIndex::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* StaleReadIndex::descriptor() {
+  protobuf_errorpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_errorpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const StaleReadIndex& StaleReadIndex::default_instance() {
+  protobuf_errorpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+StaleReadIndex* StaleReadIndex::New(::google::protobuf::Arena* arena) const {
+  StaleReadIndex* n = new StaleReadIndex;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void StaleReadIndex::Clear() {
+// @@protoc_insertion_point(message_clear_start:errorpb.StaleReadIndex)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&old_index_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&new_index_) -
+      reinterpret_cast<char*>(&old_index_)) + sizeof(new_index_));
+  _internal_metadata_.Clear();
+}
+
+bool StaleReadIndex::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:errorpb.StaleReadIndex)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // uint64 old_index = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &old_index_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 new_index = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &new_index_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:errorpb.StaleReadIndex)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:errorpb.StaleReadIndex)
+  return false;
+#undef DO_
+}
+
+void StaleReadIndex::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:errorpb.StaleReadIndex)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint64 old_index = 1;
+  if (this->old_index() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->old_index(), output);
+  }
+
+  // uint64 new_index = 2;
+  if (this->new_index() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(2, this->new_index(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:errorpb.StaleReadIndex)
+}
+
+::google::protobuf::uint8* StaleReadIndex::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:errorpb.StaleReadIndex)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint64 old_index = 1;
+  if (this->old_index() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->old_index(), target);
+  }
+
+  // uint64 new_index = 2;
+  if (this->new_index() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(2, this->new_index(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:errorpb.StaleReadIndex)
+  return target;
+}
+
+size_t StaleReadIndex::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:errorpb.StaleReadIndex)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // uint64 old_index = 1;
+  if (this->old_index() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->old_index());
+  }
+
+  // uint64 new_index = 2;
+  if (this->new_index() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->new_index());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void StaleReadIndex::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:errorpb.StaleReadIndex)
+  GOOGLE_DCHECK_NE(&from, this);
+  const StaleReadIndex* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const StaleReadIndex>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:errorpb.StaleReadIndex)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:errorpb.StaleReadIndex)
+    MergeFrom(*source);
+  }
+}
+
+void StaleReadIndex::MergeFrom(const StaleReadIndex& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:errorpb.StaleReadIndex)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.old_index() != 0) {
+    set_old_index(from.old_index());
+  }
+  if (from.new_index() != 0) {
+    set_new_index(from.new_index());
+  }
+}
+
+void StaleReadIndex::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:errorpb.StaleReadIndex)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void StaleReadIndex::CopyFrom(const StaleReadIndex& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:errorpb.StaleReadIndex)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool StaleReadIndex::IsInitialized() const {
+  return true;
+}
+
+void StaleReadIndex::Swap(StaleReadIndex* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void StaleReadIndex::InternalSwap(StaleReadIndex* other) {
+  using std::swap;
+  swap(old_index_, other->old_index_);
+  swap(new_index_, other->new_index_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata StaleReadIndex::GetMetadata() const {
+  protobuf_errorpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_errorpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// StaleReadIndex
+
+// uint64 old_index = 1;
+void StaleReadIndex::clear_old_index() {
+  old_index_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 StaleReadIndex::old_index() const {
+  // @@protoc_insertion_point(field_get:errorpb.StaleReadIndex.old_index)
+  return old_index_;
+}
+void StaleReadIndex::set_old_index(::google::protobuf::uint64 value) {
+  
+  old_index_ = value;
+  // @@protoc_insertion_point(field_set:errorpb.StaleReadIndex.old_index)
+}
+
+// uint64 new_index = 2;
+void StaleReadIndex::clear_new_index() {
+  new_index_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 StaleReadIndex::new_index() const {
+  // @@protoc_insertion_point(field_get:errorpb.StaleReadIndex.new_index)
+  return new_index_;
+}
+void StaleReadIndex::set_new_index(::google::protobuf::uint64 value) {
+  
+  new_index_ = value;
+  // @@protoc_insertion_point(field_set:errorpb.StaleReadIndex.new_index)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int ServerIsBusy::kReasonFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -3476,6 +3809,7 @@ const int Error::kEntryTooLargeFieldNumber;
 const int Error::kTimeoutFieldNumber;
 const int Error::kRaftFailFieldNumber;
 const int Error::kStaleRangeFieldNumber;
+const int Error::kStaleReadIndexFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Error::Error()
@@ -3545,14 +3879,19 @@ Error::Error(const Error& from)
   } else {
     stale_range_ = NULL;
   }
+  if (from.has_stale_read_index()) {
+    stale_read_index_ = new ::errorpb::StaleReadIndex(*from.stale_read_index_);
+  } else {
+    stale_read_index_ = NULL;
+  }
   // @@protoc_insertion_point(copy_constructor:errorpb.Error)
 }
 
 void Error::SharedCtor() {
   message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&not_leader_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&stale_range_) -
-      reinterpret_cast<char*>(&not_leader_)) + sizeof(stale_range_));
+      reinterpret_cast<char*>(&stale_read_index_) -
+      reinterpret_cast<char*>(&not_leader_)) + sizeof(stale_read_index_));
   _cached_size_ = 0;
 }
 
@@ -3573,6 +3912,7 @@ void Error::SharedDtor() {
   if (this != internal_default_instance()) delete timeout_;
   if (this != internal_default_instance()) delete raft_fail_;
   if (this != internal_default_instance()) delete stale_range_;
+  if (this != internal_default_instance()) delete stale_read_index_;
 }
 
 void Error::SetCachedSize(int size) const {
@@ -3645,6 +3985,10 @@ void Error::Clear() {
     delete stale_range_;
   }
   stale_range_ = NULL;
+  if (GetArenaNoVirtual() == NULL && stale_read_index_ != NULL) {
+    delete stale_read_index_;
+  }
+  stale_read_index_ = NULL;
   _internal_metadata_.Clear();
 }
 
@@ -3794,6 +4138,18 @@ bool Error::MergePartialFromCodedStream(
         break;
       }
 
+      // .errorpb.StaleReadIndex stale_read_index = 12;
+      case 12: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(98u /* 98 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_stale_read_index()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -3888,6 +4244,12 @@ void Error::SerializeWithCachedSizes(
   if (this->has_stale_range()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       11, *this->stale_range_, output);
+  }
+
+  // .errorpb.StaleReadIndex stale_read_index = 12;
+  if (this->has_stale_read_index()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      12, *this->stale_read_index_, output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -3985,6 +4347,13 @@ void Error::SerializeWithCachedSizes(
         11, *this->stale_range_, deterministic, target);
   }
 
+  // .errorpb.StaleReadIndex stale_read_index = 12;
+  if (this->has_stale_read_index()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        12, *this->stale_read_index_, deterministic, target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -4079,6 +4448,13 @@ size_t Error::ByteSizeLong() const {
         *this->stale_range_);
   }
 
+  // .errorpb.StaleReadIndex stale_read_index = 12;
+  if (this->has_stale_read_index()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->stale_read_index_);
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -4142,6 +4518,9 @@ void Error::MergeFrom(const Error& from) {
   if (from.has_stale_range()) {
     mutable_stale_range()->::errorpb::StaleRange::MergeFrom(from.stale_range());
   }
+  if (from.has_stale_read_index()) {
+    mutable_stale_read_index()->::errorpb::StaleReadIndex::MergeFrom(from.stale_read_index());
+  }
 }
 
 void Error::CopyFrom(const ::google::protobuf::Message& from) {
@@ -4179,6 +4558,7 @@ void Error::InternalSwap(Error* other) {
   swap(timeout_, other->timeout_);
   swap(raft_fail_, other->raft_fail_);
   swap(stale_range_, other->stale_range_);
+  swap(stale_read_index_, other->stale_read_index_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -4642,6 +5022,46 @@ void Error::set_allocated_stale_range(::errorpb::StaleRange* stale_range) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:errorpb.Error.stale_range)
+}
+
+// .errorpb.StaleReadIndex stale_read_index = 12;
+bool Error::has_stale_read_index() const {
+  return this != internal_default_instance() && stale_read_index_ != NULL;
+}
+void Error::clear_stale_read_index() {
+  if (GetArenaNoVirtual() == NULL && stale_read_index_ != NULL) delete stale_read_index_;
+  stale_read_index_ = NULL;
+}
+const ::errorpb::StaleReadIndex& Error::stale_read_index() const {
+  const ::errorpb::StaleReadIndex* p = stale_read_index_;
+  // @@protoc_insertion_point(field_get:errorpb.Error.stale_read_index)
+  return p != NULL ? *p : *reinterpret_cast<const ::errorpb::StaleReadIndex*>(
+      &::errorpb::_StaleReadIndex_default_instance_);
+}
+::errorpb::StaleReadIndex* Error::mutable_stale_read_index() {
+  
+  if (stale_read_index_ == NULL) {
+    stale_read_index_ = new ::errorpb::StaleReadIndex;
+  }
+  // @@protoc_insertion_point(field_mutable:errorpb.Error.stale_read_index)
+  return stale_read_index_;
+}
+::errorpb::StaleReadIndex* Error::release_stale_read_index() {
+  // @@protoc_insertion_point(field_release:errorpb.Error.stale_read_index)
+  
+  ::errorpb::StaleReadIndex* temp = stale_read_index_;
+  stale_read_index_ = NULL;
+  return temp;
+}
+void Error::set_allocated_stale_read_index(::errorpb::StaleReadIndex* stale_read_index) {
+  delete stale_read_index_;
+  stale_read_index_ = stale_read_index;
+  if (stale_read_index) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:errorpb.Error.stale_read_index)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
