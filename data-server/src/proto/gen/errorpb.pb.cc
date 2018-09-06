@@ -58,11 +58,11 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<StaleRange>
      _instance;
 } _StaleRange_default_instance_;
-class LaggingReplicaDefaultTypeInternal {
+class StaleReadIndexDefaultTypeInternal {
 public:
- ::google::protobuf::internal::ExplicitlyConstructed<LaggingReplica>
+ ::google::protobuf::internal::ExplicitlyConstructed<StaleReadIndex>
      _instance;
-} _LaggingReplica_default_instance_;
+} _StaleReadIndex_default_instance_;
 class ServerIsBusyDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<ServerIsBusy>
@@ -166,12 +166,12 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StaleRange, range_),
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LaggingReplica, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StaleReadIndex, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LaggingReplica, read_index_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(LaggingReplica, replica_index_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StaleReadIndex, read_index_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StaleReadIndex, replica_index_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerIsBusy, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -201,7 +201,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, timeout_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, raft_fail_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, stale_range_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, lagging_replica_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, stale_read_index_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(NotLeader)},
@@ -212,7 +212,7 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 33, -1, sizeof(RaftFail)},
   { 38, -1, sizeof(StaleEpoch)},
   { 45, -1, sizeof(StaleRange)},
-  { 51, -1, sizeof(LaggingReplica)},
+  { 51, -1, sizeof(StaleReadIndex)},
   { 58, -1, sizeof(ServerIsBusy)},
   { 64, -1, sizeof(EntryTooLarge)},
   { 71, -1, sizeof(Error)},
@@ -227,7 +227,7 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_RaftFail_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_StaleEpoch_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_StaleRange_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&_LaggingReplica_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_StaleReadIndex_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_ServerIsBusy_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_EntryTooLarge_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_Error_default_instance_),
@@ -276,9 +276,9 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_StaleEpoch_default_instance_);_StaleRange_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_StaleRange_default_instance_);_LaggingReplica_default_instance_._instance.DefaultConstruct();
+      &_StaleRange_default_instance_);_StaleReadIndex_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_LaggingReplica_default_instance_);_ServerIsBusy_default_instance_._instance.DefaultConstruct();
+      &_StaleReadIndex_default_instance_);_ServerIsBusy_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_ServerIsBusy_default_instance_);_EntryTooLarge_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -314,8 +314,8 @@ void TableStruct::InitDefaultsImpl() {
       ::errorpb::RaftFail::internal_default_instance());
   _Error_default_instance_._instance.get_mutable()->stale_range_ = const_cast< ::errorpb::StaleRange*>(
       ::errorpb::StaleRange::internal_default_instance());
-  _Error_default_instance_._instance.get_mutable()->lagging_replica_ = const_cast< ::errorpb::LaggingReplica*>(
-      ::errorpb::LaggingReplica::internal_default_instance());
+  _Error_default_instance_._instance.get_mutable()->stale_read_index_ = const_cast< ::errorpb::StaleReadIndex*>(
+      ::errorpb::StaleReadIndex::internal_default_instance());
 }
 
 void InitDefaults() {
@@ -336,11 +336,11 @@ void AddDescriptorsImpl() {
       "\"\n\n\010RaftFail\"P\n\nStaleEpoch\022 \n\told_range\030"
       "\001 \001(\0132\r.metapb.Range\022 \n\tnew_range\030\002 \001(\0132"
       "\r.metapb.Range\"*\n\nStaleRange\022\034\n\005range\030\001 "
-      "\001(\0132\r.metapb.Range\";\n\016LaggingReplica\022\022\n\n"
+      "\001(\0132\r.metapb.Range\";\n\016StaleReadIndex\022\022\n\n"
       "read_index\030\001 \001(\004\022\025\n\rreplica_index\030\002 \001(\004\""
       "\036\n\014ServerIsBusy\022\016\n\006reason\030\001 \001(\t\"5\n\rEntry"
       "TooLarge\022\020\n\010range_id\030\001 \001(\004\022\022\n\nentry_size"
-      "\030\002 \001(\004\"\200\004\n\005Error\022\017\n\007message\030\001 \001(\t\022&\n\nnot"
+      "\030\002 \001(\004\"\201\004\n\005Error\022\017\n\007message\030\001 \001(\t\022&\n\nnot"
       "_leader\030\002 \001(\0132\022.errorpb.NotLeader\022,\n\rsta"
       "le_command\030\003 \001(\0132\025.errorpb.StaleCommand\022"
       "/\n\017range_not_found\030\004 \001(\0132\026.errorpb.Range"
@@ -351,12 +351,12 @@ void AddDescriptorsImpl() {
       "_large\030\010 \001(\0132\026.errorpb.EntryTooLarge\022!\n\007"
       "timeout\030\t \001(\0132\020.errorpb.Timeout\022$\n\traft_"
       "fail\030\n \001(\0132\021.errorpb.RaftFail\022(\n\013stale_r"
-      "ange\030\013 \001(\0132\023.errorpb.StaleRange\0220\n\017laggi"
-      "ng_replica\030\014 \001(\0132\027.errorpb.LaggingReplic"
-      "ab\006proto3"
+      "ange\030\013 \001(\0132\023.errorpb.StaleRange\0221\n\020stale"
+      "_read_index\030\014 \001(\0132\027.errorpb.StaleReadInd"
+      "exb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1089);
+      descriptor, 1090);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "errorpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -2867,19 +2867,19 @@ void StaleRange::set_allocated_range(::metapb::Range* range) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int LaggingReplica::kReadIndexFieldNumber;
-const int LaggingReplica::kReplicaIndexFieldNumber;
+const int StaleReadIndex::kReadIndexFieldNumber;
+const int StaleReadIndex::kReplicaIndexFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-LaggingReplica::LaggingReplica()
+StaleReadIndex::StaleReadIndex()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
     protobuf_errorpb_2eproto::InitDefaults();
   }
   SharedCtor();
-  // @@protoc_insertion_point(constructor:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(constructor:errorpb.StaleReadIndex)
 }
-LaggingReplica::LaggingReplica(const LaggingReplica& from)
+StaleReadIndex::StaleReadIndex(const StaleReadIndex& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
       _cached_size_(0) {
@@ -2887,49 +2887,49 @@ LaggingReplica::LaggingReplica(const LaggingReplica& from)
   ::memcpy(&read_index_, &from.read_index_,
     static_cast<size_t>(reinterpret_cast<char*>(&replica_index_) -
     reinterpret_cast<char*>(&read_index_)) + sizeof(replica_index_));
-  // @@protoc_insertion_point(copy_constructor:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(copy_constructor:errorpb.StaleReadIndex)
 }
 
-void LaggingReplica::SharedCtor() {
+void StaleReadIndex::SharedCtor() {
   ::memset(&read_index_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&replica_index_) -
       reinterpret_cast<char*>(&read_index_)) + sizeof(replica_index_));
   _cached_size_ = 0;
 }
 
-LaggingReplica::~LaggingReplica() {
-  // @@protoc_insertion_point(destructor:errorpb.LaggingReplica)
+StaleReadIndex::~StaleReadIndex() {
+  // @@protoc_insertion_point(destructor:errorpb.StaleReadIndex)
   SharedDtor();
 }
 
-void LaggingReplica::SharedDtor() {
+void StaleReadIndex::SharedDtor() {
 }
 
-void LaggingReplica::SetCachedSize(int size) const {
+void StaleReadIndex::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* LaggingReplica::descriptor() {
+const ::google::protobuf::Descriptor* StaleReadIndex::descriptor() {
   protobuf_errorpb_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_errorpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
 }
 
-const LaggingReplica& LaggingReplica::default_instance() {
+const StaleReadIndex& StaleReadIndex::default_instance() {
   protobuf_errorpb_2eproto::InitDefaults();
   return *internal_default_instance();
 }
 
-LaggingReplica* LaggingReplica::New(::google::protobuf::Arena* arena) const {
-  LaggingReplica* n = new LaggingReplica;
+StaleReadIndex* StaleReadIndex::New(::google::protobuf::Arena* arena) const {
+  StaleReadIndex* n = new StaleReadIndex;
   if (arena != NULL) {
     arena->Own(n);
   }
   return n;
 }
 
-void LaggingReplica::Clear() {
-// @@protoc_insertion_point(message_clear_start:errorpb.LaggingReplica)
+void StaleReadIndex::Clear() {
+// @@protoc_insertion_point(message_clear_start:errorpb.StaleReadIndex)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -2940,11 +2940,11 @@ void LaggingReplica::Clear() {
   _internal_metadata_.Clear();
 }
 
-bool LaggingReplica::MergePartialFromCodedStream(
+bool StaleReadIndex::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(parse_start:errorpb.StaleReadIndex)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -2990,17 +2990,17 @@ bool LaggingReplica::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(parse_success:errorpb.StaleReadIndex)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(parse_failure:errorpb.StaleReadIndex)
   return false;
 #undef DO_
 }
 
-void LaggingReplica::SerializeWithCachedSizes(
+void StaleReadIndex::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(serialize_start:errorpb.StaleReadIndex)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -3018,13 +3018,13 @@ void LaggingReplica::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(serialize_end:errorpb.StaleReadIndex)
 }
 
-::google::protobuf::uint8* LaggingReplica::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* StaleReadIndex::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(serialize_to_array_start:errorpb.StaleReadIndex)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -3042,12 +3042,12 @@ void LaggingReplica::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(serialize_to_array_end:errorpb.StaleReadIndex)
   return target;
 }
 
-size_t LaggingReplica::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:errorpb.LaggingReplica)
+size_t StaleReadIndex::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:errorpb.StaleReadIndex)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -3076,23 +3076,23 @@ size_t LaggingReplica::ByteSizeLong() const {
   return total_size;
 }
 
-void LaggingReplica::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:errorpb.LaggingReplica)
+void StaleReadIndex::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:errorpb.StaleReadIndex)
   GOOGLE_DCHECK_NE(&from, this);
-  const LaggingReplica* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const LaggingReplica>(
+  const StaleReadIndex* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const StaleReadIndex>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:errorpb.StaleReadIndex)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:errorpb.LaggingReplica)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:errorpb.StaleReadIndex)
     MergeFrom(*source);
   }
 }
 
-void LaggingReplica::MergeFrom(const LaggingReplica& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:errorpb.LaggingReplica)
+void StaleReadIndex::MergeFrom(const StaleReadIndex& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:errorpb.StaleReadIndex)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -3106,29 +3106,29 @@ void LaggingReplica::MergeFrom(const LaggingReplica& from) {
   }
 }
 
-void LaggingReplica::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:errorpb.LaggingReplica)
+void StaleReadIndex::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:errorpb.StaleReadIndex)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void LaggingReplica::CopyFrom(const LaggingReplica& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:errorpb.LaggingReplica)
+void StaleReadIndex::CopyFrom(const StaleReadIndex& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:errorpb.StaleReadIndex)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool LaggingReplica::IsInitialized() const {
+bool StaleReadIndex::IsInitialized() const {
   return true;
 }
 
-void LaggingReplica::Swap(LaggingReplica* other) {
+void StaleReadIndex::Swap(StaleReadIndex* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void LaggingReplica::InternalSwap(LaggingReplica* other) {
+void StaleReadIndex::InternalSwap(StaleReadIndex* other) {
   using std::swap;
   swap(read_index_, other->read_index_);
   swap(replica_index_, other->replica_index_);
@@ -3136,40 +3136,40 @@ void LaggingReplica::InternalSwap(LaggingReplica* other) {
   swap(_cached_size_, other->_cached_size_);
 }
 
-::google::protobuf::Metadata LaggingReplica::GetMetadata() const {
+::google::protobuf::Metadata StaleReadIndex::GetMetadata() const {
   protobuf_errorpb_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_errorpb_2eproto::file_level_metadata[kIndexInFileMessages];
 }
 
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
-// LaggingReplica
+// StaleReadIndex
 
 // uint64 read_index = 1;
-void LaggingReplica::clear_read_index() {
+void StaleReadIndex::clear_read_index() {
   read_index_ = GOOGLE_ULONGLONG(0);
 }
-::google::protobuf::uint64 LaggingReplica::read_index() const {
-  // @@protoc_insertion_point(field_get:errorpb.LaggingReplica.read_index)
+::google::protobuf::uint64 StaleReadIndex::read_index() const {
+  // @@protoc_insertion_point(field_get:errorpb.StaleReadIndex.read_index)
   return read_index_;
 }
-void LaggingReplica::set_read_index(::google::protobuf::uint64 value) {
+void StaleReadIndex::set_read_index(::google::protobuf::uint64 value) {
   
   read_index_ = value;
-  // @@protoc_insertion_point(field_set:errorpb.LaggingReplica.read_index)
+  // @@protoc_insertion_point(field_set:errorpb.StaleReadIndex.read_index)
 }
 
 // uint64 replica_index = 2;
-void LaggingReplica::clear_replica_index() {
+void StaleReadIndex::clear_replica_index() {
   replica_index_ = GOOGLE_ULONGLONG(0);
 }
-::google::protobuf::uint64 LaggingReplica::replica_index() const {
-  // @@protoc_insertion_point(field_get:errorpb.LaggingReplica.replica_index)
+::google::protobuf::uint64 StaleReadIndex::replica_index() const {
+  // @@protoc_insertion_point(field_get:errorpb.StaleReadIndex.replica_index)
   return replica_index_;
 }
-void LaggingReplica::set_replica_index(::google::protobuf::uint64 value) {
+void StaleReadIndex::set_replica_index(::google::protobuf::uint64 value) {
   
   replica_index_ = value;
-  // @@protoc_insertion_point(field_set:errorpb.LaggingReplica.replica_index)
+  // @@protoc_insertion_point(field_set:errorpb.StaleReadIndex.replica_index)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -3809,7 +3809,7 @@ const int Error::kEntryTooLargeFieldNumber;
 const int Error::kTimeoutFieldNumber;
 const int Error::kRaftFailFieldNumber;
 const int Error::kStaleRangeFieldNumber;
-const int Error::kLaggingReplicaFieldNumber;
+const int Error::kStaleReadIndexFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Error::Error()
@@ -3879,10 +3879,10 @@ Error::Error(const Error& from)
   } else {
     stale_range_ = NULL;
   }
-  if (from.has_lagging_replica()) {
-    lagging_replica_ = new ::errorpb::LaggingReplica(*from.lagging_replica_);
+  if (from.has_stale_read_index()) {
+    stale_read_index_ = new ::errorpb::StaleReadIndex(*from.stale_read_index_);
   } else {
-    lagging_replica_ = NULL;
+    stale_read_index_ = NULL;
   }
   // @@protoc_insertion_point(copy_constructor:errorpb.Error)
 }
@@ -3890,8 +3890,8 @@ Error::Error(const Error& from)
 void Error::SharedCtor() {
   message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&not_leader_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&lagging_replica_) -
-      reinterpret_cast<char*>(&not_leader_)) + sizeof(lagging_replica_));
+      reinterpret_cast<char*>(&stale_read_index_) -
+      reinterpret_cast<char*>(&not_leader_)) + sizeof(stale_read_index_));
   _cached_size_ = 0;
 }
 
@@ -3912,7 +3912,7 @@ void Error::SharedDtor() {
   if (this != internal_default_instance()) delete timeout_;
   if (this != internal_default_instance()) delete raft_fail_;
   if (this != internal_default_instance()) delete stale_range_;
-  if (this != internal_default_instance()) delete lagging_replica_;
+  if (this != internal_default_instance()) delete stale_read_index_;
 }
 
 void Error::SetCachedSize(int size) const {
@@ -3985,10 +3985,10 @@ void Error::Clear() {
     delete stale_range_;
   }
   stale_range_ = NULL;
-  if (GetArenaNoVirtual() == NULL && lagging_replica_ != NULL) {
-    delete lagging_replica_;
+  if (GetArenaNoVirtual() == NULL && stale_read_index_ != NULL) {
+    delete stale_read_index_;
   }
-  lagging_replica_ = NULL;
+  stale_read_index_ = NULL;
   _internal_metadata_.Clear();
 }
 
@@ -4138,12 +4138,12 @@ bool Error::MergePartialFromCodedStream(
         break;
       }
 
-      // .errorpb.LaggingReplica lagging_replica = 12;
+      // .errorpb.StaleReadIndex stale_read_index = 12;
       case 12: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(98u /* 98 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-               input, mutable_lagging_replica()));
+               input, mutable_stale_read_index()));
         } else {
           goto handle_unusual;
         }
@@ -4246,10 +4246,10 @@ void Error::SerializeWithCachedSizes(
       11, *this->stale_range_, output);
   }
 
-  // .errorpb.LaggingReplica lagging_replica = 12;
-  if (this->has_lagging_replica()) {
+  // .errorpb.StaleReadIndex stale_read_index = 12;
+  if (this->has_stale_read_index()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      12, *this->lagging_replica_, output);
+      12, *this->stale_read_index_, output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4347,11 +4347,11 @@ void Error::SerializeWithCachedSizes(
         11, *this->stale_range_, deterministic, target);
   }
 
-  // .errorpb.LaggingReplica lagging_replica = 12;
-  if (this->has_lagging_replica()) {
+  // .errorpb.StaleReadIndex stale_read_index = 12;
+  if (this->has_stale_read_index()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        12, *this->lagging_replica_, deterministic, target);
+        12, *this->stale_read_index_, deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4448,11 +4448,11 @@ size_t Error::ByteSizeLong() const {
         *this->stale_range_);
   }
 
-  // .errorpb.LaggingReplica lagging_replica = 12;
-  if (this->has_lagging_replica()) {
+  // .errorpb.StaleReadIndex stale_read_index = 12;
+  if (this->has_stale_read_index()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        *this->lagging_replica_);
+        *this->stale_read_index_);
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -4518,8 +4518,8 @@ void Error::MergeFrom(const Error& from) {
   if (from.has_stale_range()) {
     mutable_stale_range()->::errorpb::StaleRange::MergeFrom(from.stale_range());
   }
-  if (from.has_lagging_replica()) {
-    mutable_lagging_replica()->::errorpb::LaggingReplica::MergeFrom(from.lagging_replica());
+  if (from.has_stale_read_index()) {
+    mutable_stale_read_index()->::errorpb::StaleReadIndex::MergeFrom(from.stale_read_index());
   }
 }
 
@@ -4558,7 +4558,7 @@ void Error::InternalSwap(Error* other) {
   swap(timeout_, other->timeout_);
   swap(raft_fail_, other->raft_fail_);
   swap(stale_range_, other->stale_range_);
-  swap(lagging_replica_, other->lagging_replica_);
+  swap(stale_read_index_, other->stale_read_index_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -5024,44 +5024,44 @@ void Error::set_allocated_stale_range(::errorpb::StaleRange* stale_range) {
   // @@protoc_insertion_point(field_set_allocated:errorpb.Error.stale_range)
 }
 
-// .errorpb.LaggingReplica lagging_replica = 12;
-bool Error::has_lagging_replica() const {
-  return this != internal_default_instance() && lagging_replica_ != NULL;
+// .errorpb.StaleReadIndex stale_read_index = 12;
+bool Error::has_stale_read_index() const {
+  return this != internal_default_instance() && stale_read_index_ != NULL;
 }
-void Error::clear_lagging_replica() {
-  if (GetArenaNoVirtual() == NULL && lagging_replica_ != NULL) delete lagging_replica_;
-  lagging_replica_ = NULL;
+void Error::clear_stale_read_index() {
+  if (GetArenaNoVirtual() == NULL && stale_read_index_ != NULL) delete stale_read_index_;
+  stale_read_index_ = NULL;
 }
-const ::errorpb::LaggingReplica& Error::lagging_replica() const {
-  const ::errorpb::LaggingReplica* p = lagging_replica_;
-  // @@protoc_insertion_point(field_get:errorpb.Error.lagging_replica)
-  return p != NULL ? *p : *reinterpret_cast<const ::errorpb::LaggingReplica*>(
-      &::errorpb::_LaggingReplica_default_instance_);
+const ::errorpb::StaleReadIndex& Error::stale_read_index() const {
+  const ::errorpb::StaleReadIndex* p = stale_read_index_;
+  // @@protoc_insertion_point(field_get:errorpb.Error.stale_read_index)
+  return p != NULL ? *p : *reinterpret_cast<const ::errorpb::StaleReadIndex*>(
+      &::errorpb::_StaleReadIndex_default_instance_);
 }
-::errorpb::LaggingReplica* Error::mutable_lagging_replica() {
+::errorpb::StaleReadIndex* Error::mutable_stale_read_index() {
   
-  if (lagging_replica_ == NULL) {
-    lagging_replica_ = new ::errorpb::LaggingReplica;
+  if (stale_read_index_ == NULL) {
+    stale_read_index_ = new ::errorpb::StaleReadIndex;
   }
-  // @@protoc_insertion_point(field_mutable:errorpb.Error.lagging_replica)
-  return lagging_replica_;
+  // @@protoc_insertion_point(field_mutable:errorpb.Error.stale_read_index)
+  return stale_read_index_;
 }
-::errorpb::LaggingReplica* Error::release_lagging_replica() {
-  // @@protoc_insertion_point(field_release:errorpb.Error.lagging_replica)
+::errorpb::StaleReadIndex* Error::release_stale_read_index() {
+  // @@protoc_insertion_point(field_release:errorpb.Error.stale_read_index)
   
-  ::errorpb::LaggingReplica* temp = lagging_replica_;
-  lagging_replica_ = NULL;
+  ::errorpb::StaleReadIndex* temp = stale_read_index_;
+  stale_read_index_ = NULL;
   return temp;
 }
-void Error::set_allocated_lagging_replica(::errorpb::LaggingReplica* lagging_replica) {
-  delete lagging_replica_;
-  lagging_replica_ = lagging_replica;
-  if (lagging_replica) {
+void Error::set_allocated_stale_read_index(::errorpb::StaleReadIndex* stale_read_index) {
+  delete stale_read_index_;
+  stale_read_index_ = stale_read_index;
+  if (stale_read_index) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:errorpb.Error.lagging_replica)
+  // @@protoc_insertion_point(field_set_allocated:errorpb.Error.stale_read_index)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
