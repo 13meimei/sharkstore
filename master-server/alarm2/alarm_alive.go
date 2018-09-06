@@ -2,56 +2,15 @@ package alarm2
 
 import (
 	"fmt"
-	"strings"
-	"strconv"
-	"errors"
 	"time"
 	"context"
+
+	"github.com/gomodule/redigo/redis"
+
+	"util/log"
+	"model/pkg/alarmpb2"
 )
 
-type aliveKey string
-
-const (
-	ALIVEKEY_GATEWAY 		= "gateway"
-	ALIVEKEY_MASTER 		= "master"
-	ALIVEKEY_METRIC 		= "metric"
-	ALIVEKEY_JOIN_LETTER 	= "_"
-)
-
-func (key aliveKey) splitAliveKey() (appName string, clusterId int64, appAddr string, err error) {
-	strs := strings.Split(string(key), ALIVEKEY_JOIN_LETTER)
-	appName = strs[1]
-	clusterIdStr := strs[2]
-	appAddr = strs[3]
-
-	clusterId, err = strconv.ParseInt(clusterIdStr, 10, 64)
-	return
-}
-
-// eg. alive_gateway_1_127.0.0.1:8080
-func newAliveKey(appName string, clusterId int64, appAddr string) (key aliveKey, err error) {
-	name := strings.ToLower(appName)
-	switch {
-	case strings.HasPrefix(name, ALIVEKEY_GATEWAY):
-		key = aliveKey(fmt.Sprintf("alive%s%v%s%v%s%v",
-			ALIVEKEY_JOIN_LETTER, ALIVEKEY_GATEWAY,
-			ALIVEKEY_JOIN_LETTER, clusterId,
-			ALIVEKEY_JOIN_LETTER, appAddr))
-	case strings.HasPrefix(name, ALIVEKEY_MASTER):
-		key = aliveKey(fmt.Sprintf("alive%s%v%s%v%s%v",
-			ALIVEKEY_JOIN_LETTER, ALIVEKEY_MASTER,
-			ALIVEKEY_JOIN_LETTER, clusterId,
-			ALIVEKEY_JOIN_LETTER, appAddr))
-	case strings.HasPrefix(name, ALIVEKEY_METRIC):
-		key = aliveKey(fmt.Sprintf("alive%s%v%s%v%s%v",
-			ALIVEKEY_JOIN_LETTER, ALIVEKEY_METRIC,
-			ALIVEKEY_JOIN_LETTER, clusterId,
-			ALIVEKEY_JOIN_LETTER, appAddr))
-	default:
-		err = errors.New("unknown appname prefix")
-	}
-	return
-}
 
 func (s *Server) aliveChecking() {
 	ctx, cancel := context.WithCancel(s.context)
@@ -61,7 +20,50 @@ func (s *Server) aliveChecking() {
 	for {
 		select {
 		case <-t.C:
-			// todo
+			var apps []TableApp
+			for clusterId, clusterApps := range s.getMapApp() {
+				for ipAddr, app := range clusterApps {
+					key, err := newCacheKey(ALARMRULE_APP_NOTALIVE, app.processName, app.clusterId, app.ipAddr)
+					if err != nil {
+						log.Error("new alive key faileld: process name[%v] cluster id[%v] ip addr[%v]: %v",
+							app.processName, app.clusterId, app.ipAddr, err)
+						continue
+					}
+
+					reply, err := s.jimCommand("exists", key)
+					if err != nil {
+						log.Error("jim exists command error: %v", err)
+						continue
+					}
+					replyInt, err := redis.Int(reply, err)
+					if err != nil {
+						log.Error("jim command exists reply type is not int: %v", err)
+						continue
+					}
+
+					if replyInt != 0 { // key exists
+						log.Info("alive key exists: %v", key)
+						continue
+					}
+
+					log.Warn("app not alive: cluster id[%v] ip addr[%v] app name[%v]", clusterId, ipAddr, app.processName)
+					apps = append(apps, app)
+				}
+			}
+
+			if len(apps) != 0 {
+				for _, app := range apps {
+					s.handleRuleAlarm(&alarmpb2.RequestHeader{
+						ClusterId: app.clusterId,
+						IpAddr: app.ipAddr,
+					}, &alarmpb2.RuleAlarmRequest{
+						RuleName: ALARMRULE_APP_NOTALIVE,
+						AlarmValue: 1,
+						CmpType: alarmpb2.AlarmValueCompareType_GREATER_THAN,
+						Remark: []string{fmt.Sprintf("app name: %v", app.processName)},
+					})
+				}
+			}
 
 			t.Reset(duration)
 		case <-ctx.Done():

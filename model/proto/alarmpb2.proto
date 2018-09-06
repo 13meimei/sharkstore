@@ -15,9 +15,10 @@ enum AlarmResponseCode {
 
 enum AlarmType {
     APP_HEARTBEAT       = 0;
-    APP_NOT_ALIVE       = 1;
-    GATEWAY_SLOWLOG     = 2;
-    GATEWAY_ERRORLOG    = 3;
+    RULE_ALARM          = 1;
+    APP_NOT_ALIVE       = 2;
+    GATEWAY_SLOWLOG     = 3;
+    GATEWAY_ERRORLOG    = 4;
 }
 
 enum AlarmValueCompareType {
@@ -37,10 +38,11 @@ service Alarm {
 message AlarmRequest {
     RequestHeader header        = 1;
 
-    AppHeartbeatRequest app_heartbeat           = 2;
-    AppNotAliveRequest app_not_alive            = 3;
-    GatewaySlowLogRequest gw_slow_log           = 4;
-    GatewayErrorLogRequest gw_error_log         = 5;
+    RuleAlarmRequest rule_alarm                 = 2;
+    AppHeartbeatRequest app_heartbeat           = 3;
+    AppNotAliveRequest app_not_alive            = 4;
+    GatewaySlowLogRequest gw_slow_log           = 5;
+    GatewayErrorLogRequest gw_error_log         = 6;
 }
 
 message RequestHeader {
@@ -48,6 +50,15 @@ message RequestHeader {
 
     int64 cluster_id            = 2;
     string ip_addr              = 3;
+    string app_name             = 4;
+}
+
+//
+message RuleAlarmRequest {
+    string rule_name                = 1;
+    double alarm_value              = 2;
+    AlarmValueCompareType cmp_type  = 3;
+    repeated string remark          = 4;
 }
 
 //

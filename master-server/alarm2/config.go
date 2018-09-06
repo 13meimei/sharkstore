@@ -12,6 +12,7 @@ type Alarm2ServerConfig struct {
 	MysqlArgs string		`toml:"mysql-args" json:"mysql-args"`
 	MysqlPullingDurationSec time.Duration		`toml:"mysql-pulling-duration-sec" json:"mysql-pulling-duration-sec"`
 	AppAliveCheckingDurationSec time.Duration	`toml:"app-alive-checking-duration-sec" json:"app-alive-checking-duration-sec"`
+	AlarmGatewayAddr string `toml:"alarm-gateway-addr" json:"alarm-gateway-addr"`
 
 	JimUrl string 						`toml:"jim-url" json:"jim-url"`
 	JimApAddr string					`toml:"jim-ap-addr" json:"jim-ap-addr"`

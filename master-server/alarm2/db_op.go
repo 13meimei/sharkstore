@@ -66,16 +66,17 @@ func (s *Server) getTableAppData() (ret []TableApp, err error) {
 	return
 }
 
-type TableGlobalRule struct {
-	// pk
+type Rule struct {
 	name 			string
-	//
 	threshold   	float64
 	durable 		int64
 	count 			int64
 	interval    	int64
 	receiverRole 	string
 	enable 			int64
+}
+type TableGlobalRule struct {
+	Rule
 }
 func (s *Server) getTableGlobalRuleData() (ret []TableGlobalRule, err error) {
 	var tmp TableGlobalRule
@@ -106,13 +107,15 @@ func (s *Server) getTableGlobalRuleData() (ret []TableGlobalRule, err error) {
 			return nil, err
 		}
 		ret = append(ret, TableGlobalRule{
-			name: 			tmp.name,
-			threshold: 		tmp.threshold,
-			durable: 		tmp.durable,
-			count: 			tmp.count,
-			interval: 		tmp.interval,
-			receiverRole: 	tmp.receiverRole,
-			enable: 		tmp.enable,
+			Rule{
+				name: 			tmp.name,
+				threshold: 		tmp.threshold,
+				durable: 		tmp.durable,
+				count: 			tmp.count,
+				interval: 		tmp.interval,
+				receiverRole: 	tmp.receiverRole,
+				enable: 		tmp.enable,
+			},
 		})
 	}
 	err = rows.Err()
@@ -126,14 +129,7 @@ func (s *Server) getTableGlobalRuleData() (ret []TableGlobalRule, err error) {
 type TableClusterRule struct {
 	// pk
 	clusterId 		int64
-	ruleName 		string
-	//
-	threshold   	float64
-	durable 		int64
-	count 			int64
-	interval    	int64
-	receiverRole 	string
-	enable 			int64
+	Rule
 }
 func (s *Server) getTableClusterRuleData() (ret []TableClusterRule, err error) {
 	var tmp TableClusterRule
@@ -155,7 +151,7 @@ func (s *Server) getTableClusterRuleData() (ret []TableClusterRule, err error) {
 
 	for rows.Next() {
 		err := rows.Scan(&tmp.clusterId,
-			&tmp.ruleName,
+			&tmp.name,
 			&tmp.threshold,
 			&tmp.durable,
 			&tmp.count,
@@ -167,13 +163,15 @@ func (s *Server) getTableClusterRuleData() (ret []TableClusterRule, err error) {
 		}
 		ret = append(ret, TableClusterRule{
 			clusterId: 		tmp.clusterId,
-			ruleName: 		tmp.ruleName,
-			threshold: 		tmp.threshold,
-			durable: 		tmp.durable,
-			count: 			tmp.count,
-			interval: 		tmp.interval,
-			receiverRole: 	tmp.receiverRole,
-			enable: 		tmp.enable,
+			Rule: Rule{
+				name: 			tmp.name,
+				threshold: 		tmp.threshold,
+				durable: 		tmp.durable,
+				count: 			tmp.count,
+				interval: 		tmp.interval,
+				receiverRole: 	tmp.receiverRole,
+				enable: 		tmp.enable,
+			},
 		})
 	}
 	err = rows.Err()

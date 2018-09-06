@@ -13,15 +13,16 @@ import (
 
 	"model/pkg/alarmpb2"
 	"sync"
+	"net/http"
 )
 
-type appClusterMap		map[string]TableApp
-type appMap 			map[int64]appClusterMap
+type appMap				map[string]TableApp
+type appClusterMap 		map[int64]appMap
 
 type globalRuleMap 		map[string]TableGlobalRule
 
-type clusterRuleNameMap	map[string]TableClusterRule
-type clusterRuleMap		map[int64]clusterRuleNameMap
+type ruleClusterNameMap	map[string]TableClusterRule
+type ruleClusterMap		map[int64]ruleClusterNameMap
 
 type receiverMap 		map[string]TableReceiver
 type receiverClusterMap map[int64]receiverMap
@@ -31,13 +32,14 @@ type Server struct {
 
 	jimClient 	*redis.Pool
 	mysqlClient *sql.DB
+	reportClient *http.Client
 
 	context context.Context
 
-	app 		appMap
-	globalRule 	globalRuleMap
-	clusterRule clusterRuleMap
-	receiver 	receiverClusterMap
+	clusterApp 		appClusterMap
+	globalRule 		globalRuleMap
+	clusterRule 	ruleClusterMap
+	clusterReceiver receiverClusterMap
 	appLock			sync.RWMutex
 	globalRuleLock 	sync.RWMutex
 	clusterRuleLock sync.RWMutex
@@ -55,6 +57,7 @@ func newServer(conf *Alarm2ServerConfig) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.reportClient = &http.Client{}
 	s.context = context.Background()
 
 	return s, nil
@@ -82,8 +85,6 @@ func NewAlarmServer2(conf *Alarm2ServerConfig) (*Server, error) {
 }
 
 func (s *Server) Alarm(ctx context.Context, req *alarmpb2.AlarmRequest) (*alarmpb2.AlarmResponse, error) {
-	resp := new(alarmpb2.AlarmResponse)
-
 	header := req.GetHeader()
 	switch req.GetHeader().GetType() {
 	case alarmpb2.AlarmType_APP_HEARTBEAT:
@@ -92,29 +93,29 @@ func (s *Server) Alarm(ctx context.Context, req *alarmpb2.AlarmRequest) (*alarmp
 			return nil, errors.New("request AppHeartbeat is nil")
 		}
 		return s.handleAppHeartbeat(header, r)
-	case alarmpb2.AlarmType_APP_NOT_ALIVE:
-		r := req.GetAppNotAlive()
-		if r == nil {
-			return nil, errors.New("request AppNotAliveAlarm is nil")
-		}
-		return s.handleAppNotAlive(header, r)
-	case alarmpb2.AlarmType_GATEWAY_SLOWLOG:
-		r := req.GetGwSlowLog()
-		if r == nil {
-			return nil, errors.New("request GwSlowLog is nil")
-		}
-		return s.handleGatewaySlowLog(header, r)
-	case alarmpb2.AlarmType_GATEWAY_ERRORLOG:
-		r := req.GetGwErrorLog()
-		if r == nil {
-			return nil, errors.New("request GwErrorLog is nil")
-		}
-		return s.handleGatewayErrorLog(header, r)
+	case alarmpb2.AlarmType_RULE_ALARM:
+		return s.handleRuleAlarm(header, req.GetRuleAlarm())
+	//case alarmpb2.AlarmType_APP_NOT_ALIVE:
+	//	r := req.GetAppNotAlive()
+	//	if r == nil {
+	//		return nil, errors.New("request AppNotAliveAlarm is nil")
+	//	}
+	//	return s.handleAppNotAlive(header, r)
+	//case alarmpb2.AlarmType_GATEWAY_SLOWLOG:
+	//	r := req.GetGwSlowLog()
+	//	if r == nil {
+	//		return nil, errors.New("request GwSlowLog is nil")
+	//	}
+	//	return s.handleGatewaySlowLog(header, r)
+	//case alarmpb2.AlarmType_GATEWAY_ERRORLOG:
+	//	r := req.GetGwErrorLog()
+	//	if r == nil {
+	//		return nil, errors.New("request GwErrorLog is nil")
+	//	}
+	//	return s.handleGatewayErrorLog(header, r)
 	default:
-		return nil, errors.New("invalid request type")
+		return nil, errors.New("unknown alarm type")
 	}
-
-	return resp, nil
 }
 
 
