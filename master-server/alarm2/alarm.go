@@ -2,14 +2,12 @@ package alarm2
 
 import (
 	"fmt"
-	"errors"
-	"strings"
 	"time"
 	"context"
-	"net/http"
 
 	"util/log"
 	"util/deepcopy"
+	"model/pkg/alarmpb2"
 )
 
 const (
@@ -31,6 +29,18 @@ const (
 	ALARMRULE_GATEWAY_SLOWLOG 	= "gateway_slowlog"
 	ALARMRULE_GATEWAY_ERRORLOG 	= "gateway_errorlog"
 )
+
+type cacheKey struct {
+	RuleName 	string 	`json:"rule_name"`
+	AppName 	string 	`json:"app_name"`
+	ClusterId 	int64 	`json:"cluster_id"`
+	AppAddr 	string 	`json:"app_addr"`
+
+}
+type cacheValue struct {
+	TriggerTime int64 	`json:"trigger_time"`
+	Count 		int64 	`json:"count"`
+}
 
 func (s *Server) timingDbPulling() {
 	ctx, cancel := context.WithCancel(s.context)
@@ -200,39 +210,64 @@ func (s *Server) getMapReceiver() (ret receiverClusterMap) {
 	return
 }
 
-func newCacheKey(ruleName, appName string, clusterId int64, appAddr string) (key string, err error) {
-	name := strings.ToLower(appName)
-	switch {
-	case strings.HasPrefix(name, APPNAME_GATEWAY):
-		key = fmt.Sprintf("%s%s%v%s%v%s%v", ruleName,
-			APPNAME_JOIN_LETTER, APPNAME_GATEWAY,
-			APPNAME_JOIN_LETTER, clusterId,
-			APPNAME_JOIN_LETTER, appAddr)
-	case strings.HasPrefix(name, APPNAME_MASTER):
-		key = fmt.Sprintf("%s%s%v%s%v%s%v", ruleName,
-			APPNAME_JOIN_LETTER, APPNAME_MASTER,
-			APPNAME_JOIN_LETTER, clusterId,
-			APPNAME_JOIN_LETTER, appAddr)
-	case strings.HasPrefix(name, APPNAME_METRIC):
-		key = fmt.Sprintf("%s%s%v%s%v%s%v", ruleName,
-			APPNAME_JOIN_LETTER, APPNAME_METRIC,
-			APPNAME_JOIN_LETTER, clusterId,
-			APPNAME_JOIN_LETTER, appAddr)
-	default:
-		err = errors.New("unknown app name")
+func (s *Server) getMapClusterReceiver(clusterId int64) (ret receiverMap) {
+	m := s.getMapReceiver()
+	if _, ok := m[clusterId]; !ok {
+		return nil
 	}
-	return
+	return m[clusterId]
 }
 
-func (s *Server) doReport(msg string) error {
-	req, err := http.NewRequest("POST", s.conf.AlarmGatewayAddr, strings.NewReader(msg))
-	if err != nil {
-		return err
+func (s *Server) aliveChecking() {
+	ctx, cancel := context.WithCancel(s.context)
+	defer cancel()
+	duration := s.conf.AppAliveCheckingDurationSec
+	t := time.NewTimer(duration)
+	for {
+		select {
+		case <-t.C:
+			var apps []TableApp
+			for clusterId, clusterApps := range s.getMapApp() {
+				for ipAddr, app := range clusterApps {
+					key, err := encodeCacheKey(cacheKey{
+						ALARMRULE_APP_NOTALIVE,
+						app.processName,
+						app.clusterId,
+						app.ipAddr})
+					if err != nil {
+						log.Error("new alive key faileld: process name[%v] cluster id[%v] ip addr[%v]: %v",
+							app.processName, app.clusterId, app.ipAddr, err)
+						continue
+					}
+
+					if err := s.jimExistsCommand(key); err != nil {
+						log.Error("jim exists command error: %v", err)
+						continue
+					}
+
+					log.Warn("app not alive: cluster id[%v] ip addr[%v] app name[%v]", clusterId, ipAddr, app.processName)
+					apps = append(apps, app)
+				}
+			}
+
+			if len(apps) != 0 {
+				for _, app := range apps {
+					s.handleRuleAlarm(&alarmpb2.RequestHeader{
+						ClusterId: app.clusterId,
+						IpAddr: app.ipAddr,
+					}, &alarmpb2.RuleAlarmRequest{
+						RuleName: ALARMRULE_APP_NOTALIVE,
+						AlarmValue: 1,
+						CmpType: alarmpb2.AlarmValueCompareType_GREATER_THAN,
+						Remark: []string{fmt.Sprintf("app name: %v", app.processName)},
+					})
+				}
+			}
+
+			t.Reset(duration)
+		case <-ctx.Done():
+			return
+		}
 	}
-	resp, err := s.reportClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	return nil
 }
+

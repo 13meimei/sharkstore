@@ -6,7 +6,48 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"strings"
+	"fmt"
+	"encoding/json"
 )
+
+
+func encodeCacheKey(key cacheKey) (keyStr string, err error) {
+	name := strings.ToLower(key.AppName)
+	switch {
+	case strings.HasPrefix(name, APPNAME_GATEWAY):
+		keyStr = fmt.Sprintf("%s%s%v%s%v%s%v", key.RuleName,
+			APPNAME_JOIN_LETTER, APPNAME_GATEWAY,
+			APPNAME_JOIN_LETTER, key.ClusterId,
+			APPNAME_JOIN_LETTER, key.AppAddr)
+	case strings.HasPrefix(name, APPNAME_MASTER):
+		keyStr = fmt.Sprintf("%s%s%v%s%v%s%v", key.RuleName,
+			APPNAME_JOIN_LETTER, APPNAME_MASTER,
+			APPNAME_JOIN_LETTER, key.ClusterId,
+			APPNAME_JOIN_LETTER, key.AppAddr)
+	case strings.HasPrefix(name, APPNAME_METRIC):
+		keyStr = fmt.Sprintf("%s%s%v%s%v%s%v", key.RuleName,
+			APPNAME_JOIN_LETTER, APPNAME_METRIC,
+			APPNAME_JOIN_LETTER, key.ClusterId,
+			APPNAME_JOIN_LETTER, key.AppAddr)
+	default:
+		err = errors.New("unknown app name")
+	}
+	return
+}
+
+func decodeCacheKey(keyStr string) (key cacheKey, err error) {
+	return
+}
+
+func encodeCacheValue(value cacheValue) (string, error) {
+	ret, err := json.Marshal(value)
+	return string(ret), err
+}
+
+func decodeCacheValue(valueStr string) (value cacheValue, err error) {
+	err = json.Unmarshal([]byte(valueStr), &value)
+	return
+}
 
 func (s *Server) newJimClient() *redis.Pool {
 	return &redis.Pool{
@@ -46,16 +87,16 @@ func (s *Server) jimCommand(commandName string, args ...interface{}) (interface{
 	return conn.Do(commandName, args...)
 }
 
-func (s *Server) jimGetCommand(key string) error {
-
+func (s *Server) jimGetCommand(key string) (string, error) {
 	reply, err := s.jimCommand("get", key)
 	if err != nil {
-		return err
+		return "", err
 	}
-	if _, err := redis.String(reply, err); err != nil {
-		return err
+	replyStr, err := redis.String(reply, err)
+	if err != nil {
+		return "", err
 	}
-	return nil
+	return replyStr, nil
 }
 
 func (s *Server) jimSetexCommand(key, value string, expireTime int64) error {
@@ -68,7 +109,22 @@ func (s *Server) jimSetexCommand(key, value string, expireTime int64) error {
 		return err
 	}
 	if strings.Compare(strings.ToLower(replyStr), "ok") != 0 {
+		return errors.New("reply string is not ok")
+	}
+	return nil
+}
+
+func (s *Server) jimExistsCommand(key string) error {
+	reply, err := s.jimCommand("exists", key)
+	if err != nil {
 		return err
+	}
+	replyInt, err := redis.Int(reply, err)
+	if err != nil {
+		return err
+	}
+	if replyInt == 0 { // key not exists
+		return errors.New("reply int is 0")
 	}
 	return nil
 }

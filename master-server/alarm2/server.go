@@ -32,7 +32,9 @@ type Server struct {
 
 	jimClient 	*redis.Pool
 	mysqlClient *sql.DB
+
 	reportClient *http.Client
+	reportQueue chan alarmMessage
 
 	context context.Context
 
@@ -58,6 +60,7 @@ func newServer(conf *Alarm2ServerConfig) (*Server, error) {
 		return nil, err
 	}
 	s.reportClient = &http.Client{}
+	s.reportQueue = make(chan alarmMessage, 10000)
 	s.context = context.Background()
 
 	return s, nil

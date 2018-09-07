@@ -1,13 +1,11 @@
 package alarm2
 
 import (
-	"strings"
 	"errors"
-
-	"github.com/gomodule/redigo/redis"
 
 	"util/log"
 	"model/pkg/alarmpb2"
+	"time"
 )
 
 func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb2.AppHeartbeatRequest) (resp *alarmpb2.AlarmResponse, err error) {
@@ -15,7 +13,11 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 	resp = new(alarmpb2.AlarmResponse)
 
 	// eg. app_not_alive
-	aliveKey, err := newCacheKey(ALARMRULE_APP_NOTALIVE, req.GetAppName(), header.GetClusterId(), header.GetIpAddr())
+	aliveKey, err := encodeCacheKey(cacheKey{
+		ALARMRULE_APP_NOTALIVE,
+		req.GetAppName(),
+		header.GetClusterId(),
+		header.GetIpAddr()})
 	if err != nil {
 		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ALARM_ERROR)
 		resp.Header.Error = err.Error()
@@ -23,21 +25,10 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 	}
 
 	// setex key with ttl ping_interval to jimdb
-	reply, err := s.jimCommand("setex", aliveKey, req.GetHbIntervalTime()*2, "")
-	if err != nil {
-		//log.Error("jim setex command error: %v", err)
-		return
-	}
-	replyStr, err := redis.String(reply, err)
-	if err != nil {
+	if err := s.jimSetexCommand(aliveKey, "", req.GetHbIntervalTime()*2); err != nil {
 		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ALARM_ERROR)
 		resp.Header.Error = err.Error()
-		return
-	}
-	if strings.Compare(strings.ToLower(replyStr), "ok") != 0 {
-		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ALARM_ERROR)
-		resp.Header.Error = err.Error()
-		return
+		return resp, err
 	}
 
 	return
@@ -127,23 +118,62 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 		return &alarmpb2.AlarmResponse{}, nil
 	}
 
-	// visit cache
-	ruleKey, err := newCacheKey(req.GetRuleName(), header.GetAppName(), header.GetClusterId(), header.GetIpAddr())
+	// get key cache
+	ruleKey, err := encodeCacheKey(cacheKey{
+		req.GetRuleName(),
+		header.GetAppName(),
+		header.GetClusterId(),
+		header.GetIpAddr()})
 	if err != nil {
-		// todo
+		return nil, err
 	}
-	reply, err := s.jimCommand("get", ruleKey)
+	reply, err := s.jimGetCommand(ruleKey)
 	if err != nil {
-		// todo
-	}
-	if _, err := redis.String(reply, err); err != nil {
-		// nil
-		// todo
+		// treat as key not exists
+		log.Warn("jim get command failed: %v, treat as key[%v] not exists", err, ruleKey)
+
+		curTime := time.Now().Unix()
+		var ruleValue = cacheValue{
+			TriggerTime: curTime,
+			Count: 1,
+		}
+
+		ruleValueStr, err := encodeCacheValue(ruleValue)
+		if err != nil {
+			return nil, err
+		}
+
+		// expire time = r.durable
+		err = s.jimSetexCommand(ruleKey, ruleValueStr, r.durable)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		// not nil
+		ruleValue, err := decodeCacheValue(reply)
+		if err != nil {
+			return nil, err
+		}
+		curTime := time.Now().Unix()
+		if ruleValue.TriggerTime <= curTime {
+			ruleValue.Count++
+		}
 
+		if ruleValue.Count >= r.count {
+			// append report
+			s.ruleAlarmReportAppend(header.GetClusterId(), header.GetAppName(), header.GetIpAddr(), req, r.threshold)
+
+			ruleValue.TriggerTime = curTime + r.interval
+			ruleValue.Count = 0
+
+			ruleValueStr, err := encodeCacheValue(ruleValue)
+			if err != nil {
+				return nil, err
+			}
+
+			// expire time = r.interval + r.durable
+			s.jimSetexCommand(ruleKey, ruleValueStr, r.interval + r.durable)
+		}
 	}
-
 	return &alarmpb2.AlarmResponse{}, nil
 }
 
