@@ -599,3 +599,24 @@ message DsLockScanResponse {
     ResponseHeader header           = 1;
     LockScanResponse resp           = 2;
 }
+
+
+message LockGetRequest {
+    bytes key               = 1;
+}
+
+message LockGetResponse {
+    int64 code      = 1;
+    string error    = 2;
+    LockValue value             = 3;
+}
+
+message DsLockGetRequest {
+    RequestHeader header        = 1;
+    LockGetRequest req          = 2;
+}
+
+message DsLockGetResponse {
+    ResponseHeader header           = 1;
+    LockGetResponse resp            = 2;
+}
