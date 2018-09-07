@@ -26,6 +26,7 @@ typedef struct sf_socket_thread_config_s {
     int event_send_threads;  // event loop thread for send
     int worker_threads;      // worker thread count
     int recv_buff_size;      // recv socket buff size
+    int send_thread_priority; //thread priority
 
     pthread_t *accept_tids;  // accept thread ids
     pthread_t *recv_tids;    // recv thread ids

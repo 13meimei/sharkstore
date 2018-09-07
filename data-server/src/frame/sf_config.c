@@ -319,6 +319,12 @@ int sf_load_socket_thread_config(IniContext *ini_context, const char *section_na
         config->event_send_threads = 0;
     }
 
+    config->send_thread_priority =
+            iniGetIntValue(section_name, "event_send_thread_priority", ini_context, 20);
+    if (config->send_thread_priority <= 0) {
+        config->send_thread_priority = 20;
+    }
+
     config->port = iniGetIntValue(section_name, "port", ini_context, 0);
     if (config->port <= 0) {
         FLOG_ERROR("section name: %s"
