@@ -535,7 +535,7 @@ message DsLockResponse {
 message LockUpdateRequest {
     bytes key               = 1;
     string id               = 3;
-    int64 update_time       = 5;
+    int64 delete_time       = 5;
     bytes update_value      = 6;
     timestamp.Timestamp timestamp  = 10;
     string by               = 11;
