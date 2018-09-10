@@ -192,7 +192,7 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
 
     switch (cmd.cmd_type()) {
         case raft_cmdpb::CmdType::Lock:
-            return ApplyLock(cmd);
+            return ApplyLock(cmd, index);
         case raft_cmdpb::CmdType::LockUpdate:
             return ApplyLockUpdate(cmd);
         case raft_cmdpb::CmdType::Unlock:

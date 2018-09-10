@@ -231,6 +231,7 @@ public:
 
             lk_queue_push(lk_queue, element);
         }
+        return 0;
     }
 
     T* dequeue() {

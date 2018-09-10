@@ -87,13 +87,14 @@ public:
     Status ForceSplit(uint64_t version, std::string* split_key);
 
     // lock
-    kvrpcpb::LockValue *LockGet(const std::string &key);
+    kvrpcpb::LockValue *LockQuery(const std::string &key);
     void Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req);
     void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
     void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
     void UnlockForce(common::ProtoMessage *msg, kvrpcpb::DsUnlockForceRequest &req);
     void LockWatch(common::ProtoMessage *msg, watchpb::DsWatchRequest& req);
     void LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req);
+    void LockGet(common::ProtoMessage *msg, kvrpcpb::DsLockGetRequest &req);
 
     // KV
     void RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req);
@@ -176,7 +177,7 @@ private:
     Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd);
     Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd);
 
-    Status ApplyLock(const raft_cmdpb::Command &cmd);
+    Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
     Status ApplyLockUpdate(const raft_cmdpb::Command &cmd);
     Status ApplyUnlock(const raft_cmdpb::Command &cmd);
     Status ApplyUnlockForce(const raft_cmdpb::Command &cmd);

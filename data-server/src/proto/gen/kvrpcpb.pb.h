@@ -131,6 +131,12 @@ extern DsKvSetRequestDefaultTypeInternal _DsKvSetRequest_default_instance_;
 class DsKvSetResponse;
 class DsKvSetResponseDefaultTypeInternal;
 extern DsKvSetResponseDefaultTypeInternal _DsKvSetResponse_default_instance_;
+class DsLockGetRequest;
+class DsLockGetRequestDefaultTypeInternal;
+extern DsLockGetRequestDefaultTypeInternal _DsLockGetRequest_default_instance_;
+class DsLockGetResponse;
+class DsLockGetResponseDefaultTypeInternal;
+extern DsLockGetResponseDefaultTypeInternal _DsLockGetResponse_default_instance_;
 class DsLockRequest;
 class DsLockRequestDefaultTypeInternal;
 extern DsLockRequestDefaultTypeInternal _DsLockRequest_default_instance_;
@@ -260,6 +266,12 @@ extern KvSetResponseDefaultTypeInternal _KvSetResponse_default_instance_;
 class Limit;
 class LimitDefaultTypeInternal;
 extern LimitDefaultTypeInternal _Limit_default_instance_;
+class LockGetRequest;
+class LockGetRequestDefaultTypeInternal;
+extern LockGetRequestDefaultTypeInternal _LockGetRequest_default_instance_;
+class LockGetResponse;
+class LockGetResponseDefaultTypeInternal;
+extern LockGetResponseDefaultTypeInternal _LockGetResponse_default_instance_;
 class LockInfo;
 class LockInfoDefaultTypeInternal;
 extern LockInfoDefaultTypeInternal _LockInfo_default_instance_;
@@ -10040,11 +10052,11 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::timestamp::Timestamp* release_timestamp();
   void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
 
-  // int64 update_time = 5;
-  void clear_update_time();
-  static const int kUpdateTimeFieldNumber = 5;
-  ::google::protobuf::int64 update_time() const;
-  void set_update_time(::google::protobuf::int64 value);
+  // int64 delete_time = 5;
+  void clear_delete_time();
+  static const int kDeleteTimeFieldNumber = 5;
+  ::google::protobuf::int64 delete_time() const;
+  void set_delete_time(::google::protobuf::int64 value);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.LockUpdateRequest)
  private:
@@ -10055,7 +10067,7 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::internal::ArenaStringPtr update_value_;
   ::google::protobuf::internal::ArenaStringPtr by_;
   ::timestamp::Timestamp* timestamp_;
-  ::google::protobuf::int64 update_time_;
+  ::google::protobuf::int64 delete_time_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -11338,6 +11350,453 @@ class DsLockScanResponse : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::ResponseHeader* header_;
   ::kvrpcpb::LockScanResponse* resp_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.LockGetRequest) */ {
+ public:
+  LockGetRequest();
+  virtual ~LockGetRequest();
+
+  LockGetRequest(const LockGetRequest& from);
+
+  inline LockGetRequest& operator=(const LockGetRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  LockGetRequest(LockGetRequest&& from) noexcept
+    : LockGetRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline LockGetRequest& operator=(LockGetRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const LockGetRequest& default_instance();
+
+  static inline const LockGetRequest* internal_default_instance() {
+    return reinterpret_cast<const LockGetRequest*>(
+               &_LockGetRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    94;
+
+  void Swap(LockGetRequest* other);
+  friend void swap(LockGetRequest& a, LockGetRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline LockGetRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  LockGetRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const LockGetRequest& from);
+  void MergeFrom(const LockGetRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(LockGetRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // bytes key = 1;
+  void clear_key();
+  static const int kKeyFieldNumber = 1;
+  const ::std::string& key() const;
+  void set_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_key(::std::string&& value);
+  #endif
+  void set_key(const char* value);
+  void set_key(const void* value, size_t size);
+  ::std::string* mutable_key();
+  ::std::string* release_key();
+  void set_allocated_key(::std::string* key);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.LockGetRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr key_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class LockGetResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.LockGetResponse) */ {
+ public:
+  LockGetResponse();
+  virtual ~LockGetResponse();
+
+  LockGetResponse(const LockGetResponse& from);
+
+  inline LockGetResponse& operator=(const LockGetResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  LockGetResponse(LockGetResponse&& from) noexcept
+    : LockGetResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline LockGetResponse& operator=(LockGetResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const LockGetResponse& default_instance();
+
+  static inline const LockGetResponse* internal_default_instance() {
+    return reinterpret_cast<const LockGetResponse*>(
+               &_LockGetResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    95;
+
+  void Swap(LockGetResponse* other);
+  friend void swap(LockGetResponse& a, LockGetResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline LockGetResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  LockGetResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const LockGetResponse& from);
+  void MergeFrom(const LockGetResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(LockGetResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string error = 2;
+  void clear_error();
+  static const int kErrorFieldNumber = 2;
+  const ::std::string& error() const;
+  void set_error(const ::std::string& value);
+  #if LANG_CXX11
+  void set_error(::std::string&& value);
+  #endif
+  void set_error(const char* value);
+  void set_error(const char* value, size_t size);
+  ::std::string* mutable_error();
+  ::std::string* release_error();
+  void set_allocated_error(::std::string* error);
+
+  // .kvrpcpb.LockValue value = 3;
+  bool has_value() const;
+  void clear_value();
+  static const int kValueFieldNumber = 3;
+  const ::kvrpcpb::LockValue& value() const;
+  ::kvrpcpb::LockValue* mutable_value();
+  ::kvrpcpb::LockValue* release_value();
+  void set_allocated_value(::kvrpcpb::LockValue* value);
+
+  // int64 code = 1;
+  void clear_code();
+  static const int kCodeFieldNumber = 1;
+  ::google::protobuf::int64 code() const;
+  void set_code(::google::protobuf::int64 value);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.LockGetResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr error_;
+  ::kvrpcpb::LockValue* value_;
+  ::google::protobuf::int64 code_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class DsLockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.DsLockGetRequest) */ {
+ public:
+  DsLockGetRequest();
+  virtual ~DsLockGetRequest();
+
+  DsLockGetRequest(const DsLockGetRequest& from);
+
+  inline DsLockGetRequest& operator=(const DsLockGetRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DsLockGetRequest(DsLockGetRequest&& from) noexcept
+    : DsLockGetRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline DsLockGetRequest& operator=(DsLockGetRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DsLockGetRequest& default_instance();
+
+  static inline const DsLockGetRequest* internal_default_instance() {
+    return reinterpret_cast<const DsLockGetRequest*>(
+               &_DsLockGetRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    96;
+
+  void Swap(DsLockGetRequest* other);
+  friend void swap(DsLockGetRequest& a, DsLockGetRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DsLockGetRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  DsLockGetRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const DsLockGetRequest& from);
+  void MergeFrom(const DsLockGetRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(DsLockGetRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .kvrpcpb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::kvrpcpb::RequestHeader& header() const;
+  ::kvrpcpb::RequestHeader* mutable_header();
+  ::kvrpcpb::RequestHeader* release_header();
+  void set_allocated_header(::kvrpcpb::RequestHeader* header);
+
+  // .kvrpcpb.LockGetRequest req = 2;
+  bool has_req() const;
+  void clear_req();
+  static const int kReqFieldNumber = 2;
+  const ::kvrpcpb::LockGetRequest& req() const;
+  ::kvrpcpb::LockGetRequest* mutable_req();
+  ::kvrpcpb::LockGetRequest* release_req();
+  void set_allocated_req(::kvrpcpb::LockGetRequest* req);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.DsLockGetRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::kvrpcpb::RequestHeader* header_;
+  ::kvrpcpb::LockGetRequest* req_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class DsLockGetResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.DsLockGetResponse) */ {
+ public:
+  DsLockGetResponse();
+  virtual ~DsLockGetResponse();
+
+  DsLockGetResponse(const DsLockGetResponse& from);
+
+  inline DsLockGetResponse& operator=(const DsLockGetResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DsLockGetResponse(DsLockGetResponse&& from) noexcept
+    : DsLockGetResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline DsLockGetResponse& operator=(DsLockGetResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DsLockGetResponse& default_instance();
+
+  static inline const DsLockGetResponse* internal_default_instance() {
+    return reinterpret_cast<const DsLockGetResponse*>(
+               &_DsLockGetResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    97;
+
+  void Swap(DsLockGetResponse* other);
+  friend void swap(DsLockGetResponse& a, DsLockGetResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DsLockGetResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  DsLockGetResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const DsLockGetResponse& from);
+  void MergeFrom(const DsLockGetResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(DsLockGetResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .kvrpcpb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::kvrpcpb::ResponseHeader& header() const;
+  ::kvrpcpb::ResponseHeader* mutable_header();
+  ::kvrpcpb::ResponseHeader* release_header();
+  void set_allocated_header(::kvrpcpb::ResponseHeader* header);
+
+  // .kvrpcpb.LockGetResponse resp = 2;
+  bool has_resp() const;
+  void clear_resp();
+  static const int kRespFieldNumber = 2;
+  const ::kvrpcpb::LockGetResponse& resp() const;
+  ::kvrpcpb::LockGetResponse* mutable_resp();
+  ::kvrpcpb::LockGetResponse* release_resp();
+  void set_allocated_resp(::kvrpcpb::LockGetResponse* resp);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.DsLockGetResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::kvrpcpb::ResponseHeader* header_;
+  ::kvrpcpb::LockGetResponse* resp_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -18517,18 +18976,18 @@ inline void LockUpdateRequest::set_allocated_id(::std::string* id) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockUpdateRequest.id)
 }
 
-// int64 update_time = 5;
-inline void LockUpdateRequest::clear_update_time() {
-  update_time_ = GOOGLE_LONGLONG(0);
+// int64 delete_time = 5;
+inline void LockUpdateRequest::clear_delete_time() {
+  delete_time_ = GOOGLE_LONGLONG(0);
 }
-inline ::google::protobuf::int64 LockUpdateRequest::update_time() const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.LockUpdateRequest.update_time)
-  return update_time_;
+inline ::google::protobuf::int64 LockUpdateRequest::delete_time() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockUpdateRequest.delete_time)
+  return delete_time_;
 }
-inline void LockUpdateRequest::set_update_time(::google::protobuf::int64 value) {
+inline void LockUpdateRequest::set_delete_time(::google::protobuf::int64 value) {
   
-  update_time_ = value;
-  // @@protoc_insertion_point(field_set:kvrpcpb.LockUpdateRequest.update_time)
+  delete_time_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockUpdateRequest.delete_time)
 }
 
 // bytes update_value = 6;
@@ -19826,10 +20285,354 @@ inline void DsLockScanResponse::set_allocated_resp(::kvrpcpb::LockScanResponse* 
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsLockScanResponse.resp)
 }
 
+// -------------------------------------------------------------------
+
+// LockGetRequest
+
+// bytes key = 1;
+inline void LockGetRequest::clear_key() {
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& LockGetRequest::key() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockGetRequest.key)
+  return key_.GetNoArena();
+}
+inline void LockGetRequest::set_key(const ::std::string& value) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockGetRequest.key)
+}
+#if LANG_CXX11
+inline void LockGetRequest::set_key(::std::string&& value) {
+  
+  key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:kvrpcpb.LockGetRequest.key)
+}
+#endif
+inline void LockGetRequest::set_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:kvrpcpb.LockGetRequest.key)
+}
+inline void LockGetRequest::set_key(const void* value, size_t size) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.LockGetRequest.key)
+}
+inline ::std::string* LockGetRequest::mutable_key() {
+  
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.LockGetRequest.key)
+  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* LockGetRequest::release_key() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.LockGetRequest.key)
+  
+  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void LockGetRequest::set_allocated_key(::std::string* key) {
+  if (key != NULL) {
+    
+  } else {
+    
+  }
+  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockGetRequest.key)
+}
+
+// -------------------------------------------------------------------
+
+// LockGetResponse
+
+// int64 code = 1;
+inline void LockGetResponse::clear_code() {
+  code_ = GOOGLE_LONGLONG(0);
+}
+inline ::google::protobuf::int64 LockGetResponse::code() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockGetResponse.code)
+  return code_;
+}
+inline void LockGetResponse::set_code(::google::protobuf::int64 value) {
+  
+  code_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockGetResponse.code)
+}
+
+// string error = 2;
+inline void LockGetResponse::clear_error() {
+  error_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& LockGetResponse::error() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockGetResponse.error)
+  return error_.GetNoArena();
+}
+inline void LockGetResponse::set_error(const ::std::string& value) {
+  
+  error_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:kvrpcpb.LockGetResponse.error)
+}
+#if LANG_CXX11
+inline void LockGetResponse::set_error(::std::string&& value) {
+  
+  error_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:kvrpcpb.LockGetResponse.error)
+}
+#endif
+inline void LockGetResponse::set_error(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  error_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:kvrpcpb.LockGetResponse.error)
+}
+inline void LockGetResponse::set_error(const char* value, size_t size) {
+  
+  error_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.LockGetResponse.error)
+}
+inline ::std::string* LockGetResponse::mutable_error() {
+  
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.LockGetResponse.error)
+  return error_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* LockGetResponse::release_error() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.LockGetResponse.error)
+  
+  return error_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void LockGetResponse::set_allocated_error(::std::string* error) {
+  if (error != NULL) {
+    
+  } else {
+    
+  }
+  error_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), error);
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockGetResponse.error)
+}
+
+// .kvrpcpb.LockValue value = 3;
+inline bool LockGetResponse::has_value() const {
+  return this != internal_default_instance() && value_ != NULL;
+}
+inline void LockGetResponse::clear_value() {
+  if (GetArenaNoVirtual() == NULL && value_ != NULL) delete value_;
+  value_ = NULL;
+}
+inline const ::kvrpcpb::LockValue& LockGetResponse::value() const {
+  const ::kvrpcpb::LockValue* p = value_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.LockGetResponse.value)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::LockValue*>(
+      &::kvrpcpb::_LockValue_default_instance_);
+}
+inline ::kvrpcpb::LockValue* LockGetResponse::mutable_value() {
+  
+  if (value_ == NULL) {
+    value_ = new ::kvrpcpb::LockValue;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.LockGetResponse.value)
+  return value_;
+}
+inline ::kvrpcpb::LockValue* LockGetResponse::release_value() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.LockGetResponse.value)
+  
+  ::kvrpcpb::LockValue* temp = value_;
+  value_ = NULL;
+  return temp;
+}
+inline void LockGetResponse::set_allocated_value(::kvrpcpb::LockValue* value) {
+  delete value_;
+  value_ = value;
+  if (value) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockGetResponse.value)
+}
+
+// -------------------------------------------------------------------
+
+// DsLockGetRequest
+
+// .kvrpcpb.RequestHeader header = 1;
+inline bool DsLockGetRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void DsLockGetRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::kvrpcpb::RequestHeader& DsLockGetRequest::header() const {
+  const ::kvrpcpb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsLockGetRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
+      &::kvrpcpb::_RequestHeader_default_instance_);
+}
+inline ::kvrpcpb::RequestHeader* DsLockGetRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::kvrpcpb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsLockGetRequest.header)
+  return header_;
+}
+inline ::kvrpcpb::RequestHeader* DsLockGetRequest::release_header() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsLockGetRequest.header)
+  
+  ::kvrpcpb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void DsLockGetRequest::set_allocated_header(::kvrpcpb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsLockGetRequest.header)
+}
+
+// .kvrpcpb.LockGetRequest req = 2;
+inline bool DsLockGetRequest::has_req() const {
+  return this != internal_default_instance() && req_ != NULL;
+}
+inline void DsLockGetRequest::clear_req() {
+  if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
+  req_ = NULL;
+}
+inline const ::kvrpcpb::LockGetRequest& DsLockGetRequest::req() const {
+  const ::kvrpcpb::LockGetRequest* p = req_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsLockGetRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::LockGetRequest*>(
+      &::kvrpcpb::_LockGetRequest_default_instance_);
+}
+inline ::kvrpcpb::LockGetRequest* DsLockGetRequest::mutable_req() {
+  
+  if (req_ == NULL) {
+    req_ = new ::kvrpcpb::LockGetRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsLockGetRequest.req)
+  return req_;
+}
+inline ::kvrpcpb::LockGetRequest* DsLockGetRequest::release_req() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsLockGetRequest.req)
+  
+  ::kvrpcpb::LockGetRequest* temp = req_;
+  req_ = NULL;
+  return temp;
+}
+inline void DsLockGetRequest::set_allocated_req(::kvrpcpb::LockGetRequest* req) {
+  delete req_;
+  req_ = req;
+  if (req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsLockGetRequest.req)
+}
+
+// -------------------------------------------------------------------
+
+// DsLockGetResponse
+
+// .kvrpcpb.ResponseHeader header = 1;
+inline bool DsLockGetResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void DsLockGetResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::kvrpcpb::ResponseHeader& DsLockGetResponse::header() const {
+  const ::kvrpcpb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsLockGetResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
+      &::kvrpcpb::_ResponseHeader_default_instance_);
+}
+inline ::kvrpcpb::ResponseHeader* DsLockGetResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::kvrpcpb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsLockGetResponse.header)
+  return header_;
+}
+inline ::kvrpcpb::ResponseHeader* DsLockGetResponse::release_header() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsLockGetResponse.header)
+  
+  ::kvrpcpb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void DsLockGetResponse::set_allocated_header(::kvrpcpb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsLockGetResponse.header)
+}
+
+// .kvrpcpb.LockGetResponse resp = 2;
+inline bool DsLockGetResponse::has_resp() const {
+  return this != internal_default_instance() && resp_ != NULL;
+}
+inline void DsLockGetResponse::clear_resp() {
+  if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
+  resp_ = NULL;
+}
+inline const ::kvrpcpb::LockGetResponse& DsLockGetResponse::resp() const {
+  const ::kvrpcpb::LockGetResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsLockGetResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::LockGetResponse*>(
+      &::kvrpcpb::_LockGetResponse_default_instance_);
+}
+inline ::kvrpcpb::LockGetResponse* DsLockGetResponse::mutable_resp() {
+  
+  if (resp_ == NULL) {
+    resp_ = new ::kvrpcpb::LockGetResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsLockGetResponse.resp)
+  return resp_;
+}
+inline ::kvrpcpb::LockGetResponse* DsLockGetResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsLockGetResponse.resp)
+  
+  ::kvrpcpb::LockGetResponse* temp = resp_;
+  resp_ = NULL;
+  return temp;
+}
+inline void DsLockGetResponse::set_allocated_resp(::kvrpcpb::LockGetResponse* resp) {
+  delete resp_;
+  resp_ = resp;
+  if (resp) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsLockGetResponse.resp)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
