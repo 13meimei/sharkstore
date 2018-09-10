@@ -25,7 +25,7 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 	}
 
 	// setex key with ttl ping_interval to jimdb
-	if err := s.jimSetexCommand(aliveKey, "", req.GetHbIntervalTime()*2); err != nil {
+	if err := s.cacheOpImpl.setex(aliveKey, "", req.GetHbIntervalTime()*2); err != nil {
 		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ALARM_ERROR)
 		resp.Header.Error = err.Error()
 		return resp, err
@@ -127,7 +127,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 	if err != nil {
 		return nil, err
 	}
-	reply, err := s.jimGetCommand(ruleKey)
+	reply, err := s.cacheOpImpl.get(ruleKey)
 	if err != nil {
 		// treat as key not exists
 		log.Warn("jim get command failed: %v, treat as key[%v] not exists", err, ruleKey)
@@ -144,7 +144,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 		}
 
 		// expire time = r.durable
-		err = s.jimSetexCommand(ruleKey, ruleValueStr, r.durable)
+		err = s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.durable)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +171,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 			}
 
 			// expire time = r.interval + r.durable
-			s.jimSetexCommand(ruleKey, ruleValueStr, r.interval + r.durable)
+			s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.interval + r.durable)
 		}
 	}
 	return &alarmpb2.AlarmResponse{}, nil

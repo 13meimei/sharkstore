@@ -9,6 +9,12 @@ import (
 	"model/pkg/alarmpb2"
 )
 
+const (
+	ALARMRULE_APP_NOTALIVE 		= "app_not_alive"
+	ALARMRULE_GATEWAY_SLOWLOG 	= "gateway_slowlog"
+	ALARMRULE_GATEWAY_ERRORLOG 	= "gateway_errorlog"
+)
+
 type Client struct {
 	conn *grpc.ClientConn
 }

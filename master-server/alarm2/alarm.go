@@ -11,6 +11,18 @@ import (
 )
 
 const (
+	TABLENAME_APP 				= "sharkstore_app"
+	TABLENAME_GLOBAL_RULE 		= "sharkstore_global_rule"
+	TABLENAME_CLUSTER_RULE 		= "sharkstore_cluster_rule"
+	TABLENAME_RECEIVER 			= "sharkstore_receiver"
+
+	TABLESCHEMA_APP 				= "cluster_id, ip_addr, process_name" // all pk
+	TABLESCHEMA_GLOBAL_RULE 		= "name, threshold, durable, count, interval, receiver_role, enable" // name pk
+	TABLESCHEMA_CLUSTER_RULE 		= "cluster_id, rule_name, threshold, durable, count, interval, receiver_role, enable" // cluster_id, rule_name pk
+	TABLESCHEMA_RECEIVER 			= "erp, cluster_id, role, mail, tel" // erp, cluster_id pk
+)
+
+const (
 	APPNAME_GATEWAY 		= "gateway"
 	APPNAME_MASTER 			= "master"
 	APPNAME_METRIC 			= "metric"
@@ -24,11 +36,7 @@ const (
 
 )
 
-const (
-	ALARMRULE_APP_NOTALIVE 		= "app_not_alive"
-	ALARMRULE_GATEWAY_SLOWLOG 	= "gateway_slowlog"
-	ALARMRULE_GATEWAY_ERRORLOG 	= "gateway_errorlog"
-)
+
 
 type cacheKey struct {
 	RuleName 	string 	`json:"rule_name"`
@@ -63,7 +71,7 @@ func (s *Server) timingDbPulling() {
 }
 
 func (s *Server) tableAppPulling() {
-	ret, err := s.getTableAppData()
+	ret, err := s.dbOpImpl.getTableAppData()
 	if err != nil {
 		log.Error("pull table app failed: %v", err)
 		return
@@ -73,7 +81,7 @@ func (s *Server) tableAppPulling() {
 }
 
 func (s *Server) tableGlobalRulePulling() {
-	ret, err := s.getTableGlobalRuleData()
+	ret, err := s.dbOpImpl.getTableGlobalRuleData()
 	if err != nil {
 		log.Error("pull table global rule failed: %v", err)
 		return
@@ -83,7 +91,7 @@ func (s *Server) tableGlobalRulePulling() {
 }
 
 func (s *Server) tableClusterRulePulling() {
-	ret, err := s.getTableClusterRuleData()
+	ret, err := s.dbOpImpl.getTableClusterRuleData()
 	if err != nil {
 		log.Error("pull table cluster rule failed: %v", err)
 		return
@@ -93,7 +101,7 @@ func (s *Server) tableClusterRulePulling() {
 }
 
 func (s *Server) tableReceiverPulling() {
-	ret, err := s.getTableReceiveData()
+	ret, err := s.dbOpImpl.getTableReceiveData()
 	if err != nil {
 		log.Error("pull table receiver failed: %v", err)
 		return
@@ -240,7 +248,7 @@ func (s *Server) aliveChecking() {
 						continue
 					}
 
-					if err := s.jimExistsCommand(key); err != nil {
+					if err := s.cacheOpImpl.exists(key); err != nil {
 						log.Error("jim exists command error: %v", err)
 						continue
 					}

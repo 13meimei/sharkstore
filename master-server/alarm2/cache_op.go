@@ -10,6 +10,33 @@ import (
 	"encoding/json"
 )
 
+type cacheOp interface {
+	get(key string) (string, error)
+	setex(key, value string, expireTime int64) error
+	exists(key string) error
+}
+
+type cacheOpImpl struct {
+	server *Server
+}
+
+func (s *Server) newCacheOpImpl() *cacheOpImpl {
+	return &cacheOpImpl{
+		server: s,
+	}
+}
+
+func (opImpl *cacheOpImpl) get(key string) (string, error) {
+	return opImpl.server.jimGetCommand(key)
+}
+
+func (opImpl *cacheOpImpl) setex(key, value string, expireTime int64) error {
+	return opImpl.server.jimSetexCommand(key, value, expireTime)
+}
+
+func (opImpm *cacheOpImpl) exists(key string) error {
+	return opImpm.server.jimExistsCommand(key)
+}
 
 func encodeCacheKey(key cacheKey) (keyStr string, err error) {
 	name := strings.ToLower(key.AppName)

@@ -20,6 +20,21 @@ receiver
 erp| role cluster_id mail tel
 */
 
+type dbOp interface {
+	getTableAppData() (ret []TableApp, err error)
+	getTableGlobalRuleData() (ret []TableGlobalRule, err error)
+	getTableClusterRuleData() (ret []TableClusterRule, err error)
+	getTableReceiveData() (ret []TableReceiver, err error)
+}
+
+type dbOpImpl struct {
+	db *sql.DB
+}
+func (s *Server) newDbOpImpl() *dbOpImpl {
+	return &dbOpImpl{
+		db: s.mysqlClient,
+	}
+}
 
 func (s *Server) newMysqlClient() (*sql.DB, error) {
 	return sql.Open("mysql", s.conf.MysqlArgs)
@@ -32,14 +47,10 @@ type TableApp struct {
 	//
 	processName 	string
 }
-func (s *Server) getTableAppData() (ret []TableApp, err error) {
+func (opImpl *dbOpImpl) getTableAppData() (ret []TableApp, err error) {
 	var tmp TableApp
 
-	rows, err := s.mysqlClient.Query("select " +
-		"cluster_id, " +
-		"ip_addr, " +
-		"process_name " +
-		"from sharkstore_app")
+	rows, err := opImpl.db.Query("select " + TABLESCHEMA_APP + " from " + TABLENAME_APP)
 	if err != nil {
 		return nil, err
 	}
@@ -78,18 +89,10 @@ type Rule struct {
 type TableGlobalRule struct {
 	Rule
 }
-func (s *Server) getTableGlobalRuleData() (ret []TableGlobalRule, err error) {
+func (opImpl *dbOpImpl) getTableGlobalRuleData() (ret []TableGlobalRule, err error) {
 	var tmp TableGlobalRule
 
-	rows, err := s.mysqlClient.Query( "select " +
-		"name, " +
-		"threshold, " +
-		"durable, " +
-		"count, " +
-		"interval, " +
-		"receiver_role, " +
-		"enable " +
-		"from sharkstore_global_rule")
+	rows, err := opImpl.db.Query( "select " + TABLESCHEMA_GLOBAL_RULE + " from " + TABLENAME_GLOBAL_RULE)
 	if err != nil {
 		return nil, err
 	}
@@ -131,19 +134,10 @@ type TableClusterRule struct {
 	clusterId 		int64
 	Rule
 }
-func (s *Server) getTableClusterRuleData() (ret []TableClusterRule, err error) {
+func (opImpl *dbOpImpl) getTableClusterRuleData() (ret []TableClusterRule, err error) {
 	var tmp TableClusterRule
 
-	rows, err := s.mysqlClient.Query( "select " +
-		"cluster_id, " +
-		"rule_name, " +
-		"threshold, " +
-		"durable, " +
-		"count, " +
-		"interval, " +
-		"receiver_role, " +
-		"enable " +
-		"from sharkstore_cluster_rule")
+	rows, err := opImpl.db.Query( "select " + TABLESCHEMA_CLUSTER_RULE + " from " + TABLENAME_CLUSTER_RULE)
 	if err != nil {
 		return nil, err
 	}
@@ -191,16 +185,10 @@ type TableReceiver struct {
 	mail 		string
 	tel			string
 }
-func (s *Server) getTableReceiveData() (ret []TableReceiver, err error) {
+func (opImpl *dbOpImpl) getTableReceiveData() (ret []TableReceiver, err error) {
 	var tmp TableReceiver
 
-	rows, err := s.mysqlClient.Query("select " +
-		"erp, " +
-		"cluster_id, " +
-		"role" +
-		"mail" +
-		"tel" +
-		"from sharkstore_receiver")
+	rows, err := opImpl.db.Query("select " + TABLESCHEMA_RECEIVER + " from " + TABLENAME_RECEIVER)
 	if err != nil {
 		return nil, err
 	}

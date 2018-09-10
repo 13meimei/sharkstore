@@ -6,14 +6,14 @@ import (
 	"net"
 	"context"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"github.com/gomodule/redigo/redis"
 	"database/sql"
 
 	"model/pkg/alarmpb2"
 	"sync"
 	"net/http"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type appMap				map[string]TableApp
@@ -32,6 +32,8 @@ type Server struct {
 
 	jimClient 	*redis.Pool
 	mysqlClient *sql.DB
+	dbOpImpl 	dbOp
+	cacheOpImpl	cacheOp
 
 	reportClient *http.Client
 	reportQueue chan alarmMessage
@@ -48,9 +50,8 @@ type Server struct {
 	receiverLock 	sync.RWMutex
 }
 
-func newServer(conf *Alarm2ServerConfig) (*Server, error) {
+func NewAlarmServer2(conf *Alarm2ServerConfig) (*Server, error) {
 	s := new(Server)
-
 	s.conf = conf
 
 	var err error
@@ -59,6 +60,8 @@ func newServer(conf *Alarm2ServerConfig) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.cacheOpImpl = s.newCacheOpImpl()
+	s.dbOpImpl = s.newDbOpImpl()
 	s.reportClient = &http.Client{}
 	s.reportQueue = make(chan alarmMessage, 10000)
 	s.context = context.Background()
@@ -66,25 +69,19 @@ func newServer(conf *Alarm2ServerConfig) (*Server, error) {
 	return s, nil
 }
 
-func NewAlarmServer2(conf *Alarm2ServerConfig) (*Server, error) {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", conf.ServerPort))
+func (s *Server) Run() error {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", s.conf.ServerPort))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	s := grpc.NewServer()
-	server, err := newServer(conf)
-	if err != nil {
-		return nil, err
-	}
+	server := grpc.NewServer()
+	alarmpb2.RegisterAlarmServer(server, s)
+	reflection.Register(server)
+	go server.Serve(lis)
 
-	// register alarm server
-	alarmpb2.RegisterAlarmServer(s, server)
-	reflection.Register(s)
-	go s.Serve(lis) // rpc server
-
-	go server.timingDbPulling()
-	go server.aliveChecking()
-	return server, nil
+	go s.timingDbPulling()
+	go s.aliveChecking()
+	return nil
 }
 
 func (s *Server) Alarm(ctx context.Context, req *alarmpb2.AlarmRequest) (*alarmpb2.AlarmResponse, error) {
@@ -120,5 +117,4 @@ func (s *Server) Alarm(ctx context.Context, req *alarmpb2.AlarmRequest) (*alarmp
 		return nil, errors.New("unknown alarm type")
 	}
 }
-
 
