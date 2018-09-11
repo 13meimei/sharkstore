@@ -150,6 +150,7 @@ bool Range::PushHeartBeatMessage() {
     // 设置leader term
     req.set_term(rs.term);
 
+    auto leader_applied = apply_index_;
     for (const auto &pr : rs.replicas) {
         auto peer_status = req.add_peers_status();
 
@@ -161,6 +162,7 @@ bool Range::PushHeartBeatMessage() {
 
         peer_status->set_index(pr.second.match);
         peer_status->set_commit(pr.second.commit);
+        peer_status->set_applied(std::min(pr.second.commit, leader_applied));
         // 检查down peers
         if (pr.second.inactive_seconds > kDownPeerThresholdSecs) {
             peer_status->set_down_seconds(
