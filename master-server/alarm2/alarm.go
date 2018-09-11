@@ -118,11 +118,11 @@ func (s *Server) updateMapApp(data []TableApp) {
 
 	newMap := make(appClusterMap)
 	for _, d := range data {
-		if _, ok := newMap[d.clusterId]; !ok {
-			newMap[d.clusterId] = make(appMap)
+		if _, ok := newMap[d.ClusterId]; !ok {
+			newMap[d.ClusterId] = make(appMap)
 		}
-		dd := newMap[d.clusterId]
-		dd[d.ipAddr] = d
+		dd := newMap[d.ClusterId]
+		dd[d.IpAddr] = d
 	}
 
 	s.appLock.Lock()
@@ -146,7 +146,7 @@ func (s *Server) updateMapGlobalRule(data []TableGlobalRule) {
 
 	newMap := make(globalRuleMap)
 	for _, d := range data {
-		newMap[d.name] = d
+		newMap[d.Name] = d
 	}
 
 	s.globalRuleLock.Lock()
@@ -170,11 +170,11 @@ func (s *Server) updateMapClusterRule(data []TableClusterRule) {
 
 	newMap := make(ruleClusterMap)
 	for _, d := range data {
-		if _, ok := newMap[d.clusterId]; !ok {
-			newMap[d.clusterId] = make(ruleClusterNameMap)
+		if _, ok := newMap[d.ClusterId]; !ok {
+			newMap[d.ClusterId] = make(ruleClusterNameMap)
 		}
-		dd := newMap[d.clusterId]
-		dd[d.name] = d
+		dd := newMap[d.ClusterId]
+		dd[d.Name] = d
 	}
 
 	s.globalRuleLock.Lock()
@@ -198,11 +198,11 @@ func (s *Server) updateMapReceiver(data []TableReceiver) {
 
 	newMap := make(receiverClusterMap)
 	for _, d := range data {
-		if _, ok := newMap[d.clusterId]; !ok {
-			newMap[d.clusterId] = make(receiverMap)
+		if _, ok := newMap[d.ClusterId]; !ok {
+			newMap[d.ClusterId] = make(receiverMap)
 		}
-		dd := newMap[d.clusterId]
-		dd[d.erp] = d
+		dd := newMap[d.ClusterId]
+		dd[d.Erp] = d
 	}
 
 	s.globalRuleLock.Lock()
@@ -239,12 +239,12 @@ func (s *Server) aliveChecking() {
 				for ipAddr, app := range clusterApps {
 					key, err := encodeCacheKey(cacheKey{
 						ALARMRULE_APP_NOTALIVE,
-						app.processName,
-						app.clusterId,
-						app.ipAddr})
+						app.ProcessName,
+						app.ClusterId,
+						app.IpAddr})
 					if err != nil {
 						log.Error("new alive key faileld: process name[%v] cluster id[%v] ip addr[%v]: %v",
-							app.processName, app.clusterId, app.ipAddr, err)
+							app.ProcessName, app.ClusterId, app.IpAddr, err)
 						continue
 					}
 
@@ -253,7 +253,7 @@ func (s *Server) aliveChecking() {
 						continue
 					}
 
-					log.Warn("app not alive: cluster id[%v] ip addr[%v] app name[%v]", clusterId, ipAddr, app.processName)
+					log.Warn("app not alive: cluster id[%v] ip addr[%v] app name[%v]", clusterId, ipAddr, app.ProcessName)
 					apps = append(apps, app)
 				}
 			}
@@ -261,13 +261,13 @@ func (s *Server) aliveChecking() {
 			if len(apps) != 0 {
 				for _, app := range apps {
 					s.handleRuleAlarm(&alarmpb2.RequestHeader{
-						ClusterId: app.clusterId,
-						IpAddr: app.ipAddr,
+						ClusterId: app.ClusterId,
+						IpAddr: app.IpAddr,
 					}, &alarmpb2.RuleAlarmRequest{
 						RuleName: ALARMRULE_APP_NOTALIVE,
 						AlarmValue: 1,
 						CmpType: alarmpb2.AlarmValueCompareType_GREATER_THAN,
-						Remark: []string{fmt.Sprintf("app name: %v", app.processName)},
+						Remark: []string{fmt.Sprintf("app name: %v", app.ProcessName)},
 					})
 				}
 			}

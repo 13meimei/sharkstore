@@ -34,8 +34,8 @@ func (opImpl *cacheOpImpl) setex(key, value string, expireTime int64) error {
 	return opImpl.server.jimSetexCommand(key, value, expireTime)
 }
 
-func (opImpm *cacheOpImpl) exists(key string) error {
-	return opImpm.server.jimExistsCommand(key)
+func (opImp *cacheOpImpl) exists(key string) error {
+	return opImp.server.jimExistsCommand(key)
 }
 
 func encodeCacheKey(key cacheKey) (keyStr string, err error) {

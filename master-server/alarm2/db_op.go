@@ -42,10 +42,10 @@ func (s *Server) newMysqlClient() (*sql.DB, error) {
 
 type TableApp struct {
 	// pk
-	clusterId 		int64
-	ipAddr 			string
+	ClusterId 		int64
+	IpAddr 			string
 	//
-	processName 	string
+	ProcessName 	string
 }
 func (opImpl *dbOpImpl) getTableAppData() (ret []TableApp, err error) {
 	var tmp TableApp
@@ -57,16 +57,16 @@ func (opImpl *dbOpImpl) getTableAppData() (ret []TableApp, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&tmp.clusterId,
-			&tmp.ipAddr,
-			&tmp.processName)
+		err := rows.Scan(&tmp.ClusterId,
+			&tmp.IpAddr,
+			&tmp.ProcessName)
 		if err != nil {
 			return nil, err
 		}
 		ret = append(ret, TableApp{
-			clusterId: 		tmp.clusterId,
-			ipAddr: 		tmp.ipAddr,
-			processName: 	tmp.processName,
+			ClusterId: 		tmp.ClusterId,
+			IpAddr: 		tmp.IpAddr,
+			ProcessName: 	tmp.ProcessName,
 		})
 	}
 	err = rows.Err()
@@ -78,13 +78,13 @@ func (opImpl *dbOpImpl) getTableAppData() (ret []TableApp, err error) {
 }
 
 type Rule struct {
-	name 			string
-	threshold   	float64
-	durable 		int64
-	count 			int64
-	interval    	int64
-	receiverRole 	string
-	enable 			int64
+	Name 			string
+	Threshold   	float64
+	Durable 		int64
+	Count 			int64
+	Interval    	int64
+	ReceiverRole 	string
+	Enable 			int64
 }
 type TableGlobalRule struct {
 	Rule
@@ -99,25 +99,26 @@ func (opImpl *dbOpImpl) getTableGlobalRuleData() (ret []TableGlobalRule, err err
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&tmp.name,
-			&tmp.threshold,
-			&tmp.durable,
-			&tmp.count,
-			&tmp.interval,
-			&tmp.receiverRole,
-			&tmp.enable)
+		err := rows.Scan(
+			&tmp.Name,
+			&tmp.Threshold,
+			&tmp.Durable,
+			&tmp.Count,
+			&tmp.Interval,
+			&tmp.ReceiverRole,
+			&tmp.Enable)
 		if err != nil {
 			return nil, err
 		}
 		ret = append(ret, TableGlobalRule{
 			Rule{
-				name: 			tmp.name,
-				threshold: 		tmp.threshold,
-				durable: 		tmp.durable,
-				count: 			tmp.count,
-				interval: 		tmp.interval,
-				receiverRole: 	tmp.receiverRole,
-				enable: 		tmp.enable,
+				Name: 			tmp.Name,
+				Threshold: 		tmp.Threshold,
+				Durable: 		tmp.Durable,
+				Count: 			tmp.Count,
+				Interval: 		tmp.Interval,
+				ReceiverRole: 	tmp.ReceiverRole,
+				Enable: 		tmp.Enable,
 			},
 		})
 	}
@@ -131,7 +132,7 @@ func (opImpl *dbOpImpl) getTableGlobalRuleData() (ret []TableGlobalRule, err err
 
 type TableClusterRule struct {
 	// pk
-	clusterId 		int64
+	ClusterId 		int64
 	Rule
 }
 func (opImpl *dbOpImpl) getTableClusterRuleData() (ret []TableClusterRule, err error) {
@@ -144,27 +145,28 @@ func (opImpl *dbOpImpl) getTableClusterRuleData() (ret []TableClusterRule, err e
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&tmp.clusterId,
-			&tmp.name,
-			&tmp.threshold,
-			&tmp.durable,
-			&tmp.count,
-			&tmp.interval,
-			&tmp.receiverRole,
-			&tmp.enable)
+		err := rows.Scan(
+			&tmp.ClusterId,
+			&tmp.Name,
+			&tmp.Threshold,
+			&tmp.Durable,
+			&tmp.Count,
+			&tmp.Interval,
+			&tmp.ReceiverRole,
+			&tmp.Enable)
 		if err != nil {
 			return nil, err
 		}
 		ret = append(ret, TableClusterRule{
-			clusterId: 		tmp.clusterId,
+			ClusterId: 		tmp.ClusterId,
 			Rule: Rule{
-				name: 			tmp.name,
-				threshold: 		tmp.threshold,
-				durable: 		tmp.durable,
-				count: 			tmp.count,
-				interval: 		tmp.interval,
-				receiverRole: 	tmp.receiverRole,
-				enable: 		tmp.enable,
+				Name: 			tmp.Name,
+				Threshold: 		tmp.Threshold,
+				Durable: 		tmp.Durable,
+				Count: 			tmp.Count,
+				Interval: 		tmp.Interval,
+				ReceiverRole: 	tmp.ReceiverRole,
+				Enable: 		tmp.Enable,
 			},
 		})
 	}
@@ -178,12 +180,12 @@ func (opImpl *dbOpImpl) getTableClusterRuleData() (ret []TableClusterRule, err e
 
 type TableReceiver struct {
 	//pk
-	erp 		string
-	clusterId 	int64
+	Erp 		string
+	ClusterId 	int64
 	//
-	role 		string
-	mail 		string
-	tel			string
+	Role 		string
+	Mail 		string
+	Tel			string
 }
 func (opImpl *dbOpImpl) getTableReceiveData() (ret []TableReceiver, err error) {
 	var tmp TableReceiver
@@ -195,20 +197,21 @@ func (opImpl *dbOpImpl) getTableReceiveData() (ret []TableReceiver, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&tmp.erp,
-			&tmp.clusterId,
-			&tmp.role,
-			&tmp.mail,
-			&tmp.tel)
+		err := rows.Scan(
+			&tmp.Erp,
+			&tmp.ClusterId,
+			&tmp.Role,
+			&tmp.Mail,
+			&tmp.Tel)
 		if err != nil {
 			return nil, err
 		}
 		ret = append(ret, TableReceiver{
-			erp: 			tmp.erp,
-			clusterId: 		tmp.clusterId,
-			role: 			tmp.role,
-			mail: 			tmp.mail,
-			tel: 			tmp.tel,
+			Erp: 			tmp.Erp,
+			ClusterId: 		tmp.ClusterId,
+			Role: 			tmp.Role,
+			Mail: 			tmp.Mail,
+			Tel: 			tmp.Tel,
 		})
 	}
 	err = rows.Err()

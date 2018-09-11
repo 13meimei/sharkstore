@@ -63,8 +63,7 @@ message RuleAlarmRequest {
 
 //
 message AppHeartbeatRequest {
-    string app_name             = 1;
-    int64 hb_interval_time      = 2;
+    int64 hb_interval_time      = 1;
 }
 
 //

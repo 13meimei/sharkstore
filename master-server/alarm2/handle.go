@@ -10,12 +10,14 @@ import (
 
 func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb2.AppHeartbeatRequest) (resp *alarmpb2.AlarmResponse, err error) {
 	log.Debug("handle app heartbeat request: %v", req)
-	resp = new(alarmpb2.AlarmResponse)
+	resp = &alarmpb2.AlarmResponse{
+		Header: &alarmpb2.ResponseHeader{},
+	}
 
 	// eg. app_not_alive
 	aliveKey, err := encodeCacheKey(cacheKey{
 		ALARMRULE_APP_NOTALIVE,
-		req.GetAppName(),
+		header.GetAppName(),
 		header.GetClusterId(),
 		header.GetIpAddr()})
 	if err != nil {
@@ -60,50 +62,50 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 
 	// enable?
 	log.Debug("rule alarm: cluster id[%v] rule name[%v] enable[%v]",
-		header.GetClusterId(), req.GetRuleName(), r.enable)
-	if r.enable == 0 {
+		header.GetClusterId(), req.GetRuleName(), r.Enable)
+	if r.Enable == 0 {
 		return &alarmpb2.AlarmResponse{}, nil
 	}
 
 	// threshold
-	var threshold bool = false
+	var thresholdJudge bool = false
 
 	switch req.GetCmpType() {
 	case alarmpb2.AlarmValueCompareType_EQUAL:
 		log.Debug("rule alarm: cluster id[%v] ip addr[%v] rule name[%v] alarm value[%v] == threshold[%v]",
-			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.threshold)
-		if req.GetAlarmValue() == r.threshold {
-			threshold = true
+			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.Threshold)
+		if req.GetAlarmValue() == r.Threshold {
+			thresholdJudge = true
 		}
 	case alarmpb2.AlarmValueCompareType_GREATER_THAN:
 		log.Debug("rule alarm: cluster id[%v] ip addr[%v] rule name[%v] alarm value[%v] > threshold[%v]",
-			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.threshold)
-		if req.GetAlarmValue() > r.threshold {
-			threshold = true
+			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.Threshold)
+		if req.GetAlarmValue() > r.Threshold {
+			thresholdJudge = true
 		}
 	case alarmpb2.AlarmValueCompareType_LESS_THAN:
 		log.Debug("rule alarm: cluster id[%v] ip addr[%v] rule name[%v] alarm value[%v] < threshold[%v]",
-			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.threshold)
-		if req.GetAlarmValue() < r.threshold {
-			threshold = true
+			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.Threshold)
+		if req.GetAlarmValue() < r.Threshold {
+			thresholdJudge = true
 		}
 	case alarmpb2.AlarmValueCompareType_NOT_EQUAL:
 		log.Debug("rule alarm: cluster id[%v] ip addr[%v] rule name[%v] alarm value[%v] != threshold[%v]",
-			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.threshold)
-		if req.GetAlarmValue() != r.threshold {
-			threshold = true
+			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.Threshold)
+		if req.GetAlarmValue() != r.Threshold {
+			thresholdJudge = true
 		}
 	case alarmpb2.AlarmValueCompareType_NOT_GREATER_THAN:
 		log.Debug("rule alarm: cluster id[%v] ip addr[%v] rule name[%v] alarm value[%v] <= threshold[%v]",
-			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.threshold)
-		if req.GetAlarmValue() <= r.threshold {
-			threshold = true
+			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.Threshold)
+		if req.GetAlarmValue() <= r.Threshold {
+			thresholdJudge = true
 		}
 	case alarmpb2.AlarmValueCompareType_NOT_LESS_THAN:
 		log.Debug("rule alarm: cluster id[%v] ip addr[%v] rule name[%v] alarm value[%v] >= threshold[%v]",
-			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.threshold)
-		if req.GetAlarmValue() >= r.threshold {
-			threshold = true
+			header.GetClusterId(), header.GetIpAddr(), req.GetRuleName(), req.GetAlarmValue(), r.Threshold)
+		if req.GetAlarmValue() >= r.Threshold {
+			thresholdJudge = true
 		}
 	default:
 		return &alarmpb2.AlarmResponse{
@@ -114,7 +116,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 		}, nil
 	}
 
-	if threshold == false {
+	if thresholdJudge == false {
 		return &alarmpb2.AlarmResponse{}, nil
 	}
 
@@ -144,7 +146,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 		}
 
 		// expire time = r.durable
-		err = s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.durable)
+		err = s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.Durable)
 		if err != nil {
 			return nil, err
 		}
@@ -158,11 +160,11 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 			ruleValue.Count++
 		}
 
-		if ruleValue.Count >= r.count {
+		if ruleValue.Count >= r.Count {
 			// append report
-			s.ruleAlarmReportAppend(header.GetClusterId(), header.GetAppName(), header.GetIpAddr(), req, r.threshold)
+			s.ruleAlarmReportAppend(header.GetClusterId(), header.GetAppName(), header.GetIpAddr(), req, r.Threshold)
 
-			ruleValue.TriggerTime = curTime + r.interval
+			ruleValue.TriggerTime = curTime + r.Interval
 			ruleValue.Count = 0
 
 			ruleValueStr, err := encodeCacheValue(ruleValue)
@@ -171,7 +173,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 			}
 
 			// expire time = r.interval + r.durable
-			s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.interval + r.durable)
+			s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.Interval + r.Durable)
 		}
 	}
 	return &alarmpb2.AlarmResponse{}, nil

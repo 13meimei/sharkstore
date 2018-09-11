@@ -48,9 +48,9 @@ func (c *Client) AlarmAppHeartbeat(clusterId int64, ipAddr, appName string, inte
 			Type: alarmpb2.AlarmType_APP_HEARTBEAT,
 			ClusterId: clusterId,
 			IpAddr: ipAddr,
+			AppName: appName,
 		},
 		AppHeartbeat: &alarmpb2.AppHeartbeatRequest{
-			AppName: appName,
 			HbIntervalTime: intervalTime,
 		},
 	})

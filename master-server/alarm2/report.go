@@ -62,8 +62,8 @@ func (s *Server) getReportReceivers(msg alarmMessage) ([]string, []string, error
 		log.Warn("no system receiver")
 	} else {
 		for _, r := range systemRecvers {
-			mail = append(mail, r.mail)
-			sms = append(sms, r.tel)
+			mail = append(mail, r.Mail)
+			sms = append(sms, r.Tel)
 		}
 	}
 	// cluster receiver
@@ -72,8 +72,8 @@ func (s *Server) getReportReceivers(msg alarmMessage) ([]string, []string, error
 		log.Warn("no cluster[%v] receiver", msg.clusterId)
 	} else {
 		for _, r := range clusterRecvers {
-			mail = append(mail, r.mail)
-			sms = append(sms, r.tel)
+			mail = append(mail, r.Mail)
+			sms = append(sms, r.Tel)
 		}
 	}
 
