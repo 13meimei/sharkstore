@@ -400,9 +400,9 @@ static int load_watch_config(IniContext *ini_context) {
     }
 
     ds_config.watch_config.watcher_thread_priority =
-            iniGetIntValue(section, "watcher_thread_priority", ini_context, 21);
-    if (ds_config.watch_config.watcher_thread_priority <= 0) {
-        ds_config.watch_config.watcher_thread_priority = 21;
+            iniGetIntValue(section, "watcher_thread_priority", ini_context, 0);
+    if (ds_config.watch_config.watcher_thread_priority < 0) {
+        ds_config.watch_config.watcher_thread_priority = 0;
     }
 
     return 0;

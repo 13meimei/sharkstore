@@ -2631,7 +2631,7 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 	for _, lockInfo := range reply.Values {
 		tInfo := new(models.LockShow)
 		tInfo.K = fmt.Sprintf("%v", lockInfo[0])
-		value := fmt.Sprintf("%s", lockInfo[1])//todo parse
+		value := fmt.Sprintf("%v", lockInfo[1])//todo parse
 		if len(value) > 0 {
 			newValue := new(kvrpcpb.LockValue)
 			if err = newValue.Unmarshal([]byte(value)); err != nil {

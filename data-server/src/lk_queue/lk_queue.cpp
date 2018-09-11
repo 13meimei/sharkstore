@@ -21,13 +21,14 @@ void *lk_queue_pop(lock_free_queue_t *lk_queue) {
 
 #else
 
-#include <tbb/concurrent_queue.h>¬
+#include <tbb/concurrent_queue.h>
 struct lock_free_queue_s {
     tbb::concurrent_queue<void *> lk_queue;
 };
 
 bool lk_queue_push(lock_free_queue_t *lk_queue, void *entry) {
-    return lk_queue->lk_queue.push(entry);
+    lk_queue->lk_queue.push(entry);
+    return true;
 }
 
 void *lk_queue_pop(lock_free_queue_t *lk_queue) {
