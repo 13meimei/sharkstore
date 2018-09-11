@@ -41,6 +41,30 @@ else()
 endif()
 MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
+# use intel tbb
+OPTION (ENABLE_TBB "Use Intel TBB" ON)
+MESSAGE(STATUS ENABLE_TBB=${ENABLE_TBB})
+if(ENABLE_TBB)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTBB -ltbb")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTBB -ltbb")
+
+    find_library(TBB_LIB tbb)
+    if(NOT TBB_LIB)
+        message(FATAL_ERROR "TBB library not found")
+    else()
+        message(STATUS "Found TBB C++ library: " ${TBB_LIB})
+    endif()
+
+    # find grpc header
+    find_path(TBB_HEADER_PATH tbb/concurrent_queue.h)
+    if(NOT TBB_HEADER_PATH )
+        message(FATAL_ERROR "TBB headers not found")
+    else()
+        message(STATUS "Found TBB headers path: " ${TBB_HEADER_PATH})
+        include_directories(${TBB_HEADER_PATH})
+    endif()
+endif()
+
 OPTION(BLOB_EXTEND_OPTIONS "Enable blob extend options" OFF)
 MESSAGE(STATUS BLOB_EXTEND_OPTIONS=${BLOB_EXTEND_OPTIONS})
 if(BLOB_EXTEND_OPTIONS)
@@ -83,20 +107,20 @@ find_package(Protobuf REQUIRED)
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 
 
-# find grpc 
+# find grpc
 find_library(GRPC_LIB grpc)
 if(NOT GRPC_LIB)
     message(FATAL_ERROR "Grpc library not found")
 else()
     message(STATUS "Found Grpc library: " ${GRPC_LIB})
-endif() 
+endif()
 
 find_library(GRPC_CPP_LIB grpc++)
 if(NOT GRPC_CPP_LIB)
     message(FATAL_ERROR "Grpc++ library not found")
 else()
     message(STATUS "Found Grpc C++ library: " ${GRPC_CPP_LIB})
-endif() 
+endif()
 
 # find grpc header
 find_path(GRPC_HEADER_PATH grpc/grpc.h)
@@ -105,7 +129,7 @@ if(NOT GRPC_HEADER_PATH )
 else()
     message(STATUS "Found Grpc headers path: " ${GRPC_HEADER_PATH})
     include_directories(${GRPC_HEADER_PATH})
-endif() 
+endif()
 
 
 # find rocksdb
@@ -114,7 +138,7 @@ if(NOT ROCKSDB_LIB)
     message(FATAL_ERROR "Rocksdb library not found")
 else()
     message(STATUS "Found Rocksdb library: " ${ROCKSDB_LIB})
-endif() 
+endif()
 
 find_path(ROCKSDB_HEADER_PATH rocksdb/db.h)
 if(NOT ROCKSDB_HEADER_PATH)
@@ -122,16 +146,16 @@ if(NOT ROCKSDB_HEADER_PATH)
 else()
     message(STATUS "Found Rocksdb headers path: " ${ROCKSDB_HEADER_PATH})
     include_directories(${ROCKSDB_HEADER_PATH})
-endif() 
+endif()
 
 
 # find fastcommon
-find_library(FASTCOMMON_LIB fastcommon) 
+find_library(FASTCOMMON_LIB fastcommon)
 if(NOT FASTCOMMON_LIB)
     message(FATAL_ERROR "Fastcommon library not found")
 else()
     message(STATUS "Found Fastcommon library: " ${FASTCOMMON_LIB})
-endif() 
+endif()
 
 find_path(FASTCOMMON_HEADER_PATH fastcommon/fast_task_queue.h)
 if(NOT FASTCOMMON_HEADER_PATH )
@@ -139,7 +163,7 @@ if(NOT FASTCOMMON_HEADER_PATH )
 else()
     message(STATUS "Found Fastcommon headers path: " ${FASTCOMMON_HEADER_PATH})
     include_directories(${FASTCOMMON_HEADER_PATH})
-endif() 
+endif()
 
 set(SOURCES
     src/server/main.cpp
@@ -236,12 +260,12 @@ if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)
 endif()
 
-foreach(f IN LISTS SOURCES) 
-    # remove "src/" 
-    string(SUBSTRING ${f} 4 -1 fname) 
-    set_source_files_properties(${f} PROPERTIES 
-        COMPILE_DEFINITIONS "__FNAME__=\"${fname}\"") 
-endforeach() 
+foreach(f IN LISTS SOURCES)
+    # remove "src/"
+    string(SUBSTRING ${f} 4 -1 fname)
+    set_source_files_properties(${f} PROPERTIES
+        COMPILE_DEFINITIONS "__FNAME__=\"${fname}\"")
+endforeach()
 
 add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
 target_link_libraries(data-server ${depend_LIBRARYS})

@@ -1,7 +1,7 @@
 #include "lk_queue.h"
 
+#ifndef TBB
 #include "concurrentqueue.h"
-
 struct lock_free_queue_s {
     moodycamel::ConcurrentQueue<void *> lk_queue;
 };
@@ -19,6 +19,27 @@ void *lk_queue_pop(lock_free_queue_t *lk_queue) {
     return nullptr;
 }
 
+#else
+
+#include <tbb/concurrent_queue.h>¬
+struct lock_free_queue_s {
+    tbb::concurrent_queue<void *> lk_queue;
+};
+
+bool lk_queue_push(lock_free_queue_t *lk_queue, void *entry) {
+    return lk_queue->lk_queue.push(entry);
+}
+
+void *lk_queue_pop(lock_free_queue_t *lk_queue) {
+    void *item;
+    if (lk_queue->lk_queue.try_pop(item)) {
+        return item;
+    }
+
+    return nullptr;
+}
+#endif
+
 lock_free_queue_t *new_lk_queue() {
     return new lock_free_queue_t;
 }
@@ -26,5 +47,3 @@ lock_free_queue_t *new_lk_queue() {
 void delete_lk_queue(lock_free_queue_t *lk_queue) {
     delete lk_queue;
 }
-
-
