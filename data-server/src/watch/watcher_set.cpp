@@ -164,7 +164,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                     std::string endKey(key);
                     if (0 != range::WatchEncodeAndDecode::NextComparableBytes(key.data(), key.length(), endKey)) {
                         //to do set error message
-                        FLOG_ERROR("AddWatcher fail, NextComparableBytes execute error.");
+                        FLOG_ERROR("AddWatcher error, NextComparableBytes execute error.");
                         return WATCH_WATCHER_NOT_NEED;
                     }
 
@@ -194,14 +194,14 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                 ret = store_->Get(key, &val);
                 if(ret.ok()){
                     if (!watch::Watcher::DecodeValue(&version, &userVal, &ext, val)) {
-                        FLOG_ERROR("AddWatcher Decode error, key: %s", EncodeToHexString(key).c_str());
+                        FLOG_ERROR("AddWatcher error,Decode  key: %s", EncodeToHexString(key).c_str());
                         version = 0;
                         return WATCH_WATCHER_NOT_NEED;
                     }
                     result.first = 1;
                     result.second = true;
                 }else if(ret.code() != Status::kNotFound) {
-                    FLOG_ERROR("AddWatcher Get error, key: %s err:%s", EncodeToHexString(key).c_str(), ret.ToString().c_str());
+                    FLOG_ERROR("AddWatcher error,Get key: %s err:%s", EncodeToHexString(key).c_str(), ret.ToString().c_str());
                     version = 0;
                     return WATCH_WATCHER_NOT_NEED;
                 }
@@ -289,12 +289,12 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 
         code = WATCH_OK;
 
-        FLOG_INFO("watcher add success, count:%" PRIu64 " queue_size:%" PRId64 " watcher_id[%" PRIu64 "] key: [%s]  take time:%" PRId64 " ms",
+        FLOG_INFO("AddWatcher success, count:%" PRIu64 " queue_size:%" PRId64 " watcher_id[%" PRIu64 "] key: [%s]  take time:%" PRId64 " ms",
                   watcher_map_it->second->mapKeyWatcher.size(), watcher_queue_.size(), w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), endTime - beginTime);
     } else {
         code = WATCH_WATCHER_EXIST;
 
-        FLOG_ERROR("watcher add failed, watcher_id[%" PRIu64 "] exists, key: [%s] take time:%" PRId64 " ms",
+        FLOG_ERROR("AddWatcher error, watcher_id[%" PRIu64 "] exists, key: [%s] take time:%" PRId64 " ms",
                   w_ptr->GetWatcherId(), EncodeToHexString(key).c_str(), endTime - beginTime);
     }
     return code;

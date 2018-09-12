@@ -47,6 +47,30 @@ set(test_SRCS
     unittest/util_unittest.cpp
 )
 
+OPTION (ENABLE_TBB "Use Intel TBB" ON)
+MESSAGE(STATUS ENABLE_TBB=${ENABLE_TBB})
+if(ENABLE_TBB)
+     find_library(TBB_LIB tbb)
+     if(NOT TBB_LIB)
+         message(FATAL_ERROR "TBB library not found")
+     else()
+         message(STATUS "Found TBB C++ library: " ${TBB_LIB})
+     endif()
+
+     # find grpc header
+     find_path(TBB_HEADER_PATH tbb/concurrent_queue.h)
+     if(NOT TBB_HEADER_PATH )
+         message(FATAL_ERROR "TBB headers not found")
+     else()
+         message(STATUS "Found TBB headers path: " ${TBB_HEADER_PATH})
+         include_directories(${TBB_HEADER_PATH})
+     endif()
+ endif()
+
+if(ENABLE_TBB)
+     list(APPEND test_DEPEND_LIBS tbb)
+endif()
+
 foreach(f IN LISTS test_SRCS)
     set_source_files_properties(${f} PROPERTIES
             COMPILE_DEFINITIONS "__FNAME__=\"${f}\"")
@@ -67,3 +91,4 @@ add_subdirectory(range)
 if (BUILD_NET)
     add_subdirectory(net)
 endif()
+

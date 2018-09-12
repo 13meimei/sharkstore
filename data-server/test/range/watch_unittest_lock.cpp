@@ -19,6 +19,7 @@
 
 #include "watch/watcher.h"
 #include "common/socket_base.h"
+#include "test_public_funcs.h"
 
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
 
@@ -87,6 +88,7 @@ protected:
 
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
+        ds_config.range_config.recover_concurrency = 10;
 
         sf_socket_thread_config_t config;
         ds_config.watch_config.watcher_thread_priority = 23;
@@ -416,7 +418,7 @@ protected:
     int64_t now;
     SocketBaseMock socket_;
 };
-
+/*
 metapb::Range *genRange1() {
     //watch::Watcher watcher;
     auto meta = new metapb::Range;
@@ -494,6 +496,7 @@ metapb::Range *genRange2() {
 
     return meta;
 }
+*/
 
 TEST_F(LockTest, watch_lock_get) {
     //not exist

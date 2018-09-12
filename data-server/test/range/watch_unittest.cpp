@@ -23,6 +23,8 @@
 #include "common/socket_base.h"
 #include "lk_queue/lk_queue.h"
 
+#include "test_public_funcs.h"
+
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
 char level[8] = "debug";
 
@@ -83,6 +85,7 @@ protected:
 
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
+        ds_config.range_config.recover_concurrency = 10;
 
         sf_socket_thread_config_t config;
         sf_socket_status_t status = {0};
@@ -121,6 +124,7 @@ protected:
     SocketBaseMock socket_;
 };
 
+/*
 metapb::Range *genRange1() {
     //watch::Watcher watcher;
     auto meta = new metapb::Range;
@@ -210,6 +214,7 @@ metapb::Range *genRange2() {
 
     return meta;
 }
+*/
 
 template<typename T>
 class ConcurrentQueueTests {

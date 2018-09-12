@@ -20,10 +20,11 @@
 #include "watch/watcher.h"
 #include "watch/watcher_set.h"
 #include "common/socket_base.h"
+#include "test_public_funcs.h"
 
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
-metapb::Range *genRange2();
-metapb::Range *genRange1();
+extern metapb::Range *genRange2();
+extern metapb::Range *genRange1();
 
 char level[8] = "WARN";
 
@@ -86,6 +87,7 @@ protected:
 
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
+        ds_config.range_config.recover_concurrency = 10;
 
         sf_socket_thread_config_t config;
 
@@ -316,83 +318,6 @@ protected:
     SocketBaseMock socket_;
 };
 
-metapb::Range *genRange1() {
-    //watch::Watcher watcher;
-    auto meta = new metapb::Range;
-    
-    std::vector<std::string*> keys;
-    keys.clear();
-    std::string keyStart("");
-    std::string keyEnd("");
-    std::string k1("01003"), k2("01004");
-
-    keys.push_back(&k1);
-    watch::Watcher watcher1(1, keys);
-    watcher1.EncodeKey(&keyStart, 1, keys);
-
-    keys.clear();
-    keys.push_back(&k2);
-    watch::Watcher watcher2(1, keys);
-    watcher2.EncodeKey(&keyEnd, 1, keys);
-
-    meta->set_id(1);
-    //meta->set_start_key("01003");
-    //meta->set_end_key("01004");
-    meta->set_start_key(keyStart);
-    meta->set_end_key(keyEnd);
-
-    meta->mutable_range_epoch()->set_conf_ver(1);
-    meta->mutable_range_epoch()->set_version(1);
-
-    meta->set_table_id(1);
-
-    auto peer = meta->add_peers();
-    peer->set_id(1);
-    peer->set_node_id(1);
-
-    peer = meta->add_peers();
-    peer->set_id(2);
-    peer->set_node_id(2);
-
-    return meta;
-}
-
-metapb::Range *genRange2() {
-    //watch::Watcher watcher;
-    auto meta = new metapb::Range;
-
-    std::vector<std::string*> keys;
-    keys.clear();
-    std::string keyStart("");
-    std::string keyEnd("");
-    std::string k1("01004"), k2("01005");
-
-    keys.push_back(&k1);
-    watch::Watcher watcher1(1, keys);
-    watcher1.EncodeKey(&keyStart, 1, keys);
-
-    keys.clear();
-    keys.push_back(&k2);
-    watch::Watcher watcher2(1, keys);
-    watcher2.EncodeKey(&keyEnd, 1, keys);
-
-    meta->set_id(2);
-    //meta->set_start_key("01004");
-    //meta->set_end_key("01005");
-    meta->set_start_key(keyStart);
-    meta->set_end_key(keyEnd);
-
-    meta->mutable_range_epoch()->set_conf_ver(1);
-    meta->mutable_range_epoch()->set_version(1);
-
-    meta->set_table_id(1);
-
-    auto peer = meta->add_peers();
-    peer->set_id(1);
-    peer->set_node_id(1);
-
-    return meta;
-}
 
 TEST_F(WatchTest, pure_get_single) {
 

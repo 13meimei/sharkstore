@@ -45,9 +45,6 @@ MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 OPTION (ENABLE_TBB "Use Intel TBB" ON)
 MESSAGE(STATUS ENABLE_TBB=${ENABLE_TBB})
 if(ENABLE_TBB)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTBB -ltbb")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DTBB -ltbb")
-
     find_library(TBB_LIB tbb)
     if(NOT TBB_LIB)
         message(FATAL_ERROR "TBB library not found")
@@ -131,7 +128,6 @@ else()
     include_directories(${GRPC_HEADER_PATH})
 endif()
 
-
 # find rocksdb
 find_library(ROCKSDB_LIB rocksdb)
 if(NOT ROCKSDB_LIB)
@@ -147,7 +143,6 @@ else()
     message(STATUS "Found Rocksdb headers path: " ${ROCKSDB_HEADER_PATH})
     include_directories(${ROCKSDB_HEADER_PATH})
 endif()
-
 
 # find fastcommon
 find_library(FASTCOMMON_LIB fastcommon)
@@ -260,6 +255,10 @@ if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)
 endif()
 
+if(ENABLE_TBB)
+    list(APPEND depend_LIBRARYS tbb)
+endif()
+
 foreach(f IN LISTS SOURCES)
     # remove "src/"
     string(SUBSTRING ${f} 4 -1 fname)
@@ -267,7 +266,7 @@ foreach(f IN LISTS SOURCES)
         COMPILE_DEFINITIONS "__FNAME__=\"${fname}\"")
 endforeach()
 
-add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
+add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp test/range/test_public_funcs.h)
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(
