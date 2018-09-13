@@ -2,11 +2,13 @@ package alarm2
 
 import (
 	"testing"
-	"model/pkg/alarmpb2"
-	"github.com/muesli/cache2go"
+
+	"fmt"
 	"time"
 	"errors"
-	"fmt"
+
+	"github.com/muesli/cache2go"
+	"model/pkg/alarmpb2"
 )
 
 var conf = Alarm2ServerConfig{
@@ -133,15 +135,20 @@ func TestHandle(t *testing.T) {
 	header := newRequestHeader()
 	hbReq := newAppHeartbeatRequest()
 	resp, err := s.handleAppHeartbeat(header, hbReq)
-	if len(resp.GetHeader().GetError()) != 0 || resp.GetHeader().GetCode() != int64(alarmpb2.AlarmResponseCode_ALARM_OK) {
+	if len(resp.GetHeader().GetError()) != 0 || resp.GetHeader().GetCode() != int64(alarmpb2.AlarmResponseCode_OK) {
 		t.Fatalf("handle app heartbeat failed: header error: %v", resp.GetHeader().GetError())
 	}
 	if err != nil {
 		t.Fatalf("handle app heartbeat failed: %v", err)
 	}
+	aliveKey, _ := encodeCacheKey(cacheKey{
+		ALARMRULE_APP_NOTALIVE,
+		header.GetAppName(),
+		header.GetClusterId(),
+		header.GetIpAddr()})
 	for i := 0; i < 7; i++ { // check cache2go expire
 		time.Sleep(time.Second)
-		fmt.Println("exists: ", s.cacheOpImpl.exists("app_not_alive_gateway_12_1.2.3.4"))
+		fmt.Println("exists: ", s.cacheOpImpl.exists(aliveKey))
 	}
 
 	// test db op
@@ -176,6 +183,10 @@ func TestHandle(t *testing.T) {
 	s.tableClusterRulePulling()
 	s.tableReceiverPulling()
 
+	// set key to cache
+	vStr, _ := encodeCacheValue(cacheValue{})
+	s.cacheOpImpl.setex(aliveKey, vStr, hbReq.GetHbIntervalTime()*2)
+
 	if _, err := s.handleRuleAlarm(&alarmpb2.RequestHeader{
 		ClusterId: gAppClusterId,
 		IpAddr: gAppIpAddr,
@@ -190,20 +201,15 @@ func TestHandle(t *testing.T) {
 	}
 
 	to := time.NewTimer(3*time.Second)
+	loop:
 	for {
 		select {
 		case <-to.C:
 			t.Fatalf("no alarm message in report queue")
 		case msg := <-s.reportQueue:
-			fmt.Printf("report message: +%v", msg)
+			fmt.Printf("report message: %v", msg)
+			break loop
 		}
 	}
 
-	//exitTime := time.NewTimer(10*time.Second)
-	//for {
-	//	select {
-	//	case <-exitTime.C:
-	//		s.context.Done()
-	//	}
-	//}
 }

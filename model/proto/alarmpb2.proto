@@ -9,16 +9,17 @@ option (gogoproto.sizer_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 
 enum AlarmResponseCode {
-    ALARM_OK        = 0;
-    ALARM_ERROR     = 1;
+    OK        = 0;
+    ERROR     = 1;
 }
 
 enum AlarmType {
-    APP_HEARTBEAT       = 0;
-    RULE_ALARM          = 1;
-    APP_NOT_ALIVE       = 2;
-    GATEWAY_SLOWLOG     = 3;
-    GATEWAY_ERRORLOG    = 4;
+    INVALID             = 0;
+    APP_HEARTBEAT       = 1;
+    RULE_ALARM          = 2;
+    APP_NOT_ALIVE       = 3;
+    GATEWAY_SLOWLOG     = 4;
+    GATEWAY_ERRORLOG    = 5;
 }
 
 enum AlarmValueCompareType {
