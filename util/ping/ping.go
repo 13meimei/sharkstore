@@ -3,12 +3,14 @@ package ping
 import (
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
-	"time"
-	"strings"
+
+	"master-server/alarm2"
+	"util/log"
 )
+
+var alarmClient *alarm2.Client
 
 func getAppInfo() (app string, ip []string) {
 	app = filepath.Base(os.Args[0])
@@ -29,31 +31,23 @@ func getAppInfo() (app string, ip []string) {
 	return app, ip
 }
 
-func Ping(clusterId string, port int64, pingBaseUrl string, ping_interval int64) {
-	app, ips := getAppInfo()
-	if len(ips) == 0 {
+func Ping(alarmServerAddr string, clusterId int64, appPort int, ping_interval int64) {
+	if alarmClient == nil {
+		var err error
+		alarmClient, err = alarm2.NewAlarmClient2(alarmServerAddr)
+		if err != nil {
+			log.Error("new alarm client failed: %v", err)
+			return
+		}
+	}
+	appName, appIps := getAppInfo()
+	if len(appIps) == 0 {
+		log.Error("get app ips len is 0")
 		return
 	}
-
-	url := fmt.Sprintf(`http://%s/app/ping?cluster_id=%s&app_name=%s&ip_addrs=%s&port=%d&ping_interval=%d`,
-		pingBaseUrl,
-		clusterId,
-		app,
-		strings.Join(ips, ","),
-		port,
-		ping_interval)
-
-	timer := time.NewTicker(time.Duration(ping_interval) * time.Second)
-	for {
-		select {
-		case <-timer.C:
-			resp, err := http.Get(url)
-			if err != nil {
-				fmt.Println(err)
-			}
-			if resp != nil {
-				resp.Body.Close()
-			}
-		}
+	appAddr := fmt.Sprintf("%v:%v", appIps[0], appPort)
+	if err := alarmClient.AlarmAppHeartbeat(clusterId, appAddr, appName, ping_interval); err != nil {
+		log.Error("do alarm app heartbeat failed: %v", err)
+		return
 	}
 }

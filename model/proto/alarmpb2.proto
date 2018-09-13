@@ -96,7 +96,7 @@ message AlarmResponse {
 }
 
 message ResponseHeader {
-    int64 code          = 1;
-    string error        = 2;
+    AlarmResponseCode   code    = 1;
+    string error                = 2;
 }
 

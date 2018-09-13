@@ -135,7 +135,7 @@ func TestHandle(t *testing.T) {
 	header := newRequestHeader()
 	hbReq := newAppHeartbeatRequest()
 	resp, err := s.handleAppHeartbeat(header, hbReq)
-	if len(resp.GetHeader().GetError()) != 0 || resp.GetHeader().GetCode() != int64(alarmpb2.AlarmResponseCode_OK) {
+	if len(resp.GetHeader().GetError()) != 0 || resp.GetHeader().GetCode() != alarmpb2.AlarmResponseCode_OK {
 		t.Fatalf("handle app heartbeat failed: header error: %v", resp.GetHeader().GetError())
 	}
 	if err != nil {

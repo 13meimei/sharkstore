@@ -21,7 +21,7 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 		header.GetClusterId(),
 		header.GetIpAddr()})
 	if err != nil {
-		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+		resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 		resp.Header.Error = err.Error()
 		return
 	}
@@ -29,7 +29,7 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 	// setex key with ttl ping_interval to jimdb
 	vStr, _ := encodeCacheValue(cacheValue{})
 	if err = s.cacheOpImpl.setex(aliveKey, vStr, req.GetHbIntervalTime()*2); err != nil {
-		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+		resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 		resp.Header.Error = err.Error()
 		return
 	}
@@ -48,13 +48,13 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 	// get global rule
 	gRule := s.getMapGlobalRule()
 	if len(gRule) == 0 {
-		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+		resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 		resp.Header.Error = "no global rule"
 		return
 	}
 	gr, ok := gRule[req.GetRuleName()]
 	if !ok {
-		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+		resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 		resp.Header.Error = "unknown rule"
 		return
 	}
@@ -119,7 +119,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 			thresholdJudge = true
 		}
 	default:
-		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+		resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 		resp.Header.Error = "unknown compare type"
 		return
 	}
@@ -136,7 +136,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 		header.GetClusterId(),
 		header.GetIpAddr()})
 	if err != nil {
-		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+		resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 		resp.Header.Error = err.Error()
 		return
 	}
@@ -153,7 +153,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 
 		ruleValueStr, err := encodeCacheValue(ruleValue)
 		if err != nil {
-			resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+			resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 			resp.Header.Error = err.Error()
 			return resp, err
 		}
@@ -161,14 +161,14 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 		// expire time = r.durable
 		err = s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.Durable)
 		if err != nil {
-			resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+			resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 			resp.Header.Error = err.Error()
 			return resp, err
 		}
 	} else {
 		ruleValue, err := decodeCacheValue(reply)
 		if err != nil {
-			resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+			resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 			resp.Header.Error = err.Error()
 			return resp, err
 		}
@@ -190,7 +190,7 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 
 			ruleValueStr, err := encodeCacheValue(ruleValue)
 			if err != nil {
-				resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
+				resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 				resp.Header.Error = err.Error()
 				return resp, err
 			}

@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 
 	"model/pkg/alarmpb2"
+	"errors"
 )
 
 const (
@@ -43,7 +44,7 @@ func (c *Client) AlarmAppHeartbeat(clusterId int64, ipAddr, appName string, inte
 	cli := alarmpb2.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	_, err := cli.Alarm(ctx, &alarmpb2.AlarmRequest{
+	resp, err := cli.Alarm(ctx, &alarmpb2.AlarmRequest{
 		Header: &alarmpb2.RequestHeader{
 			Type: alarmpb2.AlarmType_APP_HEARTBEAT,
 			ClusterId: clusterId,
@@ -54,6 +55,12 @@ func (c *Client) AlarmAppHeartbeat(clusterId int64, ipAddr, appName string, inte
 			HbIntervalTime: intervalTime,
 		},
 	})
+	if resp != nil && resp.GetHeader() != nil {
+		if resp.GetHeader().GetCode() != alarmpb2.AlarmResponseCode_OK ||
+			len(resp.GetHeader().GetError()) != 0 {
+				return errors.New(resp.GetHeader().GetError())
+		}
+	}
 	return err
 }
 
@@ -66,7 +73,7 @@ func (c *Client) RuleAlarm(clusterId int64, ipAddr string,
 	cli := alarmpb2.NewAlarmClient(c.conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	_, err := cli.Alarm(ctx, &alarmpb2.AlarmRequest{
+	resp, err := cli.Alarm(ctx, &alarmpb2.AlarmRequest{
 		Header: &alarmpb2.RequestHeader{
 			Type: alarmpb2.AlarmType_RULE_ALARM,
 			ClusterId: clusterId,
@@ -79,6 +86,12 @@ func (c *Client) RuleAlarm(clusterId int64, ipAddr string,
 			Remark: remark,
 		},
 	})
+	if resp != nil && resp.GetHeader() != nil {
+		if resp.GetHeader().GetCode() != alarmpb2.AlarmResponseCode_OK ||
+			len(resp.GetHeader().GetError()) != 0 {
+			return errors.New(resp.GetHeader().GetError())
+		}
+	}
 	return err
 }
 
