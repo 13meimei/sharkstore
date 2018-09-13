@@ -41,9 +41,9 @@ message AlarmRequest {
 
     RuleAlarmRequest rule_alarm                 = 2;
     AppHeartbeatRequest app_heartbeat           = 3;
-    AppNotAliveRequest app_not_alive            = 4;
-    GatewaySlowLogRequest gw_slow_log           = 5;
-    GatewayErrorLogRequest gw_error_log         = 6;
+//    AppNotAliveRequest app_not_alive            = 4;
+//    GatewaySlowLogRequest gw_slow_log           = 5;
+//    GatewayErrorLogRequest gw_error_log         = 6;
 }
 
 message RequestHeader {

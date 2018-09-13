@@ -1,19 +1,13 @@
 package alarm2
 
 import (
+	"errors"
 	"time"
 	"context"
 
 	"google.golang.org/grpc"
 
 	"model/pkg/alarmpb2"
-	"errors"
-)
-
-const (
-	ALARMRULE_APP_NOTALIVE 		= "app_not_alive"
-	ALARMRULE_GATEWAY_SLOWLOG 	= "gateway_slowlog"
-	ALARMRULE_GATEWAY_ERRORLOG 	= "gateway_errorlog"
 )
 
 type Client struct {

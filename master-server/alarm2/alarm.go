@@ -10,40 +10,11 @@ import (
 	"model/pkg/alarmpb2"
 )
 
-const (
-	TABLENAME_APP 				= "sharkstore_app"
-	TABLENAME_GLOBAL_RULE 		= "sharkstore_global_rule"
-	TABLENAME_CLUSTER_RULE 		= "sharkstore_cluster_rule"
-	TABLENAME_RECEIVER 			= "sharkstore_receiver"
-
-	TABLESCHEMA_APP 				= "cluster_id, ip_addr, process_name" // all pk
-	TABLESCHEMA_GLOBAL_RULE 		= "name, threshold, durable, count, interval, receiver_role, enable" // name pk
-	TABLESCHEMA_CLUSTER_RULE 		= "cluster_id, rule_name, threshold, durable, count, interval, receiver_role, enable" // cluster_id, rule_name pk
-	TABLESCHEMA_RECEIVER 			= "erp, cluster_id, role, mail, tel" // erp, cluster_id pk
-)
-
-const (
-	APPNAME_GATEWAY 		= "gateway"
-	APPNAME_MASTER 			= "master"
-	APPNAME_METRIC 			= "metric"
-	APPNAME_JOIN_LETTER 	= "_"
-)
-
-const (
-	ALARMROLE_SYSTEM_ADMIN 		= "system_admin"
-	ALARMROLE_CLUSTER_ADMIN 	= "cluster_admin"
-	ALARMROLE_CLUSTER_USER 		= "cluster_user"
-
-)
-
-
-
 type cacheKey struct {
 	RuleName 	string 	`json:"rule_name"`
 	AppName 	string 	`json:"app_name"`
 	ClusterId 	int64 	`json:"cluster_id"`
 	AppAddr 	string 	`json:"app_addr"`
-
 }
 type cacheValue struct {
 	TriggerTime int64 	`json:"trigger_time"`

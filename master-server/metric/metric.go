@@ -12,7 +12,7 @@ import (
 	"model/pkg/statspb"
 	"model/pkg/mspb"
 	"time"
-	"util/alarm"
+	"master-server/alarm2"
 )
 
 const (
@@ -75,7 +75,7 @@ type Metric struct {
 	port   uint16
 	server *server.Server
 
-	AlarmCli *alarm.Client
+	AlarmCli *alarm2.Client
 	Threshold ThresholdConfig
 
 	store  Store
