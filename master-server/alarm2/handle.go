@@ -14,15 +14,6 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 		Header: &alarmpb2.ResponseHeader{},
 	}
 
-	// check input args
-	if header.GetType() == alarmpb2.AlarmType_INVALID ||
-		len(header.GetIpAddr()) == 0 ||
-		len(header.GetAppName()) == 0 {
-		resp.Header.Code = int64(alarmpb2.AlarmResponseCode_ERROR)
-		resp.Header.Error = "input args not enough"
-		return
-	}
-
 	// eg. app_not_alive
 	aliveKey, err := encodeCacheKey(cacheKey{
 		ALARMRULE_APP_NOTALIVE,

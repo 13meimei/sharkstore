@@ -86,6 +86,13 @@ func (s *Server) Run() error {
 
 func (s *Server) Alarm(ctx context.Context, req *alarmpb2.AlarmRequest) (*alarmpb2.AlarmResponse, error) {
 	header := req.GetHeader()
+	// check input args
+	if header.GetType() == alarmpb2.AlarmType_INVALID ||
+		len(header.GetIpAddr()) == 0 ||
+		len(header.GetAppName()) == 0 {
+		return nil, errors.New("input args not enough")
+	}
+
 	switch req.GetHeader().GetType() {
 	case alarmpb2.AlarmType_APP_HEARTBEAT:
 		r := req.GetAppHeartbeat()
@@ -94,6 +101,10 @@ func (s *Server) Alarm(ctx context.Context, req *alarmpb2.AlarmRequest) (*alarmp
 		}
 		return s.handleAppHeartbeat(header, r)
 	case alarmpb2.AlarmType_RULE_ALARM:
+		r := req.GetRuleAlarm()
+		if r == nil {
+			return nil, errors.New("request RuleAlarm is nil")
+		}
 		return s.handleRuleAlarm(header, req.GetRuleAlarm())
 	//case alarmpb2.AlarmType_APP_NOT_ALIVE:
 	//	r := req.GetAppNotAlive()

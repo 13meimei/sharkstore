@@ -68,10 +68,10 @@ func (impl *fakeDbOpImpl) getTableClusterRuleData() (ret []TableClusterRule, err
 func (impl *fakeDbOpImpl) getTableReceiveData() (ret []TableReceiver, err error) {
 	return []TableReceiver{
 		TableReceiver{
-			Erp: 		"test_erp",
+			Erp: 		"test_erp1",
 			ClusterId: 	gAppClusterId,
-			Mail:		"test_mail",
-			Tel:		"test_tel",
+			Mail:		"test_mail1",
+			Tel:		"test_tel1",
 		},
 	}, nil
 }
@@ -201,15 +201,23 @@ func TestHandle(t *testing.T) {
 	}
 
 	to := time.NewTimer(3*time.Second)
+	var msg alarmMessage
 	loop:
 	for {
 		select {
 		case <-to.C:
 			t.Fatalf("no alarm message in report queue")
-		case msg := <-s.reportQueue:
+		case msg = <-s.reportQueue:
 			fmt.Printf("report message: %v", msg)
 			break loop
 		}
 	}
+
+	// test report
+	mail, sms, err := s.getReportReceivers(msg)
+	if err != nil {
+		t.Fatalf("get report receivers failed: %v", err)
+	}
+	fmt.Printf("receiver mail: %v, sms: %v", mail, sms)
 
 }
