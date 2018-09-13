@@ -312,7 +312,7 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 	} else if sendDelay <= 200 {
 		log.Info("request to %s type:%s execut time %d ms, msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, reqHeader.TraceId, l.Region.Id)
 	} else if sendDelay <= 500 {
-		log.Warn("request to %s type:%s execut time %d ms, msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay,  reqHeader.TraceId, l.Region.Id)
+		log.Warn("request to %s type:%s execut time %d ms, msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, reqHeader.TraceId, l.Region.Id)
 	} else {
 		log.Error("request to %s type:%s execut time %d ms, msg:%d rangeId:%d", addr, req.GetType().String(), sendDelay, reqHeader.TraceId, l.Region.Id)
 	}
@@ -425,9 +425,20 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 		log.Warn("ds reports `RaftEntryTooLarge`, ctx: %s %s", ctx.RequestHeader.String(), ctx.NodeAddr)
 		return false, errors.New(rangeErr.String())
 	}
+	if rangeErr.GetRangeNotFound() != nil {
+		log.Warn("ds reports `RangeNotFound`, ctx: %s %s", ctx.RequestHeader.String(), ctx.NodeAddr)
+		p.RangeCache.DropRegion(ctx.VID)
+		return false, ErrRouteChange
+	}
+	if rangeErr.GetKeyNotInRange() != nil {
+		log.Warn("ds reports `KeyNotInRange`, ctx: %s %s", ctx.RequestHeader.String(), ctx.NodeAddr)
+		p.RangeCache.DropRegion(ctx.VID)
+		return false, ErrRouteChange
+	}
 	// For other errors, we only drop cache here.
 	// Because caller may need to re-split the request.
 	log.Warn("ds reports range error: %s, ctx: %s %s", rangeErr, ctx.RequestHeader.String(), ctx.NodeAddr)
 	p.RangeCache.DropRegion(ctx.VID)
-	return false, nil
+	// 不重试，返回错误
+	return false, errors.New(rangeErr.String())
 }
