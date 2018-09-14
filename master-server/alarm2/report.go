@@ -28,6 +28,8 @@ type reportMessage struct {
 }
 
 func (s *Server) ruleAlarmReportAppend(clusterId int64, appName, ipAddr string, req *alarmpb2.RuleAlarmRequest, ruleThreshlod float64) {
+	log.Debug("rule alarm report append cluster id[%v] app name[%v] ip addr[%v] trigger rule name[%v]",
+		clusterId, appName, ipAddr, req.GetRuleName())
 	s.reportQueue <-alarmMessage{
 		clusterId: 	clusterId,
 		appName: 	appName,
@@ -45,7 +47,7 @@ func (s *Server) ruleAlarmReportCron() {
 		select {
 		case msg := <-s.reportQueue:
 			if err := s.report(msg); err != nil {
-				log.Error("report error: %v", err)
+				log.Error("alarm report error: %v", err)
 			}
 		case <-ctx.Done():
 			return
@@ -94,6 +96,7 @@ func genAlarmContent(msg alarmMessage) (content string) {
 }
 
 func (s *Server) report(msg alarmMessage) error {
+	log.Debug("alarm report message: %+v", msg)
 	var receiverMail 	[]string
 	var receiverSms 	[]string
 
@@ -112,6 +115,8 @@ func (s *Server) report(msg alarmMessage) error {
 		MailTo: strings.Join(receiverMail, ","),
 		SmsTo: strings.Join(receiverSms, ","),
 	}
+	log.Debug("alarm report title is: %v", reportMsg.Title)
+	log.Debug("alarm report content is: %v", reportMsg.Content)
 
 	data, err := json.Marshal(reportMsg)
 	if err != nil {

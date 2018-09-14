@@ -166,8 +166,10 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 			return resp, err
 		}
 	} else {
+		log.Debug("rule alarm get key str[%v] value str[%v]", ruleKey, reply)
 		ruleValue, err := decodeCacheValue(reply)
 		if err != nil {
+			log.Debug("jim get reply decode failed: %v", err)
 			resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 			resp.Header.Error = err.Error()
 			return resp, err
