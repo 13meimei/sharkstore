@@ -286,6 +286,9 @@ func (service *Server) MetricStart() {
 	if err != nil {
 		log.Fatal("open metric store failed, err[%v]", err)
 	}
+	if err := service.alarmServer.Run(); err != nil {
+		log.Error("metric server do run alarm server failed: %v", err)
+	}
 }
 
 func (service *Server) Start() error {
