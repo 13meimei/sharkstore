@@ -117,6 +117,8 @@ func (s *Server) report(msg alarmMessage) error {
 	}
 	log.Debug("alarm report title is: %v", reportMsg.Title)
 	log.Debug("alarm report content is: %v", reportMsg.Content)
+	log.Debug("alarm report receiver mail is: %v", reportMsg.MailTo)
+	log.Debug("alarm report sms is: %v", reportMsg.SmsTo)
 
 	data, err := json.Marshal(reportMsg)
 	if err != nil {
