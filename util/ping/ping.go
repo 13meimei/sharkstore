@@ -2,6 +2,7 @@ package ping
 
 import (
 	"fmt"
+	"time"
 	"net"
 	"os"
 	"path/filepath"
@@ -32,22 +33,28 @@ func getAppInfo() (app string, ip []string) {
 }
 
 func Ping(alarmServerAddr string, clusterId int64, appPort int, ping_interval int64) {
-	if alarmClient == nil {
-		var err error
-		alarmClient, err = alarm2.NewAlarmClient2(alarmServerAddr)
-		if err != nil {
-			log.Error("new alarm client failed: %v", err)
-			return
+	t := time.NewTicker(time.Duration(ping_interval) * time.Second)
+	for {
+		select {
+		case <-t.C:
+			if alarmClient == nil {
+				var err error
+				alarmClient, err = alarm2.NewAlarmClient2(alarmServerAddr)
+				if err != nil {
+					log.Error("new alarm client failed: %v", err)
+					continue
+				}
+			}
+			appName, appIps := getAppInfo()
+			if len(appIps) == 0 {
+				log.Error("get app ips len is 0")
+				continue
+			}
+			appAddr := fmt.Sprintf("%v:%v", appIps[0], appPort)
+			if err := alarmClient.AlarmAppHeartbeat(clusterId, appAddr, appName, ping_interval); err != nil {
+				log.Error("do alarm app heartbeat failed: %v", err)
+				continue
+			}
 		}
-	}
-	appName, appIps := getAppInfo()
-	if len(appIps) == 0 {
-		log.Error("get app ips len is 0")
-		return
-	}
-	appAddr := fmt.Sprintf("%v:%v", appIps[0], appPort)
-	if err := alarmClient.AlarmAppHeartbeat(clusterId, appAddr, appName, ping_interval); err != nil {
-		log.Error("do alarm app heartbeat failed: %v", err)
-		return
 	}
 }
