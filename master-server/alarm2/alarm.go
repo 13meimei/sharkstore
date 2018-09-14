@@ -220,8 +220,8 @@ func (s *Server) aliveChecking() {
 					}
 
 					if err := s.cacheOpImpl.exists(key); err != nil {
+						// treat as key not exists
 						log.Error("jim exists command error: %v", err)
-						continue
 					}
 
 					log.Warn("app not alive: cluster id[%v] ip addr[%v] app name[%v]", clusterId, ipAddr, app.ProcessName)
