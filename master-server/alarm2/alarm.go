@@ -24,7 +24,7 @@ type cacheValue struct {
 func (s *Server) timingDbPulling() {
 	ctx, cancel := context.WithCancel(s.context)
 	defer cancel()
-	duration := s.conf.MysqlPullingDurationSec
+	duration := s.conf.MysqlPullingDurationSec * time.Second
 	t := time.NewTimer(duration)
 	for {
 		select {
@@ -200,7 +200,7 @@ func (s *Server) getMapClusterReceiver(clusterId int64) (ret receiverMap) {
 func (s *Server) aliveChecking() {
 	ctx, cancel := context.WithCancel(s.context)
 	defer cancel()
-	duration := s.conf.AppAliveCheckingDurationSec
+	duration := s.conf.AppAliveCheckingDurationSec * time.Second
 	t := time.NewTimer(duration)
 	for {
 		select {
