@@ -231,7 +231,7 @@ func (s *Server) aliveChecking() {
 
 			if len(apps) != 0 {
 				for _, app := range apps {
-					s.handleRuleAlarm(&alarmpb2.RequestHeader{
+					resp, err := s.handleRuleAlarm(&alarmpb2.RequestHeader{
 						ClusterId: app.ClusterId,
 						IpAddr: app.IpAddr,
 					}, &alarmpb2.RuleAlarmRequest{
@@ -240,6 +240,14 @@ func (s *Server) aliveChecking() {
 						CmpType: alarmpb2.AlarmValueCompareType_GREATER_THAN,
 						Remark: []string{fmt.Sprintf("app name: %v", app.ProcessName)},
 					})
+					if err != nil {
+						log.Error("handle rule alarm error: %v", err)
+					} else {
+						if resp.GetHeader().GetCode() != alarmpb2.AlarmResponseCode_OK ||
+							len(resp.GetHeader().GetError()) != 0 {
+								log.Error("handle rule alarm do failed: %v", resp.GetHeader().GetError())
+						}
+					}
 				}
 			}
 
