@@ -234,6 +234,7 @@ func (s *Server) aliveChecking() {
 					resp, err := s.handleRuleAlarm(&alarmpb2.RequestHeader{
 						ClusterId: app.ClusterId,
 						IpAddr: app.IpAddr,
+						AppName: app.ProcessName,
 					}, &alarmpb2.RuleAlarmRequest{
 						RuleName: ALARMRULE_APP_NOTALIVE,
 						AlarmValue: 1,

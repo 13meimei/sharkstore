@@ -127,6 +127,13 @@ func (s *Server) report(msg alarmMessage) error {
 	if err != nil {
 		return err
 	}
+
+	req.Header.Add("User-Agent", "Jimdb-Message-Sender")
+	req.Header.Set("Content-Type", "application/json;charset=utf-8")
+	req.Header.Set("Accept", "application/json,text/html,text/plain")
+	req.Header.Set("Accept-Charset", "utf-8,GBK")
+	req.Header.Set("Connection", "close")
+
 	resp, err := s.reportClient.Do(req)
 	if err != nil {
 		return err
