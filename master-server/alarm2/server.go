@@ -81,6 +81,7 @@ func (s *Server) Run() error {
 
 	go s.timingDbPulling()
 	go s.aliveChecking()
+	go s.ruleAlarmReportCron()
 	return nil
 }
 
