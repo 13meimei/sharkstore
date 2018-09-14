@@ -7,8 +7,8 @@ const (
 	TABLENAME_RECEIVER 			= "sharkstore_receiver"
 
 	TABLESCHEMA_APP 				= "cluster_id, ip_addr, process_name" // all pk
-	TABLESCHEMA_GLOBAL_RULE 		= "name, threshold, durable, count, interval, receiver_role, enable" // name pk
-	TABLESCHEMA_CLUSTER_RULE 		= "cluster_id, rule_name, threshold, durable, count, interval, receiver_role, enable" // cluster_id, rule_name pk
+	TABLESCHEMA_GLOBAL_RULE 		= "name, threshold, alarm_durable, trigger_count, alarm_interval, receiver_role, enable" // name pk
+	TABLESCHEMA_CLUSTER_RULE 		= "cluster_id, rule_name, threshold, alarm_durable, trigger_count, alarm_interval, receiver_role, enable" // cluster_id, rule_name pk
 	TABLESCHEMA_RECEIVER 			= "erp, cluster_id, role, mail, tel" // erp, cluster_id pk
 )
 
