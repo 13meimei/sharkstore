@@ -46,7 +46,7 @@ func main() {
 	// start gc
 	go gogc.TickerPrintGCSummary(log.GetFileLogger(), "info")
 	// start alive report
-	go ping.Ping(fmt.Sprint(conf.Cluster.ID), conf.Metric.Address, 10) // fixme
+	go ping.Ping(conf.Alarm.Address, int64(conf.Cluster.ID), conf.SqlPort, 10)
 	// run server
 	srv.Run()
 	log.Info("gateway server start ")

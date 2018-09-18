@@ -3,17 +3,15 @@ package server
 import (
 	"time"
 
-	"model/pkg/alarmpb"
 	"model/pkg/metapb"
 	"util/log"
 
 	"fmt"
-	"util/deepcopy"
-
 	"golang.org/x/net/context"
-	"util/alarm"
 	"strings"
 	"strconv"
+	"model/pkg/alarmpb2"
+	"master-server/alarm2"
 )
 
 type RangeHbCheckWorker struct {
@@ -98,19 +96,14 @@ func (hb *RangeHbCheckWorker) Work(cluster *Cluster) {
 func hbAlarmDeal(cluster *Cluster, leader *metapb.Peer, table *Table, r *Range, desc string) {
 	ip := strings.Split(cluster.FindNodeById(leader.GetNodeId()).GetServerAddr(), ":")[0]
 	port, _ := strconv.ParseInt(strings.Split(cluster.FindNodeById(leader.GetNodeId()).GetServerAddr(), ":")[1], 10, 64)
-	info := make(map[string]interface{})
-	info["ip"] = ip
-	info["port"] = port
-	info["spaceId"] = cluster.GetClusterId()
-	info["range_no_heartbeat"] = 1
-	info["tableId"] = table.GetId()
-	info["rangeId"] = r.GetId()
-	info["nodeId"] = leader.GetNodeId()
-	sample := alarm.NewSample(ip, int(port), int(cluster.GetClusterId()), info)
-	if err := cluster.alarmCli.RangeNoHeartbeatAlarm(int64(cluster.clusterId), &alarmpb.RangeNoHeartbeatAlarm{
-		Range:             deepcopy.Iface(r.Range).(*metapb.Range),
-		LastHeartbeatTime: r.LastHbTimeTS.String(),
-	}, desc, []*alarm.Sample{sample}); err != nil {
+
+	ipAddr := fmt.Sprintf("%v:%v", ip, port)
+	ruleName := alarm2.ALARMRULE_RANGE_NO_HEARTBEAT
+	alarmValue := float64(1)
+	remark := []string{fmt.Sprintf("db name[%v] table name[%v] range id[%v]", table.GetDbName(), table.GetName(), r.GetId())}
+	compareType := alarmpb2.AlarmValueCompareType_GREATER_THAN
+
+	if err := cluster.alarmCli.RuleAlarm(int64(cluster.clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
 		log.Error("range no leader alarm failed: %v", err)
 	}
 }

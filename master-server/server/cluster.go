@@ -16,7 +16,7 @@ import (
 	"model/pkg/metapb"
 	"model/pkg/taskpb"
 	"util"
-	"util/alarm"
+	"master-server/alarm2"
 	"util/deepcopy"
 	"util/log"
 	"util/ttlcache"
@@ -95,7 +95,7 @@ type Cluster struct {
 	autoTransferUnable bool
 	autoSplitUnable    bool
 
-	alarmCli *alarm.Client
+	alarmCli *alarm2.Client
 }
 
 func NewCluster(clusterId, nodeId uint64, store Store, opt *scheduleOption) *Cluster {

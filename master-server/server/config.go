@@ -9,6 +9,7 @@ import (
 	"util/log"
 	"github.com/BurntSushi/toml"
 	"master-server/metric"
+	"master-server/alarm2"
 )
 
 const (
@@ -119,7 +120,9 @@ type Config struct {
 	Metric      MetricConfig      `toml:"metric,omitempty" json:"metric"`
 
 	Threshold metric.ThresholdConfig `toml:"threshold,omitempty" json:"threshold"`
-	Alarm AlarmConfig`toml:"alarm,omitempty" json:"alarm"`
+
+	AlarmClient alarm2.Alarm2ClientConfig 	`toml:"alarm-client,omitempty" json:"alarm-client"`
+	AlarmServer alarm2.Alarm2ServerConfig	`toml:"alarm-server,omitempty" json:"alarm-server"`
 
 }
 
@@ -211,24 +214,6 @@ type ClusterPeer struct {
 type ClusterConfig struct {
 	ClusterID uint64         `toml:"cluster-id,omitempty" json:"cluster-id"`
 	Peers     []*ClusterPeer `toml:"peer,omitempty" json:"peer"`
-}
-
-type AlarmReceiver struct {
-	Mail string `toml:"mail,omitempty" json:"mail"`
-	Sms  string `toml:"sms,omitempty" json:"sms"`
-}
-
-
-
-type AlarmConfig struct {
-	ServerAddress string  		`toml:"server-address" json:"server-address"`
-	ServerPort int   		`toml:"server-port,omitempty" json:"port"`
-	RemoteAlarmServerAddress string	`toml:"remote-alarm-server-address,omitempty" json:"remote-alarm-server-address"`
-	MysqlArgs string		`toml:"mysql-args,omitempty" json:"mysql-args"`
-	//MessageGatewayAddress string	`toml:"message-gateway-address,omitempty" json:"message-gateway-address"`
-	//Receivers []*AlarmReceiver	`toml:"receivers,omitempty" json:"receivers"`
-	JimUrl string 			`toml:"jim-url,omitempty" json:"jim-url"`
-	JimApAddr string		`toml:"jim-ap-addr,omitempty" json:"jim-ap-addr"`
 }
 
 func (c *ClusterConfig) adjust() error {

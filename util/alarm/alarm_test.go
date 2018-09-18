@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"model/pkg/alarmpb"
 	"github.com/gomodule/redigo/redis"
+	"encoding/json"
 )
 
 func TestAlarmGrpc(t *testing.T) {
@@ -109,9 +110,10 @@ func TestAlarmHandleAppPing(t *testing.T) {
 	ip0 := "192.168.0.0"
 	ip1 := "192.168.0.1"
 	ips := []string{ip0, ip1}
+	port := 8080
 	ping_interval := 3
-	url := fmt.Sprintf(`http://%s?cluster_id=%s&app_name=%s&ip_addrs=%s&ping_interval=%d`,
-		"", fmt.Sprint(clusterId), appName, strings.Join(ips, ","), ping_interval)
+	url := fmt.Sprintf(`http://%s?cluster_id=%s&app_name=%s&ip_addrs=%s&port=%d&ping_interval=%d`,
+		"", fmt.Sprint(clusterId), appName, strings.Join(ips, ","), port, ping_interval)
 
 	var r *http.Request
 	w := httptest.NewRecorder()
@@ -121,7 +123,7 @@ func TestAlarmHandleAppPing(t *testing.T) {
 	s.HandleAppPing(w, r)
 
 	// check jimdb
-	appKey := s.genAliveAppKey(appName, fmt.Sprint(clusterId), ip0)
+	appKey := newAliveAppKey(appName, fmt.Sprint(clusterId), fmt.Sprintf("%v:%v", ip0, port))
 	t.Logf("test app key: %v", appKey)
 
 	//
@@ -165,3 +167,28 @@ func TestAlarmGetClusterInfo(t *testing.T) {
 	}
 
 }
+
+func TestClusterRemarkJson1(t *testing.T) {
+	{
+	remark := &clusterRemark{
+		GatewayAddrsAlarmEnable: true,
+		GatewayAddrs: []string{"127.0.0.1:9090", "127.0.0.1:9999"},
+	}
+	data, err := json.Marshal(remark)
+	if err != nil {
+		t.Fatal("json marshal error: ", err)
+	}
+	fmt.Println("json bytes: ", string(data))
+	}
+
+	{
+	data := []byte(`{"master-addr-alarm-enable":false,"master-addrs":null,"gateway-addr-alarm-enable":false,"gateway-addrs":["11.3.82.133","11.3.82.135","11.3.83.106"]}`)
+
+	var remark clusterRemark
+	if err := json.Unmarshal(data, &remark); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	fmt.Println("unmarshal ok")
+	}
+}
+

@@ -22,7 +22,8 @@ import (
 	"model/pkg/statspb"
 	"util/log"
 	"util/metrics"
-	"util/alarm"
+	"master-server/alarm2"
+	"model/pkg/alarmpb2"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -61,7 +62,7 @@ type Metric struct {
 
 	errorLogLock	sync.Mutex
 	errorLogger 	*ErrorLog
-	alarmClient 	*alarm.Client
+	alarmClient 	*alarm2.Client
 }
 
 func NewMetric(clusterId uint64, host, addr string, maxSlowLogNum uint64, alarmServerAddr string) *Metric {
@@ -94,7 +95,7 @@ func NewMetric(clusterId uint64, host, addr string, maxSlowLogNum uint64, alarmS
 
 	if len(alarmServerAddr) != 0 {
 		var err error
-		metric.alarmClient, err = alarm.NewAlarmClient(alarmServerAddr)
+		metric.alarmClient, err = alarm2.NewAlarmClient2(alarmServerAddr)
 		if err != nil {
 			log.Error("create alarm client failed, err[%v]", err)
 		}
@@ -136,38 +137,28 @@ func (m *Metric) GetMetricAddress() string  {
 }
 
 func (m *Metric) gatewayErrorlogAlarm(clusterId, ipAddr string, errorlogs []string) {
-	var samples []*alarm.Sample
+	alarmValue := float64(1)
+	ruleName := alarm2.ALARMRULE_GATEWAY_ERRORLOG
+	remark := errorlogs
 
-	for _, errorlog := range errorlogs {
-		info := make(map[string]interface{})
-		info["spaceId"] = clusterId
-		info["ip"] = ipAddr
-		info["gateway_errorlog"] = 1
-		info["errorlog"] = errorlog
-		samples = append(samples, alarm.NewSample("", 0, 0, info))
-	}
-
-	log.Warn("errorlog alarm do send")
-	if err := m.alarmClient.SimpleAlarm(m.clusterId, "errorlog alarm", "", samples); err != nil {
-		log.Error("errorlog alarm do failed: %v", err)
+	if err := m.alarmClient.RuleAlarm(int64(m.clusterId), ipAddr,
+		ruleName, alarmValue, alarmpb2.AlarmValueCompareType_GREATER_THAN, remark); err != nil {
+			log.Error("alarm rule[%v] do failed: %v", err)
 	}
 }
 
 func (m *Metric) gatewaySlowlogAlarm(clusterId, ipAddr string, slowlogs []*statspb.SlowLog) {
-	var samples []*alarm.Sample
+	alarmValue := float64(1)
+	ruleName := alarm2.ALARMRULE_GATEWAY_SLOWLOG
+	var remark []string
 
-	for _, slowlog := range slowlogs {
-		info := make(map[string]interface{})
-		info["spaceId"] = clusterId
-		info["ip"] = ipAddr
-		info["gateway_slowlog"] = 1
-		info["slowlog"] = slowlog.SlowLog
-		samples = append(samples, alarm.NewSample("", 0, 0, info))
+	for _, log := range slowlogs {
+		remark = append(remark, log.SlowLog)
 	}
 
-	log.Info("slowlog alarm do send")
-	if err := m.alarmClient.SimpleAlarm(m.clusterId, "slowlog alarm", "", samples); err != nil {
-		log.Error("slowlog alarm do failed: %v", err)
+	if err := m.alarmClient.RuleAlarm(int64(m.clusterId), ipAddr,
+		ruleName, alarmValue, alarmpb2.AlarmValueCompareType_GREATER_THAN, remark); err != nil {
+			log.Error("alarm rule[%v] do failed: %v", err)
 	}
 }
 

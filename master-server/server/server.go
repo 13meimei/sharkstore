@@ -8,14 +8,13 @@ import (
 
 	"util/log"
 	"util/server"
-	"util/alarm"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"model/pkg/mspb"
 	"master-server/raft"
 	"golang.org/x/net/context"
 	"master-server/metric"
+	"master-server/alarm2"
 )
 
 type Server struct {
@@ -30,8 +29,8 @@ type Server struct {
 	rpcServer *grpc.Server
 
 	metricServer *metric.Metric
-	alarmServer  *alarm.Server
-	alarmClient  *alarm.Client
+	alarmServer  *alarm2.Server
+	alarmClient  *alarm2.Client
 
 	leaderChangeNotify chan uint64
 	wg                 sync.WaitGroup
@@ -146,7 +145,6 @@ func (service *Server) initHttpHandler() () {
 
 	s.Handle("/metric/config/set", NewHandler(service.validRequest, service.handleMetricConfigSet))
 	s.Handle("/metric/config/get", NewHandler(service.validRequest, service.handleMetricConfigGet))
-	s.Handle("/test/alarm", NewHandler(nil, service.handleTestAlarm))
 
 	return
 }
@@ -194,8 +192,8 @@ func (service *Server) InitMasterServer(conf *Config) {
 		service.server = s
 	}
 	service.initHttpHandler()
-	if len(conf.Alarm.ServerAddress) != 0 {
-		service.alarmClient, err = alarm.NewAlarmClient(conf.Alarm.ServerAddress)
+	if len(conf.AlarmClient.ServerAddress) != 0 {
+		service.alarmClient, err = alarm2.NewAlarmClient2(conf.AlarmClient.ServerAddress)
 		if err != nil {
 			log.Fatal("create alarm client failed, err[%v]", err)
 		}
@@ -203,31 +201,15 @@ func (service *Server) InitMasterServer(conf *Config) {
 	}
 }
 
-func (service *Server) InitAlarmServer(conf AlarmConfig) (err error) {
-	//var alarmReceivers []*alarm.User
-	//for _, r := range conf.Receivers {
-	//	alarmReceivers = append(alarmReceivers, &alarm.User{
-	//		Mail: r.Mail,
-	//		Sms:  r.Sms,
-	//	})
-	//}
-	log.Info("alarm server config: \n" +
-		"	server port: %v\n" +
-		"	remote alarm server addr: %v\n" +
-		"	mysql args: %v\n" +
-		"	jim url: %v\n" +
-		"	jim app addr: %v\n", conf.ServerPort,
-		conf.RemoteAlarmServerAddress, conf.MysqlArgs, conf.JimUrl, conf.JimApAddr)
+func (service *Server) InitAlarmServer(conf alarm2.Alarm2ServerConfig) (err error) {
+	log.Info("alarm server config: %+v", conf)
 
-	service.alarmServer, err = alarm.NewAlarmServer(service.ctx, conf.ServerPort,
-		conf.RemoteAlarmServerAddress, conf.MysqlArgs, conf.JimUrl, conf.JimApAddr)
+	service.alarmServer, err = alarm2.NewAlarmServer2(&conf)
 	if err != nil {
 		log.Error("alarm.NewAlarmServer failed, err: [%v]", err)
 		return nil
 	}
 
-	// app ping url, for alive alarm
-	service.server.Handle("/app/ping", service.alarmServer.HandleAppPing)
 	return nil
 }
 
@@ -250,9 +232,9 @@ func (service *Server) InitMetricServer(conf *Config) {
 	}
 	service.metricServer = metric.NewMetric(service.server, store, conf.Threshold)
 
-	if len(conf.Alarm.ServerAddress) != 0 {
+	if len(conf.AlarmClient.ServerAddress) != 0 {
 		var err error
-		service.alarmClient, err = alarm.NewAlarmClient(conf.Alarm.ServerAddress)
+		service.alarmClient, err = alarm2.NewAlarmClient2(conf.AlarmClient.ServerAddress)
 		if err != nil {
 			log.Fatal("create alarm client failed, err[%v]", err)
 		}
@@ -271,7 +253,7 @@ func (service *Server) InitServer(conf *Config) {
 		service.InitMasterServer(conf)
 	case "metric":
 		service.InitMetricServer(conf)
-		service.InitAlarmServer(conf.Alarm)
+		service.InitAlarmServer(conf.AlarmServer)
 	}
 }
 
@@ -303,6 +285,9 @@ func (service *Server) MetricStart() {
 	err := service.metricServer.Open()
 	if err != nil {
 		log.Fatal("open metric store failed, err[%v]", err)
+	}
+	if err := service.alarmServer.Run(); err != nil {
+		log.Error("metric server do run alarm server failed: %v", err)
 	}
 }
 

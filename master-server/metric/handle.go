@@ -13,7 +13,8 @@ import (
 	"encoding/json"
 	"util/log"
 	"util/deepcopy"
-	"util/alarm"
+	"master-server/alarm2"
+	"model/pkg/alarmpb2"
 )
 
 func (m *Metric) doProcessMetric(ctx *Context, data []byte) error {
@@ -233,55 +234,69 @@ func (m *Metric) doHotspotMetric(ctx *Context, data []byte) error {
 }
 
 func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, node *mspb.NodeStats) (err error) {
-	var msg []byte
-	var sample *alarm.Sample
 	ip := strings.Split(nodeAddr, ":")[0]
 	port, _ := strconv.ParseInt(strings.Split(nodeAddr, ":")[1], 10, 64)
-	info := make(map[string]interface{})
+
+	ipAddr := fmt.Sprintf("%v:%v", ip, port)
+	remark := []string{fmt.Sprintf("node id[%v]", nodeId)}
+	compareType := alarmpb2.AlarmValueCompareType_GREATER_THAN
+
+	var ruleName string
+	var alarmValue float64
+
 	usedSize := node.GetUsedSize()
 	capacity := node.GetCapacity()+1
 	if usedSize/capacity > m.Threshold.Node.CapacityUsedRate {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] cacapcity used rate %v > %v <br>",
-			clusterId, nodeId, nodeAddr, usedSize/capacity, m.Threshold.Node.CapacityUsedRate))...)
-		info["node_capacity_used_rate"] = usedSize/capacity
+		ruleName = alarm2.ALARMRULE_NODE_CAPACITY_USED_RATE
+		alarmValue = float64(usedSize/capacity)
+
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
+			return err
+		}
 	}
 	writeBps := node.GetBytesWritten()
 	if writeBps > m.Threshold.Node.WriteBps {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] write bps %v > %v <br>",
-			clusterId, nodeId, nodeAddr, writeBps, m.Threshold.Node.WriteBps))...)
-		info["node_write_bps"] = writeBps
+		ruleName = alarm2.ALARMRULE_NODE_WRITE_BPS
+		alarmValue = float64(writeBps)
+
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
+			return err
+		}
 	}
 	writeOps := node.GetKeysWritten()
 	if writeOps > m.Threshold.Node.WriteOps {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] write ops %v > %v <br>",
-			clusterId, nodeId, nodeAddr, writeOps, m.Threshold.Node.WriteOps))...)
-		info["node_write_ops"] = writeOps
+		ruleName = alarm2.ALARMRULE_NODE_WRITE_OPS
+		alarmValue = float64(writeOps)
+
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
+			return err
+		}
 	}
 	readBps := node.GetBytesRead()
 	if readBps > m.Threshold.Node.ReadBps {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] read bps %v > %v <br>",
-			clusterId, nodeId, nodeAddr, readBps, m.Threshold.Node.ReadBps))...)
-		info["node_read_bps"] = readBps
+		ruleName = alarm2.ALARMRULE_NODE_READ_BPS
+		alarmValue = float64(readBps)
+
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
+			return err
+		}
 	}
 	readOps := node.GetKeysRead()
 	if readOps > m.Threshold.Node.ReadOps {
-		msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] node[%v] addr[%v] read ops %v > %v <br>",
-			clusterId, nodeId, nodeAddr, readOps, m.Threshold.Node.ReadOps))...)
-		info["node_read_ops"] = readOps
-	}
-	if len(msg) == 0 {
-		return nil
-	}
-	if len(info) != 0 {
-		info["ip"] = ip
-		info["port"] = port
-		info["spaceId"] = clusterId
-		info["nodeId"] = fmt.Sprint(nodeId)
-		log.Info("sample info: %+v", info)
-		sample = alarm.NewSample(ip, int(port), int(clusterId), info)
+		ruleName = alarm2.ALARMRULE_NODE_READ_OPS
+		alarmValue = float64(readOps)
+
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
+			return err
+		}
 	}
 
-	return m.AlarmCli.SimpleAlarm(clusterId, "node stats alarm", string(msg), []*alarm.Sample{sample})
+	return nil
 }
 
 func (m *Metric) doNodeMetric(ctx *Context, data []byte) error {
@@ -312,53 +327,57 @@ func (m *Metric) doNodeMetric(ctx *Context, data []byte) error {
 }
 
 func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.RangeInfo) (err error) {
-	var msg []byte
-	var samples []*alarm.Sample
 	for _, rang := range rangeStats {
 		ip := strings.Split(rang.GetNodeAdder(), ":")[0]
 		port, _ := strconv.ParseInt(strings.Split(rang.GetNodeAdder(), ":")[1], 10, 64)
-		info := make(map[string]interface{})
+		ipAddr := fmt.Sprintf("%v:%v", ip, port)
+		remark := []string{fmt.Sprintf("range id[%v]", rang.GetRangeId())}
+		compareType := alarmpb2.AlarmValueCompareType_GREATER_THAN
 
+		var ruleName string
+		var alarmValue uint64
 		writeBps := rang.GetStats().GetBytesWritten()
 		if writeBps > m.Threshold.Range.WriteBps {
-			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] write bps %v > %v <br>",
-				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), writeBps, m.Threshold.Range.WriteBps))...)
-			info["range_write_bps"] = writeBps
+			ruleName = alarm2.ALARMRULE_RANGE_WRITE_BPS
+			alarmValue = writeBps
+
+			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, float64(alarmValue), compareType, remark); err != nil {
+				log.Error("range alarm rule[%v] do failed: %v", ruleName, err)
+				return err
+			}
 		}
 		writeOps := rang.GetStats().GetKeysWritten()
 		if writeOps > m.Threshold.Range.WriteOps {
-			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] write ops %v > %v <br>",
-				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), writeOps, m.Threshold.Range.WriteOps))...)
-			info["range_write_ops"] = writeOps
+			ruleName = alarm2.ALARMRULE_RANGE_WRITE_OPS
+			alarmValue = writeOps
+
+			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, float64(alarmValue), compareType, remark); err != nil {
+				log.Error("range alarm rule[%v] do failed: %v", ruleName, err)
+				return err
+			}
 		}
 		readBps := rang.GetStats().GetBytesRead()
 		if readBps > m.Threshold.Range.ReadBps {
-			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] read bps %v > %v <br>",
-				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), readBps, m.Threshold.Range.ReadBps))...)
-			info["range_read_bps"] = readBps
+			ruleName = alarm2.ALARMRULE_RANGE_READ_BPS
+			alarmValue = readBps
+
+			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, float64(alarmValue), compareType, remark); err != nil {
+				log.Error("range alarm rule[%v] do failed: %v", ruleName, err)
+				return err
+			}
 		}
 		readOps := rang.GetStats().GetKeysRead()
 		if readOps > m.Threshold.Range.ReadOps {
-			msg = append(msg, []byte(fmt.Sprintf("cluster id[%v] range[%v] addr[%v] read ops %v > %v <br>",
-				clusterId, rang.GetRangeId(), rang.GetNodeAdder(), readOps, m.Threshold.Range.ReadOps))...)
-			info["range_read_ops"] = readOps
-		}
+			ruleName = alarm2.ALARMRULE_RANGE_READ_OPS
+			alarmValue = readOps
 
-		if len(info) != 0 {
-			info["ip"] = ip
-			info["port"] = port
-			info["spaceId"] = clusterId
-			info["rangeId"] = rang.GetRangeId()
-			log.Info("sample info: %+v", info)
-			samples = append(samples, alarm.NewSample(ip, int(port), int(clusterId), info))
+			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, float64(alarmValue), compareType, remark); err != nil {
+				log.Error("range alarm rule[%v] do failed: %v", ruleName, err)
+				return err
+			}
 		}
 	}
-	if len(msg) == 0 {
-		return nil
-	}
-
-
-	return m.AlarmCli.SimpleAlarm(clusterId, "range stats alarm", string(msg), samples)
+	return nil
 }
 
 func (m *Metric) doRangeMetric(ctx *Context, data []byte) error {
