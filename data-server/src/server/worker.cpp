@@ -67,6 +67,8 @@ void Worker::StartWorker(std::vector<std::thread> &worker,
                         --hash_queue.all_msg_size;
                         DealTask(task);
                     }
+                } else {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
             }
 
