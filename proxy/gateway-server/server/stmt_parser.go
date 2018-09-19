@@ -56,6 +56,12 @@ type Row struct {
 	fields []Field
 }
 
+// UpdateField  for update statement col = value
+type UpdateField struct {
+	col   string
+	value []byte
+}
+
 func (s *StmtParser) parseTable(stmt sqlparser.Statement) string {
 	switch v := stmt.(type) {
 	case *sqlparser.Select:
@@ -179,6 +185,32 @@ func (s *StmtParser) parseInsertValues(insert *sqlparser.Insert) ([]InsertRowVal
 		rowValues = append(rowValues, rowValue)
 	}
 	return rowValues, nil
+}
+
+func parseUpdateFields(update *sqlparser.Update) ([]UpdateField, error) {
+	exprs := update.Exprs
+	if len(exprs) == 0 {
+		// TODO: see mysql error
+		return nil, fmt.Errorf("missing update col and value pairs")
+	}
+	fields := make([]UpdateField, len(exprs))
+	for i, expr := range exprs {
+		if expr.Name == nil || len(expr.Name.Name) == 0 {
+			return nil, fmt.Errorf("missing update col at index %d", i)
+		}
+		fields[i].col = string(expr.Name.Name)
+		switch val := expr.Expr.(type) {
+		case sqlparser.StrVal:
+			fields[i].value = []byte(val)
+		case sqlparser.NumVal:
+			fields[i].value = []byte(val)
+		case *sqlparser.NullVal:
+			fields[i].value = nil
+		default:
+			return nil, fmt.Errorf("unsupported update value type(%T) at index %d", expr.Expr, j)
+		}
+	}
+	return fields, nil
 }
 
 func (s *StmtParser) parseOperator(operator string) MatchType {

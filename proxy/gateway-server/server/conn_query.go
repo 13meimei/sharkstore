@@ -24,10 +24,10 @@ import (
 	"proxy/gateway-server/errors"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
-	"util/hack"
-	golog "util/log"
 	"proxy/metric"
 	"util"
+	"util/hack"
+	golog "util/log"
 )
 
 /*处理query语句*/
@@ -101,7 +101,8 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 		slowLogThreshold = c.server.cfg.Performance.InsertSlowLog
 		err = c.handleInsert(v, nil)
 	case *sqlparser.Update:
-		err = c.handleExec(stmt, nil, "Update")
+		// TODO: slow log and method metric
+		err = c.handleUpdate(v, nil)
 	case *sqlparser.Delete:
 		method = "delete"
 		slowLogThreshold = c.server.cfg.Performance.DeleteSlowLog
@@ -123,7 +124,7 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	case *sqlparser.SimpleSelect:
 		err = c.handleSimpleSelect(v)
 	case *sqlparser.Truncate:
-		err = c.handleExec(stmt, nil,"Truncate")
+		err = c.handleExec(stmt, nil, "Truncate")
 	case *sqlparser.Describe:
 		err = c.handleDescribe(v)
 	default:
@@ -190,8 +191,26 @@ func (c *ClientConn) handleDelete(stmt *sqlparser.Delete, args []interface{}) er
 	return c.writeOK(ret)
 }
 
+func (c *ClientConn) handleUpdate(stmt *sqlparser.Update, args []interface{}) error {
+	if len(c.db) == 0 {
+		return errors.ErrNoDatabase
+	}
+	if golog.GetFileLogger().IsEnableDebug() {
+		golog.Debug("table:%v, expr:%v, where:%v", stmt.Table, stmt.Exprs, stmt.Where)
+	}
+	ret, err := c.server.proxy.HandleUpdate(c.db, stmt, args)
+	if err != nil {
+		golog.Error("update failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	if golog.GetFileLogger().IsEnableDebug() {
+		golog.Debug("update success")
+	}
+	return c.writeOK(ret)
+}
+
 func (c *ClientConn) handleExec(stmt sqlparser.Statement, args []interface{}, statement string) error {
-	return  fmt.Errorf("statement %s not support now", statement)
+	return fmt.Errorf("statement %s not support now", statement)
 }
 
 func (c *ClientConn) handleDescribe(stmt *sqlparser.Describe) error {
