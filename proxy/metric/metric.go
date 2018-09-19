@@ -141,7 +141,7 @@ func (m *Metric) gatewayErrorlogAlarm(clusterId, ipAddr string, errorlogs []stri
 	ruleName := alarm2.ALARMRULE_GATEWAY_ERRORLOG
 	remark := errorlogs
 
-	if err := m.alarmClient.RuleAlarm(int64(m.clusterId), ipAddr,
+	if err := m.alarmClient.RuleAlarm(int64(m.clusterId), ipAddr, "master-server",
 		ruleName, alarmValue, alarmpb2.AlarmValueCompareType_GREATER_THAN, remark); err != nil {
 			log.Error("alarm rule[%v] do failed: %v", err)
 	}
@@ -156,7 +156,7 @@ func (m *Metric) gatewaySlowlogAlarm(clusterId, ipAddr string, slowlogs []*stats
 		remark = append(remark, log.SlowLog)
 	}
 
-	if err := m.alarmClient.RuleAlarm(int64(m.clusterId), ipAddr,
+	if err := m.alarmClient.RuleAlarm(int64(m.clusterId), ipAddr, "master-server",
 		ruleName, alarmValue, alarmpb2.AlarmValueCompareType_GREATER_THAN, remark); err != nil {
 			log.Error("alarm rule[%v] do failed: %v", err)
 	}

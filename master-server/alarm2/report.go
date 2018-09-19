@@ -55,7 +55,7 @@ func (s *Server) ruleAlarmReportCron() {
 	}
 }
 
-func (s *Server) getReportReceivers(msg alarmMessage) ([]string, []string, error) {
+func (s *Server) getReportReceivers(clusterId int64) ([]string, []string, error) {
 	var mail 	[]string
 	var sms 	[]string
 	// system receiver
@@ -69,9 +69,9 @@ func (s *Server) getReportReceivers(msg alarmMessage) ([]string, []string, error
 		}
 	}
 	// cluster receiver
-	clusterRecvers := s.getMapClusterReceiver(msg.clusterId)
+	clusterRecvers := s.getMapClusterReceiver(clusterId)
 	if len(clusterRecvers) == 0 {
-		log.Warn("no cluster[%v] receiver", msg.clusterId)
+		log.Warn("no cluster[%v] receiver", clusterId)
 	} else {
 		for _, r := range clusterRecvers {
 			mail = append(mail, r.Mail)
@@ -80,12 +80,12 @@ func (s *Server) getReportReceivers(msg alarmMessage) ([]string, []string, error
 	}
 
 	if len(mail) == 0 || len(sms) == 0 {
-		return nil, nil, fmt.Errorf("cluster[%v] no receiver", msg.clusterId)
+		return nil, nil, fmt.Errorf("cluster[%v] no receiver", clusterId)
 	}
 	return mail, sms, nil
 }
 
-func genAlarmContent(msg alarmMessage) (content string) {
+func genAlarmMailContent(msg alarmMessage) (content string) {
 	content = fmt.Sprintf("ClusterId[%v] AppName[%v] IpAddr[%v] Trigger RuleName[%v] AlarmValue[%v] CompareType[%v] AlarmThreshold[%v]<br>",
 		msg.clusterId, msg.appName, msg.ipAddr, msg.GetRuleName(), msg.GetAlarmValue(), msg.GetCmpType().String(), msg.ruleThreshold)
 
@@ -95,31 +95,65 @@ func genAlarmContent(msg alarmMessage) (content string) {
 	return
 }
 
+func genAlarmSmsContent(msg alarmMessage) (content string) {
+	content = fmt.Sprintf("ClusterId[%v] AppName[%v] IpAddr[%v] Trigger RuleName[%v] AlarmValue[%v] CompareType[%v] AlarmThreshold[%v]",
+		msg.clusterId, msg.appName, msg.ipAddr, msg.GetRuleName(), msg.GetAlarmValue(), msg.GetCmpType().String(), msg.ruleThreshold)
+
+	return
+}
+
 func (s *Server) report(msg alarmMessage) error {
 	log.Debug("alarm report message: %+v", msg)
-	var receiverMail 	[]string
-	var receiverSms 	[]string
+	var receiverMail []string
+	var receiverSms []string
 
-	// mail sms
-	receiverMail, receiverSms, err := s.getReportReceivers(msg)
+	receiverMail, receiverSms, err := s.getReportReceivers(msg.clusterId)
 	if err != nil {
 		return err
 	}
 
-	// content
-	content := genAlarmContent(msg)
+	if err := s.mailReport(msg, receiverMail); err != nil {
+		return err
+	}
+	if err := s.smsReport(msg, receiverSms); err != nil {
+		return err
+	}
 
-	reportMsg := &reportMessage{
-		Title: "SHARKSTORE ALARM " + msg.RuleName,
+	return nil
+}
+
+func (s *Server) mailReport(msg alarmMessage, receiverMail []string) error {
+	content := genAlarmMailContent(msg)
+
+	reportMsg := reportMessage{
+		Title:   "SHARKSTORE ALARM " + msg.GetRuleName(),
 		Content: content,
-		MailTo: strings.Join(receiverMail, ","),
-		SmsTo: strings.Join(receiverSms, ","),
+		MailTo:  strings.Join(receiverMail, ","),
 	}
 	log.Debug("alarm report title is: %v", reportMsg.Title)
 	log.Debug("alarm report content is: %v", reportMsg.Content)
-	log.Debug("alarm report receiver mail is: %v", reportMsg.MailTo)
+	log.Debug("alarm report mail is: %v", reportMsg.MailTo)
+
+	return s.doReport(reportMsg)
+}
+
+func (s *Server) smsReport(msg alarmMessage, receiverSms []string) error {
+	content := "SHARKSTORE ALARM " + msg.GetRuleName()
+	content += genAlarmSmsContent(msg)
+
+	reportMsg := reportMessage{
+		Title:   "SHARKSTORE ALARM " + msg.GetRuleName(),
+		Content: content,
+		SmsTo:   strings.Join(receiverSms, ","),
+	}
+	log.Debug("alarm report title is: %v", reportMsg.Title)
+	log.Debug("alarm report content is: %v", reportMsg.Content)
 	log.Debug("alarm report sms is: %v", reportMsg.SmsTo)
 
+	return s.doReport(reportMsg)
+}
+
+func (s *Server) doReport(reportMsg reportMessage) error {
 	data, err := json.Marshal(reportMsg)
 	if err != nil {
 		return err

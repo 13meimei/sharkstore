@@ -58,7 +58,7 @@ func (c *Client) AlarmAppHeartbeat(clusterId int64, ipAddr, appName string, inte
 	return err
 }
 
-func (c *Client) RuleAlarm(clusterId int64, ipAddr string,
+func (c *Client) RuleAlarm(clusterId int64, ipAddr, appName string,
 	ruleName string, alarmValue float64, cmpType alarmpb2.AlarmValueCompareType, remark []string) error {
 	if c == nil {
 		return nil
@@ -72,6 +72,7 @@ func (c *Client) RuleAlarm(clusterId int64, ipAddr string,
 			Type: alarmpb2.AlarmType_RULE_ALARM,
 			ClusterId: clusterId,
 			IpAddr: ipAddr,
+			AppName: appName,
 		},
 		RuleAlarm: &alarmpb2.RuleAlarmRequest{
 			RuleName: ruleName,

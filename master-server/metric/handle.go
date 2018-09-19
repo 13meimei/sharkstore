@@ -250,7 +250,8 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 		ruleName = alarm2.ALARMRULE_NODE_CAPACITY_USED_RATE
 		alarmValue = float64(usedSize/capacity)
 
-		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+			ruleName, alarmValue, compareType, remark); err != nil {
 			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
 			return err
 		}
@@ -260,7 +261,8 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 		ruleName = alarm2.ALARMRULE_NODE_WRITE_BPS
 		alarmValue = float64(writeBps)
 
-		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+			ruleName, alarmValue, compareType, remark); err != nil {
 			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
 			return err
 		}
@@ -270,7 +272,8 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 		ruleName = alarm2.ALARMRULE_NODE_WRITE_OPS
 		alarmValue = float64(writeOps)
 
-		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+			ruleName, alarmValue, compareType, remark); err != nil {
 			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
 			return err
 		}
@@ -280,7 +283,8 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 		ruleName = alarm2.ALARMRULE_NODE_READ_BPS
 		alarmValue = float64(readBps)
 
-		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+			ruleName, alarmValue, compareType, remark); err != nil {
 			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
 			return err
 		}
@@ -290,7 +294,8 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 		ruleName = alarm2.ALARMRULE_NODE_READ_OPS
 		alarmValue = float64(readOps)
 
-		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+			ruleName, alarmValue, compareType, remark); err != nil {
 			log.Error("node alarm rule[%v] do failed: %v", ruleName, err)
 			return err
 		}
@@ -341,7 +346,8 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 			ruleName = alarm2.ALARMRULE_RANGE_WRITE_BPS
 			alarmValue = writeBps
 
-			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, float64(alarmValue), compareType, remark); err != nil {
+			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+				ruleName, float64(alarmValue), compareType, remark); err != nil {
 				log.Error("range alarm rule[%v] do failed: %v", ruleName, err)
 				return err
 			}
@@ -351,7 +357,8 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 			ruleName = alarm2.ALARMRULE_RANGE_WRITE_OPS
 			alarmValue = writeOps
 
-			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, float64(alarmValue), compareType, remark); err != nil {
+			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+				ruleName, float64(alarmValue), compareType, remark); err != nil {
 				log.Error("range alarm rule[%v] do failed: %v", ruleName, err)
 				return err
 			}
@@ -361,7 +368,8 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 			ruleName = alarm2.ALARMRULE_RANGE_READ_BPS
 			alarmValue = readBps
 
-			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, float64(alarmValue), compareType, remark); err != nil {
+			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+				ruleName, float64(alarmValue), compareType, remark); err != nil {
 				log.Error("range alarm rule[%v] do failed: %v", ruleName, err)
 				return err
 			}
@@ -371,7 +379,8 @@ func (m *Metric) rangeThresholdAlarm(clusterId uint64, rangeStats []*statspb.Ran
 			ruleName = alarm2.ALARMRULE_RANGE_READ_OPS
 			alarmValue = readOps
 
-			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, ruleName, float64(alarmValue), compareType, remark); err != nil {
+			if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
+				ruleName, float64(alarmValue), compareType, remark); err != nil {
 				log.Error("range alarm rule[%v] do failed: %v", ruleName, err)
 				return err
 			}

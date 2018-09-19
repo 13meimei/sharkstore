@@ -214,7 +214,7 @@ func TestHandle(t *testing.T) {
 	}
 
 	// test report
-	mail, sms, err := s.getReportReceivers(msg)
+	mail, sms, err := s.getReportReceivers(msg.clusterId)
 	if err != nil {
 		t.Fatalf("get report receivers failed: %v", err)
 	}
