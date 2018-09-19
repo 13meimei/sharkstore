@@ -212,6 +212,7 @@ bool Worker::isSlow(sharkstore::dataserver::common::ProtoMessage *msg) {
     }
     switch (msg->header.func_id) {
         case funcpb::FunctionID::kFuncSelect:
+        case funcpb::FunctionID::kFuncUpdate:
         case funcpb::FunctionID::kFuncWatchGet:
         case funcpb::FunctionID::kFuncKvRangeDel:
         case funcpb::FunctionID::kFuncKvScan :

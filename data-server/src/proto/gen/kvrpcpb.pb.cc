@@ -223,6 +223,26 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<Field>
      _instance;
 } _Field_default_instance_;
+class UpdateRequestDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<UpdateRequest>
+     _instance;
+} _UpdateRequest_default_instance_;
+class DsUpdateRequestDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<DsUpdateRequest>
+     _instance;
+} _DsUpdateRequest_default_instance_;
+class UpdateResponseDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<UpdateResponse>
+     _instance;
+} _UpdateResponse_default_instance_;
+class DsUpdateResponseDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<DsUpdateResponse>
+     _instance;
+} _DsUpdateResponse_default_instance_;
 class RedisKeyValueDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<RedisKeyValue>
@@ -494,7 +514,7 @@ namespace protobuf_kvrpcpb_2eproto {
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[94];
+::google::protobuf::Metadata file_level_metadata[98];
 const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[5];
 
 }  // namespace
@@ -510,6 +530,10 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::AuxillaryParseTableField
 };
 PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
     TableStruct::schema[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
@@ -909,6 +933,36 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Field, column_id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Field, value_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, key_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, scope_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, fields_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, where_filters_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUpdateRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUpdateRequest, header_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUpdateRequest, req_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateResponse, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateResponse, code_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateResponse, affected_keys_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUpdateResponse, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUpdateResponse, header_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUpdateResponse, resp_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RedisKeyValue, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1346,59 +1400,63 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 278, -1, sizeof(DeleteRequest)},
   { 288, -1, sizeof(DeleteResponse)},
   { 295, -1, sizeof(Field)},
-  { 302, -1, sizeof(RedisKeyValue)},
-  { 309, -1, sizeof(RedisDo)},
-  { 318, -1, sizeof(KvSetRequest)},
-  { 325, -1, sizeof(KvSetResponse)},
-  { 332, -1, sizeof(DsKvSetRequest)},
-  { 339, -1, sizeof(DsKvSetResponse)},
-  { 346, -1, sizeof(KvGetRequest)},
-  { 352, -1, sizeof(KvGetResponse)},
-  { 359, -1, sizeof(DsKvGetRequest)},
-  { 366, -1, sizeof(DsKvGetResponse)},
-  { 373, -1, sizeof(KvBatchSetRequest)},
-  { 380, -1, sizeof(KvBatchSetResponse)},
-  { 387, -1, sizeof(DsKvBatchSetRequest)},
-  { 394, -1, sizeof(DsKvBatchSetResponse)},
-  { 401, -1, sizeof(KvBatchGetRequest)},
-  { 408, -1, sizeof(KvBatchGetResponse)},
-  { 415, -1, sizeof(DsKvBatchGetRequest)},
-  { 422, -1, sizeof(DsKvBatchGetResponse)},
-  { 429, -1, sizeof(KvScanRequest)},
-  { 439, -1, sizeof(KvScanResponse)},
-  { 448, -1, sizeof(DsKvScanRequest)},
-  { 455, -1, sizeof(DsKvScanResponse)},
-  { 462, -1, sizeof(KvDeleteRequest)},
-  { 469, -1, sizeof(KvDeleteResponse)},
-  { 476, -1, sizeof(DsKvDeleteRequest)},
-  { 483, -1, sizeof(DsKvDeleteResponse)},
-  { 490, -1, sizeof(KvBatchDeleteRequest)},
-  { 497, -1, sizeof(KvBatchDeleteResponse)},
-  { 504, -1, sizeof(DsKvBatchDeleteRequest)},
-  { 511, -1, sizeof(DsKvBatchDeleteResponse)},
-  { 518, -1, sizeof(KvRangeDeleteRequest)},
-  { 527, -1, sizeof(KvRangeDeleteResponse)},
-  { 535, -1, sizeof(DsKvRangeDeleteRequest)},
-  { 542, -1, sizeof(DsKvRangeDeleteResponse)},
-  { 549, -1, sizeof(LockValue)},
-  { 559, -1, sizeof(LockRequest)},
-  { 567, -1, sizeof(DsLockRequest)},
-  { 574, -1, sizeof(LockResponse)},
-  { 583, -1, sizeof(LockInfo)},
-  { 590, -1, sizeof(LockScanResponse)},
-  { 597, -1, sizeof(DsLockResponse)},
-  { 604, -1, sizeof(LockUpdateRequest)},
-  { 615, -1, sizeof(DsLockUpdateRequest)},
-  { 622, -1, sizeof(DsLockUpdateResponse)},
-  { 629, -1, sizeof(UnlockRequest)},
-  { 638, -1, sizeof(DsUnlockRequest)},
-  { 645, -1, sizeof(DsUnlockResponse)},
-  { 652, -1, sizeof(UnlockForceRequest)},
-  { 660, -1, sizeof(DsUnlockForceRequest)},
-  { 667, -1, sizeof(DsUnlockForceResponse)},
-  { 674, -1, sizeof(LockScanRequest)},
-  { 682, -1, sizeof(DsLockScanRequest)},
-  { 689, -1, sizeof(DsLockScanResponse)},
+  { 302, -1, sizeof(UpdateRequest)},
+  { 311, -1, sizeof(DsUpdateRequest)},
+  { 318, -1, sizeof(UpdateResponse)},
+  { 325, -1, sizeof(DsUpdateResponse)},
+  { 332, -1, sizeof(RedisKeyValue)},
+  { 339, -1, sizeof(RedisDo)},
+  { 348, -1, sizeof(KvSetRequest)},
+  { 355, -1, sizeof(KvSetResponse)},
+  { 362, -1, sizeof(DsKvSetRequest)},
+  { 369, -1, sizeof(DsKvSetResponse)},
+  { 376, -1, sizeof(KvGetRequest)},
+  { 382, -1, sizeof(KvGetResponse)},
+  { 389, -1, sizeof(DsKvGetRequest)},
+  { 396, -1, sizeof(DsKvGetResponse)},
+  { 403, -1, sizeof(KvBatchSetRequest)},
+  { 410, -1, sizeof(KvBatchSetResponse)},
+  { 417, -1, sizeof(DsKvBatchSetRequest)},
+  { 424, -1, sizeof(DsKvBatchSetResponse)},
+  { 431, -1, sizeof(KvBatchGetRequest)},
+  { 438, -1, sizeof(KvBatchGetResponse)},
+  { 445, -1, sizeof(DsKvBatchGetRequest)},
+  { 452, -1, sizeof(DsKvBatchGetResponse)},
+  { 459, -1, sizeof(KvScanRequest)},
+  { 469, -1, sizeof(KvScanResponse)},
+  { 478, -1, sizeof(DsKvScanRequest)},
+  { 485, -1, sizeof(DsKvScanResponse)},
+  { 492, -1, sizeof(KvDeleteRequest)},
+  { 499, -1, sizeof(KvDeleteResponse)},
+  { 506, -1, sizeof(DsKvDeleteRequest)},
+  { 513, -1, sizeof(DsKvDeleteResponse)},
+  { 520, -1, sizeof(KvBatchDeleteRequest)},
+  { 527, -1, sizeof(KvBatchDeleteResponse)},
+  { 534, -1, sizeof(DsKvBatchDeleteRequest)},
+  { 541, -1, sizeof(DsKvBatchDeleteResponse)},
+  { 548, -1, sizeof(KvRangeDeleteRequest)},
+  { 557, -1, sizeof(KvRangeDeleteResponse)},
+  { 565, -1, sizeof(DsKvRangeDeleteRequest)},
+  { 572, -1, sizeof(DsKvRangeDeleteResponse)},
+  { 579, -1, sizeof(LockValue)},
+  { 589, -1, sizeof(LockRequest)},
+  { 597, -1, sizeof(DsLockRequest)},
+  { 604, -1, sizeof(LockResponse)},
+  { 613, -1, sizeof(LockInfo)},
+  { 620, -1, sizeof(LockScanResponse)},
+  { 627, -1, sizeof(DsLockResponse)},
+  { 634, -1, sizeof(LockUpdateRequest)},
+  { 645, -1, sizeof(DsLockUpdateRequest)},
+  { 652, -1, sizeof(DsLockUpdateResponse)},
+  { 659, -1, sizeof(UnlockRequest)},
+  { 668, -1, sizeof(DsUnlockRequest)},
+  { 675, -1, sizeof(DsUnlockResponse)},
+  { 682, -1, sizeof(UnlockForceRequest)},
+  { 690, -1, sizeof(DsUnlockForceRequest)},
+  { 697, -1, sizeof(DsUnlockForceResponse)},
+  { 704, -1, sizeof(LockScanRequest)},
+  { 712, -1, sizeof(DsLockScanRequest)},
+  { 719, -1, sizeof(DsLockScanResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -1443,6 +1501,10 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_DeleteRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_DeleteResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_Field_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_UpdateRequest_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_DsUpdateRequest_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_UpdateResponse_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_DsUpdateResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_RedisKeyValue_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_RedisDo_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_KvSetRequest_default_instance_),
@@ -1516,7 +1578,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 94);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 98);
 }
 
 }  // namespace
@@ -1609,7 +1671,15 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_DeleteResponse_default_instance_);_Field_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_Field_default_instance_);_RedisKeyValue_default_instance_._instance.DefaultConstruct();
+      &_Field_default_instance_);_UpdateRequest_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_UpdateRequest_default_instance_);_DsUpdateRequest_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_DsUpdateRequest_default_instance_);_UpdateResponse_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_UpdateResponse_default_instance_);_DsUpdateResponse_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_DsUpdateResponse_default_instance_);_RedisKeyValue_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_RedisKeyValue_default_instance_);_RedisDo_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -1799,6 +1869,16 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::Scope::internal_default_instance());
   _DeleteRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
       ::timestamp::Timestamp::internal_default_instance());
+  _UpdateRequest_default_instance_._instance.get_mutable()->scope_ = const_cast< ::kvrpcpb::Scope*>(
+      ::kvrpcpb::Scope::internal_default_instance());
+  _DsUpdateRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
+      ::kvrpcpb::RequestHeader::internal_default_instance());
+  _DsUpdateRequest_default_instance_._instance.get_mutable()->req_ = const_cast< ::kvrpcpb::UpdateRequest*>(
+      ::kvrpcpb::UpdateRequest::internal_default_instance());
+  _DsUpdateResponse_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::ResponseHeader*>(
+      ::kvrpcpb::ResponseHeader::internal_default_instance());
+  _DsUpdateResponse_default_instance_._instance.get_mutable()->resp_ = const_cast< ::kvrpcpb::UpdateResponse*>(
+      ::kvrpcpb::UpdateResponse::internal_default_instance());
   _KvSetRequest_default_instance_._instance.get_mutable()->kv_ = const_cast< ::kvrpcpb::RedisKeyValue*>(
       ::kvrpcpb::RedisKeyValue::internal_default_instance());
   _DsKvSetRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
@@ -2018,137 +2098,147 @@ void AddDescriptorsImpl() {
       " \003(\004\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Time"
       "stamp\"5\n\016DeleteResponse\022\014\n\004code\030\001 \001(\005\022\025\n"
       "\raffected_keys\030\002 \001(\004\")\n\005Field\022\021\n\tcolumn_"
-      "id\030\001 \001(\004\022\r\n\005value\030\002 \001(\014\"+\n\rRedisKeyValue"
-      "\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\"g\n\007RedisDo\022"
-      "\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\022\036\n\002op\030\003 \001(\0162"
-      "\022.kvrpcpb.Operation\022 \n\004case\030\004 \001(\0162\022.kvrp"
-      "cpb.ExistCase\"T\n\014KvSetRequest\022\"\n\002kv\030\001 \001("
-      "\0132\026.kvrpcpb.RedisKeyValue\022 \n\004case\030\002 \001(\0162"
-      "\022.kvrpcpb.ExistCase\"4\n\rKvSetResponse\022\014\n\004"
-      "code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"\\\n\016DsK"
-      "vSetRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Re"
-      "questHeader\022\"\n\003req\030\002 \001(\0132\025.kvrpcpb.KvSet"
-      "Request\"`\n\017DsKvSetResponse\022\'\n\006header\030\001 \001"
-      "(\0132\027.kvrpcpb.ResponseHeader\022$\n\004resp\030\002 \001("
-      "\0132\026.kvrpcpb.KvSetResponse\"\033\n\014KvGetReques"
-      "t\022\013\n\003key\030\001 \001(\014\",\n\rKvGetResponse\022\014\n\004code\030"
-      "\001 \001(\005\022\r\n\005value\030\002 \001(\014\"\\\n\016DsKvGetRequest\022&"
-      "\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\""
-      "\n\003req\030\002 \001(\0132\025.kvrpcpb.KvGetRequest\"`\n\017Ds"
-      "KvGetResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb."
-      "ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.kvrpcpb.K"
-      "vGetResponse\"Z\n\021KvBatchSetRequest\022#\n\003kvs"
-      "\030\001 \003(\0132\026.kvrpcpb.RedisKeyValue\022 \n\004case\030\002"
-      " \001(\0162\022.kvrpcpb.ExistCase\"9\n\022KvBatchSetRe"
-      "sponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 "
-      "\001(\004\"f\n\023DsKvBatchSetRequest\022&\n\006header\030\001 \001"
-      "(\0132\026.kvrpcpb.RequestHeader\022\'\n\003req\030\002 \001(\0132"
-      "\032.kvrpcpb.KvBatchSetRequest\"j\n\024DsKvBatch"
-      "SetResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Re"
-      "sponseHeader\022)\n\004resp\030\002 \001(\0132\033.kvrpcpb.KvB"
-      "atchSetResponse\"/\n\021KvBatchGetRequest\022\014\n\004"
-      "code\030\001 \001(\005\022\014\n\004keys\030\002 \003(\014\"G\n\022KvBatchGetRe"
-      "sponse\022\014\n\004code\030\001 \001(\005\022#\n\003kvs\030\002 \003(\0132\026.kvrp"
-      "cpb.RedisKeyValue\"f\n\023DsKvBatchGetRequest"
-      "\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader"
-      "\022\'\n\003req\030\002 \001(\0132\032.kvrpcpb.KvBatchGetReques"
-      "t\"j\n\024DsKvBatchGetResponse\022\'\n\006header\030\001 \001("
-      "\0132\027.kvrpcpb.ResponseHeader\022)\n\004resp\030\002 \001(\013"
-      "2\033.kvrpcpb.KvBatchGetResponse\"f\n\rKvScanR"
-      "equest\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\022\n\n"
-      "count_only\030\003 \001(\010\022\020\n\010key_only\030\004 \001(\010\022\021\n\tma"
-      "x_count\030\005 \001(\003\"d\n\016KvScanResponse\022\014\n\004code\030"
-      "\001 \001(\005\022\r\n\005count\030\002 \001(\003\022#\n\003kvs\030\003 \003(\0132\026.kvrp"
-      "cpb.RedisKeyValue\022\020\n\010last_key\030\004 \001(\014\"^\n\017D"
-      "sKvScanRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb"
-      ".RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.Kv"
-      "ScanRequest\"b\n\020DsKvScanResponse\022\'\n\006heade"
-      "r\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022%\n\004resp"
-      "\030\002 \001(\0132\027.kvrpcpb.KvScanResponse\"@\n\017KvDel"
-      "eteRequest\022\013\n\003key\030\001 \001(\014\022 \n\004case\030\002 \001(\0162\022."
-      "kvrpcpb.ExistCase\"7\n\020KvDeleteResponse\022\014\n"
-      "\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"b\n\021Ds"
-      "KvDeleteRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcp"
-      "b.RequestHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.K"
-      "vDeleteRequest\"f\n\022DsKvDeleteResponse\022\'\n\006"
-      "header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n"
-      "\004resp\030\002 \001(\0132\031.kvrpcpb.KvDeleteResponse\"F"
-      "\n\024KvBatchDeleteRequest\022\014\n\004keys\030\001 \003(\014\022 \n\004"
-      "case\030\002 \001(\0162\022.kvrpcpb.ExistCase\"<\n\025KvBatc"
-      "hDeleteResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffecte"
-      "d_keys\030\002 \001(\004\"l\n\026DsKvBatchDeleteRequest\022&"
-      "\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022*"
-      "\n\003req\030\002 \001(\0132\035.kvrpcpb.KvBatchDeleteReque"
-      "st\"p\n\027DsKvBatchDeleteResponse\022\'\n\006header\030"
-      "\001 \001(\0132\027.kvrpcpb.ResponseHeader\022,\n\004resp\030\002"
-      " \001(\0132\036.kvrpcpb.KvBatchDeleteResponse\"i\n\024"
-      "KvRangeDeleteRequest\022\r\n\005start\030\001 \001(\014\022\r\n\005l"
-      "imit\030\002 \001(\014\022\021\n\tmax_count\030\003 \001(\003\022 \n\004case\030\004 "
-      "\001(\0162\022.kvrpcpb.ExistCase\"N\n\025KvRangeDelete"
-      "Response\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030"
-      "\002 \001(\004\022\020\n\010last_key\030\003 \001(\014\"l\n\026DsKvRangeDele"
-      "teRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Requ"
-      "estHeader\022*\n\003req\030\002 \001(\0132\035.kvrpcpb.KvRange"
-      "DeleteRequest\"p\n\027DsKvRangeDeleteResponse"
-      "\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeade"
-      "r\022,\n\004resp\030\002 \001(\0132\036.kvrpcpb.KvRangeDeleteR"
-      "esponse\"\\\n\tLockValue\022\r\n\005value\030\002 \001(\014\022\n\n\002i"
-      "d\030\003 \001(\t\022\023\n\013delete_time\030\004 \001(\003\022\023\n\013update_t"
-      "ime\030\005 \001(\003\022\n\n\002by\030\007 \001(\t\"f\n\013LockRequest\022\013\n\003"
-      "key\030\001 \001(\014\022!\n\005value\030\002 \001(\0132\022.kvrpcpb.LockV"
-      "alue\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Time"
-      "stamp\"Z\n\rDsLockRequest\022&\n\006header\030\001 \001(\0132\026"
-      ".kvrpcpb.RequestHeader\022!\n\003req\030\002 \001(\0132\024.kv"
-      "rpcpb.LockRequest\"O\n\014LockResponse\022\014\n\004cod"
-      "e\030\001 \001(\003\022\r\n\005error\030\002 \001(\t\022\r\n\005value\030\003 \001(\014\022\023\n"
-      "\013update_time\030\004 \001(\003\":\n\010LockInfo\022\013\n\003key\030\001 "
-      "\001(\014\022!\n\005value\030\002 \001(\0132\022.kvrpcpb.LockValue\"E"
-      "\n\020LockScanResponse\022\037\n\004info\030\001 \003(\0132\021.kvrpc"
-      "pb.LockInfo\022\020\n\010last_key\030\002 \001(\014\"^\n\016DsLockR"
+      "id\030\001 \001(\004\022\r\n\005value\030\002 \001(\014\"\202\001\n\rUpdateReques"
+      "t\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb."
+      "Scope\022\036\n\006fields\030\003 \003(\0132\016.kvrpcpb.Field\022%\n"
+      "\rwhere_filters\030\004 \003(\0132\016.kvrpcpb.Match\"^\n\017"
+      "DsUpdateRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcp"
+      "b.RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.U"
+      "pdateRequest\"5\n\016UpdateResponse\022\014\n\004code\030\001"
+      " \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"b\n\020DsUpdateR"
       "esponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respon"
-      "seHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockRes"
-      "ponse\"\214\001\n\021LockUpdateRequest\022\013\n\003key\030\001 \001(\014"
-      "\022\n\n\002id\030\003 \001(\t\022\023\n\013update_time\030\005 \001(\003\022\024\n\014upd"
-      "ate_value\030\006 \001(\014\022\'\n\ttimestamp\030\n \001(\0132\024.tim"
-      "estamp.Timestamp\022\n\n\002by\030\013 \001(\t\"f\n\023DsLockUp"
-      "dateRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Re"
-      "questHeader\022\'\n\003req\030\002 \001(\0132\032.kvrpcpb.LockU"
-      "pdateRequest\"d\n\024DsLockUpdateResponse\022\'\n\006"
-      "header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n"
-      "\004resp\030\002 \001(\0132\025.kvrpcpb.LockResponse\"]\n\rUn"
-      "lockRequest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\'\n\t"
-      "timestamp\030\n \001(\0132\024.timestamp.Timestamp\022\n\n"
-      "\002by\030\013 \001(\t\"^\n\017DsUnlockRequest\022&\n\006header\030\001"
-      " \001(\0132\026.kvrpcpb.RequestHeader\022#\n\003req\030\002 \001("
-      "\0132\026.kvrpcpb.UnlockRequest\"`\n\020DsUnlockRes"
-      "ponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Response"
-      "Header\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockRespo"
-      "nse\"V\n\022UnlockForceRequest\022\013\n\003key\030\001 \001(\014\022\'"
-      "\n\ttimestamp\030\n \001(\0132\024.timestamp.Timestamp\022"
-      "\n\n\002by\030\013 \001(\t\"h\n\024DsUnlockForceRequest\022&\n\006h"
-      "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022(\n\003r"
-      "eq\030\002 \001(\0132\033.kvrpcpb.UnlockForceRequest\"e\n"
-      "\025DsUnlockForceResponse\022\'\n\006header\030\001 \001(\0132\027"
-      ".kvrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025."
-      "kvrpcpb.LockResponse\">\n\017LockScanRequest\022"
-      "\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\r\n\005count\030\003"
-      " \001(\r\"b\n\021DsLockScanRequest\022&\n\006header\030\001 \001("
-      "\0132\026.kvrpcpb.RequestHeader\022%\n\003req\030\002 \001(\0132\030"
-      ".kvrpcpb.LockScanRequest\"f\n\022DsLockScanRe"
+      "seHeader\022%\n\004resp\030\002 \001(\0132\027.kvrpcpb.UpdateR"
+      "esponse\"+\n\rRedisKeyValue\022\013\n\003key\030\001 \001(\014\022\r\n"
+      "\005value\030\002 \001(\014\"g\n\007RedisDo\022\013\n\003key\030\001 \001(\014\022\r\n\005"
+      "value\030\002 \001(\014\022\036\n\002op\030\003 \001(\0162\022.kvrpcpb.Operat"
+      "ion\022 \n\004case\030\004 \001(\0162\022.kvrpcpb.ExistCase\"T\n"
+      "\014KvSetRequest\022\"\n\002kv\030\001 \001(\0132\026.kvrpcpb.Redi"
+      "sKeyValue\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.ExistC"
+      "ase\"4\n\rKvSetResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raf"
+      "fected_keys\030\002 \001(\004\"\\\n\016DsKvSetRequest\022&\n\006h"
+      "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n\003r"
+      "eq\030\002 \001(\0132\025.kvrpcpb.KvSetRequest\"`\n\017DsKvS"
+      "etResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Res"
+      "ponseHeader\022$\n\004resp\030\002 \001(\0132\026.kvrpcpb.KvSe"
+      "tResponse\"\033\n\014KvGetRequest\022\013\n\003key\030\001 \001(\014\","
+      "\n\rKvGetResponse\022\014\n\004code\030\001 \001(\005\022\r\n\005value\030\002"
+      " \001(\014\"\\\n\016DsKvGetRequest\022&\n\006header\030\001 \001(\0132\026"
+      ".kvrpcpb.RequestHeader\022\"\n\003req\030\002 \001(\0132\025.kv"
+      "rpcpb.KvGetRequest\"`\n\017DsKvGetResponse\022\'\n"
+      "\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$"
+      "\n\004resp\030\002 \001(\0132\026.kvrpcpb.KvGetResponse\"Z\n\021"
+      "KvBatchSetRequest\022#\n\003kvs\030\001 \003(\0132\026.kvrpcpb"
+      ".RedisKeyValue\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.E"
+      "xistCase\"9\n\022KvBatchSetResponse\022\014\n\004code\030\001"
+      " \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"f\n\023DsKvBatch"
+      "SetRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Req"
+      "uestHeader\022\'\n\003req\030\002 \001(\0132\032.kvrpcpb.KvBatc"
+      "hSetRequest\"j\n\024DsKvBatchSetResponse\022\'\n\006h"
+      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022)\n\004"
+      "resp\030\002 \001(\0132\033.kvrpcpb.KvBatchSetResponse\""
+      "/\n\021KvBatchGetRequest\022\014\n\004code\030\001 \001(\005\022\014\n\004ke"
+      "ys\030\002 \003(\014\"G\n\022KvBatchGetResponse\022\014\n\004code\030\001"
+      " \001(\005\022#\n\003kvs\030\002 \003(\0132\026.kvrpcpb.RedisKeyValu"
+      "e\"f\n\023DsKvBatchGetRequest\022&\n\006header\030\001 \001(\013"
+      "2\026.kvrpcpb.RequestHeader\022\'\n\003req\030\002 \001(\0132\032."
+      "kvrpcpb.KvBatchGetRequest\"j\n\024DsKvBatchGe"
+      "tResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Resp"
+      "onseHeader\022)\n\004resp\030\002 \001(\0132\033.kvrpcpb.KvBat"
+      "chGetResponse\"f\n\rKvScanRequest\022\r\n\005start\030"
+      "\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\022\n\ncount_only\030\003 \001(\010"
+      "\022\020\n\010key_only\030\004 \001(\010\022\021\n\tmax_count\030\005 \001(\003\"d\n"
+      "\016KvScanResponse\022\014\n\004code\030\001 \001(\005\022\r\n\005count\030\002"
+      " \001(\003\022#\n\003kvs\030\003 \003(\0132\026.kvrpcpb.RedisKeyValu"
+      "e\022\020\n\010last_key\030\004 \001(\014\"^\n\017DsKvScanRequest\022&"
+      "\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022#"
+      "\n\003req\030\002 \001(\0132\026.kvrpcpb.KvScanRequest\"b\n\020D"
+      "sKvScanResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
+      "b.ResponseHeader\022%\n\004resp\030\002 \001(\0132\027.kvrpcpb"
+      ".KvScanResponse\"@\n\017KvDeleteRequest\022\013\n\003ke"
+      "y\030\001 \001(\014\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.ExistCas"
+      "e\"7\n\020KvDeleteResponse\022\014\n\004code\030\001 \001(\005\022\025\n\ra"
+      "ffected_keys\030\002 \001(\004\"b\n\021DsKvDeleteRequest\022"
+      "&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022"
+      "%\n\003req\030\002 \001(\0132\030.kvrpcpb.KvDeleteRequest\"f"
+      "\n\022DsKvDeleteResponse\022\'\n\006header\030\001 \001(\0132\027.k"
+      "vrpcpb.ResponseHeader\022\'\n\004resp\030\002 \001(\0132\031.kv"
+      "rpcpb.KvDeleteResponse\"F\n\024KvBatchDeleteR"
+      "equest\022\014\n\004keys\030\001 \003(\014\022 \n\004case\030\002 \001(\0162\022.kvr"
+      "pcpb.ExistCase\"<\n\025KvBatchDeleteResponse\022"
+      "\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"l\n\026"
+      "DsKvBatchDeleteRequest\022&\n\006header\030\001 \001(\0132\026"
+      ".kvrpcpb.RequestHeader\022*\n\003req\030\002 \001(\0132\035.kv"
+      "rpcpb.KvBatchDeleteRequest\"p\n\027DsKvBatchD"
+      "eleteResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb."
+      "ResponseHeader\022,\n\004resp\030\002 \001(\0132\036.kvrpcpb.K"
+      "vBatchDeleteResponse\"i\n\024KvRangeDeleteReq"
+      "uest\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\021\n\tma"
+      "x_count\030\003 \001(\003\022 \n\004case\030\004 \001(\0162\022.kvrpcpb.Ex"
+      "istCase\"N\n\025KvRangeDeleteResponse\022\014\n\004code"
+      "\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\022\020\n\010last_ke"
+      "y\030\003 \001(\014\"l\n\026DsKvRangeDeleteRequest\022&\n\006hea"
+      "der\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022*\n\003req"
+      "\030\002 \001(\0132\035.kvrpcpb.KvRangeDeleteRequest\"p\n"
+      "\027DsKvRangeDeleteResponse\022\'\n\006header\030\001 \001(\013"
+      "2\027.kvrpcpb.ResponseHeader\022,\n\004resp\030\002 \001(\0132"
+      "\036.kvrpcpb.KvRangeDeleteResponse\"\\\n\tLockV"
+      "alue\022\r\n\005value\030\002 \001(\014\022\n\n\002id\030\003 \001(\t\022\023\n\013delet"
+      "e_time\030\004 \001(\003\022\023\n\013update_time\030\005 \001(\003\022\n\n\002by\030"
+      "\007 \001(\t\"f\n\013LockRequest\022\013\n\003key\030\001 \001(\014\022!\n\005val"
+      "ue\030\002 \001(\0132\022.kvrpcpb.LockValue\022\'\n\ttimestam"
+      "p\030\n \001(\0132\024.timestamp.Timestamp\"Z\n\rDsLockR"
+      "equest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Request"
+      "Header\022!\n\003req\030\002 \001(\0132\024.kvrpcpb.LockReques"
+      "t\"O\n\014LockResponse\022\014\n\004code\030\001 \001(\003\022\r\n\005error"
+      "\030\002 \001(\t\022\r\n\005value\030\003 \001(\014\022\023\n\013update_time\030\004 \001"
+      "(\003\":\n\010LockInfo\022\013\n\003key\030\001 \001(\014\022!\n\005value\030\002 \001"
+      "(\0132\022.kvrpcpb.LockValue\"E\n\020LockScanRespon"
+      "se\022\037\n\004info\030\001 \003(\0132\021.kvrpcpb.LockInfo\022\020\n\010l"
+      "ast_key\030\002 \001(\014\"^\n\016DsLockResponse\022\'\n\006heade"
+      "r\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004resp"
+      "\030\002 \001(\0132\025.kvrpcpb.LockResponse\"\214\001\n\021LockUp"
+      "dateRequest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\023\n\013"
+      "update_time\030\005 \001(\003\022\024\n\014update_value\030\006 \001(\014\022"
+      "\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Timestamp"
+      "\022\n\n\002by\030\013 \001(\t\"f\n\023DsLockUpdateRequest\022&\n\006h"
+      "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n\003r"
+      "eq\030\002 \001(\0132\032.kvrpcpb.LockUpdateRequest\"d\n\024"
+      "DsLockUpdateResponse\022\'\n\006header\030\001 \001(\0132\027.k"
+      "vrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.kv"
+      "rpcpb.LockResponse\"]\n\rUnlockRequest\022\013\n\003k"
+      "ey\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\'\n\ttimestamp\030\n \001(\0132"
+      "\024.timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"^\n\017DsU"
+      "nlockRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.R"
+      "equestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.Unlo"
+      "ckRequest\"`\n\020DsUnlockResponse\022\'\n\006header\030"
+      "\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004resp\030\002"
+      " \001(\0132\025.kvrpcpb.LockResponse\"V\n\022UnlockFor"
+      "ceRequest\022\013\n\003key\030\001 \001(\014\022\'\n\ttimestamp\030\n \001("
+      "\0132\024.timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"h\n\024D"
+      "sUnlockForceRequest\022&\n\006header\030\001 \001(\0132\026.kv"
+      "rpcpb.RequestHeader\022(\n\003req\030\002 \001(\0132\033.kvrpc"
+      "pb.UnlockForceRequest\"e\n\025DsUnlockForceRe"
       "sponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respons"
-      "eHeader\022\'\n\004resp\030\002 \001(\0132\031.kvrpcpb.LockScan"
-      "Response*;\n\013ExecuteType\022\017\n\013ExecInvalid\020\000"
-      "\022\013\n\007ExecPut\020\001\022\016\n\nExecDelete\020\002*k\n\tMatchTy"
-      "pe\022\013\n\007Invalid\020\000\022\t\n\005Equal\020\001\022\014\n\010NotEqual\020\002"
-      "\022\010\n\004Less\020\003\022\017\n\013LessOrEqual\020\004\022\n\n\006Larger\020\005\022"
-      "\021\n\rLargerOrEqual\020\006*Z\n\tExistCase\022\016\n\nEC_In"
-      "valid\020\000\022\020\n\014EC_NotExists\020\001\022\r\n\tEC_Exists\020\002"
-      "\022\016\n\nEC_AnyCase\020\003\022\014\n\010EC_Force\020\004*B\n\tOperat"
-      "ion\022\016\n\nOP_Invalid\020\000\022\n\n\006OP_Set\020\001\022\r\n\tOP_De"
-      "lete\020\002\022\n\n\006OP_Get\020\003b\006proto3"
+      "eHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockResp"
+      "onse\">\n\017LockScanRequest\022\r\n\005start\030\001 \001(\014\022\r"
+      "\n\005limit\030\002 \001(\014\022\r\n\005count\030\003 \001(\r\"b\n\021DsLockSc"
+      "anRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Requ"
+      "estHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.LockSca"
+      "nRequest\"f\n\022DsLockScanResponse\022\'\n\006header"
+      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n\004resp\030"
+      "\002 \001(\0132\031.kvrpcpb.LockScanResponse*;\n\013Exec"
+      "uteType\022\017\n\013ExecInvalid\020\000\022\013\n\007ExecPut\020\001\022\016\n"
+      "\nExecDelete\020\002*k\n\tMatchType\022\013\n\007Invalid\020\000\022"
+      "\t\n\005Equal\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022\017\n\013Le"
+      "ssOrEqual\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOrEqual"
+      "\020\006*Z\n\tExistCase\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_No"
+      "tExists\020\001\022\r\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020\003"
+      "\022\014\n\010EC_Force\020\004*B\n\tOperation\022\016\n\nOP_Invali"
+      "d\020\000\022\n\n\006OP_Set\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Get"
+      "\020\003b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 8746);
+      descriptor, 9130);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "kvrpcpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -18263,6 +18353,1605 @@ void Field::set_allocated_value(::std::string* value) {
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.Field.value)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int UpdateRequest::kKeyFieldNumber;
+const int UpdateRequest::kScopeFieldNumber;
+const int UpdateRequest::kFieldsFieldNumber;
+const int UpdateRequest::kWhereFiltersFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+UpdateRequest::UpdateRequest()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_kvrpcpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:kvrpcpb.UpdateRequest)
+}
+UpdateRequest::UpdateRequest(const UpdateRequest& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      fields_(from.fields_),
+      where_filters_(from.where_filters_),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.key().size() > 0) {
+    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
+  }
+  if (from.has_scope()) {
+    scope_ = new ::kvrpcpb::Scope(*from.scope_);
+  } else {
+    scope_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:kvrpcpb.UpdateRequest)
+}
+
+void UpdateRequest::SharedCtor() {
+  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  scope_ = NULL;
+  _cached_size_ = 0;
+}
+
+UpdateRequest::~UpdateRequest() {
+  // @@protoc_insertion_point(destructor:kvrpcpb.UpdateRequest)
+  SharedDtor();
+}
+
+void UpdateRequest::SharedDtor() {
+  key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete scope_;
+}
+
+void UpdateRequest::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* UpdateRequest::descriptor() {
+  protobuf_kvrpcpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_kvrpcpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const UpdateRequest& UpdateRequest::default_instance() {
+  protobuf_kvrpcpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+UpdateRequest* UpdateRequest::New(::google::protobuf::Arena* arena) const {
+  UpdateRequest* n = new UpdateRequest;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void UpdateRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:kvrpcpb.UpdateRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  fields_.Clear();
+  where_filters_.Clear();
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == NULL && scope_ != NULL) {
+    delete scope_;
+  }
+  scope_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool UpdateRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:kvrpcpb.UpdateRequest)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // bytes key = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_key()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .kvrpcpb.Scope scope = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_scope()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .kvrpcpb.Field fields = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_fields()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .kvrpcpb.Match where_filters = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_where_filters()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:kvrpcpb.UpdateRequest)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:kvrpcpb.UpdateRequest)
+  return false;
+#undef DO_
+}
+
+void UpdateRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:kvrpcpb.UpdateRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // bytes key = 1;
+  if (this->key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      1, this->key(), output);
+  }
+
+  // .kvrpcpb.Scope scope = 2;
+  if (this->has_scope()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, *this->scope_, output);
+  }
+
+  // repeated .kvrpcpb.Field fields = 3;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->fields_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->fields(static_cast<int>(i)), output);
+  }
+
+  // repeated .kvrpcpb.Match where_filters = 4;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->where_filters_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      4, this->where_filters(static_cast<int>(i)), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:kvrpcpb.UpdateRequest)
+}
+
+::google::protobuf::uint8* UpdateRequest::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:kvrpcpb.UpdateRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // bytes key = 1;
+  if (this->key().size() > 0) {
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+        1, this->key(), target);
+  }
+
+  // .kvrpcpb.Scope scope = 2;
+  if (this->has_scope()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        2, *this->scope_, deterministic, target);
+  }
+
+  // repeated .kvrpcpb.Field fields = 3;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->fields_size()); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        3, this->fields(static_cast<int>(i)), deterministic, target);
+  }
+
+  // repeated .kvrpcpb.Match where_filters = 4;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->where_filters_size()); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        4, this->where_filters(static_cast<int>(i)), deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:kvrpcpb.UpdateRequest)
+  return target;
+}
+
+size_t UpdateRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:kvrpcpb.UpdateRequest)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // repeated .kvrpcpb.Field fields = 3;
+  {
+    unsigned int count = static_cast<unsigned int>(this->fields_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->fields(static_cast<int>(i)));
+    }
+  }
+
+  // repeated .kvrpcpb.Match where_filters = 4;
+  {
+    unsigned int count = static_cast<unsigned int>(this->where_filters_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->where_filters(static_cast<int>(i)));
+    }
+  }
+
+  // bytes key = 1;
+  if (this->key().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::BytesSize(
+        this->key());
+  }
+
+  // .kvrpcpb.Scope scope = 2;
+  if (this->has_scope()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->scope_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void UpdateRequest::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:kvrpcpb.UpdateRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  const UpdateRequest* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const UpdateRequest>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:kvrpcpb.UpdateRequest)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:kvrpcpb.UpdateRequest)
+    MergeFrom(*source);
+  }
+}
+
+void UpdateRequest::MergeFrom(const UpdateRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:kvrpcpb.UpdateRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  fields_.MergeFrom(from.fields_);
+  where_filters_.MergeFrom(from.where_filters_);
+  if (from.key().size() > 0) {
+
+    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
+  }
+  if (from.has_scope()) {
+    mutable_scope()->::kvrpcpb::Scope::MergeFrom(from.scope());
+  }
+}
+
+void UpdateRequest::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:kvrpcpb.UpdateRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void UpdateRequest::CopyFrom(const UpdateRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:kvrpcpb.UpdateRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool UpdateRequest::IsInitialized() const {
+  return true;
+}
+
+void UpdateRequest::Swap(UpdateRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void UpdateRequest::InternalSwap(UpdateRequest* other) {
+  using std::swap;
+  fields_.InternalSwap(&other->fields_);
+  where_filters_.InternalSwap(&other->where_filters_);
+  key_.Swap(&other->key_);
+  swap(scope_, other->scope_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata UpdateRequest::GetMetadata() const {
+  protobuf_kvrpcpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_kvrpcpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// UpdateRequest
+
+// bytes key = 1;
+void UpdateRequest::clear_key() {
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& UpdateRequest::key() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.key)
+  return key_.GetNoArena();
+}
+void UpdateRequest::set_key(const ::std::string& value) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:kvrpcpb.UpdateRequest.key)
+}
+#if LANG_CXX11
+void UpdateRequest::set_key(::std::string&& value) {
+  
+  key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:kvrpcpb.UpdateRequest.key)
+}
+#endif
+void UpdateRequest::set_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:kvrpcpb.UpdateRequest.key)
+}
+void UpdateRequest::set_key(const void* value, size_t size) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.UpdateRequest.key)
+}
+::std::string* UpdateRequest::mutable_key() {
+  
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.key)
+  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* UpdateRequest::release_key() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.UpdateRequest.key)
+  
+  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void UpdateRequest::set_allocated_key(::std::string* key) {
+  if (key != NULL) {
+    
+  } else {
+    
+  }
+  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UpdateRequest.key)
+}
+
+// .kvrpcpb.Scope scope = 2;
+bool UpdateRequest::has_scope() const {
+  return this != internal_default_instance() && scope_ != NULL;
+}
+void UpdateRequest::clear_scope() {
+  if (GetArenaNoVirtual() == NULL && scope_ != NULL) delete scope_;
+  scope_ = NULL;
+}
+const ::kvrpcpb::Scope& UpdateRequest::scope() const {
+  const ::kvrpcpb::Scope* p = scope_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.scope)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Scope*>(
+      &::kvrpcpb::_Scope_default_instance_);
+}
+::kvrpcpb::Scope* UpdateRequest::mutable_scope() {
+  
+  if (scope_ == NULL) {
+    scope_ = new ::kvrpcpb::Scope;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.scope)
+  return scope_;
+}
+::kvrpcpb::Scope* UpdateRequest::release_scope() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.UpdateRequest.scope)
+  
+  ::kvrpcpb::Scope* temp = scope_;
+  scope_ = NULL;
+  return temp;
+}
+void UpdateRequest::set_allocated_scope(::kvrpcpb::Scope* scope) {
+  delete scope_;
+  scope_ = scope;
+  if (scope) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UpdateRequest.scope)
+}
+
+// repeated .kvrpcpb.Field fields = 3;
+int UpdateRequest::fields_size() const {
+  return fields_.size();
+}
+void UpdateRequest::clear_fields() {
+  fields_.Clear();
+}
+const ::kvrpcpb::Field& UpdateRequest::fields(int index) const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.fields)
+  return fields_.Get(index);
+}
+::kvrpcpb::Field* UpdateRequest::mutable_fields(int index) {
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.fields)
+  return fields_.Mutable(index);
+}
+::kvrpcpb::Field* UpdateRequest::add_fields() {
+  // @@protoc_insertion_point(field_add:kvrpcpb.UpdateRequest.fields)
+  return fields_.Add();
+}
+::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >*
+UpdateRequest::mutable_fields() {
+  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.UpdateRequest.fields)
+  return &fields_;
+}
+const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >&
+UpdateRequest::fields() const {
+  // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.fields)
+  return fields_;
+}
+
+// repeated .kvrpcpb.Match where_filters = 4;
+int UpdateRequest::where_filters_size() const {
+  return where_filters_.size();
+}
+void UpdateRequest::clear_where_filters() {
+  where_filters_.Clear();
+}
+const ::kvrpcpb::Match& UpdateRequest::where_filters(int index) const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.where_filters)
+  return where_filters_.Get(index);
+}
+::kvrpcpb::Match* UpdateRequest::mutable_where_filters(int index) {
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.where_filters)
+  return where_filters_.Mutable(index);
+}
+::kvrpcpb::Match* UpdateRequest::add_where_filters() {
+  // @@protoc_insertion_point(field_add:kvrpcpb.UpdateRequest.where_filters)
+  return where_filters_.Add();
+}
+::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match >*
+UpdateRequest::mutable_where_filters() {
+  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.UpdateRequest.where_filters)
+  return &where_filters_;
+}
+const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match >&
+UpdateRequest::where_filters() const {
+  // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.where_filters)
+  return where_filters_;
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int DsUpdateRequest::kHeaderFieldNumber;
+const int DsUpdateRequest::kReqFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+DsUpdateRequest::DsUpdateRequest()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_kvrpcpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:kvrpcpb.DsUpdateRequest)
+}
+DsUpdateRequest::DsUpdateRequest(const DsUpdateRequest& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_header()) {
+    header_ = new ::kvrpcpb::RequestHeader(*from.header_);
+  } else {
+    header_ = NULL;
+  }
+  if (from.has_req()) {
+    req_ = new ::kvrpcpb::UpdateRequest(*from.req_);
+  } else {
+    req_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:kvrpcpb.DsUpdateRequest)
+}
+
+void DsUpdateRequest::SharedCtor() {
+  ::memset(&header_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&req_) -
+      reinterpret_cast<char*>(&header_)) + sizeof(req_));
+  _cached_size_ = 0;
+}
+
+DsUpdateRequest::~DsUpdateRequest() {
+  // @@protoc_insertion_point(destructor:kvrpcpb.DsUpdateRequest)
+  SharedDtor();
+}
+
+void DsUpdateRequest::SharedDtor() {
+  if (this != internal_default_instance()) delete header_;
+  if (this != internal_default_instance()) delete req_;
+}
+
+void DsUpdateRequest::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* DsUpdateRequest::descriptor() {
+  protobuf_kvrpcpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_kvrpcpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const DsUpdateRequest& DsUpdateRequest::default_instance() {
+  protobuf_kvrpcpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+DsUpdateRequest* DsUpdateRequest::New(::google::protobuf::Arena* arena) const {
+  DsUpdateRequest* n = new DsUpdateRequest;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void DsUpdateRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:kvrpcpb.DsUpdateRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) {
+    delete header_;
+  }
+  header_ = NULL;
+  if (GetArenaNoVirtual() == NULL && req_ != NULL) {
+    delete req_;
+  }
+  req_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool DsUpdateRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:kvrpcpb.DsUpdateRequest)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .kvrpcpb.RequestHeader header = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_header()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .kvrpcpb.UpdateRequest req = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_req()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:kvrpcpb.DsUpdateRequest)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:kvrpcpb.DsUpdateRequest)
+  return false;
+#undef DO_
+}
+
+void DsUpdateRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:kvrpcpb.DsUpdateRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .kvrpcpb.RequestHeader header = 1;
+  if (this->has_header()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, *this->header_, output);
+  }
+
+  // .kvrpcpb.UpdateRequest req = 2;
+  if (this->has_req()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, *this->req_, output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:kvrpcpb.DsUpdateRequest)
+}
+
+::google::protobuf::uint8* DsUpdateRequest::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:kvrpcpb.DsUpdateRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .kvrpcpb.RequestHeader header = 1;
+  if (this->has_header()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        1, *this->header_, deterministic, target);
+  }
+
+  // .kvrpcpb.UpdateRequest req = 2;
+  if (this->has_req()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        2, *this->req_, deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:kvrpcpb.DsUpdateRequest)
+  return target;
+}
+
+size_t DsUpdateRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:kvrpcpb.DsUpdateRequest)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // .kvrpcpb.RequestHeader header = 1;
+  if (this->has_header()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->header_);
+  }
+
+  // .kvrpcpb.UpdateRequest req = 2;
+  if (this->has_req()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->req_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void DsUpdateRequest::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:kvrpcpb.DsUpdateRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  const DsUpdateRequest* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const DsUpdateRequest>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:kvrpcpb.DsUpdateRequest)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:kvrpcpb.DsUpdateRequest)
+    MergeFrom(*source);
+  }
+}
+
+void DsUpdateRequest::MergeFrom(const DsUpdateRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:kvrpcpb.DsUpdateRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.has_header()) {
+    mutable_header()->::kvrpcpb::RequestHeader::MergeFrom(from.header());
+  }
+  if (from.has_req()) {
+    mutable_req()->::kvrpcpb::UpdateRequest::MergeFrom(from.req());
+  }
+}
+
+void DsUpdateRequest::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:kvrpcpb.DsUpdateRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void DsUpdateRequest::CopyFrom(const DsUpdateRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:kvrpcpb.DsUpdateRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool DsUpdateRequest::IsInitialized() const {
+  return true;
+}
+
+void DsUpdateRequest::Swap(DsUpdateRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void DsUpdateRequest::InternalSwap(DsUpdateRequest* other) {
+  using std::swap;
+  swap(header_, other->header_);
+  swap(req_, other->req_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata DsUpdateRequest::GetMetadata() const {
+  protobuf_kvrpcpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_kvrpcpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// DsUpdateRequest
+
+// .kvrpcpb.RequestHeader header = 1;
+bool DsUpdateRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+void DsUpdateRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+const ::kvrpcpb::RequestHeader& DsUpdateRequest::header() const {
+  const ::kvrpcpb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsUpdateRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
+      &::kvrpcpb::_RequestHeader_default_instance_);
+}
+::kvrpcpb::RequestHeader* DsUpdateRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::kvrpcpb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsUpdateRequest.header)
+  return header_;
+}
+::kvrpcpb::RequestHeader* DsUpdateRequest::release_header() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsUpdateRequest.header)
+  
+  ::kvrpcpb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+void DsUpdateRequest::set_allocated_header(::kvrpcpb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsUpdateRequest.header)
+}
+
+// .kvrpcpb.UpdateRequest req = 2;
+bool DsUpdateRequest::has_req() const {
+  return this != internal_default_instance() && req_ != NULL;
+}
+void DsUpdateRequest::clear_req() {
+  if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
+  req_ = NULL;
+}
+const ::kvrpcpb::UpdateRequest& DsUpdateRequest::req() const {
+  const ::kvrpcpb::UpdateRequest* p = req_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsUpdateRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::UpdateRequest*>(
+      &::kvrpcpb::_UpdateRequest_default_instance_);
+}
+::kvrpcpb::UpdateRequest* DsUpdateRequest::mutable_req() {
+  
+  if (req_ == NULL) {
+    req_ = new ::kvrpcpb::UpdateRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsUpdateRequest.req)
+  return req_;
+}
+::kvrpcpb::UpdateRequest* DsUpdateRequest::release_req() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsUpdateRequest.req)
+  
+  ::kvrpcpb::UpdateRequest* temp = req_;
+  req_ = NULL;
+  return temp;
+}
+void DsUpdateRequest::set_allocated_req(::kvrpcpb::UpdateRequest* req) {
+  delete req_;
+  req_ = req;
+  if (req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsUpdateRequest.req)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int UpdateResponse::kCodeFieldNumber;
+const int UpdateResponse::kAffectedKeysFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+UpdateResponse::UpdateResponse()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_kvrpcpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:kvrpcpb.UpdateResponse)
+}
+UpdateResponse::UpdateResponse(const UpdateResponse& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::memcpy(&affected_keys_, &from.affected_keys_,
+    static_cast<size_t>(reinterpret_cast<char*>(&code_) -
+    reinterpret_cast<char*>(&affected_keys_)) + sizeof(code_));
+  // @@protoc_insertion_point(copy_constructor:kvrpcpb.UpdateResponse)
+}
+
+void UpdateResponse::SharedCtor() {
+  ::memset(&affected_keys_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&code_) -
+      reinterpret_cast<char*>(&affected_keys_)) + sizeof(code_));
+  _cached_size_ = 0;
+}
+
+UpdateResponse::~UpdateResponse() {
+  // @@protoc_insertion_point(destructor:kvrpcpb.UpdateResponse)
+  SharedDtor();
+}
+
+void UpdateResponse::SharedDtor() {
+}
+
+void UpdateResponse::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* UpdateResponse::descriptor() {
+  protobuf_kvrpcpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_kvrpcpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const UpdateResponse& UpdateResponse::default_instance() {
+  protobuf_kvrpcpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+UpdateResponse* UpdateResponse::New(::google::protobuf::Arena* arena) const {
+  UpdateResponse* n = new UpdateResponse;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void UpdateResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:kvrpcpb.UpdateResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&affected_keys_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&code_) -
+      reinterpret_cast<char*>(&affected_keys_)) + sizeof(code_));
+  _internal_metadata_.Clear();
+}
+
+bool UpdateResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:kvrpcpb.UpdateResponse)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // int32 code = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &code_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 affected_keys = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &affected_keys_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:kvrpcpb.UpdateResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:kvrpcpb.UpdateResponse)
+  return false;
+#undef DO_
+}
+
+void UpdateResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:kvrpcpb.UpdateResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 code = 1;
+  if (this->code() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->code(), output);
+  }
+
+  // uint64 affected_keys = 2;
+  if (this->affected_keys() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(2, this->affected_keys(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:kvrpcpb.UpdateResponse)
+}
+
+::google::protobuf::uint8* UpdateResponse::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:kvrpcpb.UpdateResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 code = 1;
+  if (this->code() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->code(), target);
+  }
+
+  // uint64 affected_keys = 2;
+  if (this->affected_keys() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(2, this->affected_keys(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:kvrpcpb.UpdateResponse)
+  return target;
+}
+
+size_t UpdateResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:kvrpcpb.UpdateResponse)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // uint64 affected_keys = 2;
+  if (this->affected_keys() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->affected_keys());
+  }
+
+  // int32 code = 1;
+  if (this->code() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int32Size(
+        this->code());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void UpdateResponse::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:kvrpcpb.UpdateResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  const UpdateResponse* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const UpdateResponse>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:kvrpcpb.UpdateResponse)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:kvrpcpb.UpdateResponse)
+    MergeFrom(*source);
+  }
+}
+
+void UpdateResponse::MergeFrom(const UpdateResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:kvrpcpb.UpdateResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.affected_keys() != 0) {
+    set_affected_keys(from.affected_keys());
+  }
+  if (from.code() != 0) {
+    set_code(from.code());
+  }
+}
+
+void UpdateResponse::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:kvrpcpb.UpdateResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void UpdateResponse::CopyFrom(const UpdateResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:kvrpcpb.UpdateResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool UpdateResponse::IsInitialized() const {
+  return true;
+}
+
+void UpdateResponse::Swap(UpdateResponse* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void UpdateResponse::InternalSwap(UpdateResponse* other) {
+  using std::swap;
+  swap(affected_keys_, other->affected_keys_);
+  swap(code_, other->code_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata UpdateResponse::GetMetadata() const {
+  protobuf_kvrpcpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_kvrpcpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// UpdateResponse
+
+// int32 code = 1;
+void UpdateResponse::clear_code() {
+  code_ = 0;
+}
+::google::protobuf::int32 UpdateResponse::code() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateResponse.code)
+  return code_;
+}
+void UpdateResponse::set_code(::google::protobuf::int32 value) {
+  
+  code_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.UpdateResponse.code)
+}
+
+// uint64 affected_keys = 2;
+void UpdateResponse::clear_affected_keys() {
+  affected_keys_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 UpdateResponse::affected_keys() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateResponse.affected_keys)
+  return affected_keys_;
+}
+void UpdateResponse::set_affected_keys(::google::protobuf::uint64 value) {
+  
+  affected_keys_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.UpdateResponse.affected_keys)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int DsUpdateResponse::kHeaderFieldNumber;
+const int DsUpdateResponse::kRespFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+DsUpdateResponse::DsUpdateResponse()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_kvrpcpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:kvrpcpb.DsUpdateResponse)
+}
+DsUpdateResponse::DsUpdateResponse(const DsUpdateResponse& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_header()) {
+    header_ = new ::kvrpcpb::ResponseHeader(*from.header_);
+  } else {
+    header_ = NULL;
+  }
+  if (from.has_resp()) {
+    resp_ = new ::kvrpcpb::UpdateResponse(*from.resp_);
+  } else {
+    resp_ = NULL;
+  }
+  // @@protoc_insertion_point(copy_constructor:kvrpcpb.DsUpdateResponse)
+}
+
+void DsUpdateResponse::SharedCtor() {
+  ::memset(&header_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&resp_) -
+      reinterpret_cast<char*>(&header_)) + sizeof(resp_));
+  _cached_size_ = 0;
+}
+
+DsUpdateResponse::~DsUpdateResponse() {
+  // @@protoc_insertion_point(destructor:kvrpcpb.DsUpdateResponse)
+  SharedDtor();
+}
+
+void DsUpdateResponse::SharedDtor() {
+  if (this != internal_default_instance()) delete header_;
+  if (this != internal_default_instance()) delete resp_;
+}
+
+void DsUpdateResponse::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* DsUpdateResponse::descriptor() {
+  protobuf_kvrpcpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_kvrpcpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const DsUpdateResponse& DsUpdateResponse::default_instance() {
+  protobuf_kvrpcpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+DsUpdateResponse* DsUpdateResponse::New(::google::protobuf::Arena* arena) const {
+  DsUpdateResponse* n = new DsUpdateResponse;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void DsUpdateResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:kvrpcpb.DsUpdateResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) {
+    delete header_;
+  }
+  header_ = NULL;
+  if (GetArenaNoVirtual() == NULL && resp_ != NULL) {
+    delete resp_;
+  }
+  resp_ = NULL;
+  _internal_metadata_.Clear();
+}
+
+bool DsUpdateResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:kvrpcpb.DsUpdateResponse)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .kvrpcpb.ResponseHeader header = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_header()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .kvrpcpb.UpdateResponse resp = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_resp()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:kvrpcpb.DsUpdateResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:kvrpcpb.DsUpdateResponse)
+  return false;
+#undef DO_
+}
+
+void DsUpdateResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:kvrpcpb.DsUpdateResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .kvrpcpb.ResponseHeader header = 1;
+  if (this->has_header()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, *this->header_, output);
+  }
+
+  // .kvrpcpb.UpdateResponse resp = 2;
+  if (this->has_resp()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, *this->resp_, output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:kvrpcpb.DsUpdateResponse)
+}
+
+::google::protobuf::uint8* DsUpdateResponse::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:kvrpcpb.DsUpdateResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .kvrpcpb.ResponseHeader header = 1;
+  if (this->has_header()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        1, *this->header_, deterministic, target);
+  }
+
+  // .kvrpcpb.UpdateResponse resp = 2;
+  if (this->has_resp()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        2, *this->resp_, deterministic, target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:kvrpcpb.DsUpdateResponse)
+  return target;
+}
+
+size_t DsUpdateResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:kvrpcpb.DsUpdateResponse)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // .kvrpcpb.ResponseHeader header = 1;
+  if (this->has_header()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->header_);
+  }
+
+  // .kvrpcpb.UpdateResponse resp = 2;
+  if (this->has_resp()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->resp_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void DsUpdateResponse::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:kvrpcpb.DsUpdateResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  const DsUpdateResponse* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const DsUpdateResponse>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:kvrpcpb.DsUpdateResponse)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:kvrpcpb.DsUpdateResponse)
+    MergeFrom(*source);
+  }
+}
+
+void DsUpdateResponse::MergeFrom(const DsUpdateResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:kvrpcpb.DsUpdateResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.has_header()) {
+    mutable_header()->::kvrpcpb::ResponseHeader::MergeFrom(from.header());
+  }
+  if (from.has_resp()) {
+    mutable_resp()->::kvrpcpb::UpdateResponse::MergeFrom(from.resp());
+  }
+}
+
+void DsUpdateResponse::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:kvrpcpb.DsUpdateResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void DsUpdateResponse::CopyFrom(const DsUpdateResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:kvrpcpb.DsUpdateResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool DsUpdateResponse::IsInitialized() const {
+  return true;
+}
+
+void DsUpdateResponse::Swap(DsUpdateResponse* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void DsUpdateResponse::InternalSwap(DsUpdateResponse* other) {
+  using std::swap;
+  swap(header_, other->header_);
+  swap(resp_, other->resp_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata DsUpdateResponse::GetMetadata() const {
+  protobuf_kvrpcpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_kvrpcpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// DsUpdateResponse
+
+// .kvrpcpb.ResponseHeader header = 1;
+bool DsUpdateResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+void DsUpdateResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+const ::kvrpcpb::ResponseHeader& DsUpdateResponse::header() const {
+  const ::kvrpcpb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsUpdateResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
+      &::kvrpcpb::_ResponseHeader_default_instance_);
+}
+::kvrpcpb::ResponseHeader* DsUpdateResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::kvrpcpb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsUpdateResponse.header)
+  return header_;
+}
+::kvrpcpb::ResponseHeader* DsUpdateResponse::release_header() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsUpdateResponse.header)
+  
+  ::kvrpcpb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+void DsUpdateResponse::set_allocated_header(::kvrpcpb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsUpdateResponse.header)
+}
+
+// .kvrpcpb.UpdateResponse resp = 2;
+bool DsUpdateResponse::has_resp() const {
+  return this != internal_default_instance() && resp_ != NULL;
+}
+void DsUpdateResponse::clear_resp() {
+  if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
+  resp_ = NULL;
+}
+const ::kvrpcpb::UpdateResponse& DsUpdateResponse::resp() const {
+  const ::kvrpcpb::UpdateResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsUpdateResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::UpdateResponse*>(
+      &::kvrpcpb::_UpdateResponse_default_instance_);
+}
+::kvrpcpb::UpdateResponse* DsUpdateResponse::mutable_resp() {
+  
+  if (resp_ == NULL) {
+    resp_ = new ::kvrpcpb::UpdateResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsUpdateResponse.resp)
+  return resp_;
+}
+::kvrpcpb::UpdateResponse* DsUpdateResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsUpdateResponse.resp)
+  
+  ::kvrpcpb::UpdateResponse* temp = resp_;
+  resp_ = NULL;
+  return temp;
+}
+void DsUpdateResponse::set_allocated_resp(::kvrpcpb::UpdateResponse* resp) {
+  delete resp_;
+  resp_ = resp;
+  if (resp) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsUpdateResponse.resp)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
