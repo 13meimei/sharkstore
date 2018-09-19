@@ -6,11 +6,13 @@
 #include <queue>
 #include <thread>
 #include <vector>
+#include <semaphore.h>
 
 #include "common/ds_config.h"
 #include "common/socket_server.h"
 #include "frame/sf_status.h"
-#include "lk_queue/blockingconcurrentqueue.h"
+//#include "lk_queue/blockingconcurrentqueue.h"
+#include "lk_queue/lk_queue.h"
 
 #include "context_server.h"
 
@@ -46,12 +48,14 @@ public:
 
 private:
 
-    struct MsgQueue {
-        moodycamel::BlockingConcurrentQueue<common::ProtoMessage *> msg_queue;
-    };
+
+//    struct MsgQueue {
+//        moodycamel::BlockingConcurrentQueue<common::ProtoMessage *> msg_queue;
+//    };
 
     struct HashQueue {
-        std::vector<MsgQueue *> msg_queue;
+        //std::vector<MsgQueue *> msg_queue;
+        std::vector<lock_free_queue_t *> msg_queue;
         std::atomic<uint64_t> all_msg_size;
 
         HashQueue() : all_msg_size(0) {}
