@@ -286,6 +286,17 @@ func (s *StmtParser) parseMatch(_expr sqlparser.BoolExpr) (matches []Match, err 
 	return
 }
 
+func (s *StmtParser) parseUpdateExprs(exprs sqlparser.UpdateExprs) (ret []UpdateField, err error) {
+	// todo
+	for _, expr := range exprs {
+		ret = append(ret, UpdateField{
+			col: string(expr.Name.Name),
+		})
+
+	}
+	return
+}
+
 // now only support where exp; where exp1 and exp2
 func (s *StmtParser) parseWhere(where *sqlparser.Where) ([]Match, error) {
 	// TODO: 支持OR表达式
