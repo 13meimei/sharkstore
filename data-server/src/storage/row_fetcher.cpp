@@ -92,12 +92,14 @@ Status RowFetcher::nextScope(RowResult* result, bool* over) {
         }
 
         matched_ = false;
-        last_status_ = decoder_.DecodeAndFilter(key, value, result, &matched_);
-        if (!last_status_.ok()) {
-            return last_status_;
+        // in blobdb if key is expired, value will be empty, skip and continue
+        if (!value.empty()) {
+            last_status_ = decoder_.DecodeAndFilter(key, value, result, &matched_);
+            if (!last_status_.ok()) {
+                return last_status_;
+            }
+            FLOG_DEBUG("select decode key: %s, matched: %d", EncodeToHexString(key).c_str(), matched_);
         }
-
-        FLOG_DEBUG("select decode key: %s, matched: %d", EncodeToHexString(key).c_str(), matched_);
 
         iter_->Next();
         if (matched_) {
