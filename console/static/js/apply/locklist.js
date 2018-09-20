@@ -1,5 +1,3 @@
-var pageIndex = 1;
-var pageSize = 10;
 (function () {
     /**
      * lock 详情列表展示
@@ -8,6 +6,10 @@ var pageSize = 10;
         url: getUrl(),
         striped: true,
         cache: false,
+        pagination: true,
+        pageNumber: 1,
+        pageSize: 10,
+        pageList: [10, 25, 50, 100],
         sidePagination: "server",
         clickToSelect: true,
         iconSize: 'outline',
@@ -15,6 +17,17 @@ var pageSize = 10;
         height: 500,
         icons: {
             refresh: 'glyphicon-repeat'
+        },
+        // 得到查询的参数
+        queryParams: function (params) {
+            //这里的键的名字和控制器的变量名必须一直，这边改动，控制器也需要改成一样的
+            var temp = {
+                rows: params.limit,                         //页面大小
+                page: (params.offset / params.limit) + 1,   //页码
+                sort: params.sort,      //排序列名
+                sortOrder: params.order //排位命令（desc，asc）
+            };
+            return temp;
         },
         columns: [
             {field: '', radio: true, align: 'center'},
@@ -47,22 +60,12 @@ var pageSize = 10;
         ],
         responseHandler: function (res) {
             if (res.code === 0) {
-                pageIndex = res.data.pageIndex;
-                pageSize = res.data.pageSize;
-                setPageDisable();
-                if (res.data.total < 10) {
-                    $("li.page-next").addClass("disabled");
-                    $("li.page-next").find("a").removeAttr("onclick");
-                }
                 return {
                     "total": res.data.total,//当前页面数据
                     "rows": res.data.data   //数据
                 };
             } else {
-                pageIndex = 1;
-                pageSize = 10;
                 swal("失败", res.msg, "error");
-                setPageDisable();
                 return {
                     "total": 0,//总页数
                     "rows": res.data   //数据
@@ -76,8 +79,6 @@ function getUrl() {
     return "/lock/lock/queryList?clusterId=" + $('#clusterId').val()
         + "&dbName=" + $('#dbName').val()
         + "&tableName=" + $('#tableName').val()
-        + "&page=" + pageIndex
-        + "&rows=" + pageSize
 }
 
 //能看到记录，就能修改
@@ -135,42 +136,4 @@ function refreshLockList() {
         url: getUrl(),
     };
     $("#lockLists").bootstrapTable('refresh', opt);
-}
-
-function refreshPageFirst() {
-    pageIndex = 1;
-    refreshLockList();
-}
-
-function refreshPagePre() {
-    if (pageIndex > 1) {
-        pageIndex = pageIndex - 1;
-    }
-    refreshLockList();
-}
-
-function refreshPageNext() {
-    pageIndex = pageIndex + 1;
-    refreshLockList();
-}
-
-function setPageDisable() {
-    $("#currentPage").text(pageIndex);
-    var first = $("li.page-first");
-    var pre = $("li.page-pre");
-    var next = $("li.page-next");
-    if (pageIndex == 1) {
-        first.addClass("disabled");
-        pre.addClass("disabled");
-        first.find("a").removeAttr("onclick");
-        pre.find("a").removeAttr("onclick");
-        next.find("a").attr("onclick", "refreshPageNext();");
-    } else if (pageIndex > 1) {
-        first.removeClass("disabled");
-        pre.removeClass("disabled");
-        next.removeClass("disabled");
-        first.find("a").attr("onclick", "refreshPageFirst();");
-        pre.find("a").attr("onclick", "refreshPagePre();");
-        next.find("a").attr("onclick", "refreshPageNext();");
-    }
 }

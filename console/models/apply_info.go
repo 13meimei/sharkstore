@@ -29,7 +29,7 @@ type LockInfo struct {
 	K       string `json:"k"`
 	V       string `json:"v"`
 	Version int64  `json:"version"`
-	Extend  int64  `json:"extend"`
+	Extend  string  `json:"extend"`
 }
 
 type LockShow struct {
@@ -46,7 +46,7 @@ type LockShow struct {
 type ConfigureInfo struct {
 	K       string `json:"k"`
 	V       string `json:"v"`
-	Version string `json:"version"`
+	Version int64 `json:"version"`
 	Extend  string `json:"extend"`
 }
 

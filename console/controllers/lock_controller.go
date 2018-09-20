@@ -224,17 +224,14 @@ func (ctrl *LockGetAllAction) Execute(c *gin.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	lockList, err := service.NewService().GetAllLock(cId, dbName, tableName, pageInfo)
+	totalRecord, lockList, err := service.NewService().GetAllLock(cId, dbName, tableName, pageInfo)
 	if err != nil {
 		log.Warn("get lock detail list error, %v", err)
 		return nil, err
 	}
-
 	pageData := new(PageData)
-	pageData.Total = len(lockList) //由于http方式不支持count，所以，只能迭代取
+	pageData.Total = totalRecord
 	pageData.Data = lockList
-	pageData.PageIndex = pageInfo.PageIndex
-	pageData.PageSize = pageInfo.PageSize
 	return pageData, nil
 }
 

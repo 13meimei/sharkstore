@@ -18,7 +18,7 @@
         // showRefresh: true,  //是否显示刷新按钮
         iconSize: 'outline',
         toolbar: '#nspApplyListsToolbar',
-        height: 500,
+        height: 700,
         icons: {
             refresh: 'glyphicon-repeat'
         },
@@ -120,7 +120,6 @@ function updateOwner(applyId) {
                     if (data.code === 0) {
                         swal("更新成功!", data.msg, "success");
                         $('#nspApplyLists').bootstrapTable('refresh', {url: '/lock/namespace/queryList'});
-
                     } else {
                         swal("更新失败", data.msg, "error");
                     }
@@ -166,7 +165,6 @@ function viewCluster(clusterId) {
 function viewLock(dbName, tableName, clusterId) {
     window.location.href = "/page/lock/viewLock?clusterId=" + clusterId + "&dbName=" + dbName + "&tableName=" + tableName;
 }
-
 
 function viewToken(dbId, tableId) {
     $.ajax({

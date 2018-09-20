@@ -227,17 +227,14 @@ func (ctrl *ConfigureGetAllAction) Execute(c *gin.Context) (interface{}, error) 
 	if err != nil {
 		return nil, err
 	}
-	confList, err := service.NewService().GetAllConfigure(cId, dbName, tableName, pageInfo)
+	totalRecord, confList, err := service.NewService().GetAllConfigure(cId, dbName, tableName, pageInfo)
 	if err != nil {
 		log.Warn("get configure detail list error, %v", err)
 		return nil, err
 	}
-
 	pageData := new(PageData)
-	pageData.Total = len(confList) //由于http方式不支持count，所以，只能迭代取
+	pageData.Total = totalRecord
 	pageData.Data = confList
-	pageData.PageIndex = pageInfo.PageIndex
-	pageData.PageSize = pageInfo.PageSize
 	return pageData, nil
 }
 

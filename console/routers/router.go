@@ -691,7 +691,11 @@ func (r *Router) StartRouter() *gin.Engine {
 				"clusterId": cid,
 			})
 		})
-
+		router.GET("/page/system/sqlCAManage", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "sql_ca_list.html", gin.H{
+				"basePath": r.staticRootDir,
+			})
+		})
 		group.GET("/page/monitor/cluster", func(c *gin.Context) {
 			cid := c.Query("clusterId")
 			if cid == "" {
@@ -1036,6 +1040,20 @@ func (r *Router) StartRouter() *gin.Engine {
 	})
 	router.POST(controllers.REQURL_METRIC_CONFIG_SET, func(c *gin.Context) {
 		handleAction(c, controllers.NewSetMetricConfigAction())
+	})
+
+	//sql ca
+	router.GET(controllers.REQURI_SQL_CA_GETALL, func(c *gin.Context) {
+		handleAction(c, controllers.NewSqlCAGetAllAction())
+	})
+	router.POST(controllers.REQURI_SQL_CA_ADD, func(c *gin.Context) {
+		handleAction(c, controllers.NewSqlCAAddAction())
+	})
+	router.POST(controllers.REQURI_SQL_CA_DEL, func(c *gin.Context) {
+		handleAction(c, controllers.NewSqlCADelAction())
+	})
+	router.POST(controllers.REQURI_SQL_CA_GETBYID, func(c *gin.Context) {
+		handleAction(c, controllers.NewSqlCAGetAction())
 	})
 	router.Run(":" + fmt.Sprint(r.config.ReqListenPort))
 

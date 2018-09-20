@@ -153,8 +153,8 @@ func (lc *LocalDSClient) CreateRange(addr string, r *metapb.Range) error {
 	fmt.Println(fmt.Sprintf("invoke createRange, addr: %v, rangeID: %v", addr, r.GetId()))
 	return nil
 }
-func (lc *LocalDSClient) DeleteRange(addr string, rangeId uint64) error {
-	fmt.Println(fmt.Sprintf("invoke deleteRange, addr: %v, rangeID: %v", addr, rangeId))
+func (lc *LocalDSClient) DeleteRange(addr string, rangeId uint64, peerID uint64) error {
+	fmt.Println(fmt.Sprintf("invoke deleteRange, addr: %v, rangeID: %v, peerId: %v", addr, rangeId, peerID))
 	return nil
 }
 func (lc *LocalDSClient) TransferLeader(addr string, rangeId uint64) error {

@@ -61,3 +61,9 @@ type DsNode struct {
 	State    int32  `json:"state,omitempty"`
 	Version  string `json:"version,omitempty"`
 }
+
+type SqlCAInfo struct {
+	ClusterId int `json:"cluster_id"`
+	UserName  string `json:"user_name"`
+	Password  string `json:"password"`
+}

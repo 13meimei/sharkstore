@@ -304,6 +304,13 @@ CREATE TABLE IF NOT EXISTS `metric_server` (
 	  PRIMARY KEY (`addr`)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `fbase_sql_ca` (
+    `cluster_id`  bigint(20) NOT NULL,
+    `user_name`  varchar(32) NOT NULL,
+    `password`  varchar(32) NOT NULL,
+	  PRIMARY KEY (`cluster_id`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 #需要初始化fbase_role, fbase_privilege
 insert into fbase_role values (3, "普通用户")
 insert into fbase_role values (2, "集群管理员")

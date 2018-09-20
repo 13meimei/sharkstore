@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -259,11 +258,11 @@ func (service *Server) handleTableCreate(w http.ResponseWriter, r *http.Request)
 		reply.Message = http_error_parameter_not_enough
 		return
 	}
-	if strings.IndexByte(tName, '-') != -1 {
-		reply.Code = HTTP_ERROR
-		reply.Message = "table name has letter '-'"
-		return
-	}
+	//if strings.IndexByte(tName, '-') != -1 {
+	//	reply.Code = HTTP_ERROR
+	//	reply.Message = "table name has letter '-'"
+	//	return
+	//}
 	rangeKeysNumStr := r.FormValue(HTTP_RANGEKEYS_NUM)
 	rangeKeysStart := r.FormValue(HTTP_RANGEKEYS_START)
 	rangeKeysEnd := r.FormValue(HTTP_RANGEKEYS_END)
@@ -368,11 +367,11 @@ func (service *Server) handleSqlTableCreate(w http.ResponseWriter, r *http.Reque
 		reply.Message = "table is nil, check log for detail"
 		return
 	}
-	if strings.IndexByte(table.GetName(), '-') != -1 {
-		reply.Code = HTTP_ERROR
-		reply.Message = "table name has letter '-'"
-		return
-	}
+	//if strings.IndexByte(table.GetName(), '-') != -1 {
+	//	reply.Code = HTTP_ERROR
+	//	reply.Message = "table name has letter '-'"
+	//	return
+	//}
 
 	_, err := service.cluster.CreateTable(dbName, table.GetName(), table.GetColumns(), nil, false, nil)
 	if err != nil {
@@ -1867,6 +1866,12 @@ var (
 	metric_server = []*metapb.Column{
 		&metapb.Column{Name: "addr", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
 	}
+
+	fbase_sql_ca = []*metapb.Column{
+		&metapb.Column{Name: "cluster_id", DataType: metapb.DataType_BigInt, PrimaryKey: 1},
+		&metapb.Column{Name: "user_name", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
+		&metapb.Column{Name: "password", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
+	}
 )
 
 func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Request) {
@@ -2028,6 +2033,15 @@ func (service *Server) handleManageClusterInit(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	//fbase_sql_ca
+	parseColumn(fbase_sql_ca)
+	_, err = cluster.CreateTable(fbase, "fbase_sql_ca", fbase_sql_ca, nil, false, nil)
+	if err != nil {
+		log.Warn("create table %s %s failed, err %v", fbase, "fbase_sql_ca", err)
+		reply.Code = HTTP_ERROR
+		reply.Message = fmt.Errorf("createTable fbase_sql_ca err: %v", err).Error()
+		return
+	}
 	log.Info("cluster init success!!!")
 	reply.Message = "cluster init success"
 	return

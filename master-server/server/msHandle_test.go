@@ -572,21 +572,21 @@ func TestRpcRangeHeartbeat(t *testing.T) {
 	}
 
 	// 模拟脑裂
-	rng = ranges[2]
-	r = deepcopy.Iface(rng.Range).(*metapb.Range)
-	var downPeer []*mspb.PeerStatus
-	for _, peer := range rng.GetPeers() {
-		downPeer = append(downPeer, &mspb.PeerStatus{Peer: peer, DownSeconds: uint64(1)})
-		if len(downPeer) == 2 {
-			break
-		}
-	}
+	//rng = ranges[2]
+	//r = deepcopy.Iface(rng.Range).(*metapb.Range)
+	//var downPeer []*mspb.PeerStatus
+	//for _, peer := range rng.GetPeers() {
+	//	downPeer = append(downPeer, &mspb.PeerStatus{Peer: peer, DownSeconds: uint64(1)})
+	//	if len(downPeer) == 2 {
+	//		break
+	//	}
+	//}
 	rng.Leader = rng.GetPeers()[2]
 	server.handleRangeHeartbeat(ctx, &mspb.RangeHeartbeatRequest{
 		Header:  &mspb.RequestHeader{},
 		Range: r,
 		Leader: rng.GetPeers()[0],
-		PeersStatus: downPeer,
+		//PeersStatus: downPeer,
 	})
 	if len(rng.GetDownPeers()) > 0 {
 		t.Error("test failed")

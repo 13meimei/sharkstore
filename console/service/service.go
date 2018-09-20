@@ -44,6 +44,7 @@ const (
 	TABLE_NAME_LOCK_NSP      = "fbase_lock_nsp"
 	TABLE_NAME_CONFIGURE_NSP = "fbase_configure_nsp"
 	TABLE_NAME_METRIC_SERVER = "metric_server"
+	TABLE_NAME_SQL_CA 	 = "fbase_sql_ca"
 
 	STATUS_APPLY  = 1
 	STATUS_AUDIT  = 2
@@ -85,10 +86,10 @@ func (s *Service) GetUserInfoByErp(erp string) (*models.UserInfo, error) {
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
 	}
+	defer rows.Close()
 	if !rows.Next() {
 		return nil, nil
 	}
-
 	info := models.NewUserInfo()
 	if err := rows.Scan(&(info.Id), &(info.Erp), &(info.Mail), &(info.Tel), &(info.UserName), &(info.RealName),
 		&(info.SuperiorName), &(info.Department1), &(info.Department2), &(info.OrganizationName),
@@ -109,7 +110,7 @@ func (s *Service) GetClusterById(ids ...int64) ([]*models.ClusterInfo, error) {
 			log.Error("db select is failed. err:[%v]", err)
 			return nil, common.DB_ERROR
 		}
-
+		defer rows.Close()
 		for rows.Next() {
 			info := models.NewClusterInfo()
 			if err := rows.Scan(&(info.Id), &(info.Name), &(info.MasterUrl), &(info.GatewayHttpUrl), &(info.GatewaySqlUrl),
@@ -131,7 +132,7 @@ func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
 	}
-
+	defer rows.Close()
 	result := make([]*models.ClusterInfo, 0, 10) // TODO: 分页
 	for rows.Next() {
 		info := models.NewClusterInfo()
@@ -2063,6 +2064,7 @@ func (s *Service) GetPrivilegeInfo(offset, limit int, order string) ([]*models.U
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
 	}
+	defer rows.Close()
 	for rows.Next() {
 		info := models.NewUserPrivilege()
 		if err := rows.Scan(&(info.UserName), &(info.ClusterId), &(info.Privilege)); err != nil {
@@ -2118,6 +2120,7 @@ func (s *Service) GetRoleInfo(offset, limit int, order string) ([]*models.Role, 
 		log.Error("db select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
 	}
+	defer rows.Close()
 	for rows.Next() {
 		info := models.NewRole()
 		if err := rows.Scan(&(info.Id), &(info.RoleName)); err != nil {
@@ -2218,7 +2221,7 @@ func (s *Service) GetAllSqlApply(userName string, isAdmin bool, pageInfo *models
 	}
 	if pageInfo != nil {
 		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
-			selectSql = fmt.Sprintf(`%s order by "%s" "%s"`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
+			selectSql = fmt.Sprintf(`%s order by %s %s`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
 		} else {
 			selectSql = fmt.Sprintf(`%s order by create_time desc`, selectSql)
 		}
@@ -2241,6 +2244,7 @@ func (s *Service) GetAllSqlApply(userName string, isAdmin bool, pageInfo *models
 			log.Error("db select is failed. err:[%v]", err)
 			return 0, nil, common.DB_ERROR
 		}
+		defer rows.Close()
 		result := make([]*models.SqlApply, 0)
 		for rows.Next() {
 			info := new(models.SqlApply)
@@ -2327,7 +2331,7 @@ func (s *Service) GetAllNamespace(userName string, isAdmin bool, pageInfo *model
 
 	if pageInfo != nil {
 		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
-			selectSql = fmt.Sprintf(`%s order by "%s" "%s"`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
+			selectSql = fmt.Sprintf(`%s order by %s %s`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
 		} else {
 			selectSql = fmt.Sprintf(`%s order by create_time desc`, selectSql)
 		}
@@ -2554,7 +2558,7 @@ func (s *Service) DeleteNsp(ids []string, storeTable string) error {
 			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: err.Error()}
 		}
 	}
-	log.Debug("%v delete lock namespace success")
+	log.Debug("%v delete lock namespace success", ids)
 	return nil
 }
 
@@ -2572,84 +2576,84 @@ func (s *Service) GetLockClusterList() ([]*models.ClusterInfo, error) {
 	return clusters, nil
 }
 
-//go by http command
-func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.LockShow, error) {
-	info, err := s.selectClusterById(clusterId)
-	if err != nil {
-		return nil, err
-	}
-	if info == nil {
-		return nil, common.CLUSTER_NOTEXISTS_ERROR
-	}
-
-	log.Debug("get all lock list under clusterId:%v dbName:%v tableName:%v", clusterId, dbName, tableName)
-
-	filter := new(models.Filter_)
+//by sql command
+func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) (int, []*models.LockShow, error) {
+	selectSql := fmt.Sprintf(`select k, version, v, extend from %s`, tableName)
+	countSql := fmt.Sprintf(`select count(*) from %s`, tableName)
 	if pageInfo != nil {
-		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
-			var descFlag bool
-			switch pageInfo.SortOrder {
-			case "asc":
-				descFlag = true
-			default:
-				descFlag = false
-			}
-			order := &models.Order{By: pageInfo.SortName, Desc: descFlag}
-			filter.Order = []*models.Order{order}
-		} else {
-			order := &models.Order{By: "create_time", Desc: true}
-			filter.Order = []*models.Order{order}
-		}
 		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
-			filter.Limit = &models.Limit_{Offset: uint64(pageInfo.GetPageOffset()), RowCount: uint64(pageInfo.GetPageSize())}
+			selectSql = fmt.Sprintf(`%s limit %d, %d`, selectSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
 		}
 	}
-
-	setQueryRep := &models.Query{
-		DatabaseName: dbName,
-		TableName:    tableName,
-		Command: &models.Command{
-			Type:   "get",
-			Field:  []string{"k", "v", "version", "extend"},
-			Filter: filter,
-		},
+	log.Debug("get all lock list under clusterId:%v dbName:%v tableName:%v", clusterId, dbName, tableName)
+	clusterInfo, err1 := s.selectClusterById(clusterId)
+	if err1 != nil {
+		return 0, nil, err1
 	}
-	var reply models.Reply
-	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
-		return nil, err
+	caInfo, err2 := s.selectSqlCAById(clusterId)
+	if err2 != nil {
+		return 0, nil, err2
 	}
-	if reply.Code == 5 {
-		return nil, nil
-	} else if reply.Code != 0 {
-		log.Error("get cluster[%d] lock list failed. err:[%v]", clusterId, reply)
-		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
+	if caInfo == nil || clusterInfo == nil {
+		return 0, nil, common.CLUSTER_NOTEXISTS_ERROR
 	}
+	var totalRecord int
+	var result []*models.LockShow
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", caInfo.UserName, caInfo.Password, clusterInfo.GatewaySqlUrl, dbName))
+	if err != nil {
+		log.Error("open sql err, [%v]", err)
+		return 0, nil, err
+	}
+	defer db.Close()
+	if err := db.QueryRow(countSql).
+		Scan(&(totalRecord)); err != nil {
+		log.Error("db queryrow is failed. err:[%v]", err)
+		return 0, nil, common.DB_ERROR
+	}
+	if totalRecord > 0 {
+		rows, err := db.Query(selectSql)
+		if err != nil {
+			log.Error("db select is failed. err:[%v]", err)
+			return 0, nil, common.DB_ERROR
+		}
+		infos := make([]*models.LockInfo, 0)
+		for rows.Next() {
+			info := new(models.LockInfo)
+			if err := rows.Scan(&(info.K), &(info.Version), &(info.V),  &(info.Extend)); err != nil {
+				log.Error("db scan is failed. err:[%v]", err)
+				return 0, nil, common.DB_ERROR
+			}
+			infos = append(infos, info)
+		}
+		rows.Close()
+		result = ChangeLockToShow(infos)
+	}
+	return totalRecord, result, nil
+}
 
-	log.Info("result: %v", reply)
-
-	var lockInfos []*models.LockShow
-	for _, lockInfo := range reply.Values {
-		tInfo := new(models.LockShow)
-		tInfo.K = fmt.Sprintf("%v", lockInfo[0])
-		value := fmt.Sprintf("%s", lockInfo[1])//todo parse
-		if len(value) > 0 {
+func ChangeLockToShow(infos []*models.LockInfo) []*models.LockShow {
+	shows :=make([]*models.LockShow, 0)
+	for _, info := range infos {
+		showInfo := new(models.LockShow)
+		showInfo.K = info.K
+		val := info.V
+		if len(val) > 0 {
 			newValue := new(kvrpcpb.LockValue)
-			if err = newValue.Unmarshal([]byte(value)); err != nil {
-				log.Warn("unmarshal value %v error %v", value, err)
-				tInfo.V = value
+			if err := newValue.Unmarshal([]byte(val)); err != nil {
+				log.Warn("unmarshal value %v error %v", val, err)
+				showInfo.V = val
 			} else {
-				tInfo.V = string(newValue.GetValue())
-				tInfo.LockId = newValue.GetId()
-				tInfo.UpdTime = newValue.GetUpdateTime()
-				tInfo.ExpiredTime = newValue.GetDeleteTime()
-				//tInfo.Creator = newValue.get
+				showInfo.V = string(newValue.GetValue())
+				showInfo.LockId = newValue.GetId()
+				showInfo.UpdTime = newValue.GetUpdateTime()
+				showInfo.ExpiredTime = newValue.GetDeleteTime()
 			}
 		}
-		tInfo.Version,_ = strconv.ParseInt(fmt.Sprintf("%v", lockInfo[2]), 10, 46)
-		tInfo.Extend = fmt.Sprintf("%v", lockInfo[3])
-		lockInfos = append(lockInfos, tInfo)
+		showInfo.Version = info.Version
+		showInfo.Extend = info.Extend
 	}
-	return lockInfos, nil
+	return shows
 }
 
 func (s *Service) ForceUnLock(clusterId int, dbName, tableName, key string) error {
@@ -2764,7 +2768,6 @@ func (s *Service) GetClusterInfo(clusterId int) (*models.ClusterInfo, error) {
 	}
 	return clusterInfo, nil
 }
-
 //=============lock end================
 
 //=============configure center start================
@@ -2798,76 +2801,72 @@ func (s *Service) GetConfigureClusterList() ([]*models.ClusterInfo, error) {
 	return clusters, nil
 }
 
-//go by http command
-func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) ([]*models.ConfigureShow, error) {
-	info, err := s.selectClusterById(clusterId)
-	if err != nil {
-		return nil, err
-	}
-	if info == nil {
-		return nil, common.CLUSTER_NOTEXISTS_ERROR
-	}
-
-	log.Debug("get all configure list under clusterId:%v dbName:%v tableName:%v", clusterId, dbName, tableName)
-
-	filter := new(models.Filter_)
+func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) (int, []*models.ConfigureShow, error) {
+	selectSql := fmt.Sprintf(`select k, version, v, extend from %s`, tableName)
+	countSql := fmt.Sprintf(`select count(*) from %s`, tableName)
 	if pageInfo != nil {
-		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
-			var descFlag bool
-			switch pageInfo.SortOrder {
-			case "asc":
-				descFlag = true
-			default:
-				descFlag = false
-			}
-			order := &models.Order{By: pageInfo.SortName, Desc: descFlag}
-			filter.Order = []*models.Order{order}
-		} else {
-			order := &models.Order{By: "create_time", Desc: true}
-			filter.Order = []*models.Order{order}
-		}
 		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
-			filter.Limit = &models.Limit_{Offset: uint64(pageInfo.GetPageOffset()), RowCount: uint64(pageInfo.GetPageSize())}
+			selectSql = fmt.Sprintf(`%s limit %d, %d`, selectSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
 		}
 	}
-
-	setQueryRep := &models.Query{
-		DatabaseName: dbName,
-		TableName:    tableName,
-		Command: &models.Command{
-			Type:   "get",
-			Field:  []string{"k", "v", "version", "extend"},
-			Filter: filter,
-		},
+	log.Debug("get all config list under clusterId:%v dbName:%v tableName:%v", clusterId, dbName, tableName)
+	clusterInfo, err1 := s.selectClusterById(clusterId)
+	if err1 != nil {
+		return 0, nil, err1
 	}
-	var reply models.Reply
-	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
-		return nil, err
+	caInfo, err2 := s.selectSqlCAById(clusterId)
+	if err2 != nil {
+		return 0, nil, err2
 	}
-	if reply.Code == 5 {//table no exist
-		return nil, nil
-	} else if reply.Code != 0 {
-		log.Error("get cluster[%d] configure list failed. err:[%v]", clusterId, reply)
-		return nil, &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
+	if caInfo == nil || clusterInfo == nil {
+		return 0, nil, common.CLUSTER_NOTEXISTS_ERROR
 	}
-
-	log.Info("result: %v", reply)
-
-	var configureInfos []*models.ConfigureShow
-	for _, confInfo := range reply.Values {
-		tInfo := new(models.ConfigureShow)
-		tInfo.K = fmt.Sprintf("%v", confInfo[0])
-		tInfo.V = fmt.Sprintf("%v", confInfo[1]) //todo parse
-		tInfo.Version,_ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[2]), 10, 46)
-		tInfo.Extend = fmt.Sprintf("%v", confInfo[3])
-		//tInfo.CreateTime, _ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[4]), 10, 46)
-		//tInfo.UpdTime, _ = strconv.ParseInt(fmt.Sprintf("%v", confInfo[5]), 10, 46)
-		//tInfo.Creator = fmt.Sprintf("%v", confInfo[7])
-		configureInfos = append(configureInfos, tInfo)
+	var totalRecord int
+	var result []*models.ConfigureShow
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", caInfo.UserName, caInfo.Password, clusterInfo.GatewaySqlUrl, dbName))
+	if err != nil {
+		log.Error("open sql err, [%v]", err)
+		return 0, nil, err
 	}
-	return configureInfos, nil
+	defer db.Close()
+	if err := db.QueryRow(countSql).
+		Scan(&(totalRecord)); err != nil {
+		log.Error("db queryrow is failed. err:[%v]", err)
+		return 0, nil, common.DB_ERROR
+	}
+	if totalRecord > 0 {
+		rows, err := db.Query(selectSql)
+		if err != nil {
+			log.Error("db select is failed. err:[%v]", err)
+			return 0, nil, common.DB_ERROR
+		}
+		infos := make([]*models.ConfigureInfo, 0)
+		for rows.Next() {
+			info := new(models.ConfigureInfo)
+			if err := rows.Scan(&(info.K), &(info.Version), &(info.V),  &(info.Extend)); err != nil {
+				log.Error("db scan is failed. err:[%v]", err)
+				return 0, nil, common.DB_ERROR
+			}
+			infos = append(infos, info)
+		}
+		rows.Close()
+		result = ChangeConfigToShow(infos)
+	}
+	return totalRecord, result, nil
 }
 
+func ChangeConfigToShow(infos []*models.ConfigureInfo) []*models.ConfigureShow {
+	shows :=make([]*models.ConfigureShow, 0)
+	for _, info := range infos {
+		showInfo := new(models.ConfigureShow)
+		showInfo.K = info.K
+		showInfo.V = info.V
+		showInfo.Version = info.Version
+		showInfo.Extend = info.Extend
+	}
+	return shows
+}
 func (s *Service) AuditConfigureNsp(ids []string, status int, auditor string) error {
 	for _, applyId := range ids {
 		info, err := s.GetNamespaceById(applyId, TABLE_NAME_CONFIGURE_NSP)
@@ -2911,15 +2910,14 @@ func (s *Service) AuditConfigureNsp(ids []string, status int, auditor string) er
 
 //=============configure center end================
 
-//=============metric add ===============
-
+//=============metric start ===============
 func (s *Service) GetAllMetricServer() ([]models.MetricServer, error) {
 	rows, err := s.db.Query(fmt.Sprintf(`SELECT addr FROM %s`, TABLE_NAME_METRIC_SERVER))
 	if err != nil {
 		log.Error("metric server select is failed. err:[%v]", err)
 		return nil, common.DB_ERROR
 	}
-
+	defer rows.Close()
 	var result []models.MetricServer
 	for rows.Next() {
 		var info models.MetricServer
@@ -3113,8 +3111,100 @@ func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]st
 	log.Debug("set master client config: %v", respose)
 	return respose, nil
 }
-
 //=============metric end ===============
+
+//============sql ca start ==============
+func (s *Service) GetSqlCaList(pageInfo *models.PagerInfo) (int, []*models.SqlCAInfo, error) {
+	selectSql := fmt.Sprintf(`SELECT cluster_id, user_name, password FROM %s`, TABLE_NAME_SQL_CA)
+	countSql := fmt.Sprintf(`select count(*) from %s`, TABLE_NAME_SQL_CA)
+	if pageInfo != nil {
+		if pageInfo.SortName != "" && pageInfo.SortOrder != "" {
+			selectSql = fmt.Sprintf(`%s order by %s %s`, selectSql, pageInfo.SortName, pageInfo.SortOrder)
+		} else {
+			selectSql = fmt.Sprintf(`%s order by cluster_id asc`, selectSql)
+		}
+		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+			selectSql = fmt.Sprintf(`%s limit %d, %d`, selectSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
+		}
+	}
+	log.Debug("get all sql ca records:  %s", selectSql)
+	var totalRecord int
+	if err := s.db.QueryRow(countSql).
+		Scan(&(totalRecord)); err != nil {
+		log.Error("db select is failed. err:[%v]", err)
+		return 0, nil, &common.FbaseError{Code:common.DB_ERROR.Code, Msg: err.Error()}
+	}
+	if totalRecord > 0 {
+		rows, err := s.db.Query(selectSql)
+		if err != nil {
+			log.Error("db select is failed. err:[%v]", err)
+			return 0, nil, &common.FbaseError{Code: common.DB_ERROR.Code, Msg: err.Error()}
+		}
+		defer rows.Close()
+		result := make([]*models.SqlCAInfo, 0)
+		for rows.Next() {
+			info := new(models.SqlCAInfo)
+			if err := rows.Scan(&info.ClusterId, &info.UserName, &info.Password); err != nil {
+				log.Error("db scan is failed. err:[%v]", err)
+				return 0, nil, &common.FbaseError{Code: common.DB_ERROR.Code, Msg: err.Error()}
+			}
+			result = append(result, info)
+		}
+		return totalRecord, result, nil
+	} else {
+		return totalRecord, nil, nil
+	}
+}
+func (s *Service) GetSqlCAById(clusterId int64) (*models.SqlCAInfo, error) {
+	querySql := fmt.Sprintf(`select cluster_id, user_name, password from %s where cluster_id = %d`, )
+	log.Debug("get single sql ca info: %s", querySql)
+	info := new(models.SqlCAInfo)
+	if err := s.db.QueryRow(querySql).
+		Scan(&(info.ClusterId), &(info.UserName), &(info.Password)); err != nil {
+		if err == sql.ErrNoRows {
+			log.Error("db row not exists. ")
+			return nil, nil
+		} else {
+			log.Error("db queryrow is failed. err:[%v]", err)
+			return nil, common.DB_ERROR
+		}
+	}
+	return info, nil
+}
+
+func (s *Service) AddSqlCA(cId int, cName, password string, cTime int64) error {
+	result, err := s.db.Exec(fmt.Sprintf(`INSERT INTO %s (cluster_id, user_name, password) values (%d, "%s", "%s")`,
+		TABLE_NAME_SQL_CA, cId, cName, password))
+	if err != nil {
+		log.Error("db exec is failed. err:[%v]", err)
+		return common.DB_ERROR
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error("db rowsaffected is failed. err:[%v]", err)
+		return common.DB_ERROR
+	}
+	if rowsAffected != 1 {
+		return common.CLUSTER_DUPCREATE_ERROR
+	}
+	return nil
+}
+
+func (s *Service) DelSqlCA(ids []int) error {
+	for _, clusterId := range ids {
+		caSql := fmt.Sprintf(`delete from %s where cluster_id = %d`, TABLE_NAME_SQL_CA, clusterId)
+		_, err := s.execSql(caSql)
+		if err != nil {
+			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: err.Error()}
+		}
+	}
+	log.Debug("%v delete sql ca success", ids)
+	return nil
+}
+
+//============sql ca end ==============
+
 
 // ------------http request -------------------
 func sendGetSimpleReq(host, uri string, params map[string]interface{}, result string) (error) {
@@ -3297,8 +3387,13 @@ func sendPostReqJsonBody(host, uri string, params interface{}, result interface{
 		return common.HTTP_REQUEST_ERROR
 	}
 	log.Debug("http response body:[%v]", string(data))
+
+	bufEscape := bytes.NewBufferString("")
+	//拼接转义的json串  但是不会帮你检查错误
+	json.HTMLEscape(bufEscape, body)
+
 	//解决反序列化时，float64超过一定长度默认科学计数法表示
-	d := json.NewDecoder(strings.NewReader(string(data)))
+	d := json.NewDecoder(strings.NewReader(string(bufEscape.Bytes())))
 	d.UseNumber()
 	if err := d.Decode(&result); err != nil {
 		log.Error("Cannot parse http response in json. body:[%v]", string(data))
@@ -3363,6 +3458,21 @@ func (s *Service) selectClusterById(cId int) (*models.ClusterInfo, error) {
 	return info, nil
 }
 
+func (s *Service) selectSqlCAById(cId int) (*models.SqlCAInfo, error) {
+	info := new(models.SqlCAInfo)
+	if err := s.db.QueryRow(fmt.Sprintf(`SELECT user_name, password From %s WHERE cluster_id=%d`, TABLE_NAME_SQL_CA, cId)).
+		Scan( &(info.UserName), &(info.Password)); err != nil {
+		if err == sql.ErrNoRows {
+			log.Error("db row not exists. cid:[%d]", cId)
+			return nil, nil
+		} else {
+			log.Error("db queryrow is failed. err:[%v]", err)
+			return nil, common.DB_ERROR
+		}
+	}
+	return info, nil
+}
+
 func (s *Service) execSql(sql string) (int64, error) {
 	res, err := s.db.Exec(sql)
 	if err != nil {
@@ -3413,6 +3523,7 @@ func (s *Service) queryStoreDataBySql(gatewaySqlUrl string, paramMap map[string]
 		log.Error("open sql err, [%v]", err)
 		return nil, err
 	}
+	defer db.Close()
 	rows, err := db.Query(paramMap["sql"])
 	if err != nil {
 		log.Error("query sql err, [%v]", err)
@@ -3491,6 +3602,7 @@ func (s *Service) operateStoreDataBySql(gatewaySqlUrl string, paramMap map[strin
 		log.Error("open sql err, [%v]", err)
 		return 0, err
 	}
+	defer db.Close()
 	res, err := db.Exec(paramMap["sql"])
 	if err != nil {
 		log.Error("db exec is failed. err:[%v]", err)

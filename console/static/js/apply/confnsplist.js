@@ -17,7 +17,7 @@
         // showRefresh: true,  //是否显示刷新按钮
         iconSize: 'outline',
         toolbar: '#nspApplyListsToolbar',
-        height: 500,
+        height: 700,
         icons: {
             refresh: 'glyphicon-repeat'
         },
@@ -352,7 +352,7 @@ function getCluster() {
 function deleteNsp() {
     var selectedApplyRows = $('#nspApplyLists').bootstrapTable('getSelections');
     if (selectedApplyRows.length == 0) {
-        swal("驳回申请", "请选择要驳回的申请记录", "error");
+        swal("删除", "请选择要删除的申请记录", "error");
         return;
     }
     var ids = [];
