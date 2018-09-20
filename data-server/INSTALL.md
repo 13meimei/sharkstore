@@ -1,6 +1,7 @@
 # 依赖
 ## grpc 
 v1.6.4
+
 ```sh
 git clone --depth 1 --branch v1.6.4 https://github.com/grpc/grpc.git
 cd grpc
@@ -11,6 +12,7 @@ sudo make install
 
 ## protobuf 
 v3.4.1
+
 ```sh
 git clone --depth 1 --branch v3.4.1 https://github.com/google/protobuf.git
 cd protobuf
@@ -22,6 +24,7 @@ sudo make install
 
 ## libfastcommon
 V1.0.36
+
 ```sh
 git clone --depth 1 https://github.com/ChenVsGuo/libfastcommon.git
 cd libfastcommon
@@ -29,7 +32,7 @@ cd libfastcommon
 sudo ./make.sh install
 ```
 
-## snappy
+## snappy （如果需要配置压缩）
 ```sh
 wget https://github.com/google/snappy/archive/1.1.7.tar.gz
 tar xvf 1.1.7.tar.gz
@@ -40,14 +43,15 @@ sudo make install -j 4
 ```
 
 ## rocksdb
-v5.11.3
+v5.11.3     
+
 ```sh
-wget https://github.com/facebook/rocksdb/archive/v5.11.3.tar.gz
-tar xvf v5.11.3.tar.gz
-cd rocksdb-5.11.3
+git clone --depth 1 https://github.com/sharkstore/rocksdb.git
+cd rocksdb
 mkdir build
 cd build
-cmake .. -DWITH_SNAPPY=ON -DWITH_TESTS=OFF
+# 如果有需要配置压缩，需要加上 -DWITH_SNAPPY=ON
+cmake .. -DWITH_TESTS=OFF
 make -j `nproc`
 sudo make install
 ```
@@ -70,6 +74,7 @@ sudo make install -j `nproc`
 
 ## gtest and gmock
 v1.8.0
+
 ```sh
 wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz -O gtest18.tar.gz
 tar xvf gtest18.tar.gz
@@ -81,6 +86,7 @@ sudo make install
 
 ## gperf tools
 v2.6.3
+
 ```sh
 wget https://github.com/gperftools/gperftools/archive/gperftools-2.6.3.tar.gz
 tar xvf gperftools-2.6.3.tar.gz
@@ -102,16 +108,6 @@ make -j `nproc`
 
 ## 编译测试
 
-### 安装asio网络库 (raft测试程序需要）
-```sh
-wget https://github.com/chriskohlhoff/asio/archive/asio-1-10-8.tar.gz
-cd asio-asio-1-10-8/asio
-./autogen.sh
-./configure --without-boost
-make -j `nproc`
-sudo make install
-```
-
 ### 编译dataserver带tests
 
 ```sh
@@ -130,3 +126,5 @@ install gcov lcov
 将测试结果合并到一个文件 `lcov -d . -c -o ds.gcov.info   `   
 将结果文件转换成html格式，输出到ds_report目录  `genhtml ds.gcov.info -o ds_report`  
 浏览器运行ds_report的index.html文件查看结果       
+
+

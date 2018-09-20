@@ -41,7 +41,7 @@ else()
 endif()
 MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
-OPTION(BLOB_EXTEND_OPTIONS "Enable blob extend options" OFF)
+OPTION(BLOB_EXTEND_OPTIONS "Enable blob extend options" ON)
 MESSAGE(STATUS BLOB_EXTEND_OPTIONS=${BLOB_EXTEND_OPTIONS})
 if(BLOB_EXTEND_OPTIONS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBLOB_EXTEND_OPTIONS")
@@ -109,7 +109,7 @@ endif()
 
 
 # find rocksdb
-find_library(ROCKSDB_LIB rocksdb)
+find_library(ROCKSDB_LIB librocksdb.a rocksdb)
 if(NOT ROCKSDB_LIB)
     message(FATAL_ERROR "Rocksdb library not found")
 else()
