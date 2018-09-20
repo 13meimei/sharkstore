@@ -68,7 +68,7 @@ void Worker::StartWorker(std::vector<std::thread> &worker,
                         DealTask(task);
                     }
                 } else {
-                    std::this_thread::sleep_for(std::chrono::microseconds(10));
+                    std::this_thread::sleep_for(std::chrono::microseconds(100));
                 }
             }
 
