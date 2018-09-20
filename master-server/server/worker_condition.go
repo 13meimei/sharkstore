@@ -35,7 +35,6 @@ func (node *Node) require() bool {
 }
 
 func (rng *Range) require(cluster *Cluster) bool {
-	//todo 完善range的state
 	if rng.State == metapb.RangeState_R_Remove ||
 		rng.State == metapb.RangeState_R_Abnormal ||
 		rng.State == metapb.RangeState_R_Init {
@@ -59,8 +58,9 @@ return:
 	the normal node of the most leader number
     the normal node of the least leader number
  */
-func SelectMostAndLeastLeaderNode(nodes []*Node, selectors []NodeSelector) (*Node, *Node) {
+func SelectMostAndLeastLeaderNode(nodes []*Node, selectors []NodeSelector) (*Node, *Node, float64) {
 	var most, least *Node
+	var aveNum float64
 	for _, node := range nodes {
 		if !node.require() {
 			continue
@@ -85,8 +85,9 @@ func SelectMostAndLeastLeaderNode(nodes []*Node, selectors []NodeSelector) (*Nod
 				least = node
 			}
 		}
+		aveNum += float64(node.GetLeaderCount()) / float64(len(nodes))
 	}
-	return most, least
+	return most, least, aveNum
 }
 
 /**
@@ -94,8 +95,9 @@ return:
 	the normal node of the most leader number or available ration low node
     the normal node of the least leader number
  */
-func SelectMostAndLeastRangeNode(opt *scheduleOption, nodes []*Node, selectors []NodeSelector) (*Node, *Node, bool) {
+func SelectMostAndLeastRangeNode(opt *scheduleOption, nodes []*Node, selectors []NodeSelector) (*Node, *Node, bool, float64) {
 	var most, least *Node
+	var aveNum float64
 	force := false
 	for _, node := range nodes {
 		if !node.require() {
@@ -129,8 +131,10 @@ func SelectMostAndLeastRangeNode(opt *scheduleOption, nodes []*Node, selectors [
 				least = node
 			}
 		}
+
+		aveNum += float64(node.GetLeaderCount()) / float64(len(nodes))
 	}
-	return most, least, force
+	return most, least, force, aveNum
 }
 
 func SelectLeaderNode(nodes []*Node, selectors []NodeSelector, mostLeaderNum float64) *Node {
