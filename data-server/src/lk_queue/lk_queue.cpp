@@ -1,6 +1,8 @@
 #include "lk_queue.h"
 
 #ifndef TBB
+#pragma message("Use moodycamel!")
+
 #include "concurrentqueue.h"
 struct lock_free_queue_s {
     moodycamel::ConcurrentQueue<void *> lk_queue;
@@ -20,6 +22,7 @@ void *lk_queue_pop(lock_free_queue_t *lk_queue) {
 }
 
 #else
+#pragma message("Use tbb!")
 
 #include <tbb/concurrent_queue.h>
 struct lock_free_queue_s {

@@ -60,6 +60,7 @@ if(ENABLE_TBB)
         message(STATUS "Found TBB headers path: " ${TBB_HEADER_PATH})
         include_directories(${TBB_HEADER_PATH})
     endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTBB")
 endif()
 
 OPTION(BLOB_EXTEND_OPTIONS "Enable blob extend options" OFF)
