@@ -37,9 +37,7 @@ func (ctrl *MasterAllAction) Execute(c *gin.Context) (interface{}, error) {
 	}
 
 	log.Debug("query cluster master leader. cid:[%v]", cId)
-
-	cToken := common.BuildNewClusterToken(cId, "", "")
-	return service.NewService().GetMasterAll(cId, cToken)
+	return service.NewService().GetMasterAll(cId)
 }
 
 /**
@@ -63,9 +61,7 @@ func (ctrl *MasterLeaderAction) Execute(c *gin.Context) (interface{}, error) {
 	}
 
 	log.Debug("query cluster master leader. cid:[%v]", cId)
-
-	cToken := common.BuildNewClusterToken(cId, "", "")
-	return service.NewService().GetMasterLeader(cId, cToken)
+	return service.NewService().GetMasterLeader(cId)
 }
 
 type MasterLogLevelUpdate struct {

@@ -234,12 +234,6 @@ func (r *Router) StartRouter() *gin.Engine {
 			})
 		})
 
-		group.GET("/page/cluster/createcluster", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "cluster_createcluster.html", gin.H{
-				"basePath": r.staticRootDir,
-			})
-		})
-
 		group.GET("/page/master/viewNodeList", func(c *gin.Context) {
 			cid := c.Query("clusterId")
 			if cid == "" {
@@ -674,6 +668,12 @@ func (r *Router) StartRouter() *gin.Engine {
 			})
 		})
 
+		router.GET("/page/cluster/createcluster", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "cluster_createcluster.html", gin.H{
+				"basePath": r.staticRootDir,
+			})
+		})
+
 		router.GET("/page/system/scheduleManage", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "schedule_manage.html", gin.H{
 				"basePath": r.staticRootDir,
@@ -748,6 +748,9 @@ func (r *Router) StartRouter() *gin.Engine {
 		})
 		router.POST(controllers.REQURI_CLUSTER_CREATE, func(c *gin.Context) {
 			handleAction(c, controllers.NewClusterCreateAction())
+		})
+		router.GET(controllers.REQURI_CLUSTER_DELETE, func(c *gin.Context) {
+			handleAction(c, controllers.NewClusterDeleteAction())
 		})
 		router.POST(controllers.REQURI_CLUSTER_INIT, func(c *gin.Context) {
 			handleAction(c, controllers.NewClusterInitAction())

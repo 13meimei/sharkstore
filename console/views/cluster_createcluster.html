@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>创建集群</title>
-<meta name="keywords" content="">
-<meta name="description" content="">
-<link rel="shortcut icon" href="/static/favicon.ico">
-<link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
-<link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
-<link href="/static/css/animate.css" rel="stylesheet">
-<link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
-<link href="/static/css/plugins/webuploader/webuploader.css" rel="stylesheet">
-<link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
-<style type="text/css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建集群</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+    <link href="/static/css/animate.css" rel="stylesheet">
+    <link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+    <link href="/static/css/plugins/webuploader/webuploader.css" rel="stylesheet">
+    <link href="/static/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+    <style type="text/css">
 #createcluster-form{
     border: 1px solid rgb(197, 197, 197);
     width: 1000px;
@@ -25,52 +25,63 @@
 </style>
 </head>
 <body>
-	<h1 class="text-center text-danger">集群创建</h1><br>
-    <form id="createcluster-form" role="form" class="form-horizontal" method="POST">
-        <div class="form-group">
-            <label class="col-sm-2 control-label" for="clusterId">集群ID：</label>
-            <div class="col-sm-5">
-                <input class="form-control" id="clusterId" name="clusterId" placeholder="1"/>
-            </div>
+<h1 class="text-center text-danger">集群创建</h1><br>
+<form id="createcluster-form" role="form" class="form-horizontal" method="POST">
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="clusterId">集群ID：</label>
+        <div class="col-sm-5">
+            <input class="form-control" id="clusterId" name="clusterId" placeholder="1"/>
         </div>
-        <div class="form-group">
-            <label class="col-sm-2 control-label" for="clusterName">集群名：</label>
-            <div class="col-sm-5">
-                <input class="form-control" id="clusterName" name="clusterName" placeholder="fbase"/>
-            </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="clusterName">集群名：</label>
+        <div class="col-sm-5">
+            <input class="form-control" id="clusterName" name="clusterName" placeholder="fbase"/>
         </div>
-        <div class="form-group">
-            <label class="col-sm-2 control-label" for="masterUrl">masterUrl：</label>
-            <div class="col-sm-5">
-                <input class="form-control" id="masterUrl" name="masterUrl" placeholder="http://127.0.111.94:8080"/>
-            </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="masterUrl">masterUrl：</label>
+        <div class="col-sm-5">
+            <input class="form-control" id="masterUrl" name="masterUrl" placeholder="http://127.0.111.94:8080"/>
         </div>
-        <div class="form-group">
-            <label class="col-sm-2 control-label" for="gatewayHttpUrl">网关http：</label>
-            <div class="col-sm-5">
-                <input class="form-control" id="gatewayHttpUrl" name="gatewayHttpUrl" placeholder="http://127.0.111.94:8080"/>
-            </div>
+        <div class="col-sm-2">
+            <input class="form-control" id="token" name="token" placeholder="token"/>
         </div>
-        <div class="form-group">
-            <label class="col-sm-2 control-label" for="gatewaySqlUrl">网关sql：</label>
-            <div class="col-sm-5">
-                <input class="form-control" id="gatewaySqlUrl" name="gatewaySqlUrl" placeholder="127.0.111.94:3360"/>
-            </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="gatewayHttpUrl">网关http：</label>
+        <div class="col-sm-5">
+            <input class="form-control" id="gatewayHttpUrl" name="gatewayHttpUrl"
+                   placeholder="http://127.0.111.94:8080"/>
         </div>
-        <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
-                <button type="submit" id="submit" class="btn btn-primary btn-sm">创建</button>
-            </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="gatewaySqlUrl">网关sql：</label>
+        <div class="col-sm-5">
+            <input class="form-control" id="gatewaySqlUrl" name="gatewaySqlUrl" placeholder="127.0.111.94:3360"/>
         </div>
-    </form>
-	<!-- 全局js -->
-	<script src="/static/js/jquery.min.js?v=2.1.4"></script>
-	<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
-	<script src="/static/js/plugins/validate/jquery.validate.min.js"></script>
-	<script src="/static/js/plugins/validate/messages_zh.min.js"></script>
-	<script src="/static/js/plugins/webuploader/webuploader.js"></script>
-	<script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
-	<script type="text/javascript">
+        <div class="col-sm-2">
+            <input class="form-control" id="userName" name="userName" placeholder="sql账号"/>
+        </div>
+        <div class="col-sm-2">
+            <input class="form-control" id="password" name="password" placeholder="sql密码"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <button type="submit" id="submit" class="btn btn-primary btn-sm">创建</button>
+        </div>
+    </div>
+    <div><span>注意：基础集群1的token内置</span></div>
+</form>
+<!-- 全局js -->
+<script src="/static/js/jquery.min.js?v=2.1.4"></script>
+<script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+<script src="/static/js/plugins/validate/jquery.validate.min.js"></script>
+<script src="/static/js/plugins/validate/messages_zh.min.js"></script>
+<script src="/static/js/plugins/webuploader/webuploader.js"></script>
+<script src="/static/js/plugins/sweetalert/sweetalert.min.js"></script>
+<script type="text/javascript">
     $(function(){
         $("#createcluster-form").validate({
             debug: true, 
@@ -92,8 +103,12 @@
                     required:true,
                     url:true
                 },
-                getwayUrl:{
-                    required:true
+                gatewayHttpUrl:{
+                    required:true,
+                    url:true
+                },
+                gatewaySqlUrl:{
+                    required:true,
                 }
             },
             messages:{
@@ -106,21 +121,25 @@
                 masterUrl:{
                     required: "必须输入正确格式的网址"
                 },
-                getwayUrl:{
+                getwayHttpUrl:{
                 	required: "必须输入正确格式"
-                }                                    
+                },
+                getwaySqlUrl:{
+                	required: "必填"
+                }
             }
-                      
-        });    
-
+        });
     });
 	function createCluster(){
 		$('#submit').attr('disabled',"true");
 		var clusterId = $("#clusterId").val();
 		var clusterName = $("#clusterName").val();
 		var masterUrl = $("#masterUrl").val();
+		var token = $("#token").val();
 		var gatewayHttpUrl = $("#gatewayHttpUrl").val();
 		var gatewaySqlUrl = $("#gatewaySqlUrl").val();
+		var userName = $("#userName").val();
+		var password = $("#password").val();
 		swal({
 	    	  title: "创建集群?",
 	    	  type: "warning",
@@ -140,7 +159,10 @@
 						clusterName:clusterName,
 						masterUrl:masterUrl,
 						gatewayHttpUrl:gatewayHttpUrl,
-						gatewaySqlUrl:gatewaySqlUrl
+						gatewaySqlUrl:gatewaySqlUrl,
+						token:token,
+						userName:userName,
+						password:password
 					},
 					success: function(data){
 						if(data.code === 0){
@@ -158,6 +180,6 @@
 				});
 		});
 	}
-	</script>
+</script>
 </body>
 </html>

@@ -18,6 +18,7 @@ const (
 	REQURI_CLUSTER_CREATE     = "/cluster/createCluster"
 	REQURI_CLUSTER_INIT       = "/cluster/initCluster"
 	REQURI_CLUSTER_TOGGLEAUTO = "/cluster/toggleAuto"
+	REQURI_CLUSTER_DELETE     = "/cluster/deleteCluster"
 )
 
 /**
@@ -110,14 +111,15 @@ func (ctrl *ClusterCreateAction) Execute(c *gin.Context) (interface{}, error) {
 	if gatewaySqlUrl == "" {
 		return nil, common.PARSE_PARAM_ERROR
 	}
+	token := c.PostForm("token")
+	userName := c.PostForm("userName")
+	password := c.PostForm("password")
 	log.Debug("create new cluster. cid:[%v]", cId)
-
-	cToken := common.BuildNewClusterToken(cId, cName, "")
-	err = service.NewService().CreateCluster(cId, cName, masterUrl, gatewayHttpUrl, gatewaySqlUrl, cToken, time.Now().Unix())
+	cToken := common.BuildNewClusterToken(cId, token)
+	err = service.NewService().CreateCluster(cId, cName, masterUrl, gatewayHttpUrl, gatewaySqlUrl, cToken, userName, password, time.Now().Unix())
 	if err != nil {
 		return nil, err
 	}
-
 	return nil, nil
 }
 
@@ -146,8 +148,35 @@ func (ctrl *ClusterInitAction) Execute(c *gin.Context) (interface{}, error) {
 	}
 	log.Debug("init cluster. cid:[%v]", cId)
 
-	cToken := common.BuildNewClusterToken(cId, "", "")
+	cToken := common.BuildNewClusterToken(cId, "")
 	err = service.NewService().InitCluster(cId, masterUrl, cToken)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+/**
+ * 删除集群
+ */
+type ClusterDeleteAction struct {
+}
+
+func NewClusterDeleteAction() *ClusterDeleteAction {
+	return &ClusterDeleteAction{
+	}
+}
+func (ctrl *ClusterDeleteAction) Execute(c *gin.Context) (interface{}, error) {
+	cIdStr := c.Query("clusterId")
+	if cIdStr == "" {
+		return nil, common.PARSE_PARAM_ERROR
+	}
+	cId, err := strconv.Atoi(cIdStr)
+	if err != nil {
+		return nil, common.PARAM_FORMAT_ERROR
+	}
+	log.Debug("delete cluster. cid:[%v]", cId)
+	err = service.NewService().DeleteCluster(cId)
 	if err != nil {
 		return nil, err
 	}

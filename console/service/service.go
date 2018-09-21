@@ -148,7 +148,7 @@ func (s *Service) GetAllClusters() ([]*models.ClusterInfo, error) {
 	return result, nil
 }
 
-func (s *Service) CreateCluster(cId int, cName, masterUrl, gateHttpUrl, gateSqlUrl, cToken string, cTime int64) error {
+func (s *Service) CreateCluster(cId int, cName, masterUrl, gateHttpUrl, gateSqlUrl, cToken, userName, password string, cTime int64) error {
 	result, err := s.db.Exec(fmt.Sprintf(`INSERT INTO %s (id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign,
 		auto_failover, auto_transfer, auto_split, create_time) values (%d, "%s", "%s", "%s", "%s", "%s", 0, 0, 0, %d)`, TABLE_NAME_CLUSTER, cId, cName, masterUrl,
 		gateHttpUrl, gateSqlUrl, cToken, cTime))
@@ -156,7 +156,6 @@ func (s *Service) CreateCluster(cId int, cName, masterUrl, gateHttpUrl, gateSqlU
 		log.Error("db exec is failed. err:[%v]", err)
 		return common.DB_ERROR
 	}
-
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		log.Error("db rowsaffected is failed. err:[%v]", err)
@@ -165,7 +164,24 @@ func (s *Service) CreateCluster(cId int, cName, masterUrl, gateHttpUrl, gateSqlU
 	if rowsAffected != 1 {
 		return common.CLUSTER_DUPCREATE_ERROR
 	}
+	if len(userName) > 0 && len(password) > 0 {
+		return s.AddSqlCA(cId, userName, password, cTime)
+	}
+	return nil
+}
 
+func (s *Service) DeleteCluster(cId int) error {
+	cIds := make([]int,0)
+	cIds = append(cIds, cId)
+	err := s.DelSqlCA(cIds)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(fmt.Sprintf(`Delete from %s where id = %d`, TABLE_NAME_CLUSTER, cId))
+	if err != nil {
+		log.Error("db exec is failed. err:[%v]", err)
+		return common.DB_ERROR
+	}
 	return nil
 }
 
@@ -501,7 +517,7 @@ func (s *Service) GetTableColumns(cId int, tableName, dbName string) (*models.Ta
 	return table, nil
 }
 
-func (s *Service) GetMasterAll(cId int, token string) (*models.Member, error) {
+func (s *Service) GetMasterAll(cId int) (*models.Member, error) {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
 		return nil, err
@@ -510,7 +526,7 @@ func (s *Service) GetMasterAll(cId int, token string) (*models.Member, error) {
 		return nil, common.CLUSTER_NOTEXISTS_ERROR
 	}
 	ts := time.Now().Unix()
-	sign := common.CalcMsReqSign(cId, token, ts)
+	sign := common.CalcMsReqSign(cId, info.ClusterToken, ts)
 
 	reqParams := make(map[string]interface{})
 	reqParams["d"] = ts
@@ -531,7 +547,7 @@ func (s *Service) GetMasterAll(cId int, token string) (*models.Member, error) {
 	return masterNodesResp.Data, nil
 }
 
-func (s *Service) GetMasterLeader(cId int, token string) (*models.MsNode, error) {
+func (s *Service) GetMasterLeader(cId int) (*models.MsNode, error) {
 	info, err := s.selectClusterById(cId)
 	if err != nil {
 		return nil, err
@@ -540,7 +556,7 @@ func (s *Service) GetMasterLeader(cId int, token string) (*models.MsNode, error)
 		return nil, common.CLUSTER_NOTEXISTS_ERROR
 	}
 	ts := time.Now().Unix()
-	sign := common.CalcMsReqSign(cId, token, ts)
+	sign := common.CalcMsReqSign(cId, info.ClusterToken, ts)
 
 	reqParams := make(map[string]interface{})
 	reqParams["d"] = ts
@@ -3149,6 +3165,8 @@ func (s *Service) GetSqlCaList(pageInfo *models.PagerInfo) (int, []*models.SqlCA
 				log.Error("db scan is failed. err:[%v]", err)
 				return 0, nil, &common.FbaseError{Code: common.DB_ERROR.Code, Msg: err.Error()}
 			}
+			info.UserName,_ = common.Base64Decode(info.UserName)
+			info.Password,_ = common.Base64Decode(info.Password)
 			result = append(result, info)
 		}
 		return totalRecord, result, nil
@@ -3175,7 +3193,7 @@ func (s *Service) GetSqlCAById(clusterId int64) (*models.SqlCAInfo, error) {
 
 func (s *Service) AddSqlCA(cId int, cName, password string, cTime int64) error {
 	result, err := s.db.Exec(fmt.Sprintf(`INSERT INTO %s (cluster_id, user_name, password) values (%d, "%s", "%s")`,
-		TABLE_NAME_SQL_CA, cId, cName, password))
+		TABLE_NAME_SQL_CA, cId, common.Base64Encode(cName), common.Base64Encode(password)))
 	if err != nil {
 		log.Error("db exec is failed. err:[%v]", err)
 		return common.DB_ERROR
@@ -3470,6 +3488,8 @@ func (s *Service) selectSqlCAById(cId int) (*models.SqlCAInfo, error) {
 			return nil, common.DB_ERROR
 		}
 	}
+	info.UserName,_ = common.Base64Decode(info.UserName)
+	info.Password,_ = common.Base64Decode(info.Password)
 	return info, nil
 }
 
