@@ -323,7 +323,7 @@ func (service *Server) Start() error {
 			break
 		}
 
-		go ping.Ping(conf.AlarmClient.ServerAddress, int64(conf.Cluster.ClusterID), int(metricPort), 10)
+		go ping.Ping(conf.AlarmClient.ServerAddress, 0, int(metricPort), 10)
 	}
 	service.server.Run()
 	return nil
