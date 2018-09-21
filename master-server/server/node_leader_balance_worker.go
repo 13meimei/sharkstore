@@ -79,15 +79,6 @@ func (w *balanceNodeLeaderWorker) Stop() {
 	w.cancel()
 }
 
-//count node leader average number,
-func countLeaderAvg(nodes []*Node) float64 {
-	var averageLeader float64
-	for _, s := range nodes {
-		averageLeader += float64(s.GetLeaderCount()) / float64(len(nodes))
-	}
-	return averageLeader
-}
-
 /**
 选择需要切换leader的range
 */
@@ -105,9 +96,7 @@ func (w *balanceNodeLeaderWorker) selectChangeLeader(cluster *Cluster) (*Range, 
 		NewDifferCacheNodeSelector(cluster.hbManager.dealIngNodes),
 	}
 
-	//todo avg 应该 是过滤后的node的平均值
-	avgLeaderNum := countLeaderAvg(nodes)
-	mostLeaderNode, leastLeaderNode := SelectMostAndLeastLeaderNode(nodes, newSelectors)
+	mostLeaderNode, leastLeaderNode, avgLeaderNum := SelectMostAndLeastLeaderNode(nodes, newSelectors)
 	var mostLeaderNum, leastLeaderNum = float64(0), float64(0)
 	if mostLeaderNode != nil {
 		mostLeaderNum = mostLeaderNode.leaderScore()
@@ -124,7 +113,7 @@ func (w *balanceNodeLeaderWorker) selectChangeLeader(cluster *Cluster) (*Range, 
 
 	balanceThreshold := maxFloat64(avgLeaderNum/10, float64(Min_leader_balance_num))
 	if (mostLeaderNum - avgLeaderNum) > balanceThreshold {
-		// 在Node上选择一个leader
+		// mostLeaderNum节点上为leader的分片，在follow Nodes上选择副本切换为leader
 		for _, r := range mostLeaderNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() == mostLeaderNode.GetId() && r.require(cluster) {
 				tarGetAllNode := cluster.getFollowerNodes(r)
@@ -137,7 +126,7 @@ func (w *balanceNodeLeaderWorker) selectChangeLeader(cluster *Cluster) (*Range, 
 	}
 
 	if (avgLeaderNum - leastLeaderNum) > balanceThreshold {
-		// 在Node上选择一个不是leader的
+		// 在leastLeaderNum节点 非leader的分片，切换为leader
 		for _, r := range leastLeaderNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() != leastLeaderNode.GetId() && r.require(cluster) {
 				leaderNode := cluster.getLeaderNode(r)

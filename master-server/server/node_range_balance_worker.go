@@ -47,7 +47,7 @@ func (w *balanceNodeRangeWorker) Work(cluster *Cluster) {
 		return
 	}
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
-	log.Debug("start to balance region and remove peer, region:[%v], old peer:[%v], old node:[%v], new node:[%v]",
+	log.Debug("start to balance region and remove peer, region:[%v], old peer:[%v], old node:[%v], excepted new node:[%v]",
 		rng.GetId(), oldPeer.GetId(), oldPeer.GetNodeId(), targetNodeId)
 	tc := NewTransferPeerTasks(id, rng, "balance-range-transfer", oldPeer)
 	// TODO: check return
@@ -86,7 +86,7 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 		NewDifferCacheNodeSelector(cluster.hbManager.dealIngNodes),
 	}
 
-	mostRangeNode, leastRangeNode, force := SelectMostAndLeastRangeNode(cluster.opt, nodes, newSelectors)
+	mostRangeNode, leastRangeNode, force, avgRangerNum := SelectMostAndLeastRangeNode(cluster.opt, nodes, newSelectors)
 	var mostRangeNum, leastRangeNum = uint32(0), uint32(0)
 	if mostRangeNode != nil {
 		mostRangeNum = mostRangeNode.GetRangesCount()
@@ -98,16 +98,14 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 		return nil, nil, 0
 	}
 
-	avgRangerNum := countRangeAvg(nodes)
 	balanceThreshold := maxFloat64(avgRangerNum/20, float64(Min_range_balance_num))
-
 	if !force && float64(mostRangeNum-leastRangeNum) < balanceThreshold {
 		log.Debug("mostNode %v mostRangeNum %v , leastNode %v leastRangeNum %v, don't need balance",
 			mostRangeNode.GetId(), mostRangeNum, leastRangeNode.GetId(), leastRangeNum)
 		return nil, nil, 0
 	}
 
-	//选节点的peer不在mostRangeNode的 range, 且该range  没有 peer在leastRangeNode 上
+	//优先选mostRangeNode上非leader的分片，迁移到leastRangeNode 上
 	var rng *Range
 	for _, r := range mostRangeNode.GetAllRanges() {
 		if r.GetLeader().GetNodeId() != mostRangeNode.GetId() && r.require(cluster) {
@@ -120,6 +118,7 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 		}
 	}
 
+	//选mostRangeNode上leader的分片，迁移到leastRangeNode 上
 	if rng == nil {
 		log.Debug("%v: select follower range than exclude leastRangeNode %v is nil ", w.GetName(), leastRangeNode)
 		for _, r := range mostRangeNode.GetAllRanges() {
@@ -168,13 +167,4 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 	}
 
 	return rng, rng.GetNodePeer(mostRangeNode.GetId()), leastRangeNode.GetId()
-}
-
-//count node range average number,
-func countRangeAvg(nodes []*Node) float64 {
-	var averageLeader float64
-	for _, s := range nodes {
-		averageLeader += float64(s.GetRangesCount()) / float64(len(nodes))
-	}
-	return averageLeader
 }
