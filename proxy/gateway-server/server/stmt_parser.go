@@ -187,7 +187,7 @@ func (s *StmtParser) parseInsertValues(insert *sqlparser.Insert) ([]InsertRowVal
 	return rowValues, nil
 }
 
-func parseUpdateFields(update *sqlparser.Update) ([]UpdateField, error) {
+func (s *StmtParser) parseUpdateFields(update *sqlparser.Update) ([]UpdateField, error) {
 	exprs := update.Exprs
 	if len(exprs) == 0 {
 		// TODO: see mysql error
@@ -207,7 +207,7 @@ func parseUpdateFields(update *sqlparser.Update) ([]UpdateField, error) {
 		case *sqlparser.NullVal:
 			fields[i].value = nil
 		default:
-			return nil, fmt.Errorf("unsupported update value type(%T) at index %d", expr.Expr, j)
+			return nil, fmt.Errorf("unsupported update value type(%T) at index %d", expr.Expr, i)
 		}
 	}
 	return fields, nil
@@ -286,17 +286,6 @@ func (s *StmtParser) parseMatch(_expr sqlparser.BoolExpr) (matches []Match, err 
 	return
 }
 
-func (s *StmtParser) parseUpdateExprs(exprs sqlparser.UpdateExprs) (ret []UpdateField, err error) {
-	// todo
-	for _, expr := range exprs {
-		ret = append(ret, UpdateField{
-			col: string(expr.Name.Name),
-		})
-
-	}
-	return
-}
-
 // now only support where exp; where exp1 and exp2
 func (s *StmtParser) parseWhere(where *sqlparser.Where) ([]Match, error) {
 	// TODO: 支持OR表达式
@@ -348,7 +337,7 @@ func parseLimit(limit *sqlparser.Limit) (offset, count uint64, err error) {
 		return
 	}
 	if count, err = strconv.ParseUint(hack.String([]byte(num)), 10, 64); err != nil {
-		err = fmt.Errorf("invalid select limit count(%s): %v", string(num), err)
+		err = fmt.Errorf("invalid limit count(%s): %v", string(num), err)
 		return
 	}
 	return
