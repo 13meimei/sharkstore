@@ -1,10 +1,10 @@
 package server
 
 import (
+	"proxy/gateway-server/sqlparser"
 	"reflect"
 	"testing"
-
-	"proxy/gateway-server/sqlparser"
+	"util/assert"
 )
 
 func TestParseInsertCols(t *testing.T) {
@@ -133,4 +133,46 @@ func TestParseSelectCols(t *testing.T) {
 		t.Fatal("expected aggregate col == \"\"")
 	}
 
+}
+
+func TestParseUpdate(t *testing.T)  {
+	sql := "update mytable set name ='name2', pass='2323' where id = 2 limit 1"
+	parseUpdate(sql, t)
+}
+
+func parseUpdate(sql  string, t *testing.T)  {
+	stmt, err := sqlparser.Parse(sql)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updateStmt, ok := stmt.(*sqlparser.Update)
+	if !ok {
+		t.Fatalf("not update statemnet")
+	}
+	stparser := StmtParser{}
+	tableName := stparser.parseTable(stmt)
+	assert.Equal(t, tableName, "mytable", "tableName")
+	fileds, err := stparser.parseUpdateFields(updateStmt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range fileds {
+		t.Logf("col: %v, value %v", f.col, string(f.value))
+	}
+	if len(fileds) != 2 {
+		t.Fatalf("unexpected result length: %v, expected:%v", len(fileds), 2)
+	}
+	var matchs []Match
+	if updateStmt.Where != nil {
+		matchs, err = stparser.parseWhere(updateStmt.Where)
+		if err != nil {
+			t.Errorf("[update] parse where error(%v)", err.Error())
+			return
+		}
+	}
+	t.Logf("match %v", matchs)
+
+	if updateStmt.Limit != nil {
+		t.Logf("limit rowCount %v",  updateStmt.Limit.Rowcount)
+	}
 }

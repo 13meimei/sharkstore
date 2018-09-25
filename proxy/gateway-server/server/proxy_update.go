@@ -12,9 +12,7 @@ import (
 // HandleUpdate handle update
 func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface{}) (*mysql.Result, error) {
 	var err error
-
 	parser := &StmtParser{}
-
 	// 解析表名
 	tableName := parser.parseTable(stmt)
 	t := p.router.FindTable(db, tableName)
@@ -24,7 +22,7 @@ func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface
 	}
 
 	var exprs []UpdateField
-	exprs, err = parser.parseUpdateExprs(stmt.Exprs)
+	exprs, err = parser.parseUpdateFields(stmt)
 	if err != nil {
 		log.Error("[update] parse update exprs failed: %v", err)
 		return nil, fmt.Errorf("parse update exprs failed: %v", err)
@@ -48,17 +46,22 @@ func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface
 			log.Error("[update] parse limit error[%v]", err)
 			return nil, err
 		}
-		if count > DefaultMaxRawCount {
-			log.Warn("limit count exceeding the maximum limit")
-			return nil, ErrExceedMaxLimit
+		if offset != 0 {
+			log.Error("[update] unsupported limit offset")
+			return nil, fmt.Errorf("parse update limit failed: unsupported limit offset")
 		}
-		limit = &Limit{offset: offset, rowCount: count}
+		//if count > DefaultMaxRawCount {
+		//	log.Warn("limit count exceeding the maximum limit")
+		//	return nil, ErrExceedMaxLimit
+		//}
+		limit = &Limit{rowCount: count}
+	}
+	if stmt.OrderBy != nil {
+
 	}
 
 	if log.GetFileLogger().IsEnableDebug() {
-		log.Debug("update exprs: %v", exprs)
-		log.Debug("matchs: %v", matchs)
-		log.Debug("limit: %v", limit)
+		log.Debug("update exprs: %v, matchs: %v, limit: %v, orderBy: %v", exprs, matchs, limit, stmt.OrderBy)
 	}
 
 	affected, err := p.doUpdate(t, exprs, matchs, limit)
@@ -72,17 +75,17 @@ func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface
 }
 
 func (p *Proxy) doUpdate(t *Table, exprs []UpdateField, matches []Match, limit *Limit) (affected uint64, err error) {
-	pbMatches, err := makePBMatches(t, matches)
-	if err != nil {
-		log.Error("[update]covert filter failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
-		return
-	}
-
-	pbLimit, err := makePBLimit(p, limit)
-	if err != nil {
-		log.Error("[update]covert limit failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
-		return
-	}
+	//pbMatches, err := makePBMatches(t, matches)
+	//if err != nil {
+	//	log.Error("[update]covert filter failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
+	//	return
+	//}
+	//
+	//pbLimit, err := makePBLimit(p, limit)
+	//if err != nil {
+	//	log.Error("[update]covert limit failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
+	//	return
+	//}
 
 	// todo update
 
