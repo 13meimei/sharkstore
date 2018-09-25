@@ -101,6 +101,7 @@ public:
     void RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
 
     void Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req);
+    void Update(common::ProtoMessage *msg, kvrpcpb::DsUpdateRequest &req);
     void Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req);
     void Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
     
@@ -162,6 +163,7 @@ private:
     Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
 
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
+    Status ApplyUpdate(const raft_cmdpb::Command &cmd);
     Status ApplyDelete(const raft_cmdpb::Command &cmd);
 
     Status ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index);

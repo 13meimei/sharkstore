@@ -138,6 +138,12 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
     }
 }
 
+Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected) {
+    // todo
+
+    return Status::OK();
+}
+
 static void addRow(const kvrpcpb::SelectRequest& req,
                    kvrpcpb::SelectResponse* resp, const RowResult& r) {
     std::string buf;

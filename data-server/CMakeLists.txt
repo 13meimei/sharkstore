@@ -160,6 +160,7 @@ set(SOURCES
     src/range/raw_delete.cpp
     src/range/select.cpp
     src/range/insert.cpp
+    src/range/update.cpp
     src/range/delete.cpp
     src/range/split.cpp
     src/range/split_policy.cpp

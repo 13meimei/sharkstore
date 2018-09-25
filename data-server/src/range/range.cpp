@@ -208,6 +208,8 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
             return ApplyRawDelete(cmd);
         case raft_cmdpb::CmdType::Insert:
             return ApplyInsert(cmd);
+        case raft_cmdpb::CmdType::Update:
+            return ApplyUpdate(cmd);
         case raft_cmdpb::CmdType::Delete:
             return ApplyDelete(cmd);
         case raft_cmdpb::CmdType::KvSet:

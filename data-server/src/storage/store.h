@@ -34,6 +34,7 @@ public:
     Status Delete(const std::string& key);
 
     Status Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected);
+    Status Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected);
     Status Select(const kvrpcpb::SelectRequest& req,
                   kvrpcpb::SelectResponse* resp);
     Status DeleteRows(const kvrpcpb::DeleteRequest& req, uint64_t* affected);
