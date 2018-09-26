@@ -2,10 +2,13 @@ package server
 
 import (
 	"fmt"
+	"strings"
+	"strconv"
 	"net"
 	"runtime"
 	"sync"
 
+	"util/ping"
 	"util/log"
 	"util/server"
 	"google.golang.org/grpc"
@@ -300,11 +303,27 @@ func (service *Server) Start() error {
 			panic(buf)
 		}
 	}()
+	conf := service.conf
 	switch service.conf.Role {
 	case "master":
 		service.MasterStart()
+		go ping.Ping(conf.AlarmClient.ServerAddress, int64(conf.Cluster.ClusterID), conf.Cluster.Peers[0].HttpPort, 10)
 	case "metric":
 		service.MetricStart()
+
+		addr := strings.Split(conf.Metric.Server.Address, ":")
+		if len(addr) != 2 {
+			log.Error("metric server address format can not be split by ':'")
+			break
+		}
+
+		metricPort, err := strconv.ParseInt(addr[1], 10, 64)
+		if err != nil {
+			log.Error("metric server port parse failed: %v", err)
+			break
+		}
+
+		go ping.Ping(conf.AlarmClient.ServerAddress, 0, int(metricPort), 10)
 	}
 	service.server.Run()
 	return nil

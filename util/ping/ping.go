@@ -37,6 +37,7 @@ func Ping(alarmServerAddr string, clusterId int64, appPort int, ping_interval in
 	for {
 		select {
 		case <-t.C:
+			log.Debug("ping time ticker %v", ping_interval)
 			if alarmClient == nil {
 				var err error
 				alarmClient, err = alarm2.NewAlarmClient2(alarmServerAddr)

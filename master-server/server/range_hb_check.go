@@ -103,7 +103,8 @@ func hbAlarmDeal(cluster *Cluster, leader *metapb.Peer, table *Table, r *Range, 
 	remark := []string{fmt.Sprintf("db name[%v] table name[%v] range id[%v]", table.GetDbName(), table.GetName(), r.GetId())}
 	compareType := alarmpb2.AlarmValueCompareType_GREATER_THAN
 
-	if err := cluster.alarmCli.RuleAlarm(int64(cluster.clusterId), ipAddr, ruleName, alarmValue, compareType, remark); err != nil {
+	if err := cluster.alarmCli.RuleAlarm(int64(cluster.clusterId), ipAddr, "master-server",
+		ruleName, alarmValue, compareType, remark); err != nil {
 		log.Error("range no leader alarm failed: %v", err)
 	}
 }
