@@ -9,6 +9,7 @@ _Pragma("once");
 #include "range/split_policy.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
+#include "field_value.h"
 
 // test fixture forward declare for friend class
 namespace sharkstore { namespace test { namespace helper { class StoreTestFixture; }}}
@@ -78,6 +79,7 @@ private:
 
     Status selectSimple(const kvrpcpb::SelectRequest& req,
                         kvrpcpb::SelectResponse* resp);
+    Status selectUpdate(std::vector<Row*>& rows, const kvrpcpb::SelectRequest& req);
     Status selectAggre(const kvrpcpb::SelectRequest& req,
                        kvrpcpb::SelectResponse* resp);
 

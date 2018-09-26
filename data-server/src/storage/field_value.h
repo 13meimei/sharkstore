@@ -2,6 +2,7 @@ _Pragma("once");
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace sharkstore {
 namespace dataserver {
@@ -84,6 +85,16 @@ bool fcompare(const FieldValue& lh, const FieldValue& rh, CompareOp op);
 
 FieldValue* CopyValue(const FieldValue& f);
 void EncodeFieldValue(std::string* buf, FieldValue* v);
+
+struct Field {
+    uint64_t column_id_;
+    std::string value_;
+};
+
+struct Row {
+    std::string key_;
+    std::vector<Field*> fields_;
+};
 
 } /* namespace storage */
 } /* namespace dataserver */

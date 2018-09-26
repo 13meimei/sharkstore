@@ -139,9 +139,54 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
 }
 
 Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected) {
-    // todo
+    kvrpcpb::SelectRequest select_req;
+    kvrpcpb::InsertRequest insert_req;
 
-    return Status::OK();
+    // select
+    select_req.mutable_key()->assign(req.key());
+    select_req.mutable_scope()->CopyFrom(req.scope());
+    select_req.mutable_field_list()->CopyFrom(req.field_list());
+    select_req.mutable_where_filters()->CopyFrom(req.where_filters());
+
+    std::vector<Row*> rows;
+    auto select_status = selectUpdate(rows, select_req);
+    if (select_status != Status::OK()) {
+        return select_status;
+    }
+
+    if (rows.size() == 0) {
+        *affected = 0;
+        return Status::OK();
+    }
+
+    // insert
+    for (auto j = 0; j < req.fields_size(); j++) {
+        auto update_req_column_id = req.fields(j).column_id();
+        auto update_req_value = req.fields(j).value();
+
+        for (auto it_r = rows.begin(); it_r != rows.end(); it_r++) {
+            auto fields = (*it_r)->fields_;
+
+            for (auto it_f = fields.begin(); it_f != fields.end(); it_f++) {
+                if ((*it_f)->column_id_ == update_req_column_id) {
+                    (*it_f)->value_ = update_req_value;
+                }
+            }
+        }
+    }
+
+    for (auto it_r = rows.begin(); it_r != rows.end(); it_r++) {
+        auto fields = (*it_r)->fields_;
+
+        for (auto it_f = fields.begin(); it_f != fields.end(); it_f++) {
+            // todo
+        }
+    }
+    kvrpcpb::KeyValue kv;
+    // todo
+    // insert_req.mutable_rows()->Add(std::move(kv));
+
+    return Insert(insert_req, affected);
 }
 
 static void addRow(const kvrpcpb::SelectRequest& req,
@@ -157,6 +202,24 @@ static void addRow(const kvrpcpb::SelectRequest& req,
     auto row = resp->add_rows();
     row->set_key(r.Key());
     row->set_fields(buf);
+}
+
+static void addRow2(Row* row, const kvrpcpb::SelectRequest& req, const RowResult& r) {
+    for (int i = 0; i < req.field_list_size(); i++) {
+        const auto& f = req.field_list(i);
+        if (f.has_column()) {
+            FieldValue* v = r.GetField(f.column().id());
+
+            auto field = new Field;
+            std::string buf;
+
+            EncodeFieldValue(&buf, v);
+            field->column_id_ = f.column().id();
+            field->value_ = buf;
+            row->key_ = r.Key();
+            row->fields_.push_back(field);
+        }
+    }
 }
 
 Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
@@ -181,6 +244,34 @@ Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
         }
     }
     resp->set_offset(all);
+    return s;
+}
+
+Status Store::selectUpdate(std::vector<Row*>& rows,
+                           const kvrpcpb::SelectRequest& req) {
+    RowFetcher f(*this, req);
+    Status s;
+    std::unique_ptr<RowResult> r(new RowResult);
+    bool over = false;
+    uint64_t count = 0;
+    uint64_t all = 0;
+    uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
+    uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
+
+    auto i = 0;
+    while (!over && s.ok()) {
+        over = false;
+        s = f.Next(r.get(), &over);
+        if (s.ok() && !over) {
+            ++all;
+            if (all > offset) {
+                auto row = new(Row);
+                addRow2(row, req, *r);
+                if (++count >= limit) break;
+                rows.push_back(row);
+            }
+        }
+    }
     return s;
 }
 

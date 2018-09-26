@@ -278,6 +278,7 @@ message UpdateRequest {
     Scope scope                     = 2;
     repeated Field fields           = 3;
     repeated Match where_filters    = 4;
+    repeated SelectField field_list     = 5;       // select filed list
 }
 
 message DsUpdateRequest {

@@ -940,8 +940,9 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, scope_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, fields_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, field_list_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, where_filters_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UpdateRequest, fields_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsUpdateRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1401,62 +1402,62 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 288, -1, sizeof(DeleteResponse)},
   { 295, -1, sizeof(Field)},
   { 302, -1, sizeof(UpdateRequest)},
-  { 311, -1, sizeof(DsUpdateRequest)},
-  { 318, -1, sizeof(UpdateResponse)},
-  { 325, -1, sizeof(DsUpdateResponse)},
-  { 332, -1, sizeof(RedisKeyValue)},
-  { 339, -1, sizeof(RedisDo)},
-  { 348, -1, sizeof(KvSetRequest)},
-  { 355, -1, sizeof(KvSetResponse)},
-  { 362, -1, sizeof(DsKvSetRequest)},
-  { 369, -1, sizeof(DsKvSetResponse)},
-  { 376, -1, sizeof(KvGetRequest)},
-  { 382, -1, sizeof(KvGetResponse)},
-  { 389, -1, sizeof(DsKvGetRequest)},
-  { 396, -1, sizeof(DsKvGetResponse)},
-  { 403, -1, sizeof(KvBatchSetRequest)},
-  { 410, -1, sizeof(KvBatchSetResponse)},
-  { 417, -1, sizeof(DsKvBatchSetRequest)},
-  { 424, -1, sizeof(DsKvBatchSetResponse)},
-  { 431, -1, sizeof(KvBatchGetRequest)},
-  { 438, -1, sizeof(KvBatchGetResponse)},
-  { 445, -1, sizeof(DsKvBatchGetRequest)},
-  { 452, -1, sizeof(DsKvBatchGetResponse)},
-  { 459, -1, sizeof(KvScanRequest)},
-  { 469, -1, sizeof(KvScanResponse)},
-  { 478, -1, sizeof(DsKvScanRequest)},
-  { 485, -1, sizeof(DsKvScanResponse)},
-  { 492, -1, sizeof(KvDeleteRequest)},
-  { 499, -1, sizeof(KvDeleteResponse)},
-  { 506, -1, sizeof(DsKvDeleteRequest)},
-  { 513, -1, sizeof(DsKvDeleteResponse)},
-  { 520, -1, sizeof(KvBatchDeleteRequest)},
-  { 527, -1, sizeof(KvBatchDeleteResponse)},
-  { 534, -1, sizeof(DsKvBatchDeleteRequest)},
-  { 541, -1, sizeof(DsKvBatchDeleteResponse)},
-  { 548, -1, sizeof(KvRangeDeleteRequest)},
-  { 557, -1, sizeof(KvRangeDeleteResponse)},
-  { 565, -1, sizeof(DsKvRangeDeleteRequest)},
-  { 572, -1, sizeof(DsKvRangeDeleteResponse)},
-  { 579, -1, sizeof(LockValue)},
-  { 589, -1, sizeof(LockRequest)},
-  { 597, -1, sizeof(DsLockRequest)},
-  { 604, -1, sizeof(LockResponse)},
-  { 613, -1, sizeof(LockInfo)},
-  { 620, -1, sizeof(LockScanResponse)},
-  { 627, -1, sizeof(DsLockResponse)},
-  { 634, -1, sizeof(LockUpdateRequest)},
-  { 645, -1, sizeof(DsLockUpdateRequest)},
-  { 652, -1, sizeof(DsLockUpdateResponse)},
-  { 659, -1, sizeof(UnlockRequest)},
-  { 668, -1, sizeof(DsUnlockRequest)},
-  { 675, -1, sizeof(DsUnlockResponse)},
-  { 682, -1, sizeof(UnlockForceRequest)},
-  { 690, -1, sizeof(DsUnlockForceRequest)},
-  { 697, -1, sizeof(DsUnlockForceResponse)},
-  { 704, -1, sizeof(LockScanRequest)},
-  { 712, -1, sizeof(DsLockScanRequest)},
-  { 719, -1, sizeof(DsLockScanResponse)},
+  { 312, -1, sizeof(DsUpdateRequest)},
+  { 319, -1, sizeof(UpdateResponse)},
+  { 326, -1, sizeof(DsUpdateResponse)},
+  { 333, -1, sizeof(RedisKeyValue)},
+  { 340, -1, sizeof(RedisDo)},
+  { 349, -1, sizeof(KvSetRequest)},
+  { 356, -1, sizeof(KvSetResponse)},
+  { 363, -1, sizeof(DsKvSetRequest)},
+  { 370, -1, sizeof(DsKvSetResponse)},
+  { 377, -1, sizeof(KvGetRequest)},
+  { 383, -1, sizeof(KvGetResponse)},
+  { 390, -1, sizeof(DsKvGetRequest)},
+  { 397, -1, sizeof(DsKvGetResponse)},
+  { 404, -1, sizeof(KvBatchSetRequest)},
+  { 411, -1, sizeof(KvBatchSetResponse)},
+  { 418, -1, sizeof(DsKvBatchSetRequest)},
+  { 425, -1, sizeof(DsKvBatchSetResponse)},
+  { 432, -1, sizeof(KvBatchGetRequest)},
+  { 439, -1, sizeof(KvBatchGetResponse)},
+  { 446, -1, sizeof(DsKvBatchGetRequest)},
+  { 453, -1, sizeof(DsKvBatchGetResponse)},
+  { 460, -1, sizeof(KvScanRequest)},
+  { 470, -1, sizeof(KvScanResponse)},
+  { 479, -1, sizeof(DsKvScanRequest)},
+  { 486, -1, sizeof(DsKvScanResponse)},
+  { 493, -1, sizeof(KvDeleteRequest)},
+  { 500, -1, sizeof(KvDeleteResponse)},
+  { 507, -1, sizeof(DsKvDeleteRequest)},
+  { 514, -1, sizeof(DsKvDeleteResponse)},
+  { 521, -1, sizeof(KvBatchDeleteRequest)},
+  { 528, -1, sizeof(KvBatchDeleteResponse)},
+  { 535, -1, sizeof(DsKvBatchDeleteRequest)},
+  { 542, -1, sizeof(DsKvBatchDeleteResponse)},
+  { 549, -1, sizeof(KvRangeDeleteRequest)},
+  { 558, -1, sizeof(KvRangeDeleteResponse)},
+  { 566, -1, sizeof(DsKvRangeDeleteRequest)},
+  { 573, -1, sizeof(DsKvRangeDeleteResponse)},
+  { 580, -1, sizeof(LockValue)},
+  { 590, -1, sizeof(LockRequest)},
+  { 598, -1, sizeof(DsLockRequest)},
+  { 605, -1, sizeof(LockResponse)},
+  { 614, -1, sizeof(LockInfo)},
+  { 621, -1, sizeof(LockScanResponse)},
+  { 628, -1, sizeof(DsLockResponse)},
+  { 635, -1, sizeof(LockUpdateRequest)},
+  { 646, -1, sizeof(DsLockUpdateRequest)},
+  { 653, -1, sizeof(DsLockUpdateResponse)},
+  { 660, -1, sizeof(UnlockRequest)},
+  { 669, -1, sizeof(DsUnlockRequest)},
+  { 676, -1, sizeof(DsUnlockResponse)},
+  { 683, -1, sizeof(UnlockForceRequest)},
+  { 691, -1, sizeof(DsUnlockForceRequest)},
+  { 698, -1, sizeof(DsUnlockForceResponse)},
+  { 705, -1, sizeof(LockScanRequest)},
+  { 713, -1, sizeof(DsLockScanRequest)},
+  { 720, -1, sizeof(DsLockScanResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -2098,147 +2099,148 @@ void AddDescriptorsImpl() {
       " \003(\004\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Time"
       "stamp\"5\n\016DeleteResponse\022\014\n\004code\030\001 \001(\005\022\025\n"
       "\raffected_keys\030\002 \001(\004\")\n\005Field\022\021\n\tcolumn_"
-      "id\030\001 \001(\004\022\r\n\005value\030\002 \001(\014\"\202\001\n\rUpdateReques"
+      "id\030\001 \001(\004\022\r\n\005value\030\002 \001(\014\"\254\001\n\rUpdateReques"
       "t\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb."
-      "Scope\022\036\n\006fields\030\003 \003(\0132\016.kvrpcpb.Field\022%\n"
-      "\rwhere_filters\030\004 \003(\0132\016.kvrpcpb.Match\"^\n\017"
-      "DsUpdateRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcp"
-      "b.RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.U"
-      "pdateRequest\"5\n\016UpdateResponse\022\014\n\004code\030\001"
-      " \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"b\n\020DsUpdateR"
-      "esponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respon"
-      "seHeader\022%\n\004resp\030\002 \001(\0132\027.kvrpcpb.UpdateR"
-      "esponse\"+\n\rRedisKeyValue\022\013\n\003key\030\001 \001(\014\022\r\n"
-      "\005value\030\002 \001(\014\"g\n\007RedisDo\022\013\n\003key\030\001 \001(\014\022\r\n\005"
-      "value\030\002 \001(\014\022\036\n\002op\030\003 \001(\0162\022.kvrpcpb.Operat"
-      "ion\022 \n\004case\030\004 \001(\0162\022.kvrpcpb.ExistCase\"T\n"
-      "\014KvSetRequest\022\"\n\002kv\030\001 \001(\0132\026.kvrpcpb.Redi"
-      "sKeyValue\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.ExistC"
-      "ase\"4\n\rKvSetResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raf"
-      "fected_keys\030\002 \001(\004\"\\\n\016DsKvSetRequest\022&\n\006h"
-      "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n\003r"
-      "eq\030\002 \001(\0132\025.kvrpcpb.KvSetRequest\"`\n\017DsKvS"
-      "etResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Res"
-      "ponseHeader\022$\n\004resp\030\002 \001(\0132\026.kvrpcpb.KvSe"
-      "tResponse\"\033\n\014KvGetRequest\022\013\n\003key\030\001 \001(\014\","
-      "\n\rKvGetResponse\022\014\n\004code\030\001 \001(\005\022\r\n\005value\030\002"
-      " \001(\014\"\\\n\016DsKvGetRequest\022&\n\006header\030\001 \001(\0132\026"
-      ".kvrpcpb.RequestHeader\022\"\n\003req\030\002 \001(\0132\025.kv"
-      "rpcpb.KvGetRequest\"`\n\017DsKvGetResponse\022\'\n"
-      "\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$"
-      "\n\004resp\030\002 \001(\0132\026.kvrpcpb.KvGetResponse\"Z\n\021"
-      "KvBatchSetRequest\022#\n\003kvs\030\001 \003(\0132\026.kvrpcpb"
-      ".RedisKeyValue\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.E"
-      "xistCase\"9\n\022KvBatchSetResponse\022\014\n\004code\030\001"
-      " \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"f\n\023DsKvBatch"
-      "SetRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Req"
-      "uestHeader\022\'\n\003req\030\002 \001(\0132\032.kvrpcpb.KvBatc"
-      "hSetRequest\"j\n\024DsKvBatchSetResponse\022\'\n\006h"
-      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022)\n\004"
-      "resp\030\002 \001(\0132\033.kvrpcpb.KvBatchSetResponse\""
-      "/\n\021KvBatchGetRequest\022\014\n\004code\030\001 \001(\005\022\014\n\004ke"
-      "ys\030\002 \003(\014\"G\n\022KvBatchGetResponse\022\014\n\004code\030\001"
-      " \001(\005\022#\n\003kvs\030\002 \003(\0132\026.kvrpcpb.RedisKeyValu"
-      "e\"f\n\023DsKvBatchGetRequest\022&\n\006header\030\001 \001(\013"
-      "2\026.kvrpcpb.RequestHeader\022\'\n\003req\030\002 \001(\0132\032."
-      "kvrpcpb.KvBatchGetRequest\"j\n\024DsKvBatchGe"
-      "tResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Resp"
-      "onseHeader\022)\n\004resp\030\002 \001(\0132\033.kvrpcpb.KvBat"
-      "chGetResponse\"f\n\rKvScanRequest\022\r\n\005start\030"
-      "\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\022\n\ncount_only\030\003 \001(\010"
-      "\022\020\n\010key_only\030\004 \001(\010\022\021\n\tmax_count\030\005 \001(\003\"d\n"
-      "\016KvScanResponse\022\014\n\004code\030\001 \001(\005\022\r\n\005count\030\002"
-      " \001(\003\022#\n\003kvs\030\003 \003(\0132\026.kvrpcpb.RedisKeyValu"
-      "e\022\020\n\010last_key\030\004 \001(\014\"^\n\017DsKvScanRequest\022&"
-      "\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022#"
-      "\n\003req\030\002 \001(\0132\026.kvrpcpb.KvScanRequest\"b\n\020D"
-      "sKvScanResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
-      "b.ResponseHeader\022%\n\004resp\030\002 \001(\0132\027.kvrpcpb"
-      ".KvScanResponse\"@\n\017KvDeleteRequest\022\013\n\003ke"
-      "y\030\001 \001(\014\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.ExistCas"
-      "e\"7\n\020KvDeleteResponse\022\014\n\004code\030\001 \001(\005\022\025\n\ra"
-      "ffected_keys\030\002 \001(\004\"b\n\021DsKvDeleteRequest\022"
-      "&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022"
-      "%\n\003req\030\002 \001(\0132\030.kvrpcpb.KvDeleteRequest\"f"
-      "\n\022DsKvDeleteResponse\022\'\n\006header\030\001 \001(\0132\027.k"
-      "vrpcpb.ResponseHeader\022\'\n\004resp\030\002 \001(\0132\031.kv"
-      "rpcpb.KvDeleteResponse\"F\n\024KvBatchDeleteR"
-      "equest\022\014\n\004keys\030\001 \003(\014\022 \n\004case\030\002 \001(\0162\022.kvr"
-      "pcpb.ExistCase\"<\n\025KvBatchDeleteResponse\022"
-      "\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"l\n\026"
-      "DsKvBatchDeleteRequest\022&\n\006header\030\001 \001(\0132\026"
-      ".kvrpcpb.RequestHeader\022*\n\003req\030\002 \001(\0132\035.kv"
-      "rpcpb.KvBatchDeleteRequest\"p\n\027DsKvBatchD"
-      "eleteResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb."
-      "ResponseHeader\022,\n\004resp\030\002 \001(\0132\036.kvrpcpb.K"
-      "vBatchDeleteResponse\"i\n\024KvRangeDeleteReq"
-      "uest\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\021\n\tma"
-      "x_count\030\003 \001(\003\022 \n\004case\030\004 \001(\0162\022.kvrpcpb.Ex"
-      "istCase\"N\n\025KvRangeDeleteResponse\022\014\n\004code"
-      "\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\022\020\n\010last_ke"
-      "y\030\003 \001(\014\"l\n\026DsKvRangeDeleteRequest\022&\n\006hea"
-      "der\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022*\n\003req"
-      "\030\002 \001(\0132\035.kvrpcpb.KvRangeDeleteRequest\"p\n"
-      "\027DsKvRangeDeleteResponse\022\'\n\006header\030\001 \001(\013"
-      "2\027.kvrpcpb.ResponseHeader\022,\n\004resp\030\002 \001(\0132"
-      "\036.kvrpcpb.KvRangeDeleteResponse\"\\\n\tLockV"
-      "alue\022\r\n\005value\030\002 \001(\014\022\n\n\002id\030\003 \001(\t\022\023\n\013delet"
-      "e_time\030\004 \001(\003\022\023\n\013update_time\030\005 \001(\003\022\n\n\002by\030"
-      "\007 \001(\t\"f\n\013LockRequest\022\013\n\003key\030\001 \001(\014\022!\n\005val"
-      "ue\030\002 \001(\0132\022.kvrpcpb.LockValue\022\'\n\ttimestam"
-      "p\030\n \001(\0132\024.timestamp.Timestamp\"Z\n\rDsLockR"
-      "equest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Request"
-      "Header\022!\n\003req\030\002 \001(\0132\024.kvrpcpb.LockReques"
-      "t\"O\n\014LockResponse\022\014\n\004code\030\001 \001(\003\022\r\n\005error"
-      "\030\002 \001(\t\022\r\n\005value\030\003 \001(\014\022\023\n\013update_time\030\004 \001"
-      "(\003\":\n\010LockInfo\022\013\n\003key\030\001 \001(\014\022!\n\005value\030\002 \001"
-      "(\0132\022.kvrpcpb.LockValue\"E\n\020LockScanRespon"
-      "se\022\037\n\004info\030\001 \003(\0132\021.kvrpcpb.LockInfo\022\020\n\010l"
-      "ast_key\030\002 \001(\014\"^\n\016DsLockResponse\022\'\n\006heade"
+      "Scope\022(\n\nfield_list\030\003 \003(\0132\024.kvrpcpb.Sele"
+      "ctField\022%\n\rwhere_filters\030\004 \003(\0132\016.kvrpcpb"
+      ".Match\022\036\n\006fields\030\005 \003(\0132\016.kvrpcpb.Field\"^"
+      "\n\017DsUpdateRequest\022&\n\006header\030\001 \001(\0132\026.kvrp"
+      "cpb.RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb"
+      ".UpdateRequest\"5\n\016UpdateResponse\022\014\n\004code"
+      "\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"b\n\020DsUpdat"
+      "eResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Resp"
+      "onseHeader\022%\n\004resp\030\002 \001(\0132\027.kvrpcpb.Updat"
+      "eResponse\"+\n\rRedisKeyValue\022\013\n\003key\030\001 \001(\014\022"
+      "\r\n\005value\030\002 \001(\014\"g\n\007RedisDo\022\013\n\003key\030\001 \001(\014\022\r"
+      "\n\005value\030\002 \001(\014\022\036\n\002op\030\003 \001(\0162\022.kvrpcpb.Oper"
+      "ation\022 \n\004case\030\004 \001(\0162\022.kvrpcpb.ExistCase\""
+      "T\n\014KvSetRequest\022\"\n\002kv\030\001 \001(\0132\026.kvrpcpb.Re"
+      "disKeyValue\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.Exis"
+      "tCase\"4\n\rKvSetResponse\022\014\n\004code\030\001 \001(\005\022\025\n\r"
+      "affected_keys\030\002 \001(\004\"\\\n\016DsKvSetRequest\022&\n"
+      "\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n"
+      "\003req\030\002 \001(\0132\025.kvrpcpb.KvSetRequest\"`\n\017DsK"
+      "vSetResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.R"
+      "esponseHeader\022$\n\004resp\030\002 \001(\0132\026.kvrpcpb.Kv"
+      "SetResponse\"\033\n\014KvGetRequest\022\013\n\003key\030\001 \001(\014"
+      "\",\n\rKvGetResponse\022\014\n\004code\030\001 \001(\005\022\r\n\005value"
+      "\030\002 \001(\014\"\\\n\016DsKvGetRequest\022&\n\006header\030\001 \001(\013"
+      "2\026.kvrpcpb.RequestHeader\022\"\n\003req\030\002 \001(\0132\025."
+      "kvrpcpb.KvGetRequest\"`\n\017DsKvGetResponse\022"
+      "\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader"
+      "\022$\n\004resp\030\002 \001(\0132\026.kvrpcpb.KvGetResponse\"Z"
+      "\n\021KvBatchSetRequest\022#\n\003kvs\030\001 \003(\0132\026.kvrpc"
+      "pb.RedisKeyValue\022 \n\004case\030\002 \001(\0162\022.kvrpcpb"
+      ".ExistCase\"9\n\022KvBatchSetResponse\022\014\n\004code"
+      "\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"f\n\023DsKvBat"
+      "chSetRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.R"
+      "equestHeader\022\'\n\003req\030\002 \001(\0132\032.kvrpcpb.KvBa"
+      "tchSetRequest\"j\n\024DsKvBatchSetResponse\022\'\n"
+      "\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022)"
+      "\n\004resp\030\002 \001(\0132\033.kvrpcpb.KvBatchSetRespons"
+      "e\"/\n\021KvBatchGetRequest\022\014\n\004code\030\001 \001(\005\022\014\n\004"
+      "keys\030\002 \003(\014\"G\n\022KvBatchGetResponse\022\014\n\004code"
+      "\030\001 \001(\005\022#\n\003kvs\030\002 \003(\0132\026.kvrpcpb.RedisKeyVa"
+      "lue\"f\n\023DsKvBatchGetRequest\022&\n\006header\030\001 \001"
+      "(\0132\026.kvrpcpb.RequestHeader\022\'\n\003req\030\002 \001(\0132"
+      "\032.kvrpcpb.KvBatchGetRequest\"j\n\024DsKvBatch"
+      "GetResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Re"
+      "sponseHeader\022)\n\004resp\030\002 \001(\0132\033.kvrpcpb.KvB"
+      "atchGetResponse\"f\n\rKvScanRequest\022\r\n\005star"
+      "t\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\022\n\ncount_only\030\003 \001"
+      "(\010\022\020\n\010key_only\030\004 \001(\010\022\021\n\tmax_count\030\005 \001(\003\""
+      "d\n\016KvScanResponse\022\014\n\004code\030\001 \001(\005\022\r\n\005count"
+      "\030\002 \001(\003\022#\n\003kvs\030\003 \003(\0132\026.kvrpcpb.RedisKeyVa"
+      "lue\022\020\n\010last_key\030\004 \001(\014\"^\n\017DsKvScanRequest"
+      "\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader"
+      "\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.KvScanRequest\"b\n"
+      "\020DsKvScanResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
+      "cpb.ResponseHeader\022%\n\004resp\030\002 \001(\0132\027.kvrpc"
+      "pb.KvScanResponse\"@\n\017KvDeleteRequest\022\013\n\003"
+      "key\030\001 \001(\014\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.ExistC"
+      "ase\"7\n\020KvDeleteResponse\022\014\n\004code\030\001 \001(\005\022\025\n"
+      "\raffected_keys\030\002 \001(\004\"b\n\021DsKvDeleteReques"
+      "t\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeade"
+      "r\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.KvDeleteRequest"
+      "\"f\n\022DsKvDeleteResponse\022\'\n\006header\030\001 \001(\0132\027"
+      ".kvrpcpb.ResponseHeader\022\'\n\004resp\030\002 \001(\0132\031."
+      "kvrpcpb.KvDeleteResponse\"F\n\024KvBatchDelet"
+      "eRequest\022\014\n\004keys\030\001 \003(\014\022 \n\004case\030\002 \001(\0162\022.k"
+      "vrpcpb.ExistCase\"<\n\025KvBatchDeleteRespons"
+      "e\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"l"
+      "\n\026DsKvBatchDeleteRequest\022&\n\006header\030\001 \001(\013"
+      "2\026.kvrpcpb.RequestHeader\022*\n\003req\030\002 \001(\0132\035."
+      "kvrpcpb.KvBatchDeleteRequest\"p\n\027DsKvBatc"
+      "hDeleteResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
+      "b.ResponseHeader\022,\n\004resp\030\002 \001(\0132\036.kvrpcpb"
+      ".KvBatchDeleteResponse\"i\n\024KvRangeDeleteR"
+      "equest\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\021\n\t"
+      "max_count\030\003 \001(\003\022 \n\004case\030\004 \001(\0162\022.kvrpcpb."
+      "ExistCase\"N\n\025KvRangeDeleteResponse\022\014\n\004co"
+      "de\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\022\020\n\010last_"
+      "key\030\003 \001(\014\"l\n\026DsKvRangeDeleteRequest\022&\n\006h"
+      "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022*\n\003r"
+      "eq\030\002 \001(\0132\035.kvrpcpb.KvRangeDeleteRequest\""
+      "p\n\027DsKvRangeDeleteResponse\022\'\n\006header\030\001 \001"
+      "(\0132\027.kvrpcpb.ResponseHeader\022,\n\004resp\030\002 \001("
+      "\0132\036.kvrpcpb.KvRangeDeleteResponse\"\\\n\tLoc"
+      "kValue\022\r\n\005value\030\002 \001(\014\022\n\n\002id\030\003 \001(\t\022\023\n\013del"
+      "ete_time\030\004 \001(\003\022\023\n\013update_time\030\005 \001(\003\022\n\n\002b"
+      "y\030\007 \001(\t\"f\n\013LockRequest\022\013\n\003key\030\001 \001(\014\022!\n\005v"
+      "alue\030\002 \001(\0132\022.kvrpcpb.LockValue\022\'\n\ttimest"
+      "amp\030\n \001(\0132\024.timestamp.Timestamp\"Z\n\rDsLoc"
+      "kRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reque"
+      "stHeader\022!\n\003req\030\002 \001(\0132\024.kvrpcpb.LockRequ"
+      "est\"O\n\014LockResponse\022\014\n\004code\030\001 \001(\003\022\r\n\005err"
+      "or\030\002 \001(\t\022\r\n\005value\030\003 \001(\014\022\023\n\013update_time\030\004"
+      " \001(\003\":\n\010LockInfo\022\013\n\003key\030\001 \001(\014\022!\n\005value\030\002"
+      " \001(\0132\022.kvrpcpb.LockValue\"E\n\020LockScanResp"
+      "onse\022\037\n\004info\030\001 \003(\0132\021.kvrpcpb.LockInfo\022\020\n"
+      "\010last_key\030\002 \001(\014\"^\n\016DsLockResponse\022\'\n\006hea"
+      "der\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004re"
+      "sp\030\002 \001(\0132\025.kvrpcpb.LockResponse\"\214\001\n\021Lock"
+      "UpdateRequest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\023"
+      "\n\013update_time\030\005 \001(\003\022\024\n\014update_value\030\006 \001("
+      "\014\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Timesta"
+      "mp\022\n\n\002by\030\013 \001(\t\"f\n\023DsLockUpdateRequest\022&\n"
+      "\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n"
+      "\003req\030\002 \001(\0132\032.kvrpcpb.LockUpdateRequest\"d"
+      "\n\024DsLockUpdateResponse\022\'\n\006header\030\001 \001(\0132\027"
+      ".kvrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025."
+      "kvrpcpb.LockResponse\"]\n\rUnlockRequest\022\013\n"
+      "\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\'\n\ttimestamp\030\n \001("
+      "\0132\024.timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"^\n\017D"
+      "sUnlockRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb"
+      ".RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.Un"
+      "lockRequest\"`\n\020DsUnlockResponse\022\'\n\006heade"
       "r\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004resp"
-      "\030\002 \001(\0132\025.kvrpcpb.LockResponse\"\214\001\n\021LockUp"
-      "dateRequest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\023\n\013"
-      "update_time\030\005 \001(\003\022\024\n\014update_value\030\006 \001(\014\022"
-      "\'\n\ttimestamp\030\n \001(\0132\024.timestamp.Timestamp"
-      "\022\n\n\002by\030\013 \001(\t\"f\n\023DsLockUpdateRequest\022&\n\006h"
-      "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n\003r"
-      "eq\030\002 \001(\0132\032.kvrpcpb.LockUpdateRequest\"d\n\024"
-      "DsLockUpdateResponse\022\'\n\006header\030\001 \001(\0132\027.k"
-      "vrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.kv"
-      "rpcpb.LockResponse\"]\n\rUnlockRequest\022\013\n\003k"
-      "ey\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\'\n\ttimestamp\030\n \001(\0132"
-      "\024.timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"^\n\017DsU"
-      "nlockRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.R"
-      "equestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.Unlo"
-      "ckRequest\"`\n\020DsUnlockResponse\022\'\n\006header\030"
-      "\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004resp\030\002"
-      " \001(\0132\025.kvrpcpb.LockResponse\"V\n\022UnlockFor"
-      "ceRequest\022\013\n\003key\030\001 \001(\014\022\'\n\ttimestamp\030\n \001("
-      "\0132\024.timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"h\n\024D"
-      "sUnlockForceRequest\022&\n\006header\030\001 \001(\0132\026.kv"
-      "rpcpb.RequestHeader\022(\n\003req\030\002 \001(\0132\033.kvrpc"
-      "pb.UnlockForceRequest\"e\n\025DsUnlockForceRe"
-      "sponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respons"
-      "eHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockResp"
-      "onse\">\n\017LockScanRequest\022\r\n\005start\030\001 \001(\014\022\r"
-      "\n\005limit\030\002 \001(\014\022\r\n\005count\030\003 \001(\r\"b\n\021DsLockSc"
-      "anRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Requ"
-      "estHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.LockSca"
-      "nRequest\"f\n\022DsLockScanResponse\022\'\n\006header"
-      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n\004resp\030"
-      "\002 \001(\0132\031.kvrpcpb.LockScanResponse*;\n\013Exec"
-      "uteType\022\017\n\013ExecInvalid\020\000\022\013\n\007ExecPut\020\001\022\016\n"
-      "\nExecDelete\020\002*k\n\tMatchType\022\013\n\007Invalid\020\000\022"
-      "\t\n\005Equal\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022\017\n\013Le"
-      "ssOrEqual\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOrEqual"
-      "\020\006*Z\n\tExistCase\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_No"
-      "tExists\020\001\022\r\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020\003"
-      "\022\014\n\010EC_Force\020\004*B\n\tOperation\022\016\n\nOP_Invali"
-      "d\020\000\022\n\n\006OP_Set\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Get"
-      "\020\003b\006proto3"
+      "\030\002 \001(\0132\025.kvrpcpb.LockResponse\"V\n\022UnlockF"
+      "orceRequest\022\013\n\003key\030\001 \001(\014\022\'\n\ttimestamp\030\n "
+      "\001(\0132\024.timestamp.Timestamp\022\n\n\002by\030\013 \001(\t\"h\n"
+      "\024DsUnlockForceRequest\022&\n\006header\030\001 \001(\0132\026."
+      "kvrpcpb.RequestHeader\022(\n\003req\030\002 \001(\0132\033.kvr"
+      "pcpb.UnlockForceRequest\"e\n\025DsUnlockForce"
+      "Response\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respo"
+      "nseHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockRe"
+      "sponse\">\n\017LockScanRequest\022\r\n\005start\030\001 \001(\014"
+      "\022\r\n\005limit\030\002 \001(\014\022\r\n\005count\030\003 \001(\r\"b\n\021DsLock"
+      "ScanRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Re"
+      "questHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.LockS"
+      "canRequest\"f\n\022DsLockScanResponse\022\'\n\006head"
+      "er\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n\004res"
+      "p\030\002 \001(\0132\031.kvrpcpb.LockScanResponse*;\n\013Ex"
+      "ecuteType\022\017\n\013ExecInvalid\020\000\022\013\n\007ExecPut\020\001\022"
+      "\016\n\nExecDelete\020\002*k\n\tMatchType\022\013\n\007Invalid\020"
+      "\000\022\t\n\005Equal\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022\017\n\013"
+      "LessOrEqual\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOrEqu"
+      "al\020\006*Z\n\tExistCase\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_"
+      "NotExists\020\001\022\r\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase"
+      "\020\003\022\014\n\010EC_Force\020\004*B\n\tOperation\022\016\n\nOP_Inva"
+      "lid\020\000\022\n\n\006OP_Set\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_G"
+      "et\020\003b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 9130);
+      descriptor, 9172);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "kvrpcpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -18362,8 +18364,9 @@ void Field::set_allocated_value(::std::string* value) {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int UpdateRequest::kKeyFieldNumber;
 const int UpdateRequest::kScopeFieldNumber;
-const int UpdateRequest::kFieldsFieldNumber;
+const int UpdateRequest::kFieldListFieldNumber;
 const int UpdateRequest::kWhereFiltersFieldNumber;
+const int UpdateRequest::kFieldsFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 UpdateRequest::UpdateRequest()
@@ -18377,8 +18380,9 @@ UpdateRequest::UpdateRequest()
 UpdateRequest::UpdateRequest(const UpdateRequest& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
-      fields_(from.fields_),
+      field_list_(from.field_list_),
       where_filters_(from.where_filters_),
+      fields_(from.fields_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -18438,8 +18442,9 @@ void UpdateRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  fields_.Clear();
+  field_list_.Clear();
   where_filters_.Clear();
+  fields_.Clear();
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && scope_ != NULL) {
     delete scope_;
@@ -18482,12 +18487,12 @@ bool UpdateRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .kvrpcpb.Field fields = 3;
+      // repeated .kvrpcpb.SelectField field_list = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_fields()));
+                input, add_field_list()));
         } else {
           goto handle_unusual;
         }
@@ -18500,6 +18505,18 @@ bool UpdateRequest::MergePartialFromCodedStream(
             static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                 input, add_where_filters()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .kvrpcpb.Field fields = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_fields()));
         } else {
           goto handle_unusual;
         }
@@ -18544,11 +18561,11 @@ void UpdateRequest::SerializeWithCachedSizes(
       2, *this->scope_, output);
   }
 
-  // repeated .kvrpcpb.Field fields = 3;
+  // repeated .kvrpcpb.SelectField field_list = 3;
   for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->fields_size()); i < n; i++) {
+      n = static_cast<unsigned int>(this->field_list_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->fields(static_cast<int>(i)), output);
+      3, this->field_list(static_cast<int>(i)), output);
   }
 
   // repeated .kvrpcpb.Match where_filters = 4;
@@ -18556,6 +18573,13 @@ void UpdateRequest::SerializeWithCachedSizes(
       n = static_cast<unsigned int>(this->where_filters_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       4, this->where_filters(static_cast<int>(i)), output);
+  }
+
+  // repeated .kvrpcpb.Field fields = 5;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->fields_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      5, this->fields(static_cast<int>(i)), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -18586,12 +18610,12 @@ void UpdateRequest::SerializeWithCachedSizes(
         2, *this->scope_, deterministic, target);
   }
 
-  // repeated .kvrpcpb.Field fields = 3;
+  // repeated .kvrpcpb.SelectField field_list = 3;
   for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->fields_size()); i < n; i++) {
+      n = static_cast<unsigned int>(this->field_list_size()); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        3, this->fields(static_cast<int>(i)), deterministic, target);
+        3, this->field_list(static_cast<int>(i)), deterministic, target);
   }
 
   // repeated .kvrpcpb.Match where_filters = 4;
@@ -18600,6 +18624,14 @@ void UpdateRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         4, this->where_filters(static_cast<int>(i)), deterministic, target);
+  }
+
+  // repeated .kvrpcpb.Field fields = 5;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->fields_size()); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        5, this->fields(static_cast<int>(i)), deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -18619,14 +18651,14 @@ size_t UpdateRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // repeated .kvrpcpb.Field fields = 3;
+  // repeated .kvrpcpb.SelectField field_list = 3;
   {
-    unsigned int count = static_cast<unsigned int>(this->fields_size());
+    unsigned int count = static_cast<unsigned int>(this->field_list_size());
     total_size += 1UL * count;
     for (unsigned int i = 0; i < count; i++) {
       total_size +=
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          this->fields(static_cast<int>(i)));
+          this->field_list(static_cast<int>(i)));
     }
   }
 
@@ -18638,6 +18670,17 @@ size_t UpdateRequest::ByteSizeLong() const {
       total_size +=
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->where_filters(static_cast<int>(i)));
+    }
+  }
+
+  // repeated .kvrpcpb.Field fields = 5;
+  {
+    unsigned int count = static_cast<unsigned int>(this->fields_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->fields(static_cast<int>(i)));
     }
   }
 
@@ -18684,8 +18727,9 @@ void UpdateRequest::MergeFrom(const UpdateRequest& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  fields_.MergeFrom(from.fields_);
+  field_list_.MergeFrom(from.field_list_);
   where_filters_.MergeFrom(from.where_filters_);
+  fields_.MergeFrom(from.fields_);
   if (from.key().size() > 0) {
 
     key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
@@ -18719,8 +18763,9 @@ void UpdateRequest::Swap(UpdateRequest* other) {
 }
 void UpdateRequest::InternalSwap(UpdateRequest* other) {
   using std::swap;
-  fields_.InternalSwap(&other->fields_);
+  field_list_.InternalSwap(&other->field_list_);
   where_filters_.InternalSwap(&other->where_filters_);
+  fields_.InternalSwap(&other->fields_);
   key_.Swap(&other->key_);
   swap(scope_, other->scope_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
@@ -18828,34 +18873,34 @@ void UpdateRequest::set_allocated_scope(::kvrpcpb::Scope* scope) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UpdateRequest.scope)
 }
 
-// repeated .kvrpcpb.Field fields = 3;
-int UpdateRequest::fields_size() const {
-  return fields_.size();
+// repeated .kvrpcpb.SelectField field_list = 3;
+int UpdateRequest::field_list_size() const {
+  return field_list_.size();
 }
-void UpdateRequest::clear_fields() {
-  fields_.Clear();
+void UpdateRequest::clear_field_list() {
+  field_list_.Clear();
 }
-const ::kvrpcpb::Field& UpdateRequest::fields(int index) const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.fields)
-  return fields_.Get(index);
+const ::kvrpcpb::SelectField& UpdateRequest::field_list(int index) const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.field_list)
+  return field_list_.Get(index);
 }
-::kvrpcpb::Field* UpdateRequest::mutable_fields(int index) {
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.fields)
-  return fields_.Mutable(index);
+::kvrpcpb::SelectField* UpdateRequest::mutable_field_list(int index) {
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.field_list)
+  return field_list_.Mutable(index);
 }
-::kvrpcpb::Field* UpdateRequest::add_fields() {
-  // @@protoc_insertion_point(field_add:kvrpcpb.UpdateRequest.fields)
-  return fields_.Add();
+::kvrpcpb::SelectField* UpdateRequest::add_field_list() {
+  // @@protoc_insertion_point(field_add:kvrpcpb.UpdateRequest.field_list)
+  return field_list_.Add();
 }
-::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >*
-UpdateRequest::mutable_fields() {
-  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.UpdateRequest.fields)
-  return &fields_;
+::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField >*
+UpdateRequest::mutable_field_list() {
+  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.UpdateRequest.field_list)
+  return &field_list_;
 }
-const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >&
-UpdateRequest::fields() const {
-  // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.fields)
-  return fields_;
+const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField >&
+UpdateRequest::field_list() const {
+  // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.field_list)
+  return field_list_;
 }
 
 // repeated .kvrpcpb.Match where_filters = 4;
@@ -18886,6 +18931,36 @@ const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match >&
 UpdateRequest::where_filters() const {
   // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.where_filters)
   return where_filters_;
+}
+
+// repeated .kvrpcpb.Field fields = 5;
+int UpdateRequest::fields_size() const {
+  return fields_.size();
+}
+void UpdateRequest::clear_fields() {
+  fields_.Clear();
+}
+const ::kvrpcpb::Field& UpdateRequest::fields(int index) const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.fields)
+  return fields_.Get(index);
+}
+::kvrpcpb::Field* UpdateRequest::mutable_fields(int index) {
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.fields)
+  return fields_.Mutable(index);
+}
+::kvrpcpb::Field* UpdateRequest::add_fields() {
+  // @@protoc_insertion_point(field_add:kvrpcpb.UpdateRequest.fields)
+  return fields_.Add();
+}
+::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >*
+UpdateRequest::mutable_fields() {
+  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.UpdateRequest.fields)
+  return &fields_;
+}
+const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >&
+UpdateRequest::fields() const {
+  // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.fields)
+  return fields_;
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
