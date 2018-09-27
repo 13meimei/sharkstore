@@ -417,6 +417,30 @@ inline bool MatchType_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<MatchType>(
     MatchType_descriptor(), name, value);
 }
+enum FieldType {
+  FieldInvalid = 0,
+  Plus = 1,
+  Minus = 2,
+  Mult = 3,
+  Div = 4,
+  FieldType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  FieldType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool FieldType_IsValid(int value);
+const FieldType FieldType_MIN = FieldInvalid;
+const FieldType FieldType_MAX = Div;
+const int FieldType_ARRAYSIZE = FieldType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* FieldType_descriptor();
+inline const ::std::string& FieldType_Name(FieldType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    FieldType_descriptor(), value);
+}
+inline bool FieldType_Parse(
+    const ::std::string& name, FieldType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<FieldType>(
+    FieldType_descriptor(), name, value);
+}
 enum ExistCase {
   EC_Invalid = 0,
   EC_NotExists = 1,
@@ -5190,18 +5214,28 @@ class Field : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
 
-  // uint64 column_id = 1;
-  void clear_column_id();
-  static const int kColumnIdFieldNumber = 1;
-  ::google::protobuf::uint64 column_id() const;
-  void set_column_id(::google::protobuf::uint64 value);
+  // .metapb.Column column = 1;
+  bool has_column() const;
+  void clear_column();
+  static const int kColumnFieldNumber = 1;
+  const ::metapb::Column& column() const;
+  ::metapb::Column* mutable_column();
+  ::metapb::Column* release_column();
+  void set_allocated_column(::metapb::Column* column);
+
+  // .kvrpcpb.FieldType field_type = 3;
+  void clear_field_type();
+  static const int kFieldTypeFieldNumber = 3;
+  ::kvrpcpb::FieldType field_type() const;
+  void set_field_type(::kvrpcpb::FieldType value);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.Field)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr value_;
-  ::google::protobuf::uint64 column_id_;
+  ::metapb::Column* column_;
+  int field_type_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -5288,17 +5322,17 @@ class UpdateRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
 
   // accessors -------------------------------------------------------
 
-  // repeated .kvrpcpb.SelectField field_list = 3;
-  int field_list_size() const;
-  void clear_field_list();
-  static const int kFieldListFieldNumber = 3;
-  const ::kvrpcpb::SelectField& field_list(int index) const;
-  ::kvrpcpb::SelectField* mutable_field_list(int index);
-  ::kvrpcpb::SelectField* add_field_list();
-  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField >*
-      mutable_field_list();
-  const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField >&
-      field_list() const;
+  // repeated .kvrpcpb.Field fields = 3;
+  int fields_size() const;
+  void clear_fields();
+  static const int kFieldsFieldNumber = 3;
+  const ::kvrpcpb::Field& fields(int index) const;
+  ::kvrpcpb::Field* mutable_fields(int index);
+  ::kvrpcpb::Field* add_fields();
+  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >*
+      mutable_fields();
+  const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >&
+      fields() const;
 
   // repeated .kvrpcpb.Match where_filters = 4;
   int where_filters_size() const;
@@ -5311,18 +5345,6 @@ class UpdateRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
       mutable_where_filters();
   const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match >&
       where_filters() const;
-
-  // repeated .kvrpcpb.Field fields = 5;
-  int fields_size() const;
-  void clear_fields();
-  static const int kFieldsFieldNumber = 5;
-  const ::kvrpcpb::Field& fields(int index) const;
-  ::kvrpcpb::Field* mutable_fields(int index);
-  ::kvrpcpb::Field* add_fields();
-  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >*
-      mutable_fields();
-  const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >&
-      fields() const;
 
   // bytes key = 1;
   void clear_key();
@@ -5347,15 +5369,24 @@ class UpdateRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::kvrpcpb::Scope* release_scope();
   void set_allocated_scope(::kvrpcpb::Scope* scope);
 
+  // .kvrpcpb.Limit limit = 5;
+  bool has_limit() const;
+  void clear_limit();
+  static const int kLimitFieldNumber = 5;
+  const ::kvrpcpb::Limit& limit() const;
+  ::kvrpcpb::Limit* mutable_limit();
+  ::kvrpcpb::Limit* release_limit();
+  void set_allocated_limit(::kvrpcpb::Limit* limit);
+
   // @@protoc_insertion_point(class_scope:kvrpcpb.UpdateRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField > field_list_;
-  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match > where_filters_;
   ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field > fields_;
+  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match > where_filters_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::kvrpcpb::Scope* scope_;
+  ::kvrpcpb::Limit* limit_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -15317,18 +15348,44 @@ inline void DeleteResponse::set_affected_keys(::google::protobuf::uint64 value) 
 
 // Field
 
-// uint64 column_id = 1;
-inline void Field::clear_column_id() {
-  column_id_ = GOOGLE_ULONGLONG(0);
+// .metapb.Column column = 1;
+inline bool Field::has_column() const {
+  return this != internal_default_instance() && column_ != NULL;
 }
-inline ::google::protobuf::uint64 Field::column_id() const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.Field.column_id)
-  return column_id_;
+inline void Field::clear_column() {
+  if (GetArenaNoVirtual() == NULL && column_ != NULL) delete column_;
+  column_ = NULL;
 }
-inline void Field::set_column_id(::google::protobuf::uint64 value) {
+inline const ::metapb::Column& Field::column() const {
+  const ::metapb::Column* p = column_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.Field.column)
+  return p != NULL ? *p : *reinterpret_cast<const ::metapb::Column*>(
+      &::metapb::_Column_default_instance_);
+}
+inline ::metapb::Column* Field::mutable_column() {
   
-  column_id_ = value;
-  // @@protoc_insertion_point(field_set:kvrpcpb.Field.column_id)
+  if (column_ == NULL) {
+    column_ = new ::metapb::Column;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.Field.column)
+  return column_;
+}
+inline ::metapb::Column* Field::release_column() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.Field.column)
+  
+  ::metapb::Column* temp = column_;
+  column_ = NULL;
+  return temp;
+}
+inline void Field::set_allocated_column(::metapb::Column* column) {
+  delete column_;
+  column_ = column;
+  if (column) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.Field.column)
 }
 
 // bytes value = 2;
@@ -15382,6 +15439,20 @@ inline void Field::set_allocated_value(::std::string* value) {
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.Field.value)
+}
+
+// .kvrpcpb.FieldType field_type = 3;
+inline void Field::clear_field_type() {
+  field_type_ = 0;
+}
+inline ::kvrpcpb::FieldType Field::field_type() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.Field.field_type)
+  return static_cast< ::kvrpcpb::FieldType >(field_type_);
+}
+inline void Field::set_field_type(::kvrpcpb::FieldType value) {
+  
+  field_type_ = value;
+  // @@protoc_insertion_point(field_set:kvrpcpb.Field.field_type)
 }
 
 // -------------------------------------------------------------------
@@ -15481,34 +15552,34 @@ inline void UpdateRequest::set_allocated_scope(::kvrpcpb::Scope* scope) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UpdateRequest.scope)
 }
 
-// repeated .kvrpcpb.SelectField field_list = 3;
-inline int UpdateRequest::field_list_size() const {
-  return field_list_.size();
+// repeated .kvrpcpb.Field fields = 3;
+inline int UpdateRequest::fields_size() const {
+  return fields_.size();
 }
-inline void UpdateRequest::clear_field_list() {
-  field_list_.Clear();
+inline void UpdateRequest::clear_fields() {
+  fields_.Clear();
 }
-inline const ::kvrpcpb::SelectField& UpdateRequest::field_list(int index) const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.field_list)
-  return field_list_.Get(index);
+inline const ::kvrpcpb::Field& UpdateRequest::fields(int index) const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.fields)
+  return fields_.Get(index);
 }
-inline ::kvrpcpb::SelectField* UpdateRequest::mutable_field_list(int index) {
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.field_list)
-  return field_list_.Mutable(index);
+inline ::kvrpcpb::Field* UpdateRequest::mutable_fields(int index) {
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.fields)
+  return fields_.Mutable(index);
 }
-inline ::kvrpcpb::SelectField* UpdateRequest::add_field_list() {
-  // @@protoc_insertion_point(field_add:kvrpcpb.UpdateRequest.field_list)
-  return field_list_.Add();
+inline ::kvrpcpb::Field* UpdateRequest::add_fields() {
+  // @@protoc_insertion_point(field_add:kvrpcpb.UpdateRequest.fields)
+  return fields_.Add();
 }
-inline ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField >*
-UpdateRequest::mutable_field_list() {
-  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.UpdateRequest.field_list)
-  return &field_list_;
+inline ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >*
+UpdateRequest::mutable_fields() {
+  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.UpdateRequest.fields)
+  return &fields_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField >&
-UpdateRequest::field_list() const {
-  // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.field_list)
-  return field_list_;
+inline const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >&
+UpdateRequest::fields() const {
+  // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.fields)
+  return fields_;
 }
 
 // repeated .kvrpcpb.Match where_filters = 4;
@@ -15541,34 +15612,44 @@ UpdateRequest::where_filters() const {
   return where_filters_;
 }
 
-// repeated .kvrpcpb.Field fields = 5;
-inline int UpdateRequest::fields_size() const {
-  return fields_.size();
+// .kvrpcpb.Limit limit = 5;
+inline bool UpdateRequest::has_limit() const {
+  return this != internal_default_instance() && limit_ != NULL;
 }
-inline void UpdateRequest::clear_fields() {
-  fields_.Clear();
+inline void UpdateRequest::clear_limit() {
+  if (GetArenaNoVirtual() == NULL && limit_ != NULL) delete limit_;
+  limit_ = NULL;
 }
-inline const ::kvrpcpb::Field& UpdateRequest::fields(int index) const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.fields)
-  return fields_.Get(index);
+inline const ::kvrpcpb::Limit& UpdateRequest::limit() const {
+  const ::kvrpcpb::Limit* p = limit_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.UpdateRequest.limit)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Limit*>(
+      &::kvrpcpb::_Limit_default_instance_);
 }
-inline ::kvrpcpb::Field* UpdateRequest::mutable_fields(int index) {
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.fields)
-  return fields_.Mutable(index);
+inline ::kvrpcpb::Limit* UpdateRequest::mutable_limit() {
+  
+  if (limit_ == NULL) {
+    limit_ = new ::kvrpcpb::Limit;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.UpdateRequest.limit)
+  return limit_;
 }
-inline ::kvrpcpb::Field* UpdateRequest::add_fields() {
-  // @@protoc_insertion_point(field_add:kvrpcpb.UpdateRequest.fields)
-  return fields_.Add();
+inline ::kvrpcpb::Limit* UpdateRequest::release_limit() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.UpdateRequest.limit)
+  
+  ::kvrpcpb::Limit* temp = limit_;
+  limit_ = NULL;
+  return temp;
 }
-inline ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >*
-UpdateRequest::mutable_fields() {
-  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.UpdateRequest.fields)
-  return &fields_;
-}
-inline const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field >&
-UpdateRequest::fields() const {
-  // @@protoc_insertion_point(field_list:kvrpcpb.UpdateRequest.fields)
-  return fields_;
+inline void UpdateRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
+  delete limit_;
+  limit_ = limit;
+  if (limit) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UpdateRequest.limit)
 }
 
 // -------------------------------------------------------------------
@@ -20966,6 +21047,11 @@ template <> struct is_proto_enum< ::kvrpcpb::MatchType> : ::google::protobuf::in
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::kvrpcpb::MatchType>() {
   return ::kvrpcpb::MatchType_descriptor();
+}
+template <> struct is_proto_enum< ::kvrpcpb::FieldType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::kvrpcpb::FieldType>() {
+  return ::kvrpcpb::FieldType_descriptor();
 }
 template <> struct is_proto_enum< ::kvrpcpb::ExistCase> : ::google::protobuf::internal::true_type {};
 template <>

@@ -3,6 +3,7 @@ _Pragma("once");
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <proto/gen/kvrpcpb.pb.h>
 
 namespace sharkstore {
 namespace dataserver {
@@ -13,6 +14,17 @@ enum class FieldType : char {
     kUInt,
     kFloat,
     kBytes,
+};
+
+struct FieldUpdate {
+    FieldUpdate(uint64_t column_id, uint64_t offset, uint64_t length, kvrpcpb::Field& field):
+            column_id_(column_id), offset_(offset), length_(length), field_(field) {
+    }
+
+    uint64_t column_id_;
+    uint64_t offset_;
+    uint64_t length_;
+    kvrpcpb::Field& field_;
 };
 
 class FieldValue {
@@ -85,16 +97,6 @@ bool fcompare(const FieldValue& lh, const FieldValue& rh, CompareOp op);
 
 FieldValue* CopyValue(const FieldValue& f);
 void EncodeFieldValue(std::string* buf, FieldValue* v);
-
-struct Field {
-    uint64_t column_id_;
-    std::string value_;
-};
-
-struct Row {
-    std::string key_;
-    std::vector<Field*> fields_;
-};
 
 } /* namespace storage */
 } /* namespace dataserver */

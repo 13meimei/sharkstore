@@ -12,6 +12,7 @@ namespace dataserver {
 namespace storage {
 
 struct FieldValue;
+struct FieldUpdate;
 
 class RowResult {
 public:
@@ -30,9 +31,14 @@ public:
     // 清空，方便迭代时重用
     void Reset();
 
+public:
+    std::string value_;
+    std::vector<FieldUpdate> field_update_;
+
 private:
     std::string key_;
     std::map<uint64_t, FieldValue*> fields_;
+
 };
 
 class RowDecoder {
@@ -40,6 +46,11 @@ public:
     RowDecoder(
         const std::vector<metapb::Column>& primary_keys,
         const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches);
+
+    RowDecoder(
+            const std::vector<metapb::Column>& primary_keys,
+            const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field>& update_fields,
+            const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches);
 
     RowDecoder(
         const std::vector<metapb::Column>& primary_keys,
@@ -54,6 +65,8 @@ public:
 
     Status Decode(const std::string& key, const std::string& buf,
                   RowResult* result);
+    Status Decode4Update(const std::string& key, const std::string& buf,
+                         RowResult* result);
 
     Status DecodeAndFilter(const std::string& key, const std::string& buf,
                            RowResult* result, bool* matched);
@@ -67,6 +80,8 @@ private:
     const std::vector<metapb::Column>& primary_keys_;
     std::map<uint64_t, metapb::Column> cols_;
     std::vector<kvrpcpb::Match> filters_;
+
+    std::map<uint64_t, kvrpcpb::Field> update_fields_;
 };
 
 } /* namespace storage */

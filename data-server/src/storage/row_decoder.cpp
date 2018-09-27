@@ -50,6 +50,18 @@ RowDecoder::RowDecoder(
 }
 
 RowDecoder::RowDecoder(
+        const std::vector<metapb::Column>& primary_keys,
+        const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field>& update_fields,
+        const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches)
+        : RowDecoder{primary_keys, matches} {
+    for (int i = 0; i < update_fields.size(); i++) {
+        const auto& u = update_fields.Get(i);
+//        cols_.emplace(u.column().id(), u.column());
+        update_fields_.emplace(u.column().id(), u);
+    }
+}
+
+RowDecoder::RowDecoder(
     const std::vector<metapb::Column>& primary_keys,
     const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField>& field_list,
     const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches)
@@ -215,8 +227,76 @@ static Status decodeField(const std::string& buf, size_t& offset, const metapb::
     return Status::OK();
 }
 
+Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf, RowResult* result) {
+    result->Reset();
+    result->SetKey(key);
+    result->value_ = buf; // set value
+
+    // 解析非主键列
+    uint32_t col_id = 0;
+    EncodeType enc_type;
+    bool ret = false;
+    size_t tag_offset;
+    for (size_t offset = 0; offset < buf.size();) {
+        auto offset_bk = offset;
+
+        // 解析列ID
+        tag_offset = offset;
+        ret = DecodeValueTag(buf, tag_offset, &col_id, &enc_type);
+        if (!ret) {
+            return Status(
+                    Status::kCorruption,
+                    std::string("decode row value tag failed at offset ") + std::to_string(offset),
+                    EncodeToHexString(buf));
+        }
+
+        // 检查该列ID对应的列是否需要Decode
+        auto it = cols_.find(col_id);
+        if (it == cols_.end()) {
+            ret = SkipValue(buf, offset);
+            if (!ret) {
+                return Status(
+                        Status::kCorruption,
+                        std::string("decode skip value tag failed at offset ") + std::to_string(offset),
+                        EncodeToHexString(buf));
+            }
+
+            auto it_update = update_fields_.find(col_id);
+            if (it_update != update_fields_.end()) {
+                FieldUpdate fvoff(col_id, offset, offset - offset_bk, (*it_update).second);
+                result->field_update_.push_back(fvoff);
+            }
+
+            continue;
+        }
+
+        // 解码列值
+        FieldValue *value = nullptr;
+        auto status = decodeField(buf, offset, it->second, &value);
+        if (!status.ok()) {
+            delete value;
+            return status;
+        } else {
+            if (!result->AddField(it->first, value)) {
+                delete value;
+                return Status(Status::kDuplicate, "repeated field on column", it->second.name());
+            }
+        }
+
+        auto it_update = update_fields_.find(col_id);
+        if (it_update != update_fields_.end()) {
+            FieldUpdate fvoff(col_id, offset, offset - offset_bk, (*it_update).second);
+            result->field_update_.push_back(fvoff);
+        }
+    }
+    return Status::OK();
+}
+
 Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowResult* result) {
     assert(result != nullptr);
+    if (update_fields_.size() != 0) {
+        return Decode4Update(key, buf, result);
+    }
 
     result->Reset();
     result->SetKey(key);

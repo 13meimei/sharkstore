@@ -77,20 +77,6 @@ Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-//        if (cmd.cmd_id().node_id() == node_id_) {
-//            uint64_t len = 0;
-//            auto size = req.rows_size();
-//
-//            for (int i = 0; i < size; i++) {
-//                auto keys_size = req.rows(i).key().size();
-//                auto values_size = req.rows(i).value().size();
-//
-//                len += keys_size + values_size;
-//            }
-//
-//            CheckSplit(len);
-//        }
-
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
