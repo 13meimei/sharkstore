@@ -134,12 +134,13 @@ func makePBLimit(p *Proxy, limit *Limit) (*kvrpcpb.Limit, error) {
 	var pbLimit *kvrpcpb.Limit
 	if limit != nil {
 		var count uint64
-		if limit.rowCount > p.config.MaxLimit {
-			count = p.config.MaxLimit
-			return nil, fmt.Errorf("limit must less than %d", p.config.MaxLimit)
-		} else {
+		//todo 是否需要加限制
+		//if limit.rowCount > p.config.MaxLimit {
+		//	count = p.config.MaxLimit
+		//	return nil, fmt.Errorf("limit must less than %d", p.config.MaxLimit)
+		//} else {
 			count = limit.rowCount
-		}
+		//}
 		pbLimit = &kvrpcpb.Limit{Offset: limit.offset, Count: count}
 	} else {
 		pbLimit = &kvrpcpb.Limit{Offset: 0, Count: p.config.MaxLimit}
@@ -331,4 +332,35 @@ func decodeRows(t *Table, fieldList []*kvrpcpb.SelectField, pbRows [][]*kvrpcpb.
 		rowss = append(rowss, rows)
 	}
 	return rowss, nil
+}
+
+
+func makeUpdFieldList(t *Table, updCols []*UpdColumn) ([]*kvrpcpb.Field, error) {
+	fieldList := make([]*kvrpcpb.Field, 0, len(updCols))
+	// field list
+	for _, uc := range updCols {
+		col := t.FindColumn(uc.column)
+		if col == nil {
+			return nil, fmt.Errorf("Unknown column '%s' in 'field list'", uc.column)
+		}
+		//检查是否包含主键值，不允许修改
+		if col.GetPrimaryKey() == 1 {
+			return nil, fmt.Errorf("pk(%s) not allowed for update", uc.column)
+		}
+
+		if uc.fieldType != FieldInvalid {
+			switch col.DataType {
+			case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+			case metapb.DataType_Float, metapb.DataType_Double:
+			default:
+				return nil, fmt.Errorf("unsupported type(%s) when update field(%s)", col.DataType.String(), col.Name)
+			}
+		}
+		fieldList = append(fieldList, &kvrpcpb.Field{
+			Column:    col,
+			Value:     uc.value,
+			FieldType: kvrpcpb.FieldType(uc.fieldType),
+		})
+	}
+	return fieldList, nil
 }

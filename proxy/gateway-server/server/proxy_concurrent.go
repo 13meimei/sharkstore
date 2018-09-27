@@ -253,3 +253,63 @@ func (t *aggreTask) Wait() error {
 
 func (t *aggreTask) Reset() {
 }
+
+type UpdateResult struct {
+	affected     uint64
+}
+
+func (r *UpdateResult) GetAffected() uint64 {
+	if r == nil {
+		return 0
+	}
+	return r.affected
+}
+
+type UpdateTask struct {
+	p       *Proxy
+	table   *Table
+	fieldList    []*kvrpcpb.Field
+	matches   []Match
+	done    chan error
+	rest    *UpdateResult
+}
+
+func (it *UpdateTask) init(proxy *Proxy, table *Table, fieldList []*kvrpcpb.Field, matches []Match,) *UpdateTask {
+	if it == nil {
+		return it
+	}
+	it.p = proxy
+	it.table = table
+	it.fieldList = fieldList
+	it.matches = matches
+	return it
+}
+
+func (it *UpdateTask) Do() {
+	affected, err := it.p.doUpdate(it.table, it.fieldList, it.matches, nil, nil)
+	if err != nil {
+		it.done <- err
+		return
+	}
+
+	it.rest = &UpdateResult{affected}
+	it.done <- nil
+	return
+}
+
+func (it *UpdateTask) Wait() error {
+	select {
+	case <-it.p.ctx.Done():
+		return errors.New("proxy already closed")
+	case err := <-it.done:
+		return err
+	}
+	return nil
+}
+
+func (it *UpdateTask) Reset() {
+	if it == nil {
+		return
+	}
+	*it = UpdateTask{done: make(chan error, 1)}
+}

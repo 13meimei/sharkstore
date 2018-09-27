@@ -2,9 +2,11 @@ package server
 
 import (
 	"proxy/gateway-server/sqlparser"
+	"model/pkg/metapb"
 	"reflect"
 	"testing"
 	"util/assert"
+	"time"
 )
 
 func TestParseInsertCols(t *testing.T) {
@@ -136,11 +138,50 @@ func TestParseSelectCols(t *testing.T) {
 }
 
 func TestParseUpdate(t *testing.T)  {
-	sql := "update mytable set name ='name2', pass='2323' where id = 2 limit 1"
+	sql := "update mytable set user_name ='name2', pass_word='2323' where h = 2 limit 1"
 	parseUpdate(sql, t)
+
+	sql2 := "update mytable set pass_word = age + 1,  pass_word='2' where id = 1"
+	parseUpdate(sql2, t)
+
+	sql3:= "update mytable set pass_word = pass_word + '1',  real_name ='2' where id = 1"
+	parseUpdate(sql3, t)
+
+	//sql3 := "update mytable set real_name = '1', pass_word='2' where h = 1"
+	//parseUpdate(sql3, t)
+
+	//unsupported
+	//sql3 := "update mytable set age = name where id = 1"
+	//parseUpdate(sql3, t)
+
+	//sql4 := "update mytable set age = concat('a','b')"
+	//parseUpdate(sql4, t)
+
+	//sql5 := "update mytable, mytable2 set mytable.age = mytable2.name"
+	//parseUpdate(sql5, t)
+
+	//sql6 := "update mytable set name = 'test' where id in (select id from (select * from mytable order by id asc limit 20, 10) AS tt) "
 }
 
 func parseUpdate(sql  string, t *testing.T)  {
+	colInfos := []*metapb.Column{
+		{Name: "h", Id: uint64(1), DataType: metapb.DataType_BigInt, PrimaryKey: uint64(1), Index: true},
+		{Name: "user_name", Id: uint64(2), DataType: metapb.DataType_Varchar, PrimaryKey: uint64(1), Index: true},
+		{Name: "pass_word", Id: uint64(3), DataType: metapb.DataType_Varchar, Index: true},
+		{Name: "real_name", Id: uint64(4), DataType: metapb.DataType_Varchar, Index: true},
+		{Name: "age", Id: uint64(4), DataType: metapb.DataType_Tinyint, Index: true},
+	}
+	tableMeta := &metapb.Table{
+		Name:    "test",
+		DbName:  "test",
+		DbId:    2,
+		Id:      3,
+		Columns: colInfos,
+		Epoch:   &metapb.TableEpoch{ConfVer: 1, Version: 1},
+	}
+	ta := NewTable(tableMeta, nil, 5*time.Minute)
+
+
 	stmt, err := sqlparser.Parse(sql)
 	if err != nil {
 		t.Fatal(err)
@@ -152,16 +193,18 @@ func parseUpdate(sql  string, t *testing.T)  {
 	stparser := StmtParser{}
 	tableName := stparser.parseTable(stmt)
 	assert.Equal(t, tableName, "mytable", "tableName")
-	fileds, err := stparser.parseUpdateFields(updateStmt)
+	fileds, err := stparser.parseUpdateFields(ta, updateStmt)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, f := range fileds {
-		t.Logf("col: %v, value %v", f.col, string(f.value))
+		t.Logf("col: %v, value %v, type: %v", f.Column.Name, string(f.Value), f.FieldType)
 	}
 	if len(fileds) != 2 {
 		t.Fatalf("unexpected result length: %v, expected:%v", len(fileds), 2)
 	}
+
+
 	var matchs []Match
 	if updateStmt.Where != nil {
 		matchs, err = stparser.parseWhere(updateStmt.Where)

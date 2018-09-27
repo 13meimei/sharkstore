@@ -22,6 +22,7 @@ const (
 	DefaultServerName = "gateway"
 
 	DefaultInsertSlowLog = 20 * time.Millisecond
+	DefaultUpdateSlowLog = 50 * time.Millisecond
 	DefaultSelectSlowLog = 100 * time.Millisecond
 	DefaultDeleteSlowLog = 20 * time.Millisecond
 
@@ -144,6 +145,7 @@ type PerformConfig struct {
 	GrpcInitWinSize int    `toml:"grpc-win-size,omitempty" json:"grpc-win-size"`
 
 	InsertSlowLog util.Duration `toml:"slow-insert,omitempty" json:"slow-insert"`
+	UpdateSlowLog util.Duration `toml:"slow-update,omitempty" json:"slow-update"`
 	SelectSlowLog util.Duration `toml:"slow-select,omitempty" json:"slow-select"`
 	DeleteSlowLog util.Duration `toml:"slow-delete,omitempty" json:"slow-delete"`
 	SlowLogMaxLen uint64        `toml:"slow-log-max-len,omitempty" json:"slow-log-max-len"`
@@ -157,6 +159,7 @@ func (p *PerformConfig) adjust() error {
 	adjustInt(&p.GrpcInitWinSize, DefaultGrpcInitWinSize)
 
 	adjustDuration(&p.InsertSlowLog, DefaultInsertSlowLog)
+	adjustDuration(&p.UpdateSlowLog, DefaultUpdateSlowLog)
 	adjustDuration(&p.SelectSlowLog, DefaultSelectSlowLog)
 	adjustDuration(&p.DeleteSlowLog, DefaultDeleteSlowLog)
 	adjustUint64(&p.SlowLogMaxLen, DefaultMaxSlowLogLen)

@@ -22,6 +22,7 @@ type KvClient interface {
 	Insert(ctx context.Context, addr string, req *kvrpcpb.DsInsertRequest) (*kvrpcpb.DsInsertResponse, error)
 	Select(ctx context.Context, addr string, req *kvrpcpb.DsSelectRequest) (*kvrpcpb.DsSelectResponse, error)
 	Delete(ctx context.Context, addr string, req *kvrpcpb.DsDeleteRequest) (*kvrpcpb.DsDeleteResponse, error)
+	Update(ctx context.Context, addr string, req *kvrpcpb.DsUpdateRequest) (*kvrpcpb.DsUpdateResponse, error)
 
 	Lock(ctx context.Context, addr string, req *kvrpcpb.DsLockRequest) (*kvrpcpb.DsLockResponse, error)
 	LockUpdate(ctx context.Context, addr string, req *kvrpcpb.DsLockUpdateRequest) (*kvrpcpb.DsLockUpdateResponse, error)
@@ -120,6 +121,15 @@ func (c *KvRpcClient) Delete(ctx context.Context, addr string, req *kvrpcpb.DsDe
 		return nil, err
 	}
 	resp, err := conn.Delete(ctx, req)
+	return resp, err
+}
+
+func (c *KvRpcClient) Update(ctx context.Context, addr string, req *kvrpcpb.DsUpdateRequest) (*kvrpcpb.DsUpdateResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.Update(ctx, req)
 	return resp, err
 }
 
