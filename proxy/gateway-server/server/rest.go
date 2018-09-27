@@ -48,19 +48,29 @@ type Filter_ struct {
 	Order []*Order `json:"order"`
 }
 
+//support aggregate function
 type AggreFunc struct {
 	Function string `json:"func"`
 	Field    string `json:"field"`
 }
 
+//support update table set column = value
+// or column = column +(-,*,/) value
+type FieldValue struct {
+	Column string      `json:"column"`
+	Value  interface{} `json:"value"`
+	Relate string      `json:"relate"`
+}
+
 type Command struct {
-	Version   string          `json:"version"`
-	Type      string          `json:"type"`
-	Field     []string        `json:"field"`
-	Values    [][]interface{} `json:"values"`
-	Filter    *Filter_        `json:"filter"`
-	PKs       [][]*And        `json:"pks"`
-	AggreFunc []*AggreFunc    `json:"aggrefunc"`
+	Version    string          `json:"version"`
+	Type       string          `json:"type"`
+	Field      []string        `json:"field"`
+	Values     [][]interface{} `json:"values"`
+	Filter     *Filter_        `json:"filter"`
+	PKs        [][]*And        `json:"pks"`
+	AggreFunc  []*AggreFunc    `json:"aggrefunc"`
+	FieldValue []*FieldValue   `json:"fieldvalue"`
 }
 
 type Query struct {
@@ -103,6 +113,10 @@ type TableProperty struct {
 
 func (q *Query) parseColumnNames() []string {
 	return q.Command.Field
+}
+
+func (q *Query) parseColumnValues() []*FieldValue {
+	return q.Command.FieldValue
 }
 
 func (q *Query) parseAggreFuncs() []*AggreFunc {
@@ -175,7 +189,7 @@ func (q *Query) parseMatchs(ands []*And) ([]Match, error) {
 	matchs := make([]Match, 0)
 
 	var (
-		column_ string
+		column_    string
 		sqlValue_  []byte
 		matchType_ MatchType
 	)
@@ -304,10 +318,38 @@ func (q *Query) parseSelectCols(t *Table) []*SelColumn {
 		if aggre.Function == "count" && aggre.Field == "*" {
 			columns = append(columns, &SelColumn{aggreFunc: aggre.Function})
 		} else {
-			columns = append(columns, &SelColumn{aggreFunc: aggre.Function, col:aggre.Field})
+			columns = append(columns, &SelColumn{aggreFunc: aggre.Function, col: aggre.Field})
 		}
 	}
 	return columns
+}
+
+func (q *Query) parseUpdateFields() ([]*UpdColumn, error) {
+	columnValues := q.parseColumnValues()
+	if len(columnValues) == 0 {
+		return nil, fmt.Errorf("missing update col and value pairs")
+	}
+	updColumns := make([]*UpdColumn, 0, len(columnValues))
+	for _, cv := range columnValues {
+		fieldType_ := FieldInvalid
+		if len(cv.Relate) > 0 {
+			switch cv.Relate {
+			case "+":
+				fieldType_ = Plus
+			case "-":
+				fieldType_ = Minus
+			case "*":
+				fieldType_ = Mult
+			case "/":
+				fieldType_ = Div
+			default:
+				return nil, errors.New("invalid type, only support +,-,*,/")
+			}
+		}
+		sqlValue_ := []byte(fmt.Sprintf("%v", cv.Value))
+		updColumns = append(updColumns, &UpdColumn{column: cv.Column, value: sqlValue_, fieldType: fieldType_})
+	}
+	return updColumns, nil
 }
 
 //func Float64ToByte(float float64) []byte {

@@ -25,8 +25,8 @@ func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface
 		return nil, fmt.Errorf("Table '%s.%s' doesn't exist", db, tableName)
 	}
 
-	var exprs []*kvrpcpb.Field
-	exprs, err = parser.parseUpdateFields(t, stmt)
+	var fieldList []*kvrpcpb.Field
+	fieldList, err = parser.parseUpdateFields(t, stmt)
 	if err != nil {
 		log.Error("[update] parse update exprs failed: %v", err)
 		return nil, fmt.Errorf("parse update exprs failed: %v", err)
@@ -54,6 +54,7 @@ func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface
 			log.Error("[update] unsupported limit offset")
 			return nil, fmt.Errorf("parse update limit failed: unsupported limit offset")
 		}
+		//todo 是否需要加限制
 		//if count > DefaultMaxRawCount {
 		//	log.Warn("limit count exceeding the maximum limit")
 		//	return nil, ErrExceedMaxLimit
@@ -66,9 +67,9 @@ func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface
 	//}
 
 	if log.GetFileLogger().IsEnableDebug() {
-		log.Debug("update exprs: %v, matchs: %v, limit: %v", exprs, matchs, limit)
+		log.Debug("update exprs: %v, matchs: %v, limit: %v", fieldList, matchs, limit)
 	}
-	affected, err := p.doUpdate(t, exprs, matchs, limit, nil)
+	affected, err := p.doUpdate(t, fieldList, matchs, limit, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +85,6 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 		log.Error("[update]covert filter failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
 		return
 	}
-	//todo 是否需要加限制
 	pbLimit, err := makePBLimit(p, limit)
 	if err != nil {
 		log.Error("[update]covert limit failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
@@ -94,7 +94,6 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 	var key []byte
 	var scope *kvrpcpb.Scope
 	if userScope != nil {
-		// TODO
 		scope = &kvrpcpb.Scope{
 			Start: userScope.Start,
 			Limit: userScope.End,

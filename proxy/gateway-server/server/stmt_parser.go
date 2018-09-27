@@ -57,6 +57,12 @@ type SelColumn struct {
 	col       string // empty if select(*) or count(*)
 }
 
+type UpdColumn struct {
+	column    string
+	value     []byte
+	fieldType FieldType
+} 
+
 type Field struct {
 	col   string
 	value interface{}
@@ -204,7 +210,6 @@ func (s *StmtParser) parseUpdateFields(t *Table, update *sqlparser.Update) ([]*k
 		if expr.Name == nil || len(expr.Name.Name) == 0 {
 			return nil, fmt.Errorf("missing update col at index %d", i)
 		}
-
 		colName := string(expr.Name.Name)
 		col := t.FindColumn(colName)
 		if col == nil {
