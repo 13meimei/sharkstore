@@ -157,11 +157,11 @@ enum MatchType {
 }
 
 enum FieldType {
-    Invalid       = 0;
-    Plus          = 1;
-   	Minus         = 2;
-   	Mult          = 3;
-   	Div           = 4;
+    FieldInvalid       = 0;
+    Plus               = 1;
+   	Minus              = 2;
+   	Mult               = 3;
+   	Div                = 4;
 }
 
 message Match {
