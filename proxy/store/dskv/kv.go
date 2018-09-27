@@ -112,6 +112,13 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 			goto Err
 		}
 		resp.DeleteResp = _resp
+	case Type_Update:
+		_resp, _err := p.Cli.Update(ctx, addr, req.GetUpdateReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.UpdateResp = _resp
 	case Type_KvSet:
 		_resp, _err := p.Cli.KvSet(ctx, addr, req.GetKvSetReq())
 		if _err != nil {
@@ -208,6 +215,9 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 		timeout = client.ReadTimeoutMedium
 	case Type_Delete:
 		header = req.DeleteReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
+	case Type_Update:
+		header = req.UpdateReq.GetHeader()
 		timeout = client.ReadTimeoutMedium
 
 	case Type_Lock:

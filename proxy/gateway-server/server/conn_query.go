@@ -101,7 +101,8 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 		slowLogThreshold = c.server.cfg.Performance.InsertSlowLog
 		err = c.handleInsert(v, nil)
 	case *sqlparser.Update:
-		// TODO: slow log and method metric
+		method = "update"
+		slowLogThreshold = c.server.cfg.Performance.UpdateSlowLog
 		err = c.handleUpdate(v, nil)
 	case *sqlparser.Delete:
 		method = "delete"

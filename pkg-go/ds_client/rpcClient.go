@@ -137,6 +137,7 @@ type RpcClient interface {
 	Select(ctx context.Context, in *kvrpcpb.DsSelectRequest) (*kvrpcpb.DsSelectResponse, error)
 	Insert(ctx context.Context, in *kvrpcpb.DsInsertRequest) (*kvrpcpb.DsInsertResponse, error)
 	Delete(ctx context.Context, in *kvrpcpb.DsDeleteRequest) (*kvrpcpb.DsDeleteResponse, error)
+	Update(ctx context.Context, in *kvrpcpb.DsUpdateRequest) (*kvrpcpb.DsUpdateResponse, error)
 
 	// lock
 	Lock(ctx context.Context, in *kvrpcpb.DsLockRequest) (*kvrpcpb.DsLockResponse, error)
@@ -515,6 +516,17 @@ func (c *DSRpcClient) Select(ctx context.Context, in *kvrpcpb.DsSelectRequest) (
 func (c *DSRpcClient) Insert(ctx context.Context, in *kvrpcpb.DsInsertRequest) (*kvrpcpb.DsInsertResponse, error) {
 	out := new(kvrpcpb.DsInsertResponse)
 	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncInsert), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) Update(ctx context.Context, in *kvrpcpb.DsUpdateRequest) (*kvrpcpb.DsUpdateResponse, error) {
+	out := new(kvrpcpb.DsUpdateResponse)
+	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncUpdate), ctx, in, out)
 	in.GetHeader().TraceId = msgId
 	if err != nil {
 		return nil, err

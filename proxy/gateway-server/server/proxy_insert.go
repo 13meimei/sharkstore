@@ -383,7 +383,7 @@ func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValu
 		if errForRetry != nil {
 			errForRetry = context.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
 			if errForRetry != nil {
-				log.Error("%s execute timeout", context)
+				log.Error("[insert]%s execute timeout", context)
 				return
 			}
 		}
@@ -400,7 +400,7 @@ func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValu
 		}
 
 		if errTp != nil && errTp == dskv.ErrRouteChange {
-			log.Warn("%s route change ,retry table:%s, row size:%v", context, t.GetName(), len(kvPairs))
+			log.Warn("[insert]%s route change ,retry table:%s, row size:%v", context, t.GetName(), len(kvPairs))
 			duplicateKey = duplicateKeyTp
 			affected += affectedTp
 			errForRetry = errTp
@@ -412,7 +412,7 @@ func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValu
 		err = errTp
 		break
 	}
-	log.Debug("%s execute finish", context)
+	log.Debug("[insert]%s execute finish", context)
 	return
 }
 

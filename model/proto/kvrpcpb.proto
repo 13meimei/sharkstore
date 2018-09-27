@@ -277,7 +277,6 @@ message DeleteResponse {
 
 message Field {
     metapb.Column column    = 1;
-    // value是gateway server编码后的数据， data server不解析
     bytes value             = 2;
     FieldType field_type    = 3;
 }
