@@ -156,6 +156,14 @@ enum MatchType {
     LargerOrEqual = 6;
 }
 
+enum FieldType {
+    Invalid       = 0;
+    Plus          = 1;
+   	Minus         = 2;
+   	Mult          = 3;
+   	Div           = 4;
+}
+
 message Match {
     metapb.Column column   = 1;
     // 匹配对象
@@ -267,10 +275,11 @@ message DeleteResponse {
     uint64 affected_keys    = 2;
 }
 
-message Field {                                                                                                                                                                                               
-    uint64 column_id           = 1;
+message Field {
+    metapb.Column column    = 1;
     // value是gateway server编码后的数据， data server不解析
-    bytes value                = 2;
+    bytes value             = 2;
+    FieldType field_type    = 3;
 }
 
 message UpdateRequest {
@@ -278,7 +287,7 @@ message UpdateRequest {
     Scope scope                     = 2;
     repeated Field fields           = 3;
     repeated Match where_filters    = 4;
-    repeated SelectField field_list     = 5;       // select filed list
+    Limit limit                     = 5;       // max update num, only rowCount, 0 means no limit
 }
 
 message DsUpdateRequest {
