@@ -99,6 +99,8 @@ function saveSqlApply() {
         swal("申请", "请先填写库名、表名、sql语句", "error");
         return
     }
+    sentence = sentence.replace(/"/g, "\\\\\\\"");
+    sentence = sentence.replace(/'/g, "\\\\\\\'");
     var remark = $("#remark").val();
     //执行ajax提交
     $.ajax({
@@ -115,15 +117,17 @@ function saveSqlApply() {
         },
         success: function (data) {
             if (data.code === 0) {
-                swal("设置", "设置成功", "success");
+                swal("保存申请", "保存成功", "success");
                 //关闭模态框
                 $('#sqlApplyModal').modal('hide');
                 //更新页面
                 $('#sqlApplyLists').bootstrapTable('refresh', {url: '/sql/queryApplyList'});
+            } else {
+                swal("保存失败", data.msg, "error");
             }
         },
         error: function (res) {
-            swal("设置失败", res, "error");
+            swal("保存失败", res, "error");
         }
     });
 }
@@ -141,17 +145,19 @@ function showDetail(id) {
                 $("#remark").val(data.data.remark);
                 $("#saveButton").attr("style", "display:none");
                 $('#sqlApplyModal').modal('show');
+            } else {
+                swal("查看详情失败", data.msg, "error");
             }
         },
         error: function (res) {
-            swal("设置失败", res, "error");
+            swal("查看详情失败", res, "error");
         }
     });
 
 }
 
 //审批
-function auditSql() {
+function auditApply() {
     var selectedApplyRows = $('#sqlApplyLists').bootstrapTable('getSelections');
     if (selectedApplyRows.length == 0) {
         swal("审批申请", "请选择要审批的申请记录", "error")
@@ -178,7 +184,7 @@ function auditSql() {
         },
         function () {
             $.ajax({
-                url: "/sql/audit",
+                url: "/sql/apply/audit",
                 type: "post",
                 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                 dataType: "json",
@@ -191,7 +197,7 @@ function auditSql() {
                         swal("审批成功！", "审批成功!", "success");
                         $('#sqlApplyLists').bootstrapTable('refresh', {url: '/sql/queryApplyList'});
                     } else {
-                        swal("审批失败！", data.message, "error");
+                        swal("审批失败！", data.msg, "error");
                     }
                 },
                 error: function (res) {
@@ -202,7 +208,7 @@ function auditSql() {
 }
 
 //驳回，支持批量
-function rejectSql() {
+function rejectApply() {
     var selectedApplyRows = $('#sqlApplyLists').bootstrapTable('getSelections');
     if (selectedApplyRows.length == 0) {
         swal("驳回申请", "请选择要驳回的申请记录", "error")
@@ -229,7 +235,7 @@ function rejectSql() {
         },
         function () {
             $.ajax({
-                url: "/sql/audit",
+                url: "/sql/apply/audit",
                 type: "post",
                 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                 dataType: "json",
@@ -242,11 +248,63 @@ function rejectSql() {
                         swal("驳回成功！", "驳回成功!", "success");
                         $('#sqlApplyLists').bootstrapTable('refresh', {url: '/sql/queryApplyList'});
                     } else {
-                        swal("驳回失败！", data.message, "error");
+                        swal("驳回失败！", data.msg, "error");
                     }
                 },
                 error: function (res) {
                     swal("驳回失败！", "请联系管理员!", "error");
+                }
+            });
+        });
+}
+
+
+//删除，支持批量
+function deleteApply() {
+    var selectedApplyRows = $('#sqlApplyLists').bootstrapTable('getSelections');
+    if (selectedApplyRows.length == 0) {
+        swal("删除", "请选择要删除的申请记录", "error")
+        return
+    }
+    var ids = [];
+    for (var i = 0; i < selectedApplyRows.length; i++) {
+        if (selectedApplyRows[i].status > 1) {
+            swal("删除申请", "请选择待审核状态的记录删除", "error")
+            return
+        }
+        ids.push(selectedApplyRows[i].id);
+    }
+    if (ids.length == 0) {
+        return
+    }
+    swal({
+            title: "删除操作",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "删除",
+            closeOnConfirm: false
+        },
+        function () {
+            $.ajax({
+                url: "/sql/apply/delete",
+                type: "post",
+                contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+                dataType: "json",
+                data: {
+                    "ids": JSON.stringify(ids),
+                    "status": 3
+                },
+                success: function (data) {
+                    if (data.code === 0) {
+                        swal("删除成功！", "删除成功!", "success");
+                        $('#sqlApplyLists').bootstrapTable('refresh', {url: '/sql/queryApplyList'});
+                    } else {
+                        swal("删除失败！", data.msg, "error");
+                    }
+                },
+                error: function (res) {
+                    swal("删除失败！", "请联系管理员!", "error");
                 }
             });
         });

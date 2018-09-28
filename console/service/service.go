@@ -2309,6 +2309,18 @@ func (s *Service) AuditSql(ids []string, status int, auditor string) error {
 	return nil
 }
 
+func (s *Service) DeleteSqlApply(ids []string) error {
+	for _, id := range ids {
+		nspSql := fmt.Sprintf(`delete from %s where id = "%s"`, TABLE_NAME_SQL_APPLY, id)
+		_, err := s.execSql(nspSql)
+		if err != nil {
+			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: err.Error()}
+		}
+	}
+
+	log.Debug("delete sql apply success")
+	return nil
+}
 //=============sql apply end==============
 
 //=============lock start==============
@@ -2554,7 +2566,7 @@ func (s *Service) DeleteNsp(ids []string, storeTable string) error {
 			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: err.Error()}
 		}
 	}
-	log.Debug("%v delete lock namespace success")
+	log.Debug("delete %v namespace success", storeTable)
 	return nil
 }
 

@@ -25,9 +25,11 @@
     <div class="hidden-xs table-btns" id="sqlApplyListsToolbar" role="group">
         <button type="button" class="btn btn-primary  btn-rounded" onclick="applySql()">申请</button>
         &nbsp; &nbsp;
-        <button type="button" class="btn btn-primary  btn-rounded" onclick="auditSql()" style="display:{[{.admin}]}">审批</button>
+        <button type="button" class="btn btn-primary  btn-rounded" onclick="auditApply()" style="display:{[{.admin}]}">审批</button>
         &nbsp; &nbsp;
-        <button type="button" class="btn btn-primary  btn-rounded" onclick="rejectSql()" style="display:{[{.admin}]}">驳回</button>
+        <button type="button" class="btn btn-primary  btn-rounded" onclick="rejectApply()" style="display:{[{.admin}]}">驳回</button>
+        &nbsp; &nbsp;
+        <button type="button" class="btn btn-primary  btn-rounded" onclick="deleteApply()">删除</button>
     </div>
     <table id="sqlApplyLists" data-height="400" data-mobile-responsive="true">
     </table>
@@ -88,5 +90,5 @@
 <script src="/static/js/angular/angular.min.js"></script>
 <script src="/static/js/jquery.easyui.min.js"></script>
 <script src="/static/js/commons/utils.js"></script>
-<script src="/static/js/apply/sqllist.js?v=1.0.3"></script>
+<script src="/static/js/apply/sqllist.js?v=1.0.4"></script>
 </html>
