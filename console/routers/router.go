@@ -962,6 +962,9 @@ func (r *Router) StartRouter() *gin.Engine {
 	router.POST(controllers.REQURI_SQL_APPLY_AUDIT, func(c *gin.Context) {
 		handleAction(c, controllers.NewSqlAuditAction())
 	})
+	router.POST(controllers.REQURI_SQL_APPLY_DELETE, func(c *gin.Context) {
+		handleAction(c, controllers.NewSqlApplyDeleteAction())
+	})
 
 	//lock
 	router.GET(controllers.REQURI_LOCK_NAMESPACE_GETALL, func(c *gin.Context) {

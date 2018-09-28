@@ -18,7 +18,8 @@ const (
 	REQURI_SQL_GETALL       = "/sql/queryApplyList"
 	REQURI_SQL_APPLY        = "/sql/apply"
 	REQURI_SQL_APPLY_DETAIL = "/sql/apply/detail"
-	REQURI_SQL_APPLY_AUDIT  = "/sql/audit"
+	REQURI_SQL_APPLY_AUDIT  = "/sql/apply/audit"
+	REQURI_SQL_APPLY_DELETE = "/sql/apply/delete"
 )
 
 /**
@@ -148,4 +149,29 @@ func (ctrl *SqlAuditAction) Execute(c *gin.Context) (interface{}, error) {
 	}
 
 	return nil, nil
+}
+
+/**
+ * 删除sql申请
+ */
+type SqlApplyDeleteAction struct {
+}
+
+func NewSqlApplyDeleteAction() *SqlApplyDeleteAction {
+	return &SqlApplyDeleteAction{
+	}
+}
+func (ctrl *SqlApplyDeleteAction) Execute(c *gin.Context) (interface{}, error) {
+	ids := c.PostForm("ids")
+	if ids == "" {
+		return nil, common.PARSE_PARAM_ERROR
+	}
+
+	log.Debug("delete sql apply, ids:%v", ids)
+	var idArray []string
+	if err := json.Unmarshal([]byte(ids), &idArray); err != nil {
+		return nil, common.PARSE_PARAM_ERROR
+	}
+
+	return nil, service.NewService().DeleteSqlApply(idArray)
 }
