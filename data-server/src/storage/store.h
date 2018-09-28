@@ -79,7 +79,7 @@ private:
 
     Status selectSimple(const kvrpcpb::SelectRequest& req,
                         kvrpcpb::SelectResponse* resp);
-    Status updateRows(const kvrpcpb::UpdateRequest& req);
+    Status updateRows(const kvrpcpb::UpdateRequest& req, uint64_t* affected);
     Status selectAggre(const kvrpcpb::SelectRequest& req,
                        kvrpcpb::SelectResponse* resp);
 

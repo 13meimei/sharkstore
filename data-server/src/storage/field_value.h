@@ -17,14 +17,13 @@ enum class FieldType : char {
 };
 
 struct FieldUpdate {
-    FieldUpdate(uint64_t column_id, uint64_t offset, uint64_t length, kvrpcpb::Field& field):
-            column_id_(column_id), offset_(offset), length_(length), field_(field) {
+    FieldUpdate(uint64_t column_id, uint64_t offset, uint64_t length):
+            column_id_(column_id), offset_(offset), length_(length) {
     }
 
     uint64_t column_id_;
     uint64_t offset_;
     uint64_t length_;
-    kvrpcpb::Field& field_;
 };
 
 class FieldValue {
@@ -75,6 +74,12 @@ public:
         return *value_.sval;
     }
 
+public:
+    void SetInt(int64_t v)          { value_.ival = v; }
+    void SetUint(int64_t v)         { value_.uval = v; }
+    void SetFloat(double v)           { value_.fval = v; }
+    void SetBytes(std::string* v)     { value_.sval = v; } // todo free old string???
+
 private:
     static const std::string kDefaultBytes;
 
@@ -97,6 +102,7 @@ bool fcompare(const FieldValue& lh, const FieldValue& rh, CompareOp op);
 
 FieldValue* CopyValue(const FieldValue& f);
 void EncodeFieldValue(std::string* buf, FieldValue* v);
+void EncodeFieldValue(std::string* buf, FieldValue* v, uint32_t col_id);
 
 } /* namespace storage */
 } /* namespace dataserver */

@@ -12,6 +12,9 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+static Status parseThreshold(const std::string& thres, const metapb::Column& col,
+                             std::unique_ptr<FieldValue>* value);
+
 RowResult::RowResult() {}
 
 RowResult::~RowResult() {
@@ -36,6 +39,10 @@ void RowResult::Reset() {
     std::for_each(fields_.begin(), fields_.end(),
                   [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
     fields_.clear();
+
+    std::for_each(update_field_delta_.begin(), update_field_delta_.end(),
+                  [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
+    update_field_delta_.clear();
 }
 
 RowDecoder::RowDecoder(
@@ -56,7 +63,7 @@ RowDecoder::RowDecoder(
         : RowDecoder{primary_keys, matches} {
     for (int i = 0; i < update_fields.size(); i++) {
         const auto& u = update_fields.Get(i);
-//        cols_.emplace(u.column().id(), u.column());
+        cols_.emplace(u.column().id(), u.column());
         update_fields_.emplace(u.column().id(), u);
     }
 }
@@ -261,17 +268,31 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
                         EncodeToHexString(buf));
             }
 
-            auto it_update = update_fields_.find(col_id);
-            if (it_update != update_fields_.end()) {
-                FieldUpdate fvoff(col_id, offset, offset - offset_bk, (*it_update).second);
-                result->field_update_.push_back(fvoff);
+            // 记录所有非主键列的值在value中的偏移和长度
+            FieldUpdate fu(col_id, offset, offset - offset_bk);
+            result->field_value_.push_back(fu);
+            // 记录需要update列
+            auto it_u = update_fields_.find(col_id);
+            if (it_u != update_fields_.end()) {
+                auto f = (*it_u).second;
+
+                result->update_field_.emplace(col_id, &f);
+
+                // 解析kvrpcfield为fieldvalue
+                std::unique_ptr<FieldValue> cf = nullptr;
+                auto s = parseThreshold(f.value(), f.column(), &cf);
+                if (!s.ok()) {
+                    FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
+                    return Status(Status::kAborted);
+                }
+                result->update_field_delta_.emplace(col_id, cf.release());
             }
 
             continue;
         }
 
         // 解码列值
-        FieldValue *value = nullptr;
+        FieldValue* value = nullptr;
         auto status = decodeField(buf, offset, it->second, &value);
         if (!status.ok()) {
             delete value;
@@ -283,10 +304,24 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
             }
         }
 
-        auto it_update = update_fields_.find(col_id);
-        if (it_update != update_fields_.end()) {
-            FieldUpdate fvoff(col_id, offset, offset - offset_bk, (*it_update).second);
-            result->field_update_.push_back(fvoff);
+        // 记录所有非主键列的值在value中的偏移和长度
+        FieldUpdate fu(col_id, offset, offset - offset_bk);
+        result->field_value_.push_back(fu);
+        // 记录需要update列
+        auto it_u = update_fields_.find(col_id);
+        if (it_u != update_fields_.end()) {
+            auto f = (*it_u).second;
+
+            result->update_field_.emplace(col_id, &f);
+
+            // 解析kvrpcfield为fieldvalue
+            std::unique_ptr<FieldValue> cf = nullptr;
+            auto s = parseThreshold(f.value(), f.column(), &cf);
+            if (!s.ok()) {
+                FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
+                return Status(Status::kAborted);
+            }
+            result->update_field_delta_.emplace(col_id, cf.release());
         }
     }
     return Status::OK();

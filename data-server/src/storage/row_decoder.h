@@ -33,7 +33,9 @@ public:
 
 public:
     std::string value_;
-    std::vector<FieldUpdate> field_update_;
+    std::vector<FieldUpdate> field_value_;
+    std::map<uint64_t, kvrpcpb::Field*> update_field_;
+    std::map<uint64_t, FieldValue*> update_field_delta_;
 
 private:
     std::string key_;

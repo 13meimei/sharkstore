@@ -116,6 +116,28 @@ void EncodeFieldValue(std::string* buf, FieldValue* v) {
     }
 }
 
+void EncodeFieldValue(std::string* buf, FieldValue* v, uint32_t col_id) {
+    if (v == nullptr) {
+        EncodeNullValue(buf, col_id);
+        return;
+    }
+
+    switch (v->Type()) {
+        case FieldType::kInt:
+            EncodeIntValue(buf, col_id, v->Int());
+            return;
+        case FieldType::kUInt:
+            EncodeIntValue(buf, col_id, static_cast<int64_t>(v->UInt()));
+            break;
+        case FieldType::kFloat:
+            EncodeFloatValue(buf, col_id, v->Float());
+            break;
+        case FieldType::kBytes:
+            EncodeBytesValue(buf, col_id, v->Bytes().c_str(), v->Bytes().size());
+            break;
+    }
+}
+
 } /* namespace storage */
 } /* namespace dataserver */
 } /* namespace sharkstore */

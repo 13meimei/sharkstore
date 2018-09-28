@@ -157,7 +157,7 @@ enum MatchType {
 }
 
 enum FieldType {
-    FieldInvalid       = 0;
+	Assign			   = 0;
     Plus               = 1;
    	Minus              = 2;
    	Mult               = 3;

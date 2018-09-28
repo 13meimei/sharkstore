@@ -418,7 +418,7 @@ inline bool MatchType_Parse(
     MatchType_descriptor(), name, value);
 }
 enum FieldType {
-  FieldInvalid = 0,
+  Assign = 0,
   Plus = 1,
   Minus = 2,
   Mult = 3,
@@ -427,7 +427,7 @@ enum FieldType {
   FieldType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool FieldType_IsValid(int value);
-const FieldType FieldType_MIN = FieldInvalid;
+const FieldType FieldType_MIN = Assign;
 const FieldType FieldType_MAX = Div;
 const int FieldType_ARRAYSIZE = FieldType_MAX + 1;
 

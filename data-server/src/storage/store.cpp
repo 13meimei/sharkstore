@@ -139,52 +139,11 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
 }
 
 Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected) {
-    auto select_status = updateRows(req);
+    auto select_status = updateRows(req, affected);
     if (select_status != Status::OK()) {
         return select_status;
     }
     return Status::OK();
-
-//    if (rows.size() == 0) {
-//        *affected = 0;
-//        return Status::OK();
-//    }
-//
-//     insert
-//    kvrpcpb::InsertRequest insert_req;
-//
-//    for (auto j = 0; j < req.fields_size(); j++) {
-//        auto update_req_column_id = req.fields(j).column_id();
-//        auto update_req_value = req.fields(j).value();
-//
-//        for (auto it_r = rows.begin(); it_r != rows.end(); it_r++) {
-//            auto fields = (*it_r)->fields_;
-//
-//            for (auto it_f = fields.begin(); it_f != fields.end(); it_f++) {
-//                if ((*it_f)->column_id_ == update_req_column_id) {
-//                    (*it_f)->value_ = update_req_value;
-//                }
-//            }
-//        }
-//    }
-//
-//    for (auto it_r = rows.begin(); it_r != rows.end(); it_r++) {
-//        auto fields = (*it_r)->fields_;
-//        std::string row_buf;
-//
-//        for (auto it_f = fields.begin(); it_f != fields.end(); it_f++) {
-//             encode all field value
-//            EncodeBytesValue(&row_buf, kNoColumnID, (*it_f)->value_.c_str(), (*it_f)->value_.size());
-//        }
-//
-//        kvrpcpb::KeyValue kv;
-//        kv.set_key((*it_r)->key_);
-//        kv.set_value(row_buf);
-//
-//        insert_req.mutable_rows()->Add(std::move(kv));
-//    }
-//
-//    return Insert(insert_req, affected);
 }
 
 static void addRow(const kvrpcpb::SelectRequest& req,
@@ -202,14 +161,87 @@ static void addRow(const kvrpcpb::SelectRequest& req,
     row->set_fields(buf);
 }
 
-static void updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
-    row->set_key(r.Key());
+static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
+    std::string final_encode_value;
+    const auto& origin_encode_value = row->value().c_str();
 
-    for (auto it = r.field_update_.begin(); it != r.field_update_.end(); it++) {
-//        auto fu = (*it);
+    for (auto it = r.field_value_.begin(); it != r.field_value_.end(); it++) {
+        auto& field = (*it);
 
-        // todo
+        std::string value;
+        value.assign(origin_encode_value, field.offset_, field.length_);
+
+        auto it_field_update = r.update_field_.find(field.column_id_);
+        if (it_field_update == r.update_field_.end()) {
+            final_encode_value.append(value);
+            continue;
+        }
+
+        // 更新列值
+        // delta field value
+        auto it_value_delta = r.update_field_delta_.find(field.column_id_);
+        if (it_value_delta == r.update_field_delta_.end()) {
+            return Status(Status::kAborted);
+        }
+        FieldValue* value_delta = (*it_value_delta).second;
+
+        // orig field value
+        FieldValue* value_orig = r.GetField(field.column_id_);
+        if (value_orig == nullptr) {
+            return Status(Status::kAborted);
+        }
+
+        // kv rpc field
+        kvrpcpb::Field* field_delta = (*it_field_update).second;
+
+        switch (field_delta->field_type()) {
+            case kvrpcpb::Assign:
+                switch (value_delta->Type()) {
+                    case FieldType::kInt:
+                        value_orig->SetInt(value_delta->Int());
+                        break;
+                    case FieldType::kUInt:
+                        value_orig->SetUint(value_delta->UInt());
+                        break;
+                    case FieldType::kFloat:
+                        value_orig->SetFloat(value_delta->Float());
+                        break;
+                    case FieldType::kBytes:
+//                        value_orig->SetBytes(value_delta->Bytes().c_str());
+                        break;
+                }
+            case kvrpcpb::Plus:
+                switch (value_delta->Type()) {
+                    case FieldType::kInt:
+                        value_orig->SetInt(value_orig->Int() + value_delta->Int());
+                        break;
+                    case FieldType::kUInt:
+                        value_orig->SetUint(value_orig->UInt() + value_delta->UInt());
+                        break;
+                    case FieldType::kFloat:
+                        value_orig->SetFloat(value_orig->Float() + value_delta->Float());
+                        break;
+                    case FieldType::kBytes:
+                        // todo append string???
+                        break;
+                }
+            case kvrpcpb::Minus:
+            case kvrpcpb::Mult:
+            case kvrpcpb::Div:
+                break;
+            default:
+                return Status(Status::kInvalid);
+        }
+
+        // 重新编码修改后的field value
+        EncodeFieldValue(&value, value_orig, field.column_id_);
+        final_encode_value.append(value);
     }
+
+    row->set_key(r.Key());
+    row->set_value(final_encode_value);
+
+    return Status::OK();
 }
 
 Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
@@ -237,7 +269,7 @@ Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
     return s;
 }
 
-Status Store::updateRows(const kvrpcpb::UpdateRequest& req) {
+Status Store::updateRows(const kvrpcpb::UpdateRequest& req, uint64_t* affected) {
     RowFetcher f(*this, req);
     Status s;
     std::unique_ptr<RowResult> r(new RowResult);
@@ -247,6 +279,9 @@ Status Store::updateRows(const kvrpcpb::UpdateRequest& req) {
     uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
     uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
 
+    rocksdb::WriteBatch batch;
+    uint64_t bytes_written = 0;
+
     while (!over && s.ok()) {
         over = false;
         s = f.Next(r.get(), &over);
@@ -254,11 +289,21 @@ Status Store::updateRows(const kvrpcpb::UpdateRequest& req) {
             ++all;
             if (all > offset) {
                 kvrpcpb::KvPair kv;
-
                 updateRow(&kv, *r);
+
+                batch.Put(kv.key(), kv.value());
+                ++(*affected);
+                bytes_written += kv.key().size() + kv.value().size();
 
                 if (++count >= limit) break;
             }
+        }
+    }
+
+    if (s.ok()) {
+        auto rs = db_->Write(write_options_, &batch);
+        if (!rs.ok()) {
+            s = Status(Status::kIOError, "update batch write", rs.ToString());
         }
     }
     return s;

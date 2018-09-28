@@ -2239,16 +2239,15 @@ void AddDescriptorsImpl() {
       "\001\022\016\n\nExecDelete\020\002*k\n\tMatchType\022\013\n\007Invali"
       "d\020\000\022\t\n\005Equal\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022\017"
       "\n\013LessOrEqual\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOrE"
-      "qual\020\006*E\n\tFieldType\022\020\n\014FieldInvalid\020\000\022\010\n"
-      "\004Plus\020\001\022\t\n\005Minus\020\002\022\010\n\004Mult\020\003\022\007\n\003Div\020\004*Z\n"
-      "\tExistCase\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_NotExis"
-      "ts\020\001\022\r\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020\003\022\014\n\010E"
-      "C_Force\020\004*B\n\tOperation\022\016\n\nOP_Invalid\020\000\022\n"
-      "\n\006OP_Set\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Get\020\003b\006p"
-      "roto3"
+      "qual\020\006*\?\n\tFieldType\022\n\n\006Assign\020\000\022\010\n\004Plus\020"
+      "\001\022\t\n\005Minus\020\002\022\010\n\004Mult\020\003\022\007\n\003Div\020\004*Z\n\tExist"
+      "Case\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_NotExists\020\001\022\r"
+      "\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020\003\022\014\n\010EC_Forc"
+      "e\020\004*B\n\tOperation\022\016\n\nOP_Invalid\020\000\022\n\n\006OP_S"
+      "et\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Get\020\003b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 9285);
+      descriptor, 9279);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "kvrpcpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
