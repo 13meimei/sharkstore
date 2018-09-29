@@ -246,9 +246,9 @@ func (m *Metric) nodeThresholdAlarm(clusterId, nodeId uint64, nodeAddr string, n
 
 	usedSize := node.GetUsedSize()
 	capacity := node.GetCapacity()+1
-	if usedSize/capacity > m.Threshold.Node.CapacityUsedRate {
+	if (usedSize*100/capacity) > m.Threshold.Node.CapacityUsedRate {
 		ruleName = alarm2.ALARMRULE_NODE_CAPACITY_USED_RATE
-		alarmValue = float64(usedSize/capacity)
+		alarmValue = float64(usedSize*100/capacity)
 
 		if err := m.AlarmCli.RuleAlarm(int64(clusterId), ipAddr, "master-server",
 			ruleName, alarmValue, compareType, remark); err != nil {
