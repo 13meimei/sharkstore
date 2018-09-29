@@ -67,7 +67,9 @@ Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
             break;
         }
 
-        ret = store_->Update(req, &affected_keys);
+        uint64_t update_bytes = 0;
+
+        ret = store_->Update(req, &affected_keys, &update_bytes);
         auto etime = get_micro_second();
         context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
 
@@ -77,6 +79,9 @@ Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
             break;
         }
 
+        if (cmd.cmd_id().node_id() == node_id_) {
+            CheckSplit(update_bytes);
+        }
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {

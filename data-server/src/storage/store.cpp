@@ -17,6 +17,8 @@ namespace storage {
 
 static const size_t kDefaultMaxSelectLimit = 10000;
 
+static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r);
+
 Store::Store(const metapb::Range& meta, rocksdb::DB* db) :
     table_id_(meta.table_id()) ,
     range_id_(meta.id()),
@@ -138,12 +140,46 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
     }
 }
 
-Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected) {
-    auto select_status = updateRows(req, affected);
-    if (select_status != Status::OK()) {
-        return select_status;
+Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint64_t* update_bytes) {
+    RowFetcher f(*this, req);
+    Status s;
+    std::unique_ptr<RowResult> r(new RowResult);
+    bool over = false;
+    uint64_t count = 0;
+    uint64_t all = 0;
+    uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
+    uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
+
+    rocksdb::WriteBatch batch;
+    uint64_t bytes_written = 0;
+
+    while (!over && s.ok()) {
+        over = false;
+        s = f.Next(r.get(), &over);
+        if (s.ok() && !over) {
+            ++all;
+            if (all > offset) {
+                kvrpcpb::KvPair kv;
+                updateRow(&kv, *r);
+
+                batch.Put(kv.key(), kv.value());
+                ++(*affected);
+                bytes_written += kv.key().size() + kv.value().size();
+
+                if (++count >= limit) break;
+            }
+        }
     }
-    return Status::OK();
+
+    if (s.ok()) {
+        auto rs = db_->Write(write_options_, &batch);
+        if (!rs.ok()) {
+            s = Status(Status::kIOError, "update batch write", rs.ToString());
+        }
+    }
+
+    *update_bytes = bytes_written;
+    return s;
 }
 
 static void addRow(const kvrpcpb::SelectRequest& req,
@@ -198,36 +234,82 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
             case kvrpcpb::Assign:
                 switch (value_delta->Type()) {
                     case FieldType::kInt:
-                        value_orig->SetInt(value_delta->Int());
+                        value_orig->AssignInt(value_delta->Int());
                         break;
                     case FieldType::kUInt:
-                        value_orig->SetUint(value_delta->UInt());
+                        value_orig->AssignUint(value_delta->UInt());
                         break;
                     case FieldType::kFloat:
-                        value_orig->SetFloat(value_delta->Float());
+                        value_orig->AssignFloat(value_delta->Float());
                         break;
                     case FieldType::kBytes:
-//                        value_orig->SetBytes(value_delta->Bytes().c_str());
+                        value_orig->AssignBytes(value_delta->String());
                         break;
                 }
+                break;
             case kvrpcpb::Plus:
                 switch (value_delta->Type()) {
                     case FieldType::kInt:
-                        value_orig->SetInt(value_orig->Int() + value_delta->Int());
+                        value_orig->AssignInt(value_orig->Int() + value_delta->Int());
                         break;
                     case FieldType::kUInt:
-                        value_orig->SetUint(value_orig->UInt() + value_delta->UInt());
+                        value_orig->AssignUint(value_orig->UInt() + value_delta->UInt());
                         break;
                     case FieldType::kFloat:
-                        value_orig->SetFloat(value_orig->Float() + value_delta->Float());
+                        value_orig->AssignFloat(value_orig->Float() + value_delta->Float());
                         break;
                     case FieldType::kBytes:
-                        // todo append string???
+                        value_orig->AssignBytes(value_delta->String());
                         break;
                 }
+                break;
             case kvrpcpb::Minus:
+                switch (value_delta->Type()) {
+                    case FieldType::kInt:
+                        value_orig->AssignInt(value_orig->Int() - value_delta->Int());
+                        break;
+                    case FieldType::kUInt:
+                        value_orig->AssignUint(value_orig->UInt() - value_delta->UInt());
+                        break;
+                    case FieldType::kFloat:
+                        value_orig->AssignFloat(value_orig->Float() - value_delta->Float());
+                        break;
+                    case FieldType::kBytes:
+                        value_orig->AssignBytes(value_delta->String());
+                        break;
+                }
+                break;
             case kvrpcpb::Mult:
+                switch (value_delta->Type()) {
+                    case FieldType::kInt:
+                        value_orig->AssignInt(value_orig->Int() * value_delta->Int());
+                        break;
+                    case FieldType::kUInt:
+                        value_orig->AssignUint(value_orig->UInt() * value_delta->UInt());
+                        break;
+                    case FieldType::kFloat:
+                        value_orig->AssignFloat(value_orig->Float() * value_delta->Float());
+                        break;
+                    case FieldType::kBytes:
+                        value_orig->AssignBytes(value_delta->String());
+                        break;
+                }
+                break;
             case kvrpcpb::Div:
+                switch (value_delta->Type()) {
+                    case FieldType::kInt:
+                        if (value_delta->Int() != 0) { value_orig->AssignInt(value_orig->Int() / value_delta->Int()); }
+                        break;
+                    case FieldType::kUInt:
+                        if (value_delta->UInt() != 0) { value_orig->AssignUint(value_orig->UInt() / value_delta->UInt()); }
+                        break;
+                    case FieldType::kFloat:
+                        if (value_delta->Float() != 0) { value_orig->AssignFloat(value_orig->Float() / value_delta->Float()); }
+                        break;
+                    case FieldType::kBytes:
+                        value_orig->AssignBytes(value_delta->String());
+                        break;
+                }
                 break;
             default:
                 return Status(Status::kInvalid);
@@ -266,46 +348,6 @@ Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
         }
     }
     resp->set_offset(all);
-    return s;
-}
-
-Status Store::updateRows(const kvrpcpb::UpdateRequest& req, uint64_t* affected) {
-    RowFetcher f(*this, req);
-    Status s;
-    std::unique_ptr<RowResult> r(new RowResult);
-    bool over = false;
-    uint64_t count = 0;
-    uint64_t all = 0;
-    uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
-    uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
-
-    rocksdb::WriteBatch batch;
-    uint64_t bytes_written = 0;
-
-    while (!over && s.ok()) {
-        over = false;
-        s = f.Next(r.get(), &over);
-        if (s.ok() && !over) {
-            ++all;
-            if (all > offset) {
-                kvrpcpb::KvPair kv;
-                updateRow(&kv, *r);
-
-                batch.Put(kv.key(), kv.value());
-                ++(*affected);
-                bytes_written += kv.key().size() + kv.value().size();
-
-                if (++count >= limit) break;
-            }
-        }
-    }
-
-    if (s.ok()) {
-        auto rs = db_->Write(write_options_, &batch);
-        if (!rs.ok()) {
-            s = Status(Status::kIOError, "update batch write", rs.ToString());
-        }
-    }
     return s;
 }
 

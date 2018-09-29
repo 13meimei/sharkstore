@@ -74,11 +74,16 @@ public:
         return *value_.sval;
     }
 
+    std::string* String() const {
+        if (value_.sval == nullptr) return nullptr;
+        return value_.sval;
+    }
+
 public:
-    void SetInt(int64_t v)          { value_.ival = v; }
-    void SetUint(int64_t v)         { value_.uval = v; }
-    void SetFloat(double v)           { value_.fval = v; }
-    void SetBytes(std::string* v)     { value_.sval = v; } // todo free old string???
+    void AssignInt(int64_t v)          { value_.ival = v; }
+    void AssignUint(int64_t v)         { value_.uval = v; }
+    void AssignFloat(double v)           { value_.fval = v; }
+    void AssignBytes(std::string* v)     { value_.sval = v; }
 
 private:
     static const std::string kDefaultBytes;
