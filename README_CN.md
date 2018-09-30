@@ -78,4 +78,12 @@ Under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
 
 Thanks
 -------
-我们的一些设计灵感来源于tidb，cockroachdb，kingshard，感谢他们的工作。
+- [Tidb](https://github.com/pingcap/tidb)
+
+- [cockroachdb](https://github.com/cockroachdb/cockroach)
+
+- [Kingshard](https://github.com/flike/kingshard)
+
+- [Rocksdb](https://github.com/facebook/rocksdb)
+
+我们的许多设计灵感和一些实现参考了Tidb，cockroachdb，kingshard等，感谢他们的工作。

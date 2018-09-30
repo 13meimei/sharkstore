@@ -95,4 +95,12 @@ Under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
 
 Thanks
 -------
-tidb, cockroachdb, kingshard, many designs are inspired by them, thanks for their great works. 
+- [Tidb](https://github.com/pingcap/tidb)    
+
+- [cockroachdb](https://github.com/cockroachdb/cockroach)   
+
+- [Kingshard](https://github.com/flike/kingshard)
+
+- [Rocksdb](https://github.com/facebook/rocksdb)
+
+Many designs are inspired by them. Thanks for their great work. 
