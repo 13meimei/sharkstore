@@ -91,3 +91,8 @@ We created a table named 'metric' witch 12 columns on 3 data servers with NVMe d
 License
 -------
 Under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
+
+
+Thanks
+-------
+tidb, cockroachdb, kingshard, many designs are inspired by them, thanks for their great works. 

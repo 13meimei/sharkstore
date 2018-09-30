@@ -74,3 +74,8 @@ sharkstore是一个分布式的持久化K-V存储系统，存储层依赖rocksdb
 License
 -------
 Under the Apache 2.0 license. See the [LICENSE](LICENSE) file for details.
+
+
+Thanks
+-------
+我们的一些设计灵感来源于tidb，cockroachdb，kingshard，感谢他们的工作。
