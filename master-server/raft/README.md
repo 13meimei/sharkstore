@@ -4,12 +4,13 @@ A multi-raft implementation based on the [coreos/etcd](https://github.com/coreos
 
 
 ## features  
-- MultiRaft support    
-- snapshopt manager    
-- check down peer   
-- one raft's panic is allowed, detectable  
+- multi-raft support    
+- snapshopt manager   
+- merged and compressed heartbeat message    
+- check down replica      
+- single raft's panic is allowed, detectable  
 - new wal implementation    
-- export more run status   
-- 。。。。
+- export more run status    
+- ...
 
 
