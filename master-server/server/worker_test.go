@@ -226,7 +226,7 @@ func addRangeForRangeBalance(cluster *Cluster, rangeSize int, t *testing.T) {
 func addPeersBalance(cluster *Cluster, rng *Range, t *testing.T) {
 	for index := 0; index < cluster.opt.GetMaxReplicas(); index++ {
 		peers := rng.GetPeers()
-		newPeer, err := cluster.allocPeerAndSelectNode(rng, false)
+		newPeer, err := cluster.allocPeerAndSelectNode(rng, false, false)
 		if err != nil {
 			t.Errorf("errr: %v", err)
 			continue

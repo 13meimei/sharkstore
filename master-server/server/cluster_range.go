@@ -223,7 +223,7 @@ func (c *Cluster) rangeRecreate(r *Range, peerId uint64) (err error) {
 		toGcPeer = append(toGcPeer, peer)
 	}
 	if needNewPeer {
-		newPeer, err = c.allocPeerAndSelectNode(r, false)
+		newPeer, err = c.allocPeerAndSelectNode(r, false, false)
 		if err != nil {
 			return
 		}

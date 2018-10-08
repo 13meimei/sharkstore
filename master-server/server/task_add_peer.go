@@ -32,6 +32,15 @@ func NewAddPeerTask() *AddPeerTask {
 	}
 }
 
+// NewAddPeerTaskForSpecify new add peer task for special
+func NewAddPeerTaskForSpecify(peer *metapb.Peer) *AddPeerTask {
+	addPeerTask := NewAddPeerTask()
+	if peer != nil {
+		addPeerTask.peer = peer
+	}
+	return addPeerTask
+}
+
 func (t *AddPeerTask) String() string {
 	return fmt.Sprintf("{%s, \"to_add\":\"%s\"}", t.BaseTask.String(), t.peer.String())
 }
@@ -68,7 +77,7 @@ func (t *AddPeerTask) stepStart(cluster *Cluster, r *Range) (task *taskpb.Task) 
 	// not alloc new peer yet
 	if t.peer == nil {
 		var err error
-		t.peer, err = cluster.allocPeerAndSelectNode(r, true)
+		t.peer, err = cluster.allocPeerAndSelectNode(r, true, false)
 		if err != nil {
 			log.Error("%s alloc peer failed: %s", t.logID, err.Error())
 			return nil

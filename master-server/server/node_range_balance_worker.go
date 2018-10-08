@@ -42,6 +42,13 @@ func (w *balanceNodeRangeWorker) Work(cluster *Cluster) {
 		return
 	}
 
+	newPeer, err := cluster.allocPeerAndSelectNode(rng, true, true)
+	if newPeer == nil || err != nil {
+		cluster.metric.CollectScheduleCounter(w.GetName(), "no_peer")
+		log.Error("alloc peer failure rngId:%d err:%s", rng.GetId(), err.Error())
+		return
+	}
+
 	id, err := cluster.GenId()
 	if err != nil {
 		return
@@ -49,7 +56,7 @@ func (w *balanceNodeRangeWorker) Work(cluster *Cluster) {
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to balance region and remove peer, region:[%v], old peer:[%v], old node:[%v], excepted new node:[%v]",
 		rng.GetId(), oldPeer.GetId(), oldPeer.GetNodeId(), targetNodeId)
-	tc := NewTransferPeerTasks(id, rng, "balance-range-transfer", oldPeer)
+	tc := NewTransferPeerTasks(id, rng, "balance-range-transfer", oldPeer, newPeer)
 	// TODO: check return
 	cluster.taskManager.Add(tc)
 	return
@@ -83,6 +90,7 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 	newSelectors := []NodeSelector{
 		NewWriterOpsThresholdSelector(cluster.opt),
 		NewStorageThresholdSelector(cluster.opt),
+		NewSnapshotReceiveThresholdSelector(cluster.opt),
 		NewDifferCacheNodeSelector(cluster.hbManager.dealIngNodes),
 	}
 
@@ -105,6 +113,7 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 		return nil, nil, 0
 	}
 
+	//以下为初步检查是否有可用的目标node
 	//优先选mostRangeNode上非leader的分片，迁移到leastRangeNode 上
 	var rng *Range
 	for _, r := range mostRangeNode.GetAllRanges() {
@@ -137,7 +146,7 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 		log.Debug("%v: select leader range that exclude leastRangeNode %v is nil ", w.GetName(), leastRangeNode)
 		for _, r := range mostRangeNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() != mostRangeNode.GetId() && r.require(cluster) {
-				leastRangeNode = cluster.selectNodeForAddPeer(r)
+				leastRangeNode = cluster.selectNodeForAddPeer(r, true)
 				if leastRangeNode != nil {
 					rng = r
 					break
@@ -150,7 +159,7 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 		log.Debug("%v: select follow range to best node is nil  %v", w.GetName(), leastRangeNode)
 		for _, r := range mostRangeNode.GetAllRanges() {
 			if r.GetLeader().GetNodeId() == mostRangeNode.GetId() && r.require(cluster) {
-				leastRangeNode = cluster.selectNodeForAddPeer(r)
+				leastRangeNode = cluster.selectNodeForAddPeer(r, true)
 				if leastRangeNode != nil {
 					rng = r
 					break

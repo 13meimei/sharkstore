@@ -1227,8 +1227,8 @@ func (c *Cluster) allocPeer(nodeId uint64, isLearner bool) (*metapb.Peer, error)
 选择节点需要排除已有peer相同的IP
 优先table的range分布少的node
 */
-func (c *Cluster) allocPeerAndSelectNode(rng *Range, isLearner bool) (*metapb.Peer, error) {
-	node := c.selectNodeForAddPeer(rng)
+func (c *Cluster) allocPeerAndSelectNode(rng *Range, isLearner bool, isReplicated bool) (*metapb.Peer, error) {
+	node := c.selectNodeForAddPeer(rng, isReplicated)
 	if node == nil {
 		return nil, ERR_NO_SELECTED_NODE
 	}
@@ -1264,7 +1264,7 @@ func (c *Cluster) newRangeByScope(startKey, endKey []byte, table *Table) (*Range
 		return nil, err
 	}
 	region := NewRange(rng, nil)
-	newPeer, err := c.allocPeerAndSelectNode(region, false)
+	newPeer, err := c.allocPeerAndSelectNode(region, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -1301,8 +1301,8 @@ func initWorkerPool() map[string]bool {
 	return pool
 }
 
-func (c *Cluster) selectNodeForAddPeer(rng *Range) *Node {
-	candidateNodes := c.selectBestNodesForAddPeer(rng)
+func (c *Cluster) selectNodeForAddPeer(rng *Range, isReplicated bool) *Node {
+	candidateNodes := c.selectBestNodesForAddPeer(rng, isReplicated)
 	if len(candidateNodes) == 0 {
 		return nil
 	}
@@ -1354,12 +1354,15 @@ func (c *Cluster) selectBestNodeST(candidateNodes []*Node, rng *Range, rngStat m
 	return c.FindNodeById(nodeScope[0].nodeId)
 }
 
-func (c *Cluster) selectBestNodesForAddPeer(rng *Range) []*Node {
+func (c *Cluster) selectBestNodesForAddPeer(rng *Range, isReplicated bool) []*Node {
 	newSelectors := []NodeSelector{
 		NewNodeLoginSelector(c.opt),
 		NewDifferIPSelector(rng.GetNodes(c)),
 		NewWriterOpsThresholdSelector(c.opt),
 		NewStorageThresholdSelector(c.opt),
+	}
+	if isReplicated {
+		newSelectors = append(newSelectors, NewSnapshotReceiveThresholdSelector(c.opt))
 	}
 
 	log.Debug("select node for add Peer node size:%d", len(c.GetAllNode()))

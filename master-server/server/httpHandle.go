@@ -1298,12 +1298,6 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 		reply.Message = http_error_range_find
 		return
 	}
-	newPeer, err := cluster.allocPeerAndSelectNode(rng, true)
-	if newPeer == nil || err != nil {
-		reply.Code = -1
-		reply.Message = "can not find best node to add peer"
-		return
-	}
 	id, err := cluster.GenId()
 	if err != nil {
 		reply.Code = -1
@@ -1311,9 +1305,14 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 		return
 	}
 	tc := NewTaskChain(id, rng.GetId(), "console-add-peer", NewAddPeerTask())
-	// TOOD: check return
-	cluster.taskManager.Add(tc)
-	log.Info("add range<%v> peer create task success", rangeId)
+	if !cluster.taskManager.Add(tc){
+		log.Warn("add range<%v> peer create task failure, has exists", rangeId)
+		reply.Code = -1
+		reply.Message = "add range peer create task failure"
+		return
+	}
+	log.Info("add range<%v> peer create task success, ", rangeId)
+
 }
 
 func (service *Server) handleRangeDelPeer(w http.ResponseWriter, r *http.Request) {
@@ -1355,8 +1354,12 @@ func (service *Server) handleRangeDelPeer(w http.ResponseWriter, r *http.Request
 		return
 	}
 	tc := cluster.hbManager.createDelPeerTask(id, rng, peer, "console-del-peer")
-	// TODO: check return
-	cluster.taskManager.Add(tc)
+	if !cluster.taskManager.Add(tc) {
+		log.Warn("del range<%v> peer<%v> create task failure", rangeId, peerId)
+		reply.Code = -1
+		reply.Message = "delete range peer create task failure"
+		return
+	}
 	log.Info("del range<%v> peer<%v> create task success", rangeId, peerId)
 }
 
@@ -2344,8 +2347,12 @@ func (service *Server) handleRangeLeaderChange(w http.ResponseWriter, r *http.Re
 	}
 	tc := NewTaskChain(taskID, rng.GetId(), "console-change-leader",
 		NewChangeLeaderTask(rng.GetLeader().GetNodeId(), newLeader.GetNodeId()))
-	// TODO: check return
-	cluster.taskManager.Add(tc)
+	if !cluster.taskManager.Add(tc) {
+		log.Warn("to change leader range[%s] failure, has exists", rng.SString())
+		reply.Code = -1
+		reply.Message = "change range leader create task failure"
+		return
+	}
 	log.Info("to change leader range[%s] success", rng.SString())
 	return
 }
@@ -2407,9 +2414,13 @@ func (service *Server) handleRangeTransfer(w http.ResponseWriter, r *http.Reques
 		reply.Message = err.Error()
 		return
 	}
-	tc := NewTransferPeerTasks(taskID, rng, "console-transfer-peer", oldPeer)
-	// TODO: check tc
-	cluster.taskManager.Add(tc)
+	tc := NewTransferPeerTasks(taskID, rng, "console-transfer-peer", oldPeer, nil)
+	if !cluster.taskManager.Add(tc) {
+		log.Warn("to transfer range[%s] peer failure, has exists", rng.SString())
+		reply.Code = -1
+		reply.Message = "transfer range peer create task failure"
+		return
+	}
 	log.Info("to transfer range[%s] peer success", rng.SString())
 	return
 }

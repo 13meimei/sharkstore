@@ -468,7 +468,7 @@ func TestAllocPeerAndSelectNode(t *testing.T) {
 
 			for _, rng := range ranges {
 				go func(rng *Range) {
-					newPeer, err := cluster.allocPeerAndSelectNode(rng, false)
+					newPeer, err := cluster.allocPeerAndSelectNode(rng, false, false)
 					if err != nil {
 						t.Errorf("alloc rangeId:%d, %s", rng.GetId(), err.Error())
 						return
@@ -486,7 +486,7 @@ func TestAllocPeerAndSelectNode(t *testing.T) {
 
 			for _, rng := range ranges {
 				go func(rng *Range) {
-					newPeer, err := cluster.allocPeerAndSelectNode(rng, false)
+					newPeer, err := cluster.allocPeerAndSelectNode(rng, false, false)
 					if err != nil {
 						t.Errorf("alloc rangeId:%d, %s", rng.GetId(), err.Error())
 						return

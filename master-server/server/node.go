@@ -26,15 +26,18 @@ type Node struct {
 	// metapb.Node属性锁
 	lock sync.RWMutex
 
-	ranges          *RegionCache
-	blocked         bool
-	stats           *mspb.NodeStats
-	LastHeartbeatTS time.Time
-	Trace           bool
-	opsStat         *NodeOpsStat
+	stats   *mspb.NodeStats
+	opsStat *NodeOpsStat
+
+	blocked bool
+	Trace   bool
+
+	ranges *RegionCache
 	// 创建/删除range副本失败产生的垃圾副本,n/2以上的节点挂掉、手动处理不可用的副本
 	// 远程GC DS上的垃圾range副本
 	trashReplicas *ReplicaCache
+
+	LastHeartbeatTS time.Time
 }
 
 const CacheSize = 100

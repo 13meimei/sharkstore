@@ -97,25 +97,23 @@ func (sel *NodeLoginSelector) CanSelect(node *Node) bool {
 	return node.IsLogin()
 }
 
-type SnapshotCountLimitSelector struct {
+type SnapshotReceiveThresholdSelector struct {
 	opt *scheduleOption
 }
 
-func NewSnapshotCountLimitSelector(opt *scheduleOption) *SnapshotCountLimitSelector {
-	return &SnapshotCountLimitSelector{opt: opt}
+func NewSnapshotReceiveThresholdSelector(opt *scheduleOption) *SnapshotReceiveThresholdSelector {
+	return &SnapshotReceiveThresholdSelector{opt: opt}
 }
 
-func (sel *SnapshotCountLimitSelector) Name() string {
-	return "snapshot-count"
+func (sel *SnapshotReceiveThresholdSelector) Name() string {
+	return "receive-snapshot"
 }
 
-func (sel *SnapshotCountLimitSelector) CanSelect(node *Node) bool {
-	isBusy := uint64(node.GetSendingSnapCount()) > sel.opt.GetMaxSnapshotCount() ||
-		uint64(node.GetReceivingSnapCount()) > sel.opt.GetMaxSnapshotCount() ||
-		uint64(node.GetApplyingSnapCount()) > sel.opt.GetMaxSnapshotCount()
+func (sel *SnapshotReceiveThresholdSelector) CanSelect(node *Node) bool {
+	isBusy :=  maxUint64(uint64(node.GetReceivingSnapCount()), uint64(node.GetApplyingSnapCount())) > sel.opt.GetMaxSnapshotCount()
 	if isBusy {
-		log.Debug("newSnapshotCountFilter  filter node :%d is snapshotCount,%d,%d,%d,%d",
-			node.GetId(), node.GetSendingSnapCount(), node.GetReceivingSnapCount(), node.GetApplyingSnapCount(), sel.opt.GetMaxSnapshotCount())
+		log.Debug("snapshotReceiveThreshold cannot select node :%d, receive-snapshotCount: %d,%d, threshold: %d",
+			node.GetId(), node.GetReceivingSnapCount(), node.GetApplyingSnapCount(), sel.opt.GetMaxSnapshotCount())
 	}
 	return !isBusy
 }

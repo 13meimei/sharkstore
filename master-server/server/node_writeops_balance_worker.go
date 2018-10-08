@@ -41,7 +41,7 @@ func (w *balanceNodeOpsWorker) Work(cluster *Cluster) {
 	}
 
 	sourceNode := cluster.FindNodeById(oldPeer.GetNodeId())
-	newPeer, err := cluster.allocPeerAndSelectNode(rng, true)
+	newPeer, err := cluster.allocPeerAndSelectNode(rng, true, true)
 	if newPeer == nil || err != nil {
 		cluster.metric.CollectScheduleCounter(w.GetName(), "no_peer")
 		log.Error("alloc peer failure rngId:%d err:%s", rng.GetId(), err.Error())
@@ -60,7 +60,7 @@ func (w *balanceNodeOpsWorker) Work(cluster *Cluster) {
 	cluster.metric.CollectScheduleCounter(w.GetName(), "new_operator")
 	log.Debug("start to balance region and transfer peer, region:[%v], old peer:[%v], old node:[%v], new node:[%v]",
 		rng.GetId(), oldPeer.GetId(), oldPeer.GetNodeId(), newPeer.GetNodeId())
-	tc := NewTransferPeerTasks(taskID, rng, "ops-range-tranfer", oldPeer)
+	tc := NewTransferPeerTasks(taskID, rng, "ops-range-tranfer", oldPeer, newPeer)
 	// TODO: check return
 	cluster.taskManager.Add(tc)
 	return
@@ -76,7 +76,7 @@ func scheduleRemoveMaxOpsPeer(cluster *Cluster, workerName string) (*Range, *met
 
 	var sourceNode *Node
 	for _, node := range nodes {
-		if node.IsLogin() && node.opsStat.GetMax() > uint64(cluster.opt.GetWriteByteOpsThreshold()) {
+		if node.IsLogin() && node.opsStat.GetMax() > uint64(cluster.opt.GetWriteByteOpsThreshold()) && uint64(node.GetSendingSnapCount()) < cluster.opt.GetMaxSnapshotCount() {
 			sourceNode = node
 			break
 		}

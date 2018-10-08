@@ -110,7 +110,8 @@ func SelectMostAndLeastRangeNode(opt *scheduleOption, nodes []*Node, selectors [
 				log.Debug("node %v available ratio under threshold",  node.GetId())
 				force = true
 				most = node
-			} else if most == nil || most.GetRangesCount() < node.GetRangesCount() {
+			} else if most == nil ||
+					(most.GetRangesCount() < node.GetRangesCount() && uint64(node.GetSendingSnapCount()) < opt.GetMaxSnapshotCount()) {
 				most = node
 			}
 		}
