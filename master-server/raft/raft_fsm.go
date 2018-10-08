@@ -1,4 +1,3 @@
-// Copyright 2018 The TigLabs raft Authors.
 // Copyright 2015 The etcd Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modified work copyright 2018 The TigLabs raft Authors.
+
 package raft
 
 import (
