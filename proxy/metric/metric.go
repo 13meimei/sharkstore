@@ -183,15 +183,30 @@ func (m *Metric) Run() {
 				log.Info("no slow log in queue")
 				return
 			}
-			stats.SlowLogs = slowLogger.slowLog
+
 			values := url.Values{}
 			values.Set("clusterId", fmt.Sprintf("%d", m.clusterId))
 			values.Set("namespace", "GS")
 			values.Set("subsystem", m.host)
 			_url := fmt.Sprintf(`http://%s/metric/slowlog?%s`, m.metricAddr, values.Encode())
-			err := m.SendMetric(_url, stats)
-			if err != nil {
-				log.Warn("send metric server failed, err[%v]", err)
+
+			loop := 0
+			interval := 30
+			for {
+				start := loop * interval
+				end :=  (loop + 1) * interval
+				if start > len(slowLogger.slowLog) {
+					break
+				}
+				if end > len(slowLogger.slowLog)  {
+					end = len(slowLogger.slowLog)
+				}
+				stats.SlowLogs = slowLogger.slowLog[start:end]
+				err := m.SendMetric(_url, stats)
+				if err != nil {
+					log.Warn("send metric server failed, err[%v]", err)
+				}
+				loop++
 			}
 
 			// slowlog alarm
