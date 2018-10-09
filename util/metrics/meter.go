@@ -1,3 +1,19 @@
+// Copyright 2017 Xiaomi, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Modified work copyright 2018 The sharkstore Authors.
+
 package metrics
 
 import (
@@ -36,7 +52,7 @@ type MetricMeter struct {
 	avgTotal  float64
 	lats      []float64
 
-	output     Output
+	output Output
 }
 
 func NewMetricMeter(name string, interval time.Duration, output Output) *MetricMeter {
@@ -154,18 +170,18 @@ func (this *MetricMeter) AddApiWithDelay(reqMethod string, ack bool, delay time.
 type OpenFalconCustomData struct {
 	Name        string  `json:"name,omitempty"`
 	Metric      string  `json:"metric,omitempty"`
-	TotalNumber uint64 `json:"number_of_request,omitempty"`
-	ErrNumber uint64 `json:"number_of_err_response,omitempty"`
-	Avg float64 `json:"average_delay_of_response,omitempty"`
-	Max float64 `json:"max_delay_of_response,omitempty"`
-	Min float64 `json:"min_delay_of_response,omitempty"`
+	TotalNumber uint64  `json:"number_of_request,omitempty"`
+	ErrNumber   uint64  `json:"number_of_err_response,omitempty"`
+	Avg         float64 `json:"average_delay_of_response,omitempty"`
+	Max         float64 `json:"max_delay_of_response,omitempty"`
+	Min         float64 `json:"min_delay_of_response,omitempty"`
 }
 
 type TpsStats struct {
-	Name        string  `json:"name,omitempty"`
+	Name        string `json:"name,omitempty"`
 	TotalNumber uint64 `json:"total_number,omitempty"`
-	ErrNumber uint64 `json:"err_number,omitempty"`
-	Tps uint64 `json:"tps,omitempty"`
+	ErrNumber   uint64 `json:"err_number,omitempty"`
+	Tps         uint64 `json:"tps,omitempty"`
 	// min　latency ms
 	Min float64 `json:"min,omitempty"`
 	// max　latency ms
@@ -184,7 +200,7 @@ type TpsStats struct {
 
 func (this *MetricMeter) report2OpenFalcon(total time.Duration, lats []float64, avgTotal float64, metrics map[string]*ApiMetric) {
 	sort.Float64s(lats)
-    	var max, min time.Duration
+	var max, min time.Duration
 	var totalNumber, errNumber uint64
 	for method, metric := range metrics {
 		stats := &OpenFalconCustomData{}
@@ -272,7 +288,7 @@ func (this *MetricMeter) reportAndReset() {
 	}()
 
 	newMetric := make(map[string]*ApiMetric)
-	newLat :=  make([]float64, 0, 100000)
+	newLat := make([]float64, 0, 100000)
 
 	this.mutex.Lock()
 	metrics := this.metrics
