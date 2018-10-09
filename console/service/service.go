@@ -2664,10 +2664,12 @@ func ChangeLockToShow(infos []*models.LockInfo) []*models.LockShow {
 				showInfo.LockId = newValue.GetId()
 				showInfo.UpdTime = newValue.GetUpdateTime()
 				showInfo.ExpiredTime = newValue.GetDeleteTime()
+				showInfo.Creator = newValue.GetBy()
 			}
 		}
 		showInfo.Version = info.Version
 		showInfo.Extend = info.Extend
+		shows = append(shows, showInfo)
 	}
 	return shows
 }
