@@ -32,6 +32,8 @@ protected:
 
     Status testDelete(const std::function<void(DeleteRequestBuilder&)>& build_func,
                       uint64_t expected_affected);
+    Status testUpdate(const std::function<void(UpdateRequestBuilder&)>& build_func,
+                      uint64_t expected_affected);
 
 protected:
     std::string encodeWatchKey(const std::vector<std::string>& keys);

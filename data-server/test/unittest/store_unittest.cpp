@@ -96,6 +96,8 @@ TEST_F(StoreTest, SelectEmpty) {
             {});
     ASSERT_TRUE(s.ok()) << s.ToString();
 
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
     // random
     for (int i = 0; i < 100; ++i) {
         auto s = testSelect(
@@ -626,7 +628,38 @@ TEST_F(StoreTest, DeleteWhere) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
+TEST_F(StoreTest, Update) {
+    InsertSomeRows();
 
+    sharkstore::Status s;
+
+    // update set id = 1000 where id = 1
+    s = testUpdate(
+            [](UpdateRequestBuilder& b) {
+                b.AddMatch("id", kvrpcpb::Equal, "1");
+                b.SetField("id", kvrpcpb::FieldType::Assign, "1000");
+            }, 1
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    // select id = 1000 should be ok
+//    s = testSelect(
+//            [](SelectRequestBuilder& b) {
+//                b.AddAllFields();
+//                b.AddMatch("id", kvrpcpb::Equal, "1000");
+//            },
+//            {rows_.cbegin(), rows_.cbegin()+1}
+//    );
+//    ASSERT_TRUE(s.ok()) << s.ToString();
+    // select id = 1 should not found
+//    s = testSelect(
+//            [](SelectRequestBuilder& b) {
+//                b.AddAllFields();
+//                b.AddMatch("id", kvrpcpb::Equal, "1");
+//            },
+//            {}
+//    );
+//    ASSERT_TRUE(!s.ok()) << s.ToString();
+}
 
 TEST_F(StoreTest, Watch) {
     {

@@ -60,7 +60,6 @@ private:
     kvrpcpb::DeleteRequest req_;
 };
 
-
 class InsertRequestBuilder {
 public:
     explicit InsertRequestBuilder(Table *t);
@@ -76,6 +75,30 @@ private:
     std::vector<metapb::Column> pk_columns_;
     std::vector<metapb::Column> non_pk_columns_;
     kvrpcpb::InsertRequest req_;
+};
+
+class UpdateRequestBuilder {
+public:
+    explicit UpdateRequestBuilder(Table *t);
+
+    // udpate one row
+    void SetKey(const std::vector<std::string>& all_pk_values);
+
+    // update multi rows
+    void SetScope(const std::vector<std::string>& start_pk_values,
+                  const std::vector<std::string>& end_pk_values);
+
+    // update where filter
+    void AddMatch(const std::string& col, kvrpcpb::MatchType type, const std::string& val);
+
+    // update set value
+    void SetField(const std::string& col, kvrpcpb::FieldType type, const std::string& val);
+
+    kvrpcpb::UpdateRequest Build() { return std::move(req_); }
+
+private:
+    Table *table_ = nullptr;
+    kvrpcpb::UpdateRequest req_;
 };
 
 } /* namespace helper */

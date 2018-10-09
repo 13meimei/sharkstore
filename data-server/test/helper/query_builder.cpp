@@ -190,6 +190,40 @@ void InsertRequestBuilder::SetCheckDuplicate() {
 }
 
 
+UpdateRequestBuilder::UpdateRequestBuilder(Table *t): table_(t) {
+    // default select all scope
+    SetScope({}, {});
+}
+
+// update one row
+void UpdateRequestBuilder::SetKey(const std::vector<std::string>& all_pk_values) {
+    req_.set_key(buildKey(table_, all_pk_values));
+}
+
+// update multi rows
+void UpdateRequestBuilder::SetScope(const std::vector<std::string>& start_pk_values,
+              const std::vector<std::string>& end_pk_values) {
+    auto ret = buildScope(table_, start_pk_values, end_pk_values);
+    req_.mutable_scope()->mutable_start()->assign(ret.first);
+    req_.mutable_scope()->mutable_limit()->assign(ret.second);
+}
+
+// update where filter
+void UpdateRequestBuilder::AddMatch(const std::string& col, kvrpcpb::MatchType type, const std::string& val) {
+    auto w = req_.add_where_filters();
+    w->set_match_type(type);
+    w->mutable_column()->CopyFrom(table_->GetColumn(col));
+    w->mutable_threshold()->assign(val);
+}
+
+// update set value
+void UpdateRequestBuilder::SetField(const std::string& col, kvrpcpb::FieldType type, const std::string& val) {
+    auto f = req_.add_fields();
+    f->mutable_column()->CopyFrom(table_->GetColumn(col));
+    f->mutable_value()->assign(val);
+    f->set_field_type(type);
+}
+
 } /* namespace helper */
 } /* namespace test */
 } /* namespace sharkstore */
