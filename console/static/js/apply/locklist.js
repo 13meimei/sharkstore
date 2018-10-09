@@ -42,7 +42,7 @@
                     if(!hasText(value) || value == 0){
                         return "";
                     }
-                    return value + "ms";
+                    return formatDate((new Date(value)), "yyyy-MM-dd hh:mm:ss");
                 }
             },
 
