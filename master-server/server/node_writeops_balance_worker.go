@@ -76,7 +76,7 @@ func scheduleRemoveMaxOpsPeer(cluster *Cluster, workerName string) (*Range, *met
 
 	var sourceNode *Node
 	for _, node := range nodes {
-		if node.IsLogin() && node.opsStat.GetMax() > uint64(cluster.opt.GetWriteByteOpsThreshold()) && uint64(node.GetSendingSnapCount()) < cluster.opt.GetMaxSnapshotCount() {
+		if node.IsLogin() && node.opsStat.GetMax() > uint64(cluster.opt.GetWriteByteOpsThreshold()) {
 			sourceNode = node
 			break
 		}
@@ -96,6 +96,10 @@ func scheduleRemoveMaxOpsPeer(cluster *Cluster, workerName string) (*Range, *met
 			continue
 		}
 		if rng == nil || (r.opsStat.hit > 10 && rng.opsStat.GetMax() < r.opsStat.GetMax()) {
+			leaderNode := cluster.FindNodeById(r.GetLeader().GetNodeId())
+			if uint64(leaderNode.GetSendingSnapCount()) > cluster.opt.GetMaxSnapshotCount() {
+				continue
+			}
 			rng = r
 		}
 	}

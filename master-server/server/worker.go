@@ -75,8 +75,8 @@ func (wm *WorkerManager) Run() {
 	wm.addWorker(NewRangeHbCheckWorker(wm, 2 * time.Minute))
 
 	wm.addWorker(NewBalanceNodeLeaderWorker(wm, 5 * defaultWorkerInterval))
-	wm.addWorker(NewBalanceNodeRangeWorker(wm, 2 * defaultWorkerInterval))
-	wm.addWorker(NewBalanceNodeOpsWorker(wm, defaultWorkerInterval))
+	wm.addWorker(NewBalanceNodeRangeWorker(wm, 6 * defaultWorkerInterval))  //两个任务后必须有node心跳[10s]上来上报数据
+	wm.addWorker(NewBalanceNodeOpsWorker(wm,  6 * defaultWorkerInterval))
 }
 
 func (wm *WorkerManager) Stop() {

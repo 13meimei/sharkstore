@@ -122,6 +122,10 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 			if !ipSelector.CanSelect(leastRangeNode) {
 				continue
 			}
+			leaderNode := cluster.FindNodeById(r.GetLeader().GetNodeId())
+			if uint64(leaderNode.GetSendingSnapCount()) > cluster.opt.GetMaxSnapshotCount() {
+				continue
+			}
 			rng = r
 			break
 		}
@@ -134,6 +138,9 @@ func (w *balanceNodeRangeWorker) selectRemovePeer(cluster *Cluster) (*Range, *me
 			if r.GetLeader().GetNodeId() == mostRangeNode.GetId() && r.require(cluster) {
 				ipSelector := NewDifferIPSelector(r.GetNodes(cluster))
 				if !ipSelector.CanSelect(leastRangeNode) {
+					continue
+				}
+				if uint64(mostRangeNode.GetSendingSnapCount()) > cluster.opt.GetMaxSnapshotCount(){
 					continue
 				}
 				rng = r
