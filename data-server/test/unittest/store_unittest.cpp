@@ -671,24 +671,25 @@ TEST_F(StoreTest, UpdateMultiRows) {
 
     s = testUpdate(
             [](UpdateRequestBuilder &b) {
-                b.AddMatch("id", kvrpcpb::Equal, "1");
+                b.AddMatch("balance", kvrpcpb::LessOrEqual, "103");
                 b.SetField("balance", kvrpcpb::FieldType::Assign, "2000");
-            }, 1
+            },
+            3
     );
     ASSERT_TRUE(s.ok()) << s.ToString();
 
-//    s = testSelect(
-//            [](SelectRequestBuilder& b) {
-//                b.AddAllFields();
-//                b.AddMatch("balance", kvrpcpb::Equal, "2000");
-//            },
-//            {
-//                    {rows_[0][0], rows_[0][1], "2000"},
-//                    {rows_[1][0], rows_[1][1], "2000"},
-//                    {rows_[2][0], rows_[2][1], "2000"},
-//            }
-//    );
-//    ASSERT_TRUE(s.ok()) << s.ToString();
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.AddMatch("balance", kvrpcpb::Equal, "2000");
+            },
+            {
+                    {rows_[0][0], rows_[0][1], "2000"},
+                    {rows_[1][0], rows_[1][1], "2000"},
+                    {rows_[2][0], rows_[2][1], "2000"},
+            }
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
 TEST_F(StoreTest, Watch) {

@@ -40,9 +40,15 @@ void RowResult::Reset() {
                   [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
     fields_.clear();
 
+    value_.clear();
+    field_value_.clear();
+    update_field_.clear();
+//    std::for_each(update_field_.begin(), update_field_.end(),
+//                  [](std::map<uint64_t, kvrpcpb::Field*>::value_type& p) { delete p.second; });
     std::for_each(update_field_delta_.begin(), update_field_delta_.end(),
                   [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
     update_field_delta_.clear();
+
 }
 
 RowDecoder::RowDecoder(
@@ -378,6 +384,7 @@ Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowRes
         } else {
             if (!result->AddField(it->first, value)) {
                 delete value;
+                FLOG_DEBUG("add field id: %lu", it->second.id());
                 return Status(Status::kDuplicate, "repeated field on column", it->second.name());
             }
         }
