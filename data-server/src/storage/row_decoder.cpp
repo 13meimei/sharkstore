@@ -269,7 +269,7 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
             }
 
             // 记录所有非主键列的值在value中的偏移和长度
-            FieldUpdate fu(col_id, offset, offset - offset_bk);
+            FieldUpdate fu(col_id, offset_bk, offset - offset_bk);
             result->field_value_.push_back(fu);
             // 记录需要update列
             auto it_u = update_fields_.find(col_id);
@@ -305,12 +305,12 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
         }
 
         // 记录所有非主键列的值在value中的偏移和长度
-        FieldUpdate fu(col_id, offset, offset - offset_bk);
+        FieldUpdate fu(col_id, offset_bk, offset - offset_bk);
         result->field_value_.push_back(fu);
         // 记录需要update列
         auto it_u = update_fields_.find(col_id);
         if (it_u != update_fields_.end()) {
-            auto f = (*it_u).second;
+            auto& f = (*it_u).second;
 
             result->update_field_.emplace(col_id, &f);
 

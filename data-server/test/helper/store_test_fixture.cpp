@@ -5,6 +5,9 @@
 #include "query_parser.h"
 #include "helper_util.h"
 
+#include "fastcommon/logger.h"
+#include <fastcommon/shared_func.h>
+
 namespace sharkstore {
 namespace test {
 namespace helper {
@@ -17,6 +20,10 @@ StoreTestFixture::StoreTestFixture(std::unique_ptr<Table> t) :
 }
 
 void StoreTestFixture::SetUp() {
+    log_init2();
+    char level[] = "INFO";
+    set_log_level(level);
+
     if (!table_) {
         throw std::runtime_error("invalid table");
     }

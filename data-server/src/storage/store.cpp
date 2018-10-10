@@ -199,16 +199,16 @@ static void addRow(const kvrpcpb::SelectRequest& req,
 
 static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
     std::string final_encode_value;
-    const auto& origin_encode_value = row->value().c_str();
+    const auto& origin_encode_value = r.value_;
 
     for (auto it = r.field_value_.begin(); it != r.field_value_.end(); it++) {
         auto& field = (*it);
 
         std::string value;
-        value.assign(origin_encode_value, field.offset_, field.length_);
 
         auto it_field_update = r.update_field_.find(field.column_id_);
         if (it_field_update == r.update_field_.end()) {
+            value.assign(origin_encode_value, field.offset_, field.length_);
             final_encode_value.append(value);
             continue;
         }
