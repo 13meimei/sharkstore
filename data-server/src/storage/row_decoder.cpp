@@ -44,8 +44,8 @@ void RowResult::Reset() {
     field_value_.clear();
 
     update_field_.clear();
-    std::for_each(update_field_delta_.begin(), update_field_delta_.end(),
-                  [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
+//    std::for_each(update_field_delta_.begin(), update_field_delta_.end(),
+//                  [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
     update_field_delta_.clear();
 
 }
@@ -283,7 +283,7 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
             // 记录需要update列
             auto it_u = update_fields_.find(col_id);
             if (it_u != update_fields_.end()) {
-                auto f = (*it_u).second;
+                auto& f = (*it_u).second;
 
                 result->update_field_.emplace(col_id, &f);
 

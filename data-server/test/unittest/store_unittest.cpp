@@ -686,6 +686,30 @@ TEST_F(StoreTest, UpdateByPk) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
+TEST_F(StoreTest, UpdateMultiColumn) {
+    InsertSomeRows();
+
+    sharkstore::Status s;
+
+    s = testUpdate(
+            [](UpdateRequestBuilder& b) {
+                b.AddMatch("id", kvrpcpb::Equal, "1");
+//                b.SetKey({"1"});
+                b.SetField("name", kvrpcpb::FieldType::Assign, "update_col");
+                b.SetField("balance", kvrpcpb::FieldType::Plus, "200");
+            }, 1
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.SetKey({"1"});
+            },
+            {{rows_[0][0], "update_col", "301"}}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
 TEST_F(StoreTest, UpdateMultiRows) {
     InsertSomeRows();
 
