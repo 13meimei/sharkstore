@@ -710,6 +710,33 @@ TEST_F(StoreTest, UpdateMultiColumn) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
+TEST_F(StoreTest, UpdateMultiColumnsMultiRows) {
+    InsertSomeRows();
+
+    sharkstore::Status s;
+
+    s = testUpdate(
+            [](UpdateRequestBuilder& b) {
+                b.AddMatch("id", kvrpcpb::LessOrEqual, "3");
+                b.SetField("name", kvrpcpb::FieldType::Assign, "update_col");
+                b.SetField("balance", kvrpcpb::FieldType::Plus, "200");
+            }, 3
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.AddMatch("id", kvrpcpb::LessOrEqual, "3");
+            },
+            {
+                    {rows_[0][0], "update_col", "301"},
+                    {rows_[1][0], "update_col", "302"},
+                    {rows_[2][0], "update_col", "303"},
+            }
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
 TEST_F(StoreTest, UpdateMultiRows) {
     InsertSomeRows();
 
