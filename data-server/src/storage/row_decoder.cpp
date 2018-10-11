@@ -42,9 +42,8 @@ void RowResult::Reset() {
 
     value_.clear();
     field_value_.clear();
+
     update_field_.clear();
-//    std::for_each(update_field_.begin(), update_field_.end(),
-//                  [](std::map<uint64_t, kvrpcpb::Field*>::value_type& p) { delete p.second; });
     std::for_each(update_field_delta_.begin(), update_field_delta_.end(),
                   [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
     update_field_delta_.clear();
@@ -244,6 +243,10 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
     result->Reset();
     result->SetKey(key);
     result->value_ = buf; // set value
+
+    // 解析主键列
+    auto s = decodePrimaryKeys(key, result);
+    if (!s.ok()) return s;
 
     // 解析非主键列
     uint32_t col_id = 0;
