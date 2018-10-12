@@ -249,16 +249,20 @@ func (ctrl *LockForceUnLockAction) Execute(c *gin.Context) (interface{}, error) 
 	cIdStr := c.PostForm("clusterId")
 	dbName := c.PostForm("dbName")
 	tableName := c.PostForm("tableName")
-	key := c.PostForm("key")
-	if "" == cIdStr || "" == dbName || "" == tableName || "" == key {
+	keys := c.PostForm("keys")
+	if "" == cIdStr || "" == dbName || "" == tableName || "" == keys {
 		return nil, common.PARSE_PARAM_ERROR
 	}
 	cId, err := strconv.Atoi(cIdStr)
 	if err != nil {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
-	log.Debug("force unlock: clusterId %v, dbName %v, tableName %v, key %v", cIdStr, dbName, tableName, key)
-	return nil, service.NewService().ForceUnLock(cId, dbName, tableName, key)
+	log.Debug("force unlock: clusterId %v, dbName %v, tableName %v, key %v", cIdStr, dbName, tableName, keys)
+	var keyArray []string
+	if err := json.Unmarshal([]byte(keys), &keyArray); err != nil {
+		return nil, common.PARSE_PARAM_ERROR
+	}
+	return nil, service.NewService().ForceUnLock(cId, dbName, tableName, keyArray)
 }
 
 /**

@@ -30,7 +30,7 @@
             return temp;
         },
         columns: [
-            {field: '', radio: true, align: 'center'},
+            {field: '', checkbox: true, align: 'center'},
             {field: 'k', title: 'key', align: 'center'},
             {field: 'v', title: '配置', align: 'center'},
             {field: 'version', title: '版本', align: 'center'},
@@ -81,19 +81,25 @@ function getUrl() {
         + "&tableName=" + $('#tableName').val()
 }
 
-//能看到记录，就能修改
+//能看到记录，就能修改， 支持批量
 function forceUnLock() {
     var selectedApplyRows = $('#lockLists').bootstrapTable('getSelections');
-    if (selectedApplyRows.length != 1) {
-        swal("强制解锁", "请选择且只选单个要强制解锁的记录", "error");
+    if (selectedApplyRows.length == 0) {
+        swal("强制解锁", "请选择要强制解锁的记录", "error");
         return;
     }
-    var key = selectedApplyRows[0].k;
     var clusterId = $("#clusterId").val();
     var dbName = $("#dbName").val();
     var tableName = $("#tableName").val();
-    if (!hasText(key) || !hasText(clusterId) || !hasText(dbName) || !hasText(tableName)) {
+    if (!hasText(clusterId) || !hasText(dbName) || !hasText(tableName)) {
         swal("强制解锁", "请选择要解锁的lock", "error");
+        return;
+    }
+    var keys = [];
+    for (var i = 0; i < selectedApplyRows.length; i++) {
+        keys.push(selectedApplyRows[i].k);
+    }
+    if (keys.length == 0) {
         return;
     }
     swal({
@@ -114,7 +120,7 @@ function forceUnLock() {
                     clusterId: clusterId,
                     dbName: dbName,
                     tableName: tableName,
-                    key: key
+                    keys:  JSON.stringify(keys)
                 },
                 success: function (data) {
                     if (data.code === 0) {

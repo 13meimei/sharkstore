@@ -2645,12 +2645,12 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 			if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
 				start := pageInfo.GetPageOffset()
 				end := start + pageInfo.GetPageSize()
-				log.Debug("start %v, end %v, result len: %v, len: %v", start, end, len(result), len(allResult))
-				if start < totalRecord && end < totalRecord {
+				if start <= totalRecord && end < totalRecord {
 					result = allResult[start:end]
-				} else if start < totalRecord && end > totalRecord {
-					result = allResult[start:]
+				} else if start <= totalRecord && end >= totalRecord {
+					result = allResult[start: totalRecord]
 				}
+				log.Debug("start %v, end %v, result len: %v, len: %v", start, end, len(result), len(allResult))
 			} else {
 				result = allResult
 			}
@@ -2691,7 +2691,7 @@ func ChangeLockToShow(infos []*models.LockInfo) []*models.LockShow {
 	return shows
 }
 
-func (s *Service) ForceUnLock(clusterId int, dbName, tableName, key string) error {
+func (s *Service) ForceUnLock(clusterId int, dbName, tableName string, keys []string) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return err
@@ -2699,29 +2699,31 @@ func (s *Service) ForceUnLock(clusterId int, dbName, tableName, key string) erro
 	if info == nil {
 		return common.CLUSTER_NOTEXISTS_ERROR
 	}
-	log.Debug("force unlock key %v under clusterId:%v dbName:%v tableName:%v", key, clusterId, dbName, tableName)
+	log.Debug("force unlock key %v under clusterId:%v dbName:%v tableName:%v", keys, clusterId, dbName, tableName)
 	var reply models.Reply
+	for _, key := range keys {
+		filed_ := &models.Field_{Column: "k", Value: key}
+		var ands []*models.And
+		ands = append(ands, &models.And{Field: filed_, Relate: "="})
 
-	filed_ := &models.Field_{Column: "k", Value: key}
-	var ands []*models.And
-	ands = append(ands, &models.And{Field: filed_, Relate: "="})
+		setQueryRep := &models.Query{
+			DatabaseName: dbName,
+			TableName:    tableName,
+			Command: &models.Command{
+				Type:   "del",
+				Filter: &models.Filter_{And: ands},
+			},
+		}
 
-	setQueryRep := &models.Query{
-		DatabaseName: dbName,
-		TableName:    tableName,
-		Command: &models.Command{
-			Type:   "del",
-			Filter: &models.Filter_{And: ands},
-		},
+		if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
+			return err
+		}
+		if reply.Code != 0 || (reply.RowsAffected != 1 && reply.RowsAffected != 0) {
+			log.Error("force unlock cluster[%d] lock %v failed. err:[%v]", key, clusterId, reply)
+			return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
+		}
 	}
 
-	if err := sendPostReqJsonBody(info.GatewayHttpUrl, "/kvcommand", setQueryRep, &reply); err != nil {
-		return err
-	}
-	if reply.Code != 0 || reply.RowsAffected != 1 {
-		log.Error("force unlock cluster[%d] lock failed. err:[%v]", clusterId, reply)
-		return &common.FbaseError{Code: common.INTERNAL_ERROR.Code, Msg: reply.Message}
-	}
 	return nil
 }
 
