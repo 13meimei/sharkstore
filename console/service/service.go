@@ -2361,6 +2361,10 @@ func (s *Service) GetAllNamespace(userName string, isAdmin bool, pageInfo *model
 	var totalRecord int
 	if err := s.db.QueryRow(countSql).
 		Scan(&(totalRecord)); err != nil {
+		if err == sql.ErrNoRows {
+			log.Error("db row not exists. ")
+			return 0, nil, nil
+		}
 		log.Error("db queryrow is failed. err:[%v]", err)
 		return 0, nil, common.DB_ERROR
 	}
@@ -2413,6 +2417,10 @@ func (s *Service) existNspApply(dbName, tableName string, clusterId int, storeTa
 	var count int
 	if err := s.db.QueryRow(querySql).
 		Scan(&(count)); err != nil {
+		if err == sql.ErrNoRows {
+			log.Error("db row not exists. ")
+			return false, nil
+		}
 		log.Error("db queryrow is failed. err:[%v]", err)
 		return true, common.DB_ERROR
 	}
@@ -2624,6 +2632,10 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 	defer db.Close()
 	if err := db.QueryRow(countSql).
 		Scan(&(totalRecord)); err != nil {
+		if err == sql.ErrNoRows {
+			log.Error("db row not exists. ")
+			return 0, nil, nil
+		}
 		log.Error("db queryrow is failed. err:[%v]", err)
 		return 0, nil, common.DB_ERROR
 	}
@@ -2850,6 +2862,10 @@ func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageI
 	defer db.Close()
 	if err := db.QueryRow(countSql).
 		Scan(&(totalRecord)); err != nil {
+		if err == sql.ErrNoRows {
+			log.Error("db row not exists. ")
+			return 0, nil, nil
+		}
 		log.Error("db queryrow is failed. err:[%v]", err)
 		return 0, nil, common.DB_ERROR
 	}
