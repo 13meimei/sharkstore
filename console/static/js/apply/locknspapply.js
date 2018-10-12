@@ -64,6 +64,7 @@ function applyLockNsp() {
     }
     var dbName = $("#dbName").val();
     var tableName = $("#tableName").val();
+    $('#submit').attr("disabled", "disabled");
     swal({
         title: "申请lock namespace?",
         type: "warning",

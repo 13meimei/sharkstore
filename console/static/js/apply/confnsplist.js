@@ -273,6 +273,7 @@ function applyNsp() {
     $("#tableName").val("");
     getCluster();
     $("#saveButton").attr("style", "");
+    $("#saveButton").attr("disabled", "");
     $('#nspApplyModal').modal('show');
 }
 
@@ -288,6 +289,7 @@ function saveApply() {
         swal("申请", "请先填写库名、表名", "error");
         return
     }
+    $('#saveButton').attr("disabled", "disabled");
     swal({
         title: "申请配置 namespace?",
         type: "warning",
@@ -313,10 +315,12 @@ function saveApply() {
                     $('#nspApplyModal').modal('hide');
                     $('#nspApplyLists').bootstrapTable('refresh', {url: '/configure/namespace/queryList'});
                 } else {
+                    $('#saveButton').removeAttr("disabled");
                     swal("申请失败", data.msg, "error");
                 }
             },
             error: function (res) {
+                $('#saveButton').removeAttr("disabled");
                 swal("申请配置 namespace失败", res, "error");
             }
         });

@@ -44,7 +44,7 @@ const (
 	TABLE_NAME_LOCK_NSP      = "fbase_lock_nsp"
 	TABLE_NAME_CONFIGURE_NSP = "fbase_configure_nsp"
 	TABLE_NAME_METRIC_SERVER = "metric_server"
-	TABLE_NAME_SQL_CA 	 = "fbase_sql_ca"
+	TABLE_NAME_SQL_CA        = "fbase_sql_ca"
 
 	STATUS_APPLY  = 1
 	STATUS_AUDIT  = 2
@@ -171,7 +171,7 @@ func (s *Service) CreateCluster(cId int, cName, masterUrl, gateHttpUrl, gateSqlU
 }
 
 func (s *Service) DeleteCluster(cId int) error {
-	cIds := make([]int,0)
+	cIds := make([]int, 0)
 	cIds = append(cIds, cId)
 	err := s.DelSqlCA(cIds)
 	if err != nil {
@@ -1156,7 +1156,6 @@ func (s *Service) FlushDBOfNode(clusterId, nodeId int, wait bool) (interface{}, 
 	}
 	return nil, nil
 }
-
 
 func (s *Service) SetClusterToggle(clusterId int, autoTransfer, autoFailover, autoSplit string) error {
 	info, err := s.selectClusterById(clusterId)
@@ -2398,7 +2397,7 @@ func (s *Service) GetNamespaceById(applyId, storeTable string) (*models.Namespac
 
 	info := new(models.NamespaceApply)
 	if err := s.db.QueryRow(querySql).
-		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.DbId),  &(info.TableId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
+		Scan(&(info.Id), &(info.DbName), &(info.TableName), &(info.ClusterId), &(info.DbId), &(info.TableId), &(info.Status), &(info.Applyer), &(info.Auditor), &(info.CreateTime)); err != nil {
 		if err == sql.ErrNoRows {
 			log.Error("db row not exists. ")
 			return nil, nil
@@ -2603,15 +2602,8 @@ func (s *Service) GetLockClusterList() ([]*models.ClusterInfo, error) {
 
 //by sql command
 func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *models.PagerInfo) (int, []*models.LockShow, error) {
-	selectSql := fmt.Sprintf(`select k, version, v, extend from %s`, tableName)
-	countSql := fmt.Sprintf(`select count(*) from %s`, tableName)
-	if pageInfo != nil {
-		if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
-			selectSql = fmt.Sprintf(`%s limit %d, %d`, selectSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
-			countSql = fmt.Sprintf(`%s limit %d, %d`, countSql, pageInfo.GetPageOffset(), pageInfo.GetPageSize())
-		}
-	}
 	log.Debug("get all lock list under clusterId:%v dbName:%v tableName:%v", clusterId, dbName, tableName)
+	selectSql := fmt.Sprintf(`select k, version, v, extend from %s`, tableName)
 	clusterInfo, err1 := s.selectClusterById(clusterId)
 	if err1 != nil {
 		return 0, nil, err1
@@ -2623,46 +2615,55 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 	if caInfo == nil || clusterInfo == nil {
 		return 0, nil, common.CLUSTER_NOTEXISTS_ERROR
 	}
-	var totalRecord int
-	var result []*models.LockShow
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", caInfo.UserName, caInfo.Password, clusterInfo.GatewaySqlUrl, dbName))
 	if err != nil {
 		log.Error("open sql err, [%v]", err)
 		return 0, nil, err
 	}
 	defer db.Close()
-	if err := db.QueryRow(countSql).
-		Scan(&(totalRecord)); err != nil {
-		if err == sql.ErrNoRows {
-			log.Error("db row not exists. ")
-			return 0, nil, nil
-		}
-		log.Error("db queryrow is failed. err:[%v]", err)
+	rows, err := db.Query(selectSql)
+	if err != nil {
+		log.Error("db select is failed. err:[%v]", err)
 		return 0, nil, common.DB_ERROR
 	}
-	if totalRecord > 0 {
-		rows, err := db.Query(selectSql)
-		if err != nil {
-			log.Error("db select is failed. err:[%v]", err)
+	defer rows.Close()
+	infos := make([]*models.LockInfo, 0)
+	for rows.Next() {
+		info := new(models.LockInfo)
+		if err := rows.Scan(&(info.K), &(info.Version), &(info.V), &(info.Extend)); err != nil {
+			log.Error("db scan is failed. err:[%v]", err)
 			return 0, nil, common.DB_ERROR
 		}
-		infos := make([]*models.LockInfo, 0)
-		for rows.Next() {
-			info := new(models.LockInfo)
-			if err := rows.Scan(&(info.K), &(info.Version), &(info.V),  &(info.Extend)); err != nil {
-				log.Error("db scan is failed. err:[%v]", err)
-				return 0, nil, common.DB_ERROR
+		infos = append(infos, info)
+	}
+	allResult := ChangeLockToShow(infos)
+
+	totalRecord := len(allResult)
+	result := make([]*models.LockShow, 0)
+	if totalRecord > 0 {
+		if pageInfo != nil {
+			if pageInfo.PageIndex > 0 && pageInfo.PageSize > 0 {
+				start := pageInfo.GetPageOffset()
+				end := start + pageInfo.GetPageSize()
+				log.Debug("start %v, end %v, result len: %v, len: %v", start, end, len(result), len(allResult))
+				if start < totalRecord && end < totalRecord {
+					result = allResult[start:end]
+				} else if start < totalRecord && end > totalRecord {
+					result = allResult[start:]
+				}
+			} else {
+				result = allResult
 			}
-			infos = append(infos, info)
+		} else {
+			result = allResult
 		}
-		rows.Close()
-		result = ChangeLockToShow(infos)
 	}
 	return totalRecord, result, nil
 }
 
 func ChangeLockToShow(infos []*models.LockInfo) []*models.LockShow {
-	shows :=make([]*models.LockShow, 0)
+	shows := make([]*models.LockShow, 0)
+	currentTime := time.Now().UnixNano() /1000000
 	for _, info := range infos {
 		showInfo := new(models.LockShow)
 		showInfo.K = info.K
@@ -2682,6 +2683,9 @@ func ChangeLockToShow(infos []*models.LockInfo) []*models.LockShow {
 		}
 		showInfo.Version = info.Version
 		showInfo.Extend = info.Extend
+		if showInfo.ExpiredTime != 0 && showInfo.ExpiredTime < currentTime {
+			continue
+		}
 		shows = append(shows, showInfo)
 	}
 	return shows
@@ -2805,6 +2809,7 @@ func (s *Service) GetLockClusterInfo(clusterId int) (*models.ClusterInfo, error)
 	}
 	return clusterInfo, nil
 }
+
 //=============lock end================
 
 //=============configure center start================
@@ -2899,7 +2904,7 @@ func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageI
 }
 
 func ChangeConfigToShow(infos []*models.ConfigureInfo) []*models.ConfigureShow {
-	shows :=make([]*models.ConfigureShow, 0)
+	shows := make([]*models.ConfigureShow, 0)
 	for _, info := range infos {
 		showInfo := new(models.ConfigureShow)
 		showInfo.K = info.K
@@ -3171,6 +3176,7 @@ func (s *Service) SetMetricConfig(cId int, addr, interval string) (map[string]st
 	log.Debug("set master client config: %v", respose)
 	return respose, nil
 }
+
 //=============metric end ===============
 
 //============sql ca start ==============
@@ -3193,7 +3199,7 @@ func (s *Service) GetSqlCaList(pageInfo *models.PagerInfo) (int, []*models.SqlCA
 	if err := s.db.QueryRow(countSql).
 		Scan(&(totalRecord)); err != nil {
 		log.Error("db select is failed. err:[%v]", err)
-		return 0, nil, &common.FbaseError{Code:common.DB_ERROR.Code, Msg: err.Error()}
+		return 0, nil, &common.FbaseError{Code: common.DB_ERROR.Code, Msg: err.Error()}
 	}
 	if totalRecord > 0 {
 		rows, err := s.db.Query(selectSql)
@@ -3209,8 +3215,8 @@ func (s *Service) GetSqlCaList(pageInfo *models.PagerInfo) (int, []*models.SqlCA
 				log.Error("db scan is failed. err:[%v]", err)
 				return 0, nil, &common.FbaseError{Code: common.DB_ERROR.Code, Msg: err.Error()}
 			}
-			info.UserName,_ = common.Base64Decode(info.UserName)
-			info.Password,_ = common.Base64Decode(info.Password)
+			info.UserName, _ = common.Base64Decode(info.UserName)
+			info.Password, _ = common.Base64Decode(info.Password)
 			result = append(result, info)
 		}
 		return totalRecord, result, nil
@@ -3266,7 +3272,6 @@ func (s *Service) DelSqlCA(ids []int) error {
 }
 
 //============sql ca end ==============
-
 
 // ------------http request -------------------
 func sendGetSimpleReq(host, uri string, params map[string]interface{}, result string) (error) {
@@ -3523,7 +3528,7 @@ func (s *Service) selectClusterById(cId int) (*models.ClusterInfo, error) {
 func (s *Service) selectSqlCAById(cId int) (*models.SqlCAInfo, error) {
 	info := new(models.SqlCAInfo)
 	if err := s.db.QueryRow(fmt.Sprintf(`SELECT user_name, password From %s WHERE cluster_id=%d`, TABLE_NAME_SQL_CA, cId)).
-		Scan( &(info.UserName), &(info.Password)); err != nil {
+		Scan(&(info.UserName), &(info.Password)); err != nil {
 		if err == sql.ErrNoRows {
 			log.Error("db row not exists. cid:[%d]", cId)
 			return nil, nil
@@ -3532,8 +3537,8 @@ func (s *Service) selectSqlCAById(cId int) (*models.SqlCAInfo, error) {
 			return nil, common.DB_ERROR
 		}
 	}
-	info.UserName,_ = common.Base64Decode(info.UserName)
-	info.Password,_ = common.Base64Decode(info.Password)
+	info.UserName, _ = common.Base64Decode(info.UserName)
+	info.Password, _ = common.Base64Decode(info.Password)
 	return info, nil
 }
 
