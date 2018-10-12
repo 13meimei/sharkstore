@@ -183,7 +183,7 @@ func (ctrl *LockNspDeleteAction) Execute(c *gin.Context) (interface{}, error) {
 }
 
 /**
- * lock cluster 刚上线的时候，锁集群是通过配置的，后期改成获取对应权限的集群列表
+ * lock cluster 刚上线的时候，锁集群是通过配置的，后期改成可配置的。 lock跟普通存储的分裂不一样
  */
 type LockClusterListGetAction struct {
 }
@@ -303,5 +303,5 @@ func (ctrl *LockClusterInfoGetAction) Execute(c *gin.Context) (interface{}, erro
 	if err != nil {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
-	return service.NewService().GetClusterInfo(cId)
+	return service.NewService().GetLockClusterInfo(cId)
 }

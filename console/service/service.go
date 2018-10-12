@@ -2587,16 +2587,17 @@ func (s *Service) DeleteNsp(ids []string, storeTable string) error {
 }
 
 func (s *Service) GetLockClusterList() ([]*models.ClusterInfo, error) {
-	clusterId := s.config.LockClusterId
-	info, err := s.selectClusterById(clusterId)
-	if err != nil {
-		return nil, err
-	}
-	if info == nil {
-		return nil, common.CLUSTER_NOTEXISTS_ERROR
-	}
 	var clusters []*models.ClusterInfo
-	clusters = append(clusters, info)
+	for _, cluster := range s.config.LockClusters {
+		info, err := s.selectClusterById(cluster.Id)
+		if err != nil {
+			return nil, err
+		}
+		if info == nil {
+			return nil, common.CLUSTER_NOTEXISTS_ERROR
+		}
+		clusters = append(clusters, info)
+	}
 	return clusters, nil
 }
 
@@ -2758,7 +2759,7 @@ func encrpytMd5(source []byte) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func (s *Service) GetClusterInfo(clusterId int) (*models.ClusterInfo, error) {
+func (s *Service) GetLockClusterInfo(clusterId int) (*models.ClusterInfo, error) {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return nil, err
@@ -2787,14 +2788,20 @@ func (s *Service) GetClusterInfo(clusterId int) (*models.ClusterInfo, error) {
 	//		clusterInfo.MasterUrl = fmt.Sprintf("%s:%s", urlArray[0], urlArray2[1])
 	//	}
 	//}
-	if info.MasterUrl != "" {
-		var urlArray []string
-		if strings.HasPrefix(info.MasterUrl, "http://") {
-			urlArray = strings.Split(info.MasterUrl[7:], ":")
-		} else {
-			urlArray = strings.Split(info.MasterUrl, ":")
+	//if info.MasterUrl != "" {
+	//	var urlArray []string
+	//	if strings.HasPrefix(info.MasterUrl, "http://") {
+	//		urlArray = strings.Split(info.MasterUrl[7:], ":")
+	//	} else {
+	//		urlArray = strings.Split(info.MasterUrl, ":")
+	//	}
+	//	clusterInfo.MasterUrl = fmt.Sprintf("%s:%d", urlArray[0], s.config.DomainRpcPort)
+	//}
+	for _, cluster := range s.config.LockClusters {
+		if clusterId == cluster.Id {
+			clusterInfo.MasterUrl = cluster.Addr
+			break
 		}
-		clusterInfo.MasterUrl = fmt.Sprintf("%s:%d", urlArray[0], s.config.DomainRpcPort)
 	}
 	return clusterInfo, nil
 }
@@ -2818,16 +2825,17 @@ func (s *Service) DeleteConfigureNsp(ids []string) error {
 }
 
 func (s *Service) GetConfigureClusterList() ([]*models.ClusterInfo, error) {
-	clusterId := s.config.ConfigureClusterId
-	info, err := s.selectClusterById(clusterId)
-	if err != nil {
-		return nil, err
-	}
-	if info == nil {
-		return nil, common.CLUSTER_NOTEXISTS_ERROR
-	}
 	var clusters []*models.ClusterInfo
-	clusters = append(clusters, info)
+	for _, cluster := range s.config.ConfClusters {
+		info, err := s.selectClusterById(cluster.Id)
+		if err != nil {
+			return nil, err
+		}
+		if info == nil {
+			return nil, common.CLUSTER_NOTEXISTS_ERROR
+		}
+		clusters = append(clusters, info)
+	}
 	return clusters, nil
 }
 
@@ -2940,6 +2948,24 @@ func (s *Service) AuditConfigureNsp(ids []string, status int, auditor string) er
 	}
 	log.Debug("%v audit configure namespace success, status: %v", auditor, status)
 	return nil
+}
+
+func (s *Service) GetConfigureClusterInfo(clusterId int) (*models.ClusterInfo, error) {
+	info, err := s.selectClusterById(clusterId)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, common.CLUSTER_NOTEXISTS_ERROR
+	}
+	clusterInfo := &models.ClusterInfo{Id: info.Id, Name: info.Name}
+	for _, cluster := range s.config.ConfClusters {
+		if clusterId == cluster.Id {
+			clusterInfo.MasterUrl = cluster.Addr
+			break
+		}
+	}
+	return clusterInfo, nil
 }
 
 //=============configure center end================

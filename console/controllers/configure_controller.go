@@ -256,5 +256,5 @@ func (ctrl *ConfigureClusterInfoGetAction) Execute(c *gin.Context) (interface{},
 	if err != nil {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
-	return service.NewService().GetClusterInfo(cId)
+	return service.NewService().GetConfigureClusterInfo(cId)
 }

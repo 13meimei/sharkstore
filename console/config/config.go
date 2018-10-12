@@ -7,6 +7,7 @@ import (
 
 	"util/config"
 	"util/log"
+	"encoding/json"
 )
 
 type LoginConfig struct {
@@ -23,6 +24,11 @@ type LoginConfig struct {
 	AppToken      string
 }
 
+type ClusterConfig struct {
+	Id   int    `json:"id"`
+	Addr string `json:"addr"`
+}
+
 type Config struct {
 	ProjectHomeDir string
 	ReqListenPort  int
@@ -37,11 +43,10 @@ type Config struct {
 	MysqlUser   string
 	MysqlPasswd string
 
-	//lock cluster
-	LockClusterId int
-	//configure cluster
-	ConfigureClusterId int
-	DomainRpcPort      int
+	//lock cluster list
+	LockClusters []*ClusterConfig
+	//configure cluster list
+	ConfClusters []*ClusterConfig
 
 	// log
 	ProjectLogDir    string
@@ -98,18 +103,27 @@ Usage:
 	if c.MysqlPasswd, found = config.Config.String("mysql.passwd"); !found {
 		log.Panic("Config mysql.passwd not specified")
 	}
-	if c.LockClusterId, found = config.Config.Int("lock.cluster.id"); !found {
-		log.Warn("Config lock.cluster.id not specified")
-		c.LockClusterId = 0
+
+	c.LockClusters, c.ConfClusters = make([]*ClusterConfig, 0), make([]*ClusterConfig, 0)
+	var lockInfo, configureInfo string
+	if lockInfo, found = config.Config.String("lock.clusters"); !found {
+		log.Warn("Config lock.clusters not specified")
+	} else {
+		err = json.Unmarshal([]byte(lockInfo), &c.LockClusters)
+		if err != nil {
+			log.Panic("Config lock.clusters resolve error, %v", err)
+		}
 	}
-	if c.ConfigureClusterId, found = config.Config.Int("configure.cluster.id"); !found {
-		log.Warn("Config configure.cluster.id not specified")
-		c.ConfigureClusterId = 0
+
+	if configureInfo, found = config.Config.String("configure.clusters"); !found {
+		log.Warn("Config configure.clusters not specified")
+	} else {
+		err = json.Unmarshal([]byte(configureInfo), &c.ConfClusters)
+		if err != nil {
+			log.Panic("Config lock.clusters resolve error, %v", err)
+		}
 	}
-	if c.DomainRpcPort, found = config.Config.Int("domain.rpc.port"); !found {
-		log.Warn("Config domain.rpc.port not specified")
-		c.DomainRpcPort = 18887
-	}
+
 	if c.ProjectLogDir, found = config.Config.String("log.dir"); !found {
 		log.Panic("Config log.dir not specified")
 	}
@@ -127,7 +141,6 @@ Usage:
 	}
 
 	c.LoginConfig = new(LoginConfig)
-
 
 	return c
 }

@@ -330,11 +330,9 @@ function getCluster() {
         type: "get",
         success: function (data) {
             if (data.code === 0) {
-                if (data.data.length > 0) {
+                for (var i = 0; i < data.data.length; i++) {
                     var option;
-                    for (var i = 0; i < data.data.length; i++) {
-                        option = $("<option>").val(data.data[i].id).text(data.data[i].name);
-                    }
+                    option = $("<option>").val(data.data[i].id).text(data.data[i].name);
                     $('#clusterSelect').append(option);
                 }
             } else {
