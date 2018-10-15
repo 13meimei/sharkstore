@@ -439,6 +439,8 @@ func (resp *Response) GetErr() (pErr *errorpb.Error, err error) {
 		pErr = resp.RawDeleteResp.GetHeader().GetError()
 	case Type_Insert:
 		pErr = resp.InsertResp.GetHeader().GetError()
+	case Type_Update:
+		pErr = resp.UpdateResp.GetHeader().GetError()
 	case Type_Select:
 		pErr = resp.SelectResp.GetHeader().GetError()
 	case Type_Delete:

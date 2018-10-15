@@ -1823,3 +1823,69 @@ func TestAllDeleteRoutChange(t *testing.T) {
 	testProxySelect(t, p, expected, "select * from "+testTableName)
 
 }
+
+func TestUpdate(t *testing.T) {
+	log.InitFileLog(logPath, "proxy", "debug")
+	columns := []*columnInfo{
+		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isPK: true},
+		&columnInfo{name: "name", typ: metapb.DataType_Varchar},
+		&columnInfo{name: "balance", typ: metapb.DataType_Double},
+	}
+	db := &metapb.DataBase{Name: testDBName, Id: 1}
+	table := makeTestTable(columns)
+	start := util.EncodeStorePrefix(util.Store_Prefix_KV, table.GetId())
+
+	var pkCol *metapb.Column
+	var pks []*metapb.Column
+	for _, col := range table.Columns {
+		if col.Name == "id" {
+			pkCol = col
+			pks = append(pks, col)
+			break
+		}
+	}
+
+	r := util.BytesPrefix(start)
+	middle, _ := util.EncodePrimaryKey(start, pkCol, []byte(strconv.Itoa(8)));
+	rng := &metapb.Range{
+		Id:         1,
+		TableId:    1,
+		StartKey:   r.Start,
+		EndKey:     middle,
+		RangeEpoch: &metapb.RangeEpoch{ConfVer: 1, Version: 1},
+		Peers:      []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+	}
+	rng.PrimaryKeys = pks
+	rng1 := &metapb.Range{
+		Id:         2,
+		TableId:    1,
+		StartKey:   middle,
+		EndKey:     r.Limit,
+		RangeEpoch: &metapb.RangeEpoch{ConfVer: 1, Version: 1},
+		Peers:      []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+	}
+	rng1.PrimaryKeys = pks
+	p := newTestProxy2(db, table, rng, rng1)
+	defer CloseMock(p)
+	defer p.Close()
+
+	//insert
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 0.0085)")
+
+	testProxyUpdate(t, p, 1, "update "+testTableName+" set name = 'mynameupdate' where id = 1 ")
+	testProxyUpdate(t, p, 1, "update "+testTableName+" set name = 'mynameupdate2', balance = 0.0065 where id = 1")
+	testProxyUpdate(t, p, 1, "update "+testTableName+" set balance = balance + 1 where id = 2 ")
+	testProxyUpdate(t, p, 1, "update "+testTableName+" set balance = balance - 0.0001, name = 'myname2update2' where id = 2")
+	testProxyUpdate(t, p, 1, "update "+testTableName+" set balance = balance * 2, name = 'myname2update3' where id = 2")
+	testProxyUpdate(t, p, 1, "update "+testTableName+" set balance = balance / 4, name = 'myname2update4' where id = 2")
+	//testProxyUpdate(t, p, 2, "update "+testTableName+" set name = 'allname', balance = balance + 0.1 ")
+
+	// select and check
+	//expected := [][]string{
+	//	[]string{"1", "allname", "0.0075"},
+	//	[]string{"2", "allname", "0.1043"},
+	//}
+	//testProxySelect(t, p, expected, "select * from "+testTableName)
+
+}

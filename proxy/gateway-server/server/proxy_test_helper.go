@@ -506,3 +506,32 @@ func getSelectFilter(tt *testing.T, p *Proxy, db string, stmt *sqlparser.Select)
 
 	return &Filter{columns: columns, matchs: matchs}
 }
+
+func testProxyUpdate(t *testing.T, p *Proxy, expectedAffected uint64, sql string) {
+	t.Logf("sql> %s ", sql)
+
+	sqlstmt, err := sqlparser.Parse(sql)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stmt, ok := sqlstmt.(*sqlparser.Update)
+	if !ok {
+		t.Fatalf("not update stamentent: %s", sql)
+	}
+	res, err := p.HandleUpdate(testDBName, stmt, nil)
+	if err != nil {
+		if  err == dskv.ErrRouteChange{
+			t.Logf("update failed, %v, sqlL%v", err, sql)
+			return
+		} else {
+			t.Fatalf("update failed: %v, sql: %v", err, sql)
+		}
+	}
+	if res.Status != 0 {
+		t.Fatalf("update failed. status not ok(%d)", res.Status)
+	}
+	if res.AffectedRows != expectedAffected {
+		time.Sleep(time.Second)
+		t.Fatalf("update failed. unexpectecd affected rows: %v, expected: %v", res.AffectedRows, expectedAffected)
+	}
+}
