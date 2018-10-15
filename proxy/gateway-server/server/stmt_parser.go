@@ -223,6 +223,7 @@ func (s *StmtParser) parseUpdateFields(t *Table, update *sqlparser.Update) ([]*k
 		field := &kvrpcpb.Field{Column: col}
 		switch val := expr.Expr.(type) {
 		case sqlparser.StrVal:
+			//todo value type check, value.type = field.type
 			field.Value = []byte(val)
 		case sqlparser.NumVal:
 			field.Value = []byte(val)
