@@ -468,6 +468,15 @@ func testSetCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected
 	assert.DeepEqual(t, reply, expected)
 }
 
+
+func testUpdCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected *Reply) {
+	reply, err := query.updCommand(p, table)
+	if err != nil {
+		t.Fatal("upd command error: ", err)
+	}
+	assert.DeepEqual(t, reply, expected)
+}
+
 func getSelectFilter(tt *testing.T, p *Proxy, db string, stmt *sqlparser.Select) *Filter {
 	parser := &StmtParser{}
 
