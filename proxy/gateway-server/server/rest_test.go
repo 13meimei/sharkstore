@@ -1,16 +1,17 @@
 package server
 
 import (
-	"testing"
+
 	"model/pkg/metapb"
-	"util"
 	"proxy/gateway-server/sqlparser"
+	"util/log"
+	"fmt"
+	"util"
 	"net/http"
 	"bytes"
-	"util/assert"
+	"testing"
 	"encoding/json"
-	"fmt"
-	"util/log"
+	"util/assert"
 )
 
 func TestRestKVHttp(t *testing.T) {
@@ -191,6 +192,29 @@ func TestRestKVHttp(t *testing.T) {
 		},
 	}
 	testUpdCommand(t, updQueryRep, table, s.proxy, &Reply{
+		Code:         0,
+		RowsAffected: 1,
+	})
+
+	updQueryRep2 := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			FieldValue: []*FieldValue{
+				{Column:"name", Value: "myname112"},
+				{Column:"balance", Value:  0.11, Relate: "+"},
+			},
+			Filter: &Filter_{
+				And: []*And{
+					&And{
+						Field:  &Field_{Column: "id", Value: uint64(1)},
+						Relate: "=",
+					},
+				},
+			},
+		},
+	}
+	testUpdCommand(t, updQueryRep2, table, s.proxy, &Reply{
 		Code:         0,
 		RowsAffected: 1,
 	})
