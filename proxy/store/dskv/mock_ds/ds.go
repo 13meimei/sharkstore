@@ -375,6 +375,47 @@ func (svr *DsRpcServer) query(msg *dsClient.Message) {
 	msg.SetData(data)
 }
 
+
+func (svr *DsRpcServer) update(msg *dsClient.Message) {
+	var resp *kvrpcpb.DsUpdateResponse
+	req := new(kvrpcpb.DsUpdateRequest)
+	err := proto.Unmarshal(msg.GetData(), req)
+	if err != nil {
+		resp = &kvrpcpb.DsUpdateResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "decode update failed"}}}
+	} else {
+		rangeId := req.Header.GetRangeId()
+		rng :=svr.GetRange(rangeId)
+		if rng == nil {
+			resp = &kvrpcpb.DsUpdateResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message:"no exist range", NotLeader: &errorpb.NotLeader{RangeId: rangeId}}}}
+		} else {
+			rngEpoch := req.Header.GetRangeEpoch()
+
+			if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
+				log.Info("%v", req.GetReq().GetKey())
+				for _, filed := range req.GetReq().GetFields() {
+					log.Info("%v, %v, %v", filed.GetFieldType(), filed.Column.GetName(), filed.GetValue())
+				}
+				scope := req.GetReq().GetScope()
+				if scope != nil {
+					log.Info("%v, %v, %v", scope.GetStart(), scope.GetLimit())
+				}
+
+				resp = &kvrpcpb.DsUpdateResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.UpdateResponse{Code: 0, AffectedKeys: uint64(1)}}
+			}else{
+				resp = &kvrpcpb.DsUpdateResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.UpdateResponse{Code: 1, AffectedKeys: uint64(0)}}
+
+				staleErr := &errorpb.Error{
+					StaleEpoch: &errorpb.StaleEpoch{OldRange:rng,NewRange:svr.childRngs[rangeId]},
+				}
+				resp.Header.Error = staleErr
+			}
+		}
+	}
+	data, _ := proto.Marshal(resp)
+	msg.SetMsgType(0x12)
+	msg.SetData(data)
+}
+
 /**
 delete one key or delete all
  */
@@ -754,6 +795,8 @@ func (svr *DsRpcServer)do(msg *dsClient.Message) {
 		svr.query(msg)
 	case funcpb.FunctionID_kFuncDelete:
 		svr.delete(msg)
+	case funcpb.FunctionID_kFuncUpdate:
+		svr.update(msg)
 	case funcpb.FunctionID_kFuncKvSet:
 		svr.kvSet(msg)
 	case funcpb.FunctionID_kFuncKvGet:

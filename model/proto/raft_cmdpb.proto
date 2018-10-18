@@ -113,6 +113,8 @@ message Command {
     kvrpcpb.LockUpdateRequest   lock_update_req = 41;
     kvrpcpb.UnlockRequest       unlock_req      = 42;
     kvrpcpb.UnlockForceRequest  unlock_force_req = 43;
+
+    kvrpcpb.UpdateRequest           update_req               = 50;
 }
 
 message PeerTask {

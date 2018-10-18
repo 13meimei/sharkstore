@@ -4,6 +4,7 @@
 #include "helper/store_test_fixture.h"
 #include "proto/gen/watchpb.pb.h"
 
+
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
@@ -94,6 +95,8 @@ TEST_F(StoreTest, SelectEmpty) {
     auto s = testSelect(
             [](SelectRequestBuilder& b) { b.AddAllFields(); },
             {});
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     // random
@@ -626,7 +629,141 @@ TEST_F(StoreTest, DeleteWhere) {
     ASSERT_TRUE(s.ok()) << s.ToString();
 }
 
+TEST_F(StoreTest, UpdateOneRow) {
+    InsertSomeRows();
 
+    sharkstore::Status s;
+
+    // update set balance += 1000 where balance = 101
+    s = testUpdate(
+            [](UpdateRequestBuilder& b) {
+                b.AddMatch("balance", kvrpcpb::Equal, "101");
+                b.SetField("balance", kvrpcpb::FieldType::Plus, "1000");
+            }, 1
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    // select balance = 1101 should be ok
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.SetKey({"1"});
+//                b.AddMatch("id", kvrpcpb::Equal, "1");
+//                b.AddMatch("balance", kvrpcpb::Equal, "1101");
+            },
+            {{rows_[0][0], rows_[0][1], "1101"}}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    // select balance = 101 should not be found
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.AddMatch("balance", kvrpcpb::Equal, "101");
+            },
+            {}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
+TEST_F(StoreTest, UpdateByPk) {
+    InsertSomeRows();
+
+    sharkstore::Status s;
+
+    s = testUpdate(
+            [](UpdateRequestBuilder& b) {
+                b.AddMatch("id", kvrpcpb::Equal, "1");
+                b.SetField("balance", kvrpcpb::FieldType::Assign, "200");
+            }, 1
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.SetKey({"1"});
+            },
+            {{rows_[0][0], rows_[0][1], "200"}}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
+TEST_F(StoreTest, UpdateMultiColumn) {
+    InsertSomeRows();
+
+    sharkstore::Status s;
+
+    s = testUpdate(
+            [](UpdateRequestBuilder& b) {
+                b.AddMatch("id", kvrpcpb::Equal, "1");
+//                b.SetKey({"1"});
+                b.SetField("name", kvrpcpb::FieldType::Assign, "update_col");
+                b.SetField("balance", kvrpcpb::FieldType::Plus, "200");
+            }, 1
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.SetKey({"1"});
+            },
+            {{rows_[0][0], "update_col", "301"}}
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
+TEST_F(StoreTest, UpdateMultiColumnsMultiRows) {
+    InsertSomeRows();
+
+    sharkstore::Status s;
+
+    s = testUpdate(
+            [](UpdateRequestBuilder& b) {
+                b.AddMatch("id", kvrpcpb::LessOrEqual, "3");
+                b.SetField("name", kvrpcpb::FieldType::Assign, "update_col");
+                b.SetField("balance", kvrpcpb::FieldType::Plus, "200");
+            }, 3
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.AddMatch("id", kvrpcpb::LessOrEqual, "3");
+            },
+            {
+                    {rows_[0][0], "update_col", "301"},
+                    {rows_[1][0], "update_col", "302"},
+                    {rows_[2][0], "update_col", "303"},
+            }
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
+TEST_F(StoreTest, UpdateMultiRows) {
+    InsertSomeRows();
+
+    sharkstore::Status s;
+
+    s = testUpdate(
+            [](UpdateRequestBuilder &b) {
+                b.AddMatch("balance", kvrpcpb::LessOrEqual, "103");
+                b.SetField("balance", kvrpcpb::FieldType::Assign, "2000");
+            },
+            3
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    s = testSelect(
+            [](SelectRequestBuilder& b) {
+                b.AddAllFields();
+                b.AddMatch("balance", kvrpcpb::Equal, "2000");
+            },
+            {
+                    {rows_[0][0], rows_[0][1], "2000"},
+                    {rows_[1][0], rows_[1][1], "2000"},
+                    {rows_[2][0], rows_[2][1], "2000"},
+            }
+    );
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
 
 TEST_F(StoreTest, Watch) {
     {

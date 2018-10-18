@@ -149,6 +149,13 @@ func (api *SharkStoreApi) execute(s *Server, dbName string, tableName string, qu
 			log.Error("setcommand error: %v", err)
 			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
 		}
+	case "upd":
+		slowLogThreshold = s.proxy.config.Performance.UpdateSlowLog
+		reply, err = query.setCommand(s.proxy, t)
+		if err != nil {
+			log.Error("updcommand error: %v", err)
+			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
+		}
 	case "del":
 		slowLogThreshold = s.proxy.config.Performance.SelectSlowLog
 		reply, err = query.delCommand(s.proxy, t)

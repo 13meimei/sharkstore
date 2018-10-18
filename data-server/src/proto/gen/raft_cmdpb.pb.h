@@ -1163,6 +1163,15 @@ class Command : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::kvrpcpb::UnlockForceRequest* release_unlock_force_req();
   void set_allocated_unlock_force_req(::kvrpcpb::UnlockForceRequest* unlock_force_req);
 
+  // .kvrpcpb.UpdateRequest update_req = 50;
+  bool has_update_req() const;
+  void clear_update_req();
+  static const int kUpdateReqFieldNumber = 50;
+  const ::kvrpcpb::UpdateRequest& update_req() const;
+  ::kvrpcpb::UpdateRequest* mutable_update_req();
+  ::kvrpcpb::UpdateRequest* release_update_req();
+  void set_allocated_update_req(::kvrpcpb::UpdateRequest* update_req);
+
   // .raft_cmdpb.CmdType cmd_type = 2;
   void clear_cmd_type();
   static const int kCmdTypeFieldNumber = 2;
@@ -1200,6 +1209,7 @@ class Command : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::kvrpcpb::LockUpdateRequest* lock_update_req_;
   ::kvrpcpb::UnlockRequest* unlock_req_;
   ::kvrpcpb::UnlockForceRequest* unlock_force_req_;
+  ::kvrpcpb::UpdateRequest* update_req_;
   int cmd_type_;
   mutable int _cached_size_;
   friend struct protobuf_raft_5fcmdpb_2eproto::TableStruct;
@@ -2895,6 +2905,46 @@ inline void Command::set_allocated_unlock_force_req(::kvrpcpb::UnlockForceReques
     
   }
   // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.Command.unlock_force_req)
+}
+
+// .kvrpcpb.UpdateRequest update_req = 50;
+inline bool Command::has_update_req() const {
+  return this != internal_default_instance() && update_req_ != NULL;
+}
+inline void Command::clear_update_req() {
+  if (GetArenaNoVirtual() == NULL && update_req_ != NULL) delete update_req_;
+  update_req_ = NULL;
+}
+inline const ::kvrpcpb::UpdateRequest& Command::update_req() const {
+  const ::kvrpcpb::UpdateRequest* p = update_req_;
+  // @@protoc_insertion_point(field_get:raft_cmdpb.Command.update_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::UpdateRequest*>(
+      &::kvrpcpb::_UpdateRequest_default_instance_);
+}
+inline ::kvrpcpb::UpdateRequest* Command::mutable_update_req() {
+  
+  if (update_req_ == NULL) {
+    update_req_ = new ::kvrpcpb::UpdateRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:raft_cmdpb.Command.update_req)
+  return update_req_;
+}
+inline ::kvrpcpb::UpdateRequest* Command::release_update_req() {
+  // @@protoc_insertion_point(field_release:raft_cmdpb.Command.update_req)
+  
+  ::kvrpcpb::UpdateRequest* temp = update_req_;
+  update_req_ = NULL;
+  return temp;
+}
+inline void Command::set_allocated_update_req(::kvrpcpb::UpdateRequest* update_req) {
+  delete update_req_;
+  update_req_ = update_req;
+  if (update_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.Command.update_req)
 }
 
 // -------------------------------------------------------------------

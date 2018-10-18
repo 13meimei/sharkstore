@@ -1,12 +1,14 @@
 package server
 
 import (
-	"fmt"
-	"strconv"
-
 	"proxy/gateway-server/sqlparser"
+	"model/pkg/kvrpcpb"
+	"model/pkg/metapb"
 	"util/hack"
 	"util/log"
+	"strings"
+	"strconv"
+	"fmt"
 )
 
 type SQLValue []byte
@@ -16,13 +18,23 @@ type InsertRowValue []SQLValue
 type MatchType int
 
 var (
-	Invalid       MatchType = 0
+	Invalid  MatchType = 0
 	Equal         MatchType = 1
 	NotEqual      MatchType = 2
 	Less          MatchType = 3
 	LessOrEqual   MatchType = 4
 	Larger        MatchType = 5
 	LargerOrEqual MatchType = 6
+)
+
+type FieldType int
+
+var (
+	FieldInvalid FieldType = 0
+	Plus         FieldType = 1
+	Minus        FieldType = 2
+	Mult         FieldType = 3
+	Div          FieldType = 4
 )
 
 type StmtParser struct {
@@ -44,6 +56,12 @@ type SelColumn struct {
 	aggreFunc string // empty if not aggregation function
 	col       string // empty if select(*) or count(*)
 }
+
+type UpdColumn struct {
+	column    string
+	value     []byte
+	fieldType FieldType
+} 
 
 type Field struct {
 	col   string
@@ -181,7 +199,60 @@ func (s *StmtParser) parseInsertValues(insert *sqlparser.Insert) ([]InsertRowVal
 	return rowValues, nil
 }
 
-func (s *StmtParser) parseOperator(operator string) MatchType {
+func (s *StmtParser) parseUpdateFields(t *Table, update *sqlparser.Update) ([]*kvrpcpb.Field, error) {
+	exprs := update.Exprs
+	if len(exprs) == 0 {
+		// TODO: see mysql error
+		return nil, fmt.Errorf("missing update col and value pairs")
+	}
+	fields := make([]*kvrpcpb.Field, 0, len(exprs))
+	for i, expr := range exprs {
+		if expr.Name == nil || len(expr.Name.Name) == 0 {
+			return nil, fmt.Errorf("missing update col at index %d", i)
+		}
+		colName := string(expr.Name.Name)
+		col := t.FindColumn(colName)
+		if col == nil {
+			return nil, fmt.Errorf("Unknown column '%s' in 'field list'", colName)
+		}
+		//检查是否包含主键值，不允许修改
+		if col.GetPrimaryKey() == 1 {
+			return nil, fmt.Errorf("pk(%s) not allowed for update", colName)
+		}
+
+		field := &kvrpcpb.Field{Column: col}
+		switch val := expr.Expr.(type) {
+		case sqlparser.StrVal:
+			//todo value type check, value.type = field.type
+			field.Value = []byte(val)
+		case sqlparser.NumVal:
+			field.Value = []byte(val)
+		case *sqlparser.NullVal:
+			field.Value = nil
+		case *sqlparser.BinaryExpr:
+			log.Info("binary expr %s%c%s", val.Left, val.Operator, val.Right)
+			switch col.DataType {
+			case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+				fallthrough
+			case metapb.DataType_Float, metapb.DataType_Double:
+				value, operateType, err := s.parseBinary(col, val)
+				if err != nil {
+					return nil, err
+				}
+				field.Value = value
+				field.FieldType = kvrpcpb.FieldType(operateType)
+			default:
+				return nil, fmt.Errorf("unsupported type(%s) when update field(%s)", col.DataType.String(), col.Name)
+			}
+		default:
+			return nil, fmt.Errorf("unsupported update value type(%T) at index %d", expr.Expr, i)
+		}
+		fields = append(fields, field)
+	}
+	return fields, nil
+}
+
+func (s *StmtParser) parseCompOperator(operator string) MatchType {
 	switch operator {
 	case sqlparser.AST_EQ:
 		return Equal
@@ -212,7 +283,7 @@ func (s *StmtParser) parseComparison(expr *sqlparser.ComparisonExpr) (*Match, er
 		log.Error("invalid expr")
 		return nil, fmt.Errorf("expr.left transfer type err %v", expr.Left)
 	}
-	matchType := s.parseOperator(expr.Operator)
+	matchType := s.parseCompOperator(expr.Operator)
 	if matchType == Invalid {
 		return nil, fmt.Errorf("unsupported comparsion operator(%s)", expr.Operator)
 	}
@@ -227,6 +298,49 @@ func (s *StmtParser) parseComparison(expr *sqlparser.ComparisonExpr) (*Match, er
 		return nil, fmt.Errorf("expr type unsupported, unknown val type %v", expr.Right)
 	}
 	return &Match{column: column, sqlValue: value, matchType: matchType}, nil
+}
+
+func (s *StmtParser) parseBinaryOperator(operator byte) FieldType {
+	switch operator {
+	case sqlparser.AST_PLUS:
+		return Plus
+	case sqlparser.AST_MINUS:
+		return Minus
+	case sqlparser.AST_MULT:
+		return Mult
+	case sqlparser.AST_DIV:
+		return Div
+	}
+	return FieldInvalid
+}
+
+func (s *StmtParser) parseBinary(colMeta *metapb.Column, expr *sqlparser.BinaryExpr) ([]byte, FieldType, error) {
+	var column string
+	if col, ok := expr.Left.(*sqlparser.ColName); ok {
+		column = string(col.Name)
+		log.Info("left col %v, colName %v", column, colMeta.Name)
+		if strings.Compare(colMeta.Name, column) != 0 {
+			log.Error("invalid expr, expr.left field should be %v not %v", colMeta.Name, expr.Left)
+			return nil, FieldInvalid, fmt.Errorf("expr.left field should be %v not %v", colMeta.Name, column)
+		}
+	} else {
+		log.Error("invalid expr, expr.left transfer type err %v", expr.Left)
+		return nil, FieldInvalid, fmt.Errorf("expr.left transfer type err %v", expr.Left)
+	}
+
+	fieldType := s.parseBinaryOperator(expr.Operator)
+	if fieldType == FieldInvalid {
+		return nil, FieldInvalid, fmt.Errorf("unsupported binary operator(%c)", expr.Operator)
+	}
+	var value []byte
+	switch lrVal := expr.Right.(type) {
+	case sqlparser.NumVal:
+		value = []byte(lrVal)
+	default:
+		log.Debug("unknown val type")
+		return nil, FieldInvalid, fmt.Errorf("expr type unsupported, unknown val type %v", expr.Right)
+	}
+	return value, fieldType, nil
 }
 
 func (s *StmtParser) parseMatch(_expr sqlparser.BoolExpr) (matches []Match, err error) {
@@ -305,7 +419,7 @@ func parseLimit(limit *sqlparser.Limit) (offset, count uint64, err error) {
 		return
 	}
 	if count, err = strconv.ParseUint(hack.String([]byte(num)), 10, 64); err != nil {
-		err = fmt.Errorf("invalid select limit count(%s): %v", string(num), err)
+		err = fmt.Errorf("invalid limit count(%s): %v", string(num), err)
 		return
 	}
 	return

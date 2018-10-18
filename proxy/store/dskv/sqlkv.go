@@ -74,7 +74,7 @@ func (p *KvProxy) Insert(rContext *ReqContext, req *kvrpcpb.InsertRequest, key [
 		if l != nil {
 			nodeId = l.NodeId
 		}
-		log.Error("nodeId:%d,request:[%v],response exception, response:[%v] ", nodeId, req, response)
+		log.Error("[insert]nodeId:%d,request:[%v],response exception, response:[%v] ", nodeId, req, response)
 		return nil, nil, ErrAffectRows
 	}
 	if response == nil || response.GetCode() > 0 {
@@ -83,14 +83,46 @@ func (p *KvProxy) Insert(rContext *ReqContext, req *kvrpcpb.InsertRequest, key [
 		if l != nil {
 			nodeId = l.NodeId
 		}
-		log.Error("nodeId:%d,request:[%v],response exception, response:[%v] ", nodeId, req, response)
+		log.Error("[insert]nodeId:%d,request:[%v],response exception, response:[%v] ", nodeId, req, response)
 		return response, nil, ErrInternalError
 	}
 	return response, l, nil
 }
 
+func (p *KvProxy) Update(rContext *ReqContext, req *kvrpcpb.UpdateRequest, key []byte) (*kvrpcpb.UpdateResponse, error) {
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_Update
+	in.UpdateReq = &kvrpcpb.DsUpdateRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, l, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("KvUpdate", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("KvUpdate", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetUpdateResp().GetResp()
+	if response == nil || response.GetCode() > 0 {
+		var nodeId uint64 = 0
+		l, err = p.RangeCache.LocateKey(rContext.GetBackOff(), key)
+		if l != nil {
+			nodeId = l.NodeId
+		}
+		log.Error("[update]nodeId:%d,request:[%v],response exception, response:[%v] ", nodeId, req, response)
+		return response, ErrInternalError
+	}
+	return response, nil
+}
+
 func (p *KvProxy) SqlQuery(req *kvrpcpb.SelectRequest, key []byte) (*kvrpcpb.SelectResponse, *KeyLocation, error) {
-	log.Debug("select by route key: %v",key)
+	log.Debug("select by route key: %v", key)
 	context := NewPRConext(GetMaxBackoff)
 	var retErr, errForRetry error
 	for metricLoop := 0; ; metricLoop++ {
@@ -166,7 +198,7 @@ func (p *KvProxy) SqlDelete(req *kvrpcpb.DeleteRequest, scope *kvrpcpb.Scope) ([
 
 func (p *KvProxy) Delete(req *kvrpcpb.DeleteRequest, key []byte) (*kvrpcpb.DeleteResponse, *KeyLocation, error) {
 	var retErr, errForRetry error
-	context :=  NewPRConext(ScannerNextMaxBackoff)
+	context := NewPRConext(ScannerNextMaxBackoff)
 	for metricLoop := 0; ; metricLoop++ {
 		if errForRetry != nil {
 			errForRetry = context.GetBackOff().Backoff(BoMSRPC, errForRetry)
@@ -192,7 +224,7 @@ func (p *KvProxy) Delete(req *kvrpcpb.DeleteRequest, key []byte) (*kvrpcpb.Delet
 		}
 		if err != nil {
 			if err == ErrRouteChange {
-				log.Info("delete failure ,route change key:%v",key)
+				log.Info("delete failure ,route change key:%v", key)
 				retErr = err
 				errForRetry = err
 				continue

@@ -9,6 +9,7 @@ _Pragma("once");
 #include "range/split_policy.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
+#include "field_value.h"
 
 // test fixture forward declare for friend class
 namespace sharkstore { namespace test { namespace helper { class StoreTestFixture; }}}
@@ -34,6 +35,7 @@ public:
     Status Delete(const std::string& key);
 
     Status Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected);
+    Status Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint64_t* update_bytes);
     Status Select(const kvrpcpb::SelectRequest& req,
                   kvrpcpb::SelectResponse* resp);
     Status DeleteRows(const kvrpcpb::DeleteRequest& req, uint64_t* affected);

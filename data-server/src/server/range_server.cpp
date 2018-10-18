@@ -375,6 +375,9 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
         case funcpb::kFuncInsert:
             Insert(msg);
             break;
+        case funcpb::kFuncUpdate:
+            Update(msg);
+            break;
         case funcpb::kFuncSelect:
             Select(msg);
             break;
@@ -842,6 +845,16 @@ void RangeServer::Insert(common::ProtoMessage *msg) {
     auto range = CheckAndDecodeRequest("Insert", req, resp, msg);
     if (range != nullptr) {
         range->Insert(msg, req);
+    }
+}
+
+void RangeServer::Update(common::ProtoMessage *msg) {
+    kvrpcpb::DsUpdateRequest req;
+    kvrpcpb::DsUpdateResponse *resp;
+
+    auto range = CheckAndDecodeRequest("Update", req, resp, msg);
+    if (range != nullptr) {
+        range->Update(msg, req);
     }
 }
 

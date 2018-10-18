@@ -1,15 +1,17 @@
 package server
 
 import (
-	"testing"
+
 	"model/pkg/metapb"
-	"util"
 	"proxy/gateway-server/sqlparser"
+	"util/log"
+	"fmt"
+	"util"
 	"net/http"
 	"bytes"
-	"util/assert"
+	"testing"
 	"encoding/json"
-	"fmt"
+	"util/assert"
 )
 
 func TestRestKVHttp(t *testing.T) {
@@ -77,6 +79,7 @@ func TestRestKVHttp(t *testing.T) {
 		},
 	}
 
+	//自主id无法考虑业务自己赋值的主键
 	testSetCommand(t, setQueryNoPkRep, table, s.proxy, &Reply{
 		Code:         0,
 		RowsAffected: 4,
@@ -165,9 +168,56 @@ func TestRestKVHttp(t *testing.T) {
 	}
 	expected = [][]interface{}{
 		[]interface{}{3, "myname3", 0.3},
+		[]interface{}{4, "myname3", 0.4},
 		[]interface{}{1, "myname1", 0.1},
 	}
 	assertGetCommand(t, getPksQuery, s.proxy, expected, table)
+
+	updQueryRep := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			FieldValue: []*FieldValue{
+				{Column:"name", Value: "myname11"},
+				{Column:"balance", Value:  0.11},
+			},
+			Filter: &Filter_{
+				And: []*And{
+					&And{
+						Field:  &Field_{Column: "id", Value: uint64(1)},
+						Relate: "=",
+					},
+				},
+			},
+		},
+	}
+	testUpdCommand(t, updQueryRep, table, s.proxy, &Reply{
+		Code:         0,
+		RowsAffected: 1,
+	})
+
+	updQueryRep2 := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			FieldValue: []*FieldValue{
+				{Column:"name", Value: "myname112"},
+				{Column:"balance", Value:  0.11, Relate: "+"},
+			},
+			Filter: &Filter_{
+				And: []*And{
+					&And{
+						Field:  &Field_{Column: "id", Value: uint64(1)},
+						Relate: "=",
+					},
+				},
+			},
+		},
+	}
+	testUpdCommand(t, updQueryRep2, table, s.proxy, &Reply{
+		Code:         0,
+		RowsAffected: 1,
+	})
 }
 
 func assertGetCommand(t *testing.T, query *Query, proxy *Proxy, except [][]interface{}, table *Table) {
@@ -621,4 +671,91 @@ func TestRestInsert(t *testing.T) {
 	}
 	testGetCommand(t, table, p, filter_, stmt, expected, nil, nil, columnNames)
 
+}
+
+
+func TestRestUpdate(t *testing.T) {
+	log.InitFileLog(logPath, "proxy", "debug")
+	columns := []*columnInfo{
+		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true},
+		&columnInfo{name: "name", typ: metapb.DataType_Varchar},
+		&columnInfo{name: "balance", typ: metapb.DataType_Double},
+	}
+	db := &metapb.DataBase{Name: testDBName, Id: 1}
+	table := makeTestTable(columns)
+	var pks []*metapb.Column
+	for _, col := range table.Columns {
+		if col.Name == "id" {
+			pks = append(pks, col)
+			break
+		}
+	}
+	start := util.EncodeStorePrefix(util.Store_Prefix_KV, table.GetId())
+	r := util.BytesPrefix(start)
+	rng := &metapb.Range{
+		Id:         1,
+		TableId:    1,
+		StartKey:   r.Start,
+		EndKey:     r.Limit,
+		RangeEpoch: &metapb.RangeEpoch{ConfVer: 3, Version: 1},
+		Peers:      []*metapb.Peer{&metapb.Peer{Id: 2, NodeId: 1}},
+	}
+	rng.PrimaryKeys = pks
+	p := newTestProxy(db, table, rng)
+	defer CloseMock(p)
+	defer p.Close()
+
+	// this is sql insert
+	testProxyInsert(t, p, 1, "insert into " + testTableName + "(id,name,balance) values(1,'myname',0.0075)")
+
+	table_ := p.router.FindTable(testDBName, testTableName)
+
+	// test upd
+	updQueryRep := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			FieldValue: []*FieldValue{
+				{Column:"name", Value: "myname11"},
+				{Column:"balance", Value:  0.11},
+			},
+			Filter: &Filter_{
+				And: []*And{
+					&And{
+						Field:  &Field_{Column: "id", Value: uint64(1)},
+						Relate: "=",
+					},
+				},
+			},
+		},
+	}
+	testUpdCommand(t, updQueryRep, table_, p, &Reply{
+		Code:         0,
+		RowsAffected: 1,
+	})
+
+	//// test getll
+	//columnNames := []string{"id", "name", "balance"}
+	//sql := "select id,name,balance from " + testTableName
+	//sqlstmt, err := sqlparser.Parse(sql)
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//stmt, ok := sqlstmt.(*sqlparser.Select)
+	//if !ok {
+	//	t.Fatalf("not select stamentent: %s", sql)
+	//}
+	//getQuery := &Query{
+	//	DatabaseName: testDBName,
+	//	TableName:    testTableName,
+	//	Command: &Command{
+	//		Field: columnNames,
+	//	},
+	//}
+	//filter_ := testGetFilter(t, getQuery, table_, p, stmt)
+	//
+	//expected := [][]interface{}{
+	//	[]interface{}{1,"mmyname11",0.075},
+	//}
+	//testGetCommand(t, table_, p, filter_, stmt, expected, nil, nil, columnNames)
 }

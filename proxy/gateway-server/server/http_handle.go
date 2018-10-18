@@ -82,6 +82,13 @@ func (q *Query) commandFieldNameToLower() {
 		}
 	}
 
+	if len(cmd.FieldValue) != 0 {
+		fieldVal := cmd.FieldValue
+		for i, fv := range fieldVal {
+			fieldVal[i].Column = strings.ToLower(fv.Column)
+		}
+	}
+
 	andLower := func(and *And) {
 		if and.Field != nil {
 			and.Field.Column = strings.ToLower(and.Field.Column)
@@ -189,6 +196,13 @@ func (s *Server) handleKVCommand(w http.ResponseWriter, r *http.Request) {
 		reply, err = query.setCommand(s.proxy, t)
 		if err != nil {
 			log.Error("setcommand error: %v", err)
+			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
+		}
+	case "upd":
+		slowLogThreshold = s.proxy.config.Performance.UpdateSlowLog
+		reply, err = query.updCommand(s.proxy, t)
+		if err != nil {
+			log.Error("updcommand error: %v", err)
 			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
 		}
 	case "del":
@@ -500,6 +514,92 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	} else if affected != uint64(len(rows)) {
 		log.Error("insert error table[%s:%s],request num:%d,inserted num:%d", db, tableName, len(rows), affected)
 		return nil, ErrAffectRows
+	}
+	return &Reply{
+		Code:         0,
+		RowsAffected: affected,
+	}, nil
+}
+
+func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
+	log.Debug("update command ........... %v", query)
+	db := t.DbName()
+	tableName := t.Name()
+	// 解析列
+	columns, err:= query.parseUpdateFields()
+	if err != nil {
+		log.Error("parse columns error: %v", err)
+		return nil, err
+	}
+	fieldList, err := makeUpdFieldList(t, columns)
+	if err != nil {
+		log.Error("[update] check table %s.%s field value error: %v", db, tableName, err)
+		return nil, err
+	}
+
+	var affected uint64
+	if len(query.Command.PKs) == 0 {
+		var matchs []Match = nil
+		var err error
+		if query.Command.Filter != nil {
+			// 解析where条件
+			matchs, err = query.parseMatchs(query.Command.Filter.And)
+			if err != nil {
+				log.Error("[update] handle parse where error: %v", err)
+				return nil, err
+			}
+		}
+
+		limit := query.parseLimit()
+		log.Debug("updcommand limit: %v", limit)
+
+		scope := query.parseScope()
+		affected, err = proxy.doUpdate(t, fieldList, matchs, limit, scope)
+		if err != nil {
+			log.Error("updcommand doUpdate error: %v", err)
+			return nil, err
+		}
+	} else {
+		var allAffected uint64
+		if len(query.Command.PKs) > 1 {
+			var tasks []*UpdateTask
+			for _, pk := range query.Command.PKs {
+				matchs, err := query.parseMatchs(pk)
+				if err != nil {
+					log.Error("[update] handle parse where error: %v", err)
+					return nil, err
+				}
+				task := GetUpdateTask()
+				task.init(proxy, t, fieldList, matchs)
+				err = proxy.Submit(task)
+				if err != nil {
+					log.Error("submit update task failed, err[%v]", err)
+					return nil, err
+				}
+				tasks = append(tasks, task)
+			}
+			for _, task := range tasks {
+				err := task.Wait()
+				if err != nil {
+					log.Error("update task do failed, err[%v]", err)
+					PutUpdateTask(task)
+					return nil, err
+				}
+				allAffected += task.rest.affected
+				PutUpdateTask(task)
+			}
+		} else {
+			matchs, err := query.parseMatchs(query.Command.PKs[0])
+			if err != nil {
+				log.Error("[update] handle parse where error: %v", err)
+				return nil, err
+			}
+			affected, err = proxy.doUpdate(t, fieldList, matchs, nil, nil)
+			if err != nil {
+				log.Error("update do failed, err[%v]", err)
+				return nil, err
+			}
+		}
 	}
 	return &Reply{
 		Code:         0,

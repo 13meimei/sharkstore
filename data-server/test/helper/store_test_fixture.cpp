@@ -5,6 +5,9 @@
 #include "query_parser.h"
 #include "helper_util.h"
 
+#include "fastcommon/logger.h"
+#include <fastcommon/shared_func.h>
+
 namespace sharkstore {
 namespace test {
 namespace helper {
@@ -17,6 +20,10 @@ StoreTestFixture::StoreTestFixture(std::unique_ptr<Table> t) :
 }
 
 void StoreTestFixture::SetUp() {
+    log_init2();
+    char level[] = "INFO";
+    set_log_level(level);
+
     if (!table_) {
         throw std::runtime_error("invalid table");
     }
@@ -110,6 +117,27 @@ Status StoreTestFixture::testDelete(const std::function<void(DeleteRequestBuilde
 
     if (actual_affected != expected_affected) {
         return Status(Status::kUnexpected, "delete affected",
+                      std::string("expected: ") + std::to_string(expected_affected) +
+                      ", actual: " + std::to_string(actual_affected));
+    }
+    return Status::OK();
+}
+
+Status StoreTestFixture::testUpdate(const std::function<void(UpdateRequestBuilder&)>& build_func,
+                  uint64_t expected_affected) {
+    UpdateRequestBuilder builder(table_.get());
+    build_func(builder);
+    auto req = builder.Build();
+
+    uint64_t actual_affected = 0;
+    uint64_t update_bytes = 0;
+    auto s = store_->Update(req, &actual_affected, &update_bytes);
+    if (!s.ok()) {
+        return Status(Status::kUnexpected, "update", s.ToString());
+    }
+
+    if (actual_affected != expected_affected) {
+        return Status(Status::kUnexpected, "update affected",
                       std::string("expected: ") + std::to_string(expected_affected) +
                       ", actual: " + std::to_string(actual_affected));
     }

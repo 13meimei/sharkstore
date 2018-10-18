@@ -2,6 +2,8 @@ _Pragma("once");
 
 #include <stdint.h>
 #include <string>
+#include <vector>
+#include <proto/gen/kvrpcpb.pb.h>
 
 namespace sharkstore {
 namespace dataserver {
@@ -12,6 +14,16 @@ enum class FieldType : char {
     kUInt,
     kFloat,
     kBytes,
+};
+
+struct FieldUpdate {
+    FieldUpdate(uint64_t column_id, uint64_t offset, uint64_t length):
+            column_id_(column_id), offset_(offset), length_(length) {
+    }
+
+    uint64_t column_id_;
+    uint64_t offset_;
+    uint64_t length_;
 };
 
 class FieldValue {
@@ -62,6 +74,17 @@ public:
         return *value_.sval;
     }
 
+    std::string* String() const {
+        if (value_.sval == nullptr) return nullptr;
+        return value_.sval;
+    }
+
+public:
+    void AssignInt(int64_t v)          { value_.ival = v; }
+    void AssignUint(int64_t v)         { value_.uval = v; }
+    void AssignFloat(double v)           { value_.fval = v; }
+    void AssignBytes(std::string* v)     { value_.sval = v; }
+
 private:
     static const std::string kDefaultBytes;
 
@@ -84,6 +107,7 @@ bool fcompare(const FieldValue& lh, const FieldValue& rh, CompareOp op);
 
 FieldValue* CopyValue(const FieldValue& f);
 void EncodeFieldValue(std::string* buf, FieldValue* v);
+void EncodeFieldValue(std::string* buf, FieldValue* v, uint32_t col_id);
 
 } /* namespace storage */
 } /* namespace dataserver */

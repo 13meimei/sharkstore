@@ -37,3 +37,21 @@ func PutInsertTask(task *InsertTask) {
 	task.Reset()
 	insertTaskPool.Put(task)
 }
+
+var updateTaskPool *sync.Pool = &sync.Pool{
+	New: func() interface{} {
+		return &UpdateTask{done: make(chan error, 1)}
+	},
+}
+
+func GetUpdateTask() *UpdateTask {
+	return updateTaskPool.Get().(*UpdateTask)
+}
+
+func PutUpdateTask(task *UpdateTask) {
+	if task == nil {
+		return
+	}
+	task.Reset()
+	updateTaskPool.Put(task)
+}

@@ -27,19 +27,20 @@ const (
 	Type_Insert      Type = 5
 	Type_Select      Type = 6
 	Type_Delete      Type = 7
-	Type_KvSet       Type = 8
-	Type_KvBatchSet  Type = 9
-	Type_KvGet       Type = 10
-	Type_KvBatchGet  Type = 11
-	Type_KvScan      Type = 12
-	Type_KvDelete    Type = 13
-	Type_KvBatchDel  Type = 14
-	Type_KvRangeDel  Type = 15
-	Type_Lock  		 	Type = 20
-	Type_LockUpdate 	Type = 21
-	Type_Unlock 		Type = 22
-	Type_UnlockForce 	Type = 23
-	Type_LockScan 		Type = 24
+	Type_Update      Type = 8
+	Type_KvSet       Type = 9
+	Type_KvBatchSet  Type = 10
+	Type_KvGet       Type = 11
+	Type_KvBatchGet  Type = 12
+	Type_KvScan      Type = 13
+	Type_KvDelete    Type = 14
+	Type_KvBatchDel  Type = 15
+	Type_KvRangeDel  Type = 16
+	Type_Lock        Type = 20
+	Type_LockUpdate  Type = 21
+	Type_Unlock      Type = 22
+	Type_UnlockForce Type = 23
+	Type_LockScan    Type = 24
 )
 
 var Type_name = map[int32]string{
@@ -51,6 +52,7 @@ var Type_name = map[int32]string{
 	5: "Insert",
 	6: "Select",
 	7: "Delete",
+	8: "Update",
 }
 var Type_value = map[string]int32{
 	"InvalidType": 0,
@@ -61,6 +63,7 @@ var Type_value = map[string]int32{
 	"Insert":      5,
 	"Select":      6,
 	"Delete":      7,
+	"Update":      8,
 }
 
 func (x Type) String() string {
@@ -77,12 +80,13 @@ type Request struct {
 	SelectReq     *kvrpcpb.DsSelectRequest
 	InsertReq     *kvrpcpb.DsInsertRequest
 	DeleteReq     *kvrpcpb.DsDeleteRequest
+	UpdateReq     *kvrpcpb.DsUpdateRequest
 
-	LockReq 	*kvrpcpb.DsLockRequest
-	LockUpdateReq 	*kvrpcpb.DsLockUpdateRequest
-	UnlockReq 	*kvrpcpb.DsUnlockRequest
-	UnlockForceReq 	*kvrpcpb.DsUnlockForceRequest
-	LockScanReq 	*kvrpcpb.DsLockScanRequest
+	LockReq        *kvrpcpb.DsLockRequest
+	LockUpdateReq  *kvrpcpb.DsLockUpdateRequest
+	UnlockReq      *kvrpcpb.DsUnlockRequest
+	UnlockForceReq *kvrpcpb.DsUnlockForceRequest
+	LockScanReq    *kvrpcpb.DsLockScanRequest
 
 	KvSetReq      *kvrpcpb.DsKvSetRequest
 	KvBatchSetReq *kvrpcpb.DsKvBatchSetRequest
@@ -185,6 +189,12 @@ func (m *Request) GetDeleteReq() *kvrpcpb.DsDeleteRequest {
 	return nil
 }
 
+func (m *Request) GetUpdateReq() *kvrpcpb.DsUpdateRequest {
+	if m != nil {
+		return m.UpdateReq
+	}
+	return nil
+}
 
 func (m *Request) GetKvSetReq() *kvrpcpb.DsKvSetRequest {
 	if m != nil {
@@ -249,15 +259,16 @@ type Response struct {
 	RawDeleteResp  *kvrpcpb.DsKvRawDeleteResponse
 	RawExecuteResp *kvrpcpb.DsKvRawExecuteResponse
 
-	SelectResp     *kvrpcpb.DsSelectResponse
-	InsertResp     *kvrpcpb.DsInsertResponse
-	DeleteResp     *kvrpcpb.DsDeleteResponse
+	SelectResp *kvrpcpb.DsSelectResponse
+	InsertResp *kvrpcpb.DsInsertResponse
+	DeleteResp *kvrpcpb.DsDeleteResponse
+	UpdateResp *kvrpcpb.DsUpdateResponse
 
-	LockResp      	*kvrpcpb.DsLockResponse
+	LockResp        *kvrpcpb.DsLockResponse
 	LockUpdateResp  *kvrpcpb.DsLockUpdateResponse
 	UnlockResp      *kvrpcpb.DsUnlockResponse
 	UnlockForceResp *kvrpcpb.DsUnlockForceResponse
-	LockScanResp 	*kvrpcpb.DsLockScanResponse
+	LockScanResp    *kvrpcpb.DsLockScanResponse
 
 	KvSetResp      *kvrpcpb.DsKvSetResponse
 	KvBatchSetResp *kvrpcpb.DsKvBatchSetResponse
@@ -321,6 +332,13 @@ func (m *Response) GetInsertResp() *kvrpcpb.DsInsertResponse {
 func (m *Response) GetDeleteResp() *kvrpcpb.DsDeleteResponse {
 	if m != nil {
 		return m.DeleteResp
+	}
+	return nil
+}
+
+func (m *Response) GetUpdateResp() *kvrpcpb.DsUpdateResponse {
+	if m != nil {
+		return m.UpdateResp
 	}
 	return nil
 }
@@ -421,6 +439,8 @@ func (resp *Response) GetErr() (pErr *errorpb.Error, err error) {
 		pErr = resp.RawDeleteResp.GetHeader().GetError()
 	case Type_Insert:
 		pErr = resp.InsertResp.GetHeader().GetError()
+	case Type_Update:
+		pErr = resp.UpdateResp.GetHeader().GetError()
 	case Type_Select:
 		pErr = resp.SelectResp.GetHeader().GetError()
 	case Type_Delete:

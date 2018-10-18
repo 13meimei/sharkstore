@@ -12,6 +12,7 @@ namespace storage {
 class RowFetcher {
 public:
     RowFetcher(Store& s, const kvrpcpb::SelectRequest& req);
+    RowFetcher(Store& s, const kvrpcpb::UpdateRequest& req);
     RowFetcher(Store& s, const kvrpcpb::DeleteRequest& req);
 
     ~RowFetcher();

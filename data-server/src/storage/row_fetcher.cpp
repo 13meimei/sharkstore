@@ -17,6 +17,12 @@ RowFetcher::RowFetcher(Store& s, const kvrpcpb::SelectRequest& req)
     init(req.key(), req.scope());
 }
 
+RowFetcher::RowFetcher(Store& s, const kvrpcpb::UpdateRequest& req)
+    : store_(s),
+      decoder_(s.GetPrimaryKeys(), req.fields(), req.where_filters()) {
+    init(req.key(), req.scope());
+}
+
 RowFetcher::RowFetcher(Store& s, const kvrpcpb::DeleteRequest& req)
     : store_(s),
       decoder_(s.GetPrimaryKeys(), req.where_filters()) {

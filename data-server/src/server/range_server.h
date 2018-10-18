@@ -65,6 +65,7 @@ private:
     void RawPut(common::ProtoMessage *msg);
     void RawDelete(common::ProtoMessage *msg);
     void Insert(common::ProtoMessage *msg);
+    void Update(common::ProtoMessage *msg);
     void Select(common::ProtoMessage *msg);
     void Delete(common::ProtoMessage *msg);
 
