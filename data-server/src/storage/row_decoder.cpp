@@ -283,7 +283,7 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
             // 记录需要update列
             auto it_u = update_fields_.find(col_id);
             if (it_u != update_fields_.end()) {
-                auto& f = (*it_u).second;
+                auto& f = it_u->second;
 
                 result->update_field_.emplace(col_id, &f);
 
@@ -292,7 +292,7 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
                 auto s = parseThreshold(f.value(), f.column(), &cf);
                 if (!s.ok()) {
                     FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
-                    return Status(Status::kAborted);
+                    return Status(Status::kUnknown, std::string("parse update field value failed:1 " + s.ToString()), "");
                 }
                 result->update_field_delta_.emplace(col_id, cf.release());
             }
@@ -319,7 +319,7 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
         // 记录需要update列
         auto it_u = update_fields_.find(col_id);
         if (it_u != update_fields_.end()) {
-            auto& f = (*it_u).second;
+            auto& f = it_u->second;
 
             result->update_field_.emplace(col_id, &f);
 
@@ -328,7 +328,7 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
             auto s = parseThreshold(f.value(), f.column(), &cf);
             if (!s.ok()) {
                 FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
-                return Status(Status::kAborted);
+                return Status(Status::kUnknown, std::string("parse update field value failed:2 " + s.ToString()), "");
             }
             result->update_field_delta_.emplace(col_id, cf.release());
         }

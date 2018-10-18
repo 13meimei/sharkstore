@@ -160,7 +160,12 @@ Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint
             ++all;
             if (all > offset) {
                 kvrpcpb::KvPair kv;
-                updateRow(&kv, *r);
+                Status s;
+
+                s = updateRow(&kv, *r);
+                if (!s.ok()) {
+                    return s;
+                }
 
                 batch.Put(kv.key(), kv.value());
                 ++(*affected);
@@ -202,7 +207,7 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
     const auto& origin_encode_value = r.value_;
 
     for (auto it = r.field_value_.begin(); it != r.field_value_.end(); it++) {
-        auto& field = (*it);
+        auto& field = *it;
 
         std::string value;
 
@@ -217,18 +222,18 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
         // delta field value
         auto it_value_delta = r.update_field_delta_.find(field.column_id_);
         if (it_value_delta == r.update_field_delta_.end()) {
-            return Status(Status::kAborted);
+            return Status(Status::kUnknown, std::string("no such update column id: " + field.column_id_), "");
         }
-        FieldValue* value_delta = (*it_value_delta).second;
+        FieldValue* value_delta = it_value_delta->second;
 
         // orig field value
         FieldValue* value_orig = r.GetField(field.column_id_);
         if (value_orig == nullptr) {
-            return Status(Status::kAborted);
+            return Status(Status::kUnknown, std::string("no such column id " + field.column_id_), "");
         }
 
         // kv rpc field
-        kvrpcpb::Field* field_delta = (*it_field_update).second;
+        kvrpcpb::Field* field_delta = it_field_update->second;
 
         switch (field_delta->field_type()) {
             case kvrpcpb::Assign:
@@ -312,7 +317,7 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
                 }
                 break;
             default:
-                return Status(Status::kInvalid);
+                return Status(Status::kUnknown, "unknown field operator type", "");
         }
 
         // 重新编码修改后的field value
