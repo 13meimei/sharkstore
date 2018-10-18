@@ -44,8 +44,8 @@ void RowResult::Reset() {
     field_value_.clear();
 
     update_field_.clear();
-//    std::for_each(update_field_delta_.begin(), update_field_delta_.end(),
-//                  [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
+    std::for_each(update_field_delta_.begin(), update_field_delta_.end(),
+                  [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
     update_field_delta_.clear();
 
 }

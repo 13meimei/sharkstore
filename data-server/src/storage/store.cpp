@@ -243,7 +243,7 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
                         value_orig->AssignFloat(value_delta->Float());
                         break;
                     case FieldType::kBytes:
-                        value_orig->AssignBytes(value_delta->String());
+                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
                         break;
                 }
                 break;
@@ -259,7 +259,7 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
                         value_orig->AssignFloat(value_orig->Float() + value_delta->Float());
                         break;
                     case FieldType::kBytes:
-                        value_orig->AssignBytes(value_delta->String());
+                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
                         break;
                 }
                 break;
@@ -275,7 +275,7 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
                         value_orig->AssignFloat(value_orig->Float() - value_delta->Float());
                         break;
                     case FieldType::kBytes:
-                        value_orig->AssignBytes(value_delta->String());
+                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
                         break;
                 }
                 break;
@@ -291,7 +291,7 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
                         value_orig->AssignFloat(value_orig->Float() * value_delta->Float());
                         break;
                     case FieldType::kBytes:
-                        value_orig->AssignBytes(value_delta->String());
+                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
                         break;
                 }
                 break;
@@ -307,7 +307,7 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
                         if (value_delta->Float() != 0) { value_orig->AssignFloat(value_orig->Float() / value_delta->Float()); }
                         break;
                     case FieldType::kBytes:
-                        value_orig->AssignBytes(value_delta->String());
+                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
                         break;
                 }
                 break;

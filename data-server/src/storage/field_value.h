@@ -74,16 +74,11 @@ public:
         return *value_.sval;
     }
 
-    std::string* String() const {
-        if (value_.sval == nullptr) return nullptr;
-        return value_.sval;
-    }
-
 public:
-    void AssignInt(int64_t v)          { value_.ival = v; }
-    void AssignUint(int64_t v)         { value_.uval = v; }
-    void AssignFloat(double v)           { value_.fval = v; }
-    void AssignBytes(std::string* v)     { value_.sval = v; }
+    void AssignInt(int64_t v)          { if (type_ == FieldType::kInt)      value_.ival = v; }
+    void AssignUint(int64_t v)         { if (type_ == FieldType::kUInt)     value_.uval = v; }
+    void AssignFloat(double v)           { if (type_ == FieldType::kFloat)  value_.fval = v; }
+    void AssignBytes(std::string* v)     { if (type_ == FieldType::kBytes)  { delete value_.sval; value_.sval = v; }}
 
 private:
     static const std::string kDefaultBytes;
