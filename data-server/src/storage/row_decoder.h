@@ -28,10 +28,23 @@ public:
     void SetKey(const std::string& key) { key_ = key; }
     const std::string& Key() const { return key_; }
 
+public:
+    void SetValue(const std::string& value) { value_ = value; }
+    const std::string& Value() const { return value_; }
+
+    void AppendFieldValue(const FieldUpdate& fu) { field_value_.push_back(fu); }
+    const std::vector<FieldUpdate>& FieldValueList() const { return field_value_; }
+
+    void AddUpdateField(uint64_t id, kvrpcpb::Field* f) { update_field_.emplace(id, f); }
+    const std::map<uint64_t, kvrpcpb::Field*>& UpdateFieldMap() const { return update_field_; }
+
+    void AddUpdateFieldDelta(uint64_t id, FieldValue* v) { update_field_delta_.emplace(id, v); }
+    const std::map<uint64_t, FieldValue*>& UpdateFieldDeltaMap() const { return update_field_delta_; }
+
     // 清空，方便迭代时重用
     void Reset();
 
-public:
+private:
     std::string value_;
     std::vector<FieldUpdate> field_value_;
     std::map<uint64_t, kvrpcpb::Field*> update_field_;

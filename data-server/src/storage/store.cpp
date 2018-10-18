@@ -204,15 +204,14 @@ static void addRow(const kvrpcpb::SelectRequest& req,
 
 static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
     std::string final_encode_value;
-    const auto& origin_encode_value = r.value_;
+    const auto& origin_encode_value = r.Value();
 
-    for (auto it = r.field_value_.begin(); it != r.field_value_.end(); it++) {
+    for (auto it = r.FieldValueList().begin(); it != r.FieldValueList().end(); it++) {
         auto& field = *it;
 
         std::string value;
-
-        auto it_field_update = r.update_field_.find(field.column_id_);
-        if (it_field_update == r.update_field_.end()) {
+        auto it_field_update = r.UpdateFieldMap().find(field.column_id_);
+        if (it_field_update == r.UpdateFieldMap().end()) {
             value.assign(origin_encode_value, field.offset_, field.length_);
             final_encode_value.append(value);
             continue;
@@ -220,8 +219,8 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
 
         // 更新列值
         // delta field value
-        auto it_value_delta = r.update_field_delta_.find(field.column_id_);
-        if (it_value_delta == r.update_field_delta_.end()) {
+        auto it_value_delta = r.UpdateFieldDeltaMap().find(field.column_id_);
+        if (it_value_delta == r.UpdateFieldDeltaMap().end()) {
             return Status(Status::kUnknown, std::string("no such update column id: " + field.column_id_), "");
         }
         FieldValue* value_delta = it_value_delta->second;

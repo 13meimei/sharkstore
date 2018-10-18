@@ -242,7 +242,7 @@ static Status decodeField(const std::string& buf, size_t& offset, const metapb::
 Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf, RowResult* result) {
     result->Reset();
     result->SetKey(key);
-    result->value_ = buf; // set value
+    result->SetValue(buf);
 
     // 解析主键列
     auto s = decodePrimaryKeys(key, result);
@@ -279,13 +279,13 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
 
             // 记录所有非主键列的值在value中的偏移和长度
             FieldUpdate fu(col_id, offset_bk, offset - offset_bk);
-            result->field_value_.push_back(fu);
+            result->AppendFieldValue(fu);
             // 记录需要update列
             auto it_u = update_fields_.find(col_id);
             if (it_u != update_fields_.end()) {
                 auto& f = it_u->second;
 
-                result->update_field_.emplace(col_id, &f);
+                result->AddUpdateField(col_id, &f);
 
                 // 解析kvrpcfield为fieldvalue
                 std::unique_ptr<FieldValue> cf = nullptr;
@@ -294,7 +294,7 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
                     FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
                     return Status(Status::kUnknown, std::string("parse update field value failed:1 " + s.ToString()), "");
                 }
-                result->update_field_delta_.emplace(col_id, cf.release());
+                result->AddUpdateFieldDelta(col_id, cf.release());
             }
 
             continue;
@@ -315,13 +315,13 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
 
         // 记录所有非主键列的值在value中的偏移和长度
         FieldUpdate fu(col_id, offset_bk, offset - offset_bk);
-        result->field_value_.push_back(fu);
+        result->AppendFieldValue(fu);
         // 记录需要update列
         auto it_u = update_fields_.find(col_id);
         if (it_u != update_fields_.end()) {
             auto& f = it_u->second;
 
-            result->update_field_.emplace(col_id, &f);
+            result->AddUpdateField(col_id, &f);
 
             // 解析kvrpcfield为fieldvalue
             std::unique_ptr<FieldValue> cf = nullptr;
@@ -330,7 +330,7 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
                 FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
                 return Status(Status::kUnknown, std::string("parse update field value failed:2 " + s.ToString()), "");
             }
-            result->update_field_delta_.emplace(col_id, cf.release());
+            result->AddUpdateFieldDelta(col_id, cf.release());
         }
     }
     return Status::OK();
