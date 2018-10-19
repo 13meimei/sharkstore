@@ -10079,37 +10079,20 @@ class LockResponse : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::google::protobuf::int64 code() const;
   void set_code(::google::protobuf::int64 value);
 
-<<<<<<< HEAD
   // int64 update_time = 4;
   void clear_update_time();
   static const int kUpdateTimeFieldNumber = 4;
   ::google::protobuf::int64 update_time() const;
   void set_update_time(::google::protobuf::int64 value);
-=======
-  // int64 delete_time = 5;
-  void clear_delete_time();
-  static const int kDeleteTimeFieldNumber = 5;
-  ::google::protobuf::int64 delete_time() const;
-  void set_delete_time(::google::protobuf::int64 value);
->>>>>>> watch
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.LockResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-<<<<<<< HEAD
   ::google::protobuf::internal::ArenaStringPtr error_;
   ::google::protobuf::internal::ArenaStringPtr value_;
   ::google::protobuf::int64 code_;
   ::google::protobuf::int64 update_time_;
-=======
-  ::google::protobuf::internal::ArenaStringPtr key_;
-  ::google::protobuf::internal::ArenaStringPtr id_;
-  ::google::protobuf::internal::ArenaStringPtr update_value_;
-  ::google::protobuf::internal::ArenaStringPtr by_;
-  ::timestamp::Timestamp* timestamp_;
-  ::google::protobuf::int64 delete_time_;
->>>>>>> watch
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -10604,11 +10587,11 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::timestamp::Timestamp* release_timestamp();
   void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
 
-  // int64 update_time = 5;
-  void clear_update_time();
-  static const int kUpdateTimeFieldNumber = 5;
-  ::google::protobuf::int64 update_time() const;
-  void set_update_time(::google::protobuf::int64 value);
+  // int64 delete_time = 5;
+  void clear_delete_time();
+  static const int kDeleteTimeFieldNumber = 5;
+  ::google::protobuf::int64 delete_time() const;
+  void set_delete_time(::google::protobuf::int64 value);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.LockUpdateRequest)
  private:
@@ -10619,7 +10602,7 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::internal::ArenaStringPtr update_value_;
   ::google::protobuf::internal::ArenaStringPtr by_;
   ::timestamp::Timestamp* timestamp_;
-  ::google::protobuf::int64 update_time_;
+  ::google::protobuf::int64 delete_time_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -11495,18 +11478,11 @@ class DsUnlockForceResponse : public ::google::protobuf::Message /* @@protoc_ins
 
   inline DsUnlockForceResponse* New() const PROTOBUF_FINAL { return New(NULL); }
 
-<<<<<<< HEAD
   DsUnlockForceResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
   void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
   void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
   void CopyFrom(const DsUnlockForceResponse& from);
   void MergeFrom(const DsUnlockForceResponse& from);
-=======
-  DsLockScanResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const DsLockScanResponse& from);
-  void MergeFrom(const DsLockScanResponse& from);
   void Clear() PROTOBUF_FINAL;
   bool IsInitialized() const PROTOBUF_FINAL;
 
@@ -11522,459 +11498,7 @@ class DsUnlockForceResponse : public ::google::protobuf::Message /* @@protoc_ins
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(DsLockScanResponse* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // .kvrpcpb.ResponseHeader header = 1;
-  bool has_header() const;
-  void clear_header();
-  static const int kHeaderFieldNumber = 1;
-  const ::kvrpcpb::ResponseHeader& header() const;
-  ::kvrpcpb::ResponseHeader* mutable_header();
-  ::kvrpcpb::ResponseHeader* release_header();
-  void set_allocated_header(::kvrpcpb::ResponseHeader* header);
-
-  // .kvrpcpb.LockScanResponse resp = 2;
-  bool has_resp() const;
-  void clear_resp();
-  static const int kRespFieldNumber = 2;
-  const ::kvrpcpb::LockScanResponse& resp() const;
-  ::kvrpcpb::LockScanResponse* mutable_resp();
-  ::kvrpcpb::LockScanResponse* release_resp();
-  void set_allocated_resp(::kvrpcpb::LockScanResponse* resp);
-
-  // @@protoc_insertion_point(class_scope:kvrpcpb.DsLockScanResponse)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::kvrpcpb::ResponseHeader* header_;
-  ::kvrpcpb::LockScanResponse* resp_;
-  mutable int _cached_size_;
-  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.LockGetRequest) */ {
- public:
-  LockGetRequest();
-  virtual ~LockGetRequest();
-
-  LockGetRequest(const LockGetRequest& from);
-
-  inline LockGetRequest& operator=(const LockGetRequest& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  LockGetRequest(LockGetRequest&& from) noexcept
-    : LockGetRequest() {
-    *this = ::std::move(from);
-  }
-
-  inline LockGetRequest& operator=(LockGetRequest&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const LockGetRequest& default_instance();
-
-  static inline const LockGetRequest* internal_default_instance() {
-    return reinterpret_cast<const LockGetRequest*>(
-               &_LockGetRequest_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    94;
-
-  void Swap(LockGetRequest* other);
-  friend void swap(LockGetRequest& a, LockGetRequest& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline LockGetRequest* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  LockGetRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const LockGetRequest& from);
-  void MergeFrom(const LockGetRequest& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(LockGetRequest* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // bytes key = 1;
-  void clear_key();
-  static const int kKeyFieldNumber = 1;
-  const ::std::string& key() const;
-  void set_key(const ::std::string& value);
-  #if LANG_CXX11
-  void set_key(::std::string&& value);
-  #endif
-  void set_key(const char* value);
-  void set_key(const void* value, size_t size);
-  ::std::string* mutable_key();
-  ::std::string* release_key();
-  void set_allocated_key(::std::string* key);
-
-  // @@protoc_insertion_point(class_scope:kvrpcpb.LockGetRequest)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr key_;
-  mutable int _cached_size_;
-  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class LockGetResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.LockGetResponse) */ {
- public:
-  LockGetResponse();
-  virtual ~LockGetResponse();
-
-  LockGetResponse(const LockGetResponse& from);
-
-  inline LockGetResponse& operator=(const LockGetResponse& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  LockGetResponse(LockGetResponse&& from) noexcept
-    : LockGetResponse() {
-    *this = ::std::move(from);
-  }
-
-  inline LockGetResponse& operator=(LockGetResponse&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const LockGetResponse& default_instance();
-
-  static inline const LockGetResponse* internal_default_instance() {
-    return reinterpret_cast<const LockGetResponse*>(
-               &_LockGetResponse_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    95;
-
-  void Swap(LockGetResponse* other);
-  friend void swap(LockGetResponse& a, LockGetResponse& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline LockGetResponse* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  LockGetResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const LockGetResponse& from);
-  void MergeFrom(const LockGetResponse& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(LockGetResponse* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // string error = 2;
-  void clear_error();
-  static const int kErrorFieldNumber = 2;
-  const ::std::string& error() const;
-  void set_error(const ::std::string& value);
-  #if LANG_CXX11
-  void set_error(::std::string&& value);
-  #endif
-  void set_error(const char* value);
-  void set_error(const char* value, size_t size);
-  ::std::string* mutable_error();
-  ::std::string* release_error();
-  void set_allocated_error(::std::string* error);
-
-  // .kvrpcpb.LockValue value = 3;
-  bool has_value() const;
-  void clear_value();
-  static const int kValueFieldNumber = 3;
-  const ::kvrpcpb::LockValue& value() const;
-  ::kvrpcpb::LockValue* mutable_value();
-  ::kvrpcpb::LockValue* release_value();
-  void set_allocated_value(::kvrpcpb::LockValue* value);
-
-  // int64 code = 1;
-  void clear_code();
-  static const int kCodeFieldNumber = 1;
-  ::google::protobuf::int64 code() const;
-  void set_code(::google::protobuf::int64 value);
-
-  // @@protoc_insertion_point(class_scope:kvrpcpb.LockGetResponse)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr error_;
-  ::kvrpcpb::LockValue* value_;
-  ::google::protobuf::int64 code_;
-  mutable int _cached_size_;
-  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class DsLockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.DsLockGetRequest) */ {
- public:
-  DsLockGetRequest();
-  virtual ~DsLockGetRequest();
-
-  DsLockGetRequest(const DsLockGetRequest& from);
-
-  inline DsLockGetRequest& operator=(const DsLockGetRequest& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  DsLockGetRequest(DsLockGetRequest&& from) noexcept
-    : DsLockGetRequest() {
-    *this = ::std::move(from);
-  }
-
-  inline DsLockGetRequest& operator=(DsLockGetRequest&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const DsLockGetRequest& default_instance();
-
-  static inline const DsLockGetRequest* internal_default_instance() {
-    return reinterpret_cast<const DsLockGetRequest*>(
-               &_DsLockGetRequest_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    96;
-
-  void Swap(DsLockGetRequest* other);
-  friend void swap(DsLockGetRequest& a, DsLockGetRequest& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline DsLockGetRequest* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  DsLockGetRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const DsLockGetRequest& from);
-  void MergeFrom(const DsLockGetRequest& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(DsLockGetRequest* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // .kvrpcpb.RequestHeader header = 1;
-  bool has_header() const;
-  void clear_header();
-  static const int kHeaderFieldNumber = 1;
-  const ::kvrpcpb::RequestHeader& header() const;
-  ::kvrpcpb::RequestHeader* mutable_header();
-  ::kvrpcpb::RequestHeader* release_header();
-  void set_allocated_header(::kvrpcpb::RequestHeader* header);
-
-  // .kvrpcpb.LockGetRequest req = 2;
-  bool has_req() const;
-  void clear_req();
-  static const int kReqFieldNumber = 2;
-  const ::kvrpcpb::LockGetRequest& req() const;
-  ::kvrpcpb::LockGetRequest* mutable_req();
-  ::kvrpcpb::LockGetRequest* release_req();
-  void set_allocated_req(::kvrpcpb::LockGetRequest* req);
-
-  // @@protoc_insertion_point(class_scope:kvrpcpb.DsLockGetRequest)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::kvrpcpb::RequestHeader* header_;
-  ::kvrpcpb::LockGetRequest* req_;
-  mutable int _cached_size_;
-  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class DsLockGetResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.DsLockGetResponse) */ {
- public:
-  DsLockGetResponse();
-  virtual ~DsLockGetResponse();
-
-  DsLockGetResponse(const DsLockGetResponse& from);
-
-  inline DsLockGetResponse& operator=(const DsLockGetResponse& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  DsLockGetResponse(DsLockGetResponse&& from) noexcept
-    : DsLockGetResponse() {
-    *this = ::std::move(from);
-  }
-
-  inline DsLockGetResponse& operator=(DsLockGetResponse&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const DsLockGetResponse& default_instance();
-
-  static inline const DsLockGetResponse* internal_default_instance() {
-    return reinterpret_cast<const DsLockGetResponse*>(
-               &_DsLockGetResponse_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    97;
-
-  void Swap(DsLockGetResponse* other);
-  friend void swap(DsLockGetResponse& a, DsLockGetResponse& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline DsLockGetResponse* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  DsLockGetResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const DsLockGetResponse& from);
-  void MergeFrom(const DsLockGetResponse& from);
->>>>>>> watch
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-<<<<<<< HEAD
   void InternalSwap(DsUnlockForceResponse* other);
-=======
-  void InternalSwap(DsLockGetResponse* other);
->>>>>>> watch
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -11999,7 +11523,6 @@ class DsLockGetResponse : public ::google::protobuf::Message /* @@protoc_inserti
   ::kvrpcpb::ResponseHeader* release_header();
   void set_allocated_header(::kvrpcpb::ResponseHeader* header);
 
-<<<<<<< HEAD
   // .kvrpcpb.LockResponse resp = 2;
   bool has_resp() const;
   void clear_resp();
@@ -12010,27 +11533,11 @@ class DsLockGetResponse : public ::google::protobuf::Message /* @@protoc_inserti
   void set_allocated_resp(::kvrpcpb::LockResponse* resp);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.DsUnlockForceResponse)
-=======
-  // .kvrpcpb.LockGetResponse resp = 2;
-  bool has_resp() const;
-  void clear_resp();
-  static const int kRespFieldNumber = 2;
-  const ::kvrpcpb::LockGetResponse& resp() const;
-  ::kvrpcpb::LockGetResponse* mutable_resp();
-  ::kvrpcpb::LockGetResponse* release_resp();
-  void set_allocated_resp(::kvrpcpb::LockGetResponse* resp);
-
-  // @@protoc_insertion_point(class_scope:kvrpcpb.DsLockGetResponse)
->>>>>>> watch
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::ResponseHeader* header_;
-<<<<<<< HEAD
   ::kvrpcpb::LockResponse* resp_;
-=======
-  ::kvrpcpb::LockGetResponse* resp_;
->>>>>>> watch
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -12378,6 +11885,453 @@ class DsLockScanResponse : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::ResponseHeader* header_;
   ::kvrpcpb::LockScanResponse* resp_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.LockGetRequest) */ {
+ public:
+  LockGetRequest();
+  virtual ~LockGetRequest();
+
+  LockGetRequest(const LockGetRequest& from);
+
+  inline LockGetRequest& operator=(const LockGetRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  LockGetRequest(LockGetRequest&& from) noexcept
+    : LockGetRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline LockGetRequest& operator=(LockGetRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const LockGetRequest& default_instance();
+
+  static inline const LockGetRequest* internal_default_instance() {
+    return reinterpret_cast<const LockGetRequest*>(
+               &_LockGetRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    98;
+
+  void Swap(LockGetRequest* other);
+  friend void swap(LockGetRequest& a, LockGetRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline LockGetRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  LockGetRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const LockGetRequest& from);
+  void MergeFrom(const LockGetRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(LockGetRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // bytes key = 1;
+  void clear_key();
+  static const int kKeyFieldNumber = 1;
+  const ::std::string& key() const;
+  void set_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_key(::std::string&& value);
+  #endif
+  void set_key(const char* value);
+  void set_key(const void* value, size_t size);
+  ::std::string* mutable_key();
+  ::std::string* release_key();
+  void set_allocated_key(::std::string* key);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.LockGetRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr key_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class LockGetResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.LockGetResponse) */ {
+ public:
+  LockGetResponse();
+  virtual ~LockGetResponse();
+
+  LockGetResponse(const LockGetResponse& from);
+
+  inline LockGetResponse& operator=(const LockGetResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  LockGetResponse(LockGetResponse&& from) noexcept
+    : LockGetResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline LockGetResponse& operator=(LockGetResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const LockGetResponse& default_instance();
+
+  static inline const LockGetResponse* internal_default_instance() {
+    return reinterpret_cast<const LockGetResponse*>(
+               &_LockGetResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    99;
+
+  void Swap(LockGetResponse* other);
+  friend void swap(LockGetResponse& a, LockGetResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline LockGetResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  LockGetResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const LockGetResponse& from);
+  void MergeFrom(const LockGetResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(LockGetResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string error = 2;
+  void clear_error();
+  static const int kErrorFieldNumber = 2;
+  const ::std::string& error() const;
+  void set_error(const ::std::string& value);
+  #if LANG_CXX11
+  void set_error(::std::string&& value);
+  #endif
+  void set_error(const char* value);
+  void set_error(const char* value, size_t size);
+  ::std::string* mutable_error();
+  ::std::string* release_error();
+  void set_allocated_error(::std::string* error);
+
+  // .kvrpcpb.LockValue value = 3;
+  bool has_value() const;
+  void clear_value();
+  static const int kValueFieldNumber = 3;
+  const ::kvrpcpb::LockValue& value() const;
+  ::kvrpcpb::LockValue* mutable_value();
+  ::kvrpcpb::LockValue* release_value();
+  void set_allocated_value(::kvrpcpb::LockValue* value);
+
+  // int64 code = 1;
+  void clear_code();
+  static const int kCodeFieldNumber = 1;
+  ::google::protobuf::int64 code() const;
+  void set_code(::google::protobuf::int64 value);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.LockGetResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr error_;
+  ::kvrpcpb::LockValue* value_;
+  ::google::protobuf::int64 code_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class DsLockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.DsLockGetRequest) */ {
+ public:
+  DsLockGetRequest();
+  virtual ~DsLockGetRequest();
+
+  DsLockGetRequest(const DsLockGetRequest& from);
+
+  inline DsLockGetRequest& operator=(const DsLockGetRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DsLockGetRequest(DsLockGetRequest&& from) noexcept
+    : DsLockGetRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline DsLockGetRequest& operator=(DsLockGetRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DsLockGetRequest& default_instance();
+
+  static inline const DsLockGetRequest* internal_default_instance() {
+    return reinterpret_cast<const DsLockGetRequest*>(
+               &_DsLockGetRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    100;
+
+  void Swap(DsLockGetRequest* other);
+  friend void swap(DsLockGetRequest& a, DsLockGetRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DsLockGetRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  DsLockGetRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const DsLockGetRequest& from);
+  void MergeFrom(const DsLockGetRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(DsLockGetRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .kvrpcpb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::kvrpcpb::RequestHeader& header() const;
+  ::kvrpcpb::RequestHeader* mutable_header();
+  ::kvrpcpb::RequestHeader* release_header();
+  void set_allocated_header(::kvrpcpb::RequestHeader* header);
+
+  // .kvrpcpb.LockGetRequest req = 2;
+  bool has_req() const;
+  void clear_req();
+  static const int kReqFieldNumber = 2;
+  const ::kvrpcpb::LockGetRequest& req() const;
+  ::kvrpcpb::LockGetRequest* mutable_req();
+  ::kvrpcpb::LockGetRequest* release_req();
+  void set_allocated_req(::kvrpcpb::LockGetRequest* req);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.DsLockGetRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::kvrpcpb::RequestHeader* header_;
+  ::kvrpcpb::LockGetRequest* req_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class DsLockGetResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.DsLockGetResponse) */ {
+ public:
+  DsLockGetResponse();
+  virtual ~DsLockGetResponse();
+
+  DsLockGetResponse(const DsLockGetResponse& from);
+
+  inline DsLockGetResponse& operator=(const DsLockGetResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DsLockGetResponse(DsLockGetResponse&& from) noexcept
+    : DsLockGetResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline DsLockGetResponse& operator=(DsLockGetResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DsLockGetResponse& default_instance();
+
+  static inline const DsLockGetResponse* internal_default_instance() {
+    return reinterpret_cast<const DsLockGetResponse*>(
+               &_DsLockGetResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    101;
+
+  void Swap(DsLockGetResponse* other);
+  friend void swap(DsLockGetResponse& a, DsLockGetResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DsLockGetResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  DsLockGetResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const DsLockGetResponse& from);
+  void MergeFrom(const DsLockGetResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(DsLockGetResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .kvrpcpb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::kvrpcpb::ResponseHeader& header() const;
+  ::kvrpcpb::ResponseHeader* mutable_header();
+  ::kvrpcpb::ResponseHeader* release_header();
+  void set_allocated_header(::kvrpcpb::ResponseHeader* header);
+
+  // .kvrpcpb.LockGetResponse resp = 2;
+  bool has_resp() const;
+  void clear_resp();
+  static const int kRespFieldNumber = 2;
+  const ::kvrpcpb::LockGetResponse& resp() const;
+  ::kvrpcpb::LockGetResponse* mutable_resp();
+  ::kvrpcpb::LockGetResponse* release_resp();
+  void set_allocated_resp(::kvrpcpb::LockGetResponse* resp);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.DsLockGetResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::kvrpcpb::ResponseHeader* header_;
+  ::kvrpcpb::LockGetResponse* resp_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -21671,6 +21625,14 @@ inline void DsLockGetResponse::set_allocated_resp(::kvrpcpb::LockGetResponse* re
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
