@@ -4,32 +4,32 @@
 package service
 
 import (
-	"database/sql"
-	"fmt"
-	"net/http"
-	"time"
-	"strings"
-	"io/ioutil"
-	"encoding/json"
 	"bytes"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
 )
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/satori/go.uuid"
 )
 import (
-	"model/pkg/ds_admin"
-	"model/pkg/kvrpcpb"
-	"console/models"
 	"console/common"
 	"console/config"
+	"console/models"
 	"console/right"
-	"util/log"
-	"strconv"
-	"errors"
-	"sync"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
+	"model/pkg/ds_admin"
+	"model/pkg/kvrpcpb"
+	"strconv"
+	"sync"
+	"util/log"
 )
 
 const (
@@ -63,8 +63,8 @@ var Columns = []*models.Column{
 var serviceInstance *Service = nil
 
 type Service struct {
-	config     *config.Config
-	db         *sql.DB
+	config *config.Config
+	db     *sql.DB
 }
 
 func NewService() *Service {
@@ -693,7 +693,7 @@ func (s *Service) SetNodeUpgrade(clusterId, nodeId int) error {
 	return nil
 }
 
-func (s *Service) SetNodeLogIn(clusterId, nodeId int) (error) {
+func (s *Service) SetNodeLogIn(clusterId, nodeId int) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return err
@@ -725,7 +725,7 @@ func (s *Service) SetNodeLogIn(clusterId, nodeId int) (error) {
 	return nil
 }
 
-func (s *Service) SetNodeLogLevel(clusterId, nodeId int, logLevel string) (error) {
+func (s *Service) SetNodeLogLevel(clusterId, nodeId int, logLevel string) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return err
@@ -1265,7 +1265,7 @@ func (s *Service) GetSchedulerDetail(clusterId int, name string) (interface{}, e
 	return scheduleDetailResp.Data, nil
 }
 
-func (s *Service) AdjustScheduler(clusterId, optType int, scheduler string) (error) {
+func (s *Service) AdjustScheduler(clusterId, optType int, scheduler string) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return err
@@ -1307,7 +1307,7 @@ func (s *Service) AdjustScheduler(clusterId, optType int, scheduler string) (err
 	return nil
 }
 
-func (s *Service) CheckTopology(clusterId int, dbName, tableName string) (error) {
+func (s *Service) CheckTopology(clusterId int, dbName, tableName string) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return err
@@ -2184,7 +2184,7 @@ func (s *Service) DelRole(roleIds []int) error {
 	return nil
 }
 
-func (s *Service) SetMasterLogLevel(clusterId int, logLevel string) (error) {
+func (s *Service) SetMasterLogLevel(clusterId int, logLevel string) error {
 	info, err := s.selectClusterById(clusterId)
 	if err != nil {
 		return err
@@ -2340,6 +2340,7 @@ func (s *Service) DeleteSqlApply(ids []string) error {
 	log.Debug("delete sql apply success")
 	return nil
 }
+
 //=============sql apply end==============
 
 //=============lock start==============
@@ -2660,7 +2661,7 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 				if start <= totalRecord && end < totalRecord {
 					result = allResult[start:end]
 				} else if start <= totalRecord && end >= totalRecord {
-					result = allResult[start: totalRecord]
+					result = allResult[start:totalRecord]
 				}
 				log.Debug("start %v, end %v, result len: %v, len: %v", start, end, len(result), len(allResult))
 			} else {
@@ -2675,7 +2676,7 @@ func (s *Service) GetAllLock(clusterId int, dbName, tableName string, pageInfo *
 
 func ChangeLockToShow(infos []*models.LockInfo) []*models.LockShow {
 	shows := make([]*models.LockShow, 0)
-	currentTime := time.Now().UnixNano() /1000000
+	currentTime := time.Now().UnixNano() / 1000000
 	for _, info := range infos {
 		showInfo := new(models.LockShow)
 		showInfo.K = info.K
@@ -2905,7 +2906,7 @@ func (s *Service) GetAllConfigure(clusterId int, dbName, tableName string, pageI
 		infos := make([]*models.ConfigureInfo, 0)
 		for rows.Next() {
 			info := new(models.ConfigureInfo)
-			if err := rows.Scan(&(info.K), &(info.Version), &(info.V),  &(info.Extend)); err != nil {
+			if err := rows.Scan(&(info.K), &(info.Version), &(info.V), &(info.Extend)); err != nil {
 				log.Error("db scan is failed. err:[%v]", err)
 				return 0, nil, common.DB_ERROR
 			}
@@ -3239,7 +3240,7 @@ func (s *Service) GetSqlCaList(pageInfo *models.PagerInfo) (int, []*models.SqlCA
 	}
 }
 func (s *Service) GetSqlCAById(clusterId int64) (*models.SqlCAInfo, error) {
-	querySql := fmt.Sprintf(`select cluster_id, user_name, password from %s where cluster_id = %d`, )
+	querySql := fmt.Sprintf(`select cluster_id, user_name, password from %s where cluster_id = %d`)
 	log.Debug("get single sql ca info: %s", querySql)
 	info := new(models.SqlCAInfo)
 	if err := s.db.QueryRow(querySql).
@@ -3288,7 +3289,7 @@ func (s *Service) DelSqlCA(ids []int) error {
 //============sql ca end ==============
 
 // ------------http request -------------------
-func sendGetSimpleReq(host, uri string, params map[string]interface{}, result string) (error) {
+func sendGetSimpleReq(host, uri string, params map[string]interface{}, result string) error {
 	var url []string
 
 	url = append(url, host)
@@ -3327,7 +3328,7 @@ func sendGetSimpleReq(host, uri string, params map[string]interface{}, result st
 	return nil
 }
 
-func sendGetReq(host, uri string, params map[string]interface{}, result interface{}) (error) {
+func sendGetReq(host, uri string, params map[string]interface{}, result interface{}) error {
 	var url []string
 
 	url = append(url, host)
@@ -3373,7 +3374,7 @@ func sendGetReq(host, uri string, params map[string]interface{}, result interfac
 	return nil
 }
 
-func sendPostReqStrBody(host, uri string, params map[string]interface{}, result interface{}) (error) {
+func sendPostReqStrBody(host, uri string, params map[string]interface{}, result interface{}) error {
 	var url []string
 
 	url = append(url, host)
@@ -3426,7 +3427,7 @@ func sendPostReqStrBody(host, uri string, params map[string]interface{}, result 
 	return nil
 }
 
-func sendPostReqJsonBody(host, uri string, params interface{}, result interface{}) (error) {
+func sendPostReqJsonBody(host, uri string, params interface{}, result interface{}) error {
 	var url []string
 
 	url = append(url, host)
@@ -3527,7 +3528,7 @@ func (s *Service) selectClusterById(cId int) (*models.ClusterInfo, error) {
 	var info *models.ClusterInfo = new(models.ClusterInfo)
 	if err := s.db.QueryRow(fmt.Sprintf(`SELECT id, cluster_name, cluster_url, gateway_http, gateway_sql, cluster_sign, create_time  FROM %s WHERE id=%d`, TABLE_NAME_CLUSTER, cId)).
 		Scan(&(info.Id), &(info.Name), &(info.MasterUrl), &(info.GatewayHttpUrl), &(info.GatewaySqlUrl), &(info.ClusterToken),
-		&(info.CreateTime)); err != nil {
+			&(info.CreateTime)); err != nil {
 		if err == sql.ErrNoRows {
 			log.Error("db row not exists. cid:[%d]", cId)
 			return nil, nil
@@ -3598,7 +3599,7 @@ func (s *Service) execSql(sql string) (int64, error) {
       ]
     }
   }
- */
+*/
 
 func (s *Service) queryStoreDataBySql(gatewaySqlUrl string, paramMap map[string]string) (interface{}, error) {
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", paramMap["dbUserName"], paramMap["dbPassWord"], gatewaySqlUrl, paramMap["dbName"]))
@@ -3678,7 +3679,7 @@ func (s *Service) queryStoreDataBySql(gatewaySqlUrl string, paramMap map[string]
       ]
     }
   }
- */
+*/
 func (s *Service) operateStoreDataBySql(gatewaySqlUrl string, paramMap map[string]string) (int64, error) {
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", paramMap["dbUserName"], paramMap["dbPassWord"], gatewaySqlUrl, paramMap["dbName"]))
 	if err != nil {
@@ -3708,7 +3709,7 @@ func InitService(c *config.Config) {
 	db.SetMaxOpenConns(20)
 	db.SetMaxIdleConns(0)
 	serviceInstance = &Service{
-		config:     c,
-		db:         db,
+		config: c,
+		db:     db,
 	}
 }

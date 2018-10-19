@@ -171,8 +171,8 @@ int sf_send_task_push(sf_socket_session_t *session, response_buff_t *buff) {
                 delete_response_buff(buff);
                 ret = -1;
             } else {
-                FLOG_DEBUG("ip: %s, fd: %d, session_id: %" PRId64 " enqueue",
-                        entry->stask->client_ip, entry->stask->event.fd, entry->session_id);
+                FLOG_DEBUG("ip: %s, fd: %d, session_id: %" PRId64 " msgid: %" PRId64 " buff:%p enqueue",
+                        entry->stask->client_ip, entry->stask->event.fd, entry->session_id, buff->msg_id, buff);
                 ret = 0;
             }
             pthread_rwlock_unlock(&entry->session_lock);
@@ -246,7 +246,7 @@ int sf_send_task_finish(sf_socket_session_t *session, int64_t session_id) {
 
             if (buff == NULL) {
                 if ((ret = sf_clear_send_event(entry->stask)) != 0) {
-                    FLOG_ERROR("ip: %s, fd: %d, clear send event fail, session: %" PRId64 ,
+                    FLOG_ERROR("ip: %s, fd: %d, clear send event fail, session: %" PRId64  ,
                             entry->stask->client_ip, entry->stask->event.fd, session_id);
                 }
                 assert(entry->is_sending);
@@ -258,8 +258,8 @@ int sf_send_task_finish(sf_socket_session_t *session, int64_t session_id) {
             pthread_rwlock_unlock(&entry->session_lock);
         }
 
-        FLOG_DEBUG("ip: %s, fd: %d, session_id: %" PRId64 " ready to send",
-                entry->stask->client_ip, entry->stask->event.fd, entry->session_id);
+        FLOG_DEBUG("ip: %s, fd: %d, session_id: %" PRId64 " msgid: %" PRId64 " buff:%p  ready to send",
+                entry->stask->client_ip, entry->stask->event.fd, entry->session_id, buff->msg_id, buff);
 
         sf_set_send_buff(entry->stask, buff);
 
@@ -376,9 +376,14 @@ bool sf_socket_session_closed(sf_socket_session_t *session, int64_t session_id) 
 void sf_free_session_entry(sf_session_entry_t *entry) {
     response_buff_t *buff = lk_queue_pop(entry->send_queue);
     while (buff != NULL) {
+
+        FLOG_DEBUG("free session_id: %" PRId64 " msgid: %" PRId64 " buff:%p ",
+                   entry->session_id, buff->msg_id, buff);
+
         //callback?
         delete_response_buff(buff);
         buff = lk_queue_pop(entry->send_queue);
+
     }
 
     delete_lk_queue(entry->send_queue);

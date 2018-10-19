@@ -400,9 +400,15 @@ static int load_watch_config(IniContext *ini_context) {
     }
 
     ds_config.watch_config.watcher_set_size =
-            iniGetIntValue(section, "watcher_set_size", ini_context, 8);
+            iniGetIntValue(section, "watcher_set_threads", ini_context, 8);
     if (ds_config.watch_config.buffer_queue_size <= 0) {
         ds_config.watch_config.buffer_queue_size = 8;
+    }
+
+    ds_config.watch_config.watcher_thread_priority =
+            iniGetIntValue(section, "watcher_thread_priority", ini_context, 0);
+    if (ds_config.watch_config.watcher_thread_priority < 0) {
+        ds_config.watch_config.watcher_thread_priority = 0;
     }
 
     return 0;

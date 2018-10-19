@@ -77,6 +77,7 @@ enum FunctionID {
   kFuncUnlock = 202,
   kFuncUnlockForce = 203,
   kFuncLockWatch = 204,
+  kFuncLockGet = 205,
   kFuncCreateRange = 1001,
   kFuncDeleteRange = 1002,
   kFuncRangeTransferLeader = 1003,

@@ -428,9 +428,17 @@ static void *event_recv_thread_entrance(void *arg) {
 }
 
 static void *event_send_thread_entrance(void *arg) {
+
     sf_socket_event_t *socket_event = arg;
     sf_socket_thread_t *context = socket_event->context;
     sf_socket_status_t *status = context->socket_status;
+
+    struct sched_param param;
+    param.sched_priority = socket_event->context->socket_config->send_thread_priority;
+
+    if(pthread_setschedparam(pthread_self(), SCHED_RR, &param) != 0) {
+        FLOG_WARN("pthread_setschedparam failed");
+    }
 
     struct nio_thread_data *thread_data = socket_event->thread_data;
 

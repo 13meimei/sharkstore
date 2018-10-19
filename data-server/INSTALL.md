@@ -31,6 +31,13 @@ cd libfastcommon
 ./make.sh
 sudo ./make.sh install
 ```
+#intel tbb
+```sh
+git clone --depth 1 https://github.com/01org/tbb.git
+cd tbb
+make -j `nproc`
+sudo cp build/*release/lib* /usr/lib64
+```
 
 ## snappy （如果需要配置压缩）
 ```sh

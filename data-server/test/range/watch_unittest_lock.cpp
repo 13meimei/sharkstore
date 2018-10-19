@@ -23,7 +23,7 @@
 
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
 
-char level[8] = "warn";
+char level[8] = "debug";
 
 int main(int argc, char *argv[]) {
     if(argc > 1)
@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
     return RUN_ALL_TESTS();
 }
 
+metapb::Range *genRange2();
+metapb::Range *genRange1();
 
 
 
@@ -78,7 +80,7 @@ std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf
     return key;
 }
 
-class WatchTest : public ::testing::Test {
+class LockTest : public ::testing::Test {
 protected:
     void SetUp() override {
         log_init2();
@@ -216,9 +218,104 @@ protected:
         }
     }
 
-    void justPut(const int16_t &rangeId, const std::string &key1, const std::string &key2,const std::string &value)
+    void justDel(const int16_t &rangeId, const std::string &key1, const std::string &value, bool prefix = false)
     {
-        FLOG_DEBUG("justPut...range:%d key1:%s  key2:%s  value:%s", rangeId, key1.c_str(), key2.c_str() , value.c_str());
+        FLOG_DEBUG("justDel...range:%d key1:%s  ", rangeId, key1.c_str());
+
+        // begin test watch_delete( ok )
+
+        // set leader
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
+        range_server_->ranges_[1]->setLeaderFlag(true);
+
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 3000;
+        msg->session_id = 1;
+        msg->socket = &socket_;
+        msg->begin_time = get_micro_second();
+        auto msgId(rand());
+        FLOG_DEBUG("msg_id:%" PRId32, msgId);
+        msg->msg_id = msgId;
+        //msg->msg_id = 20180813;
+
+        watchpb::DsKvWatchDeleteRequest req;
+
+        req.mutable_header()->set_range_id(rangeId);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_req()->mutable_kv()->add_key(key1);
+
+        req.mutable_req()->mutable_kv()->set_version(1);
+
+        req.mutable_req()->set_prefix(prefix);
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->WatchDel(msg);
+
+        watchpb::DsKvWatchDeleteResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
+
+        ASSERT_FALSE(resp.header().has_error());
+
+        // end test watch_delete
+
+    }
+
+    void LockGet(const int16_t &rangeId, const std::string key, const std::string& val, const int32_t& cnt)
+    {
+        FLOG_DEBUG("LockGet...range:%d key1: %s ", rangeId, key.c_str());
+
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
+        raft->ops_.leader = 1;
+        raft->SetLeaderTerm(1, 1);
+        range_server_->ranges_[rangeId]->setLeaderFlag(true);
+
+        auto msg = new common::ProtoMessage;
+        msg->expire_time = getticks() + 1000;
+        msg->begin_time = get_micro_second();
+        msg->session_id = 1;
+        kvrpcpb::DsLockGetRequest req;
+
+        req.mutable_header()->set_range_id(rangeId);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+
+        req.mutable_req()->set_key(key);
+
+        auto len = req.ByteSizeLong();
+        msg->body.resize(len);
+        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+
+        range_server_->LockGet(msg);
+
+        kvrpcpb::DsLockGetResponse resp;
+        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
+
+        //cnt为０时，仍返回编码ＯＫ　　kvs_size() == 0
+        ASSERT_TRUE(session_mock->GetResult(&resp));
+
+        FLOG_DEBUG(">>>LockGet RESP:%s", resp.DebugString().c_str());
+
+        if(!cnt) {
+            ASSERT_TRUE(resp.header().has_error());
+            ASSERT_TRUE(resp.resp().code() == 1);
+        } else {
+            ASSERT_TRUE(resp.resp().code() == 0);
+        }
+    }
+
+    void Lock(const int16_t &rangeId, const std::string &key,const std::string &value, const std::string& id, bool result = true)
+    {
+        FLOG_DEBUG("Lock...range:%d key1:%s  value:%s", rangeId, key.c_str(), value.c_str());
 
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
         raft->ops_.leader = 1 ;
@@ -236,34 +333,42 @@ protected:
         FLOG_DEBUG("msg_id:%" PRId32, msgId);
         msg1->msg_id = msgId;
         msg1->socket = &socket_;
-        watchpb::DsKvWatchPutRequest req1;
+        kvrpcpb::DsLockRequest req;
 
-        req1.mutable_header()->set_range_id(rangeId);
-        req1.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req1.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_header()->set_range_id(rangeId);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
 
-        req1.mutable_req()->mutable_kv()->add_key(key1);
-        if(!key2.empty())
-            req1.mutable_req()->mutable_kv()->add_key(key2);
-        req1.mutable_req()->mutable_kv()->set_value(value);
-        req1.mutable_req()->mutable_kv()->set_version(99);
+        std::string by("localhost:80");
 
-        auto len1 = req1.ByteSizeLong();
+        req.mutable_req()->set_key(key);
+        req.mutable_req()->mutable_value()->set_delete_time(1000);
+        req.mutable_req()->mutable_value()->set_by(by);
+        req.mutable_req()->mutable_value()->set_id(id);
+        req.mutable_req()->mutable_value()->set_value(value);
+
+        auto len1 = req.ByteSizeLong();
         msg1->body.resize(len1);
-        ASSERT_TRUE(req1.SerializeToArray(msg1->body.data(), len1));
+        ASSERT_TRUE(req.SerializeToArray(msg1->body.data(), len1));
 
-        range_server_->WatchPut(msg1);
-        watchpb::DsKvWatchPutResponse resp1;
+        range_server_->Lock(msg1);
+
+        kvrpcpb::DsLockResponse resp1;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
         ASSERT_TRUE(session_mock->GetResult(&resp1));
-        FLOG_DEBUG("watch_put first response: %s", resp1.DebugString().c_str());
+        FLOG_DEBUG("Lock first response: %s", resp1.DebugString().c_str());
+
+        if(result)
+            ASSERT_TRUE(resp1.resp().code() == 0);
+        else
+            ASSERT_TRUE(resp1.resp().code() == 2);
 
         return;
     }
 
-    void justWatch(const int16_t &rangeId, const std::string key1, const std::string key2, bool prefix = false)
+    void LockWatch(const int16_t &rangeId, const std::string key, bool result = true)
     {
-        FLOG_DEBUG("justWatch...range:%d key1:%s  key2:%s  prefix:%d", rangeId, key1.c_str(), key2.c_str(), prefix );
+        FLOG_DEBUG("justWatch...range:%d key:%s ", rangeId, key.c_str());
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[rangeId]->raft_.get());
         raft->ops_.leader = 1;
         raft->SetLeaderTerm(1, 1);
@@ -283,33 +388,28 @@ protected:
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
 
-        req.mutable_req()->mutable_kv()->add_key(key1);
-        if(!key2.empty()) {
-            req.mutable_req()->mutable_kv()->add_key(key2);
-        }
-        req.mutable_req()->mutable_kv()->set_version(1);
+        req.mutable_req()->mutable_kv()->add_key(key);
+        //req.mutable_req()->mutable_kv()->set_version(1);
         req.mutable_req()->set_longpull(5000);
         ///////////////////////////////////////////////
         //传入大版本号，用于让watcher添加成功
-        req.mutable_req()->set_startversion(800);
-        req.mutable_req()->set_prefix(prefix);
+        req.mutable_req()->set_startversion(0);
 
         auto len = req.ByteSizeLong();
         msg->body.resize(len);
         ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
 
-
-
-        range_server_->WatchGet(msg);
+        range_server_->LockWatch(msg);
 
         watchpb::DsWatchResponse resp;
         auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        //version为０时，增加watcher成功，则不会有返回．　客户端版本滞后时，才有返回
-        //ASSERT_TRUE(session_mock->GetResult(&resp));
-        //FLOG_DEBUG("watch_get RESP:%s", resp.DebugString().c_str());
-        ASSERT_FALSE(resp.header().has_error());
-        //ASSERT_TRUE(resp.header().error().has_key_not_in_range());
 
+        if(result)
+            ASSERT_FALSE(resp.header().has_error());
+        else {
+            session_mock->GetResult(&resp);
+            ASSERT_TRUE(resp.resp().code() == 1);
+        }
     }
 
 protected:
@@ -318,60 +418,143 @@ protected:
     int64_t now;
     SocketBaseMock socket_;
 };
+/*
+metapb::Range *genRange1() {
+    //watch::Watcher watcher;
+    auto meta = new metapb::Range;
+    
+    std::vector<std::string*> keys;
+    keys.clear();
+    std::string keyStart("");
+    std::string keyEnd("");
+    std::string k1("01003"), k2("01004");
 
+    keys.push_back(&k1);
+    watch::Watcher watcher1(1, keys);
+    watcher1.EncodeKey(&keyStart, 1, keys);
 
-TEST_F(WatchTest, watch_put_single) {
+    keys.clear();
+    keys.push_back(&k2);
+    watch::Watcher watcher2(1, keys);
+    watcher2.EncodeKey(&keyEnd, 1, keys);
 
-    justPut(1, "01003001", "", "01003001:value");
-    justGet(1, "01003001", "", "01003001:value", 1);
+    meta->set_id(1);
+    //meta->set_start_key("01003");
+    //meta->set_end_key("01004");
+    meta->set_start_key(keyStart);
+    meta->set_end_key(keyEnd);
 
-    //update
-    justPut(1, "01003001", "", "0100300101:value");
-    justGet(1, "01003001", "", "0100300101:value", 1);
+    meta->mutable_range_epoch()->set_conf_ver(1);
+    meta->mutable_range_epoch()->set_version(1);
 
-    //another range
-    justPut(2, "01004001", "", "01004001:value");
-    justGet(2, "01004001", "", "01004001:value", 1);
+    meta->set_table_id(1);
 
-    //other occasion,for examples:
-    //not leader
-    //not in range
+    auto peer = meta->add_peers();
+    peer->set_id(1);
+    peer->set_node_id(1);
+
+//    peer = meta->add_peers();
+//    peer->set_id(2);
+//    peer->set_node_id(2);
+
+    return meta;
+}
+
+metapb::Range *genRange2() {
+    //watch::Watcher watcher;
+    auto meta = new metapb::Range;
+
+    std::vector<std::string*> keys;
+    keys.clear();
+    std::string keyStart("");
+    std::string keyEnd("");
+    std::string k1("01004"), k2("01005");
+
+    keys.push_back(&k1);
+    watch::Watcher watcher1(1, keys);
+    watcher1.EncodeKey(&keyStart, 1, keys);
+
+    keys.clear();
+    keys.push_back(&k2);
+    watch::Watcher watcher2(1, keys);
+    watcher2.EncodeKey(&keyEnd, 1, keys);
+
+    meta->set_id(2);
+    //meta->set_start_key("01004");
+    //meta->set_end_key("01005");
+    meta->set_start_key(keyStart);
+    meta->set_end_key(keyEnd);
+
+    meta->mutable_range_epoch()->set_conf_ver(1);
+    meta->mutable_range_epoch()->set_version(1);
+
+    meta->set_table_id(1);
+
+    auto peer = meta->add_peers();
+    peer->set_id(1);
+    peer->set_node_id(1);
+
+    return meta;
+}
+*/
+
+TEST_F(LockTest, watch_lock_get) {
+    //not exist
+    LockGet(1, "01003001", "", 0);
+
+    //put a lock,then get
+    Lock(1,"0100301", "val", "lock_1");
+    LockGet(1, "0100301", "val", 1);
+
+    //lock by same id, expect success
+    Lock(1,"0100301", "val", "lock_1", true);
+
+    //put a lock, already exists
+    Lock(1,"0100301", "val", "lock_2", false);
+    //expect add watcher success
+    LockWatch(1, "0100301");
+    LockWatch(1, "0100301");
+    LockWatch(1, "0100301");
+
+    //delete lock and notify watcher
+    justDel(1, "0100301", "val", true);
+
+    FLOG_INFO("sleep 10 secs, wait for watcher timeout queue pop.");
+    //wait for notify
+    sleep(10);
+
+    //ok  参数１　代表期望能查询到数据
+    LockGet(1, "0100301", "val", 0);
+
+    //lock is not exist, so watch fail.
+    LockWatch(1, "0100301", false);
+
+    //Lock success
+    Lock(1,"0100301", "val", "lock_3", true);
 
 }
 
-TEST_F(WatchTest, watch_put_group) {
+TEST_F(LockTest, watch_lock_expire) {
+    //not exist
+    LockGet(1, "01003001", "", 0);
 
-//        // begin test watch_put group (key ok)
-//        FLOG_DEBUG("watch_put group mode.");
-//        metapb::Range* rng = new metapb::Range;
-//        range_server_->meta_store_->GetRange(1, rng);
-//        FLOG_DEBUG("RANGE1  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
-//
-//        range_server_->meta_store_->GetRange(2, rng);
-//        FLOG_DEBUG("RANGE2  %s---%s", EncodeToHexString(rng->start_key()).c_str(), EncodeToHexString(rng->end_key()).c_str());
+    //put a lock,then get
+    Lock(1,"0100301", "val", "lock_1");
+    LockGet(1, "0100301", "val", 1);
 
-    for(auto i = 0; i < 1000; i ++) {
-        char szKey2[1000] = {0};
-        sprintf(szKey2, "01004001%d", i);
-        std::string key2(szKey2);
-        justPut(2, "0100400101", key2, "01004001:value");
-    }
+    //lock by same id, expect success
+    Lock(1,"0100301", "val", "lock_1", true);
 
-    justGet(2, "0100400101", "", "01004001:value", 1000, true);
+    FLOG_INFO("sleep 5 secs, wait for lock expired.");
+    sleep(5);
+    //put a lock, already exists
+    Lock(1,"0100301", "val", "lock_2", true);
+    //LockWatch(1, "0100301");
+    //justDel(1, "0100301", "val", true);
 
-//    sleep(5);
-}
-
-TEST_F(WatchTest, watch_put_benchmark) {
-
-    FLOG_DEBUG("watch_put single mode.");
-
-    int64_t count(1000000);
-    int64_t bTime(getticks());
-    for (int i = 0; i < count; i++) {
-        justPut(1, "01003001", "", "01003001:value");
-    }
-    int64_t endTime(getticks());
-    FLOG_WARN("count:%" PRId64 " elapse:%" PRId64 "s average:%" PRId64 "/s",count, (endTime - bTime)/1000, count/ ((endTime - bTime)/1000));
+    //ok  参数１　代表期望能查询到数据
+    LockGet(1, "0100301", "val", 1);
+    LockWatch(1, "0100301", true);
 
 }
+

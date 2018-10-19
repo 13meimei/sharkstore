@@ -47,10 +47,13 @@ int SocketBase::Send(response_buff_t *response) {
     __sync_fetch_and_sub(&thread_info_.socket_status->current_recv_pkg_count, 1);
 
     auto sid = response->session_id;
+    auto msgId = response->msg_id;
     result = sf_send_task_push(&thread_info_.socket_session, response);
     if (result != 0) {
-        FLOG_ERROR("session: %" PRId64 " response fail", sid);
+        FLOG_ERROR("session: %" PRId64 " msgid: %" PRId64 " response fail", sid, msgId);
         return result;
+    } else {
+        FLOG_DEBUG("session: %" PRId64 " msgid: %" PRId64 " response succ,push ok.", sid, msgId);
     }
 
     // send queue size add one

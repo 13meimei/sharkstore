@@ -568,7 +568,7 @@ message DsLockResponse {
 message LockUpdateRequest {
     bytes key               = 1;
     string id               = 3;
-    int64 update_time       = 5;
+    int64 delete_time       = 5;
     bytes update_value      = 6;
     timestamp.Timestamp timestamp  = 10;
     string by               = 11;
@@ -631,4 +631,25 @@ message DsLockScanRequest {
 message DsLockScanResponse {
     ResponseHeader header           = 1;
     LockScanResponse resp           = 2;
+}
+
+
+message LockGetRequest {
+    bytes key               = 1;
+}
+
+message LockGetResponse {
+    int64 code      = 1;
+    string error    = 2;
+    LockValue value             = 3;
+}
+
+message DsLockGetRequest {
+    RequestHeader header        = 1;
+    LockGetRequest req          = 2;
+}
+
+message DsLockGetResponse {
+    ResponseHeader header           = 1;
+    LockGetResponse resp            = 2;
 }

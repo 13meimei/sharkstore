@@ -83,6 +83,7 @@ private:
     PriorityQueue<WatcherPtr>   watcher_queue_;
     std::mutex              watcher_map_mutex_;
     std::mutex              watcher_queue_mutex_;
+    std::mutex              watcher_id_mutex_;
     std::atomic<WatcherId>  watcher_id_ = {0};
 
 
@@ -97,6 +98,7 @@ private:
 
 public:
     WatcherId GenWatcherId() {
+        std::lock_guard<std::mutex> lock(watcher_id_mutex_);
         watcher_id_.fetch_add(1, std::memory_order_relaxed);
         return watcher_id_;
     }

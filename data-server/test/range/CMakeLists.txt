@@ -12,6 +12,7 @@ watch_unittest_get.cpp
 watch_unittest_put.cpp
 watch_unittest_del.cpp
 watch_unittest_watch.cpp
+watch_unittest_lock.cpp
 )
 
 foreach(f IN LISTS TESTS)
