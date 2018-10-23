@@ -240,7 +240,7 @@ static int load_range_config(IniContext *ini_context) {
 
     ds_config.range_config.access_mode =
         iniGetIntValue(section, "access_mode", ini_context, 0);
-    if (ds_config.range_config.access_mode != 0 && ds_config.range_config.access_mode != 1) {
+    if (ds_config.range_config.access_mode != 0 && ds_config.range_config.access_mode != 1 && ds_config.range_config.access_mode != 2) {
         ds_config.range_config.access_mode = 0;
     }
 
