@@ -48,6 +48,7 @@ func (s *Server) tableAppPulling() {
 		return
 	}
 
+	log.Debug("pull table app rows: %v", len(ret))
 	s.updateMapApp(ret)
 }
 
@@ -58,6 +59,7 @@ func (s *Server) tableGlobalRulePulling() {
 		return
 	}
 
+	log.Debug("pull table global rule rows: %v", len(ret))
 	s.updateMapGlobalRule(ret)
 }
 
@@ -68,6 +70,7 @@ func (s *Server) tableClusterRulePulling() {
 		return
 	}
 
+	log.Debug("pull table cluster rule rows: %v", len(ret))
 	s.updateMapClusterRule(ret)
 }
 
@@ -78,6 +81,7 @@ func (s *Server) tableReceiverPulling() {
 		return
 	}
 
+	log.Debug("pull table receiver rows: %v", len(ret))
 	s.updateMapReceiver(ret)
 }
 
