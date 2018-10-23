@@ -30,17 +30,20 @@ void Range::CheckSplit(uint64_t size) {
 }
 
 void Range::ResetStatisSize() {
+    auto policy = context_->GetSplitPolicy();
+    ResetStatisSize(policy->KeyMode(), policy->SplitSize(), policy->MaxSize());
+}
+
+void Range::ResetStatisSize(SplitKeyMode mode, uint64_t split_size, uint64_t max_size) {
     // split size is split size, not half of split size
     // amicable sequence writing and random writing
     // const static uint64_t split_size = ds_config.range_config.split_size >>
     // 1;
-    auto policy = context_->GetSplitPolicy();
     auto meta = meta_.Get();
 
     uint64_t total_size = 0;
     std::string split_key;
-    auto s = store_->StatSize(policy->SplitSize(), policy->KeyMode(),
-            &total_size , &split_key);
+    auto s = store_->StatSize(split_size, mode, &total_size , &split_key);
     statis_flag_ = false;
     statis_size_ = 0;
     if (!s.ok()) {
@@ -60,8 +63,7 @@ void Range::ResetStatisSize() {
         return ;
     }
 
-    RANGE_LOG_INFO("StatSize policy: %s, real size: %" PRIu64 ", split key: %s",
-            policy->Description().c_str(), real_size_, EncodeToHex(split_key).c_str());
+    RANGE_LOG_INFO("StatSize real size: %" PRIu64 ", split key: %s", real_size_, EncodeToHex(split_key).c_str());
 
     if (!EpochIsEqual(meta.range_epoch())) {
         RANGE_LOG_WARN("StatSize epoch is changed");
@@ -69,7 +71,7 @@ void Range::ResetStatisSize() {
     }
 
     // when real size >= max size, we need split with split size
-    if (real_size_ >= context_->GetSplitPolicy()->MaxSize()) {
+    if (real_size_ >= max_size) {
         return AskSplit(std::move(split_key), std::move(meta));
     }
 }
@@ -242,8 +244,17 @@ Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
     std::string split_key;
     auto mode = context_->GetSplitPolicy()->KeyMode();
     if (mode != SplitKeyMode::kNormal) {
-        // TODO: support unnormal mode
-        return Status(Status::kNotSupported, "split key mode", SplitKeyModeName(mode));
+        uint64_t total_size = 0;
+        std::string skey;
+        // 先统计store总大小
+        auto s = store_->StatSize(1, mode, &total_size , &skey);
+        if (!s.ok()) {
+            return Status(Status::kUnknown, "stat store total size", s.ToString());
+        }
+        // 以store的一半来分割数据
+        if (total_size > 0) {
+            ResetStatisSize(mode, total_size/2, total_size);
+        }
     } else {
         split_key = FindMiddle(meta.start_key(), meta.end_key());
     }

@@ -229,6 +229,7 @@ public:
     void DelPeer(const metapb::Peer &peer);
 
     void ResetStatisSize();
+    void ResetStatisSize(SplitKeyMode mode, uint64_t split_size, uint64_t max_size);
     void Heartbeat();
 
     Status Destroy();
