@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb2.AppHeartbeatRequest) (resp *alarmpb2.AlarmResponse, err error) {
-	log.Debug("handle app heartbeat request: %v", req)
+	log.Debug("handle app heartbeat header: %v, request: %v", header, req)
 	resp = &alarmpb2.AlarmResponse{
 		Header: &alarmpb2.ResponseHeader{},
 	}

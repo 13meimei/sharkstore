@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"errors"
 	"net"
-	"context"
+	"golang.org/x/net/context"
 
 	"github.com/gomodule/redigo/redis"
 	"database/sql"
