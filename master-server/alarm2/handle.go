@@ -16,7 +16,7 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 
 	// eg. app_not_alive
 	aliveKey, err := encodeCacheKey(cacheKey{
-		ALARMRULE_APP_NOTALIVE,
+		ALARM_APP_HEARTBEAT,
 		header.GetAppName(),
 		header.GetClusterId(),
 		header.GetIpAddr()})

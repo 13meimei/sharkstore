@@ -213,7 +213,7 @@ func (s *Server) aliveChecking() {
 			for clusterId, clusterApps := range s.getMapApp() {
 				for ipAddr, app := range clusterApps {
 					key, err := encodeCacheKey(cacheKey{
-						ALARMRULE_APP_NOTALIVE,
+						ALARM_APP_HEARTBEAT,
 						app.ProcessName,
 						app.ClusterId,
 						app.IpAddr})
