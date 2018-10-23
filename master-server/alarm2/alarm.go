@@ -223,6 +223,8 @@ func (s *Server) aliveChecking() {
 						continue
 					}
 
+					log.Debug("check alive: cluster id[%v] ip addr[%v] app name[%v], cache key[%v]",
+						clusterId, ipAddr, app.ProcessName, key)
 					if err := s.cacheOpImpl.exists(key); err != nil {
 						log.Error("jim exists command error: %v", err)
 

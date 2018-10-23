@@ -38,7 +38,7 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 }
 
 func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.RuleAlarmRequest) (resp *alarmpb2.AlarmResponse, err error) {
-	log.Debug("handle rule alarm request: %v", req)
+	log.Debug("handle rule alarm header: %v, request: %v", header, req)
 	resp = &alarmpb2.AlarmResponse{
 		Header: &alarmpb2.ResponseHeader{},
 	}
