@@ -142,7 +142,7 @@ func TestHandle(t *testing.T) {
 		t.Fatalf("handle app heartbeat failed: %v", err)
 	}
 	aliveKey, _ := encodeCacheKey(cacheKey{
-		ALARMRULE_APP_NOTALIVE,
+		ALARM_APP_HEARTBEAT,
 		header.GetAppName(),
 		header.GetClusterId(),
 		header.GetIpAddr()})
@@ -185,7 +185,12 @@ func TestHandle(t *testing.T) {
 
 	// set key to cache
 	vStr, _ := encodeCacheValue(cacheValue{})
-	s.cacheOpImpl.setex(aliveKey, vStr, hbReq.GetHbIntervalTime()*2)
+	aliveKeyRule, _ := encodeCacheKey(cacheKey{
+		ALARMRULE_APP_NOTALIVE,
+		header.GetAppName(),
+		header.GetClusterId(),
+		header.GetIpAddr()})
+	s.cacheOpImpl.setex(aliveKeyRule, vStr, hbReq.GetHbIntervalTime()*2)
 
 	if _, err := s.handleRuleAlarm(&alarmpb2.RequestHeader{
 		ClusterId: gAppClusterId,

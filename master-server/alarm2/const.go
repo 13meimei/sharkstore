@@ -26,6 +26,8 @@ const (
 )
 
 const (
+	ALARM_APP_HEARTBEAT = "app_heartbeat"
+
 	ALARMRULE_APP_NOTALIVE 		= "app_not_alive"
 	ALARMRULE_GATEWAY_SLOWLOG 	= "gateway_slowlog"
 	ALARMRULE_GATEWAY_ERRORLOG 	= "gateway_errorlog"
