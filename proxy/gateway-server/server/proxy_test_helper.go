@@ -488,7 +488,7 @@ func getSelectFilter(tt *testing.T, p *Proxy, db string, stmt *sqlparser.Select)
 	}
 
 	// 解析选择列
-	cols, err := parser.parseSelectCols(stmt)
+	cols, err := parser.parseSelectCols(stmt, true)
 	if err != nil {
 		tt.Fatal("[select]parse colum error: ", err)
 	}

@@ -232,6 +232,10 @@ func (s *Server) handleKVCommand(w http.ResponseWriter, r *http.Request) {
 
 func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	log.Debug("get command ........... %v", query)
+	if len(query.parseAggreFuncs()) > 0 && !proxy.config.AggrEnable {
+		log.Error("get command, aggregation func enable")
+		return nil, errors.New(" aggregation func unable")
+	}
 	// 解析选择列
 	columns := query.parseSelectCols(t)
 	fieldList, err := makeFieldList(t, columns)

@@ -39,7 +39,7 @@ func (p *Proxy) HandleSelect(db string, stmt *sqlparser.Select, args []interface
 	}
 
 	// 解析选择列
-	cols, err := parser.parseSelectCols(stmt)
+	cols, err := parser.parseSelectCols(stmt, p.config.AggrEnable)
 	if err != nil {
 		log.Error("[select] parse colum error: %v", err)
 		return nil, fmt.Errorf("handle select parseColumn err %s", err.Error())
