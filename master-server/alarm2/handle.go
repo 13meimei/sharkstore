@@ -189,17 +189,17 @@ func (s *Server) handleRuleAlarm(header *alarmpb2.RequestHeader, req *alarmpb2.R
 
 			ruleValue.TriggerTime = curTime + r.Interval
 			ruleValue.Count = 0
-
-			ruleValueStr, err := encodeCacheValue(ruleValue)
-			if err != nil {
-				resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
-				resp.Header.Error = err.Error()
-				return resp, err
-			}
-
-			// expire time = r.interval + r.durable
-			s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.Interval + r.Durable)
 		}
+
+		ruleValueStr, err := encodeCacheValue(ruleValue)
+		if err != nil {
+			resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
+			resp.Header.Error = err.Error()
+			return resp, err
+		}
+
+		// expire time = r.interval + r.durable
+		s.cacheOpImpl.setex(ruleKey, ruleValueStr, r.Interval + r.Durable)
 	}
 	return
 }
