@@ -43,11 +43,12 @@ type Config struct {
 	MaxClients int    `toml:"max-clients,omitempty" json:"max-clients"`
 	MaxLimit   uint64 `toml:"max-record-limit,omitempty" json:"max-record-limit"`
 
-	User     string `toml:"user,omitempty" json:"user"`
-	Password string `toml:"password,omitempty" json:"password"`
-	Charset  string `toml:"charset,omitempty" json:"charset"`
+	User       string `toml:"user,omitempty" json:"user"`
+	Password   string `toml:"password,omitempty" json:"password"`
+	Charset    string `toml:"charset,omitempty" json:"charset"`
+	AggrEnable bool   `toml:"aggr-func,omitempty" json:"aggr-func"`
 
-	Alarm AlarmConfig `toml:"alarm,omitempty" json:"alarm"`
+	Alarm       AlarmConfig   `toml:"alarm,omitempty" json:"alarm"`
 	Performance PerformConfig `toml:"performance,omitempty" json:"performance"`
 	Cluster     ClusterConfig `toml:"cluster,omitempty" json:"cluster"`
 	Log         LogConfig     `toml:"log,omitempty" json:"log"`
@@ -77,6 +78,7 @@ user = "test"
 password = "123456"
 #mysql connect property
 charset = "utf8"
+aggr-func = true
 
 
 [performance]
@@ -302,13 +304,13 @@ type BenchMarkConfig struct {
 	Scope   int    `toml:"scope,omitempty" json:"scope"`
 }
 
-func UpdateConfig(addr string) error{
+func UpdateConfig(addr string) error {
 	if *configFileN == "" {
 		return nil
 	}
 	content, err := readAndReplaceConfig(*configFileN, addr)
 	if err != nil {
-		return  err
+		return err
 	}
 	if content == "" {
 		return nil
@@ -317,7 +319,7 @@ func UpdateConfig(addr string) error{
 	return err
 }
 
-func readAndReplaceConfig(fileName string, addr string) (string, error)   {
+func readAndReplaceConfig(fileName string, addr string) (string, error) {
 	f, err := os.Open(fileName)
 	if err != nil {
 		return "", err

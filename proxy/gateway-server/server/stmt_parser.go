@@ -110,7 +110,7 @@ func (s *StmtParser) parseTable(stmt sqlparser.Statement) string {
 	return ""
 }
 
-func (s *StmtParser) parseSelectCols(stmt *sqlparser.Select) (cols []*SelColumn, err error) {
+func (s *StmtParser) parseSelectCols(stmt *sqlparser.Select, aggreEnable bool) (cols []*SelColumn, err error) {
 	for _, sexpr := range stmt.SelectExprs {
 		switch colExpr := sexpr.(type) {
 		case *sqlparser.NonStarExpr: // 非 *
@@ -124,6 +124,9 @@ func (s *StmtParser) parseSelectCols(stmt *sqlparser.Select) (cols []*SelColumn,
 				}
 				cols = append(cols, col)
 			case *sqlparser.FuncExpr:
+				if !aggreEnable {
+					return nil, fmt.Errorf("aggregation func enable")
+				}
 				if aggreFunc, aggreCol, err := parseAggreFunc(colIns); err != nil {
 					return nil, err
 				} else {

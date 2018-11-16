@@ -243,22 +243,26 @@ Status Range::ForceSplit(uint64_t version, std::string *result_split_key) {
 
     std::string split_key;
     auto mode = context_->GetSplitPolicy()->KeyMode();
-    if (mode != SplitKeyMode::kNormal) {
+    // lock和watch的数据量较小，直接分
+    if (mode == SplitKeyMode::kLockWatch) {
         uint64_t total_size = 0;
         std::string skey;
         // 先统计store总大小
         auto s = store_->StatSize(1, mode, &total_size , &skey);
         if (!s.ok()) {
+            RANGE_LOG_ERROR("Force Split. statsize failed: %s", s.ToString().c_str());
             return Status(Status::kUnknown, "stat store total size", s.ToString());
         }
+        RANGE_LOG_INFO("Force split statsize=%" PRIu64, total_size);
         // 以store的一半来分割数据
         if (total_size > 0) {
             ResetStatisSize(mode, total_size/2, total_size);
         }
-    } else {
-        split_key = FindMiddle(meta.start_key(), meta.end_key());
+        return Status::OK();
     }
 
+    // 其他的根据start_key和end_key计算字节序排列的中间点
+    split_key = FindMiddle(meta.start_key(), meta.end_key());
     if (split_key.empty() || split_key <= meta.start_key() || split_key >= meta.end_key()) {
         std::ostringstream ss;
         ss << "begin key: " << EncodeToHex(meta.start_key()) << ", ";

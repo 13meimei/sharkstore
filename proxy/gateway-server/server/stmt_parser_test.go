@@ -103,7 +103,7 @@ func TestParseSelectCols(t *testing.T) {
 		t.Fatalf("not select statemnet")
 	}
 	stparser := StmtParser{}
-	cols, err := stparser.parseSelectCols(selectStmt)
+	cols, err := stparser.parseSelectCols(selectStmt, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,14 +137,14 @@ func TestParseSelectCols(t *testing.T) {
 
 }
 
-func TestParseUpdate(t *testing.T)  {
+func TestParseUpdate(t *testing.T) {
 	sql := "update mytable set user_name ='name2', pass_word='2323' where h = 2 limit 1"
 	parseUpdate(sql, t)
 
 	sql2 := "update mytable set pass_word = age + 1,  pass_word='2' where id = 1"
 	parseUpdate(sql2, t)
 
-	sql3:= "update mytable set pass_word = pass_word + '1',  real_name ='2' where id = 1"
+	sql3 := "update mytable set pass_word = pass_word + '1',  real_name ='2' where id = 1"
 	parseUpdate(sql3, t)
 
 	//sql3 := "update mytable set real_name = '1', pass_word='2' where h = 1"
@@ -163,7 +163,7 @@ func TestParseUpdate(t *testing.T)  {
 	//sql6 := "update mytable set name = 'test' where id in (select id from (select * from mytable order by id asc limit 20, 10) AS tt) "
 }
 
-func parseUpdate(sql  string, t *testing.T)  {
+func parseUpdate(sql string, t *testing.T) {
 	colInfos := []*metapb.Column{
 		{Name: "h", Id: uint64(1), DataType: metapb.DataType_BigInt, PrimaryKey: uint64(1), Index: true},
 		{Name: "user_name", Id: uint64(2), DataType: metapb.DataType_Varchar, PrimaryKey: uint64(1), Index: true},
@@ -180,7 +180,6 @@ func parseUpdate(sql  string, t *testing.T)  {
 		Epoch:   &metapb.TableEpoch{ConfVer: 1, Version: 1},
 	}
 	ta := NewTable(tableMeta, nil, 5*time.Minute)
-
 
 	stmt, err := sqlparser.Parse(sql)
 	if err != nil {
@@ -204,7 +203,6 @@ func parseUpdate(sql  string, t *testing.T)  {
 		t.Fatalf("unexpected result length: %v, expected:%v", len(fileds), 2)
 	}
 
-
 	var matchs []Match
 	if updateStmt.Where != nil {
 		matchs, err = stparser.parseWhere(updateStmt.Where)
@@ -216,6 +214,6 @@ func parseUpdate(sql  string, t *testing.T)  {
 	t.Logf("match %v", matchs)
 
 	if updateStmt.Limit != nil {
-		t.Logf("limit rowCount %v",  updateStmt.Limit.Rowcount)
+		t.Logf("limit rowCount %v", updateStmt.Limit.Rowcount)
 	}
 }
