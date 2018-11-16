@@ -9,6 +9,8 @@ import (
 	"util/gogc"
 	"util/log"
 	"util/ping"
+	"math/rand"
+	"time"
 )
 
 var (
@@ -46,7 +48,11 @@ func main() {
 	// start gc
 	go gogc.TickerPrintGCSummary(log.GetFileLogger(), "info")
 	// start alive report
-	go ping.Ping(conf.Alarm.Address, int64(conf.Cluster.ID), conf.SqlPort, 10)
+	if conf.Alarm.PingInterval <= 0 {
+		conf.Alarm.PingInterval = 10
+	}
+	rand.Seed(time.Now().Unix())
+	go ping.Ping(conf.Alarm.Address, int64(conf.Cluster.ID), conf.SqlPort, conf.Alarm.PingInterval + int64(rand.Intn(5)))
 	// run server
 	srv.Run()
 	log.Info("gateway server start ")

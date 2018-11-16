@@ -136,6 +136,7 @@ func (c *Config) LoadConfig(configFileName *string) {
 
 type AlarmConfig struct {
 	Address string `toml:"address,omitempty" json:"address"`
+	PingInterval int64 `toml:"ping-interval,omitempty" json:"ping-interval"`
 }
 
 type PerformConfig struct {
