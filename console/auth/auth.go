@@ -4,11 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/sessions"
 
+	"console/config"
 	"util/log"
 	"net/http"
 	"strings"
 	"time"
-	"console/config"
+	"sync"
 )
 
 var authConfig *AuthConfig
@@ -25,6 +26,7 @@ type SsoReply struct {
 	ReqMsg  string    `json:"REQ_MSG"`
 }
 type AuthConfig struct {
+	authLock    sync.RWMutex
 	cache       map[string]*UserInfo
 	loginConfig *config.LoginConfig
 	client      *http.Client
@@ -89,6 +91,8 @@ func Author(cfg *config.Config) gin.HandlerFunc {
 }
 
 func getUserInfoFromCache(name string) *UserInfo {
+	authConfig.authLock.Lock()
+	defer authConfig.authLock.Unlock()
 	if authConfig.cache == nil {
 		return nil
 	}
@@ -111,6 +115,8 @@ func saveUserInfoToCache(name string, userInfo *UserInfo) {
 	expireTime := time.Now().Add(authConfig.cacheTime)
 	log.Debug("set expire time is:[%v] ", expireTime)
 	userInfo.Expire = expireTime.Unix()
+	authConfig.authLock.Lock()
+	defer authConfig.authLock.Unlock()
 	authConfig.cache[name] = userInfo
 }
 
@@ -129,7 +135,7 @@ func isExclude(uri string) bool {
 		return false
 	}
 	for _, path := range authConfig.loginConfig.SsoExcludePath {
-		if strings.HasPrefix(uri, path){
+		if strings.HasPrefix(uri, path) {
 			return true
 		}
 	}
