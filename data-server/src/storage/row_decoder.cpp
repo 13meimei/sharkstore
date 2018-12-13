@@ -142,7 +142,11 @@ static Status decodePK(const std::string& key, size_t& offset, const metapb::Col
                               std::to_string(offset),
                               EncodeToHexString(key));
             }
-            if (value != nullptr) *value = new FieldValue(s);
+            if (value != nullptr) {
+                *value = new FieldValue(s);
+            } else {
+                delete s;
+            }
             return Status::OK();
         }
 
