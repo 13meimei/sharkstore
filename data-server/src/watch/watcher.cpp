@@ -13,7 +13,7 @@ namespace watch {
 Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, common::ProtoMessage* msg):
         table_id_(table_id), key_version_(version), message_(msg), watcher_id_(msg->session_id), session_id_(msg->session_id), msg_id_(msg->header.msg_id), expire_time_(expire_time) {
     for (auto k: keys) {
-        keys_.push_back(std::move(new WatcherKey(*k)));
+        keys_.push_back(new WatcherKey(*k));
     }
     if(keys.size() > 0) {
         keys_hash_.push_back(keys_[0]);
@@ -23,7 +23,7 @@ Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const 
 Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, common::ProtoMessage* msg):
         table_id_(table_id), key_version_(version), message_(msg), type_(type), watcher_id_(msg->session_id),  session_id_(msg->session_id), msg_id_(msg->header.msg_id), expire_time_(expire_time) {
     for (auto k: keys) {
-        keys_.push_back(std::move(new WatcherKey(*k)));
+        keys_.push_back(new WatcherKey(*k));
     }
     if(keys.size() > 0) {
         keys_hash_.push_back(keys_[0]);
@@ -32,7 +32,7 @@ Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey
 
 Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys):table_id_(table_id) {
     for (auto k: keys) {
-        keys_.push_back(std::move(new WatcherKey(*k)));
+        keys_.push_back(new WatcherKey(*k));
     }
     if(keys.size() > 0) {
         keys_hash_.push_back(keys_[0]);

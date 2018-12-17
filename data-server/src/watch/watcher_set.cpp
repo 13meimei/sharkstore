@@ -148,9 +148,9 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
     if (watcher_map_it == key_watchers.end()) {
 
         std::string val;
-        std::string userKey("");
-        std::string userVal("");
-        std::string ext("");
+        std::string userKey;
+        std::string userVal;
+        std::string ext;
         int64_t version(0);
         if(store_!= nullptr){
 

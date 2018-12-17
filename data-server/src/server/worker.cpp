@@ -43,40 +43,27 @@ void Worker::StartWorker(std::vector<std::thread> &worker,
     hash_queue.msg_queue.resize(num);
 
     for (int i = 0; i < num; i++) {
-        //auto mq = new MsqQueue;
         auto mq = new_lk_queue();
-
         hash_queue.msg_queue[i] = mq;
 
         worker.emplace_back([&, mq] {
-            int batch_count = 10;
-            common::ProtoMessage *task;
-
+            common::ProtoMessage *task = nullptr;
             while (g_continue_flag) {
-                task = nullptr;
-//                if (mq->msg_queue.wait_dequeue_timed(
-//                        task, std::chrono::milliseconds(100))) {
-                //block mode
-                if(task = (common::ProtoMessage *)lk_queue_pop(mq)) {
+                task = (common::ProtoMessage*)lk_queue_pop(mq); //block mode
+                if (task != nullptr) {
                     if (!g_continue_flag) {
                         delete task;
                         break;
                     }
-
-                    if (task != nullptr) {
-                        --hash_queue.all_msg_size;
-                        DealTask(task);
-                    }
+                    --hash_queue.all_msg_size;
+                    DealTask(task);
                 } else {
                     std::this_thread::sleep_for(std::chrono::microseconds(100));
                 }
             }
-
             FLOG_INFO("Worker thread exit...");
             __sync_fetch_and_sub(&worker_status_.actual_worker_threads, 1);
-
         });
-
         __sync_fetch_and_add(&worker_status_.actual_worker_threads, 1);
     }
 }
@@ -151,7 +138,6 @@ void Worker::Push(common::ProtoMessage *task) {
         } else {
             FLOG_DEBUG("session: %" PRId64 " is alive", task->session_id);
         }
-
         context_->socket_session->Send(task, nullptr);
         return;
     }
@@ -159,18 +145,12 @@ void Worker::Push(common::ProtoMessage *task) {
     if (isSlow(task)) {
         auto slot = ++slot_seed_ % ds_config.slow_worker_num;
         auto mq = slow_queue_.msg_queue[slot];
-
         lk_queue_push(mq, task);
-        //mq->msg_queue.enqueue(task);
-
         ++slow_queue_.all_msg_size;
-
     } else {
         auto slot = ++slot_seed_ % ds_config.fast_worker_num;
         auto mq = fast_queue_.msg_queue[slot];
         lk_queue_push(mq, task);
-        //mq->msg_queue.enqueue(task);
-
         ++fast_queue_.all_msg_size;
     }
 }
@@ -187,12 +167,14 @@ void Worker::DealTask(common::ProtoMessage *task) {
 
 void Worker::Clean(HashQueue &hash_queue) {
     for (auto mq : hash_queue.msg_queue) {
-        common::ProtoMessage *task = nullptr;
-        //while (mq->msg_queue.try_dequeue(task)) {
-        while (task = (common::ProtoMessage *)lk_queue_pop(mq)) {
+        while (true) {
+            auto task = (common::ProtoMessage *)lk_queue_pop(mq);
+            if (task == nullptr) {
+                break;
+            }
             delete task;
         }
-        delete mq;
+        delete_lk_queue(mq);
     }
 }
 
@@ -200,9 +182,11 @@ size_t Worker::ClearQueue(bool fast, bool slow) {
     size_t count = 0;
     if (fast) {
         for (auto& q : fast_queue_.msg_queue) {
-            common::ProtoMessage *task;
-            //while (q->msg_queue.try_dequeue(task)) {
-            while(task = (common::ProtoMessage *)lk_queue_pop(q)) {
+            while (true) {
+                auto task = (common::ProtoMessage *)lk_queue_pop(q);
+                if (task == nullptr) {
+                    break;
+                }
                 delete task;
                 ++count;
             }
@@ -210,9 +194,11 @@ size_t Worker::ClearQueue(bool fast, bool slow) {
     }
     if (slow) {
         for (auto& q : slow_queue_.msg_queue) {
-            common::ProtoMessage *task;
-            //while (q->msg_queue.try_dequeue(task)) {
-            while (task = (common::ProtoMessage *)lk_queue_pop(q)) {
+            while (true) {
+                auto task = (common::ProtoMessage *)lk_queue_pop(q);
+                if (task == nullptr) {
+                    break;
+                }
                 delete task;
                 ++count;
             }

@@ -87,7 +87,7 @@ public:
     Status ForceSplit(uint64_t version, std::string* split_key);
 
     // lock
-    kvrpcpb::LockValue *LockQuery(const std::string &key);
+    bool LockQuery(const std::string &key, kvrpcpb::LockValue* lock_value);
     void Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req);
     void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
     void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
