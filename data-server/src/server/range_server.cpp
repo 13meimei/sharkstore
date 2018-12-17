@@ -71,6 +71,9 @@ int RangeServer::Init(ContextServer *context) {
     // 创建RangeContext
     range_context_.reset(new RangeContextImpl(context_));
 
+    // 初始化WatchServer
+    watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
+
     std::vector<metapb::Range> range_metas;
     ret = meta_store_->GetAllRange(&range_metas);
     if (!ret.ok()) {
@@ -82,9 +85,6 @@ int RangeServer::Init(ContextServer *context) {
         return -1;
     }
 
-
-
-    watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
     FLOG_INFO("RangeServer Init end ...");
 
     return 0;
