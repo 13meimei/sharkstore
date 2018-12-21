@@ -40,9 +40,9 @@ Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys):table_
 }
 
 Watcher::~Watcher() {
-    /*for (auto k: keys_) {
+    for (auto k: keys_) {
         delete k;
-    }*/
+    }
 }
 
 bool Watcher::operator>(const Watcher* other) const {
