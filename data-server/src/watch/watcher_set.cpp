@@ -383,7 +383,7 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
 
     auto itWatcherVal = watcherMap.find(key);
     if (itWatcherVal == watcherMap.end()) {
-        FLOG_INFO("GetWatcher end,key[%s] has no watcher.", EncodeToHexString(key).c_str());
+        FLOG_DEBUG("GetWatcher end,key[%s] has no watcher.", EncodeToHexString(key).c_str());
         return WATCH_KEY_NOT_EXIST;
     }
 
