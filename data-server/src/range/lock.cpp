@@ -565,11 +565,17 @@ void Range::LockWatch(common::ProtoMessage *msg, watchpb::DsWatchRequest& req) {
             return;
         }
 
+        // create watcher
         std::vector<watch::Key*> keys;
         keys.push_back(new watch::Key(req.req().kv().key(0)));
-
         int64_t expireTime = (req.req().longpull() > 0)?get_micro_second() + req.req().longpull()*1000:msg->expire_time*1000;
         auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, msg);
+        // free keys
+        for (auto k: keys) {
+            delete k;
+        }
+        keys.clear();
+
         auto w_code = context_->WatchServer()->AddKeyWatcher(w_ptr, store_.get());
         if (w_code != watch::WATCH_OK) {
             RANGE_LOG_WARN("LockWatch error: lock [%s] add key watcher failed", EncodeToHexString(encode_key).c_str());
