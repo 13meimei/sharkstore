@@ -367,6 +367,7 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
         }
 
         if (watcher_map_it->second->mapKeyWatcher.empty()) {
+            delete watcher_map_it->second;
             watcher_map_.erase(watcher_map_it);
         }
     }
@@ -402,6 +403,7 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
         watchers->mapKeyWatcher.swap(watcherValue->mapKeyWatcher);
 
         watcherMap.erase(itWatcherVal);
+        delete watchers;
         FLOG_INFO("watcher get success,count:%" PRIu64 " key: [%s] watch_id[%" PRId64 "]",
                   watcherValue->mapKeyWatcher.size(), EncodeToHexString(key).c_str(), watcherValue->mapKeyWatcher.begin()->first );
         return WATCH_OK;
