@@ -597,10 +597,11 @@ Status RangeServer::DeleteRange(uint64_t range_id, uint64_t peer_id) {
         }
         rng = it->second;
 
-        if (peer_id != 0 && rng->GetPeerID() != peer_id) {
-            FLOG_WARN("range[%" PRIu64 "] delete a mismached peer. current: %" PRIu64 ", to delete: %" PRIu64,
-                    range_id, rng->GetPeerID(), peer_id);
-
+        auto local_peer_id = rng->GetPeerID();
+        // local_peer_id == 0 maybe removed
+        if (peer_id != 0 && local_peer_id != 0 && local_peer_id != peer_id) {
+            FLOG_WARN("range[%" PRIu64 "] delete a mismached peer. local: %" PRIu64 ", request: %" PRIu64,
+                    range_id, local_peer_id, peer_id);
             // consider mismatch as success
             return Status::OK();
         }
