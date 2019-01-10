@@ -2216,12 +2216,20 @@ func (s *Service) IsAdmin(userName string) (bool, error) {
 		log.Error("user %v isAdmin error, %v", userName, err)
 		return false, err
 	}
-	if userInfo != nil {
-		for _, right := range userInfo.Right {
-			if right == 1 {
-				return true, nil
-			}
-		}
+	if userInfo != nil && userInfo.IsSystemOwner() {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (s *Service) IsClusterOwner(userName string, clusterId int64) (bool, error) {
+	userInfo, err := right.GetUserCluster(s.GetDb(), userName)
+	if err != nil {
+		log.Error("user %v GetUserCluster error, %v", userName, err)
+		return false, err
+	}
+	if userInfo != nil && userInfo.IsClusterOwner(clusterId) {
+		return true, nil
 	}
 	return false, nil
 }

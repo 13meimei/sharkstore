@@ -65,14 +65,9 @@ func (r *Router) StartRouter() *gin.Engine {
 			c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 		admin := "none"
-		user, err := r.GetUserCluster(userName)
-		if err == nil {
-			for _, r := range user.Right {
-				if r == 1 {
-					admin = ""
-					break
-				}
-			}
+		user, _ := r.GetUserCluster(userName)
+		if user != nil && user.IsSystemOwner(){
+			admin = ""
 		}
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"basePath": r.staticRootDir,
@@ -102,14 +97,9 @@ func (r *Router) StartRouter() *gin.Engine {
 			c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 		admin := "none"
-		user, err := r.GetUserCluster(userName)
-		if err == nil {
-			for _, r := range user.Right {
-				if r == 1 {
-					admin = ""
-					break
-				}
-			}
+		user, _ := r.GetUserCluster(userName)
+		if user != nil && user.IsSystemOwner(){
+			admin = ""
 		}
 		c.HTML(http.StatusOK, "sqlapply_list.html", gin.H{
 			"basePath": r.staticRootDir,
@@ -123,14 +113,9 @@ func (r *Router) StartRouter() *gin.Engine {
 			c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 		admin := "none"
-		user, err := r.GetUserCluster(userName)
-		if err == nil {
-			for _, r := range user.Right {
-				if r == 1 {
-					admin = ""
-					break
-				}
-			}
+		user, _ := r.GetUserCluster(userName)
+		if user != nil && user.IsSystemOwner() {
+			admin = ""
 		}
 		c.HTML(http.StatusOK, "locknsp_list.html", gin.H{
 			"basePath": r.staticRootDir,
@@ -167,14 +152,9 @@ func (r *Router) StartRouter() *gin.Engine {
 			c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 		admin := "none"
-		user, err := r.GetUserCluster(userName)
-		if err == nil {
-			for _, r := range user.Right {
-				if r == 1 {
-					admin = ""
-					break
-				}
-			}
+		user, _ := r.GetUserCluster(userName)
+		if user != nil && user.IsSystemOwner() {
+			admin = ""
 		}
 		c.HTML(http.StatusOK, "configurensp_list.html", gin.H{
 			"basePath": r.staticRootDir,
@@ -327,14 +307,9 @@ func (r *Router) StartRouter() *gin.Engine {
 				c.Redirect(http.StatusMovedPermanently, "/logout")
 			}
 			admin := "none"
-			user, err := r.GetUserCluster(userName)
-			if err == nil {
-				for _, r := range user.Right {
-					if r == 1 {
-						admin = ""
-						break
-					}
-				}
+			user, _ := r.GetUserCluster(userName)
+			if user != nil && user.IsSystemOwner() {
+				admin = ""
 			}
 			c.HTML(http.StatusOK, "tables_tablelist.html", gin.H{
 				"basePath":  r.staticRootDir,

@@ -37,13 +37,10 @@ func (ctrl *ClusterGetAllAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.NO_RIGHT
 	}
 	userR := userRight.(*right.User)
-	var clusterIds []int64
-	for id, r := range userR.Right {
-		if id == 0 && r == 1 {
-			log.Debug("admin [%v] get all cluster", userR.Name)
-			return service.NewService().GetAllClusters()
-		}
-		clusterIds = append(clusterIds, id)
+	isSystemOwner, clusterIds := userR.IsSystemOwnerOrClusterIds()
+	if isSystemOwner {
+		log.Debug("admin [%v] get all cluster", userR.Name)
+		return service.NewService().GetAllClusters()
 	}
 	log.Debug("user [%v] get cluster list: %v", userR.Name, clusterIds)
 	return service.NewService().GetClusterById(clusterIds...)

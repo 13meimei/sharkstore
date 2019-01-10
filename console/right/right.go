@@ -1,13 +1,13 @@
 package right
 
 import (
+	"time"
+	"sync"
+	"database/sql"
+	"util/log"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/sessions"
 	"github.com/muesli/cache2go"
-	_ "github.com/go-sql-driver/mysql"
-	"util/log"
-	"database/sql"
-	"time"
 )
 
 var UserCache = cache2go.Cache("user_cache")
@@ -19,6 +19,7 @@ const (
 )
 type Right int16
 type User struct {
+	sync.RWMutex
 	Name string
 	Right map[int64]Right // clusterid: right
 }
@@ -31,7 +32,47 @@ func NewUser(name string) *User{
 }
 
 func (user *User) addClusterRight(id, right int64) {
+	user.Lock()
+	defer user.Unlock()
 	user.Right[id] = Right(right)
+}
+
+func (user *User) IsSystemOwnerOrClusterIds() (bool, []int64){
+	ids := make([]int64, 0)
+	user.RLock()
+	defer user.RUnlock()
+	for id, r := range user.Right {
+		if r == 1 {
+			return true, nil
+		}
+		ids = append(ids, id)
+	}
+	return false, ids
+}
+
+func (user *User) IsSystemOwner() (bool){
+	user.RLock()
+	defer user.RUnlock()
+	for _, r := range user.Right {
+		if  r == 1 {
+			return true
+		}
+	}
+	return false
+}
+
+func (user *User) IsClusterOwner(clusterId int64) (bool){
+	user.RLock()
+	defer user.RUnlock()
+	for id, r := range user.Right {
+		if id <= 1 {
+			return true
+		}
+		if clusterId == id && r == 2 {
+			return true
+		}
+	}
+	return false
 }
 
 func AddCacheUser(user *User) {

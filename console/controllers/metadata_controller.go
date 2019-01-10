@@ -2,14 +2,12 @@ package controllers
 
 import (
 	"strconv"
-
-	"github.com/gin-gonic/gin"
-
+	"util/log"
+	"encoding/json"
 	"console/common"
 	"console/service"
-	"util/log"
-	//"strings"
-	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/sessions"
 )
 
 const (
@@ -73,6 +71,13 @@ func (dtrl *DeleteDbAction) Execute(c *gin.Context) (interface{}, error) {
 	if err != nil {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
+
+	userName := sessions.Default(c).Get("user_name").(string)
+	isClusterOwner, _ := service.NewService().IsClusterOwner(userName, int64(cId))
+	if !isClusterOwner {
+		return nil, common.NO_RIGHT
+	}
+	log.Debug("user [%v] delete db, isClusterOwner: %v", userName, isClusterOwner)
 	return nil, service.NewService().DeleteDb(cId, dbName)
 }
 
@@ -272,6 +277,13 @@ func (ctrl *DeleteTableAction) Execute(c *gin.Context) (interface{}, error) {
 	if flag == "" {
 		return nil, common.PARSE_PARAM_ERROR
 	}
+
+	userName := sessions.Default(c).Get("user_name").(string)
+	isClusterOwner, _ := service.NewService().IsClusterOwner(userName, int64(cId))
+	if !isClusterOwner {
+		return nil, common.NO_RIGHT
+	}
+	log.Debug("user [%v] delete table, isClusterOwner: %v", userName, isClusterOwner)
 	return nil, service.NewService().DeleteTable(cId, dbName, tableName, flag)
 }
 
