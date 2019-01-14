@@ -77,8 +77,8 @@ bool Watcher::DecodeKey(std::vector<std::string*>& keys,
     size_t offset;
     for (offset = 9; offset < buf.length();) {
         std::string* b = new std::string();
-
         if (!DecodeBytesAscending(buf, offset, b)) {
+            delete b;
             return false;
         }
         keys.push_back(b);

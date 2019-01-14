@@ -124,8 +124,8 @@ int16_t WatchEncodeAndDecode::DecodeKv(funcpb::FunctionID funcId, const uint64_t
 
                     //to do free keys
                     {
-                        for (auto itKey:encodeKeys) {
-                            free(itKey);
+                        for (auto itKey: encodeKeys) {
+                            delete itKey;
                         }
                     }
                 }
