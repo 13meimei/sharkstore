@@ -208,6 +208,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     }
 
     if(watch::WATCH_OK == wcode) {
+        delete ds_resp;
         return;
     } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
         auto btime = get_micro_second();
@@ -216,12 +217,12 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
                                        get_micro_second() - btime);
         w_ptr->Send(ds_resp);
+        return;
     } else {
         RANGE_LOG_ERROR("add watcher exception(%d).", static_cast<int>(wcode));
+        delete ds_resp;
         return;
     }
-
-    return;
 }
 
 void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req) {
