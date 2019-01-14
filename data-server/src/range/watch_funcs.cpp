@@ -152,6 +152,10 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     //int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
     int64_t expireTime = (req.req().longpull() > 0)?get_micro_second() + req.req().longpull()*1000:msg->expire_time*1000;
     auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, msg);
+    // free keys
+    for (auto k: keys) {
+        delete k;
+    }
 
     watch::WatchCode wcode;
     if(prefix) {
