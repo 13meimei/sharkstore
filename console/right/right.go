@@ -65,7 +65,7 @@ func (user *User) IsClusterOwner(clusterId int64) (bool){
 	user.RLock()
 	defer user.RUnlock()
 	for id, r := range user.Right {
-		if id <= 1 {
+		if r <= 1 {
 			return true
 		}
 		if clusterId == id && r == 2 {
