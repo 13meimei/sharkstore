@@ -83,6 +83,10 @@ int16_t WatchEncodeAndDecode::EncodeKv(funcpb::FunctionID funcId, const metapb::
             FLOG_WARN("range[%" PRIu64 "] error: unknown func_id:%d", meta_.id(), funcId);
             break;
     }
+    // free keys
+    for (auto k: keys) {
+        delete k;
+    }
     return ret;
 }
 
@@ -91,9 +95,7 @@ int16_t WatchEncodeAndDecode::DecodeKv(funcpb::FunctionID funcId, const uint64_t
                             std::string &db_key, std::string &db_value,
                             errorpb::Error *err) {
         int16_t ret(0);
-        std::vector<std::string*> keys;
         int64_t version(0);
-        keys.clear();
 
         //FLOG_DEBUG("DecodeKv dbKey:%s dbValue:%s", EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
         //FLOG_WARN("range[%" PRIu64 "] DecodeKv dbKey:%s dbValue:%s", meta_.id(), EncodeToHexString(db_key).c_str(), EncodeToHexString(db_value).c_str());
@@ -122,8 +124,8 @@ int16_t WatchEncodeAndDecode::DecodeKv(funcpb::FunctionID funcId, const uint64_t
 
                     //to do free keys
                     {
-                        for (auto itKey:encodeKeys) {
-                            free(itKey);
+                        for (auto itKey: encodeKeys) {
+                            delete itKey;
                         }
                     }
                 }

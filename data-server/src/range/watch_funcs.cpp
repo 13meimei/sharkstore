@@ -152,6 +152,10 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     //int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
     int64_t expireTime = (req.req().longpull() > 0)?get_micro_second() + req.req().longpull()*1000:msg->expire_time*1000;
     auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, msg);
+    // free keys
+    for (auto k: keys) {
+        delete k;
+    }
 
     watch::WatchCode wcode;
     if(prefix) {
@@ -204,6 +208,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     }
 
     if(watch::WATCH_OK == wcode) {
+        delete ds_resp;
         return;
     } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
         auto btime = get_micro_second();
@@ -212,12 +217,12 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
                                        get_micro_second() - btime);
         w_ptr->Send(ds_resp);
+        return;
     } else {
         RANGE_LOG_ERROR("add watcher exception(%d).", static_cast<int>(wcode));
+        delete ds_resp;
         return;
     }
-
-    return;
 }
 
 void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req) {
