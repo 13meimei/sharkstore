@@ -108,9 +108,12 @@ function myTrim(x) {
 function isIntType(dataType) {
     var typeFlag = false;
     switch (dataType){
-        case 1, 2, 3, 4:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
             typeFlag = true;
-            break
+            break;
         default:
             ;
     }
@@ -134,7 +137,7 @@ function createDataBaseTable(data) {
 		if(data[i].primary_key && !pkFlg){
             pkFlg = true;
 		}
-        if(data[i].auto_increment && (!isIntType(data[i].data_type || !data[i].primary_key ))){
+        if(data[i].auto_increment && (!isIntType(data[i].data_type) || !data[i].primary_key )){
             incFlg = false;
             break
         }
