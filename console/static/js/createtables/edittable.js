@@ -157,7 +157,7 @@ function createDataBaseTable(data) {
         if(data[i].primary_key && !pkFlg){
             pkFlg = true;
         }
-        if(data[i].auto_increment && (!isIntType(data[i].data_type || !data[i].primary_key ))){
+        if(data[i].auto_increment && (!isIntType(data[i].data_type) || !data[i].primary_key)){
             incFlg = false;
             break
         }
