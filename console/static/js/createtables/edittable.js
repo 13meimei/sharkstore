@@ -250,3 +250,18 @@ function createDataBaseTable(data) {
     		});
     	});
 }
+
+function isIntType(dataType) {
+    var typeFlag = false;
+    switch (dataType){
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            typeFlag = true;
+            break;
+        default:
+            ;
+    }
+    return typeFlag;
+}
