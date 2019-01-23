@@ -18,7 +18,7 @@ user = "test"
 password = "123456"
 #mysql connect property
 charset = "utf8"
-//aggregate functions
+#aggregate functions
 aggr-func = true
 
 
