@@ -3,18 +3,19 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"model/pkg/kvrpcpb"
-	"model/pkg/timestamp"
-	"pkg-go/ds_client"
-	"proxy/gateway-server/mysql"
-	"proxy/gateway-server/sqlparser"
-	"proxy/store/dskv"
 	"sort"
 	"strconv"
 	"time"
 	"util"
 	"util/hack"
 	"util/log"
+	"model/pkg/kvrpcpb"
+	"model/pkg/timestamp"
+	"model/pkg/metapb"
+	"pkg-go/ds_client"
+	"proxy/store/dskv"
+	"proxy/gateway-server/mysql"
+	"proxy/gateway-server/sqlparser"
 )
 
 func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface{}) (*mysql.Result, error) {
@@ -205,35 +206,26 @@ func (p *Proxy) checkPKMissing(t *Table, colMap map[string]int) (string, error) 
 	return pkName, nil
 }
 
+// Format of Data Storage Structure:
+//  +-----------------------------------------------------+
+//  |                  Key                |    Value      |
+//  +-----------------------------------------------------+
+//  | Store_Prefix_KV + tableId + PKValue | columnValue   |
+//  +-----------------------------------------------------+
+
 // EncodeRow 编码一行
 func (p *Proxy) EncodeRow(t *Table, colMap map[string]int, rowValue InsertRowValue) (*kvrpcpb.KeyValue, error) {
 	key := util.EncodeStorePrefix(util.Store_Prefix_KV, t.GetId())
 	var value []byte
 	var err error
 
-	// 编码主键
-	for _, pk := range t.PKS() {
-		i, ok := colMap[pk]
-		if !ok {
-			return nil, fmt.Errorf("pk(%s) is missing", pk)
-		}
-		col := t.FindColumn(pk)
-		if col == nil {
-			return nil, fmt.Errorf("invalid pk column(%s)", pk)
-		}
-		if i >= len(rowValue) {
-			return nil, fmt.Errorf("invalid pk(%s) value", pk)
-		}
-		if rowValue[i] == nil {
-			return nil, fmt.Errorf("pk(%s) could not be NULL", pk)
-		}
-		key, err = util.EncodePrimaryKey(key, col, rowValue[i])
-		if err != nil {
-			return nil, err
-		}
+	// 编码主键作为key
+	key, err = encodePrimaryKeys(t, key, colMap, rowValue)
+	if err != nil {
+		return nil, err
 	}
 
-	// 编码非主键列
+	// 编码非主键列作为value
 	for colName, colIndex := range colMap {
 		col := t.FindColumn(colName)
 		if col == nil {
@@ -261,6 +253,112 @@ func (p *Proxy) EncodeRow(t *Table, colMap map[string]int, rowValue InsertRowVal
 		Value: value,
 		TTL:   ttl,
 	}, nil
+}
+
+func encodePrimaryKeys(t *Table, key []byte, colMap map[string]int, rowValue InsertRowValue) ([]byte, error) {
+	var value []byte
+	var err error
+
+	// 编码主键
+	for _, pk := range t.PKS() {
+		i, ok := colMap[pk]
+		if !ok {
+			return nil, fmt.Errorf("pk(%s) is missing", pk)
+		}
+		col := t.FindColumn(pk)
+		if col == nil {
+			return nil, fmt.Errorf("invalid pk column(%s)", pk)
+		}
+		if i >= len(rowValue) {
+			return nil, fmt.Errorf("invalid pk(%s) value", pk)
+		}
+		if rowValue[i] == nil {
+			return nil, fmt.Errorf("pk(%s) could not be NULL", pk)
+		}
+		value, err = util.EncodePrimaryKey(key, col, rowValue[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return value, nil
+}
+
+// Format of Unique Index Storage Structure:
+//  +-----------------------------------------------------+--------------------+
+//  |                             Key                     |        Value       |
+//  +--------------------------------------------------------------------------+
+//  | Store_Prefix_INDEX + tableId + indexId + indexValue | PKValue(+ version) |
+//  +-----------------------------------------------------+--------------------+
+//
+// Format of Non-Unique Index Storage Structure:
+//  +---------------------------------------------------------------+----------+
+//  |                             Key                               |  Value   |
+//  +---------------------------------------------------------------+----------+
+//  | Store_Prefix_INDEX + tableId + indexId + indexValue + PKValue |(version) |
+//  +---------------------------------------------------------------+----------+
+//
+// version: proxy don't encode the parameter
+
+//EncodeUniqueIndexRow: encode row for unique index
+func (p *Proxy) EncodeIndexRow(t *Table, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
+	keyValues := make([]*kvrpcpb.KeyValue, 0)
+	var err error
+
+	for _, col := range t.columns {
+		if !col.GetIndex() {
+			continue
+		}
+		//encode: index store prefix + table_id
+		key := util.EncodeStorePrefix(util.Store_Prefix_INDEX, t.GetId())
+		var indexValue []byte
+		colIndex, ok := colMap[col.GetName()]
+		if !ok {
+			indexValue = initValueByDataType(col.GetDataType(), col.GetUnsigned())
+		} else {
+			indexValue = rowValue[colIndex]
+		}
+		// encode: index column id + index column value
+		key, err = util.EncodeColumnValue(key, col, indexValue)
+		if err != nil {
+			log.Error("encode index column[%v] value[%v] error: %v", col.GetName(), indexValue, err)
+			return nil, err
+		}
+		// encode: primary key for non-unique index
+		var value []byte
+		if !col.GetUnique() {
+			key, err = encodePrimaryKeys(t, key, colMap, rowValue)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			value, err = encodePrimaryKeys(t, value, colMap, rowValue)
+			if err != nil {
+				return nil, err
+			}
+		}
+		keyValues = append(keyValues, &kvrpcpb.KeyValue{
+			Key:   key,
+			Value: value,
+		})
+	}
+	return keyValues, nil
+}
+
+func initValueByDataType(dataType metapb.DataType, unsigned bool) []byte {
+	var value []byte
+	switch dataType {
+	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+		if unsigned { // 无符号
+
+		} else { // 有符号
+
+		}
+	case metapb.DataType_Float, metapb.DataType_Double:
+
+	case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
+
+	}
+	return value
 }
 
 func (p *Proxy) batchInsert(context *dskv.ReqContext, t *Table, kvPairs []*kvrpcpb.KeyValue) (affected uint64, duplicateKey []byte, retryKVPairs []*kvrpcpb.KeyValue, err error) {

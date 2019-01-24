@@ -490,7 +490,7 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		log.Error("[insert] table %s.%s missing column(%v)", db, tableName, err)
 		return nil, err
 	}
-	//填充自增id值
+	//填充自增主键值
 	if len(pkName) > 0 {
 		colMap[pkName] = len(colMap)
 		ids, err := proxy.msCli.GetAutoIncId(t.GetDbId(), t.GetId(), uint32(len(rows)))
