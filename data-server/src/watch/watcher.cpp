@@ -53,6 +53,7 @@ bool Watcher::operator>(const Watcher* other) const {
 void Watcher::Send(google::protobuf::Message* resp) {
     std::lock_guard<std::mutex> lock(send_lock_);
     if (sent_response_flag) {
+        delete resp;
         return;
     }
 
