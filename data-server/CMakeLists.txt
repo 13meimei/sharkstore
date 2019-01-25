@@ -41,6 +41,10 @@ else()
 endif()
 MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
+include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
+
+
 # use intel tbb
 OPTION (ENABLE_TBB "Use Intel TBB" ON)
 MESSAGE(STATUS ENABLE_TBB=${ENABLE_TBB})
@@ -63,42 +67,18 @@ if(ENABLE_TBB)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTBB")
 endif()
 
-OPTION(BLOB_EXTEND_OPTIONS "Enable blob extend options" OFF)
-MESSAGE(STATUS BLOB_EXTEND_OPTIONS=${BLOB_EXTEND_OPTIONS})
-if(BLOB_EXTEND_OPTIONS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBLOB_EXTEND_OPTIONS")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBLOB_EXTEND_OPTIONS")
+OPTION (ENABLE_TCMALLOC "Use TCMalloc" OFF)
+if (ENABLE_TCMALLOC)
+    MESSAGE(STATUS "Use TCMalloc")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSHARK_USE_TCMALLOC -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSHARK_USE_TCMALLOC -fno-omit-frame-pointer")
+    find_library(TCMALLOC_LIB tcmalloc)
+    if(NOT TCMALLOC_LIB )
+        message(FATAL_ERROR "TCMalloc library not found")
+    else()
+        message(STATUS "Found TCMalloc C++ library: " ${TCMALLOC_LIB})
+    endif()
 endif()
-
-# use gcov
-OPTION (ENABLE_COVERAGE "Use gcov" OFF)
-MESSAGE(STATUS ENABLE_COVERAGE=${ENABLE_COVERAGE})
-if(ENABLE_COVERAGE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
-endif()
-
-# profiler
-OPTION (ENABLE_GPERF "Use gperf" OFF)
-MESSAGE(STATUS ENABLE_GPERF=${ENABLE_GPERF})
-if(ENABLE_GPERF)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_GPERF")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_GPERF" )
-endif()
-
-# gcc address sanitize
-OPTION (ENABLE_SANITIZE "Use gcc address sanitize" OFF)
-MESSAGE(STATUS ENABLE_SANITIZE=${ENABLE_SANITIZE})
-if(ENABLE_SANITIZE )
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address" )
-endif()
-
-message(STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
-message(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
-
-include_directories(${PROJECT_SOURCE_DIR}/src)
-include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
 # find protobuf
 find_package(Protobuf REQUIRED)
@@ -160,6 +140,41 @@ else()
     message(STATUS "Found Fastcommon headers path: " ${FASTCOMMON_HEADER_PATH})
     include_directories(${FASTCOMMON_HEADER_PATH})
 endif()
+
+OPTION(BLOB_EXTEND_OPTIONS "Enable blob extend options" OFF)
+MESSAGE(STATUS BLOB_EXTEND_OPTIONS=${BLOB_EXTEND_OPTIONS})
+if(BLOB_EXTEND_OPTIONS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBLOB_EXTEND_OPTIONS")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBLOB_EXTEND_OPTIONS")
+endif()
+
+# use gcov
+OPTION (ENABLE_COVERAGE "Use gcov" OFF)
+MESSAGE(STATUS ENABLE_COVERAGE=${ENABLE_COVERAGE})
+if(ENABLE_COVERAGE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
+endif()
+
+# profiler
+OPTION (ENABLE_GPERF "Use gperf" OFF)
+MESSAGE(STATUS ENABLE_GPERF=${ENABLE_GPERF})
+if(ENABLE_GPERF)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_GPERF")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_GPERF" )
+endif()
+
+# gcc address sanitize
+OPTION (ENABLE_SANITIZE "Use gcc address sanitize" OFF)
+MESSAGE(STATUS ENABLE_SANITIZE=${ENABLE_SANITIZE})
+if(ENABLE_SANITIZE )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address" )
+endif()
+
+
+message(STATUS "CMAKE_C_FLAGS: " ${CMAKE_C_FLAGS})
+message(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
 set(SOURCES
     src/server/main.cpp
@@ -227,6 +242,12 @@ else()
     message(FATAL_ERROR "Unsupported OS Type: " ${CMAKE_SYSTEM_NAME})
 endif()
 
+foreach(f IN LISTS SOURCES)
+    # remove "src/"
+    string(SUBSTRING ${f} 4 -1 fname)
+    set_source_files_properties(${f} PROPERTIES
+        COMPILE_DEFINITIONS "__FNAME__=\"${fname}\"")
+endforeach()
 
 add_subdirectory(src/base)
 add_subdirectory(src/lk_queue)
@@ -258,15 +279,14 @@ if(ENABLE_GPERF)
 endif()
 
 if(ENABLE_TBB)
-    list(APPEND depend_LIBRARYS tbb)
+    list(APPEND depend_LIBRARYS ${TBB_LIB})
 endif()
 
-foreach(f IN LISTS SOURCES)
-    # remove "src/"
-    string(SUBSTRING ${f} 4 -1 fname)
-    set_source_files_properties(${f} PROPERTIES
-        COMPILE_DEFINITIONS "__FNAME__=\"${fname}\"")
-endforeach()
+if (ENABLE_TCMALLOC)
+    list(APPEND depend_LIBRARYS ${TCMALLOC_LIB})
+endif()
+
+message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 
 add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp test/range/test_public_funcs.h)
 target_link_libraries(data-server ${depend_LIBRARYS})
