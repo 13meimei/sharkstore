@@ -76,7 +76,7 @@ void sf_session_free(sf_socket_session_t *session, int64_t session_id) {
     entry = hash_find(&session->session_array, key, 8);
 
     if (entry != NULL) {
-        free(entry);
+        sf_free_session_entry(entry);
     }
 
     pthread_rwlock_unlock(&session->array_lock);
