@@ -213,14 +213,13 @@ func (p *Proxy) checkPKMissing(t *Table, colMap map[string]int) (string, error) 
 //  | Store_Prefix_KV + tableId + PKValue | columnValue   |
 //  +-----------------------------------------------------+
 
-// EncodeRow 编码一行
-func (p *Proxy) EncodeRow(t *Table, colMap map[string]int, rowValue InsertRowValue) (*kvrpcpb.KeyValue, error) {
-	key := util.EncodeStorePrefix(util.Store_Prefix_KV, t.GetId())
-	var value []byte
-	var err error
-
-	// 编码主键作为key
-	key, err = encodePrimaryKeys(t, key, colMap, rowValue)
+// EncodeDataRow: encode business data
+func (p *Proxy) encodeRecordRow(t *Table, colMap map[string]int, rowValue InsertRowValue) (*kvrpcpb.KeyValue, error) {
+	var (
+		key, value []byte
+		err        error
+	)
+	key, err = p.encodeRecordKey(t, colMap, rowValue)
 	if err != nil {
 		return nil, err
 	}
@@ -255,6 +254,42 @@ func (p *Proxy) EncodeRow(t *Table, colMap map[string]int, rowValue InsertRowVal
 	}, nil
 }
 
+// EncodeRow: encode business data, index data(unique, non-unique)
+func (p *Proxy) EncodeRow(t *Table, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
+	var kvPairs []*kvrpcpb.KeyValue
+	var err error
+
+	var dataKvPair *kvrpcpb.KeyValue
+	dataKvPair, err = p.encodeRecordRow(t, colMap, rowValue)
+	if err != nil {
+		return nil, err
+	}
+	kvPairs = append(kvPairs, dataKvPair)
+
+	var indexKvPairs []*kvrpcpb.KeyValue
+	indexKvPairs, err = p.encodeIndexRows(t, colMap, rowValue)
+	if err != nil {
+		return nil, err
+	}
+	kvPairs = append(kvPairs, indexKvPairs...)
+	return kvPairs, nil
+}
+
+func (p *Proxy) encodeRecordKey(t *Table, colMap map[string]int, rowValue InsertRowValue) ([]byte, error) {
+	var (
+		err error
+		key []byte
+	)
+
+	key = util.EncodeStorePrefix(util.Store_Prefix_KV, t.GetId())
+	// 编码主键作为key
+	key, err = encodePrimaryKeys(t, key, colMap, rowValue)
+	if err != nil {
+		return nil, err
+	}
+	return key, nil
+}
+
 func encodePrimaryKeys(t *Table, key []byte, colMap map[string]int, rowValue InsertRowValue) ([]byte, error) {
 	var value []byte
 	var err error
@@ -277,6 +312,7 @@ func encodePrimaryKeys(t *Table, key []byte, colMap map[string]int, rowValue Ins
 		}
 		value, err = util.EncodePrimaryKey(key, col, rowValue[i])
 		if err != nil {
+			log.Error("encode Primary key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
 			return nil, err
 		}
 	}
@@ -299,8 +335,8 @@ func encodePrimaryKeys(t *Table, key []byte, colMap map[string]int, rowValue Ins
 //
 // version: proxy don't encode the parameter
 
-//EncodeUniqueIndexRow: encode row for unique index
-func (p *Proxy) EncodeIndexRow(t *Table, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
+//encodeIndexRows: encode index rows for unique index、non-unique index
+func (p *Proxy) encodeIndexRows(t *Table, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
 	keyValues := make([]*kvrpcpb.KeyValue, 0)
 	var err error
 
@@ -308,21 +344,21 @@ func (p *Proxy) EncodeIndexRow(t *Table, colMap map[string]int, rowValue InsertR
 		if !col.GetIndex() {
 			continue
 		}
-		//encode: index store prefix + table_id
-		key := util.EncodeStorePrefix(util.Store_Prefix_INDEX, t.GetId())
-		var indexValue []byte
+		var (
+			key, indexValue []byte
+		)
 		colIndex, ok := colMap[col.GetName()]
 		if !ok {
-			indexValue = initValueByDataType(col.GetDataType(), col.GetUnsigned())
+			indexValue = initValueByDataType(col)
 		} else {
 			indexValue = rowValue[colIndex]
 		}
-		// encode: index column id + index column value
-		key, err = util.EncodeColumnValue(key, col, indexValue)
+
+		key, err = p.encodeUniqueIndexKey(t, col, indexValue)
 		if err != nil {
-			log.Error("encode index column[%v] value[%v] error: %v", col.GetName(), indexValue, err)
 			return nil, err
 		}
+
 		// encode: primary key for non-unique index
 		var value []byte
 		if !col.GetUnique() {
@@ -331,6 +367,7 @@ func (p *Proxy) EncodeIndexRow(t *Table, colMap map[string]int, rowValue InsertR
 				return nil, err
 			}
 		} else {
+			//todo checkout unique
 			value, err = encodePrimaryKeys(t, value, colMap, rowValue)
 			if err != nil {
 				return nil, err
@@ -344,11 +381,23 @@ func (p *Proxy) EncodeIndexRow(t *Table, colMap map[string]int, rowValue InsertR
 	return keyValues, nil
 }
 
-func initValueByDataType(dataType metapb.DataType, unsigned bool) []byte {
+func (p *Proxy) encodeUniqueIndexKey(t *Table, col *metapb.Column, indexValue []byte) ([]byte, error) {
+	var err error
+	key := util.EncodeStorePrefix(util.Store_Prefix_INDEX, t.GetId())
+	// encode: index column id + index column value
+	key, err = util.EncodeColumnValue(key, col, indexValue)
+	if err != nil {
+		log.Error("encode index column[%v] value[%v] error: %v", col.GetName(), indexValue, err)
+		return nil, err
+	}
+	return key, nil
+}
+
+func initValueByDataType(col *metapb.Column) []byte {
 	var value []byte
-	switch dataType {
+	switch col.GetDataType() {
 	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
-		if unsigned { // 无符号
+		if col.GetUnsigned() { // 无符号
 
 		} else { // 有符号
 
@@ -458,14 +507,14 @@ func (p *Proxy) batchInsert(context *dskv.ReqContext, t *Table, kvPairs []*kvrpc
 
 func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValue) (affected uint64, duplicateKey []byte, err error) {
 	var kvPairs []*kvrpcpb.KeyValue
-	var kv *kvrpcpb.KeyValue
 	for i, r := range rows {
-		kv, err = p.EncodeRow(t, colMap, r)
+		var tempKvPairs []*kvrpcpb.KeyValue
+		tempKvPairs, err = p.EncodeRow(t, colMap, r)
 		if err != nil {
 			log.Error("[insert] table %s.%s encode row at %d failed: %v", t.DbName(), t.Name(), i, err)
 			return
 		}
-		kvPairs = append(kvPairs, kv)
+		kvPairs = append(kvPairs, tempKvPairs...)
 	}
 
 	var affectedTp uint64

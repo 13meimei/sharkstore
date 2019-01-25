@@ -50,7 +50,7 @@ var (
 )
 
 const (
-	HTTP_OK = iota
+	HTTP_OK                          = iota
 	HTTP_ERROR
 	HTTP_ERROR_PARAMETER_NOT_ENOUGH
 	HTTP_ERROR_INVALID_PARAM
@@ -297,17 +297,20 @@ func (service *Server) handleTableCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// 默认不检查
-	if len(pkDupCheck) == 0 {
-		pkDupCheck = "false"
-	}
-	columns, regxs, err := ParseProperties(properties)
+	columns, regxs, indexFlag, err := ParseProperties(properties)
 	if err != nil {
 		log.Error("parse cols: %s failed, err: %v", properties, err)
 		reply.Code = HTTP_ERROR_INVALID_PARAM
 		reply.Message = err.Error()
 		return
 	}
+
+	if indexFlag {
+		pkDupCheck = "true"
+	} else if len(pkDupCheck) == 0 {
+		pkDupCheck = "false"
+	}
+
 	var sliceKeys [][]byte
 	if len(rangeKeys) != 0 {
 		if sliceKeys, err = rangeKeysSplit(rangeKeys, ","); err != nil {
@@ -1305,7 +1308,7 @@ func (service *Server) handleRangeAddPeer(w http.ResponseWriter, r *http.Request
 		return
 	}
 	tc := NewTaskChain(id, rng.GetId(), "console-add-peer", NewAddPeerTask())
-	if !cluster.taskManager.Add(tc){
+	if !cluster.taskManager.Add(tc) {
 		log.Warn("add range<%v> peer create task failure, has exists", rangeId)
 		reply.Code = -1
 		reply.Message = "add range peer create task failure"

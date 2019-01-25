@@ -642,13 +642,14 @@ func (service *Server) handleCreateTable(ctx context.Context, req *mspb.CreateTa
 	resp = new(mspb.CreateTableResponse)
 	resp.Header = &mspb.ResponseHeader{}
 
-	columns, regxs, err := ParseProperties(req.GetProperties())
+	columns, regxs, indexFlag, err := ParseProperties(req.GetProperties())
 	if err != nil {
 		log.Error("parse cols[%s] failed, err[%v]", req.GetProperties(), err)
 		err = errors.New("invalid properties")
 		return
 	}
-	if _, err = service.cluster.CreateTable(req.GetDbName(), req.GetTableName(), columns, regxs, false, nil); err != nil {
+	pkDupCheck := indexFlag
+	if _, err = service.cluster.CreateTable(req.GetDbName(), req.GetTableName(), columns, regxs, pkDupCheck, nil); err != nil {
 		log.Error("http sql table create : %v", err)
 		return
 	}
