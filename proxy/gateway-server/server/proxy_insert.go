@@ -255,7 +255,7 @@ func (p *Proxy) encodeRecordRow(t *Table, colMap map[string]int, rowValue Insert
 }
 
 // EncodeRow: encode business data, index data(unique, non-unique)
-func (p *Proxy) EncodeRow(t *Table, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
+func (p *Proxy) EncodeRow(t *Table, indexCols []*metapb.Column, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
 	var kvPairs []*kvrpcpb.KeyValue
 	var err error
 
@@ -266,8 +266,11 @@ func (p *Proxy) EncodeRow(t *Table, colMap map[string]int, rowValue InsertRowVal
 	}
 	kvPairs = append(kvPairs, dataKvPair)
 
+	if len(indexCols) == 0 {
+		return kvPairs, nil
+	}
 	var indexKvPairs []*kvrpcpb.KeyValue
-	indexKvPairs, err = p.encodeIndexRows(t, colMap, rowValue)
+	indexKvPairs, err = p.encodeIndexRows(t, indexCols, colMap, rowValue)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +339,7 @@ func encodePrimaryKeys(t *Table, key []byte, colMap map[string]int, rowValue Ins
 // version: proxy don't encode the parameter
 
 //encodeIndexRows: encode index rows for unique index、non-unique index
-func (p *Proxy) encodeIndexRows(t *Table, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
+func (p *Proxy) encodeIndexRows(t *Table, indexCols []*metapb.Column, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
 	keyValues := make([]*kvrpcpb.KeyValue, 0)
 	var err error
 
@@ -367,7 +370,6 @@ func (p *Proxy) encodeIndexRows(t *Table, colMap map[string]int, rowValue Insert
 				return nil, err
 			}
 		} else {
-			//todo checkout unique
 			value, err = encodePrimaryKeys(t, value, colMap, rowValue)
 			if err != nil {
 				return nil, err
@@ -506,15 +508,15 @@ func (p *Proxy) batchInsert(context *dskv.ReqContext, t *Table, kvPairs []*kvrpc
 }
 
 func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValue) (affected uint64, duplicateKey []byte, err error) {
+	indexCols := t.AllIndexs()
 	var kvPairs []*kvrpcpb.KeyValue
-	for i, r := range rows {
-		var tempKvPairs []*kvrpcpb.KeyValue
-		tempKvPairs, err = p.EncodeRow(t, colMap, r)
+	for _, r := range rows {
+		var rowKvPairs []*kvrpcpb.KeyValue
+		rowKvPairs, err = p.EncodeRow(t, indexCols, colMap, r)
 		if err != nil {
-			log.Error("[insert] table %s.%s encode row at %d failed: %v", t.DbName(), t.Name(), i, err)
 			return
 		}
-		kvPairs = append(kvPairs, tempKvPairs...)
+		kvPairs = append(kvPairs, rowKvPairs...)
 	}
 
 	var affectedTp uint64
