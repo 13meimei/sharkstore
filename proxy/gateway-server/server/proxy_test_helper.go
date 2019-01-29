@@ -407,15 +407,15 @@ type Filter struct {
 func testGetFilter(t *testing.T, query *Query, table *Table, p *Proxy, stmt *sqlparser.Select) *Filter {
 
 	columns := query.parseColumnNames()
-	var matchs []Match = nil
+	var matches []Match = nil
 	var err error
 	if query.Command.Filter != nil {
-		matchs, err = query.parseMatchs(query.Command.Filter.And)
+		matches, err = query.parseMatches(query.Command.Filter.And)
 		if err != nil {
 			t.Fatal("filter: parse matchs error: ", err)
 		}
 	}
-	getFilter := &Filter{columns: columns, matchs: matchs}
+	getFilter := &Filter{columns: columns, matchs: matches}
 	selectFilter := getSelectFilter(t, p, testDBName, stmt)
 	t.Log("get filter: ", getFilter)
 	t.Log("select filter: ", selectFilter)

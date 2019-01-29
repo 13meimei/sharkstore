@@ -184,9 +184,9 @@ func (q *Query) parseRowValues(buffer bufalloc.Buffer) ([]InsertRowValue, error)
 // 	return values, nil
 // }
 
-func (q *Query) parseMatchs(ands []*And) ([]Match, error) {
+func (q *Query) parseMatches(ands []*And) ([]Match, error) {
 	// TODO just AND now
-	matchs := make([]Match, 0)
+	matches := make([]Match, 0)
 
 	var (
 		column_    string
@@ -264,14 +264,14 @@ func (q *Query) parseMatchs(ands []*And) ([]Match, error) {
 		//}
 
 		sqlValue_ = []byte(fmt.Sprintf("%v", and.Field.Value))
-		matchs = append(matchs, Match{
+		matches = append(matches, Match{
 			column:    column_,
 			sqlValue:  sqlValue_,
 			matchType: matchType_,
 		})
 	}
 
-	return matchs, nil
+	return matches, nil
 }
 
 func (q *Query) parseLimit() *Limit {

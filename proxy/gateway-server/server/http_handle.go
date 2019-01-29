@@ -247,11 +247,11 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	if len(query.Command.PKs) == 0 {
 		order := query.parseOrder()
 		log.Debug("getcommand order: %v", order)
-		var matchs []Match = nil
+		var matches []Match = nil
 		var err error
 		if query.Command.Filter != nil {
 			// 解析where条件
-			matchs, err = query.parseMatchs(query.Command.Filter.And)
+			matches, err = query.parseMatches(query.Command.Filter.And)
 			if err != nil {
 				log.Error("[get] handle parse where error: %v", err)
 				return nil, err
@@ -264,7 +264,7 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		log.Debug("getcommand limit: %v", limit)
 
 		scope := query.parseScope()
-		rowss, err := proxy.doSelect(t, fieldList, matchs, limit, scope)
+		rowss, err := proxy.doSelect(t, fieldList, matches, limit, scope)
 
 		if err != nil {
 			log.Error("getcommand doselect error: %v", err)
@@ -277,14 +277,14 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 			var tasks []*SelectTask
 			// TODO
 			for _, pk := range query.Command.PKs {
-				matchs, err := query.parseMatchs(pk)
+				matches, err := query.parseMatches(pk)
 				//filter := &Filter{columns: columns, matchs: matchs}
 				if err != nil {
 					log.Error("[get] handle parse where error: %v", err)
 					return nil, err
 				}
 				task := GetSelectTask()
-				task.init(proxy, t, fieldList, matchs)
+				task.init(proxy, t, fieldList, matches)
 				err = proxy.Submit(task)
 				if err != nil {
 					log.Error("submit insert task failed, err[%v]", err)
@@ -306,12 +306,12 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 				PutSelectTask(task)
 			}
 		} else {
-			matchs, err := query.parseMatchs(query.Command.PKs[0])
+			matches, err := query.parseMatches(query.Command.PKs[0])
 			if err != nil {
 				log.Error("[get] handle parse where error: %v", err)
 				return nil, err
 			}
-			allRows, err = proxy.doSelect(t, fieldList, matchs, nil, nil)
+			allRows, err = proxy.doSelect(t, fieldList, matches, nil, nil)
 			if err != nil {
 				log.Error("select do failed, err[%v]", err)
 				return nil, err
@@ -543,11 +543,11 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 
 	var affected uint64
 	if len(query.Command.PKs) == 0 {
-		var matchs []Match = nil
+		var matches []Match = nil
 		var err error
 		if query.Command.Filter != nil {
 			// 解析where条件
-			matchs, err = query.parseMatchs(query.Command.Filter.And)
+			matches, err = query.parseMatches(query.Command.Filter.And)
 			if err != nil {
 				log.Error("[update] handle parse where error: %v", err)
 				return nil, err
@@ -558,7 +558,7 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		log.Debug("updcommand limit: %v", limit)
 
 		scope := query.parseScope()
-		affected, err = proxy.doUpdate(t, fieldList, matchs, limit, scope)
+		affected, err = proxy.doUpdate(t, fieldList, matches, limit, scope)
 		if err != nil {
 			log.Error("updcommand doUpdate error: %v", err)
 			return nil, err
@@ -568,13 +568,13 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		if len(query.Command.PKs) > 1 {
 			var tasks []*UpdateTask
 			for _, pk := range query.Command.PKs {
-				matchs, err := query.parseMatchs(pk)
+				matches, err := query.parseMatches(pk)
 				if err != nil {
 					log.Error("[update] handle parse where error: %v", err)
 					return nil, err
 				}
 				task := GetUpdateTask()
-				task.init(proxy, t, fieldList, matchs)
+				task.init(proxy, t, fieldList, matches)
 				err = proxy.Submit(task)
 				if err != nil {
 					log.Error("submit update task failed, err[%v]", err)
@@ -593,12 +593,12 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 				PutUpdateTask(task)
 			}
 		} else {
-			matchs, err := query.parseMatchs(query.Command.PKs[0])
+			matches, err := query.parseMatches(query.Command.PKs[0])
 			if err != nil {
 				log.Error("[update] handle parse where error: %v", err)
 				return nil, err
 			}
-			affected, err = proxy.doUpdate(t, fieldList, matchs, nil, nil)
+			affected, err = proxy.doUpdate(t, fieldList, matches, nil, nil)
 			if err != nil {
 				log.Error("update do failed, err[%v]", err)
 				return nil, err
@@ -614,11 +614,11 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 func (query *Query) delCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	// 解析选择列
 	//columns := query.parseColumnNames()
-	var matchs []Match = nil
+	var matches []Match = nil
 	var err error
 	if query.Command.Filter != nil {
 		// 解析where条件
-		matchs, err = query.parseMatchs(query.Command.Filter.And)
+		matches, err = query.parseMatches(query.Command.Filter.And)
 		if err != nil {
 			log.Error("[get] handle parse where error: %v", err)
 			return nil, err
@@ -626,7 +626,7 @@ func (query *Query) delCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	}
 
 	// 向dataserver查询
-	affectedRows, err := proxy.doDelete(t, matchs)
+	affectedRows, err := proxy.doDelete(t, matches)
 	if err != nil {
 		return nil, err
 	}

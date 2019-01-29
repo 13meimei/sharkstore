@@ -127,6 +127,30 @@ func (t *Table) AllIndexs() []uint64 {
 	return indexs
 }
 
+func (t *Table) AllUniqueIndexs() []*metapb.Column {
+	indexs := make([]*metapb.Column, 0)
+	t.cLock.RLock()
+	defer t.cLock.RUnlock()
+	for _, c := range t.columns {
+		if c.Index && c.Unique {
+			indexs = append(indexs, c)
+		}
+	}
+	return indexs
+}
+
+func (t *Table) AllNonUniqueIndexs() []*metapb.Column {
+	indexs := make([]*metapb.Column, 0)
+	t.cLock.RLock()
+	defer t.cLock.RUnlock()
+	for _, c := range t.columns {
+		if c.Index && !c.Unique{
+			indexs = append(indexs, c)
+		}
+	}
+	return indexs
+}
+
 func (t *Table) AddColumn(c *metapb.Column) {
 	if c == nil {
 		return
