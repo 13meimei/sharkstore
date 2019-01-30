@@ -2,15 +2,14 @@ package server
 
 import (
 	"fmt"
+	"bytes"
 
+	"util/log"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
 	"proxy/store/dskv"
 	"pkg-go/ds_client"
 	"model/pkg/kvrpcpb"
-
-	"util/log"
-	"bytes"
 )
 
 // HandleUpdate handle update
@@ -108,6 +107,88 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 			log.Debug("[update]pk key: [%v], scope: %v", key, scope)
 		}
 	}
+
+	//检查更新的字段是否包含需要更新的index字段
+	needSelectFields, indexMap := getSelectFieldsForIndex(t, exprs)
+	if len(needSelectFields) > 0 {
+		//retrieve: pk value and index field old value
+		sreq := &kvrpcpb.SelectRequest{
+			Key:          key,
+			Scope:        scope,
+			FieldList:    needSelectFields,
+			WhereFilters: pbMatches,
+			Limit:        pbLimit,
+		}
+		//pk1,...,pkn,index1(old),...,indexn(old), correspond to needSelectFields
+		var data [][]*Row
+		data, err = p.selectRemote(t, sreq)
+		if err != nil {
+			return
+		}
+
+		var (
+			oldIndexKeys    [][]byte
+			newIndexKvPairs []*kvrpcpb.KeyValue
+			start           = len(t.PKS())
+			end             = len(needSelectFields)
+		)
+
+		for _, rowData := range data {
+			if len(rowData) != len(needSelectFields) {
+				err = fmt.Errorf("select error")
+				return
+			}
+
+			//index
+			for i := start; i < end; i++ {
+				var (
+					oldKey []byte
+					newKey, newValue []byte
+				)
+				//todo
+				col := needSelectFields[i].Column
+				//oldKey, err = encodeUniqueIndexKey(t, col, rowData[i].fields[0].value)
+				//if err != nil {
+				//	return
+				//}
+				newKey, err = encodeUniqueIndexKey(t, col, indexMap[col.Name].Value)
+				if err != nil {
+					return
+				}
+
+				//if col.Unique {
+				//	oldKey, err = encodePrimaryKeys(t, key, colMap, rowValue)
+				//	if err != nil {
+				//		return
+				//	}
+				//	newKey, err = encodePrimaryKeys(t, key, colMap, rowValue)
+				//	if err != nil {
+				//		return
+				//	}
+				//} else {
+				//
+				//
+				//}
+				oldIndexKeys = append(oldIndexKeys, oldKey)
+				newIndexKvPairs = append(newIndexKvPairs, &kvrpcpb.KeyValue{
+					Key: newKey,
+					Value: newValue,
+				})
+			}
+		}
+		context := dskv.NewPRConext(dskv.GetMaxBackoff)
+		//delete index data
+		if err = p.deleteIndexes(context, t, oldIndexKeys); err != nil {
+			return
+		}
+
+		//insert index data
+		if err = p.insertIndexes(context, t, newIndexKvPairs); err != nil {
+			return
+		}
+
+	}
+
 	// TODO: pool
 	sreq := &kvrpcpb.UpdateRequest{
 		Key:          key,
@@ -117,6 +198,35 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 		Limit:        pbLimit,
 	}
 	return p.updateRemote(t, sreq)
+}
+
+func getSelectFieldsForIndex(t *Table, exprs []*kvrpcpb.Field) ([]*kvrpcpb.SelectField, map[string]*kvrpcpb.Field) {
+	var (
+		indexColMap  = make(map[string]*kvrpcpb.Field, 0)
+		selectFields []*kvrpcpb.SelectField
+	)
+	for _, expr := range exprs {
+		if expr.Column.Index {
+			indexColMap[expr.Column.Name] = expr
+		}
+	}
+	if len(indexColMap) == 0 {
+		return nil, nil
+	}
+	for _, pkColName := range t.PKS() {
+		pkCol := t.FindColumn(pkColName)
+		selectFields = append(selectFields, &kvrpcpb.SelectField{
+			Typ:    kvrpcpb.SelectField_Column,
+			Column: pkCol,
+		})
+	}
+	for _, expr := range indexColMap {
+		selectFields = append(selectFields, &kvrpcpb.SelectField{
+			Typ:    kvrpcpb.SelectField_Column,
+			Column: expr.Column,
+		})
+	}
+	return selectFields, indexColMap
 }
 
 func (p *Proxy) updateRemote(t *Table, req *kvrpcpb.UpdateRequest) (affected uint64, err error) {
@@ -165,7 +275,7 @@ func (p *Proxy) singleUpdateRemote(context *dskv.ReqContext, t *Table, req *kvrp
 		return
 	}
 
-	if  resp.GetCode() == 0 {
+	if resp.GetCode() == 0 {
 		affected = resp.GetAffectedKeys()
 	} else {
 		err = CodeToErr(int(resp.GetCode()))
