@@ -1,9 +1,17 @@
 syntax = "proto3";
 package txn;
 
+import "gogoproto/gogo.proto";
+import "kvrpcpb.proto";
+import "metapb.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
 enum OpType {
-    INSERT  = 0,
-    DELETE  = 1,
+    INSERT  = 0;
+    DELETE  = 1;
 }
 
 message TxnIntent {
@@ -15,10 +23,10 @@ message TxnIntent {
     bool is_primary     = 6; // 是否是primary row
 }
 
-message TxnStatus {
-    INIT = 0,
-    COMMITTED = 1,
-    ABORTED = 2,
+enum TxnStatus {
+    INIT = 0;
+    COMMITTED = 1;
+    ABORTED = 2;
 }
 
 // data-server端存储结构
@@ -65,10 +73,10 @@ message StatusConflict {
 
 message TxnError {
     enum ErrType {
-        UNKNOWN = 0,
-        LOCKED = 1,
-        UNEXPECTED_VER = 2,
-        STATUS_CONFLICT = 3,
+        UNKNOWN = 0;
+        LOCKED = 1;
+        UNEXPECTED_VER = 2;
+        STATUS_CONFLICT = 3;
     }
 
     ErrType err_type  = 1;
@@ -77,6 +85,8 @@ message TxnError {
     StatusConflict status_conflict = 4;
 }
 
+
+// Prepare
 message PrepareRequest {
     string txn_id                        = 1;
     bool local                           = 2;   // 事务只涉及本地一个range，可优化为1PL
@@ -88,9 +98,21 @@ message PrepareRequest {
     bool strict_check                    = 16; // 前期做一些正确性检查
 }
 
-message PrepareRespose {
+message PrepareResponse {
     repeated TxnError errors  = 1;
 }
+
+message DsPrepareRequest {
+    kvrpcpb.RequestHeader header = 1;
+    PrepareRequest req           = 2;
+}
+
+message DsPrepareResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    PrepareResponse resp          = 2;
+}
+
+
 
 // Commit or Rollback
 message DecideRequest {
@@ -103,6 +125,17 @@ message DecideResponse {
     repeated TxnError errors  = 1;
 }
 
+message DsDecideRequest {
+    kvrpcpb.RequestHeader header = 1;
+    DecideRequest req            = 2;
+}
+
+message DsDecideResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    DecideResponse resp           = 2;
+}
+
+
 
 // 查询Lock信息
 message GetLockInfoRequest {
@@ -112,4 +145,59 @@ message GetLockInfoRequest {
 
 message GetLockInfoResponse {
     LockInfo info = 1;
+}
+
+message DsGetLockInfoRequest {
+    kvrpcpb.RequestHeader header = 1;
+    GetLockInfoRequest req       = 2;
+}
+
+message DsGetLockInfoResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    GetLockInfoResponse resp      = 2;
+}
+
+
+
+// Select
+message SelectRequest {
+    bytes key                                   = 1;       // 只查询单行
+    kvrpcpb.Scope scope                         = 2;       // 查询主键在某个范围的行
+    repeated kvrpcpb.SelectField field_list     = 3;      // select filed list
+    repeated kvrpcpb.Match where_filters        = 4;       // where matches
+    repeated metapb.Column group_bys            = 5;       // group by column ids
+    kvrpcpb.Limit limit                         = 6;       // max range query num, 0 means no limit
+}
+
+message RowValue {
+    bytes fields                 = 1;              //  encoded fields
+    repeated int64 aggred_counts = 2;              // aggregated row count(for avg)
+}
+
+message RowIntent {
+    string txn_id           = 1;
+    bytes primary_key       = 2;
+    RowValue value          = 10;
+}
+
+message Row {
+    bytes key = 1;
+    RowValue value = 2;
+    RowIntent intent = 3;
+}
+
+message SelectResponse {
+    int32 code        = 1;
+    repeated Row rows = 2;
+    uint64 offset     = 3;
+}
+
+message DsSelectRequest {
+    kvrpcpb.RequestHeader header = 1;
+    SelectRequest req            = 2;
+}
+
+message DsSelectResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    SelectResponse resp           = 2;
 }
