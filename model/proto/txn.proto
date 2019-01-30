@@ -1,0 +1,99 @@
+syntax = "proto3";
+package txn;
+
+enum OpType {
+    INSERT  = 0,
+    DELETE  = 1,
+}
+
+message TxnIntent {
+    OpType typ          = 1;
+    bytes key           = 2; // 编码后的主键
+    bytes value         = 3; // 编码后的列值（所有非主键列）
+    bool  check_unique  = 4; // for unique index or insert check pk duplicate
+    uint64 expected_ver = 5; // 为0表示不校验version
+    bool is_primary     = 6; // 是否是primary row
+}
+
+message TxnStatus {
+    INIT = 0,
+    COMMITTED = 1,
+    ABORTED = 2,
+}
+
+message TxnValue {
+    string txn_id               = 1;
+    TxnIntent intent            = 2; // 本行预写数据
+    bytes primary_key           = 3; // 指向primary row
+    uint64 expired_at           = 4; // 绝对时间
+
+    // only exists in primary row, used as txn record
+    TxnStatus txn_status          = 10; 
+    repeated bytes secondary_keys = 11;
+}
+
+message LockError {
+    bytes key       = 1;
+    string txn_id   = 2; // locked by 
+    bool timeout    = 3; // is lock timeout
+
+    // 如果当前key是primary，则is_primary=true则返回status和secondary_keys
+    // 如果不是则primary, 则返回primary key 
+    bool is_primary                 = 8;
+    bytes primary_key               = 9;
+    TxnStatus status                = 10;
+    repeated bytes secondary_keys   = 11;
+}
+
+// Intent中设置了expected_ver时，version校验不通过，一般是写冲突
+message UnexpectedVer {
+    bytes key           = 1;
+    uint64 expected_ver = 2;
+    uint64 actual_ver   = 3;
+}
+
+// 更新事务状态时，事务状态已经不是INIT，则更新失败，并返回当前的状态
+// 比如事务状态已经是ABORTED，则不能更新为COMMITTED
+message StatusConflict {
+    TxnStatus status = 1;
+}
+
+message TxnError {
+    enum ErrType {
+        UNKNOWN = 0,
+        LOCKED = 1,
+        UNEXPECTED_VER = 2,
+        STATUS_CONFLICT = 3,
+    }
+
+    ErrType err_type  = 1;
+    LockError lock_err = 2;
+    UnexpectedVer unexpected_ver = 3;
+    StatusConflict status_conflict = 4;
+}
+
+message PrepareRequest {
+    string txn_id                        = 1;
+    bool local                           = 2;   // 事务只涉及本地一个range，可优化为1PL
+    repeated TxnIntent intents           = 3;
+    bytes primary_key                    = 4;
+    uint64 lock_ttl                      = 5;
+    repeated bytes secondary_keys        = 6;  // 只发往primary row
+    
+    bool strict_check                    = 16; // 前期做一些正确性检查
+}
+
+message PrepareRespose {
+    repeated TxnError errors  = 1;
+}
+
+// Commit or Rollback
+message DecideRequest {
+    string txn_id       = 1;
+    TxnStatus status    = 2;
+    repeated bytes keys = 3;
+}
+
+message DecideResponse {
+    repeated TxnError errors  = 1;
+}
