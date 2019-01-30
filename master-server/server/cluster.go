@@ -445,6 +445,15 @@ func (c *Cluster) CreateTable(dbName, tableName string, columns, regxs []*metapb
 			endKey:   sharingKeys[i+1],
 		}
 	}
+	if pkDupCheck {
+		var idxStart, idxEnd []byte
+		idxStart = util.EncodeStorePrefix(util.Store_Prefix_INDEX, tableId)
+		_, idxEnd = bytesPrefix(start)
+		createTable.rangesToCreateList <- &rangeToCreate{
+			startKey: idxStart,
+			endKey:   idxEnd,
+		}
+	}
 	// 准备完成后再加入创建队列
 	c.creatingTables.Add(createTable)
 	return table, nil
