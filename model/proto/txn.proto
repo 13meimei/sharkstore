@@ -21,6 +21,7 @@ message TxnStatus {
     ABORTED = 2,
 }
 
+// data-server端存储结构
 message TxnValue {
     string txn_id               = 1;
     TxnIntent intent            = 2; // 本行预写数据
@@ -32,17 +33,21 @@ message TxnValue {
     repeated bytes secondary_keys = 11;
 }
 
+message LockInfo {
+    string txn_id = 1;
+    bool timeout = 2;
+
+    // 1) 如果当前key是primary，则is_primary为true且返回status和secondary_keys
+    // 2) 如果不是则primary, 则is_primary为false并返回primary key 
+    bool is_primary                 = 10;
+    bytes primary_key               = 11;
+    TxnStatus status                = 12;
+    repeated bytes secondary_keys   = 13;
+}
+
 message LockError {
     bytes key       = 1;
-    string txn_id   = 2; // locked by 
-    bool timeout    = 3; // is lock timeout
-
-    // 如果当前key是primary，则is_primary=true则返回status和secondary_keys
-    // 如果不是则primary, 则返回primary key 
-    bool is_primary                 = 8;
-    bytes primary_key               = 9;
-    TxnStatus status                = 10;
-    repeated bytes secondary_keys   = 11;
+    LockInfo info   = 2;
 }
 
 // Intent中设置了expected_ver时，version校验不通过，一般是写冲突
@@ -96,4 +101,15 @@ message DecideRequest {
 
 message DecideResponse {
     repeated TxnError errors  = 1;
+}
+
+
+// 查询Lock信息
+message GetLockInfoRequest {
+    bytes key = 1;
+    string txn_id = 2; // 事务ID为空，则返回当前lock
+}
+
+message GetLockInfoResponse {
+    LockInfo info = 1;
 }
