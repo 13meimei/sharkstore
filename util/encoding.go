@@ -15,11 +15,14 @@ import (
 )
 
 const (
+	//record_data
 	Store_Prefix_Invalid uint8 = 0
 	Store_Prefix_KV      uint8 = 1
 	Store_Prefix_INDEX   uint8 = 2
-	//Store_Prefix_Range       uint8 = 3
-	//Store_Prefix_RaftLog     uint8 = 4
+
+	//meta_data
+	Store_Prefix_Range   uint8 = 2
+	Store_Prefix_RaftLog uint8 = 3
 )
 
 func Encode(v proto.Message) ([]byte, error) {

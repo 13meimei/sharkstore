@@ -30,7 +30,7 @@ func TestNodeFailOverNormal(t *testing.T) {
 	ds_1.SetNodeId(node1.Id)
 
 	if err := cluster.NodeLogin(ds_1.NodeId); err != nil {
-		t.Fatal("NodeLogin error:[%v]", err)
+		t.Fatalf("NodeLogin error:[%v]", err)
 	}
 	assert.Equal(t, node1.State, metapb.NodeState_N_Login, "node state error")
 
@@ -55,14 +55,14 @@ func TestNodeFailOverRecovery(t *testing.T) {
 	ds_1 := NewMockDs(dsAddr_1)
 	node1, _, err := cluster.GetNodeId(dsAddr_1, "", "", "")
 	if err != nil {
-		t.Fatal("GetNodeId error:[%v]", err)
+		t.Fatalf("GetNodeId error:[%v]", err)
 	}
 	assert.NotEqual(t, node1.Id, 0, "Donot generate node id")
 	assert.Equal(t, node1.State, metapb.NodeState_N_Initial, "node state error")
 	ds_1.SetNodeId(node1.Id)
 
 	if err := cluster.NodeLogin(ds_1.NodeId); err != nil {
-		t.Fatal("NodeLogin error:[%v]", err)
+		t.Fatalf("NodeLogin error:[%v]", err)
 	}
 	assert.Equal(t, node1.State, metapb.NodeState_N_Login, "node state error")
 
@@ -89,14 +89,14 @@ func TestNodeFailOverBornAgain(t *testing.T) {
 	ds_1 := NewMockDs(dsAddr_1)
 	node1, _, err := cluster.GetNodeId(dsAddr_1, "", "", "")
 	if err != nil {
-		t.Fatal("GetNodeId error:[%v]", err)
+		t.Fatalf("GetNodeId error:[%v]", err)
 	}
 	assert.NotEqual(t, node1.Id, 0, "Donot generate node id")
 	assert.Equal(t, node1.State, metapb.NodeState_N_Initial, "node state error")
 	ds_1.SetNodeId(node1.Id)
 
 	if err := cluster.NodeLogin(ds_1.NodeId); err != nil {
-		t.Fatal("NodeLogin error:[%v]", err)
+		t.Fatalf("NodeLogin error:[%v]", err)
 	}
 	assert.Equal(t, node1.State, metapb.NodeState_N_Login, "node state error")
 
@@ -130,14 +130,14 @@ func TestNodeFailOverToDead(t *testing.T) {
 	ds_1 := NewMockDs(dsAddr_1)
 	node1, _, err := cluster.GetNodeId(dsAddr_1, "", "", "")
 	if err != nil {
-		t.Fatal("GetNodeId error:[%v]", err)
+		t.Fatalf("GetNodeId error:[%v]", err)
 	}
 	assert.NotEqual(t, node1.Id, 0, "Donot generate node id")
 	assert.Equal(t, node1.State, metapb.NodeState_N_Initial, "node state error")
 	ds_1.SetNodeId(node1.Id)
 
 	if err := cluster.NodeLogin(ds_1.NodeId); err != nil {
-		t.Fatal("NodeLogin error:[%v]", err)
+		t.Fatalf("NodeLogin error:[%v]", err)
 	}
 	assert.Equal(t, node1.State, metapb.NodeState_N_Login, "node state error")
 
