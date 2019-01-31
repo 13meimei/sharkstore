@@ -119,6 +119,7 @@ message DecideRequest {
     string txn_id       = 1;
     TxnStatus status    = 2;
     repeated bytes keys = 3;
+    bool clear_up       = 4;   // true表示删除最后的primary row
 }
 
 message DecideResponse {
@@ -172,6 +173,7 @@ message SelectRequest {
 message RowValue {
     bytes fields                 = 1;              //  encoded fields
     repeated int64 aggred_counts = 2;              // aggregated row count(for avg)
+    uint64 version               = 3;             // version
 }
 
 message RowIntent {
