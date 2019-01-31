@@ -34,12 +34,24 @@
 #include "metapb.pb.h"
 // @@protoc_insertion_point(includes)
 namespace txn {
+class ClearupRequest;
+class ClearupRequestDefaultTypeInternal;
+extern ClearupRequestDefaultTypeInternal _ClearupRequest_default_instance_;
+class ClearupResponse;
+class ClearupResponseDefaultTypeInternal;
+extern ClearupResponseDefaultTypeInternal _ClearupResponse_default_instance_;
 class DecideRequest;
 class DecideRequestDefaultTypeInternal;
 extern DecideRequestDefaultTypeInternal _DecideRequest_default_instance_;
 class DecideResponse;
 class DecideResponseDefaultTypeInternal;
 extern DecideResponseDefaultTypeInternal _DecideResponse_default_instance_;
+class DsClearupRequest;
+class DsClearupRequestDefaultTypeInternal;
+extern DsClearupRequestDefaultTypeInternal _DsClearupRequest_default_instance_;
+class DsClearupResponse;
+class DsClearupResponseDefaultTypeInternal;
+extern DsClearupResponseDefaultTypeInternal _DsClearupResponse_default_instance_;
 class DsDecideRequest;
 class DsDecideRequestDefaultTypeInternal;
 extern DsDecideRequestDefaultTypeInternal _DsDecideRequest_default_instance_;
@@ -1789,12 +1801,6 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::txn::TxnStatus status() const;
   void set_status(::txn::TxnStatus value);
 
-  // bool clear_up = 4;
-  void clear_clear_up();
-  static const int kClearUpFieldNumber = 4;
-  bool clear_up() const;
-  void set_clear_up(bool value);
-
   // @@protoc_insertion_point(class_scope:txn.DecideRequest)
  private:
 
@@ -1802,7 +1808,6 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::RepeatedPtrField< ::std::string> keys_;
   ::google::protobuf::internal::ArenaStringPtr txn_id_;
   int status_;
-  bool clear_up_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -2131,6 +2136,446 @@ class DsDecideResponse : public ::google::protobuf::Message /* @@protoc_insertio
 };
 // -------------------------------------------------------------------
 
+class ClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.ClearupRequest) */ {
+ public:
+  ClearupRequest();
+  virtual ~ClearupRequest();
+
+  ClearupRequest(const ClearupRequest& from);
+
+  inline ClearupRequest& operator=(const ClearupRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ClearupRequest(ClearupRequest&& from) noexcept
+    : ClearupRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline ClearupRequest& operator=(ClearupRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ClearupRequest& default_instance();
+
+  static inline const ClearupRequest* internal_default_instance() {
+    return reinterpret_cast<const ClearupRequest*>(
+               &_ClearupRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    15;
+
+  void Swap(ClearupRequest* other);
+  friend void swap(ClearupRequest& a, ClearupRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ClearupRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  ClearupRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const ClearupRequest& from);
+  void MergeFrom(const ClearupRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(ClearupRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string txn_id = 1;
+  void clear_txn_id();
+  static const int kTxnIdFieldNumber = 1;
+  const ::std::string& txn_id() const;
+  void set_txn_id(const ::std::string& value);
+  #if LANG_CXX11
+  void set_txn_id(::std::string&& value);
+  #endif
+  void set_txn_id(const char* value);
+  void set_txn_id(const char* value, size_t size);
+  ::std::string* mutable_txn_id();
+  ::std::string* release_txn_id();
+  void set_allocated_txn_id(::std::string* txn_id);
+
+  // bytes primary_key = 2;
+  void clear_primary_key();
+  static const int kPrimaryKeyFieldNumber = 2;
+  const ::std::string& primary_key() const;
+  void set_primary_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_primary_key(::std::string&& value);
+  #endif
+  void set_primary_key(const char* value);
+  void set_primary_key(const void* value, size_t size);
+  ::std::string* mutable_primary_key();
+  ::std::string* release_primary_key();
+  void set_allocated_primary_key(::std::string* primary_key);
+
+  // @@protoc_insertion_point(class_scope:txn.ClearupRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr txn_id_;
+  ::google::protobuf::internal::ArenaStringPtr primary_key_;
+  mutable int _cached_size_;
+  friend struct protobuf_txn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.ClearupResponse) */ {
+ public:
+  ClearupResponse();
+  virtual ~ClearupResponse();
+
+  ClearupResponse(const ClearupResponse& from);
+
+  inline ClearupResponse& operator=(const ClearupResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ClearupResponse(ClearupResponse&& from) noexcept
+    : ClearupResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline ClearupResponse& operator=(ClearupResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ClearupResponse& default_instance();
+
+  static inline const ClearupResponse* internal_default_instance() {
+    return reinterpret_cast<const ClearupResponse*>(
+               &_ClearupResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    16;
+
+  void Swap(ClearupResponse* other);
+  friend void swap(ClearupResponse& a, ClearupResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ClearupResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  ClearupResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const ClearupResponse& from);
+  void MergeFrom(const ClearupResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(ClearupResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .txn.TxnError err = 1;
+  bool has_err() const;
+  void clear_err();
+  static const int kErrFieldNumber = 1;
+  const ::txn::TxnError& err() const;
+  ::txn::TxnError* mutable_err();
+  ::txn::TxnError* release_err();
+  void set_allocated_err(::txn::TxnError* err);
+
+  // @@protoc_insertion_point(class_scope:txn.ClearupResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::txn::TxnError* err_;
+  mutable int _cached_size_;
+  friend struct protobuf_txn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class DsClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsClearupRequest) */ {
+ public:
+  DsClearupRequest();
+  virtual ~DsClearupRequest();
+
+  DsClearupRequest(const DsClearupRequest& from);
+
+  inline DsClearupRequest& operator=(const DsClearupRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DsClearupRequest(DsClearupRequest&& from) noexcept
+    : DsClearupRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline DsClearupRequest& operator=(DsClearupRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DsClearupRequest& default_instance();
+
+  static inline const DsClearupRequest* internal_default_instance() {
+    return reinterpret_cast<const DsClearupRequest*>(
+               &_DsClearupRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    17;
+
+  void Swap(DsClearupRequest* other);
+  friend void swap(DsClearupRequest& a, DsClearupRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DsClearupRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  DsClearupRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const DsClearupRequest& from);
+  void MergeFrom(const DsClearupRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(DsClearupRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .kvrpcpb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::kvrpcpb::RequestHeader& header() const;
+  ::kvrpcpb::RequestHeader* mutable_header();
+  ::kvrpcpb::RequestHeader* release_header();
+  void set_allocated_header(::kvrpcpb::RequestHeader* header);
+
+  // .txn.ClearupRequest req = 2;
+  bool has_req() const;
+  void clear_req();
+  static const int kReqFieldNumber = 2;
+  const ::txn::ClearupRequest& req() const;
+  ::txn::ClearupRequest* mutable_req();
+  ::txn::ClearupRequest* release_req();
+  void set_allocated_req(::txn::ClearupRequest* req);
+
+  // @@protoc_insertion_point(class_scope:txn.DsClearupRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::kvrpcpb::RequestHeader* header_;
+  ::txn::ClearupRequest* req_;
+  mutable int _cached_size_;
+  friend struct protobuf_txn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class DsClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsClearupResponse) */ {
+ public:
+  DsClearupResponse();
+  virtual ~DsClearupResponse();
+
+  DsClearupResponse(const DsClearupResponse& from);
+
+  inline DsClearupResponse& operator=(const DsClearupResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DsClearupResponse(DsClearupResponse&& from) noexcept
+    : DsClearupResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline DsClearupResponse& operator=(DsClearupResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DsClearupResponse& default_instance();
+
+  static inline const DsClearupResponse* internal_default_instance() {
+    return reinterpret_cast<const DsClearupResponse*>(
+               &_DsClearupResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    18;
+
+  void Swap(DsClearupResponse* other);
+  friend void swap(DsClearupResponse& a, DsClearupResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DsClearupResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  DsClearupResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const DsClearupResponse& from);
+  void MergeFrom(const DsClearupResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(DsClearupResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .kvrpcpb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::kvrpcpb::ResponseHeader& header() const;
+  ::kvrpcpb::ResponseHeader* mutable_header();
+  ::kvrpcpb::ResponseHeader* release_header();
+  void set_allocated_header(::kvrpcpb::ResponseHeader* header);
+
+  // .txn.ClearupResponse resp = 2;
+  bool has_resp() const;
+  void clear_resp();
+  static const int kRespFieldNumber = 2;
+  const ::txn::ClearupResponse& resp() const;
+  ::txn::ClearupResponse* mutable_resp();
+  ::txn::ClearupResponse* release_resp();
+  void set_allocated_resp(::txn::ClearupResponse* resp);
+
+  // @@protoc_insertion_point(class_scope:txn.DsClearupResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::kvrpcpb::ResponseHeader* header_;
+  ::txn::ClearupResponse* resp_;
+  mutable int _cached_size_;
+  friend struct protobuf_txn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class GetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.GetLockInfoRequest) */ {
  public:
   GetLockInfoRequest();
@@ -2165,7 +2610,7 @@ class GetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_GetLockInfoRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    15;
+    19;
 
   void Swap(GetLockInfoRequest* other);
   friend void swap(GetLockInfoRequest& a, GetLockInfoRequest& b) {
@@ -2285,7 +2730,7 @@ class GetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_inser
                &_GetLockInfoResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    16;
+    20;
 
   void Swap(GetLockInfoResponse* other);
   friend void swap(GetLockInfoResponse& a, GetLockInfoResponse& b) {
@@ -2385,7 +2830,7 @@ class DsGetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_inse
                &_DsGetLockInfoRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    17;
+    21;
 
   void Swap(DsGetLockInfoRequest* other);
   friend void swap(DsGetLockInfoRequest& a, DsGetLockInfoRequest& b) {
@@ -2495,7 +2940,7 @@ class DsGetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_ins
                &_DsGetLockInfoResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    18;
+    22;
 
   void Swap(DsGetLockInfoResponse* other);
   friend void swap(DsGetLockInfoResponse& a, DsGetLockInfoResponse& b) {
@@ -2605,7 +3050,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_SelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    19;
+    23;
 
   void Swap(SelectRequest* other);
   friend void swap(SelectRequest& a, SelectRequest& b) {
@@ -2769,7 +3214,7 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_RowValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    20;
+    24;
 
   void Swap(RowValue* other);
   friend void swap(RowValue& a, RowValue& b) {
@@ -2895,7 +3340,7 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_RowIntent_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    21;
+    25;
 
   void Swap(RowIntent* other);
   friend void swap(RowIntent& a, RowIntent& b) {
@@ -2979,6 +3424,12 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::txn::RowValue* release_value();
   void set_allocated_value(::txn::RowValue* value);
 
+  // bool timeout = 3;
+  void clear_timeout();
+  static const int kTimeoutFieldNumber = 3;
+  bool timeout() const;
+  void set_timeout(bool value);
+
   // @@protoc_insertion_point(class_scope:txn.RowIntent)
  private:
 
@@ -2986,6 +3437,7 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::google::protobuf::internal::ArenaStringPtr txn_id_;
   ::google::protobuf::internal::ArenaStringPtr primary_key_;
   ::txn::RowValue* value_;
+  bool timeout_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -3025,7 +3477,7 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
                &_Row_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    22;
+    26;
 
   void Swap(Row* other);
   friend void swap(Row& a, Row& b) {
@@ -3150,7 +3602,7 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_SelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    23;
+    27;
 
   void Swap(SelectResponse* other);
   friend void swap(SelectResponse& a, SelectResponse& b) {
@@ -3267,7 +3719,7 @@ class DsSelectRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsSelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    24;
+    28;
 
   void Swap(DsSelectRequest* other);
   friend void swap(DsSelectRequest& a, DsSelectRequest& b) {
@@ -3377,7 +3829,7 @@ class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsSelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    25;
+    29;
 
   void Swap(DsSelectResponse* other);
   friend void swap(DsSelectResponse& a, DsSelectResponse& b) {
@@ -5024,20 +5476,6 @@ DecideRequest::mutable_keys() {
   return &keys_;
 }
 
-// bool clear_up = 4;
-inline void DecideRequest::clear_clear_up() {
-  clear_up_ = false;
-}
-inline bool DecideRequest::clear_up() const {
-  // @@protoc_insertion_point(field_get:txn.DecideRequest.clear_up)
-  return clear_up_;
-}
-inline void DecideRequest::set_clear_up(bool value) {
-  
-  clear_up_ = value;
-  // @@protoc_insertion_point(field_set:txn.DecideRequest.clear_up)
-}
-
 // -------------------------------------------------------------------
 
 // DecideResponse
@@ -5238,6 +5676,328 @@ inline void DsDecideResponse::set_allocated_resp(::txn::DecideResponse* resp) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:txn.DsDecideResponse.resp)
+}
+
+// -------------------------------------------------------------------
+
+// ClearupRequest
+
+// string txn_id = 1;
+inline void ClearupRequest::clear_txn_id() {
+  txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ClearupRequest::txn_id() const {
+  // @@protoc_insertion_point(field_get:txn.ClearupRequest.txn_id)
+  return txn_id_.GetNoArena();
+}
+inline void ClearupRequest::set_txn_id(const ::std::string& value) {
+  
+  txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:txn.ClearupRequest.txn_id)
+}
+#if LANG_CXX11
+inline void ClearupRequest::set_txn_id(::std::string&& value) {
+  
+  txn_id_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:txn.ClearupRequest.txn_id)
+}
+#endif
+inline void ClearupRequest::set_txn_id(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:txn.ClearupRequest.txn_id)
+}
+inline void ClearupRequest::set_txn_id(const char* value, size_t size) {
+  
+  txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:txn.ClearupRequest.txn_id)
+}
+inline ::std::string* ClearupRequest::mutable_txn_id() {
+  
+  // @@protoc_insertion_point(field_mutable:txn.ClearupRequest.txn_id)
+  return txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ClearupRequest::release_txn_id() {
+  // @@protoc_insertion_point(field_release:txn.ClearupRequest.txn_id)
+  
+  return txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ClearupRequest::set_allocated_txn_id(::std::string* txn_id) {
+  if (txn_id != NULL) {
+    
+  } else {
+    
+  }
+  txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txn_id);
+  // @@protoc_insertion_point(field_set_allocated:txn.ClearupRequest.txn_id)
+}
+
+// bytes primary_key = 2;
+inline void ClearupRequest::clear_primary_key() {
+  primary_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ClearupRequest::primary_key() const {
+  // @@protoc_insertion_point(field_get:txn.ClearupRequest.primary_key)
+  return primary_key_.GetNoArena();
+}
+inline void ClearupRequest::set_primary_key(const ::std::string& value) {
+  
+  primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:txn.ClearupRequest.primary_key)
+}
+#if LANG_CXX11
+inline void ClearupRequest::set_primary_key(::std::string&& value) {
+  
+  primary_key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:txn.ClearupRequest.primary_key)
+}
+#endif
+inline void ClearupRequest::set_primary_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:txn.ClearupRequest.primary_key)
+}
+inline void ClearupRequest::set_primary_key(const void* value, size_t size) {
+  
+  primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:txn.ClearupRequest.primary_key)
+}
+inline ::std::string* ClearupRequest::mutable_primary_key() {
+  
+  // @@protoc_insertion_point(field_mutable:txn.ClearupRequest.primary_key)
+  return primary_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ClearupRequest::release_primary_key() {
+  // @@protoc_insertion_point(field_release:txn.ClearupRequest.primary_key)
+  
+  return primary_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ClearupRequest::set_allocated_primary_key(::std::string* primary_key) {
+  if (primary_key != NULL) {
+    
+  } else {
+    
+  }
+  primary_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), primary_key);
+  // @@protoc_insertion_point(field_set_allocated:txn.ClearupRequest.primary_key)
+}
+
+// -------------------------------------------------------------------
+
+// ClearupResponse
+
+// .txn.TxnError err = 1;
+inline bool ClearupResponse::has_err() const {
+  return this != internal_default_instance() && err_ != NULL;
+}
+inline void ClearupResponse::clear_err() {
+  if (GetArenaNoVirtual() == NULL && err_ != NULL) delete err_;
+  err_ = NULL;
+}
+inline const ::txn::TxnError& ClearupResponse::err() const {
+  const ::txn::TxnError* p = err_;
+  // @@protoc_insertion_point(field_get:txn.ClearupResponse.err)
+  return p != NULL ? *p : *reinterpret_cast<const ::txn::TxnError*>(
+      &::txn::_TxnError_default_instance_);
+}
+inline ::txn::TxnError* ClearupResponse::mutable_err() {
+  
+  if (err_ == NULL) {
+    err_ = new ::txn::TxnError;
+  }
+  // @@protoc_insertion_point(field_mutable:txn.ClearupResponse.err)
+  return err_;
+}
+inline ::txn::TxnError* ClearupResponse::release_err() {
+  // @@protoc_insertion_point(field_release:txn.ClearupResponse.err)
+  
+  ::txn::TxnError* temp = err_;
+  err_ = NULL;
+  return temp;
+}
+inline void ClearupResponse::set_allocated_err(::txn::TxnError* err) {
+  delete err_;
+  err_ = err;
+  if (err) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txn.ClearupResponse.err)
+}
+
+// -------------------------------------------------------------------
+
+// DsClearupRequest
+
+// .kvrpcpb.RequestHeader header = 1;
+inline bool DsClearupRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void DsClearupRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::kvrpcpb::RequestHeader& DsClearupRequest::header() const {
+  const ::kvrpcpb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:txn.DsClearupRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
+      &::kvrpcpb::_RequestHeader_default_instance_);
+}
+inline ::kvrpcpb::RequestHeader* DsClearupRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::kvrpcpb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:txn.DsClearupRequest.header)
+  return header_;
+}
+inline ::kvrpcpb::RequestHeader* DsClearupRequest::release_header() {
+  // @@protoc_insertion_point(field_release:txn.DsClearupRequest.header)
+  
+  ::kvrpcpb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void DsClearupRequest::set_allocated_header(::kvrpcpb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txn.DsClearupRequest.header)
+}
+
+// .txn.ClearupRequest req = 2;
+inline bool DsClearupRequest::has_req() const {
+  return this != internal_default_instance() && req_ != NULL;
+}
+inline void DsClearupRequest::clear_req() {
+  if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
+  req_ = NULL;
+}
+inline const ::txn::ClearupRequest& DsClearupRequest::req() const {
+  const ::txn::ClearupRequest* p = req_;
+  // @@protoc_insertion_point(field_get:txn.DsClearupRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txn::ClearupRequest*>(
+      &::txn::_ClearupRequest_default_instance_);
+}
+inline ::txn::ClearupRequest* DsClearupRequest::mutable_req() {
+  
+  if (req_ == NULL) {
+    req_ = new ::txn::ClearupRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:txn.DsClearupRequest.req)
+  return req_;
+}
+inline ::txn::ClearupRequest* DsClearupRequest::release_req() {
+  // @@protoc_insertion_point(field_release:txn.DsClearupRequest.req)
+  
+  ::txn::ClearupRequest* temp = req_;
+  req_ = NULL;
+  return temp;
+}
+inline void DsClearupRequest::set_allocated_req(::txn::ClearupRequest* req) {
+  delete req_;
+  req_ = req;
+  if (req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txn.DsClearupRequest.req)
+}
+
+// -------------------------------------------------------------------
+
+// DsClearupResponse
+
+// .kvrpcpb.ResponseHeader header = 1;
+inline bool DsClearupResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void DsClearupResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::kvrpcpb::ResponseHeader& DsClearupResponse::header() const {
+  const ::kvrpcpb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:txn.DsClearupResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
+      &::kvrpcpb::_ResponseHeader_default_instance_);
+}
+inline ::kvrpcpb::ResponseHeader* DsClearupResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::kvrpcpb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:txn.DsClearupResponse.header)
+  return header_;
+}
+inline ::kvrpcpb::ResponseHeader* DsClearupResponse::release_header() {
+  // @@protoc_insertion_point(field_release:txn.DsClearupResponse.header)
+  
+  ::kvrpcpb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void DsClearupResponse::set_allocated_header(::kvrpcpb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txn.DsClearupResponse.header)
+}
+
+// .txn.ClearupResponse resp = 2;
+inline bool DsClearupResponse::has_resp() const {
+  return this != internal_default_instance() && resp_ != NULL;
+}
+inline void DsClearupResponse::clear_resp() {
+  if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
+  resp_ = NULL;
+}
+inline const ::txn::ClearupResponse& DsClearupResponse::resp() const {
+  const ::txn::ClearupResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:txn.DsClearupResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::txn::ClearupResponse*>(
+      &::txn::_ClearupResponse_default_instance_);
+}
+inline ::txn::ClearupResponse* DsClearupResponse::mutable_resp() {
+  
+  if (resp_ == NULL) {
+    resp_ = new ::txn::ClearupResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:txn.DsClearupResponse.resp)
+  return resp_;
+}
+inline ::txn::ClearupResponse* DsClearupResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:txn.DsClearupResponse.resp)
+  
+  ::txn::ClearupResponse* temp = resp_;
+  resp_ = NULL;
+  return temp;
+}
+inline void DsClearupResponse::set_allocated_resp(::txn::ClearupResponse* resp) {
+  delete resp_;
+  resp_ = resp;
+  if (resp) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txn.DsClearupResponse.resp)
 }
 
 // -------------------------------------------------------------------
@@ -6000,6 +6760,20 @@ inline void RowIntent::set_allocated_primary_key(::std::string* primary_key) {
   // @@protoc_insertion_point(field_set_allocated:txn.RowIntent.primary_key)
 }
 
+// bool timeout = 3;
+inline void RowIntent::clear_timeout() {
+  timeout_ = false;
+}
+inline bool RowIntent::timeout() const {
+  // @@protoc_insertion_point(field_get:txn.RowIntent.timeout)
+  return timeout_;
+}
+inline void RowIntent::set_timeout(bool value) {
+  
+  timeout_ = value;
+  // @@protoc_insertion_point(field_set:txn.RowIntent.timeout)
+}
+
 // .txn.RowValue value = 10;
 inline bool RowIntent::has_value() const {
   return this != internal_default_instance() && value_ != NULL;
@@ -6411,6 +7185,14 @@ inline void DsSelectResponse::set_allocated_resp(::txn::SelectResponse* resp) {
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

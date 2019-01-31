@@ -119,7 +119,6 @@ message DecideRequest {
     string txn_id       = 1;
     TxnStatus status    = 2;
     repeated bytes keys = 3;
-    bool clear_up       = 4;   // true表示删除最后的primary row
 }
 
 message DecideResponse {
@@ -134,6 +133,27 @@ message DsDecideRequest {
 message DsDecideResponse {
     kvrpcpb.ResponseHeader header = 1;
     DecideResponse resp           = 2;
+}
+
+
+// 删除最后的primary row
+message ClearupRequest {
+    string txn_id       = 1;
+    bytes primary_key   = 2;
+}
+
+message ClearupResponse {
+    TxnError err = 1;
+}
+
+message DsClearupRequest {
+    kvrpcpb.RequestHeader header = 1;
+    ClearupRequest req           = 2;
+}
+
+message DsClearupResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    ClearupResponse resp          = 2;
 }
 
 
@@ -179,6 +199,7 @@ message RowValue {
 message RowIntent {
     string txn_id           = 1;
     bytes primary_key       = 2;
+    bool timeout            = 3;
     RowValue value          = 10;
 }
 
