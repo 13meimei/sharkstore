@@ -197,6 +197,7 @@ func (ctrl *CreateTableAction) Execute(c *gin.Context) (interface{}, error) {
 		Unsigned      bool   `json:"unsigned"`
 		AutoIncrement bool   `json:"auto_increment"`
 		Index         bool   `json:"index"`
+		Unique        bool   `json:"unique"`
 		Regxs         bool   `json:"regxs"`
 	}
 	var columnJsonArray []columnJsonType
