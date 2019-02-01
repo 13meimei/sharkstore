@@ -45,7 +45,7 @@ func TestFindAndDeleteTable(t *testing.T) {
 	// 第二步.　创建Database
 	db, err := cluster.CreateDatabase("test", "")
 	if err != nil {
-		t.Errorf("create database failed, err %v", node3.GetId(), err)
+		t.Errorf("create database on node %v failed, err %v", node3.GetId(), err)
 		return
 	}
 	// 第三步.　创建table

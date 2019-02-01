@@ -64,7 +64,7 @@ func TestRpcColumn(t *testing.T) {
 		Name:   "test",
 	})
 	if err != nil {
-		t.Error("test failed, err %v", err)
+		t.Errorf("test failed, err %v", err)
 		return
 	}
 
@@ -74,7 +74,7 @@ func TestRpcColumn(t *testing.T) {
 		TableName: "t1",
 	})
 	if err != nil {
-		t.Error("test failed, err %v", err)
+		t.Errorf("test failed, err %v", err)
 		return
 	}
 	_, err = server.handleGetTableById(ctx, &mspb.GetTableByIdRequest{
@@ -83,7 +83,7 @@ func TestRpcColumn(t *testing.T) {
 		TableId: table.GetId(),
 	})
 	if err != nil {
-		t.Error("test failed, err %v", err)
+		t.Errorf("test failed, err %v", err)
 		return
 	}
 	resp, err := server.handleGetColumns(ctx, &mspb.GetColumnsRequest{
@@ -92,7 +92,7 @@ func TestRpcColumn(t *testing.T) {
 		TableId: table.GetId(),
 	})
 	if err != nil {
-		t.Error("test failed, err %v", err)
+		t.Errorf("test failed, err %v", err)
 		return
 	}
 	if len(resp.GetColumns()) != 3 {
@@ -106,7 +106,7 @@ func TestRpcColumn(t *testing.T) {
 		ColId:   1,
 	})
 	if err != nil {
-		t.Error("test failed, err %v", err)
+		t.Errorf("test failed, err %v", err)
 		return
 	}
 	_, err = server.handleGetColumnByName(ctx, &mspb.GetColumnByNameRequest{
@@ -116,7 +116,7 @@ func TestRpcColumn(t *testing.T) {
 		ColName: "rangeid",
 	})
 	if err != nil {
-		t.Error("test failed, err %v", err)
+		t.Errorf("test failed, err %v", err)
 		return
 	}
 	cols_new := []*metapb.Column{
@@ -131,7 +131,7 @@ func TestRpcColumn(t *testing.T) {
 		Columns: cols_new,
 	})
 	if err != nil {
-		t.Error("test failed, err %v", err)
+		t.Errorf("test failed, err %v", err)
 		return
 	}
 }
@@ -175,7 +175,7 @@ func TestRpcRangeSplit(t *testing.T) {
 	// 第二步.　创建Database
 	db, err := cluster.CreateDatabase("test", "")
 	if err != nil {
-		t.Errorf("create database failed, err %v", node3.GetId(), err)
+		t.Errorf("create database on node %v failed, err %v", node3.GetId(), err)
 		return
 	}
 	// 第三步.　创建table
@@ -404,7 +404,7 @@ func TestRpcRangeHeartbeat(t *testing.T) {
 	// 第二步.　创建Database
 	db, err := cluster.CreateDatabase("test", "")
 	if err != nil {
-		t.Errorf("create database failed, err %v", node3.GetId(), err)
+		t.Errorf("create database on nodeId %v failed, err %v", node3.GetId(), err)
 		return
 	}
 	// 第三步.　创建table
@@ -633,7 +633,7 @@ func TestRpcRangeHeartbeatWhenTableInit(t *testing.T) {
 	// 第二步.　创建Database
 	db, err := cluster.CreateDatabase("test", "")
 	if err != nil {
-		t.Errorf("create database failed, err %v", node3.GetId(), err)
+		t.Errorf("create database on node %v failed, err %v", node3.GetId(), err)
 		return
 	}
 	// 第三步.　创建table
@@ -816,7 +816,7 @@ func TestRpcRangeHeartbeatWhenTablePrepare(t *testing.T) {
 	// 第二步.　创建Database
 	db, err := cluster.CreateDatabase("test", "")
 	if err != nil {
-		t.Errorf("create database failed, err %v", node3.GetId(), err)
+		t.Errorf("create database on node %v failed, err %v", node3.GetId(), err)
 		return
 	}
 	// 第三步.　创建table
@@ -1002,7 +1002,7 @@ func TestRpcRangeHeartbeatWhenTableDeleting(t *testing.T) {
 	// 第二步.　创建Database
 	db, err := cluster.CreateDatabase("test", "")
 	if err != nil {
-		t.Errorf("create database failed, err %v", node3.GetId(), err)
+		t.Errorf("create database on node %v failed, err %v", node3.GetId(), err)
 		return
 	}
 	// 第三步.　创建table
@@ -1189,7 +1189,7 @@ func TestRpcRangeHeartbeatWhenTableMiss(t *testing.T) {
 	// 第二步.　创建Database
 	db, err := cluster.CreateDatabase("test", "")
 	if err != nil {
-		t.Errorf("create database failed, err %v", node3.GetId(), err)
+		t.Errorf("create database on node %v failed, err %v", node3.GetId(), err)
 		return
 	}
 	// 第三步.　创建table
@@ -1383,7 +1383,7 @@ func TestRpcNodeHeartbeat(t *testing.T) {
 	// 第二步.　创建Database
 	db, err := cluster.CreateDatabase("test", "")
 	if err != nil {
-		t.Errorf("create database failed, err %v", node3.GetId(), err)
+		t.Errorf("create database on node %v failed, err %v", node3.GetId(), err)
 		return
 	}
 	// 第三步.　创建table
