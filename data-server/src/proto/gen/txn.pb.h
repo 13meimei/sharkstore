@@ -1801,6 +1801,12 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::txn::TxnStatus status() const;
   void set_status(::txn::TxnStatus value);
 
+  // bool recover = 4;
+  void clear_recover();
+  static const int kRecoverFieldNumber = 4;
+  bool recover() const;
+  void set_recover(bool value);
+
   // @@protoc_insertion_point(class_scope:txn.DecideRequest)
  private:
 
@@ -1808,6 +1814,7 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::RepeatedPtrField< ::std::string> keys_;
   ::google::protobuf::internal::ArenaStringPtr txn_id_;
   int status_;
+  bool recover_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -1894,23 +1901,43 @@ class DecideResponse : public ::google::protobuf::Message /* @@protoc_insertion_
 
   // accessors -------------------------------------------------------
 
-  // repeated .txn.TxnError errors = 1;
-  int errors_size() const;
-  void clear_errors();
-  static const int kErrorsFieldNumber = 1;
-  const ::txn::TxnError& errors(int index) const;
-  ::txn::TxnError* mutable_errors(int index);
-  ::txn::TxnError* add_errors();
-  ::google::protobuf::RepeatedPtrField< ::txn::TxnError >*
-      mutable_errors();
-  const ::google::protobuf::RepeatedPtrField< ::txn::TxnError >&
-      errors() const;
+  // repeated bytes secondary_keys = 2;
+  int secondary_keys_size() const;
+  void clear_secondary_keys();
+  static const int kSecondaryKeysFieldNumber = 2;
+  const ::std::string& secondary_keys(int index) const;
+  ::std::string* mutable_secondary_keys(int index);
+  void set_secondary_keys(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_secondary_keys(int index, ::std::string&& value);
+  #endif
+  void set_secondary_keys(int index, const char* value);
+  void set_secondary_keys(int index, const void* value, size_t size);
+  ::std::string* add_secondary_keys();
+  void add_secondary_keys(const ::std::string& value);
+  #if LANG_CXX11
+  void add_secondary_keys(::std::string&& value);
+  #endif
+  void add_secondary_keys(const char* value);
+  void add_secondary_keys(const void* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& secondary_keys() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_secondary_keys();
+
+  // .txn.TxnError err = 1;
+  bool has_err() const;
+  void clear_err();
+  static const int kErrFieldNumber = 1;
+  const ::txn::TxnError& err() const;
+  ::txn::TxnError* mutable_err();
+  ::txn::TxnError* release_err();
+  void set_allocated_err(::txn::TxnError* err);
 
   // @@protoc_insertion_point(class_scope:txn.DecideResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::txn::TxnError > errors_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> secondary_keys_;
+  ::txn::TxnError* err_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -5476,38 +5503,131 @@ DecideRequest::mutable_keys() {
   return &keys_;
 }
 
+// bool recover = 4;
+inline void DecideRequest::clear_recover() {
+  recover_ = false;
+}
+inline bool DecideRequest::recover() const {
+  // @@protoc_insertion_point(field_get:txn.DecideRequest.recover)
+  return recover_;
+}
+inline void DecideRequest::set_recover(bool value) {
+  
+  recover_ = value;
+  // @@protoc_insertion_point(field_set:txn.DecideRequest.recover)
+}
+
 // -------------------------------------------------------------------
 
 // DecideResponse
 
-// repeated .txn.TxnError errors = 1;
-inline int DecideResponse::errors_size() const {
-  return errors_.size();
+// .txn.TxnError err = 1;
+inline bool DecideResponse::has_err() const {
+  return this != internal_default_instance() && err_ != NULL;
 }
-inline void DecideResponse::clear_errors() {
-  errors_.Clear();
+inline void DecideResponse::clear_err() {
+  if (GetArenaNoVirtual() == NULL && err_ != NULL) delete err_;
+  err_ = NULL;
 }
-inline const ::txn::TxnError& DecideResponse::errors(int index) const {
-  // @@protoc_insertion_point(field_get:txn.DecideResponse.errors)
-  return errors_.Get(index);
+inline const ::txn::TxnError& DecideResponse::err() const {
+  const ::txn::TxnError* p = err_;
+  // @@protoc_insertion_point(field_get:txn.DecideResponse.err)
+  return p != NULL ? *p : *reinterpret_cast<const ::txn::TxnError*>(
+      &::txn::_TxnError_default_instance_);
 }
-inline ::txn::TxnError* DecideResponse::mutable_errors(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.DecideResponse.errors)
-  return errors_.Mutable(index);
+inline ::txn::TxnError* DecideResponse::mutable_err() {
+  
+  if (err_ == NULL) {
+    err_ = new ::txn::TxnError;
+  }
+  // @@protoc_insertion_point(field_mutable:txn.DecideResponse.err)
+  return err_;
 }
-inline ::txn::TxnError* DecideResponse::add_errors() {
-  // @@protoc_insertion_point(field_add:txn.DecideResponse.errors)
-  return errors_.Add();
+inline ::txn::TxnError* DecideResponse::release_err() {
+  // @@protoc_insertion_point(field_release:txn.DecideResponse.err)
+  
+  ::txn::TxnError* temp = err_;
+  err_ = NULL;
+  return temp;
 }
-inline ::google::protobuf::RepeatedPtrField< ::txn::TxnError >*
-DecideResponse::mutable_errors() {
-  // @@protoc_insertion_point(field_mutable_list:txn.DecideResponse.errors)
-  return &errors_;
+inline void DecideResponse::set_allocated_err(::txn::TxnError* err) {
+  delete err_;
+  err_ = err;
+  if (err) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txn.DecideResponse.err)
 }
-inline const ::google::protobuf::RepeatedPtrField< ::txn::TxnError >&
-DecideResponse::errors() const {
-  // @@protoc_insertion_point(field_list:txn.DecideResponse.errors)
-  return errors_;
+
+// repeated bytes secondary_keys = 2;
+inline int DecideResponse::secondary_keys_size() const {
+  return secondary_keys_.size();
+}
+inline void DecideResponse::clear_secondary_keys() {
+  secondary_keys_.Clear();
+}
+inline const ::std::string& DecideResponse::secondary_keys(int index) const {
+  // @@protoc_insertion_point(field_get:txn.DecideResponse.secondary_keys)
+  return secondary_keys_.Get(index);
+}
+inline ::std::string* DecideResponse::mutable_secondary_keys(int index) {
+  // @@protoc_insertion_point(field_mutable:txn.DecideResponse.secondary_keys)
+  return secondary_keys_.Mutable(index);
+}
+inline void DecideResponse::set_secondary_keys(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:txn.DecideResponse.secondary_keys)
+  secondary_keys_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void DecideResponse::set_secondary_keys(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:txn.DecideResponse.secondary_keys)
+  secondary_keys_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void DecideResponse::set_secondary_keys(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  secondary_keys_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:txn.DecideResponse.secondary_keys)
+}
+inline void DecideResponse::set_secondary_keys(int index, const void* value, size_t size) {
+  secondary_keys_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:txn.DecideResponse.secondary_keys)
+}
+inline ::std::string* DecideResponse::add_secondary_keys() {
+  // @@protoc_insertion_point(field_add_mutable:txn.DecideResponse.secondary_keys)
+  return secondary_keys_.Add();
+}
+inline void DecideResponse::add_secondary_keys(const ::std::string& value) {
+  secondary_keys_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:txn.DecideResponse.secondary_keys)
+}
+#if LANG_CXX11
+inline void DecideResponse::add_secondary_keys(::std::string&& value) {
+  secondary_keys_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:txn.DecideResponse.secondary_keys)
+}
+#endif
+inline void DecideResponse::add_secondary_keys(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  secondary_keys_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:txn.DecideResponse.secondary_keys)
+}
+inline void DecideResponse::add_secondary_keys(const void* value, size_t size) {
+  secondary_keys_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:txn.DecideResponse.secondary_keys)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+DecideResponse::secondary_keys() const {
+  // @@protoc_insertion_point(field_list:txn.DecideResponse.secondary_keys)
+  return secondary_keys_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+DecideResponse::mutable_secondary_keys() {
+  // @@protoc_insertion_point(field_mutable_list:txn.DecideResponse.secondary_keys)
+  return &secondary_keys_;
 }
 
 // -------------------------------------------------------------------

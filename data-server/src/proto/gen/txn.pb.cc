@@ -326,12 +326,14 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DecideRequest, txn_id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DecideRequest, status_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DecideRequest, keys_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DecideRequest, recover_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DecideResponse, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DecideResponse, errors_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DecideResponse, err_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DecideResponse, secondary_keys_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsDecideRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -472,24 +474,24 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 81, -1, sizeof(DsPrepareRequest)},
   { 88, -1, sizeof(DsPrepareResponse)},
   { 95, -1, sizeof(DecideRequest)},
-  { 103, -1, sizeof(DecideResponse)},
-  { 109, -1, sizeof(DsDecideRequest)},
-  { 116, -1, sizeof(DsDecideResponse)},
-  { 123, -1, sizeof(ClearupRequest)},
-  { 130, -1, sizeof(ClearupResponse)},
-  { 136, -1, sizeof(DsClearupRequest)},
-  { 143, -1, sizeof(DsClearupResponse)},
-  { 150, -1, sizeof(GetLockInfoRequest)},
-  { 157, -1, sizeof(GetLockInfoResponse)},
-  { 163, -1, sizeof(DsGetLockInfoRequest)},
-  { 170, -1, sizeof(DsGetLockInfoResponse)},
-  { 177, -1, sizeof(SelectRequest)},
-  { 188, -1, sizeof(RowValue)},
-  { 196, -1, sizeof(RowIntent)},
-  { 205, -1, sizeof(Row)},
-  { 213, -1, sizeof(SelectResponse)},
-  { 221, -1, sizeof(DsSelectRequest)},
-  { 228, -1, sizeof(DsSelectResponse)},
+  { 104, -1, sizeof(DecideResponse)},
+  { 111, -1, sizeof(DsDecideRequest)},
+  { 118, -1, sizeof(DsDecideResponse)},
+  { 125, -1, sizeof(ClearupRequest)},
+  { 132, -1, sizeof(ClearupResponse)},
+  { 138, -1, sizeof(DsClearupRequest)},
+  { 145, -1, sizeof(DsClearupResponse)},
+  { 152, -1, sizeof(GetLockInfoRequest)},
+  { 159, -1, sizeof(GetLockInfoResponse)},
+  { 165, -1, sizeof(DsGetLockInfoRequest)},
+  { 172, -1, sizeof(DsGetLockInfoResponse)},
+  { 179, -1, sizeof(SelectRequest)},
+  { 190, -1, sizeof(RowValue)},
+  { 198, -1, sizeof(RowIntent)},
+  { 207, -1, sizeof(Row)},
+  { 215, -1, sizeof(SelectResponse)},
+  { 223, -1, sizeof(DsSelectRequest)},
+  { 230, -1, sizeof(DsSelectResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -631,6 +633,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::ResponseHeader::internal_default_instance());
   _DsPrepareResponse_default_instance_._instance.get_mutable()->resp_ = const_cast< ::txn::PrepareResponse*>(
       ::txn::PrepareResponse::internal_default_instance());
+  _DecideResponse_default_instance_._instance.get_mutable()->err_ = const_cast< ::txn::TxnError*>(
+      ::txn::TxnError::internal_default_instance());
   _DsDecideRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
       ::kvrpcpb::RequestHeader::internal_default_instance());
   _DsDecideRequest_default_instance_._instance.get_mutable()->req_ = const_cast< ::txn::DecideRequest*>(
@@ -720,53 +724,54 @@ void AddDescriptorsImpl() {
       "\002 \001(\0132\023.txn.PrepareRequest\"`\n\021DsPrepareR"
       "esponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respon"
       "seHeader\022\"\n\004resp\030\002 \001(\0132\024.txn.PrepareResp"
-      "onse\"M\n\rDecideRequest\022\016\n\006txn_id\030\001 \001(\t\022\036\n"
+      "onse\"^\n\rDecideRequest\022\016\n\006txn_id\030\001 \001(\t\022\036\n"
       "\006status\030\002 \001(\0162\016.txn.TxnStatus\022\014\n\004keys\030\003 "
-      "\003(\014\"/\n\016DecideResponse\022\035\n\006errors\030\001 \003(\0132\r."
-      "txn.TxnError\"Z\n\017DsDecideRequest\022&\n\006heade"
-      "r\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\037\n\003req\030\002"
-      " \001(\0132\022.txn.DecideRequest\"^\n\020DsDecideResp"
-      "onse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseH"
-      "eader\022!\n\004resp\030\002 \001(\0132\023.txn.DecideResponse"
-      "\"5\n\016ClearupRequest\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013pr"
-      "imary_key\030\002 \001(\014\"-\n\017ClearupResponse\022\032\n\003er"
-      "r\030\001 \001(\0132\r.txn.TxnError\"\\\n\020DsClearupReque"
-      "st\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHead"
-      "er\022 \n\003req\030\002 \001(\0132\023.txn.ClearupRequest\"`\n\021"
-      "DsClearupResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
-      "cpb.ResponseHeader\022\"\n\004resp\030\002 \001(\0132\024.txn.C"
-      "learupResponse\"1\n\022GetLockInfoRequest\022\013\n\003"
-      "key\030\001 \001(\014\022\016\n\006txn_id\030\002 \001(\t\"2\n\023GetLockInfo"
-      "Response\022\033\n\004info\030\001 \001(\0132\r.txn.LockInfo\"d\n"
-      "\024DsGetLockInfoRequest\022&\n\006header\030\001 \001(\0132\026."
-      "kvrpcpb.RequestHeader\022$\n\003req\030\002 \001(\0132\027.txn"
-      ".GetLockInfoRequest\"h\n\025DsGetLockInfoResp"
-      "onse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseH"
-      "eader\022&\n\004resp\030\002 \001(\0132\030.txn.GetLockInfoRes"
-      "ponse\"\316\001\n\rSelectRequest\022\013\n\003key\030\001 \001(\014\022\035\n\005"
-      "scope\030\002 \001(\0132\016.kvrpcpb.Scope\022(\n\nfield_lis"
-      "t\030\003 \003(\0132\024.kvrpcpb.SelectField\022%\n\rwhere_f"
-      "ilters\030\004 \003(\0132\016.kvrpcpb.Match\022!\n\tgroup_by"
-      "s\030\005 \003(\0132\016.metapb.Column\022\035\n\005limit\030\006 \001(\0132\016"
-      ".kvrpcpb.Limit\"B\n\010RowValue\022\016\n\006fields\030\001 \001"
-      "(\014\022\025\n\raggred_counts\030\002 \003(\003\022\017\n\007version\030\003 \001"
-      "(\004\"_\n\tRowIntent\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013prima"
-      "ry_key\030\002 \001(\014\022\017\n\007timeout\030\003 \001(\010\022\034\n\005value\030\n"
-      " \001(\0132\r.txn.RowValue\"P\n\003Row\022\013\n\003key\030\001 \001(\014\022"
-      "\034\n\005value\030\002 \001(\0132\r.txn.RowValue\022\036\n\006intent\030"
-      "\003 \001(\0132\016.txn.RowIntent\"F\n\016SelectResponse\022"
-      "\014\n\004code\030\001 \001(\005\022\026\n\004rows\030\002 \003(\0132\010.txn.Row\022\016\n"
-      "\006offset\030\003 \001(\004\"Z\n\017DsSelectRequest\022&\n\006head"
-      "er\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\037\n\003req\030"
-      "\002 \001(\0132\022.txn.SelectRequest\"^\n\020DsSelectRes"
-      "ponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Response"
-      "Header\022!\n\004resp\030\002 \001(\0132\023.txn.SelectRespons"
-      "e* \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*1\n\tT"
-      "xnStatus\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007ABO"
-      "RTED\020\002b\006proto3"
+      "\003(\014\022\017\n\007recover\030\004 \001(\010\"D\n\016DecideResponse\022\032"
+      "\n\003err\030\001 \001(\0132\r.txn.TxnError\022\026\n\016secondary_"
+      "keys\030\002 \003(\014\"Z\n\017DsDecideRequest\022&\n\006header\030"
+      "\001 \001(\0132\026.kvrpcpb.RequestHeader\022\037\n\003req\030\002 \001"
+      "(\0132\022.txn.DecideRequest\"^\n\020DsDecideRespon"
+      "se\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHea"
+      "der\022!\n\004resp\030\002 \001(\0132\023.txn.DecideResponse\"5"
+      "\n\016ClearupRequest\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013prim"
+      "ary_key\030\002 \001(\014\"-\n\017ClearupResponse\022\032\n\003err\030"
+      "\001 \001(\0132\r.txn.TxnError\"\\\n\020DsClearupRequest"
+      "\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader"
+      "\022 \n\003req\030\002 \001(\0132\023.txn.ClearupRequest\"`\n\021Ds"
+      "ClearupResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
+      "b.ResponseHeader\022\"\n\004resp\030\002 \001(\0132\024.txn.Cle"
+      "arupResponse\"1\n\022GetLockInfoRequest\022\013\n\003ke"
+      "y\030\001 \001(\014\022\016\n\006txn_id\030\002 \001(\t\"2\n\023GetLockInfoRe"
+      "sponse\022\033\n\004info\030\001 \001(\0132\r.txn.LockInfo\"d\n\024D"
+      "sGetLockInfoRequest\022&\n\006header\030\001 \001(\0132\026.kv"
+      "rpcpb.RequestHeader\022$\n\003req\030\002 \001(\0132\027.txn.G"
+      "etLockInfoRequest\"h\n\025DsGetLockInfoRespon"
+      "se\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHea"
+      "der\022&\n\004resp\030\002 \001(\0132\030.txn.GetLockInfoRespo"
+      "nse\"\316\001\n\rSelectRequest\022\013\n\003key\030\001 \001(\014\022\035\n\005sc"
+      "ope\030\002 \001(\0132\016.kvrpcpb.Scope\022(\n\nfield_list\030"
+      "\003 \003(\0132\024.kvrpcpb.SelectField\022%\n\rwhere_fil"
+      "ters\030\004 \003(\0132\016.kvrpcpb.Match\022!\n\tgroup_bys\030"
+      "\005 \003(\0132\016.metapb.Column\022\035\n\005limit\030\006 \001(\0132\016.k"
+      "vrpcpb.Limit\"B\n\010RowValue\022\016\n\006fields\030\001 \001(\014"
+      "\022\025\n\raggred_counts\030\002 \003(\003\022\017\n\007version\030\003 \001(\004"
+      "\"_\n\tRowIntent\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primary"
+      "_key\030\002 \001(\014\022\017\n\007timeout\030\003 \001(\010\022\034\n\005value\030\n \001"
+      "(\0132\r.txn.RowValue\"P\n\003Row\022\013\n\003key\030\001 \001(\014\022\034\n"
+      "\005value\030\002 \001(\0132\r.txn.RowValue\022\036\n\006intent\030\003 "
+      "\001(\0132\016.txn.RowIntent\"F\n\016SelectResponse\022\014\n"
+      "\004code\030\001 \001(\005\022\026\n\004rows\030\002 \003(\0132\010.txn.Row\022\016\n\006o"
+      "ffset\030\003 \001(\004\"Z\n\017DsSelectRequest\022&\n\006header"
+      "\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\037\n\003req\030\002 "
+      "\001(\0132\022.txn.SelectRequest\"^\n\020DsSelectRespo"
+      "nse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHe"
+      "ader\022!\n\004resp\030\002 \001(\0132\023.txn.SelectResponse*"
+      " \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*1\n\tTxn"
+      "Status\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007ABORT"
+      "ED\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 3054);
+      descriptor, 3092);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "txn.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -6180,6 +6185,7 @@ void DsPrepareResponse::set_allocated_resp(::txn::PrepareResponse* resp) {
 const int DecideRequest::kTxnIdFieldNumber;
 const int DecideRequest::kStatusFieldNumber;
 const int DecideRequest::kKeysFieldNumber;
+const int DecideRequest::kRecoverFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 DecideRequest::DecideRequest()
@@ -6200,13 +6206,17 @@ DecideRequest::DecideRequest(const DecideRequest& from)
   if (from.txn_id().size() > 0) {
     txn_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.txn_id_);
   }
-  status_ = from.status_;
+  ::memcpy(&status_, &from.status_,
+    static_cast<size_t>(reinterpret_cast<char*>(&recover_) -
+    reinterpret_cast<char*>(&status_)) + sizeof(recover_));
   // @@protoc_insertion_point(copy_constructor:txn.DecideRequest)
 }
 
 void DecideRequest::SharedCtor() {
   txn_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  status_ = 0;
+  ::memset(&status_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&recover_) -
+      reinterpret_cast<char*>(&status_)) + sizeof(recover_));
   _cached_size_ = 0;
 }
 
@@ -6250,7 +6260,9 @@ void DecideRequest::Clear() {
 
   keys_.Clear();
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  status_ = 0;
+  ::memset(&status_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&recover_) -
+      reinterpret_cast<char*>(&status_)) + sizeof(recover_));
   _internal_metadata_.Clear();
 }
 
@@ -6307,6 +6319,20 @@ bool DecideRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // bool recover = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &recover_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -6355,6 +6381,11 @@ void DecideRequest::SerializeWithCachedSizes(
       3, this->keys(i), output);
   }
 
+  // bool recover = 4;
+  if (this->recover() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(4, this->recover(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -6390,6 +6421,11 @@ void DecideRequest::SerializeWithCachedSizes(
   for (int i = 0, n = this->keys_size(); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteBytesToArray(3, this->keys(i), target);
+  }
+
+  // bool recover = 4;
+  if (this->recover() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(4, this->recover(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -6430,6 +6466,11 @@ size_t DecideRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormatLite::EnumSize(this->status());
   }
 
+  // bool recover = 4;
+  if (this->recover() != 0) {
+    total_size += 1 + 1;
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -6467,6 +6508,9 @@ void DecideRequest::MergeFrom(const DecideRequest& from) {
   if (from.status() != 0) {
     set_status(from.status());
   }
+  if (from.recover() != 0) {
+    set_recover(from.recover());
+  }
 }
 
 void DecideRequest::CopyFrom(const ::google::protobuf::Message& from) {
@@ -6496,6 +6540,7 @@ void DecideRequest::InternalSwap(DecideRequest* other) {
   keys_.InternalSwap(&other->keys_);
   txn_id_.Swap(&other->txn_id_);
   swap(status_, other->status_);
+  swap(recover_, other->recover_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -6644,12 +6689,27 @@ DecideRequest::mutable_keys() {
   return &keys_;
 }
 
+// bool recover = 4;
+void DecideRequest::clear_recover() {
+  recover_ = false;
+}
+bool DecideRequest::recover() const {
+  // @@protoc_insertion_point(field_get:txn.DecideRequest.recover)
+  return recover_;
+}
+void DecideRequest::set_recover(bool value) {
+  
+  recover_ = value;
+  // @@protoc_insertion_point(field_set:txn.DecideRequest.recover)
+}
+
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
 
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int DecideResponse::kErrorsFieldNumber;
+const int DecideResponse::kErrFieldNumber;
+const int DecideResponse::kSecondaryKeysFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 DecideResponse::DecideResponse()
@@ -6663,13 +6723,19 @@ DecideResponse::DecideResponse()
 DecideResponse::DecideResponse(const DecideResponse& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
-      errors_(from.errors_),
+      secondary_keys_(from.secondary_keys_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_err()) {
+    err_ = new ::txn::TxnError(*from.err_);
+  } else {
+    err_ = NULL;
+  }
   // @@protoc_insertion_point(copy_constructor:txn.DecideResponse)
 }
 
 void DecideResponse::SharedCtor() {
+  err_ = NULL;
   _cached_size_ = 0;
 }
 
@@ -6679,6 +6745,7 @@ DecideResponse::~DecideResponse() {
 }
 
 void DecideResponse::SharedDtor() {
+  if (this != internal_default_instance()) delete err_;
 }
 
 void DecideResponse::SetCachedSize(int size) const {
@@ -6710,7 +6777,11 @@ void DecideResponse::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  errors_.Clear();
+  secondary_keys_.Clear();
+  if (GetArenaNoVirtual() == NULL && err_ != NULL) {
+    delete err_;
+  }
+  err_ = NULL;
   _internal_metadata_.Clear();
 }
 
@@ -6724,12 +6795,24 @@ bool DecideResponse::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .txn.TxnError errors = 1;
+      // .txn.TxnError err = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_errors()));
+               input, mutable_err()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated bytes secondary_keys = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->add_secondary_keys()));
         } else {
           goto handle_unusual;
         }
@@ -6762,11 +6845,16 @@ void DecideResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // repeated .txn.TxnError errors = 1;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->errors_size()); i < n; i++) {
+  // .txn.TxnError err = 1;
+  if (this->has_err()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, this->errors(static_cast<int>(i)), output);
+      1, *this->err_, output);
+  }
+
+  // repeated bytes secondary_keys = 2;
+  for (int i = 0, n = this->secondary_keys_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytes(
+      2, this->secondary_keys(i), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -6783,12 +6871,17 @@ void DecideResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // repeated .txn.TxnError errors = 1;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->errors_size()); i < n; i++) {
+  // .txn.TxnError err = 1;
+  if (this->has_err()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        1, this->errors(static_cast<int>(i)), deterministic, target);
+        1, *this->err_, deterministic, target);
+  }
+
+  // repeated bytes secondary_keys = 2;
+  for (int i = 0, n = this->secondary_keys_size(); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteBytesToArray(2, this->secondary_keys(i), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -6808,15 +6901,19 @@ size_t DecideResponse::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // repeated .txn.TxnError errors = 1;
-  {
-    unsigned int count = static_cast<unsigned int>(this->errors_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-          this->errors(static_cast<int>(i)));
-    }
+  // repeated bytes secondary_keys = 2;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->secondary_keys_size());
+  for (int i = 0, n = this->secondary_keys_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::BytesSize(
+      this->secondary_keys(i));
+  }
+
+  // .txn.TxnError err = 1;
+  if (this->has_err()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->err_);
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -6848,7 +6945,10 @@ void DecideResponse::MergeFrom(const DecideResponse& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  errors_.MergeFrom(from.errors_);
+  secondary_keys_.MergeFrom(from.secondary_keys_);
+  if (from.has_err()) {
+    mutable_err()->::txn::TxnError::MergeFrom(from.err());
+  }
 }
 
 void DecideResponse::CopyFrom(const ::google::protobuf::Message& from) {
@@ -6875,7 +6975,8 @@ void DecideResponse::Swap(DecideResponse* other) {
 }
 void DecideResponse::InternalSwap(DecideResponse* other) {
   using std::swap;
-  errors_.InternalSwap(&other->errors_);
+  secondary_keys_.InternalSwap(&other->secondary_keys_);
+  swap(err_, other->err_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -6888,34 +6989,113 @@ void DecideResponse::InternalSwap(DecideResponse* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // DecideResponse
 
-// repeated .txn.TxnError errors = 1;
-int DecideResponse::errors_size() const {
-  return errors_.size();
+// .txn.TxnError err = 1;
+bool DecideResponse::has_err() const {
+  return this != internal_default_instance() && err_ != NULL;
 }
-void DecideResponse::clear_errors() {
-  errors_.Clear();
+void DecideResponse::clear_err() {
+  if (GetArenaNoVirtual() == NULL && err_ != NULL) delete err_;
+  err_ = NULL;
 }
-const ::txn::TxnError& DecideResponse::errors(int index) const {
-  // @@protoc_insertion_point(field_get:txn.DecideResponse.errors)
-  return errors_.Get(index);
+const ::txn::TxnError& DecideResponse::err() const {
+  const ::txn::TxnError* p = err_;
+  // @@protoc_insertion_point(field_get:txn.DecideResponse.err)
+  return p != NULL ? *p : *reinterpret_cast<const ::txn::TxnError*>(
+      &::txn::_TxnError_default_instance_);
 }
-::txn::TxnError* DecideResponse::mutable_errors(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.DecideResponse.errors)
-  return errors_.Mutable(index);
+::txn::TxnError* DecideResponse::mutable_err() {
+  
+  if (err_ == NULL) {
+    err_ = new ::txn::TxnError;
+  }
+  // @@protoc_insertion_point(field_mutable:txn.DecideResponse.err)
+  return err_;
 }
-::txn::TxnError* DecideResponse::add_errors() {
-  // @@protoc_insertion_point(field_add:txn.DecideResponse.errors)
-  return errors_.Add();
+::txn::TxnError* DecideResponse::release_err() {
+  // @@protoc_insertion_point(field_release:txn.DecideResponse.err)
+  
+  ::txn::TxnError* temp = err_;
+  err_ = NULL;
+  return temp;
 }
-::google::protobuf::RepeatedPtrField< ::txn::TxnError >*
-DecideResponse::mutable_errors() {
-  // @@protoc_insertion_point(field_mutable_list:txn.DecideResponse.errors)
-  return &errors_;
+void DecideResponse::set_allocated_err(::txn::TxnError* err) {
+  delete err_;
+  err_ = err;
+  if (err) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txn.DecideResponse.err)
 }
-const ::google::protobuf::RepeatedPtrField< ::txn::TxnError >&
-DecideResponse::errors() const {
-  // @@protoc_insertion_point(field_list:txn.DecideResponse.errors)
-  return errors_;
+
+// repeated bytes secondary_keys = 2;
+int DecideResponse::secondary_keys_size() const {
+  return secondary_keys_.size();
+}
+void DecideResponse::clear_secondary_keys() {
+  secondary_keys_.Clear();
+}
+const ::std::string& DecideResponse::secondary_keys(int index) const {
+  // @@protoc_insertion_point(field_get:txn.DecideResponse.secondary_keys)
+  return secondary_keys_.Get(index);
+}
+::std::string* DecideResponse::mutable_secondary_keys(int index) {
+  // @@protoc_insertion_point(field_mutable:txn.DecideResponse.secondary_keys)
+  return secondary_keys_.Mutable(index);
+}
+void DecideResponse::set_secondary_keys(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:txn.DecideResponse.secondary_keys)
+  secondary_keys_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+void DecideResponse::set_secondary_keys(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:txn.DecideResponse.secondary_keys)
+  secondary_keys_.Mutable(index)->assign(std::move(value));
+}
+#endif
+void DecideResponse::set_secondary_keys(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  secondary_keys_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:txn.DecideResponse.secondary_keys)
+}
+void DecideResponse::set_secondary_keys(int index, const void* value, size_t size) {
+  secondary_keys_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:txn.DecideResponse.secondary_keys)
+}
+::std::string* DecideResponse::add_secondary_keys() {
+  // @@protoc_insertion_point(field_add_mutable:txn.DecideResponse.secondary_keys)
+  return secondary_keys_.Add();
+}
+void DecideResponse::add_secondary_keys(const ::std::string& value) {
+  secondary_keys_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:txn.DecideResponse.secondary_keys)
+}
+#if LANG_CXX11
+void DecideResponse::add_secondary_keys(::std::string&& value) {
+  secondary_keys_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:txn.DecideResponse.secondary_keys)
+}
+#endif
+void DecideResponse::add_secondary_keys(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  secondary_keys_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:txn.DecideResponse.secondary_keys)
+}
+void DecideResponse::add_secondary_keys(const void* value, size_t size) {
+  secondary_keys_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:txn.DecideResponse.secondary_keys)
+}
+const ::google::protobuf::RepeatedPtrField< ::std::string>&
+DecideResponse::secondary_keys() const {
+  // @@protoc_insertion_point(field_list:txn.DecideResponse.secondary_keys)
+  return secondary_keys_;
+}
+::google::protobuf::RepeatedPtrField< ::std::string>*
+DecideResponse::mutable_secondary_keys() {
+  // @@protoc_insertion_point(field_mutable_list:txn.DecideResponse.secondary_keys)
+  return &secondary_keys_;
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

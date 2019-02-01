@@ -119,10 +119,12 @@ message DecideRequest {
     string txn_id       = 1;
     TxnStatus status    = 2;
     repeated bytes keys = 3;
+    bool recover        = 4; // 如果recover=true，发往primary的请求会反馈secondary keys
 }
 
 message DecideResponse {
-    repeated TxnError errors  = 1;
+    TxnError err                  = 1;
+    repeated bytes secondary_keys = 2;
 }
 
 message DsDecideRequest {
