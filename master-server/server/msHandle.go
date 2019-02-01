@@ -100,6 +100,7 @@ func (service *Server) handleNodeHeartbeat(ctx context.Context, req *mspb.NodeHe
 	case metapb.NodeState_N_Tombstone:
 		// 暂时先回到offline状态,如果还能收到心跳,那么就会正式成为login
 		cluster.UpdateNodeState(node, metapb.NodeState_N_Offline)
+		node.LastHeartbeatTS = time.Now()
 		return
 	}
 
