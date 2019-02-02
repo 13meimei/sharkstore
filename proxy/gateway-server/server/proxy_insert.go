@@ -205,7 +205,6 @@ func (p *Proxy) checkPKMissing(t *Table, colMap map[string]int) (string, error) 
 	return pkName, nil
 }
 
-
 // Format of Data Storage Structure:
 //  +-----------------------------------------------------+
 //  |                  Key                |    Value      |
@@ -259,7 +258,6 @@ func (p *Proxy) EncodeRows(t *Table, colMap map[string]int, rows []InsertRowValu
 		err                         error
 		recordKvPairs, indexKvPairs []*kvrpcpb.KeyValue
 	)
-	//todo verify pk and unique-index row-index in a request, now through return err by ds
 	for _, r := range rows {
 		var recordKvPair *kvrpcpb.KeyValue
 		recordKvPair, err = p.EncodeRow(t, colMap, r)
@@ -276,6 +274,36 @@ func (p *Proxy) EncodeRows(t *Table, colMap map[string]int, rows []InsertRowValu
 		indexKvPairs = append(indexKvPairs, tIndexKvPairs...)
 	}
 	return recordKvPairs, indexKvPairs, nil
+}
+
+func verifyUniqueness(recordKvPairs, indexKvPairs []*kvrpcpb.KeyValue) bool {
+	if len(recordKvPairs) <= 1 || len(indexKvPairs) <= 1 {
+		return true
+	}
+	fmt.Printf(fmt.Sprintf("start to verify uniqueness"))
+	var checkDupMap = make(map[string]int, 0)
+	for _, recordKv := range recordKvPairs {
+		key := string(recordKv.GetKey())
+		if _, ok := checkDupMap[key]; !ok {
+			checkDupMap[key] = 1
+		} else {
+			log.Error("verifyUniqueness: primary key duplicate")
+			return false
+		}
+	}
+	for _, indexKv := range indexKvPairs {
+		if indexKv.GetValue() == nil { //non-unique index
+			continue
+		}
+		key := string(indexKv.GetKey())
+		if _, ok := checkDupMap[key]; !ok {
+			checkDupMap[key] = 1
+		} else {
+			log.Error("verifyUniqueness: index key duplicate")
+			return false
+		}
+	}
+	return true
 }
 
 // EncodeRow: encode business data,
@@ -430,6 +458,12 @@ func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValu
 	//indexKvPairs: encode unique and non-unique index kvPair
 	recordKvPairs, indexKvPairs, err = p.EncodeRows(t, colMap, rows)
 	if err != nil {
+		return
+	}
+
+	//verify index key uniqueness in a request
+	if t.GetPkDupCheck() && !verifyUniqueness(recordKvPairs, indexKvPairs) {
+		err = fmt.Errorf("table %v: insert duplicate pk or unique index", t.GetName())
 		return
 	}
 	context := dskv.NewPRConext(dskv.InsertMaxBackoff)
