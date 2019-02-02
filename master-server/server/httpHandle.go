@@ -1875,8 +1875,8 @@ var (
 
 	fbase_sql_ca = []*metapb.Column{
 		&metapb.Column{Name: "cluster_id", DataType: metapb.DataType_BigInt, PrimaryKey: 1},
-		&metapb.Column{Name: "user_name", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
-		&metapb.Column{Name: "password", DataType: metapb.DataType_Varchar, PrimaryKey: 1},
+		&metapb.Column{Name: "user_name", DataType: metapb.DataType_Varchar},
+		&metapb.Column{Name: "password", DataType: metapb.DataType_Varchar},
 	}
 )
 
