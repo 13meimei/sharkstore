@@ -2,12 +2,10 @@ package server
 
 import (
 	"util"
-	"fmt"
 	"util/log"
 	"model/pkg/metapb"
 	"model/pkg/kvrpcpb"
 	"proxy/store/dskv"
-
 )
 
 // insert unique index key, 如果存在，则报错
@@ -15,22 +13,13 @@ func (p *Proxy) insertIndexes(context *dskv.ReqContext, t *Table, indexKvPairs [
 	if len(indexKvPairs) == 0 {
 		return
 	}
-	var (
-		duplicateKey []byte
-	)
-	_, duplicateKey, err = p.insertRowsWithContext(context, t, indexKvPairs)
+	_, _, err = p.insertRowsWithContext(context, t, indexKvPairs)
 	if err != nil {
+		log.Error("insert indexes to table [%v:%v] error", t.GetDbId(), t.GetId())
 		return
 	}
-	//todo
-	if duplicateKey == nil {
-		err = fmt.Errorf("")
-		return
-	}
-
 	return nil
 }
-
 
 // delete index key
 func (p *Proxy) deleteIndexes(context *dskv.ReqContext, t *Table, indexKeys [][]byte) (err error) {
@@ -165,7 +154,7 @@ func encodeUniqueIndexKey(t *Table, col *metapb.Column, idxDefVal []byte) ([]byt
 	var err error
 	key := util.EncodeStorePrefix(util.Store_Prefix_INDEX, t.GetId())
 	// encode: index column id + index column value
-	key, err = util.EncodeColumnValue(key, col, idxDefVal)
+	key, err = util.EncodeIndexKey(key, col, idxDefVal)
 	if err != nil {
 		log.Error("encode index column[%v] value[%v] error: %v", col.GetName(), idxDefVal, err)
 		return nil, err
@@ -175,18 +164,15 @@ func encodeUniqueIndexKey(t *Table, col *metapb.Column, idxDefVal []byte) ([]byt
 
 func initValueByDataType(col *metapb.Column) []byte {
 	var value []byte
-	switch col.GetDataType() {
-	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
-		if col.GetUnsigned() { // 无符号
-
-		} else { // 有符号
-
-		}
-	case metapb.DataType_Float, metapb.DataType_Double:
-
-	case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
-
-	}
+	//switch col.GetDataType() {
+	//case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+	//	if col.GetUnsigned() { // 无符号
+	//
+	//	} else { // 有符号
+	//	}
+	//case metapb.DataType_Float, metapb.DataType_Double:
+	//
+	//case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
+	//}
 	return value
 }
-

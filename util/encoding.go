@@ -260,3 +260,37 @@ func DecodePrimaryKey2(buf []byte, col *metapb.Column) ([]byte, interface{}, err
 		return buf, nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
 	}
 }
+
+// EncodeIndexKey 编码索引列ID 索引列 保持排序属性
+func EncodeIndexKey(buf []byte, col *metapb.Column, sval []byte) ([]byte, error) {
+	buf =  encoding.EncodeUvarintAscending(buf, col.GetId())
+	if len(sval) == 0 {
+		return encoding.EncodeNullAscending(buf), nil
+	}
+	switch col.DataType {
+	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+		if col.Unsigned { // 无符号整型
+			ival, err := strconv.ParseUint(hack.String(sval), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("parse unsigned integer failed(%s) when encoding pk(%s) ", err.Error(), col.Name)
+			}
+			return encoding.EncodeUvarintAscending(buf, ival), nil
+		} else { // 有符号整型
+			ival, err := strconv.ParseInt(hack.String(sval), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("parse integer failed(%s) when encoding pk(%s) ", err.Error(), col.Name)
+			}
+			return encoding.EncodeVarintAscending(buf, ival), nil
+		}
+	case metapb.DataType_Float, metapb.DataType_Double:
+		fval, err := strconv.ParseFloat(hack.String(sval), 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse float failed(%s) when encoding pk(%s)", err.Error(), col.Name)
+		}
+		return encoding.EncodeFloatAscending(buf, fval), nil
+	case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
+		return encoding.EncodeBytesAscending(buf, sval), nil
+	default:
+		return nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
+	}
+}

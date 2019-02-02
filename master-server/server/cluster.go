@@ -453,7 +453,7 @@ func (c *Cluster) CreateTable(dbName, tableName string, columns, regxs []*metapb
 		log.Debug("create table %v with index range", tableName)
 		var idxStart, idxEnd []byte
 		idxStart = util.EncodeStorePrefix(util.Store_Prefix_INDEX, tableId)
-		_, idxEnd = bytesPrefix(start)
+		_, idxEnd = bytesPrefix(idxStart)
 		createTable.rangesToCreateList <- &rangeToCreate{
 			startKey: idxStart,
 			endKey:   idxEnd,

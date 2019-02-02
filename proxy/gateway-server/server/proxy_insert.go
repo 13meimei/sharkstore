@@ -37,7 +37,7 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 	tableName := parser.parseTable(stmt)
 	t := p.router.FindTable(db, tableName)
 	if t == nil {
-		log.Error("[insert] table %s.%s doesn.t exist", db, tableName)
+		log.Error("[insert] table %s.%s doesn't exist", db, tableName)
 		return nil, fmt.Errorf("Table '%s.%s' doesn't exist", db, tableName)
 	}
 
@@ -259,6 +259,7 @@ func (p *Proxy) EncodeRows(t *Table, colMap map[string]int, rows []InsertRowValu
 		err                         error
 		recordKvPairs, indexKvPairs []*kvrpcpb.KeyValue
 	)
+	//todo verify pk and unique-index row-index in a request, now through return err by ds
 	for _, r := range rows {
 		var recordKvPair *kvrpcpb.KeyValue
 		recordKvPair, err = p.EncodeRow(t, colMap, r)

@@ -484,7 +484,7 @@ func getSelectFilter(tt *testing.T, p *Proxy, db string, stmt *sqlparser.Select)
 	tableName := parser.parseTable(stmt)
 	t := p.router.FindTable(db, tableName)
 	if t == nil {
-		tt.Fatal("[select] table %s.%s doesn.t exist", db, tableName)
+		tt.Fatalf("[select] table %s.%s doesn.t exist", db, tableName)
 	}
 
 	// 解析选择列
@@ -509,7 +509,7 @@ func getSelectFilter(tt *testing.T, p *Proxy, db string, stmt *sqlparser.Select)
 		// TODO: 支持OR表达式
 		matchs, err = parser.parseWhere(stmt.Where)
 		if err != nil {
-			tt.Fatal("handle select parse where error(%v)", err.Error())
+			tt.Fatalf("handle select parse where error(%v)", err.Error())
 		}
 	}
 
