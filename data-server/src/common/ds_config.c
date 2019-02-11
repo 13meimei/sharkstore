@@ -40,6 +40,19 @@ static int load_integer_value_atleast(IniContext *ini_context, const char *secti
     return value;
 }
 
+static int load_engine_config(IniContext *ini_context) {
+    char *section = "engine";
+
+    char *temp_str = iniGetStrValue(section, "name", ini_context);
+    if (temp_str != NULL) {
+        snprintf(ds_config.engine_config.name, sizeof(ds_config.engine_config.name), "%s", temp_str);
+    } else {
+        fprintf(stderr, "[ds config] engine name is missing");
+        return -1;
+    }
+    return 0;
+}
+
 static int load_rocksdb_config(IniContext *ini_context) {
     char *section = "rocksdb";
 
@@ -496,6 +509,10 @@ int load_from_conf_file(IniContext *ini_context, const char *filename) {
     }
 
     if (load_heartbeat_config(ini_context) != 0) {
+        return -1;
+    }
+
+    if (load_engine_config(ini_context) != 0) {
         return -1;
     }
 

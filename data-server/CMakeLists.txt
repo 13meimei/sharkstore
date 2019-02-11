@@ -213,6 +213,7 @@ set(SOURCES
     src/storage/row_decoder.cpp
     src/storage/row_fetcher.cpp
     src/storage/store.cpp
+    src/storage/mem_db.cpp
     src/storage/store_watch.cpp
     src/master/client.cpp
     src/master/connection.cpp
@@ -273,6 +274,7 @@ set (depend_LIBRARYS
     pthread
     dl
     z
+        skiplist
 )
 if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)

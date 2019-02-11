@@ -1,7 +1,5 @@
 _Pragma("once");
 
-#include <rocksdb/db.h>
-#include <rocksdb/utilities/blob_db/blob_db.h>
 #include <mutex>
 
 #include "iterator.h"
@@ -11,6 +9,7 @@ _Pragma("once");
 #include "proto/gen/watchpb.pb.h"
 #include "field_value.h"
 #include "store_interface.h"
+#include <mem_store/mem_store.h>
 
 // test fixture forward declare for friend class
 namespace sharkstore { namespace test { namespace helper { class StoreTestFixture; }}}
@@ -19,17 +18,13 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-// 行前缀长度: 1字节特殊标记+8字节table id
-static const size_t kRowPrefixLength = 9;
-static const unsigned char kStoreKVPrefixByte = '\x01';
-
-class Store: public StoreInterface {
+class MemStore final: public StoreInterface {
 public:
-    Store(const metapb::Range& meta, rocksdb::DB* db);
-    ~Store();
+    MemStore(const metapb::Range& meta, memstore::Store<std::string>* db);
+    ~MemStore();
 
-    Store(const Store&) = delete;
-//    Store& operator=(const Store&) = delete;
+    MemStore(const MemStore&) = delete;
+//    MemStore& operator=(const Store&) = delete;
 
     Status Get(const std::string& key, std::string* value);
     Status Put(const std::string& key, const std::string& value);
@@ -101,8 +96,7 @@ private:
     std::string end_key_;
     mutable std::mutex key_lock_;
 
-    rocksdb::DB* db_;
-    rocksdb::WriteOptions write_options_;
+    memstore::Store<std::string>* db_;
 
     std::vector<metapb::Column> primary_keys_;
 

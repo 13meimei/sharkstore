@@ -6,6 +6,8 @@
 #include "watcher_set.h"
 #include "common/socket_session_impl.h"
 #include "frame/sf_logger.h"
+#include "watch.h"
+#include "watcher.h"
 
 #include <pthread.h>
 #include <error.h>
@@ -133,7 +135,7 @@ WatcherSet::~WatcherSet() {
 
 
 // private add/del watcher
-WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, WatcherMap& key_watchers, KeyMap& key_map, storage::Store *store_, bool prefixFlag ) {
+WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, WatcherMap& key_watchers, KeyMap& key_map, storage::StoreInterface *store, bool prefixFlag ) {
     int64_t beginTime(getticks());
 
     std::unique_lock<std::mutex> lock_queue(watcher_queue_mutex_);
@@ -152,7 +154,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         std::string userVal;
         std::string ext;
         int64_t version(0);
-        if(store_!= nullptr){
+        if(store != nullptr){
 
             Status ret;
             std::pair<int64_t, bool> result = std::make_pair(0, false);
@@ -171,7 +173,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
                     auto ds_resp = new watchpb::DsWatchResponse;
                     auto tmpVer(clientVersion);
 
-                    result = loadFromDb(store_, watchpb::PUT, key, endKey, tmpVer, w_ptr->GetTableId(),
+                    result = loadFromDb(store, watchpb::PUT, key, endKey, tmpVer, w_ptr->GetTableId(),
                                             ds_resp);
                     FLOG_DEBUG("prefix mode: version:%" PRId64 " loadFromDb count:%" PRId64, tmpVer, result.first);
 
@@ -191,7 +193,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
             } else {
 
                 //single key
-                ret = store_->Get(key, &val);
+                ret = store->Get(key, &val);
                 if(ret.ok()){
                     if (!watch::Watcher::DecodeValue(&version, &userVal, &ext, val)) {
                         FLOG_ERROR("AddWatcher error,Decode  key: %s", EncodeToHexString(key).c_str());
@@ -415,8 +417,8 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
 }
 
 // key add/del watcher
-WatchCode WatcherSet::AddKeyWatcher(const WatcherKey& key, WatcherPtr& w_ptr, storage::Store *store_) {
-    return AddWatcher(key, w_ptr, key_watcher_map_, key_map_, store_);
+WatchCode WatcherSet::AddKeyWatcher(const WatcherKey& key, WatcherPtr& w_ptr, storage::StoreInterface *store) {
+    return AddWatcher(key, w_ptr, key_watcher_map_, key_map_, store);
 }
 
 WatchCode WatcherSet::DelKeyWatcher(const WatcherKey& key, WatcherId id) {
@@ -447,8 +449,8 @@ WatchCode WatcherSet::GetKeyWatchers(const watchpb::EventType &evtType, std::vec
 }
 
 // prefix add/del watcher
-WatchCode WatcherSet::AddPrefixWatcher(const PrefixKey& prefix, WatcherPtr& w_ptr, storage::Store *store_) {
-    return AddWatcher(prefix, w_ptr, prefix_watcher_map_, prefix_map_, store_, true);
+WatchCode WatcherSet::AddPrefixWatcher(const PrefixKey& prefix, WatcherPtr& w_ptr, storage::StoreInterface *store) {
+    return AddWatcher(prefix, w_ptr, prefix_watcher_map_, prefix_map_, store, true);
 }
 
 WatchCode WatcherSet::DelPrefixWatcher(const PrefixKey& prefix, WatcherId id) {
@@ -477,7 +479,7 @@ WatchCode WatcherSet::GetPrefixWatchers(const watchpb::EventType &evtType, std::
     return retCode;
 }
 
-std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::Store *store, const watchpb::EventType &evtType, const std::string &fromKey,
+std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::StoreInterface *store, const watchpb::EventType &evtType, const std::string &fromKey,
                    const std::string &endKey, const int64_t &startVersion, const uint64_t &tableId,
                    watchpb::DsWatchResponse *dsResp) {
 

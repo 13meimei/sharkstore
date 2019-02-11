@@ -94,6 +94,10 @@ typedef struct ds_config_s {
 
     sf_socket_thread_config_t manager_config;  // manager thread config
     sf_socket_thread_config_t worker_config;   // worker thread config
+
+    struct {
+        char name[8];
+    } engine_config;
 } ds_config_t;
 
 extern ds_config_t ds_config;
