@@ -190,6 +190,7 @@ set(SOURCES
 	src/range/watch.cpp
 	src/range/watch_funcs.cpp
     src/range/submit.cpp
+    src/range/txn.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
     src/storage/iterator.cpp

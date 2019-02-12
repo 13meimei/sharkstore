@@ -13,23 +13,20 @@ _Pragma("once");
 #include "common/generater.h"
 #include "common/ds_encoding.h"
 #include "common/socket_session.h"
-
 #include "storage/store.h"
-
 #include "raft/raft.h"
 #include "raft/statemachine.h"
 #include "raft/types.h"
-
+#include "server/context_server.h"
+#include "server/run_status.h"
+#include "watch/watch_event_buffer.h"
+#include "watch/watcher.h"
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
-
-#include "server/context_server.h"
-#include "server/run_status.h"
-#include "watch/watch_event_buffer.h"
-#include "watch/watcher.h"
+#include "proto/gen/txn.pb.h"
 
 #include "meta_keeper.h"
 #include "context.h"
@@ -114,6 +111,9 @@ public:
     void KVBatchDelete(common::ProtoMessage *msg, kvrpcpb::DsKvBatchDeleteRequest &req);
     void KVRangeDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRangeDeleteRequest &req);
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
+
+    // TXN
+//    void Prepare(common::ProtoMessage* msg, txnpb::)
 
     //KV watch series
     Status GetAndResp( watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey, const bool &prefix,

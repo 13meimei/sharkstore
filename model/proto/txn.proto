@@ -1,5 +1,5 @@
 syntax = "proto3";
-package txn;
+package txnpb;
 
 import "gogoproto/gogo.proto";
 import "kvrpcpb.proto";

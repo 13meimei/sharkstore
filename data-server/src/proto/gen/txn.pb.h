@@ -33,7 +33,7 @@
 #include "kvrpcpb.pb.h"
 #include "metapb.pb.h"
 // @@protoc_insertion_point(includes)
-namespace txn {
+namespace txnpb {
 class ClearupRequest;
 class ClearupRequestDefaultTypeInternal;
 extern ClearupRequestDefaultTypeInternal _ClearupRequest_default_instance_;
@@ -124,9 +124,9 @@ extern TxnValueDefaultTypeInternal _TxnValue_default_instance_;
 class UnexpectedVer;
 class UnexpectedVerDefaultTypeInternal;
 extern UnexpectedVerDefaultTypeInternal _UnexpectedVer_default_instance_;
-}  // namespace txn
+}  // namespace txnpb
 
-namespace txn {
+namespace txnpb {
 
 namespace protobuf_txn_2eproto {
 // Internal implementation detail -- do not call these.
@@ -211,7 +211,7 @@ inline bool TxnStatus_Parse(
 }
 // ===================================================================
 
-class TxnIntent : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.TxnIntent) */ {
+class TxnIntent : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.TxnIntent) */ {
  public:
   TxnIntent();
   virtual ~TxnIntent();
@@ -320,11 +320,11 @@ class TxnIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
 
-  // .txn.OpType typ = 1;
+  // .txnpb.OpType typ = 1;
   void clear_typ();
   static const int kTypFieldNumber = 1;
-  ::txn::OpType typ() const;
-  void set_typ(::txn::OpType value);
+  ::txnpb::OpType typ() const;
+  void set_typ(::txnpb::OpType value);
 
   // bool check_unique = 4;
   void clear_check_unique();
@@ -344,7 +344,7 @@ class TxnIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::google::protobuf::uint64 expected_ver() const;
   void set_expected_ver(::google::protobuf::uint64 value);
 
-  // @@protoc_insertion_point(class_scope:txn.TxnIntent)
+  // @@protoc_insertion_point(class_scope:txnpb.TxnIntent)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -359,7 +359,7 @@ class TxnIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
 };
 // -------------------------------------------------------------------
 
-class TxnValue : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.TxnValue) */ {
+class TxnValue : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.TxnValue) */ {
  public:
   TxnValue();
   virtual ~TxnValue();
@@ -490,14 +490,14 @@ class TxnValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_primary_key();
   void set_allocated_primary_key(::std::string* primary_key);
 
-  // .txn.TxnIntent intent = 2;
+  // .txnpb.TxnIntent intent = 2;
   bool has_intent() const;
   void clear_intent();
   static const int kIntentFieldNumber = 2;
-  const ::txn::TxnIntent& intent() const;
-  ::txn::TxnIntent* mutable_intent();
-  ::txn::TxnIntent* release_intent();
-  void set_allocated_intent(::txn::TxnIntent* intent);
+  const ::txnpb::TxnIntent& intent() const;
+  ::txnpb::TxnIntent* mutable_intent();
+  ::txnpb::TxnIntent* release_intent();
+  void set_allocated_intent(::txnpb::TxnIntent* intent);
 
   // uint64 expired_at = 4;
   void clear_expired_at();
@@ -505,20 +505,20 @@ class TxnValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::uint64 expired_at() const;
   void set_expired_at(::google::protobuf::uint64 value);
 
-  // .txn.TxnStatus txn_status = 10;
+  // .txnpb.TxnStatus txn_status = 10;
   void clear_txn_status();
   static const int kTxnStatusFieldNumber = 10;
-  ::txn::TxnStatus txn_status() const;
-  void set_txn_status(::txn::TxnStatus value);
+  ::txnpb::TxnStatus txn_status() const;
+  void set_txn_status(::txnpb::TxnStatus value);
 
-  // @@protoc_insertion_point(class_scope:txn.TxnValue)
+  // @@protoc_insertion_point(class_scope:txnpb.TxnValue)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::RepeatedPtrField< ::std::string> secondary_keys_;
   ::google::protobuf::internal::ArenaStringPtr txn_id_;
   ::google::protobuf::internal::ArenaStringPtr primary_key_;
-  ::txn::TxnIntent* intent_;
+  ::txnpb::TxnIntent* intent_;
   ::google::protobuf::uint64 expired_at_;
   int txn_status_;
   mutable int _cached_size_;
@@ -526,7 +526,7 @@ class TxnValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
 };
 // -------------------------------------------------------------------
 
-class LockInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.LockInfo) */ {
+class LockInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.LockInfo) */ {
  public:
   LockInfo();
   virtual ~LockInfo();
@@ -669,13 +669,13 @@ class LockInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
   bool is_primary() const;
   void set_is_primary(bool value);
 
-  // .txn.TxnStatus status = 12;
+  // .txnpb.TxnStatus status = 12;
   void clear_status();
   static const int kStatusFieldNumber = 12;
-  ::txn::TxnStatus status() const;
-  void set_status(::txn::TxnStatus value);
+  ::txnpb::TxnStatus status() const;
+  void set_status(::txnpb::TxnStatus value);
 
-  // @@protoc_insertion_point(class_scope:txn.LockInfo)
+  // @@protoc_insertion_point(class_scope:txnpb.LockInfo)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -690,7 +690,7 @@ class LockInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
 };
 // -------------------------------------------------------------------
 
-class LockError : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.LockError) */ {
+class LockError : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.LockError) */ {
  public:
   LockError();
   virtual ~LockError();
@@ -785,27 +785,27 @@ class LockError : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::std::string* release_key();
   void set_allocated_key(::std::string* key);
 
-  // .txn.LockInfo info = 2;
+  // .txnpb.LockInfo info = 2;
   bool has_info() const;
   void clear_info();
   static const int kInfoFieldNumber = 2;
-  const ::txn::LockInfo& info() const;
-  ::txn::LockInfo* mutable_info();
-  ::txn::LockInfo* release_info();
-  void set_allocated_info(::txn::LockInfo* info);
+  const ::txnpb::LockInfo& info() const;
+  ::txnpb::LockInfo* mutable_info();
+  ::txnpb::LockInfo* release_info();
+  void set_allocated_info(::txnpb::LockInfo* info);
 
-  // @@protoc_insertion_point(class_scope:txn.LockError)
+  // @@protoc_insertion_point(class_scope:txnpb.LockError)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr key_;
-  ::txn::LockInfo* info_;
+  ::txnpb::LockInfo* info_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class UnexpectedVer : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.UnexpectedVer) */ {
+class UnexpectedVer : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.UnexpectedVer) */ {
  public:
   UnexpectedVer();
   virtual ~UnexpectedVer();
@@ -912,7 +912,7 @@ class UnexpectedVer : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::uint64 actual_ver() const;
   void set_actual_ver(::google::protobuf::uint64 value);
 
-  // @@protoc_insertion_point(class_scope:txn.UnexpectedVer)
+  // @@protoc_insertion_point(class_scope:txnpb.UnexpectedVer)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -924,7 +924,7 @@ class UnexpectedVer : public ::google::protobuf::Message /* @@protoc_insertion_p
 };
 // -------------------------------------------------------------------
 
-class StatusConflict : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.StatusConflict) */ {
+class StatusConflict : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.StatusConflict) */ {
  public:
   StatusConflict();
   virtual ~StatusConflict();
@@ -1005,13 +1005,13 @@ class StatusConflict : public ::google::protobuf::Message /* @@protoc_insertion_
 
   // accessors -------------------------------------------------------
 
-  // .txn.TxnStatus status = 1;
+  // .txnpb.TxnStatus status = 1;
   void clear_status();
   static const int kStatusFieldNumber = 1;
-  ::txn::TxnStatus status() const;
-  void set_status(::txn::TxnStatus value);
+  ::txnpb::TxnStatus status() const;
+  void set_status(::txnpb::TxnStatus value);
 
-  // @@protoc_insertion_point(class_scope:txn.StatusConflict)
+  // @@protoc_insertion_point(class_scope:txnpb.StatusConflict)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -1021,7 +1021,7 @@ class StatusConflict : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
-class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.TxnError) */ {
+class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.TxnError) */ {
  public:
   TxnError();
   virtual ~TxnError();
@@ -1132,53 +1132,53 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   // accessors -------------------------------------------------------
 
-  // .txn.LockError lock_err = 2;
+  // .txnpb.LockError lock_err = 2;
   bool has_lock_err() const;
   void clear_lock_err();
   static const int kLockErrFieldNumber = 2;
-  const ::txn::LockError& lock_err() const;
-  ::txn::LockError* mutable_lock_err();
-  ::txn::LockError* release_lock_err();
-  void set_allocated_lock_err(::txn::LockError* lock_err);
+  const ::txnpb::LockError& lock_err() const;
+  ::txnpb::LockError* mutable_lock_err();
+  ::txnpb::LockError* release_lock_err();
+  void set_allocated_lock_err(::txnpb::LockError* lock_err);
 
-  // .txn.UnexpectedVer unexpected_ver = 3;
+  // .txnpb.UnexpectedVer unexpected_ver = 3;
   bool has_unexpected_ver() const;
   void clear_unexpected_ver();
   static const int kUnexpectedVerFieldNumber = 3;
-  const ::txn::UnexpectedVer& unexpected_ver() const;
-  ::txn::UnexpectedVer* mutable_unexpected_ver();
-  ::txn::UnexpectedVer* release_unexpected_ver();
-  void set_allocated_unexpected_ver(::txn::UnexpectedVer* unexpected_ver);
+  const ::txnpb::UnexpectedVer& unexpected_ver() const;
+  ::txnpb::UnexpectedVer* mutable_unexpected_ver();
+  ::txnpb::UnexpectedVer* release_unexpected_ver();
+  void set_allocated_unexpected_ver(::txnpb::UnexpectedVer* unexpected_ver);
 
-  // .txn.StatusConflict status_conflict = 4;
+  // .txnpb.StatusConflict status_conflict = 4;
   bool has_status_conflict() const;
   void clear_status_conflict();
   static const int kStatusConflictFieldNumber = 4;
-  const ::txn::StatusConflict& status_conflict() const;
-  ::txn::StatusConflict* mutable_status_conflict();
-  ::txn::StatusConflict* release_status_conflict();
-  void set_allocated_status_conflict(::txn::StatusConflict* status_conflict);
+  const ::txnpb::StatusConflict& status_conflict() const;
+  ::txnpb::StatusConflict* mutable_status_conflict();
+  ::txnpb::StatusConflict* release_status_conflict();
+  void set_allocated_status_conflict(::txnpb::StatusConflict* status_conflict);
 
-  // .txn.TxnError.ErrType err_type = 1;
+  // .txnpb.TxnError.ErrType err_type = 1;
   void clear_err_type();
   static const int kErrTypeFieldNumber = 1;
-  ::txn::TxnError_ErrType err_type() const;
-  void set_err_type(::txn::TxnError_ErrType value);
+  ::txnpb::TxnError_ErrType err_type() const;
+  void set_err_type(::txnpb::TxnError_ErrType value);
 
-  // @@protoc_insertion_point(class_scope:txn.TxnError)
+  // @@protoc_insertion_point(class_scope:txnpb.TxnError)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::txn::LockError* lock_err_;
-  ::txn::UnexpectedVer* unexpected_ver_;
-  ::txn::StatusConflict* status_conflict_;
+  ::txnpb::LockError* lock_err_;
+  ::txnpb::UnexpectedVer* unexpected_ver_;
+  ::txnpb::StatusConflict* status_conflict_;
   int err_type_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class PrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.PrepareRequest) */ {
+class PrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.PrepareRequest) */ {
  public:
   PrepareRequest();
   virtual ~PrepareRequest();
@@ -1259,16 +1259,16 @@ class PrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_
 
   // accessors -------------------------------------------------------
 
-  // repeated .txn.TxnIntent intents = 3;
+  // repeated .txnpb.TxnIntent intents = 3;
   int intents_size() const;
   void clear_intents();
   static const int kIntentsFieldNumber = 3;
-  const ::txn::TxnIntent& intents(int index) const;
-  ::txn::TxnIntent* mutable_intents(int index);
-  ::txn::TxnIntent* add_intents();
-  ::google::protobuf::RepeatedPtrField< ::txn::TxnIntent >*
+  const ::txnpb::TxnIntent& intents(int index) const;
+  ::txnpb::TxnIntent* mutable_intents(int index);
+  ::txnpb::TxnIntent* add_intents();
+  ::google::protobuf::RepeatedPtrField< ::txnpb::TxnIntent >*
       mutable_intents();
-  const ::google::protobuf::RepeatedPtrField< ::txn::TxnIntent >&
+  const ::google::protobuf::RepeatedPtrField< ::txnpb::TxnIntent >&
       intents() const;
 
   // repeated bytes secondary_keys = 6;
@@ -1339,11 +1339,11 @@ class PrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_
   bool strict_check() const;
   void set_strict_check(bool value);
 
-  // @@protoc_insertion_point(class_scope:txn.PrepareRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.PrepareRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::txn::TxnIntent > intents_;
+  ::google::protobuf::RepeatedPtrField< ::txnpb::TxnIntent > intents_;
   ::google::protobuf::RepeatedPtrField< ::std::string> secondary_keys_;
   ::google::protobuf::internal::ArenaStringPtr txn_id_;
   ::google::protobuf::internal::ArenaStringPtr primary_key_;
@@ -1355,7 +1355,7 @@ class PrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
-class PrepareResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.PrepareResponse) */ {
+class PrepareResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.PrepareResponse) */ {
  public:
   PrepareResponse();
   virtual ~PrepareResponse();
@@ -1436,29 +1436,29 @@ class PrepareResponse : public ::google::protobuf::Message /* @@protoc_insertion
 
   // accessors -------------------------------------------------------
 
-  // repeated .txn.TxnError errors = 1;
+  // repeated .txnpb.TxnError errors = 1;
   int errors_size() const;
   void clear_errors();
   static const int kErrorsFieldNumber = 1;
-  const ::txn::TxnError& errors(int index) const;
-  ::txn::TxnError* mutable_errors(int index);
-  ::txn::TxnError* add_errors();
-  ::google::protobuf::RepeatedPtrField< ::txn::TxnError >*
+  const ::txnpb::TxnError& errors(int index) const;
+  ::txnpb::TxnError* mutable_errors(int index);
+  ::txnpb::TxnError* add_errors();
+  ::google::protobuf::RepeatedPtrField< ::txnpb::TxnError >*
       mutable_errors();
-  const ::google::protobuf::RepeatedPtrField< ::txn::TxnError >&
+  const ::google::protobuf::RepeatedPtrField< ::txnpb::TxnError >&
       errors() const;
 
-  // @@protoc_insertion_point(class_scope:txn.PrepareResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.PrepareResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::txn::TxnError > errors_;
+  ::google::protobuf::RepeatedPtrField< ::txnpb::TxnError > errors_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsPrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsPrepareRequest) */ {
+class DsPrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsPrepareRequest) */ {
  public:
   DsPrepareRequest();
   virtual ~DsPrepareRequest();
@@ -1548,27 +1548,27 @@ class DsPrepareRequest : public ::google::protobuf::Message /* @@protoc_insertio
   ::kvrpcpb::RequestHeader* release_header();
   void set_allocated_header(::kvrpcpb::RequestHeader* header);
 
-  // .txn.PrepareRequest req = 2;
+  // .txnpb.PrepareRequest req = 2;
   bool has_req() const;
   void clear_req();
   static const int kReqFieldNumber = 2;
-  const ::txn::PrepareRequest& req() const;
-  ::txn::PrepareRequest* mutable_req();
-  ::txn::PrepareRequest* release_req();
-  void set_allocated_req(::txn::PrepareRequest* req);
+  const ::txnpb::PrepareRequest& req() const;
+  ::txnpb::PrepareRequest* mutable_req();
+  ::txnpb::PrepareRequest* release_req();
+  void set_allocated_req(::txnpb::PrepareRequest* req);
 
-  // @@protoc_insertion_point(class_scope:txn.DsPrepareRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.DsPrepareRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::RequestHeader* header_;
-  ::txn::PrepareRequest* req_;
+  ::txnpb::PrepareRequest* req_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsPrepareResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsPrepareResponse) */ {
+class DsPrepareResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsPrepareResponse) */ {
  public:
   DsPrepareResponse();
   virtual ~DsPrepareResponse();
@@ -1658,27 +1658,27 @@ class DsPrepareResponse : public ::google::protobuf::Message /* @@protoc_inserti
   ::kvrpcpb::ResponseHeader* release_header();
   void set_allocated_header(::kvrpcpb::ResponseHeader* header);
 
-  // .txn.PrepareResponse resp = 2;
+  // .txnpb.PrepareResponse resp = 2;
   bool has_resp() const;
   void clear_resp();
   static const int kRespFieldNumber = 2;
-  const ::txn::PrepareResponse& resp() const;
-  ::txn::PrepareResponse* mutable_resp();
-  ::txn::PrepareResponse* release_resp();
-  void set_allocated_resp(::txn::PrepareResponse* resp);
+  const ::txnpb::PrepareResponse& resp() const;
+  ::txnpb::PrepareResponse* mutable_resp();
+  ::txnpb::PrepareResponse* release_resp();
+  void set_allocated_resp(::txnpb::PrepareResponse* resp);
 
-  // @@protoc_insertion_point(class_scope:txn.DsPrepareResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.DsPrepareResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::ResponseHeader* header_;
-  ::txn::PrepareResponse* resp_;
+  ::txnpb::PrepareResponse* resp_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DecideRequest) */ {
+class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DecideRequest) */ {
  public:
   DecideRequest();
   virtual ~DecideRequest();
@@ -1795,11 +1795,11 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::std::string* release_txn_id();
   void set_allocated_txn_id(::std::string* txn_id);
 
-  // .txn.TxnStatus status = 2;
+  // .txnpb.TxnStatus status = 2;
   void clear_status();
   static const int kStatusFieldNumber = 2;
-  ::txn::TxnStatus status() const;
-  void set_status(::txn::TxnStatus value);
+  ::txnpb::TxnStatus status() const;
+  void set_status(::txnpb::TxnStatus value);
 
   // bool recover = 4;
   void clear_recover();
@@ -1807,7 +1807,7 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   bool recover() const;
   void set_recover(bool value);
 
-  // @@protoc_insertion_point(class_scope:txn.DecideRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.DecideRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -1820,7 +1820,7 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
 };
 // -------------------------------------------------------------------
 
-class DecideResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DecideResponse) */ {
+class DecideResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DecideResponse) */ {
  public:
   DecideResponse();
   virtual ~DecideResponse();
@@ -1923,27 +1923,27 @@ class DecideResponse : public ::google::protobuf::Message /* @@protoc_insertion_
   const ::google::protobuf::RepeatedPtrField< ::std::string>& secondary_keys() const;
   ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_secondary_keys();
 
-  // .txn.TxnError err = 1;
+  // .txnpb.TxnError err = 1;
   bool has_err() const;
   void clear_err();
   static const int kErrFieldNumber = 1;
-  const ::txn::TxnError& err() const;
-  ::txn::TxnError* mutable_err();
-  ::txn::TxnError* release_err();
-  void set_allocated_err(::txn::TxnError* err);
+  const ::txnpb::TxnError& err() const;
+  ::txnpb::TxnError* mutable_err();
+  ::txnpb::TxnError* release_err();
+  void set_allocated_err(::txnpb::TxnError* err);
 
-  // @@protoc_insertion_point(class_scope:txn.DecideResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.DecideResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::RepeatedPtrField< ::std::string> secondary_keys_;
-  ::txn::TxnError* err_;
+  ::txnpb::TxnError* err_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsDecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsDecideRequest) */ {
+class DsDecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsDecideRequest) */ {
  public:
   DsDecideRequest();
   virtual ~DsDecideRequest();
@@ -2033,27 +2033,27 @@ class DsDecideRequest : public ::google::protobuf::Message /* @@protoc_insertion
   ::kvrpcpb::RequestHeader* release_header();
   void set_allocated_header(::kvrpcpb::RequestHeader* header);
 
-  // .txn.DecideRequest req = 2;
+  // .txnpb.DecideRequest req = 2;
   bool has_req() const;
   void clear_req();
   static const int kReqFieldNumber = 2;
-  const ::txn::DecideRequest& req() const;
-  ::txn::DecideRequest* mutable_req();
-  ::txn::DecideRequest* release_req();
-  void set_allocated_req(::txn::DecideRequest* req);
+  const ::txnpb::DecideRequest& req() const;
+  ::txnpb::DecideRequest* mutable_req();
+  ::txnpb::DecideRequest* release_req();
+  void set_allocated_req(::txnpb::DecideRequest* req);
 
-  // @@protoc_insertion_point(class_scope:txn.DsDecideRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.DsDecideRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::RequestHeader* header_;
-  ::txn::DecideRequest* req_;
+  ::txnpb::DecideRequest* req_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsDecideResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsDecideResponse) */ {
+class DsDecideResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsDecideResponse) */ {
  public:
   DsDecideResponse();
   virtual ~DsDecideResponse();
@@ -2143,27 +2143,27 @@ class DsDecideResponse : public ::google::protobuf::Message /* @@protoc_insertio
   ::kvrpcpb::ResponseHeader* release_header();
   void set_allocated_header(::kvrpcpb::ResponseHeader* header);
 
-  // .txn.DecideResponse resp = 2;
+  // .txnpb.DecideResponse resp = 2;
   bool has_resp() const;
   void clear_resp();
   static const int kRespFieldNumber = 2;
-  const ::txn::DecideResponse& resp() const;
-  ::txn::DecideResponse* mutable_resp();
-  ::txn::DecideResponse* release_resp();
-  void set_allocated_resp(::txn::DecideResponse* resp);
+  const ::txnpb::DecideResponse& resp() const;
+  ::txnpb::DecideResponse* mutable_resp();
+  ::txnpb::DecideResponse* release_resp();
+  void set_allocated_resp(::txnpb::DecideResponse* resp);
 
-  // @@protoc_insertion_point(class_scope:txn.DsDecideResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.DsDecideResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::ResponseHeader* header_;
-  ::txn::DecideResponse* resp_;
+  ::txnpb::DecideResponse* resp_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class ClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.ClearupRequest) */ {
+class ClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.ClearupRequest) */ {
  public:
   ClearupRequest();
   virtual ~ClearupRequest();
@@ -2272,7 +2272,7 @@ class ClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_
   ::std::string* release_primary_key();
   void set_allocated_primary_key(::std::string* primary_key);
 
-  // @@protoc_insertion_point(class_scope:txn.ClearupRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.ClearupRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -2283,7 +2283,7 @@ class ClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
-class ClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.ClearupResponse) */ {
+class ClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.ClearupResponse) */ {
  public:
   ClearupResponse();
   virtual ~ClearupResponse();
@@ -2364,26 +2364,26 @@ class ClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion
 
   // accessors -------------------------------------------------------
 
-  // .txn.TxnError err = 1;
+  // .txnpb.TxnError err = 1;
   bool has_err() const;
   void clear_err();
   static const int kErrFieldNumber = 1;
-  const ::txn::TxnError& err() const;
-  ::txn::TxnError* mutable_err();
-  ::txn::TxnError* release_err();
-  void set_allocated_err(::txn::TxnError* err);
+  const ::txnpb::TxnError& err() const;
+  ::txnpb::TxnError* mutable_err();
+  ::txnpb::TxnError* release_err();
+  void set_allocated_err(::txnpb::TxnError* err);
 
-  // @@protoc_insertion_point(class_scope:txn.ClearupResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.ClearupResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::txn::TxnError* err_;
+  ::txnpb::TxnError* err_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsClearupRequest) */ {
+class DsClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsClearupRequest) */ {
  public:
   DsClearupRequest();
   virtual ~DsClearupRequest();
@@ -2473,27 +2473,27 @@ class DsClearupRequest : public ::google::protobuf::Message /* @@protoc_insertio
   ::kvrpcpb::RequestHeader* release_header();
   void set_allocated_header(::kvrpcpb::RequestHeader* header);
 
-  // .txn.ClearupRequest req = 2;
+  // .txnpb.ClearupRequest req = 2;
   bool has_req() const;
   void clear_req();
   static const int kReqFieldNumber = 2;
-  const ::txn::ClearupRequest& req() const;
-  ::txn::ClearupRequest* mutable_req();
-  ::txn::ClearupRequest* release_req();
-  void set_allocated_req(::txn::ClearupRequest* req);
+  const ::txnpb::ClearupRequest& req() const;
+  ::txnpb::ClearupRequest* mutable_req();
+  ::txnpb::ClearupRequest* release_req();
+  void set_allocated_req(::txnpb::ClearupRequest* req);
 
-  // @@protoc_insertion_point(class_scope:txn.DsClearupRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.DsClearupRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::RequestHeader* header_;
-  ::txn::ClearupRequest* req_;
+  ::txnpb::ClearupRequest* req_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsClearupResponse) */ {
+class DsClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsClearupResponse) */ {
  public:
   DsClearupResponse();
   virtual ~DsClearupResponse();
@@ -2583,27 +2583,27 @@ class DsClearupResponse : public ::google::protobuf::Message /* @@protoc_inserti
   ::kvrpcpb::ResponseHeader* release_header();
   void set_allocated_header(::kvrpcpb::ResponseHeader* header);
 
-  // .txn.ClearupResponse resp = 2;
+  // .txnpb.ClearupResponse resp = 2;
   bool has_resp() const;
   void clear_resp();
   static const int kRespFieldNumber = 2;
-  const ::txn::ClearupResponse& resp() const;
-  ::txn::ClearupResponse* mutable_resp();
-  ::txn::ClearupResponse* release_resp();
-  void set_allocated_resp(::txn::ClearupResponse* resp);
+  const ::txnpb::ClearupResponse& resp() const;
+  ::txnpb::ClearupResponse* mutable_resp();
+  ::txnpb::ClearupResponse* release_resp();
+  void set_allocated_resp(::txnpb::ClearupResponse* resp);
 
-  // @@protoc_insertion_point(class_scope:txn.DsClearupResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.DsClearupResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::ResponseHeader* header_;
-  ::txn::ClearupResponse* resp_;
+  ::txnpb::ClearupResponse* resp_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class GetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.GetLockInfoRequest) */ {
+class GetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.GetLockInfoRequest) */ {
  public:
   GetLockInfoRequest();
   virtual ~GetLockInfoRequest();
@@ -2712,7 +2712,7 @@ class GetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::std::string* release_txn_id();
   void set_allocated_txn_id(::std::string* txn_id);
 
-  // @@protoc_insertion_point(class_scope:txn.GetLockInfoRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.GetLockInfoRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -2723,7 +2723,7 @@ class GetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insert
 };
 // -------------------------------------------------------------------
 
-class GetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.GetLockInfoResponse) */ {
+class GetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.GetLockInfoResponse) */ {
  public:
   GetLockInfoResponse();
   virtual ~GetLockInfoResponse();
@@ -2804,26 +2804,26 @@ class GetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_inser
 
   // accessors -------------------------------------------------------
 
-  // .txn.LockInfo info = 1;
+  // .txnpb.LockInfo info = 1;
   bool has_info() const;
   void clear_info();
   static const int kInfoFieldNumber = 1;
-  const ::txn::LockInfo& info() const;
-  ::txn::LockInfo* mutable_info();
-  ::txn::LockInfo* release_info();
-  void set_allocated_info(::txn::LockInfo* info);
+  const ::txnpb::LockInfo& info() const;
+  ::txnpb::LockInfo* mutable_info();
+  ::txnpb::LockInfo* release_info();
+  void set_allocated_info(::txnpb::LockInfo* info);
 
-  // @@protoc_insertion_point(class_scope:txn.GetLockInfoResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.GetLockInfoResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::txn::LockInfo* info_;
+  ::txnpb::LockInfo* info_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsGetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsGetLockInfoRequest) */ {
+class DsGetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsGetLockInfoRequest) */ {
  public:
   DsGetLockInfoRequest();
   virtual ~DsGetLockInfoRequest();
@@ -2913,27 +2913,27 @@ class DsGetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_inse
   ::kvrpcpb::RequestHeader* release_header();
   void set_allocated_header(::kvrpcpb::RequestHeader* header);
 
-  // .txn.GetLockInfoRequest req = 2;
+  // .txnpb.GetLockInfoRequest req = 2;
   bool has_req() const;
   void clear_req();
   static const int kReqFieldNumber = 2;
-  const ::txn::GetLockInfoRequest& req() const;
-  ::txn::GetLockInfoRequest* mutable_req();
-  ::txn::GetLockInfoRequest* release_req();
-  void set_allocated_req(::txn::GetLockInfoRequest* req);
+  const ::txnpb::GetLockInfoRequest& req() const;
+  ::txnpb::GetLockInfoRequest* mutable_req();
+  ::txnpb::GetLockInfoRequest* release_req();
+  void set_allocated_req(::txnpb::GetLockInfoRequest* req);
 
-  // @@protoc_insertion_point(class_scope:txn.DsGetLockInfoRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.DsGetLockInfoRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::RequestHeader* header_;
-  ::txn::GetLockInfoRequest* req_;
+  ::txnpb::GetLockInfoRequest* req_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsGetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsGetLockInfoResponse) */ {
+class DsGetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsGetLockInfoResponse) */ {
  public:
   DsGetLockInfoResponse();
   virtual ~DsGetLockInfoResponse();
@@ -3023,27 +3023,27 @@ class DsGetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_ins
   ::kvrpcpb::ResponseHeader* release_header();
   void set_allocated_header(::kvrpcpb::ResponseHeader* header);
 
-  // .txn.GetLockInfoResponse resp = 2;
+  // .txnpb.GetLockInfoResponse resp = 2;
   bool has_resp() const;
   void clear_resp();
   static const int kRespFieldNumber = 2;
-  const ::txn::GetLockInfoResponse& resp() const;
-  ::txn::GetLockInfoResponse* mutable_resp();
-  ::txn::GetLockInfoResponse* release_resp();
-  void set_allocated_resp(::txn::GetLockInfoResponse* resp);
+  const ::txnpb::GetLockInfoResponse& resp() const;
+  ::txnpb::GetLockInfoResponse* mutable_resp();
+  ::txnpb::GetLockInfoResponse* release_resp();
+  void set_allocated_resp(::txnpb::GetLockInfoResponse* resp);
 
-  // @@protoc_insertion_point(class_scope:txn.DsGetLockInfoResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.DsGetLockInfoResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::ResponseHeader* header_;
-  ::txn::GetLockInfoResponse* resp_;
+  ::txnpb::GetLockInfoResponse* resp_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.SelectRequest) */ {
+class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.SelectRequest) */ {
  public:
   SelectRequest();
   virtual ~SelectRequest();
@@ -3192,7 +3192,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::kvrpcpb::Limit* release_limit();
   void set_allocated_limit(::kvrpcpb::Limit* limit);
 
-  // @@protoc_insertion_point(class_scope:txn.SelectRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.SelectRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -3207,7 +3207,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
 };
 // -------------------------------------------------------------------
 
-class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.RowValue) */ {
+class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.RowValue) */ {
  public:
   RowValue();
   virtual ~RowValue();
@@ -3320,7 +3320,7 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::uint64 version() const;
   void set_version(::google::protobuf::uint64 value);
 
-  // @@protoc_insertion_point(class_scope:txn.RowValue)
+  // @@protoc_insertion_point(class_scope:txnpb.RowValue)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -3333,7 +3333,7 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
 };
 // -------------------------------------------------------------------
 
-class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.RowIntent) */ {
+class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.RowIntent) */ {
  public:
   RowIntent();
   virtual ~RowIntent();
@@ -3442,14 +3442,14 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::std::string* release_primary_key();
   void set_allocated_primary_key(::std::string* primary_key);
 
-  // .txn.RowValue value = 10;
+  // .txnpb.RowValue value = 10;
   bool has_value() const;
   void clear_value();
   static const int kValueFieldNumber = 10;
-  const ::txn::RowValue& value() const;
-  ::txn::RowValue* mutable_value();
-  ::txn::RowValue* release_value();
-  void set_allocated_value(::txn::RowValue* value);
+  const ::txnpb::RowValue& value() const;
+  ::txnpb::RowValue* mutable_value();
+  ::txnpb::RowValue* release_value();
+  void set_allocated_value(::txnpb::RowValue* value);
 
   // bool timeout = 3;
   void clear_timeout();
@@ -3457,20 +3457,20 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   bool timeout() const;
   void set_timeout(bool value);
 
-  // @@protoc_insertion_point(class_scope:txn.RowIntent)
+  // @@protoc_insertion_point(class_scope:txnpb.RowIntent)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr txn_id_;
   ::google::protobuf::internal::ArenaStringPtr primary_key_;
-  ::txn::RowValue* value_;
+  ::txnpb::RowValue* value_;
   bool timeout_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.Row) */ {
+class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.Row) */ {
  public:
   Row();
   virtual ~Row();
@@ -3565,37 +3565,37 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
   ::std::string* release_key();
   void set_allocated_key(::std::string* key);
 
-  // .txn.RowValue value = 2;
+  // .txnpb.RowValue value = 2;
   bool has_value() const;
   void clear_value();
   static const int kValueFieldNumber = 2;
-  const ::txn::RowValue& value() const;
-  ::txn::RowValue* mutable_value();
-  ::txn::RowValue* release_value();
-  void set_allocated_value(::txn::RowValue* value);
+  const ::txnpb::RowValue& value() const;
+  ::txnpb::RowValue* mutable_value();
+  ::txnpb::RowValue* release_value();
+  void set_allocated_value(::txnpb::RowValue* value);
 
-  // .txn.RowIntent intent = 3;
+  // .txnpb.RowIntent intent = 3;
   bool has_intent() const;
   void clear_intent();
   static const int kIntentFieldNumber = 3;
-  const ::txn::RowIntent& intent() const;
-  ::txn::RowIntent* mutable_intent();
-  ::txn::RowIntent* release_intent();
-  void set_allocated_intent(::txn::RowIntent* intent);
+  const ::txnpb::RowIntent& intent() const;
+  ::txnpb::RowIntent* mutable_intent();
+  ::txnpb::RowIntent* release_intent();
+  void set_allocated_intent(::txnpb::RowIntent* intent);
 
-  // @@protoc_insertion_point(class_scope:txn.Row)
+  // @@protoc_insertion_point(class_scope:txnpb.Row)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr key_;
-  ::txn::RowValue* value_;
-  ::txn::RowIntent* intent_;
+  ::txnpb::RowValue* value_;
+  ::txnpb::RowIntent* intent_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.SelectResponse) */ {
+class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.SelectResponse) */ {
  public:
   SelectResponse();
   virtual ~SelectResponse();
@@ -3676,16 +3676,16 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
 
   // accessors -------------------------------------------------------
 
-  // repeated .txn.Row rows = 2;
+  // repeated .txnpb.Row rows = 2;
   int rows_size() const;
   void clear_rows();
   static const int kRowsFieldNumber = 2;
-  const ::txn::Row& rows(int index) const;
-  ::txn::Row* mutable_rows(int index);
-  ::txn::Row* add_rows();
-  ::google::protobuf::RepeatedPtrField< ::txn::Row >*
+  const ::txnpb::Row& rows(int index) const;
+  ::txnpb::Row* mutable_rows(int index);
+  ::txnpb::Row* add_rows();
+  ::google::protobuf::RepeatedPtrField< ::txnpb::Row >*
       mutable_rows();
-  const ::google::protobuf::RepeatedPtrField< ::txn::Row >&
+  const ::google::protobuf::RepeatedPtrField< ::txnpb::Row >&
       rows() const;
 
   // uint64 offset = 3;
@@ -3700,11 +3700,11 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::int32 code() const;
   void set_code(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:txn.SelectResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.SelectResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::txn::Row > rows_;
+  ::google::protobuf::RepeatedPtrField< ::txnpb::Row > rows_;
   ::google::protobuf::uint64 offset_;
   ::google::protobuf::int32 code_;
   mutable int _cached_size_;
@@ -3712,7 +3712,7 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
-class DsSelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsSelectRequest) */ {
+class DsSelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsSelectRequest) */ {
  public:
   DsSelectRequest();
   virtual ~DsSelectRequest();
@@ -3802,27 +3802,27 @@ class DsSelectRequest : public ::google::protobuf::Message /* @@protoc_insertion
   ::kvrpcpb::RequestHeader* release_header();
   void set_allocated_header(::kvrpcpb::RequestHeader* header);
 
-  // .txn.SelectRequest req = 2;
+  // .txnpb.SelectRequest req = 2;
   bool has_req() const;
   void clear_req();
   static const int kReqFieldNumber = 2;
-  const ::txn::SelectRequest& req() const;
-  ::txn::SelectRequest* mutable_req();
-  ::txn::SelectRequest* release_req();
-  void set_allocated_req(::txn::SelectRequest* req);
+  const ::txnpb::SelectRequest& req() const;
+  ::txnpb::SelectRequest* mutable_req();
+  ::txnpb::SelectRequest* release_req();
+  void set_allocated_req(::txnpb::SelectRequest* req);
 
-  // @@protoc_insertion_point(class_scope:txn.DsSelectRequest)
+  // @@protoc_insertion_point(class_scope:txnpb.DsSelectRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::RequestHeader* header_;
-  ::txn::SelectRequest* req_;
+  ::txnpb::SelectRequest* req_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txn.DsSelectResponse) */ {
+class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.DsSelectResponse) */ {
  public:
   DsSelectResponse();
   virtual ~DsSelectResponse();
@@ -3912,21 +3912,21 @@ class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertio
   ::kvrpcpb::ResponseHeader* release_header();
   void set_allocated_header(::kvrpcpb::ResponseHeader* header);
 
-  // .txn.SelectResponse resp = 2;
+  // .txnpb.SelectResponse resp = 2;
   bool has_resp() const;
   void clear_resp();
   static const int kRespFieldNumber = 2;
-  const ::txn::SelectResponse& resp() const;
-  ::txn::SelectResponse* mutable_resp();
-  ::txn::SelectResponse* release_resp();
-  void set_allocated_resp(::txn::SelectResponse* resp);
+  const ::txnpb::SelectResponse& resp() const;
+  ::txnpb::SelectResponse* mutable_resp();
+  ::txnpb::SelectResponse* release_resp();
+  void set_allocated_resp(::txnpb::SelectResponse* resp);
 
-  // @@protoc_insertion_point(class_scope:txn.DsSelectResponse)
+  // @@protoc_insertion_point(class_scope:txnpb.DsSelectResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::kvrpcpb::ResponseHeader* header_;
-  ::txn::SelectResponse* resp_;
+  ::txnpb::SelectResponse* resp_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -3942,18 +3942,18 @@ class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertio
 #endif  // __GNUC__
 // TxnIntent
 
-// .txn.OpType typ = 1;
+// .txnpb.OpType typ = 1;
 inline void TxnIntent::clear_typ() {
   typ_ = 0;
 }
-inline ::txn::OpType TxnIntent::typ() const {
-  // @@protoc_insertion_point(field_get:txn.TxnIntent.typ)
-  return static_cast< ::txn::OpType >(typ_);
+inline ::txnpb::OpType TxnIntent::typ() const {
+  // @@protoc_insertion_point(field_get:txnpb.TxnIntent.typ)
+  return static_cast< ::txnpb::OpType >(typ_);
 }
-inline void TxnIntent::set_typ(::txn::OpType value) {
+inline void TxnIntent::set_typ(::txnpb::OpType value) {
   
   typ_ = value;
-  // @@protoc_insertion_point(field_set:txn.TxnIntent.typ)
+  // @@protoc_insertion_point(field_set:txnpb.TxnIntent.typ)
 }
 
 // bytes key = 2;
@@ -3961,41 +3961,41 @@ inline void TxnIntent::clear_key() {
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TxnIntent::key() const {
-  // @@protoc_insertion_point(field_get:txn.TxnIntent.key)
+  // @@protoc_insertion_point(field_get:txnpb.TxnIntent.key)
   return key_.GetNoArena();
 }
 inline void TxnIntent::set_key(const ::std::string& value) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.TxnIntent.key)
+  // @@protoc_insertion_point(field_set:txnpb.TxnIntent.key)
 }
 #if LANG_CXX11
 inline void TxnIntent::set_key(::std::string&& value) {
   
   key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.TxnIntent.key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.TxnIntent.key)
 }
 #endif
 inline void TxnIntent::set_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.TxnIntent.key)
+  // @@protoc_insertion_point(field_set_char:txnpb.TxnIntent.key)
 }
 inline void TxnIntent::set_key(const void* value, size_t size) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.TxnIntent.key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.TxnIntent.key)
 }
 inline ::std::string* TxnIntent::mutable_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.TxnIntent.key)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnIntent.key)
   return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TxnIntent::release_key() {
-  // @@protoc_insertion_point(field_release:txn.TxnIntent.key)
+  // @@protoc_insertion_point(field_release:txnpb.TxnIntent.key)
   
   return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4006,7 +4006,7 @@ inline void TxnIntent::set_allocated_key(::std::string* key) {
     
   }
   key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:txn.TxnIntent.key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnIntent.key)
 }
 
 // bytes value = 3;
@@ -4014,41 +4014,41 @@ inline void TxnIntent::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TxnIntent::value() const {
-  // @@protoc_insertion_point(field_get:txn.TxnIntent.value)
+  // @@protoc_insertion_point(field_get:txnpb.TxnIntent.value)
   return value_.GetNoArena();
 }
 inline void TxnIntent::set_value(const ::std::string& value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.TxnIntent.value)
+  // @@protoc_insertion_point(field_set:txnpb.TxnIntent.value)
 }
 #if LANG_CXX11
 inline void TxnIntent::set_value(::std::string&& value) {
   
   value_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.TxnIntent.value)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.TxnIntent.value)
 }
 #endif
 inline void TxnIntent::set_value(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.TxnIntent.value)
+  // @@protoc_insertion_point(field_set_char:txnpb.TxnIntent.value)
 }
 inline void TxnIntent::set_value(const void* value, size_t size) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.TxnIntent.value)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.TxnIntent.value)
 }
 inline ::std::string* TxnIntent::mutable_value() {
   
-  // @@protoc_insertion_point(field_mutable:txn.TxnIntent.value)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnIntent.value)
   return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TxnIntent::release_value() {
-  // @@protoc_insertion_point(field_release:txn.TxnIntent.value)
+  // @@protoc_insertion_point(field_release:txnpb.TxnIntent.value)
   
   return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4059,7 +4059,7 @@ inline void TxnIntent::set_allocated_value(::std::string* value) {
     
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set_allocated:txn.TxnIntent.value)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnIntent.value)
 }
 
 // bool check_unique = 4;
@@ -4067,13 +4067,13 @@ inline void TxnIntent::clear_check_unique() {
   check_unique_ = false;
 }
 inline bool TxnIntent::check_unique() const {
-  // @@protoc_insertion_point(field_get:txn.TxnIntent.check_unique)
+  // @@protoc_insertion_point(field_get:txnpb.TxnIntent.check_unique)
   return check_unique_;
 }
 inline void TxnIntent::set_check_unique(bool value) {
   
   check_unique_ = value;
-  // @@protoc_insertion_point(field_set:txn.TxnIntent.check_unique)
+  // @@protoc_insertion_point(field_set:txnpb.TxnIntent.check_unique)
 }
 
 // uint64 expected_ver = 5;
@@ -4081,13 +4081,13 @@ inline void TxnIntent::clear_expected_ver() {
   expected_ver_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 TxnIntent::expected_ver() const {
-  // @@protoc_insertion_point(field_get:txn.TxnIntent.expected_ver)
+  // @@protoc_insertion_point(field_get:txnpb.TxnIntent.expected_ver)
   return expected_ver_;
 }
 inline void TxnIntent::set_expected_ver(::google::protobuf::uint64 value) {
   
   expected_ver_ = value;
-  // @@protoc_insertion_point(field_set:txn.TxnIntent.expected_ver)
+  // @@protoc_insertion_point(field_set:txnpb.TxnIntent.expected_ver)
 }
 
 // bool is_primary = 6;
@@ -4095,13 +4095,13 @@ inline void TxnIntent::clear_is_primary() {
   is_primary_ = false;
 }
 inline bool TxnIntent::is_primary() const {
-  // @@protoc_insertion_point(field_get:txn.TxnIntent.is_primary)
+  // @@protoc_insertion_point(field_get:txnpb.TxnIntent.is_primary)
   return is_primary_;
 }
 inline void TxnIntent::set_is_primary(bool value) {
   
   is_primary_ = value;
-  // @@protoc_insertion_point(field_set:txn.TxnIntent.is_primary)
+  // @@protoc_insertion_point(field_set:txnpb.TxnIntent.is_primary)
 }
 
 // -------------------------------------------------------------------
@@ -4113,41 +4113,41 @@ inline void TxnValue::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TxnValue::txn_id() const {
-  // @@protoc_insertion_point(field_get:txn.TxnValue.txn_id)
+  // @@protoc_insertion_point(field_get:txnpb.TxnValue.txn_id)
   return txn_id_.GetNoArena();
 }
 inline void TxnValue::set_txn_id(const ::std::string& value) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.TxnValue.txn_id)
+  // @@protoc_insertion_point(field_set:txnpb.TxnValue.txn_id)
 }
 #if LANG_CXX11
 inline void TxnValue::set_txn_id(::std::string&& value) {
   
   txn_id_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.TxnValue.txn_id)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.TxnValue.txn_id)
 }
 #endif
 inline void TxnValue::set_txn_id(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.TxnValue.txn_id)
+  // @@protoc_insertion_point(field_set_char:txnpb.TxnValue.txn_id)
 }
 inline void TxnValue::set_txn_id(const char* value, size_t size) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.TxnValue.txn_id)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.TxnValue.txn_id)
 }
 inline ::std::string* TxnValue::mutable_txn_id() {
   
-  // @@protoc_insertion_point(field_mutable:txn.TxnValue.txn_id)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnValue.txn_id)
   return txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TxnValue::release_txn_id() {
-  // @@protoc_insertion_point(field_release:txn.TxnValue.txn_id)
+  // @@protoc_insertion_point(field_release:txnpb.TxnValue.txn_id)
   
   return txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4158,10 +4158,10 @@ inline void TxnValue::set_allocated_txn_id(::std::string* txn_id) {
     
   }
   txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txn_id);
-  // @@protoc_insertion_point(field_set_allocated:txn.TxnValue.txn_id)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnValue.txn_id)
 }
 
-// .txn.TxnIntent intent = 2;
+// .txnpb.TxnIntent intent = 2;
 inline bool TxnValue::has_intent() const {
   return this != internal_default_instance() && intent_ != NULL;
 }
@@ -4169,28 +4169,28 @@ inline void TxnValue::clear_intent() {
   if (GetArenaNoVirtual() == NULL && intent_ != NULL) delete intent_;
   intent_ = NULL;
 }
-inline const ::txn::TxnIntent& TxnValue::intent() const {
-  const ::txn::TxnIntent* p = intent_;
-  // @@protoc_insertion_point(field_get:txn.TxnValue.intent)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::TxnIntent*>(
-      &::txn::_TxnIntent_default_instance_);
+inline const ::txnpb::TxnIntent& TxnValue::intent() const {
+  const ::txnpb::TxnIntent* p = intent_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnValue.intent)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::TxnIntent*>(
+      &::txnpb::_TxnIntent_default_instance_);
 }
-inline ::txn::TxnIntent* TxnValue::mutable_intent() {
+inline ::txnpb::TxnIntent* TxnValue::mutable_intent() {
   
   if (intent_ == NULL) {
-    intent_ = new ::txn::TxnIntent;
+    intent_ = new ::txnpb::TxnIntent;
   }
-  // @@protoc_insertion_point(field_mutable:txn.TxnValue.intent)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnValue.intent)
   return intent_;
 }
-inline ::txn::TxnIntent* TxnValue::release_intent() {
-  // @@protoc_insertion_point(field_release:txn.TxnValue.intent)
+inline ::txnpb::TxnIntent* TxnValue::release_intent() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnValue.intent)
   
-  ::txn::TxnIntent* temp = intent_;
+  ::txnpb::TxnIntent* temp = intent_;
   intent_ = NULL;
   return temp;
 }
-inline void TxnValue::set_allocated_intent(::txn::TxnIntent* intent) {
+inline void TxnValue::set_allocated_intent(::txnpb::TxnIntent* intent) {
   delete intent_;
   intent_ = intent;
   if (intent) {
@@ -4198,7 +4198,7 @@ inline void TxnValue::set_allocated_intent(::txn::TxnIntent* intent) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.TxnValue.intent)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnValue.intent)
 }
 
 // bytes primary_key = 3;
@@ -4206,41 +4206,41 @@ inline void TxnValue::clear_primary_key() {
   primary_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TxnValue::primary_key() const {
-  // @@protoc_insertion_point(field_get:txn.TxnValue.primary_key)
+  // @@protoc_insertion_point(field_get:txnpb.TxnValue.primary_key)
   return primary_key_.GetNoArena();
 }
 inline void TxnValue::set_primary_key(const ::std::string& value) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.TxnValue.primary_key)
+  // @@protoc_insertion_point(field_set:txnpb.TxnValue.primary_key)
 }
 #if LANG_CXX11
 inline void TxnValue::set_primary_key(::std::string&& value) {
   
   primary_key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.TxnValue.primary_key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.TxnValue.primary_key)
 }
 #endif
 inline void TxnValue::set_primary_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.TxnValue.primary_key)
+  // @@protoc_insertion_point(field_set_char:txnpb.TxnValue.primary_key)
 }
 inline void TxnValue::set_primary_key(const void* value, size_t size) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.TxnValue.primary_key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.TxnValue.primary_key)
 }
 inline ::std::string* TxnValue::mutable_primary_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.TxnValue.primary_key)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnValue.primary_key)
   return primary_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TxnValue::release_primary_key() {
-  // @@protoc_insertion_point(field_release:txn.TxnValue.primary_key)
+  // @@protoc_insertion_point(field_release:txnpb.TxnValue.primary_key)
   
   return primary_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4251,7 +4251,7 @@ inline void TxnValue::set_allocated_primary_key(::std::string* primary_key) {
     
   }
   primary_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), primary_key);
-  // @@protoc_insertion_point(field_set_allocated:txn.TxnValue.primary_key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnValue.primary_key)
 }
 
 // uint64 expired_at = 4;
@@ -4259,27 +4259,27 @@ inline void TxnValue::clear_expired_at() {
   expired_at_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 TxnValue::expired_at() const {
-  // @@protoc_insertion_point(field_get:txn.TxnValue.expired_at)
+  // @@protoc_insertion_point(field_get:txnpb.TxnValue.expired_at)
   return expired_at_;
 }
 inline void TxnValue::set_expired_at(::google::protobuf::uint64 value) {
   
   expired_at_ = value;
-  // @@protoc_insertion_point(field_set:txn.TxnValue.expired_at)
+  // @@protoc_insertion_point(field_set:txnpb.TxnValue.expired_at)
 }
 
-// .txn.TxnStatus txn_status = 10;
+// .txnpb.TxnStatus txn_status = 10;
 inline void TxnValue::clear_txn_status() {
   txn_status_ = 0;
 }
-inline ::txn::TxnStatus TxnValue::txn_status() const {
-  // @@protoc_insertion_point(field_get:txn.TxnValue.txn_status)
-  return static_cast< ::txn::TxnStatus >(txn_status_);
+inline ::txnpb::TxnStatus TxnValue::txn_status() const {
+  // @@protoc_insertion_point(field_get:txnpb.TxnValue.txn_status)
+  return static_cast< ::txnpb::TxnStatus >(txn_status_);
 }
-inline void TxnValue::set_txn_status(::txn::TxnStatus value) {
+inline void TxnValue::set_txn_status(::txnpb::TxnStatus value) {
   
   txn_status_ = value;
-  // @@protoc_insertion_point(field_set:txn.TxnValue.txn_status)
+  // @@protoc_insertion_point(field_set:txnpb.TxnValue.txn_status)
 }
 
 // repeated bytes secondary_keys = 11;
@@ -4290,64 +4290,64 @@ inline void TxnValue::clear_secondary_keys() {
   secondary_keys_.Clear();
 }
 inline const ::std::string& TxnValue::secondary_keys(int index) const {
-  // @@protoc_insertion_point(field_get:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_get:txnpb.TxnValue.secondary_keys)
   return secondary_keys_.Get(index);
 }
 inline ::std::string* TxnValue::mutable_secondary_keys(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnValue.secondary_keys)
   return secondary_keys_.Mutable(index);
 }
 inline void TxnValue::set_secondary_keys(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_set:txnpb.TxnValue.secondary_keys)
   secondary_keys_.Mutable(index)->assign(value);
 }
 #if LANG_CXX11
 inline void TxnValue::set_secondary_keys(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_set:txnpb.TxnValue.secondary_keys)
   secondary_keys_.Mutable(index)->assign(std::move(value));
 }
 #endif
 inline void TxnValue::set_secondary_keys(int index, const char* value) {
   GOOGLE_DCHECK(value != NULL);
   secondary_keys_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_set_char:txnpb.TxnValue.secondary_keys)
 }
 inline void TxnValue::set_secondary_keys(int index, const void* value, size_t size) {
   secondary_keys_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.TxnValue.secondary_keys)
 }
 inline ::std::string* TxnValue::add_secondary_keys() {
-  // @@protoc_insertion_point(field_add_mutable:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_add_mutable:txnpb.TxnValue.secondary_keys)
   return secondary_keys_.Add();
 }
 inline void TxnValue::add_secondary_keys(const ::std::string& value) {
   secondary_keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_add:txnpb.TxnValue.secondary_keys)
 }
 #if LANG_CXX11
 inline void TxnValue::add_secondary_keys(::std::string&& value) {
   secondary_keys_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_add:txnpb.TxnValue.secondary_keys)
 }
 #endif
 inline void TxnValue::add_secondary_keys(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   secondary_keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_add_char:txnpb.TxnValue.secondary_keys)
 }
 inline void TxnValue::add_secondary_keys(const void* value, size_t size) {
   secondary_keys_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_add_pointer:txnpb.TxnValue.secondary_keys)
 }
 inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
 TxnValue::secondary_keys() const {
-  // @@protoc_insertion_point(field_list:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_list:txnpb.TxnValue.secondary_keys)
   return secondary_keys_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::std::string>*
 TxnValue::mutable_secondary_keys() {
-  // @@protoc_insertion_point(field_mutable_list:txn.TxnValue.secondary_keys)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.TxnValue.secondary_keys)
   return &secondary_keys_;
 }
 
@@ -4360,41 +4360,41 @@ inline void LockInfo::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& LockInfo::txn_id() const {
-  // @@protoc_insertion_point(field_get:txn.LockInfo.txn_id)
+  // @@protoc_insertion_point(field_get:txnpb.LockInfo.txn_id)
   return txn_id_.GetNoArena();
 }
 inline void LockInfo::set_txn_id(const ::std::string& value) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.LockInfo.txn_id)
+  // @@protoc_insertion_point(field_set:txnpb.LockInfo.txn_id)
 }
 #if LANG_CXX11
 inline void LockInfo::set_txn_id(::std::string&& value) {
   
   txn_id_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.LockInfo.txn_id)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.LockInfo.txn_id)
 }
 #endif
 inline void LockInfo::set_txn_id(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.LockInfo.txn_id)
+  // @@protoc_insertion_point(field_set_char:txnpb.LockInfo.txn_id)
 }
 inline void LockInfo::set_txn_id(const char* value, size_t size) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.LockInfo.txn_id)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.LockInfo.txn_id)
 }
 inline ::std::string* LockInfo::mutable_txn_id() {
   
-  // @@protoc_insertion_point(field_mutable:txn.LockInfo.txn_id)
+  // @@protoc_insertion_point(field_mutable:txnpb.LockInfo.txn_id)
   return txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* LockInfo::release_txn_id() {
-  // @@protoc_insertion_point(field_release:txn.LockInfo.txn_id)
+  // @@protoc_insertion_point(field_release:txnpb.LockInfo.txn_id)
   
   return txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4405,7 +4405,7 @@ inline void LockInfo::set_allocated_txn_id(::std::string* txn_id) {
     
   }
   txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txn_id);
-  // @@protoc_insertion_point(field_set_allocated:txn.LockInfo.txn_id)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.LockInfo.txn_id)
 }
 
 // bool timeout = 2;
@@ -4413,13 +4413,13 @@ inline void LockInfo::clear_timeout() {
   timeout_ = false;
 }
 inline bool LockInfo::timeout() const {
-  // @@protoc_insertion_point(field_get:txn.LockInfo.timeout)
+  // @@protoc_insertion_point(field_get:txnpb.LockInfo.timeout)
   return timeout_;
 }
 inline void LockInfo::set_timeout(bool value) {
   
   timeout_ = value;
-  // @@protoc_insertion_point(field_set:txn.LockInfo.timeout)
+  // @@protoc_insertion_point(field_set:txnpb.LockInfo.timeout)
 }
 
 // bool is_primary = 10;
@@ -4427,13 +4427,13 @@ inline void LockInfo::clear_is_primary() {
   is_primary_ = false;
 }
 inline bool LockInfo::is_primary() const {
-  // @@protoc_insertion_point(field_get:txn.LockInfo.is_primary)
+  // @@protoc_insertion_point(field_get:txnpb.LockInfo.is_primary)
   return is_primary_;
 }
 inline void LockInfo::set_is_primary(bool value) {
   
   is_primary_ = value;
-  // @@protoc_insertion_point(field_set:txn.LockInfo.is_primary)
+  // @@protoc_insertion_point(field_set:txnpb.LockInfo.is_primary)
 }
 
 // bytes primary_key = 11;
@@ -4441,41 +4441,41 @@ inline void LockInfo::clear_primary_key() {
   primary_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& LockInfo::primary_key() const {
-  // @@protoc_insertion_point(field_get:txn.LockInfo.primary_key)
+  // @@protoc_insertion_point(field_get:txnpb.LockInfo.primary_key)
   return primary_key_.GetNoArena();
 }
 inline void LockInfo::set_primary_key(const ::std::string& value) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.LockInfo.primary_key)
+  // @@protoc_insertion_point(field_set:txnpb.LockInfo.primary_key)
 }
 #if LANG_CXX11
 inline void LockInfo::set_primary_key(::std::string&& value) {
   
   primary_key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.LockInfo.primary_key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.LockInfo.primary_key)
 }
 #endif
 inline void LockInfo::set_primary_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.LockInfo.primary_key)
+  // @@protoc_insertion_point(field_set_char:txnpb.LockInfo.primary_key)
 }
 inline void LockInfo::set_primary_key(const void* value, size_t size) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.LockInfo.primary_key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.LockInfo.primary_key)
 }
 inline ::std::string* LockInfo::mutable_primary_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.LockInfo.primary_key)
+  // @@protoc_insertion_point(field_mutable:txnpb.LockInfo.primary_key)
   return primary_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* LockInfo::release_primary_key() {
-  // @@protoc_insertion_point(field_release:txn.LockInfo.primary_key)
+  // @@protoc_insertion_point(field_release:txnpb.LockInfo.primary_key)
   
   return primary_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4486,21 +4486,21 @@ inline void LockInfo::set_allocated_primary_key(::std::string* primary_key) {
     
   }
   primary_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), primary_key);
-  // @@protoc_insertion_point(field_set_allocated:txn.LockInfo.primary_key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.LockInfo.primary_key)
 }
 
-// .txn.TxnStatus status = 12;
+// .txnpb.TxnStatus status = 12;
 inline void LockInfo::clear_status() {
   status_ = 0;
 }
-inline ::txn::TxnStatus LockInfo::status() const {
-  // @@protoc_insertion_point(field_get:txn.LockInfo.status)
-  return static_cast< ::txn::TxnStatus >(status_);
+inline ::txnpb::TxnStatus LockInfo::status() const {
+  // @@protoc_insertion_point(field_get:txnpb.LockInfo.status)
+  return static_cast< ::txnpb::TxnStatus >(status_);
 }
-inline void LockInfo::set_status(::txn::TxnStatus value) {
+inline void LockInfo::set_status(::txnpb::TxnStatus value) {
   
   status_ = value;
-  // @@protoc_insertion_point(field_set:txn.LockInfo.status)
+  // @@protoc_insertion_point(field_set:txnpb.LockInfo.status)
 }
 
 // repeated bytes secondary_keys = 13;
@@ -4511,64 +4511,64 @@ inline void LockInfo::clear_secondary_keys() {
   secondary_keys_.Clear();
 }
 inline const ::std::string& LockInfo::secondary_keys(int index) const {
-  // @@protoc_insertion_point(field_get:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_get:txnpb.LockInfo.secondary_keys)
   return secondary_keys_.Get(index);
 }
 inline ::std::string* LockInfo::mutable_secondary_keys(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_mutable:txnpb.LockInfo.secondary_keys)
   return secondary_keys_.Mutable(index);
 }
 inline void LockInfo::set_secondary_keys(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_set:txnpb.LockInfo.secondary_keys)
   secondary_keys_.Mutable(index)->assign(value);
 }
 #if LANG_CXX11
 inline void LockInfo::set_secondary_keys(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_set:txnpb.LockInfo.secondary_keys)
   secondary_keys_.Mutable(index)->assign(std::move(value));
 }
 #endif
 inline void LockInfo::set_secondary_keys(int index, const char* value) {
   GOOGLE_DCHECK(value != NULL);
   secondary_keys_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_set_char:txnpb.LockInfo.secondary_keys)
 }
 inline void LockInfo::set_secondary_keys(int index, const void* value, size_t size) {
   secondary_keys_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.LockInfo.secondary_keys)
 }
 inline ::std::string* LockInfo::add_secondary_keys() {
-  // @@protoc_insertion_point(field_add_mutable:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_add_mutable:txnpb.LockInfo.secondary_keys)
   return secondary_keys_.Add();
 }
 inline void LockInfo::add_secondary_keys(const ::std::string& value) {
   secondary_keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_add:txnpb.LockInfo.secondary_keys)
 }
 #if LANG_CXX11
 inline void LockInfo::add_secondary_keys(::std::string&& value) {
   secondary_keys_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_add:txnpb.LockInfo.secondary_keys)
 }
 #endif
 inline void LockInfo::add_secondary_keys(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   secondary_keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_add_char:txnpb.LockInfo.secondary_keys)
 }
 inline void LockInfo::add_secondary_keys(const void* value, size_t size) {
   secondary_keys_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_add_pointer:txnpb.LockInfo.secondary_keys)
 }
 inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
 LockInfo::secondary_keys() const {
-  // @@protoc_insertion_point(field_list:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_list:txnpb.LockInfo.secondary_keys)
   return secondary_keys_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::std::string>*
 LockInfo::mutable_secondary_keys() {
-  // @@protoc_insertion_point(field_mutable_list:txn.LockInfo.secondary_keys)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.LockInfo.secondary_keys)
   return &secondary_keys_;
 }
 
@@ -4581,41 +4581,41 @@ inline void LockError::clear_key() {
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& LockError::key() const {
-  // @@protoc_insertion_point(field_get:txn.LockError.key)
+  // @@protoc_insertion_point(field_get:txnpb.LockError.key)
   return key_.GetNoArena();
 }
 inline void LockError::set_key(const ::std::string& value) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.LockError.key)
+  // @@protoc_insertion_point(field_set:txnpb.LockError.key)
 }
 #if LANG_CXX11
 inline void LockError::set_key(::std::string&& value) {
   
   key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.LockError.key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.LockError.key)
 }
 #endif
 inline void LockError::set_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.LockError.key)
+  // @@protoc_insertion_point(field_set_char:txnpb.LockError.key)
 }
 inline void LockError::set_key(const void* value, size_t size) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.LockError.key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.LockError.key)
 }
 inline ::std::string* LockError::mutable_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.LockError.key)
+  // @@protoc_insertion_point(field_mutable:txnpb.LockError.key)
   return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* LockError::release_key() {
-  // @@protoc_insertion_point(field_release:txn.LockError.key)
+  // @@protoc_insertion_point(field_release:txnpb.LockError.key)
   
   return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4626,10 +4626,10 @@ inline void LockError::set_allocated_key(::std::string* key) {
     
   }
   key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:txn.LockError.key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.LockError.key)
 }
 
-// .txn.LockInfo info = 2;
+// .txnpb.LockInfo info = 2;
 inline bool LockError::has_info() const {
   return this != internal_default_instance() && info_ != NULL;
 }
@@ -4637,28 +4637,28 @@ inline void LockError::clear_info() {
   if (GetArenaNoVirtual() == NULL && info_ != NULL) delete info_;
   info_ = NULL;
 }
-inline const ::txn::LockInfo& LockError::info() const {
-  const ::txn::LockInfo* p = info_;
-  // @@protoc_insertion_point(field_get:txn.LockError.info)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::LockInfo*>(
-      &::txn::_LockInfo_default_instance_);
+inline const ::txnpb::LockInfo& LockError::info() const {
+  const ::txnpb::LockInfo* p = info_;
+  // @@protoc_insertion_point(field_get:txnpb.LockError.info)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::LockInfo*>(
+      &::txnpb::_LockInfo_default_instance_);
 }
-inline ::txn::LockInfo* LockError::mutable_info() {
+inline ::txnpb::LockInfo* LockError::mutable_info() {
   
   if (info_ == NULL) {
-    info_ = new ::txn::LockInfo;
+    info_ = new ::txnpb::LockInfo;
   }
-  // @@protoc_insertion_point(field_mutable:txn.LockError.info)
+  // @@protoc_insertion_point(field_mutable:txnpb.LockError.info)
   return info_;
 }
-inline ::txn::LockInfo* LockError::release_info() {
-  // @@protoc_insertion_point(field_release:txn.LockError.info)
+inline ::txnpb::LockInfo* LockError::release_info() {
+  // @@protoc_insertion_point(field_release:txnpb.LockError.info)
   
-  ::txn::LockInfo* temp = info_;
+  ::txnpb::LockInfo* temp = info_;
   info_ = NULL;
   return temp;
 }
-inline void LockError::set_allocated_info(::txn::LockInfo* info) {
+inline void LockError::set_allocated_info(::txnpb::LockInfo* info) {
   delete info_;
   info_ = info;
   if (info) {
@@ -4666,7 +4666,7 @@ inline void LockError::set_allocated_info(::txn::LockInfo* info) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.LockError.info)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.LockError.info)
 }
 
 // -------------------------------------------------------------------
@@ -4678,41 +4678,41 @@ inline void UnexpectedVer::clear_key() {
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& UnexpectedVer::key() const {
-  // @@protoc_insertion_point(field_get:txn.UnexpectedVer.key)
+  // @@protoc_insertion_point(field_get:txnpb.UnexpectedVer.key)
   return key_.GetNoArena();
 }
 inline void UnexpectedVer::set_key(const ::std::string& value) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.UnexpectedVer.key)
+  // @@protoc_insertion_point(field_set:txnpb.UnexpectedVer.key)
 }
 #if LANG_CXX11
 inline void UnexpectedVer::set_key(::std::string&& value) {
   
   key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.UnexpectedVer.key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.UnexpectedVer.key)
 }
 #endif
 inline void UnexpectedVer::set_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.UnexpectedVer.key)
+  // @@protoc_insertion_point(field_set_char:txnpb.UnexpectedVer.key)
 }
 inline void UnexpectedVer::set_key(const void* value, size_t size) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.UnexpectedVer.key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.UnexpectedVer.key)
 }
 inline ::std::string* UnexpectedVer::mutable_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.UnexpectedVer.key)
+  // @@protoc_insertion_point(field_mutable:txnpb.UnexpectedVer.key)
   return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* UnexpectedVer::release_key() {
-  // @@protoc_insertion_point(field_release:txn.UnexpectedVer.key)
+  // @@protoc_insertion_point(field_release:txnpb.UnexpectedVer.key)
   
   return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4723,7 +4723,7 @@ inline void UnexpectedVer::set_allocated_key(::std::string* key) {
     
   }
   key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:txn.UnexpectedVer.key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.UnexpectedVer.key)
 }
 
 // uint64 expected_ver = 2;
@@ -4731,13 +4731,13 @@ inline void UnexpectedVer::clear_expected_ver() {
   expected_ver_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 UnexpectedVer::expected_ver() const {
-  // @@protoc_insertion_point(field_get:txn.UnexpectedVer.expected_ver)
+  // @@protoc_insertion_point(field_get:txnpb.UnexpectedVer.expected_ver)
   return expected_ver_;
 }
 inline void UnexpectedVer::set_expected_ver(::google::protobuf::uint64 value) {
   
   expected_ver_ = value;
-  // @@protoc_insertion_point(field_set:txn.UnexpectedVer.expected_ver)
+  // @@protoc_insertion_point(field_set:txnpb.UnexpectedVer.expected_ver)
 }
 
 // uint64 actual_ver = 3;
@@ -4745,52 +4745,52 @@ inline void UnexpectedVer::clear_actual_ver() {
   actual_ver_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 UnexpectedVer::actual_ver() const {
-  // @@protoc_insertion_point(field_get:txn.UnexpectedVer.actual_ver)
+  // @@protoc_insertion_point(field_get:txnpb.UnexpectedVer.actual_ver)
   return actual_ver_;
 }
 inline void UnexpectedVer::set_actual_ver(::google::protobuf::uint64 value) {
   
   actual_ver_ = value;
-  // @@protoc_insertion_point(field_set:txn.UnexpectedVer.actual_ver)
+  // @@protoc_insertion_point(field_set:txnpb.UnexpectedVer.actual_ver)
 }
 
 // -------------------------------------------------------------------
 
 // StatusConflict
 
-// .txn.TxnStatus status = 1;
+// .txnpb.TxnStatus status = 1;
 inline void StatusConflict::clear_status() {
   status_ = 0;
 }
-inline ::txn::TxnStatus StatusConflict::status() const {
-  // @@protoc_insertion_point(field_get:txn.StatusConflict.status)
-  return static_cast< ::txn::TxnStatus >(status_);
+inline ::txnpb::TxnStatus StatusConflict::status() const {
+  // @@protoc_insertion_point(field_get:txnpb.StatusConflict.status)
+  return static_cast< ::txnpb::TxnStatus >(status_);
 }
-inline void StatusConflict::set_status(::txn::TxnStatus value) {
+inline void StatusConflict::set_status(::txnpb::TxnStatus value) {
   
   status_ = value;
-  // @@protoc_insertion_point(field_set:txn.StatusConflict.status)
+  // @@protoc_insertion_point(field_set:txnpb.StatusConflict.status)
 }
 
 // -------------------------------------------------------------------
 
 // TxnError
 
-// .txn.TxnError.ErrType err_type = 1;
+// .txnpb.TxnError.ErrType err_type = 1;
 inline void TxnError::clear_err_type() {
   err_type_ = 0;
 }
-inline ::txn::TxnError_ErrType TxnError::err_type() const {
-  // @@protoc_insertion_point(field_get:txn.TxnError.err_type)
-  return static_cast< ::txn::TxnError_ErrType >(err_type_);
+inline ::txnpb::TxnError_ErrType TxnError::err_type() const {
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.err_type)
+  return static_cast< ::txnpb::TxnError_ErrType >(err_type_);
 }
-inline void TxnError::set_err_type(::txn::TxnError_ErrType value) {
+inline void TxnError::set_err_type(::txnpb::TxnError_ErrType value) {
   
   err_type_ = value;
-  // @@protoc_insertion_point(field_set:txn.TxnError.err_type)
+  // @@protoc_insertion_point(field_set:txnpb.TxnError.err_type)
 }
 
-// .txn.LockError lock_err = 2;
+// .txnpb.LockError lock_err = 2;
 inline bool TxnError::has_lock_err() const {
   return this != internal_default_instance() && lock_err_ != NULL;
 }
@@ -4798,28 +4798,28 @@ inline void TxnError::clear_lock_err() {
   if (GetArenaNoVirtual() == NULL && lock_err_ != NULL) delete lock_err_;
   lock_err_ = NULL;
 }
-inline const ::txn::LockError& TxnError::lock_err() const {
-  const ::txn::LockError* p = lock_err_;
-  // @@protoc_insertion_point(field_get:txn.TxnError.lock_err)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::LockError*>(
-      &::txn::_LockError_default_instance_);
+inline const ::txnpb::LockError& TxnError::lock_err() const {
+  const ::txnpb::LockError* p = lock_err_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.lock_err)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::LockError*>(
+      &::txnpb::_LockError_default_instance_);
 }
-inline ::txn::LockError* TxnError::mutable_lock_err() {
+inline ::txnpb::LockError* TxnError::mutable_lock_err() {
   
   if (lock_err_ == NULL) {
-    lock_err_ = new ::txn::LockError;
+    lock_err_ = new ::txnpb::LockError;
   }
-  // @@protoc_insertion_point(field_mutable:txn.TxnError.lock_err)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.lock_err)
   return lock_err_;
 }
-inline ::txn::LockError* TxnError::release_lock_err() {
-  // @@protoc_insertion_point(field_release:txn.TxnError.lock_err)
+inline ::txnpb::LockError* TxnError::release_lock_err() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnError.lock_err)
   
-  ::txn::LockError* temp = lock_err_;
+  ::txnpb::LockError* temp = lock_err_;
   lock_err_ = NULL;
   return temp;
 }
-inline void TxnError::set_allocated_lock_err(::txn::LockError* lock_err) {
+inline void TxnError::set_allocated_lock_err(::txnpb::LockError* lock_err) {
   delete lock_err_;
   lock_err_ = lock_err;
   if (lock_err) {
@@ -4827,10 +4827,10 @@ inline void TxnError::set_allocated_lock_err(::txn::LockError* lock_err) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.TxnError.lock_err)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.lock_err)
 }
 
-// .txn.UnexpectedVer unexpected_ver = 3;
+// .txnpb.UnexpectedVer unexpected_ver = 3;
 inline bool TxnError::has_unexpected_ver() const {
   return this != internal_default_instance() && unexpected_ver_ != NULL;
 }
@@ -4838,28 +4838,28 @@ inline void TxnError::clear_unexpected_ver() {
   if (GetArenaNoVirtual() == NULL && unexpected_ver_ != NULL) delete unexpected_ver_;
   unexpected_ver_ = NULL;
 }
-inline const ::txn::UnexpectedVer& TxnError::unexpected_ver() const {
-  const ::txn::UnexpectedVer* p = unexpected_ver_;
-  // @@protoc_insertion_point(field_get:txn.TxnError.unexpected_ver)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::UnexpectedVer*>(
-      &::txn::_UnexpectedVer_default_instance_);
+inline const ::txnpb::UnexpectedVer& TxnError::unexpected_ver() const {
+  const ::txnpb::UnexpectedVer* p = unexpected_ver_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.unexpected_ver)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::UnexpectedVer*>(
+      &::txnpb::_UnexpectedVer_default_instance_);
 }
-inline ::txn::UnexpectedVer* TxnError::mutable_unexpected_ver() {
+inline ::txnpb::UnexpectedVer* TxnError::mutable_unexpected_ver() {
   
   if (unexpected_ver_ == NULL) {
-    unexpected_ver_ = new ::txn::UnexpectedVer;
+    unexpected_ver_ = new ::txnpb::UnexpectedVer;
   }
-  // @@protoc_insertion_point(field_mutable:txn.TxnError.unexpected_ver)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.unexpected_ver)
   return unexpected_ver_;
 }
-inline ::txn::UnexpectedVer* TxnError::release_unexpected_ver() {
-  // @@protoc_insertion_point(field_release:txn.TxnError.unexpected_ver)
+inline ::txnpb::UnexpectedVer* TxnError::release_unexpected_ver() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnError.unexpected_ver)
   
-  ::txn::UnexpectedVer* temp = unexpected_ver_;
+  ::txnpb::UnexpectedVer* temp = unexpected_ver_;
   unexpected_ver_ = NULL;
   return temp;
 }
-inline void TxnError::set_allocated_unexpected_ver(::txn::UnexpectedVer* unexpected_ver) {
+inline void TxnError::set_allocated_unexpected_ver(::txnpb::UnexpectedVer* unexpected_ver) {
   delete unexpected_ver_;
   unexpected_ver_ = unexpected_ver;
   if (unexpected_ver) {
@@ -4867,10 +4867,10 @@ inline void TxnError::set_allocated_unexpected_ver(::txn::UnexpectedVer* unexpec
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.TxnError.unexpected_ver)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.unexpected_ver)
 }
 
-// .txn.StatusConflict status_conflict = 4;
+// .txnpb.StatusConflict status_conflict = 4;
 inline bool TxnError::has_status_conflict() const {
   return this != internal_default_instance() && status_conflict_ != NULL;
 }
@@ -4878,28 +4878,28 @@ inline void TxnError::clear_status_conflict() {
   if (GetArenaNoVirtual() == NULL && status_conflict_ != NULL) delete status_conflict_;
   status_conflict_ = NULL;
 }
-inline const ::txn::StatusConflict& TxnError::status_conflict() const {
-  const ::txn::StatusConflict* p = status_conflict_;
-  // @@protoc_insertion_point(field_get:txn.TxnError.status_conflict)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::StatusConflict*>(
-      &::txn::_StatusConflict_default_instance_);
+inline const ::txnpb::StatusConflict& TxnError::status_conflict() const {
+  const ::txnpb::StatusConflict* p = status_conflict_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.status_conflict)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::StatusConflict*>(
+      &::txnpb::_StatusConflict_default_instance_);
 }
-inline ::txn::StatusConflict* TxnError::mutable_status_conflict() {
+inline ::txnpb::StatusConflict* TxnError::mutable_status_conflict() {
   
   if (status_conflict_ == NULL) {
-    status_conflict_ = new ::txn::StatusConflict;
+    status_conflict_ = new ::txnpb::StatusConflict;
   }
-  // @@protoc_insertion_point(field_mutable:txn.TxnError.status_conflict)
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.status_conflict)
   return status_conflict_;
 }
-inline ::txn::StatusConflict* TxnError::release_status_conflict() {
-  // @@protoc_insertion_point(field_release:txn.TxnError.status_conflict)
+inline ::txnpb::StatusConflict* TxnError::release_status_conflict() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnError.status_conflict)
   
-  ::txn::StatusConflict* temp = status_conflict_;
+  ::txnpb::StatusConflict* temp = status_conflict_;
   status_conflict_ = NULL;
   return temp;
 }
-inline void TxnError::set_allocated_status_conflict(::txn::StatusConflict* status_conflict) {
+inline void TxnError::set_allocated_status_conflict(::txnpb::StatusConflict* status_conflict) {
   delete status_conflict_;
   status_conflict_ = status_conflict;
   if (status_conflict) {
@@ -4907,7 +4907,7 @@ inline void TxnError::set_allocated_status_conflict(::txn::StatusConflict* statu
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.TxnError.status_conflict)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.status_conflict)
 }
 
 // -------------------------------------------------------------------
@@ -4919,41 +4919,41 @@ inline void PrepareRequest::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& PrepareRequest::txn_id() const {
-  // @@protoc_insertion_point(field_get:txn.PrepareRequest.txn_id)
+  // @@protoc_insertion_point(field_get:txnpb.PrepareRequest.txn_id)
   return txn_id_.GetNoArena();
 }
 inline void PrepareRequest::set_txn_id(const ::std::string& value) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.PrepareRequest.txn_id)
+  // @@protoc_insertion_point(field_set:txnpb.PrepareRequest.txn_id)
 }
 #if LANG_CXX11
 inline void PrepareRequest::set_txn_id(::std::string&& value) {
   
   txn_id_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.PrepareRequest.txn_id)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.PrepareRequest.txn_id)
 }
 #endif
 inline void PrepareRequest::set_txn_id(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.PrepareRequest.txn_id)
+  // @@protoc_insertion_point(field_set_char:txnpb.PrepareRequest.txn_id)
 }
 inline void PrepareRequest::set_txn_id(const char* value, size_t size) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.PrepareRequest.txn_id)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.PrepareRequest.txn_id)
 }
 inline ::std::string* PrepareRequest::mutable_txn_id() {
   
-  // @@protoc_insertion_point(field_mutable:txn.PrepareRequest.txn_id)
+  // @@protoc_insertion_point(field_mutable:txnpb.PrepareRequest.txn_id)
   return txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* PrepareRequest::release_txn_id() {
-  // @@protoc_insertion_point(field_release:txn.PrepareRequest.txn_id)
+  // @@protoc_insertion_point(field_release:txnpb.PrepareRequest.txn_id)
   
   return txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -4964,7 +4964,7 @@ inline void PrepareRequest::set_allocated_txn_id(::std::string* txn_id) {
     
   }
   txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txn_id);
-  // @@protoc_insertion_point(field_set_allocated:txn.PrepareRequest.txn_id)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.PrepareRequest.txn_id)
 }
 
 // bool local = 2;
@@ -4972,42 +4972,42 @@ inline void PrepareRequest::clear_local() {
   local_ = false;
 }
 inline bool PrepareRequest::local() const {
-  // @@protoc_insertion_point(field_get:txn.PrepareRequest.local)
+  // @@protoc_insertion_point(field_get:txnpb.PrepareRequest.local)
   return local_;
 }
 inline void PrepareRequest::set_local(bool value) {
   
   local_ = value;
-  // @@protoc_insertion_point(field_set:txn.PrepareRequest.local)
+  // @@protoc_insertion_point(field_set:txnpb.PrepareRequest.local)
 }
 
-// repeated .txn.TxnIntent intents = 3;
+// repeated .txnpb.TxnIntent intents = 3;
 inline int PrepareRequest::intents_size() const {
   return intents_.size();
 }
 inline void PrepareRequest::clear_intents() {
   intents_.Clear();
 }
-inline const ::txn::TxnIntent& PrepareRequest::intents(int index) const {
-  // @@protoc_insertion_point(field_get:txn.PrepareRequest.intents)
+inline const ::txnpb::TxnIntent& PrepareRequest::intents(int index) const {
+  // @@protoc_insertion_point(field_get:txnpb.PrepareRequest.intents)
   return intents_.Get(index);
 }
-inline ::txn::TxnIntent* PrepareRequest::mutable_intents(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.PrepareRequest.intents)
+inline ::txnpb::TxnIntent* PrepareRequest::mutable_intents(int index) {
+  // @@protoc_insertion_point(field_mutable:txnpb.PrepareRequest.intents)
   return intents_.Mutable(index);
 }
-inline ::txn::TxnIntent* PrepareRequest::add_intents() {
-  // @@protoc_insertion_point(field_add:txn.PrepareRequest.intents)
+inline ::txnpb::TxnIntent* PrepareRequest::add_intents() {
+  // @@protoc_insertion_point(field_add:txnpb.PrepareRequest.intents)
   return intents_.Add();
 }
-inline ::google::protobuf::RepeatedPtrField< ::txn::TxnIntent >*
+inline ::google::protobuf::RepeatedPtrField< ::txnpb::TxnIntent >*
 PrepareRequest::mutable_intents() {
-  // @@protoc_insertion_point(field_mutable_list:txn.PrepareRequest.intents)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.PrepareRequest.intents)
   return &intents_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::txn::TxnIntent >&
+inline const ::google::protobuf::RepeatedPtrField< ::txnpb::TxnIntent >&
 PrepareRequest::intents() const {
-  // @@protoc_insertion_point(field_list:txn.PrepareRequest.intents)
+  // @@protoc_insertion_point(field_list:txnpb.PrepareRequest.intents)
   return intents_;
 }
 
@@ -5016,41 +5016,41 @@ inline void PrepareRequest::clear_primary_key() {
   primary_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& PrepareRequest::primary_key() const {
-  // @@protoc_insertion_point(field_get:txn.PrepareRequest.primary_key)
+  // @@protoc_insertion_point(field_get:txnpb.PrepareRequest.primary_key)
   return primary_key_.GetNoArena();
 }
 inline void PrepareRequest::set_primary_key(const ::std::string& value) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.PrepareRequest.primary_key)
+  // @@protoc_insertion_point(field_set:txnpb.PrepareRequest.primary_key)
 }
 #if LANG_CXX11
 inline void PrepareRequest::set_primary_key(::std::string&& value) {
   
   primary_key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.PrepareRequest.primary_key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.PrepareRequest.primary_key)
 }
 #endif
 inline void PrepareRequest::set_primary_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.PrepareRequest.primary_key)
+  // @@protoc_insertion_point(field_set_char:txnpb.PrepareRequest.primary_key)
 }
 inline void PrepareRequest::set_primary_key(const void* value, size_t size) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.PrepareRequest.primary_key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.PrepareRequest.primary_key)
 }
 inline ::std::string* PrepareRequest::mutable_primary_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.PrepareRequest.primary_key)
+  // @@protoc_insertion_point(field_mutable:txnpb.PrepareRequest.primary_key)
   return primary_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* PrepareRequest::release_primary_key() {
-  // @@protoc_insertion_point(field_release:txn.PrepareRequest.primary_key)
+  // @@protoc_insertion_point(field_release:txnpb.PrepareRequest.primary_key)
   
   return primary_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -5061,7 +5061,7 @@ inline void PrepareRequest::set_allocated_primary_key(::std::string* primary_key
     
   }
   primary_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), primary_key);
-  // @@protoc_insertion_point(field_set_allocated:txn.PrepareRequest.primary_key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.PrepareRequest.primary_key)
 }
 
 // uint64 lock_ttl = 5;
@@ -5069,13 +5069,13 @@ inline void PrepareRequest::clear_lock_ttl() {
   lock_ttl_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 PrepareRequest::lock_ttl() const {
-  // @@protoc_insertion_point(field_get:txn.PrepareRequest.lock_ttl)
+  // @@protoc_insertion_point(field_get:txnpb.PrepareRequest.lock_ttl)
   return lock_ttl_;
 }
 inline void PrepareRequest::set_lock_ttl(::google::protobuf::uint64 value) {
   
   lock_ttl_ = value;
-  // @@protoc_insertion_point(field_set:txn.PrepareRequest.lock_ttl)
+  // @@protoc_insertion_point(field_set:txnpb.PrepareRequest.lock_ttl)
 }
 
 // repeated bytes secondary_keys = 6;
@@ -5086,64 +5086,64 @@ inline void PrepareRequest::clear_secondary_keys() {
   secondary_keys_.Clear();
 }
 inline const ::std::string& PrepareRequest::secondary_keys(int index) const {
-  // @@protoc_insertion_point(field_get:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_get:txnpb.PrepareRequest.secondary_keys)
   return secondary_keys_.Get(index);
 }
 inline ::std::string* PrepareRequest::mutable_secondary_keys(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_mutable:txnpb.PrepareRequest.secondary_keys)
   return secondary_keys_.Mutable(index);
 }
 inline void PrepareRequest::set_secondary_keys(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_set:txnpb.PrepareRequest.secondary_keys)
   secondary_keys_.Mutable(index)->assign(value);
 }
 #if LANG_CXX11
 inline void PrepareRequest::set_secondary_keys(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_set:txnpb.PrepareRequest.secondary_keys)
   secondary_keys_.Mutable(index)->assign(std::move(value));
 }
 #endif
 inline void PrepareRequest::set_secondary_keys(int index, const char* value) {
   GOOGLE_DCHECK(value != NULL);
   secondary_keys_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_set_char:txnpb.PrepareRequest.secondary_keys)
 }
 inline void PrepareRequest::set_secondary_keys(int index, const void* value, size_t size) {
   secondary_keys_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.PrepareRequest.secondary_keys)
 }
 inline ::std::string* PrepareRequest::add_secondary_keys() {
-  // @@protoc_insertion_point(field_add_mutable:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_add_mutable:txnpb.PrepareRequest.secondary_keys)
   return secondary_keys_.Add();
 }
 inline void PrepareRequest::add_secondary_keys(const ::std::string& value) {
   secondary_keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_add:txnpb.PrepareRequest.secondary_keys)
 }
 #if LANG_CXX11
 inline void PrepareRequest::add_secondary_keys(::std::string&& value) {
   secondary_keys_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_add:txnpb.PrepareRequest.secondary_keys)
 }
 #endif
 inline void PrepareRequest::add_secondary_keys(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   secondary_keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_add_char:txnpb.PrepareRequest.secondary_keys)
 }
 inline void PrepareRequest::add_secondary_keys(const void* value, size_t size) {
   secondary_keys_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_add_pointer:txnpb.PrepareRequest.secondary_keys)
 }
 inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
 PrepareRequest::secondary_keys() const {
-  // @@protoc_insertion_point(field_list:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_list:txnpb.PrepareRequest.secondary_keys)
   return secondary_keys_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::std::string>*
 PrepareRequest::mutable_secondary_keys() {
-  // @@protoc_insertion_point(field_mutable_list:txn.PrepareRequest.secondary_keys)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.PrepareRequest.secondary_keys)
   return &secondary_keys_;
 }
 
@@ -5152,46 +5152,46 @@ inline void PrepareRequest::clear_strict_check() {
   strict_check_ = false;
 }
 inline bool PrepareRequest::strict_check() const {
-  // @@protoc_insertion_point(field_get:txn.PrepareRequest.strict_check)
+  // @@protoc_insertion_point(field_get:txnpb.PrepareRequest.strict_check)
   return strict_check_;
 }
 inline void PrepareRequest::set_strict_check(bool value) {
   
   strict_check_ = value;
-  // @@protoc_insertion_point(field_set:txn.PrepareRequest.strict_check)
+  // @@protoc_insertion_point(field_set:txnpb.PrepareRequest.strict_check)
 }
 
 // -------------------------------------------------------------------
 
 // PrepareResponse
 
-// repeated .txn.TxnError errors = 1;
+// repeated .txnpb.TxnError errors = 1;
 inline int PrepareResponse::errors_size() const {
   return errors_.size();
 }
 inline void PrepareResponse::clear_errors() {
   errors_.Clear();
 }
-inline const ::txn::TxnError& PrepareResponse::errors(int index) const {
-  // @@protoc_insertion_point(field_get:txn.PrepareResponse.errors)
+inline const ::txnpb::TxnError& PrepareResponse::errors(int index) const {
+  // @@protoc_insertion_point(field_get:txnpb.PrepareResponse.errors)
   return errors_.Get(index);
 }
-inline ::txn::TxnError* PrepareResponse::mutable_errors(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.PrepareResponse.errors)
+inline ::txnpb::TxnError* PrepareResponse::mutable_errors(int index) {
+  // @@protoc_insertion_point(field_mutable:txnpb.PrepareResponse.errors)
   return errors_.Mutable(index);
 }
-inline ::txn::TxnError* PrepareResponse::add_errors() {
-  // @@protoc_insertion_point(field_add:txn.PrepareResponse.errors)
+inline ::txnpb::TxnError* PrepareResponse::add_errors() {
+  // @@protoc_insertion_point(field_add:txnpb.PrepareResponse.errors)
   return errors_.Add();
 }
-inline ::google::protobuf::RepeatedPtrField< ::txn::TxnError >*
+inline ::google::protobuf::RepeatedPtrField< ::txnpb::TxnError >*
 PrepareResponse::mutable_errors() {
-  // @@protoc_insertion_point(field_mutable_list:txn.PrepareResponse.errors)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.PrepareResponse.errors)
   return &errors_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::txn::TxnError >&
+inline const ::google::protobuf::RepeatedPtrField< ::txnpb::TxnError >&
 PrepareResponse::errors() const {
-  // @@protoc_insertion_point(field_list:txn.PrepareResponse.errors)
+  // @@protoc_insertion_point(field_list:txnpb.PrepareResponse.errors)
   return errors_;
 }
 
@@ -5209,7 +5209,7 @@ inline void DsPrepareRequest::clear_header() {
 }
 inline const ::kvrpcpb::RequestHeader& DsPrepareRequest::header() const {
   const ::kvrpcpb::RequestHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsPrepareRequest.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsPrepareRequest.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
       &::kvrpcpb::_RequestHeader_default_instance_);
 }
@@ -5218,11 +5218,11 @@ inline ::kvrpcpb::RequestHeader* DsPrepareRequest::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::RequestHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsPrepareRequest.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsPrepareRequest.header)
   return header_;
 }
 inline ::kvrpcpb::RequestHeader* DsPrepareRequest::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsPrepareRequest.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsPrepareRequest.header)
   
   ::kvrpcpb::RequestHeader* temp = header_;
   header_ = NULL;
@@ -5236,10 +5236,10 @@ inline void DsPrepareRequest::set_allocated_header(::kvrpcpb::RequestHeader* hea
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsPrepareRequest.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsPrepareRequest.header)
 }
 
-// .txn.PrepareRequest req = 2;
+// .txnpb.PrepareRequest req = 2;
 inline bool DsPrepareRequest::has_req() const {
   return this != internal_default_instance() && req_ != NULL;
 }
@@ -5247,28 +5247,28 @@ inline void DsPrepareRequest::clear_req() {
   if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
   req_ = NULL;
 }
-inline const ::txn::PrepareRequest& DsPrepareRequest::req() const {
-  const ::txn::PrepareRequest* p = req_;
-  // @@protoc_insertion_point(field_get:txn.DsPrepareRequest.req)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::PrepareRequest*>(
-      &::txn::_PrepareRequest_default_instance_);
+inline const ::txnpb::PrepareRequest& DsPrepareRequest::req() const {
+  const ::txnpb::PrepareRequest* p = req_;
+  // @@protoc_insertion_point(field_get:txnpb.DsPrepareRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::PrepareRequest*>(
+      &::txnpb::_PrepareRequest_default_instance_);
 }
-inline ::txn::PrepareRequest* DsPrepareRequest::mutable_req() {
+inline ::txnpb::PrepareRequest* DsPrepareRequest::mutable_req() {
   
   if (req_ == NULL) {
-    req_ = new ::txn::PrepareRequest;
+    req_ = new ::txnpb::PrepareRequest;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsPrepareRequest.req)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsPrepareRequest.req)
   return req_;
 }
-inline ::txn::PrepareRequest* DsPrepareRequest::release_req() {
-  // @@protoc_insertion_point(field_release:txn.DsPrepareRequest.req)
+inline ::txnpb::PrepareRequest* DsPrepareRequest::release_req() {
+  // @@protoc_insertion_point(field_release:txnpb.DsPrepareRequest.req)
   
-  ::txn::PrepareRequest* temp = req_;
+  ::txnpb::PrepareRequest* temp = req_;
   req_ = NULL;
   return temp;
 }
-inline void DsPrepareRequest::set_allocated_req(::txn::PrepareRequest* req) {
+inline void DsPrepareRequest::set_allocated_req(::txnpb::PrepareRequest* req) {
   delete req_;
   req_ = req;
   if (req) {
@@ -5276,7 +5276,7 @@ inline void DsPrepareRequest::set_allocated_req(::txn::PrepareRequest* req) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsPrepareRequest.req)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsPrepareRequest.req)
 }
 
 // -------------------------------------------------------------------
@@ -5293,7 +5293,7 @@ inline void DsPrepareResponse::clear_header() {
 }
 inline const ::kvrpcpb::ResponseHeader& DsPrepareResponse::header() const {
   const ::kvrpcpb::ResponseHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsPrepareResponse.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsPrepareResponse.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
       &::kvrpcpb::_ResponseHeader_default_instance_);
 }
@@ -5302,11 +5302,11 @@ inline ::kvrpcpb::ResponseHeader* DsPrepareResponse::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::ResponseHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsPrepareResponse.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsPrepareResponse.header)
   return header_;
 }
 inline ::kvrpcpb::ResponseHeader* DsPrepareResponse::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsPrepareResponse.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsPrepareResponse.header)
   
   ::kvrpcpb::ResponseHeader* temp = header_;
   header_ = NULL;
@@ -5320,10 +5320,10 @@ inline void DsPrepareResponse::set_allocated_header(::kvrpcpb::ResponseHeader* h
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsPrepareResponse.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsPrepareResponse.header)
 }
 
-// .txn.PrepareResponse resp = 2;
+// .txnpb.PrepareResponse resp = 2;
 inline bool DsPrepareResponse::has_resp() const {
   return this != internal_default_instance() && resp_ != NULL;
 }
@@ -5331,28 +5331,28 @@ inline void DsPrepareResponse::clear_resp() {
   if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
   resp_ = NULL;
 }
-inline const ::txn::PrepareResponse& DsPrepareResponse::resp() const {
-  const ::txn::PrepareResponse* p = resp_;
-  // @@protoc_insertion_point(field_get:txn.DsPrepareResponse.resp)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::PrepareResponse*>(
-      &::txn::_PrepareResponse_default_instance_);
+inline const ::txnpb::PrepareResponse& DsPrepareResponse::resp() const {
+  const ::txnpb::PrepareResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:txnpb.DsPrepareResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::PrepareResponse*>(
+      &::txnpb::_PrepareResponse_default_instance_);
 }
-inline ::txn::PrepareResponse* DsPrepareResponse::mutable_resp() {
+inline ::txnpb::PrepareResponse* DsPrepareResponse::mutable_resp() {
   
   if (resp_ == NULL) {
-    resp_ = new ::txn::PrepareResponse;
+    resp_ = new ::txnpb::PrepareResponse;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsPrepareResponse.resp)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsPrepareResponse.resp)
   return resp_;
 }
-inline ::txn::PrepareResponse* DsPrepareResponse::release_resp() {
-  // @@protoc_insertion_point(field_release:txn.DsPrepareResponse.resp)
+inline ::txnpb::PrepareResponse* DsPrepareResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:txnpb.DsPrepareResponse.resp)
   
-  ::txn::PrepareResponse* temp = resp_;
+  ::txnpb::PrepareResponse* temp = resp_;
   resp_ = NULL;
   return temp;
 }
-inline void DsPrepareResponse::set_allocated_resp(::txn::PrepareResponse* resp) {
+inline void DsPrepareResponse::set_allocated_resp(::txnpb::PrepareResponse* resp) {
   delete resp_;
   resp_ = resp;
   if (resp) {
@@ -5360,7 +5360,7 @@ inline void DsPrepareResponse::set_allocated_resp(::txn::PrepareResponse* resp) 
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsPrepareResponse.resp)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsPrepareResponse.resp)
 }
 
 // -------------------------------------------------------------------
@@ -5372,41 +5372,41 @@ inline void DecideRequest::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& DecideRequest::txn_id() const {
-  // @@protoc_insertion_point(field_get:txn.DecideRequest.txn_id)
+  // @@protoc_insertion_point(field_get:txnpb.DecideRequest.txn_id)
   return txn_id_.GetNoArena();
 }
 inline void DecideRequest::set_txn_id(const ::std::string& value) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.DecideRequest.txn_id)
+  // @@protoc_insertion_point(field_set:txnpb.DecideRequest.txn_id)
 }
 #if LANG_CXX11
 inline void DecideRequest::set_txn_id(::std::string&& value) {
   
   txn_id_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.DecideRequest.txn_id)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.DecideRequest.txn_id)
 }
 #endif
 inline void DecideRequest::set_txn_id(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.DecideRequest.txn_id)
+  // @@protoc_insertion_point(field_set_char:txnpb.DecideRequest.txn_id)
 }
 inline void DecideRequest::set_txn_id(const char* value, size_t size) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.DecideRequest.txn_id)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.DecideRequest.txn_id)
 }
 inline ::std::string* DecideRequest::mutable_txn_id() {
   
-  // @@protoc_insertion_point(field_mutable:txn.DecideRequest.txn_id)
+  // @@protoc_insertion_point(field_mutable:txnpb.DecideRequest.txn_id)
   return txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* DecideRequest::release_txn_id() {
-  // @@protoc_insertion_point(field_release:txn.DecideRequest.txn_id)
+  // @@protoc_insertion_point(field_release:txnpb.DecideRequest.txn_id)
   
   return txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -5417,21 +5417,21 @@ inline void DecideRequest::set_allocated_txn_id(::std::string* txn_id) {
     
   }
   txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txn_id);
-  // @@protoc_insertion_point(field_set_allocated:txn.DecideRequest.txn_id)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DecideRequest.txn_id)
 }
 
-// .txn.TxnStatus status = 2;
+// .txnpb.TxnStatus status = 2;
 inline void DecideRequest::clear_status() {
   status_ = 0;
 }
-inline ::txn::TxnStatus DecideRequest::status() const {
-  // @@protoc_insertion_point(field_get:txn.DecideRequest.status)
-  return static_cast< ::txn::TxnStatus >(status_);
+inline ::txnpb::TxnStatus DecideRequest::status() const {
+  // @@protoc_insertion_point(field_get:txnpb.DecideRequest.status)
+  return static_cast< ::txnpb::TxnStatus >(status_);
 }
-inline void DecideRequest::set_status(::txn::TxnStatus value) {
+inline void DecideRequest::set_status(::txnpb::TxnStatus value) {
   
   status_ = value;
-  // @@protoc_insertion_point(field_set:txn.DecideRequest.status)
+  // @@protoc_insertion_point(field_set:txnpb.DecideRequest.status)
 }
 
 // repeated bytes keys = 3;
@@ -5442,64 +5442,64 @@ inline void DecideRequest::clear_keys() {
   keys_.Clear();
 }
 inline const ::std::string& DecideRequest::keys(int index) const {
-  // @@protoc_insertion_point(field_get:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_get:txnpb.DecideRequest.keys)
   return keys_.Get(index);
 }
 inline ::std::string* DecideRequest::mutable_keys(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_mutable:txnpb.DecideRequest.keys)
   return keys_.Mutable(index);
 }
 inline void DecideRequest::set_keys(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_set:txnpb.DecideRequest.keys)
   keys_.Mutable(index)->assign(value);
 }
 #if LANG_CXX11
 inline void DecideRequest::set_keys(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_set:txnpb.DecideRequest.keys)
   keys_.Mutable(index)->assign(std::move(value));
 }
 #endif
 inline void DecideRequest::set_keys(int index, const char* value) {
   GOOGLE_DCHECK(value != NULL);
   keys_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_set_char:txnpb.DecideRequest.keys)
 }
 inline void DecideRequest::set_keys(int index, const void* value, size_t size) {
   keys_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.DecideRequest.keys)
 }
 inline ::std::string* DecideRequest::add_keys() {
-  // @@protoc_insertion_point(field_add_mutable:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_add_mutable:txnpb.DecideRequest.keys)
   return keys_.Add();
 }
 inline void DecideRequest::add_keys(const ::std::string& value) {
   keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_add:txnpb.DecideRequest.keys)
 }
 #if LANG_CXX11
 inline void DecideRequest::add_keys(::std::string&& value) {
   keys_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_add:txnpb.DecideRequest.keys)
 }
 #endif
 inline void DecideRequest::add_keys(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_add_char:txnpb.DecideRequest.keys)
 }
 inline void DecideRequest::add_keys(const void* value, size_t size) {
   keys_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_add_pointer:txnpb.DecideRequest.keys)
 }
 inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
 DecideRequest::keys() const {
-  // @@protoc_insertion_point(field_list:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_list:txnpb.DecideRequest.keys)
   return keys_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::std::string>*
 DecideRequest::mutable_keys() {
-  // @@protoc_insertion_point(field_mutable_list:txn.DecideRequest.keys)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.DecideRequest.keys)
   return &keys_;
 }
 
@@ -5508,20 +5508,20 @@ inline void DecideRequest::clear_recover() {
   recover_ = false;
 }
 inline bool DecideRequest::recover() const {
-  // @@protoc_insertion_point(field_get:txn.DecideRequest.recover)
+  // @@protoc_insertion_point(field_get:txnpb.DecideRequest.recover)
   return recover_;
 }
 inline void DecideRequest::set_recover(bool value) {
   
   recover_ = value;
-  // @@protoc_insertion_point(field_set:txn.DecideRequest.recover)
+  // @@protoc_insertion_point(field_set:txnpb.DecideRequest.recover)
 }
 
 // -------------------------------------------------------------------
 
 // DecideResponse
 
-// .txn.TxnError err = 1;
+// .txnpb.TxnError err = 1;
 inline bool DecideResponse::has_err() const {
   return this != internal_default_instance() && err_ != NULL;
 }
@@ -5529,28 +5529,28 @@ inline void DecideResponse::clear_err() {
   if (GetArenaNoVirtual() == NULL && err_ != NULL) delete err_;
   err_ = NULL;
 }
-inline const ::txn::TxnError& DecideResponse::err() const {
-  const ::txn::TxnError* p = err_;
-  // @@protoc_insertion_point(field_get:txn.DecideResponse.err)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::TxnError*>(
-      &::txn::_TxnError_default_instance_);
+inline const ::txnpb::TxnError& DecideResponse::err() const {
+  const ::txnpb::TxnError* p = err_;
+  // @@protoc_insertion_point(field_get:txnpb.DecideResponse.err)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::TxnError*>(
+      &::txnpb::_TxnError_default_instance_);
 }
-inline ::txn::TxnError* DecideResponse::mutable_err() {
+inline ::txnpb::TxnError* DecideResponse::mutable_err() {
   
   if (err_ == NULL) {
-    err_ = new ::txn::TxnError;
+    err_ = new ::txnpb::TxnError;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DecideResponse.err)
+  // @@protoc_insertion_point(field_mutable:txnpb.DecideResponse.err)
   return err_;
 }
-inline ::txn::TxnError* DecideResponse::release_err() {
-  // @@protoc_insertion_point(field_release:txn.DecideResponse.err)
+inline ::txnpb::TxnError* DecideResponse::release_err() {
+  // @@protoc_insertion_point(field_release:txnpb.DecideResponse.err)
   
-  ::txn::TxnError* temp = err_;
+  ::txnpb::TxnError* temp = err_;
   err_ = NULL;
   return temp;
 }
-inline void DecideResponse::set_allocated_err(::txn::TxnError* err) {
+inline void DecideResponse::set_allocated_err(::txnpb::TxnError* err) {
   delete err_;
   err_ = err;
   if (err) {
@@ -5558,7 +5558,7 @@ inline void DecideResponse::set_allocated_err(::txn::TxnError* err) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DecideResponse.err)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DecideResponse.err)
 }
 
 // repeated bytes secondary_keys = 2;
@@ -5569,64 +5569,64 @@ inline void DecideResponse::clear_secondary_keys() {
   secondary_keys_.Clear();
 }
 inline const ::std::string& DecideResponse::secondary_keys(int index) const {
-  // @@protoc_insertion_point(field_get:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_get:txnpb.DecideResponse.secondary_keys)
   return secondary_keys_.Get(index);
 }
 inline ::std::string* DecideResponse::mutable_secondary_keys(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_mutable:txnpb.DecideResponse.secondary_keys)
   return secondary_keys_.Mutable(index);
 }
 inline void DecideResponse::set_secondary_keys(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_set:txnpb.DecideResponse.secondary_keys)
   secondary_keys_.Mutable(index)->assign(value);
 }
 #if LANG_CXX11
 inline void DecideResponse::set_secondary_keys(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_set:txnpb.DecideResponse.secondary_keys)
   secondary_keys_.Mutable(index)->assign(std::move(value));
 }
 #endif
 inline void DecideResponse::set_secondary_keys(int index, const char* value) {
   GOOGLE_DCHECK(value != NULL);
   secondary_keys_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_set_char:txnpb.DecideResponse.secondary_keys)
 }
 inline void DecideResponse::set_secondary_keys(int index, const void* value, size_t size) {
   secondary_keys_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.DecideResponse.secondary_keys)
 }
 inline ::std::string* DecideResponse::add_secondary_keys() {
-  // @@protoc_insertion_point(field_add_mutable:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_add_mutable:txnpb.DecideResponse.secondary_keys)
   return secondary_keys_.Add();
 }
 inline void DecideResponse::add_secondary_keys(const ::std::string& value) {
   secondary_keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_add:txnpb.DecideResponse.secondary_keys)
 }
 #if LANG_CXX11
 inline void DecideResponse::add_secondary_keys(::std::string&& value) {
   secondary_keys_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_add:txnpb.DecideResponse.secondary_keys)
 }
 #endif
 inline void DecideResponse::add_secondary_keys(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   secondary_keys_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_add_char:txnpb.DecideResponse.secondary_keys)
 }
 inline void DecideResponse::add_secondary_keys(const void* value, size_t size) {
   secondary_keys_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_add_pointer:txnpb.DecideResponse.secondary_keys)
 }
 inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
 DecideResponse::secondary_keys() const {
-  // @@protoc_insertion_point(field_list:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_list:txnpb.DecideResponse.secondary_keys)
   return secondary_keys_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::std::string>*
 DecideResponse::mutable_secondary_keys() {
-  // @@protoc_insertion_point(field_mutable_list:txn.DecideResponse.secondary_keys)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.DecideResponse.secondary_keys)
   return &secondary_keys_;
 }
 
@@ -5644,7 +5644,7 @@ inline void DsDecideRequest::clear_header() {
 }
 inline const ::kvrpcpb::RequestHeader& DsDecideRequest::header() const {
   const ::kvrpcpb::RequestHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsDecideRequest.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsDecideRequest.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
       &::kvrpcpb::_RequestHeader_default_instance_);
 }
@@ -5653,11 +5653,11 @@ inline ::kvrpcpb::RequestHeader* DsDecideRequest::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::RequestHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsDecideRequest.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsDecideRequest.header)
   return header_;
 }
 inline ::kvrpcpb::RequestHeader* DsDecideRequest::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsDecideRequest.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsDecideRequest.header)
   
   ::kvrpcpb::RequestHeader* temp = header_;
   header_ = NULL;
@@ -5671,10 +5671,10 @@ inline void DsDecideRequest::set_allocated_header(::kvrpcpb::RequestHeader* head
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsDecideRequest.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsDecideRequest.header)
 }
 
-// .txn.DecideRequest req = 2;
+// .txnpb.DecideRequest req = 2;
 inline bool DsDecideRequest::has_req() const {
   return this != internal_default_instance() && req_ != NULL;
 }
@@ -5682,28 +5682,28 @@ inline void DsDecideRequest::clear_req() {
   if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
   req_ = NULL;
 }
-inline const ::txn::DecideRequest& DsDecideRequest::req() const {
-  const ::txn::DecideRequest* p = req_;
-  // @@protoc_insertion_point(field_get:txn.DsDecideRequest.req)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::DecideRequest*>(
-      &::txn::_DecideRequest_default_instance_);
+inline const ::txnpb::DecideRequest& DsDecideRequest::req() const {
+  const ::txnpb::DecideRequest* p = req_;
+  // @@protoc_insertion_point(field_get:txnpb.DsDecideRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::DecideRequest*>(
+      &::txnpb::_DecideRequest_default_instance_);
 }
-inline ::txn::DecideRequest* DsDecideRequest::mutable_req() {
+inline ::txnpb::DecideRequest* DsDecideRequest::mutable_req() {
   
   if (req_ == NULL) {
-    req_ = new ::txn::DecideRequest;
+    req_ = new ::txnpb::DecideRequest;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsDecideRequest.req)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsDecideRequest.req)
   return req_;
 }
-inline ::txn::DecideRequest* DsDecideRequest::release_req() {
-  // @@protoc_insertion_point(field_release:txn.DsDecideRequest.req)
+inline ::txnpb::DecideRequest* DsDecideRequest::release_req() {
+  // @@protoc_insertion_point(field_release:txnpb.DsDecideRequest.req)
   
-  ::txn::DecideRequest* temp = req_;
+  ::txnpb::DecideRequest* temp = req_;
   req_ = NULL;
   return temp;
 }
-inline void DsDecideRequest::set_allocated_req(::txn::DecideRequest* req) {
+inline void DsDecideRequest::set_allocated_req(::txnpb::DecideRequest* req) {
   delete req_;
   req_ = req;
   if (req) {
@@ -5711,7 +5711,7 @@ inline void DsDecideRequest::set_allocated_req(::txn::DecideRequest* req) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsDecideRequest.req)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsDecideRequest.req)
 }
 
 // -------------------------------------------------------------------
@@ -5728,7 +5728,7 @@ inline void DsDecideResponse::clear_header() {
 }
 inline const ::kvrpcpb::ResponseHeader& DsDecideResponse::header() const {
   const ::kvrpcpb::ResponseHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsDecideResponse.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsDecideResponse.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
       &::kvrpcpb::_ResponseHeader_default_instance_);
 }
@@ -5737,11 +5737,11 @@ inline ::kvrpcpb::ResponseHeader* DsDecideResponse::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::ResponseHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsDecideResponse.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsDecideResponse.header)
   return header_;
 }
 inline ::kvrpcpb::ResponseHeader* DsDecideResponse::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsDecideResponse.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsDecideResponse.header)
   
   ::kvrpcpb::ResponseHeader* temp = header_;
   header_ = NULL;
@@ -5755,10 +5755,10 @@ inline void DsDecideResponse::set_allocated_header(::kvrpcpb::ResponseHeader* he
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsDecideResponse.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsDecideResponse.header)
 }
 
-// .txn.DecideResponse resp = 2;
+// .txnpb.DecideResponse resp = 2;
 inline bool DsDecideResponse::has_resp() const {
   return this != internal_default_instance() && resp_ != NULL;
 }
@@ -5766,28 +5766,28 @@ inline void DsDecideResponse::clear_resp() {
   if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
   resp_ = NULL;
 }
-inline const ::txn::DecideResponse& DsDecideResponse::resp() const {
-  const ::txn::DecideResponse* p = resp_;
-  // @@protoc_insertion_point(field_get:txn.DsDecideResponse.resp)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::DecideResponse*>(
-      &::txn::_DecideResponse_default_instance_);
+inline const ::txnpb::DecideResponse& DsDecideResponse::resp() const {
+  const ::txnpb::DecideResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:txnpb.DsDecideResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::DecideResponse*>(
+      &::txnpb::_DecideResponse_default_instance_);
 }
-inline ::txn::DecideResponse* DsDecideResponse::mutable_resp() {
+inline ::txnpb::DecideResponse* DsDecideResponse::mutable_resp() {
   
   if (resp_ == NULL) {
-    resp_ = new ::txn::DecideResponse;
+    resp_ = new ::txnpb::DecideResponse;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsDecideResponse.resp)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsDecideResponse.resp)
   return resp_;
 }
-inline ::txn::DecideResponse* DsDecideResponse::release_resp() {
-  // @@protoc_insertion_point(field_release:txn.DsDecideResponse.resp)
+inline ::txnpb::DecideResponse* DsDecideResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:txnpb.DsDecideResponse.resp)
   
-  ::txn::DecideResponse* temp = resp_;
+  ::txnpb::DecideResponse* temp = resp_;
   resp_ = NULL;
   return temp;
 }
-inline void DsDecideResponse::set_allocated_resp(::txn::DecideResponse* resp) {
+inline void DsDecideResponse::set_allocated_resp(::txnpb::DecideResponse* resp) {
   delete resp_;
   resp_ = resp;
   if (resp) {
@@ -5795,7 +5795,7 @@ inline void DsDecideResponse::set_allocated_resp(::txn::DecideResponse* resp) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsDecideResponse.resp)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsDecideResponse.resp)
 }
 
 // -------------------------------------------------------------------
@@ -5807,41 +5807,41 @@ inline void ClearupRequest::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& ClearupRequest::txn_id() const {
-  // @@protoc_insertion_point(field_get:txn.ClearupRequest.txn_id)
+  // @@protoc_insertion_point(field_get:txnpb.ClearupRequest.txn_id)
   return txn_id_.GetNoArena();
 }
 inline void ClearupRequest::set_txn_id(const ::std::string& value) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.ClearupRequest.txn_id)
+  // @@protoc_insertion_point(field_set:txnpb.ClearupRequest.txn_id)
 }
 #if LANG_CXX11
 inline void ClearupRequest::set_txn_id(::std::string&& value) {
   
   txn_id_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.ClearupRequest.txn_id)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.ClearupRequest.txn_id)
 }
 #endif
 inline void ClearupRequest::set_txn_id(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.ClearupRequest.txn_id)
+  // @@protoc_insertion_point(field_set_char:txnpb.ClearupRequest.txn_id)
 }
 inline void ClearupRequest::set_txn_id(const char* value, size_t size) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.ClearupRequest.txn_id)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.ClearupRequest.txn_id)
 }
 inline ::std::string* ClearupRequest::mutable_txn_id() {
   
-  // @@protoc_insertion_point(field_mutable:txn.ClearupRequest.txn_id)
+  // @@protoc_insertion_point(field_mutable:txnpb.ClearupRequest.txn_id)
   return txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* ClearupRequest::release_txn_id() {
-  // @@protoc_insertion_point(field_release:txn.ClearupRequest.txn_id)
+  // @@protoc_insertion_point(field_release:txnpb.ClearupRequest.txn_id)
   
   return txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -5852,7 +5852,7 @@ inline void ClearupRequest::set_allocated_txn_id(::std::string* txn_id) {
     
   }
   txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txn_id);
-  // @@protoc_insertion_point(field_set_allocated:txn.ClearupRequest.txn_id)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.ClearupRequest.txn_id)
 }
 
 // bytes primary_key = 2;
@@ -5860,41 +5860,41 @@ inline void ClearupRequest::clear_primary_key() {
   primary_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& ClearupRequest::primary_key() const {
-  // @@protoc_insertion_point(field_get:txn.ClearupRequest.primary_key)
+  // @@protoc_insertion_point(field_get:txnpb.ClearupRequest.primary_key)
   return primary_key_.GetNoArena();
 }
 inline void ClearupRequest::set_primary_key(const ::std::string& value) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.ClearupRequest.primary_key)
+  // @@protoc_insertion_point(field_set:txnpb.ClearupRequest.primary_key)
 }
 #if LANG_CXX11
 inline void ClearupRequest::set_primary_key(::std::string&& value) {
   
   primary_key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.ClearupRequest.primary_key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.ClearupRequest.primary_key)
 }
 #endif
 inline void ClearupRequest::set_primary_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.ClearupRequest.primary_key)
+  // @@protoc_insertion_point(field_set_char:txnpb.ClearupRequest.primary_key)
 }
 inline void ClearupRequest::set_primary_key(const void* value, size_t size) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.ClearupRequest.primary_key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.ClearupRequest.primary_key)
 }
 inline ::std::string* ClearupRequest::mutable_primary_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.ClearupRequest.primary_key)
+  // @@protoc_insertion_point(field_mutable:txnpb.ClearupRequest.primary_key)
   return primary_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* ClearupRequest::release_primary_key() {
-  // @@protoc_insertion_point(field_release:txn.ClearupRequest.primary_key)
+  // @@protoc_insertion_point(field_release:txnpb.ClearupRequest.primary_key)
   
   return primary_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -5905,14 +5905,14 @@ inline void ClearupRequest::set_allocated_primary_key(::std::string* primary_key
     
   }
   primary_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), primary_key);
-  // @@protoc_insertion_point(field_set_allocated:txn.ClearupRequest.primary_key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.ClearupRequest.primary_key)
 }
 
 // -------------------------------------------------------------------
 
 // ClearupResponse
 
-// .txn.TxnError err = 1;
+// .txnpb.TxnError err = 1;
 inline bool ClearupResponse::has_err() const {
   return this != internal_default_instance() && err_ != NULL;
 }
@@ -5920,28 +5920,28 @@ inline void ClearupResponse::clear_err() {
   if (GetArenaNoVirtual() == NULL && err_ != NULL) delete err_;
   err_ = NULL;
 }
-inline const ::txn::TxnError& ClearupResponse::err() const {
-  const ::txn::TxnError* p = err_;
-  // @@protoc_insertion_point(field_get:txn.ClearupResponse.err)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::TxnError*>(
-      &::txn::_TxnError_default_instance_);
+inline const ::txnpb::TxnError& ClearupResponse::err() const {
+  const ::txnpb::TxnError* p = err_;
+  // @@protoc_insertion_point(field_get:txnpb.ClearupResponse.err)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::TxnError*>(
+      &::txnpb::_TxnError_default_instance_);
 }
-inline ::txn::TxnError* ClearupResponse::mutable_err() {
+inline ::txnpb::TxnError* ClearupResponse::mutable_err() {
   
   if (err_ == NULL) {
-    err_ = new ::txn::TxnError;
+    err_ = new ::txnpb::TxnError;
   }
-  // @@protoc_insertion_point(field_mutable:txn.ClearupResponse.err)
+  // @@protoc_insertion_point(field_mutable:txnpb.ClearupResponse.err)
   return err_;
 }
-inline ::txn::TxnError* ClearupResponse::release_err() {
-  // @@protoc_insertion_point(field_release:txn.ClearupResponse.err)
+inline ::txnpb::TxnError* ClearupResponse::release_err() {
+  // @@protoc_insertion_point(field_release:txnpb.ClearupResponse.err)
   
-  ::txn::TxnError* temp = err_;
+  ::txnpb::TxnError* temp = err_;
   err_ = NULL;
   return temp;
 }
-inline void ClearupResponse::set_allocated_err(::txn::TxnError* err) {
+inline void ClearupResponse::set_allocated_err(::txnpb::TxnError* err) {
   delete err_;
   err_ = err;
   if (err) {
@@ -5949,7 +5949,7 @@ inline void ClearupResponse::set_allocated_err(::txn::TxnError* err) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.ClearupResponse.err)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.ClearupResponse.err)
 }
 
 // -------------------------------------------------------------------
@@ -5966,7 +5966,7 @@ inline void DsClearupRequest::clear_header() {
 }
 inline const ::kvrpcpb::RequestHeader& DsClearupRequest::header() const {
   const ::kvrpcpb::RequestHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsClearupRequest.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsClearupRequest.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
       &::kvrpcpb::_RequestHeader_default_instance_);
 }
@@ -5975,11 +5975,11 @@ inline ::kvrpcpb::RequestHeader* DsClearupRequest::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::RequestHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsClearupRequest.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsClearupRequest.header)
   return header_;
 }
 inline ::kvrpcpb::RequestHeader* DsClearupRequest::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsClearupRequest.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsClearupRequest.header)
   
   ::kvrpcpb::RequestHeader* temp = header_;
   header_ = NULL;
@@ -5993,10 +5993,10 @@ inline void DsClearupRequest::set_allocated_header(::kvrpcpb::RequestHeader* hea
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsClearupRequest.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsClearupRequest.header)
 }
 
-// .txn.ClearupRequest req = 2;
+// .txnpb.ClearupRequest req = 2;
 inline bool DsClearupRequest::has_req() const {
   return this != internal_default_instance() && req_ != NULL;
 }
@@ -6004,28 +6004,28 @@ inline void DsClearupRequest::clear_req() {
   if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
   req_ = NULL;
 }
-inline const ::txn::ClearupRequest& DsClearupRequest::req() const {
-  const ::txn::ClearupRequest* p = req_;
-  // @@protoc_insertion_point(field_get:txn.DsClearupRequest.req)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::ClearupRequest*>(
-      &::txn::_ClearupRequest_default_instance_);
+inline const ::txnpb::ClearupRequest& DsClearupRequest::req() const {
+  const ::txnpb::ClearupRequest* p = req_;
+  // @@protoc_insertion_point(field_get:txnpb.DsClearupRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::ClearupRequest*>(
+      &::txnpb::_ClearupRequest_default_instance_);
 }
-inline ::txn::ClearupRequest* DsClearupRequest::mutable_req() {
+inline ::txnpb::ClearupRequest* DsClearupRequest::mutable_req() {
   
   if (req_ == NULL) {
-    req_ = new ::txn::ClearupRequest;
+    req_ = new ::txnpb::ClearupRequest;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsClearupRequest.req)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsClearupRequest.req)
   return req_;
 }
-inline ::txn::ClearupRequest* DsClearupRequest::release_req() {
-  // @@protoc_insertion_point(field_release:txn.DsClearupRequest.req)
+inline ::txnpb::ClearupRequest* DsClearupRequest::release_req() {
+  // @@protoc_insertion_point(field_release:txnpb.DsClearupRequest.req)
   
-  ::txn::ClearupRequest* temp = req_;
+  ::txnpb::ClearupRequest* temp = req_;
   req_ = NULL;
   return temp;
 }
-inline void DsClearupRequest::set_allocated_req(::txn::ClearupRequest* req) {
+inline void DsClearupRequest::set_allocated_req(::txnpb::ClearupRequest* req) {
   delete req_;
   req_ = req;
   if (req) {
@@ -6033,7 +6033,7 @@ inline void DsClearupRequest::set_allocated_req(::txn::ClearupRequest* req) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsClearupRequest.req)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsClearupRequest.req)
 }
 
 // -------------------------------------------------------------------
@@ -6050,7 +6050,7 @@ inline void DsClearupResponse::clear_header() {
 }
 inline const ::kvrpcpb::ResponseHeader& DsClearupResponse::header() const {
   const ::kvrpcpb::ResponseHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsClearupResponse.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsClearupResponse.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
       &::kvrpcpb::_ResponseHeader_default_instance_);
 }
@@ -6059,11 +6059,11 @@ inline ::kvrpcpb::ResponseHeader* DsClearupResponse::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::ResponseHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsClearupResponse.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsClearupResponse.header)
   return header_;
 }
 inline ::kvrpcpb::ResponseHeader* DsClearupResponse::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsClearupResponse.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsClearupResponse.header)
   
   ::kvrpcpb::ResponseHeader* temp = header_;
   header_ = NULL;
@@ -6077,10 +6077,10 @@ inline void DsClearupResponse::set_allocated_header(::kvrpcpb::ResponseHeader* h
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsClearupResponse.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsClearupResponse.header)
 }
 
-// .txn.ClearupResponse resp = 2;
+// .txnpb.ClearupResponse resp = 2;
 inline bool DsClearupResponse::has_resp() const {
   return this != internal_default_instance() && resp_ != NULL;
 }
@@ -6088,28 +6088,28 @@ inline void DsClearupResponse::clear_resp() {
   if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
   resp_ = NULL;
 }
-inline const ::txn::ClearupResponse& DsClearupResponse::resp() const {
-  const ::txn::ClearupResponse* p = resp_;
-  // @@protoc_insertion_point(field_get:txn.DsClearupResponse.resp)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::ClearupResponse*>(
-      &::txn::_ClearupResponse_default_instance_);
+inline const ::txnpb::ClearupResponse& DsClearupResponse::resp() const {
+  const ::txnpb::ClearupResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:txnpb.DsClearupResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::ClearupResponse*>(
+      &::txnpb::_ClearupResponse_default_instance_);
 }
-inline ::txn::ClearupResponse* DsClearupResponse::mutable_resp() {
+inline ::txnpb::ClearupResponse* DsClearupResponse::mutable_resp() {
   
   if (resp_ == NULL) {
-    resp_ = new ::txn::ClearupResponse;
+    resp_ = new ::txnpb::ClearupResponse;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsClearupResponse.resp)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsClearupResponse.resp)
   return resp_;
 }
-inline ::txn::ClearupResponse* DsClearupResponse::release_resp() {
-  // @@protoc_insertion_point(field_release:txn.DsClearupResponse.resp)
+inline ::txnpb::ClearupResponse* DsClearupResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:txnpb.DsClearupResponse.resp)
   
-  ::txn::ClearupResponse* temp = resp_;
+  ::txnpb::ClearupResponse* temp = resp_;
   resp_ = NULL;
   return temp;
 }
-inline void DsClearupResponse::set_allocated_resp(::txn::ClearupResponse* resp) {
+inline void DsClearupResponse::set_allocated_resp(::txnpb::ClearupResponse* resp) {
   delete resp_;
   resp_ = resp;
   if (resp) {
@@ -6117,7 +6117,7 @@ inline void DsClearupResponse::set_allocated_resp(::txn::ClearupResponse* resp) 
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsClearupResponse.resp)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsClearupResponse.resp)
 }
 
 // -------------------------------------------------------------------
@@ -6129,41 +6129,41 @@ inline void GetLockInfoRequest::clear_key() {
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& GetLockInfoRequest::key() const {
-  // @@protoc_insertion_point(field_get:txn.GetLockInfoRequest.key)
+  // @@protoc_insertion_point(field_get:txnpb.GetLockInfoRequest.key)
   return key_.GetNoArena();
 }
 inline void GetLockInfoRequest::set_key(const ::std::string& value) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.GetLockInfoRequest.key)
+  // @@protoc_insertion_point(field_set:txnpb.GetLockInfoRequest.key)
 }
 #if LANG_CXX11
 inline void GetLockInfoRequest::set_key(::std::string&& value) {
   
   key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.GetLockInfoRequest.key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.GetLockInfoRequest.key)
 }
 #endif
 inline void GetLockInfoRequest::set_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.GetLockInfoRequest.key)
+  // @@protoc_insertion_point(field_set_char:txnpb.GetLockInfoRequest.key)
 }
 inline void GetLockInfoRequest::set_key(const void* value, size_t size) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.GetLockInfoRequest.key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.GetLockInfoRequest.key)
 }
 inline ::std::string* GetLockInfoRequest::mutable_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.GetLockInfoRequest.key)
+  // @@protoc_insertion_point(field_mutable:txnpb.GetLockInfoRequest.key)
   return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* GetLockInfoRequest::release_key() {
-  // @@protoc_insertion_point(field_release:txn.GetLockInfoRequest.key)
+  // @@protoc_insertion_point(field_release:txnpb.GetLockInfoRequest.key)
   
   return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6174,7 +6174,7 @@ inline void GetLockInfoRequest::set_allocated_key(::std::string* key) {
     
   }
   key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:txn.GetLockInfoRequest.key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.GetLockInfoRequest.key)
 }
 
 // string txn_id = 2;
@@ -6182,41 +6182,41 @@ inline void GetLockInfoRequest::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& GetLockInfoRequest::txn_id() const {
-  // @@protoc_insertion_point(field_get:txn.GetLockInfoRequest.txn_id)
+  // @@protoc_insertion_point(field_get:txnpb.GetLockInfoRequest.txn_id)
   return txn_id_.GetNoArena();
 }
 inline void GetLockInfoRequest::set_txn_id(const ::std::string& value) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.GetLockInfoRequest.txn_id)
+  // @@protoc_insertion_point(field_set:txnpb.GetLockInfoRequest.txn_id)
 }
 #if LANG_CXX11
 inline void GetLockInfoRequest::set_txn_id(::std::string&& value) {
   
   txn_id_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.GetLockInfoRequest.txn_id)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.GetLockInfoRequest.txn_id)
 }
 #endif
 inline void GetLockInfoRequest::set_txn_id(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.GetLockInfoRequest.txn_id)
+  // @@protoc_insertion_point(field_set_char:txnpb.GetLockInfoRequest.txn_id)
 }
 inline void GetLockInfoRequest::set_txn_id(const char* value, size_t size) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.GetLockInfoRequest.txn_id)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.GetLockInfoRequest.txn_id)
 }
 inline ::std::string* GetLockInfoRequest::mutable_txn_id() {
   
-  // @@protoc_insertion_point(field_mutable:txn.GetLockInfoRequest.txn_id)
+  // @@protoc_insertion_point(field_mutable:txnpb.GetLockInfoRequest.txn_id)
   return txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* GetLockInfoRequest::release_txn_id() {
-  // @@protoc_insertion_point(field_release:txn.GetLockInfoRequest.txn_id)
+  // @@protoc_insertion_point(field_release:txnpb.GetLockInfoRequest.txn_id)
   
   return txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6227,14 +6227,14 @@ inline void GetLockInfoRequest::set_allocated_txn_id(::std::string* txn_id) {
     
   }
   txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txn_id);
-  // @@protoc_insertion_point(field_set_allocated:txn.GetLockInfoRequest.txn_id)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.GetLockInfoRequest.txn_id)
 }
 
 // -------------------------------------------------------------------
 
 // GetLockInfoResponse
 
-// .txn.LockInfo info = 1;
+// .txnpb.LockInfo info = 1;
 inline bool GetLockInfoResponse::has_info() const {
   return this != internal_default_instance() && info_ != NULL;
 }
@@ -6242,28 +6242,28 @@ inline void GetLockInfoResponse::clear_info() {
   if (GetArenaNoVirtual() == NULL && info_ != NULL) delete info_;
   info_ = NULL;
 }
-inline const ::txn::LockInfo& GetLockInfoResponse::info() const {
-  const ::txn::LockInfo* p = info_;
-  // @@protoc_insertion_point(field_get:txn.GetLockInfoResponse.info)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::LockInfo*>(
-      &::txn::_LockInfo_default_instance_);
+inline const ::txnpb::LockInfo& GetLockInfoResponse::info() const {
+  const ::txnpb::LockInfo* p = info_;
+  // @@protoc_insertion_point(field_get:txnpb.GetLockInfoResponse.info)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::LockInfo*>(
+      &::txnpb::_LockInfo_default_instance_);
 }
-inline ::txn::LockInfo* GetLockInfoResponse::mutable_info() {
+inline ::txnpb::LockInfo* GetLockInfoResponse::mutable_info() {
   
   if (info_ == NULL) {
-    info_ = new ::txn::LockInfo;
+    info_ = new ::txnpb::LockInfo;
   }
-  // @@protoc_insertion_point(field_mutable:txn.GetLockInfoResponse.info)
+  // @@protoc_insertion_point(field_mutable:txnpb.GetLockInfoResponse.info)
   return info_;
 }
-inline ::txn::LockInfo* GetLockInfoResponse::release_info() {
-  // @@protoc_insertion_point(field_release:txn.GetLockInfoResponse.info)
+inline ::txnpb::LockInfo* GetLockInfoResponse::release_info() {
+  // @@protoc_insertion_point(field_release:txnpb.GetLockInfoResponse.info)
   
-  ::txn::LockInfo* temp = info_;
+  ::txnpb::LockInfo* temp = info_;
   info_ = NULL;
   return temp;
 }
-inline void GetLockInfoResponse::set_allocated_info(::txn::LockInfo* info) {
+inline void GetLockInfoResponse::set_allocated_info(::txnpb::LockInfo* info) {
   delete info_;
   info_ = info;
   if (info) {
@@ -6271,7 +6271,7 @@ inline void GetLockInfoResponse::set_allocated_info(::txn::LockInfo* info) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.GetLockInfoResponse.info)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.GetLockInfoResponse.info)
 }
 
 // -------------------------------------------------------------------
@@ -6288,7 +6288,7 @@ inline void DsGetLockInfoRequest::clear_header() {
 }
 inline const ::kvrpcpb::RequestHeader& DsGetLockInfoRequest::header() const {
   const ::kvrpcpb::RequestHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsGetLockInfoRequest.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsGetLockInfoRequest.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
       &::kvrpcpb::_RequestHeader_default_instance_);
 }
@@ -6297,11 +6297,11 @@ inline ::kvrpcpb::RequestHeader* DsGetLockInfoRequest::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::RequestHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsGetLockInfoRequest.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsGetLockInfoRequest.header)
   return header_;
 }
 inline ::kvrpcpb::RequestHeader* DsGetLockInfoRequest::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsGetLockInfoRequest.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsGetLockInfoRequest.header)
   
   ::kvrpcpb::RequestHeader* temp = header_;
   header_ = NULL;
@@ -6315,10 +6315,10 @@ inline void DsGetLockInfoRequest::set_allocated_header(::kvrpcpb::RequestHeader*
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsGetLockInfoRequest.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsGetLockInfoRequest.header)
 }
 
-// .txn.GetLockInfoRequest req = 2;
+// .txnpb.GetLockInfoRequest req = 2;
 inline bool DsGetLockInfoRequest::has_req() const {
   return this != internal_default_instance() && req_ != NULL;
 }
@@ -6326,28 +6326,28 @@ inline void DsGetLockInfoRequest::clear_req() {
   if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
   req_ = NULL;
 }
-inline const ::txn::GetLockInfoRequest& DsGetLockInfoRequest::req() const {
-  const ::txn::GetLockInfoRequest* p = req_;
-  // @@protoc_insertion_point(field_get:txn.DsGetLockInfoRequest.req)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::GetLockInfoRequest*>(
-      &::txn::_GetLockInfoRequest_default_instance_);
+inline const ::txnpb::GetLockInfoRequest& DsGetLockInfoRequest::req() const {
+  const ::txnpb::GetLockInfoRequest* p = req_;
+  // @@protoc_insertion_point(field_get:txnpb.DsGetLockInfoRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::GetLockInfoRequest*>(
+      &::txnpb::_GetLockInfoRequest_default_instance_);
 }
-inline ::txn::GetLockInfoRequest* DsGetLockInfoRequest::mutable_req() {
+inline ::txnpb::GetLockInfoRequest* DsGetLockInfoRequest::mutable_req() {
   
   if (req_ == NULL) {
-    req_ = new ::txn::GetLockInfoRequest;
+    req_ = new ::txnpb::GetLockInfoRequest;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsGetLockInfoRequest.req)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsGetLockInfoRequest.req)
   return req_;
 }
-inline ::txn::GetLockInfoRequest* DsGetLockInfoRequest::release_req() {
-  // @@protoc_insertion_point(field_release:txn.DsGetLockInfoRequest.req)
+inline ::txnpb::GetLockInfoRequest* DsGetLockInfoRequest::release_req() {
+  // @@protoc_insertion_point(field_release:txnpb.DsGetLockInfoRequest.req)
   
-  ::txn::GetLockInfoRequest* temp = req_;
+  ::txnpb::GetLockInfoRequest* temp = req_;
   req_ = NULL;
   return temp;
 }
-inline void DsGetLockInfoRequest::set_allocated_req(::txn::GetLockInfoRequest* req) {
+inline void DsGetLockInfoRequest::set_allocated_req(::txnpb::GetLockInfoRequest* req) {
   delete req_;
   req_ = req;
   if (req) {
@@ -6355,7 +6355,7 @@ inline void DsGetLockInfoRequest::set_allocated_req(::txn::GetLockInfoRequest* r
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsGetLockInfoRequest.req)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsGetLockInfoRequest.req)
 }
 
 // -------------------------------------------------------------------
@@ -6372,7 +6372,7 @@ inline void DsGetLockInfoResponse::clear_header() {
 }
 inline const ::kvrpcpb::ResponseHeader& DsGetLockInfoResponse::header() const {
   const ::kvrpcpb::ResponseHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsGetLockInfoResponse.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsGetLockInfoResponse.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
       &::kvrpcpb::_ResponseHeader_default_instance_);
 }
@@ -6381,11 +6381,11 @@ inline ::kvrpcpb::ResponseHeader* DsGetLockInfoResponse::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::ResponseHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsGetLockInfoResponse.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsGetLockInfoResponse.header)
   return header_;
 }
 inline ::kvrpcpb::ResponseHeader* DsGetLockInfoResponse::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsGetLockInfoResponse.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsGetLockInfoResponse.header)
   
   ::kvrpcpb::ResponseHeader* temp = header_;
   header_ = NULL;
@@ -6399,10 +6399,10 @@ inline void DsGetLockInfoResponse::set_allocated_header(::kvrpcpb::ResponseHeade
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsGetLockInfoResponse.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsGetLockInfoResponse.header)
 }
 
-// .txn.GetLockInfoResponse resp = 2;
+// .txnpb.GetLockInfoResponse resp = 2;
 inline bool DsGetLockInfoResponse::has_resp() const {
   return this != internal_default_instance() && resp_ != NULL;
 }
@@ -6410,28 +6410,28 @@ inline void DsGetLockInfoResponse::clear_resp() {
   if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
   resp_ = NULL;
 }
-inline const ::txn::GetLockInfoResponse& DsGetLockInfoResponse::resp() const {
-  const ::txn::GetLockInfoResponse* p = resp_;
-  // @@protoc_insertion_point(field_get:txn.DsGetLockInfoResponse.resp)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::GetLockInfoResponse*>(
-      &::txn::_GetLockInfoResponse_default_instance_);
+inline const ::txnpb::GetLockInfoResponse& DsGetLockInfoResponse::resp() const {
+  const ::txnpb::GetLockInfoResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:txnpb.DsGetLockInfoResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::GetLockInfoResponse*>(
+      &::txnpb::_GetLockInfoResponse_default_instance_);
 }
-inline ::txn::GetLockInfoResponse* DsGetLockInfoResponse::mutable_resp() {
+inline ::txnpb::GetLockInfoResponse* DsGetLockInfoResponse::mutable_resp() {
   
   if (resp_ == NULL) {
-    resp_ = new ::txn::GetLockInfoResponse;
+    resp_ = new ::txnpb::GetLockInfoResponse;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsGetLockInfoResponse.resp)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsGetLockInfoResponse.resp)
   return resp_;
 }
-inline ::txn::GetLockInfoResponse* DsGetLockInfoResponse::release_resp() {
-  // @@protoc_insertion_point(field_release:txn.DsGetLockInfoResponse.resp)
+inline ::txnpb::GetLockInfoResponse* DsGetLockInfoResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:txnpb.DsGetLockInfoResponse.resp)
   
-  ::txn::GetLockInfoResponse* temp = resp_;
+  ::txnpb::GetLockInfoResponse* temp = resp_;
   resp_ = NULL;
   return temp;
 }
-inline void DsGetLockInfoResponse::set_allocated_resp(::txn::GetLockInfoResponse* resp) {
+inline void DsGetLockInfoResponse::set_allocated_resp(::txnpb::GetLockInfoResponse* resp) {
   delete resp_;
   resp_ = resp;
   if (resp) {
@@ -6439,7 +6439,7 @@ inline void DsGetLockInfoResponse::set_allocated_resp(::txn::GetLockInfoResponse
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsGetLockInfoResponse.resp)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsGetLockInfoResponse.resp)
 }
 
 // -------------------------------------------------------------------
@@ -6451,41 +6451,41 @@ inline void SelectRequest::clear_key() {
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& SelectRequest::key() const {
-  // @@protoc_insertion_point(field_get:txn.SelectRequest.key)
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.key)
   return key_.GetNoArena();
 }
 inline void SelectRequest::set_key(const ::std::string& value) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.SelectRequest.key)
+  // @@protoc_insertion_point(field_set:txnpb.SelectRequest.key)
 }
 #if LANG_CXX11
 inline void SelectRequest::set_key(::std::string&& value) {
   
   key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.SelectRequest.key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.SelectRequest.key)
 }
 #endif
 inline void SelectRequest::set_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.SelectRequest.key)
+  // @@protoc_insertion_point(field_set_char:txnpb.SelectRequest.key)
 }
 inline void SelectRequest::set_key(const void* value, size_t size) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.SelectRequest.key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.SelectRequest.key)
 }
 inline ::std::string* SelectRequest::mutable_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.SelectRequest.key)
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.key)
   return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* SelectRequest::release_key() {
-  // @@protoc_insertion_point(field_release:txn.SelectRequest.key)
+  // @@protoc_insertion_point(field_release:txnpb.SelectRequest.key)
   
   return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6496,7 +6496,7 @@ inline void SelectRequest::set_allocated_key(::std::string* key) {
     
   }
   key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:txn.SelectRequest.key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.key)
 }
 
 // .kvrpcpb.Scope scope = 2;
@@ -6509,7 +6509,7 @@ inline void SelectRequest::clear_scope() {
 }
 inline const ::kvrpcpb::Scope& SelectRequest::scope() const {
   const ::kvrpcpb::Scope* p = scope_;
-  // @@protoc_insertion_point(field_get:txn.SelectRequest.scope)
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.scope)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Scope*>(
       &::kvrpcpb::_Scope_default_instance_);
 }
@@ -6518,11 +6518,11 @@ inline ::kvrpcpb::Scope* SelectRequest::mutable_scope() {
   if (scope_ == NULL) {
     scope_ = new ::kvrpcpb::Scope;
   }
-  // @@protoc_insertion_point(field_mutable:txn.SelectRequest.scope)
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.scope)
   return scope_;
 }
 inline ::kvrpcpb::Scope* SelectRequest::release_scope() {
-  // @@protoc_insertion_point(field_release:txn.SelectRequest.scope)
+  // @@protoc_insertion_point(field_release:txnpb.SelectRequest.scope)
   
   ::kvrpcpb::Scope* temp = scope_;
   scope_ = NULL;
@@ -6536,7 +6536,7 @@ inline void SelectRequest::set_allocated_scope(::kvrpcpb::Scope* scope) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.SelectRequest.scope)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.scope)
 }
 
 // repeated .kvrpcpb.SelectField field_list = 3;
@@ -6547,25 +6547,25 @@ inline void SelectRequest::clear_field_list() {
   field_list_.Clear();
 }
 inline const ::kvrpcpb::SelectField& SelectRequest::field_list(int index) const {
-  // @@protoc_insertion_point(field_get:txn.SelectRequest.field_list)
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.field_list)
   return field_list_.Get(index);
 }
 inline ::kvrpcpb::SelectField* SelectRequest::mutable_field_list(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.SelectRequest.field_list)
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.field_list)
   return field_list_.Mutable(index);
 }
 inline ::kvrpcpb::SelectField* SelectRequest::add_field_list() {
-  // @@protoc_insertion_point(field_add:txn.SelectRequest.field_list)
+  // @@protoc_insertion_point(field_add:txnpb.SelectRequest.field_list)
   return field_list_.Add();
 }
 inline ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField >*
 SelectRequest::mutable_field_list() {
-  // @@protoc_insertion_point(field_mutable_list:txn.SelectRequest.field_list)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.SelectRequest.field_list)
   return &field_list_;
 }
 inline const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField >&
 SelectRequest::field_list() const {
-  // @@protoc_insertion_point(field_list:txn.SelectRequest.field_list)
+  // @@protoc_insertion_point(field_list:txnpb.SelectRequest.field_list)
   return field_list_;
 }
 
@@ -6577,25 +6577,25 @@ inline void SelectRequest::clear_where_filters() {
   where_filters_.Clear();
 }
 inline const ::kvrpcpb::Match& SelectRequest::where_filters(int index) const {
-  // @@protoc_insertion_point(field_get:txn.SelectRequest.where_filters)
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.where_filters)
   return where_filters_.Get(index);
 }
 inline ::kvrpcpb::Match* SelectRequest::mutable_where_filters(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.SelectRequest.where_filters)
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.where_filters)
   return where_filters_.Mutable(index);
 }
 inline ::kvrpcpb::Match* SelectRequest::add_where_filters() {
-  // @@protoc_insertion_point(field_add:txn.SelectRequest.where_filters)
+  // @@protoc_insertion_point(field_add:txnpb.SelectRequest.where_filters)
   return where_filters_.Add();
 }
 inline ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match >*
 SelectRequest::mutable_where_filters() {
-  // @@protoc_insertion_point(field_mutable_list:txn.SelectRequest.where_filters)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.SelectRequest.where_filters)
   return &where_filters_;
 }
 inline const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match >&
 SelectRequest::where_filters() const {
-  // @@protoc_insertion_point(field_list:txn.SelectRequest.where_filters)
+  // @@protoc_insertion_point(field_list:txnpb.SelectRequest.where_filters)
   return where_filters_;
 }
 
@@ -6607,25 +6607,25 @@ inline void SelectRequest::clear_group_bys() {
   group_bys_.Clear();
 }
 inline const ::metapb::Column& SelectRequest::group_bys(int index) const {
-  // @@protoc_insertion_point(field_get:txn.SelectRequest.group_bys)
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.group_bys)
   return group_bys_.Get(index);
 }
 inline ::metapb::Column* SelectRequest::mutable_group_bys(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.SelectRequest.group_bys)
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.group_bys)
   return group_bys_.Mutable(index);
 }
 inline ::metapb::Column* SelectRequest::add_group_bys() {
-  // @@protoc_insertion_point(field_add:txn.SelectRequest.group_bys)
+  // @@protoc_insertion_point(field_add:txnpb.SelectRequest.group_bys)
   return group_bys_.Add();
 }
 inline ::google::protobuf::RepeatedPtrField< ::metapb::Column >*
 SelectRequest::mutable_group_bys() {
-  // @@protoc_insertion_point(field_mutable_list:txn.SelectRequest.group_bys)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.SelectRequest.group_bys)
   return &group_bys_;
 }
 inline const ::google::protobuf::RepeatedPtrField< ::metapb::Column >&
 SelectRequest::group_bys() const {
-  // @@protoc_insertion_point(field_list:txn.SelectRequest.group_bys)
+  // @@protoc_insertion_point(field_list:txnpb.SelectRequest.group_bys)
   return group_bys_;
 }
 
@@ -6639,7 +6639,7 @@ inline void SelectRequest::clear_limit() {
 }
 inline const ::kvrpcpb::Limit& SelectRequest::limit() const {
   const ::kvrpcpb::Limit* p = limit_;
-  // @@protoc_insertion_point(field_get:txn.SelectRequest.limit)
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.limit)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Limit*>(
       &::kvrpcpb::_Limit_default_instance_);
 }
@@ -6648,11 +6648,11 @@ inline ::kvrpcpb::Limit* SelectRequest::mutable_limit() {
   if (limit_ == NULL) {
     limit_ = new ::kvrpcpb::Limit;
   }
-  // @@protoc_insertion_point(field_mutable:txn.SelectRequest.limit)
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.limit)
   return limit_;
 }
 inline ::kvrpcpb::Limit* SelectRequest::release_limit() {
-  // @@protoc_insertion_point(field_release:txn.SelectRequest.limit)
+  // @@protoc_insertion_point(field_release:txnpb.SelectRequest.limit)
   
   ::kvrpcpb::Limit* temp = limit_;
   limit_ = NULL;
@@ -6666,7 +6666,7 @@ inline void SelectRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.SelectRequest.limit)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.limit)
 }
 
 // -------------------------------------------------------------------
@@ -6678,41 +6678,41 @@ inline void RowValue::clear_fields() {
   fields_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& RowValue::fields() const {
-  // @@protoc_insertion_point(field_get:txn.RowValue.fields)
+  // @@protoc_insertion_point(field_get:txnpb.RowValue.fields)
   return fields_.GetNoArena();
 }
 inline void RowValue::set_fields(const ::std::string& value) {
   
   fields_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.RowValue.fields)
+  // @@protoc_insertion_point(field_set:txnpb.RowValue.fields)
 }
 #if LANG_CXX11
 inline void RowValue::set_fields(::std::string&& value) {
   
   fields_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.RowValue.fields)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.RowValue.fields)
 }
 #endif
 inline void RowValue::set_fields(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   fields_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.RowValue.fields)
+  // @@protoc_insertion_point(field_set_char:txnpb.RowValue.fields)
 }
 inline void RowValue::set_fields(const void* value, size_t size) {
   
   fields_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.RowValue.fields)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.RowValue.fields)
 }
 inline ::std::string* RowValue::mutable_fields() {
   
-  // @@protoc_insertion_point(field_mutable:txn.RowValue.fields)
+  // @@protoc_insertion_point(field_mutable:txnpb.RowValue.fields)
   return fields_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* RowValue::release_fields() {
-  // @@protoc_insertion_point(field_release:txn.RowValue.fields)
+  // @@protoc_insertion_point(field_release:txnpb.RowValue.fields)
   
   return fields_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6723,7 +6723,7 @@ inline void RowValue::set_allocated_fields(::std::string* fields) {
     
   }
   fields_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), fields);
-  // @@protoc_insertion_point(field_set_allocated:txn.RowValue.fields)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.RowValue.fields)
 }
 
 // repeated int64 aggred_counts = 2;
@@ -6734,25 +6734,25 @@ inline void RowValue::clear_aggred_counts() {
   aggred_counts_.Clear();
 }
 inline ::google::protobuf::int64 RowValue::aggred_counts(int index) const {
-  // @@protoc_insertion_point(field_get:txn.RowValue.aggred_counts)
+  // @@protoc_insertion_point(field_get:txnpb.RowValue.aggred_counts)
   return aggred_counts_.Get(index);
 }
 inline void RowValue::set_aggred_counts(int index, ::google::protobuf::int64 value) {
   aggred_counts_.Set(index, value);
-  // @@protoc_insertion_point(field_set:txn.RowValue.aggred_counts)
+  // @@protoc_insertion_point(field_set:txnpb.RowValue.aggred_counts)
 }
 inline void RowValue::add_aggred_counts(::google::protobuf::int64 value) {
   aggred_counts_.Add(value);
-  // @@protoc_insertion_point(field_add:txn.RowValue.aggred_counts)
+  // @@protoc_insertion_point(field_add:txnpb.RowValue.aggred_counts)
 }
 inline const ::google::protobuf::RepeatedField< ::google::protobuf::int64 >&
 RowValue::aggred_counts() const {
-  // @@protoc_insertion_point(field_list:txn.RowValue.aggred_counts)
+  // @@protoc_insertion_point(field_list:txnpb.RowValue.aggred_counts)
   return aggred_counts_;
 }
 inline ::google::protobuf::RepeatedField< ::google::protobuf::int64 >*
 RowValue::mutable_aggred_counts() {
-  // @@protoc_insertion_point(field_mutable_list:txn.RowValue.aggred_counts)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.RowValue.aggred_counts)
   return &aggred_counts_;
 }
 
@@ -6761,13 +6761,13 @@ inline void RowValue::clear_version() {
   version_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 RowValue::version() const {
-  // @@protoc_insertion_point(field_get:txn.RowValue.version)
+  // @@protoc_insertion_point(field_get:txnpb.RowValue.version)
   return version_;
 }
 inline void RowValue::set_version(::google::protobuf::uint64 value) {
   
   version_ = value;
-  // @@protoc_insertion_point(field_set:txn.RowValue.version)
+  // @@protoc_insertion_point(field_set:txnpb.RowValue.version)
 }
 
 // -------------------------------------------------------------------
@@ -6779,41 +6779,41 @@ inline void RowIntent::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& RowIntent::txn_id() const {
-  // @@protoc_insertion_point(field_get:txn.RowIntent.txn_id)
+  // @@protoc_insertion_point(field_get:txnpb.RowIntent.txn_id)
   return txn_id_.GetNoArena();
 }
 inline void RowIntent::set_txn_id(const ::std::string& value) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.RowIntent.txn_id)
+  // @@protoc_insertion_point(field_set:txnpb.RowIntent.txn_id)
 }
 #if LANG_CXX11
 inline void RowIntent::set_txn_id(::std::string&& value) {
   
   txn_id_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.RowIntent.txn_id)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.RowIntent.txn_id)
 }
 #endif
 inline void RowIntent::set_txn_id(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.RowIntent.txn_id)
+  // @@protoc_insertion_point(field_set_char:txnpb.RowIntent.txn_id)
 }
 inline void RowIntent::set_txn_id(const char* value, size_t size) {
   
   txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.RowIntent.txn_id)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.RowIntent.txn_id)
 }
 inline ::std::string* RowIntent::mutable_txn_id() {
   
-  // @@protoc_insertion_point(field_mutable:txn.RowIntent.txn_id)
+  // @@protoc_insertion_point(field_mutable:txnpb.RowIntent.txn_id)
   return txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* RowIntent::release_txn_id() {
-  // @@protoc_insertion_point(field_release:txn.RowIntent.txn_id)
+  // @@protoc_insertion_point(field_release:txnpb.RowIntent.txn_id)
   
   return txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6824,7 +6824,7 @@ inline void RowIntent::set_allocated_txn_id(::std::string* txn_id) {
     
   }
   txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txn_id);
-  // @@protoc_insertion_point(field_set_allocated:txn.RowIntent.txn_id)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.RowIntent.txn_id)
 }
 
 // bytes primary_key = 2;
@@ -6832,41 +6832,41 @@ inline void RowIntent::clear_primary_key() {
   primary_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& RowIntent::primary_key() const {
-  // @@protoc_insertion_point(field_get:txn.RowIntent.primary_key)
+  // @@protoc_insertion_point(field_get:txnpb.RowIntent.primary_key)
   return primary_key_.GetNoArena();
 }
 inline void RowIntent::set_primary_key(const ::std::string& value) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.RowIntent.primary_key)
+  // @@protoc_insertion_point(field_set:txnpb.RowIntent.primary_key)
 }
 #if LANG_CXX11
 inline void RowIntent::set_primary_key(::std::string&& value) {
   
   primary_key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.RowIntent.primary_key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.RowIntent.primary_key)
 }
 #endif
 inline void RowIntent::set_primary_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.RowIntent.primary_key)
+  // @@protoc_insertion_point(field_set_char:txnpb.RowIntent.primary_key)
 }
 inline void RowIntent::set_primary_key(const void* value, size_t size) {
   
   primary_key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.RowIntent.primary_key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.RowIntent.primary_key)
 }
 inline ::std::string* RowIntent::mutable_primary_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.RowIntent.primary_key)
+  // @@protoc_insertion_point(field_mutable:txnpb.RowIntent.primary_key)
   return primary_key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* RowIntent::release_primary_key() {
-  // @@protoc_insertion_point(field_release:txn.RowIntent.primary_key)
+  // @@protoc_insertion_point(field_release:txnpb.RowIntent.primary_key)
   
   return primary_key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6877,7 +6877,7 @@ inline void RowIntent::set_allocated_primary_key(::std::string* primary_key) {
     
   }
   primary_key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), primary_key);
-  // @@protoc_insertion_point(field_set_allocated:txn.RowIntent.primary_key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.RowIntent.primary_key)
 }
 
 // bool timeout = 3;
@@ -6885,16 +6885,16 @@ inline void RowIntent::clear_timeout() {
   timeout_ = false;
 }
 inline bool RowIntent::timeout() const {
-  // @@protoc_insertion_point(field_get:txn.RowIntent.timeout)
+  // @@protoc_insertion_point(field_get:txnpb.RowIntent.timeout)
   return timeout_;
 }
 inline void RowIntent::set_timeout(bool value) {
   
   timeout_ = value;
-  // @@protoc_insertion_point(field_set:txn.RowIntent.timeout)
+  // @@protoc_insertion_point(field_set:txnpb.RowIntent.timeout)
 }
 
-// .txn.RowValue value = 10;
+// .txnpb.RowValue value = 10;
 inline bool RowIntent::has_value() const {
   return this != internal_default_instance() && value_ != NULL;
 }
@@ -6902,28 +6902,28 @@ inline void RowIntent::clear_value() {
   if (GetArenaNoVirtual() == NULL && value_ != NULL) delete value_;
   value_ = NULL;
 }
-inline const ::txn::RowValue& RowIntent::value() const {
-  const ::txn::RowValue* p = value_;
-  // @@protoc_insertion_point(field_get:txn.RowIntent.value)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::RowValue*>(
-      &::txn::_RowValue_default_instance_);
+inline const ::txnpb::RowValue& RowIntent::value() const {
+  const ::txnpb::RowValue* p = value_;
+  // @@protoc_insertion_point(field_get:txnpb.RowIntent.value)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::RowValue*>(
+      &::txnpb::_RowValue_default_instance_);
 }
-inline ::txn::RowValue* RowIntent::mutable_value() {
+inline ::txnpb::RowValue* RowIntent::mutable_value() {
   
   if (value_ == NULL) {
-    value_ = new ::txn::RowValue;
+    value_ = new ::txnpb::RowValue;
   }
-  // @@protoc_insertion_point(field_mutable:txn.RowIntent.value)
+  // @@protoc_insertion_point(field_mutable:txnpb.RowIntent.value)
   return value_;
 }
-inline ::txn::RowValue* RowIntent::release_value() {
-  // @@protoc_insertion_point(field_release:txn.RowIntent.value)
+inline ::txnpb::RowValue* RowIntent::release_value() {
+  // @@protoc_insertion_point(field_release:txnpb.RowIntent.value)
   
-  ::txn::RowValue* temp = value_;
+  ::txnpb::RowValue* temp = value_;
   value_ = NULL;
   return temp;
 }
-inline void RowIntent::set_allocated_value(::txn::RowValue* value) {
+inline void RowIntent::set_allocated_value(::txnpb::RowValue* value) {
   delete value_;
   value_ = value;
   if (value) {
@@ -6931,7 +6931,7 @@ inline void RowIntent::set_allocated_value(::txn::RowValue* value) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.RowIntent.value)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.RowIntent.value)
 }
 
 // -------------------------------------------------------------------
@@ -6943,41 +6943,41 @@ inline void Row::clear_key() {
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Row::key() const {
-  // @@protoc_insertion_point(field_get:txn.Row.key)
+  // @@protoc_insertion_point(field_get:txnpb.Row.key)
   return key_.GetNoArena();
 }
 inline void Row::set_key(const ::std::string& value) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txn.Row.key)
+  // @@protoc_insertion_point(field_set:txnpb.Row.key)
 }
 #if LANG_CXX11
 inline void Row::set_key(::std::string&& value) {
   
   key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txn.Row.key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.Row.key)
 }
 #endif
 inline void Row::set_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txn.Row.key)
+  // @@protoc_insertion_point(field_set_char:txnpb.Row.key)
 }
 inline void Row::set_key(const void* value, size_t size) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txn.Row.key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.Row.key)
 }
 inline ::std::string* Row::mutable_key() {
   
-  // @@protoc_insertion_point(field_mutable:txn.Row.key)
+  // @@protoc_insertion_point(field_mutable:txnpb.Row.key)
   return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Row::release_key() {
-  // @@protoc_insertion_point(field_release:txn.Row.key)
+  // @@protoc_insertion_point(field_release:txnpb.Row.key)
   
   return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6988,10 +6988,10 @@ inline void Row::set_allocated_key(::std::string* key) {
     
   }
   key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:txn.Row.key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.Row.key)
 }
 
-// .txn.RowValue value = 2;
+// .txnpb.RowValue value = 2;
 inline bool Row::has_value() const {
   return this != internal_default_instance() && value_ != NULL;
 }
@@ -6999,28 +6999,28 @@ inline void Row::clear_value() {
   if (GetArenaNoVirtual() == NULL && value_ != NULL) delete value_;
   value_ = NULL;
 }
-inline const ::txn::RowValue& Row::value() const {
-  const ::txn::RowValue* p = value_;
-  // @@protoc_insertion_point(field_get:txn.Row.value)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::RowValue*>(
-      &::txn::_RowValue_default_instance_);
+inline const ::txnpb::RowValue& Row::value() const {
+  const ::txnpb::RowValue* p = value_;
+  // @@protoc_insertion_point(field_get:txnpb.Row.value)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::RowValue*>(
+      &::txnpb::_RowValue_default_instance_);
 }
-inline ::txn::RowValue* Row::mutable_value() {
+inline ::txnpb::RowValue* Row::mutable_value() {
   
   if (value_ == NULL) {
-    value_ = new ::txn::RowValue;
+    value_ = new ::txnpb::RowValue;
   }
-  // @@protoc_insertion_point(field_mutable:txn.Row.value)
+  // @@protoc_insertion_point(field_mutable:txnpb.Row.value)
   return value_;
 }
-inline ::txn::RowValue* Row::release_value() {
-  // @@protoc_insertion_point(field_release:txn.Row.value)
+inline ::txnpb::RowValue* Row::release_value() {
+  // @@protoc_insertion_point(field_release:txnpb.Row.value)
   
-  ::txn::RowValue* temp = value_;
+  ::txnpb::RowValue* temp = value_;
   value_ = NULL;
   return temp;
 }
-inline void Row::set_allocated_value(::txn::RowValue* value) {
+inline void Row::set_allocated_value(::txnpb::RowValue* value) {
   delete value_;
   value_ = value;
   if (value) {
@@ -7028,10 +7028,10 @@ inline void Row::set_allocated_value(::txn::RowValue* value) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.Row.value)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.Row.value)
 }
 
-// .txn.RowIntent intent = 3;
+// .txnpb.RowIntent intent = 3;
 inline bool Row::has_intent() const {
   return this != internal_default_instance() && intent_ != NULL;
 }
@@ -7039,28 +7039,28 @@ inline void Row::clear_intent() {
   if (GetArenaNoVirtual() == NULL && intent_ != NULL) delete intent_;
   intent_ = NULL;
 }
-inline const ::txn::RowIntent& Row::intent() const {
-  const ::txn::RowIntent* p = intent_;
-  // @@protoc_insertion_point(field_get:txn.Row.intent)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::RowIntent*>(
-      &::txn::_RowIntent_default_instance_);
+inline const ::txnpb::RowIntent& Row::intent() const {
+  const ::txnpb::RowIntent* p = intent_;
+  // @@protoc_insertion_point(field_get:txnpb.Row.intent)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::RowIntent*>(
+      &::txnpb::_RowIntent_default_instance_);
 }
-inline ::txn::RowIntent* Row::mutable_intent() {
+inline ::txnpb::RowIntent* Row::mutable_intent() {
   
   if (intent_ == NULL) {
-    intent_ = new ::txn::RowIntent;
+    intent_ = new ::txnpb::RowIntent;
   }
-  // @@protoc_insertion_point(field_mutable:txn.Row.intent)
+  // @@protoc_insertion_point(field_mutable:txnpb.Row.intent)
   return intent_;
 }
-inline ::txn::RowIntent* Row::release_intent() {
-  // @@protoc_insertion_point(field_release:txn.Row.intent)
+inline ::txnpb::RowIntent* Row::release_intent() {
+  // @@protoc_insertion_point(field_release:txnpb.Row.intent)
   
-  ::txn::RowIntent* temp = intent_;
+  ::txnpb::RowIntent* temp = intent_;
   intent_ = NULL;
   return temp;
 }
-inline void Row::set_allocated_intent(::txn::RowIntent* intent) {
+inline void Row::set_allocated_intent(::txnpb::RowIntent* intent) {
   delete intent_;
   intent_ = intent;
   if (intent) {
@@ -7068,7 +7068,7 @@ inline void Row::set_allocated_intent(::txn::RowIntent* intent) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.Row.intent)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.Row.intent)
 }
 
 // -------------------------------------------------------------------
@@ -7080,42 +7080,42 @@ inline void SelectResponse::clear_code() {
   code_ = 0;
 }
 inline ::google::protobuf::int32 SelectResponse::code() const {
-  // @@protoc_insertion_point(field_get:txn.SelectResponse.code)
+  // @@protoc_insertion_point(field_get:txnpb.SelectResponse.code)
   return code_;
 }
 inline void SelectResponse::set_code(::google::protobuf::int32 value) {
   
   code_ = value;
-  // @@protoc_insertion_point(field_set:txn.SelectResponse.code)
+  // @@protoc_insertion_point(field_set:txnpb.SelectResponse.code)
 }
 
-// repeated .txn.Row rows = 2;
+// repeated .txnpb.Row rows = 2;
 inline int SelectResponse::rows_size() const {
   return rows_.size();
 }
 inline void SelectResponse::clear_rows() {
   rows_.Clear();
 }
-inline const ::txn::Row& SelectResponse::rows(int index) const {
-  // @@protoc_insertion_point(field_get:txn.SelectResponse.rows)
+inline const ::txnpb::Row& SelectResponse::rows(int index) const {
+  // @@protoc_insertion_point(field_get:txnpb.SelectResponse.rows)
   return rows_.Get(index);
 }
-inline ::txn::Row* SelectResponse::mutable_rows(int index) {
-  // @@protoc_insertion_point(field_mutable:txn.SelectResponse.rows)
+inline ::txnpb::Row* SelectResponse::mutable_rows(int index) {
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectResponse.rows)
   return rows_.Mutable(index);
 }
-inline ::txn::Row* SelectResponse::add_rows() {
-  // @@protoc_insertion_point(field_add:txn.SelectResponse.rows)
+inline ::txnpb::Row* SelectResponse::add_rows() {
+  // @@protoc_insertion_point(field_add:txnpb.SelectResponse.rows)
   return rows_.Add();
 }
-inline ::google::protobuf::RepeatedPtrField< ::txn::Row >*
+inline ::google::protobuf::RepeatedPtrField< ::txnpb::Row >*
 SelectResponse::mutable_rows() {
-  // @@protoc_insertion_point(field_mutable_list:txn.SelectResponse.rows)
+  // @@protoc_insertion_point(field_mutable_list:txnpb.SelectResponse.rows)
   return &rows_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::txn::Row >&
+inline const ::google::protobuf::RepeatedPtrField< ::txnpb::Row >&
 SelectResponse::rows() const {
-  // @@protoc_insertion_point(field_list:txn.SelectResponse.rows)
+  // @@protoc_insertion_point(field_list:txnpb.SelectResponse.rows)
   return rows_;
 }
 
@@ -7124,13 +7124,13 @@ inline void SelectResponse::clear_offset() {
   offset_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 SelectResponse::offset() const {
-  // @@protoc_insertion_point(field_get:txn.SelectResponse.offset)
+  // @@protoc_insertion_point(field_get:txnpb.SelectResponse.offset)
   return offset_;
 }
 inline void SelectResponse::set_offset(::google::protobuf::uint64 value) {
   
   offset_ = value;
-  // @@protoc_insertion_point(field_set:txn.SelectResponse.offset)
+  // @@protoc_insertion_point(field_set:txnpb.SelectResponse.offset)
 }
 
 // -------------------------------------------------------------------
@@ -7147,7 +7147,7 @@ inline void DsSelectRequest::clear_header() {
 }
 inline const ::kvrpcpb::RequestHeader& DsSelectRequest::header() const {
   const ::kvrpcpb::RequestHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsSelectRequest.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsSelectRequest.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
       &::kvrpcpb::_RequestHeader_default_instance_);
 }
@@ -7156,11 +7156,11 @@ inline ::kvrpcpb::RequestHeader* DsSelectRequest::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::RequestHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsSelectRequest.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsSelectRequest.header)
   return header_;
 }
 inline ::kvrpcpb::RequestHeader* DsSelectRequest::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsSelectRequest.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsSelectRequest.header)
   
   ::kvrpcpb::RequestHeader* temp = header_;
   header_ = NULL;
@@ -7174,10 +7174,10 @@ inline void DsSelectRequest::set_allocated_header(::kvrpcpb::RequestHeader* head
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsSelectRequest.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsSelectRequest.header)
 }
 
-// .txn.SelectRequest req = 2;
+// .txnpb.SelectRequest req = 2;
 inline bool DsSelectRequest::has_req() const {
   return this != internal_default_instance() && req_ != NULL;
 }
@@ -7185,28 +7185,28 @@ inline void DsSelectRequest::clear_req() {
   if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
   req_ = NULL;
 }
-inline const ::txn::SelectRequest& DsSelectRequest::req() const {
-  const ::txn::SelectRequest* p = req_;
-  // @@protoc_insertion_point(field_get:txn.DsSelectRequest.req)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::SelectRequest*>(
-      &::txn::_SelectRequest_default_instance_);
+inline const ::txnpb::SelectRequest& DsSelectRequest::req() const {
+  const ::txnpb::SelectRequest* p = req_;
+  // @@protoc_insertion_point(field_get:txnpb.DsSelectRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::SelectRequest*>(
+      &::txnpb::_SelectRequest_default_instance_);
 }
-inline ::txn::SelectRequest* DsSelectRequest::mutable_req() {
+inline ::txnpb::SelectRequest* DsSelectRequest::mutable_req() {
   
   if (req_ == NULL) {
-    req_ = new ::txn::SelectRequest;
+    req_ = new ::txnpb::SelectRequest;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsSelectRequest.req)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsSelectRequest.req)
   return req_;
 }
-inline ::txn::SelectRequest* DsSelectRequest::release_req() {
-  // @@protoc_insertion_point(field_release:txn.DsSelectRequest.req)
+inline ::txnpb::SelectRequest* DsSelectRequest::release_req() {
+  // @@protoc_insertion_point(field_release:txnpb.DsSelectRequest.req)
   
-  ::txn::SelectRequest* temp = req_;
+  ::txnpb::SelectRequest* temp = req_;
   req_ = NULL;
   return temp;
 }
-inline void DsSelectRequest::set_allocated_req(::txn::SelectRequest* req) {
+inline void DsSelectRequest::set_allocated_req(::txnpb::SelectRequest* req) {
   delete req_;
   req_ = req;
   if (req) {
@@ -7214,7 +7214,7 @@ inline void DsSelectRequest::set_allocated_req(::txn::SelectRequest* req) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsSelectRequest.req)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsSelectRequest.req)
 }
 
 // -------------------------------------------------------------------
@@ -7231,7 +7231,7 @@ inline void DsSelectResponse::clear_header() {
 }
 inline const ::kvrpcpb::ResponseHeader& DsSelectResponse::header() const {
   const ::kvrpcpb::ResponseHeader* p = header_;
-  // @@protoc_insertion_point(field_get:txn.DsSelectResponse.header)
+  // @@protoc_insertion_point(field_get:txnpb.DsSelectResponse.header)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
       &::kvrpcpb::_ResponseHeader_default_instance_);
 }
@@ -7240,11 +7240,11 @@ inline ::kvrpcpb::ResponseHeader* DsSelectResponse::mutable_header() {
   if (header_ == NULL) {
     header_ = new ::kvrpcpb::ResponseHeader;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsSelectResponse.header)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsSelectResponse.header)
   return header_;
 }
 inline ::kvrpcpb::ResponseHeader* DsSelectResponse::release_header() {
-  // @@protoc_insertion_point(field_release:txn.DsSelectResponse.header)
+  // @@protoc_insertion_point(field_release:txnpb.DsSelectResponse.header)
   
   ::kvrpcpb::ResponseHeader* temp = header_;
   header_ = NULL;
@@ -7258,10 +7258,10 @@ inline void DsSelectResponse::set_allocated_header(::kvrpcpb::ResponseHeader* he
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsSelectResponse.header)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsSelectResponse.header)
 }
 
-// .txn.SelectResponse resp = 2;
+// .txnpb.SelectResponse resp = 2;
 inline bool DsSelectResponse::has_resp() const {
   return this != internal_default_instance() && resp_ != NULL;
 }
@@ -7269,28 +7269,28 @@ inline void DsSelectResponse::clear_resp() {
   if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
   resp_ = NULL;
 }
-inline const ::txn::SelectResponse& DsSelectResponse::resp() const {
-  const ::txn::SelectResponse* p = resp_;
-  // @@protoc_insertion_point(field_get:txn.DsSelectResponse.resp)
-  return p != NULL ? *p : *reinterpret_cast<const ::txn::SelectResponse*>(
-      &::txn::_SelectResponse_default_instance_);
+inline const ::txnpb::SelectResponse& DsSelectResponse::resp() const {
+  const ::txnpb::SelectResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:txnpb.DsSelectResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::SelectResponse*>(
+      &::txnpb::_SelectResponse_default_instance_);
 }
-inline ::txn::SelectResponse* DsSelectResponse::mutable_resp() {
+inline ::txnpb::SelectResponse* DsSelectResponse::mutable_resp() {
   
   if (resp_ == NULL) {
-    resp_ = new ::txn::SelectResponse;
+    resp_ = new ::txnpb::SelectResponse;
   }
-  // @@protoc_insertion_point(field_mutable:txn.DsSelectResponse.resp)
+  // @@protoc_insertion_point(field_mutable:txnpb.DsSelectResponse.resp)
   return resp_;
 }
-inline ::txn::SelectResponse* DsSelectResponse::release_resp() {
-  // @@protoc_insertion_point(field_release:txn.DsSelectResponse.resp)
+inline ::txnpb::SelectResponse* DsSelectResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:txnpb.DsSelectResponse.resp)
   
-  ::txn::SelectResponse* temp = resp_;
+  ::txnpb::SelectResponse* temp = resp_;
   resp_ = NULL;
   return temp;
 }
-inline void DsSelectResponse::set_allocated_resp(::txn::SelectResponse* resp) {
+inline void DsSelectResponse::set_allocated_resp(::txnpb::SelectResponse* resp) {
   delete resp_;
   resp_ = resp;
   if (resp) {
@@ -7298,7 +7298,7 @@ inline void DsSelectResponse::set_allocated_resp(::txn::SelectResponse* resp) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txn.DsSelectResponse.resp)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.DsSelectResponse.resp)
 }
 
 #ifdef __GNUC__
@@ -7367,25 +7367,25 @@ inline void DsSelectResponse::set_allocated_resp(::txn::SelectResponse* resp) {
 // @@protoc_insertion_point(namespace_scope)
 
 
-}  // namespace txn
+}  // namespace txnpb
 
 namespace google {
 namespace protobuf {
 
-template <> struct is_proto_enum< ::txn::TxnError_ErrType> : ::google::protobuf::internal::true_type {};
+template <> struct is_proto_enum< ::txnpb::TxnError_ErrType> : ::google::protobuf::internal::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::txn::TxnError_ErrType>() {
-  return ::txn::TxnError_ErrType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::txnpb::TxnError_ErrType>() {
+  return ::txnpb::TxnError_ErrType_descriptor();
 }
-template <> struct is_proto_enum< ::txn::OpType> : ::google::protobuf::internal::true_type {};
+template <> struct is_proto_enum< ::txnpb::OpType> : ::google::protobuf::internal::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::txn::OpType>() {
-  return ::txn::OpType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::txnpb::OpType>() {
+  return ::txnpb::OpType_descriptor();
 }
-template <> struct is_proto_enum< ::txn::TxnStatus> : ::google::protobuf::internal::true_type {};
+template <> struct is_proto_enum< ::txnpb::TxnStatus> : ::google::protobuf::internal::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::txn::TxnStatus>() {
-  return ::txn::TxnStatus_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::txnpb::TxnStatus>() {
+  return ::txnpb::TxnStatus_descriptor();
 }
 
 }  // namespace protobuf
