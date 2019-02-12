@@ -33,10 +33,10 @@ sudo ./make.sh install
 ```
 #intel tbb
 ```sh
-git clone --depth 1 https://github.com/01org/tbb.git
+git clone --depth 1 --branch 2019_U3 https://github.com/01org/tbb.git
 cd tbb
 make -j `nproc`
-sudo cp build/*release/lib* /usr/lib64
+sudo cp build/*release/lib* /usr/local/lib/
 sudo cp -r include/serial/ /usr/local/include/
 sudo cp -r include/tbb /usr/local/include/
 ```

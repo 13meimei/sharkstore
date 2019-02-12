@@ -226,6 +226,12 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
             return ApplyWatchPut(cmd, index);
         case raft_cmdpb::CmdType::KvWatchDel:
             return ApplyWatchDel(cmd, index);
+        case raft_cmdpb::CmdType::TxnPrepare:
+            return ApplyTxnPrepare(cmd, index);
+        case raft_cmdpb::CmdType::TxnDecide:
+            return ApplyTxnDecide(cmd, index);
+        case raft_cmdpb::CmdType::TxnClearup:
+            return ApplyTxnClearup(cmd, index);
         default:
             RANGE_LOG_ERROR("Apply cmd type error %s", CmdType_Name(cmd.cmd_type()).c_str());
             return Status(Status::kNotSupported, "cmd type not supported", "");

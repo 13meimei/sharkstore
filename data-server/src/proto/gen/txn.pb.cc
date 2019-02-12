@@ -48,6 +48,11 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<StatusConflict>
      _instance;
 } _StatusConflict_default_instance_;
+class ServerErrorDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<ServerError>
+     _instance;
+} _ServerError_default_instance_;
 class TxnErrorDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<TxnError>
@@ -174,7 +179,7 @@ namespace protobuf_txn_2eproto {
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[30];
+::google::protobuf::Metadata file_level_metadata[31];
 const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[3];
 
 }  // namespace
@@ -190,6 +195,7 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::AuxillaryParseTableField
 };
 PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
     TableStruct::schema[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
@@ -278,11 +284,19 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StatusConflict, status_),
   ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerError, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerError, code_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerError, msg_),
+  ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, err_type_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, server_err_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, lock_err_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, unexpected_ver_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, status_conflict_),
@@ -468,30 +482,31 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 33, -1, sizeof(LockError)},
   { 40, -1, sizeof(UnexpectedVer)},
   { 48, -1, sizeof(StatusConflict)},
-  { 54, -1, sizeof(TxnError)},
-  { 63, -1, sizeof(PrepareRequest)},
-  { 75, -1, sizeof(PrepareResponse)},
-  { 81, -1, sizeof(DsPrepareRequest)},
-  { 88, -1, sizeof(DsPrepareResponse)},
-  { 95, -1, sizeof(DecideRequest)},
-  { 104, -1, sizeof(DecideResponse)},
-  { 111, -1, sizeof(DsDecideRequest)},
-  { 118, -1, sizeof(DsDecideResponse)},
-  { 125, -1, sizeof(ClearupRequest)},
-  { 132, -1, sizeof(ClearupResponse)},
-  { 138, -1, sizeof(DsClearupRequest)},
-  { 145, -1, sizeof(DsClearupResponse)},
-  { 152, -1, sizeof(GetLockInfoRequest)},
-  { 159, -1, sizeof(GetLockInfoResponse)},
-  { 165, -1, sizeof(DsGetLockInfoRequest)},
-  { 172, -1, sizeof(DsGetLockInfoResponse)},
-  { 179, -1, sizeof(SelectRequest)},
-  { 190, -1, sizeof(RowValue)},
-  { 198, -1, sizeof(RowIntent)},
-  { 207, -1, sizeof(Row)},
-  { 215, -1, sizeof(SelectResponse)},
-  { 223, -1, sizeof(DsSelectRequest)},
-  { 230, -1, sizeof(DsSelectResponse)},
+  { 54, -1, sizeof(ServerError)},
+  { 61, -1, sizeof(TxnError)},
+  { 71, -1, sizeof(PrepareRequest)},
+  { 83, -1, sizeof(PrepareResponse)},
+  { 89, -1, sizeof(DsPrepareRequest)},
+  { 96, -1, sizeof(DsPrepareResponse)},
+  { 103, -1, sizeof(DecideRequest)},
+  { 112, -1, sizeof(DecideResponse)},
+  { 119, -1, sizeof(DsDecideRequest)},
+  { 126, -1, sizeof(DsDecideResponse)},
+  { 133, -1, sizeof(ClearupRequest)},
+  { 140, -1, sizeof(ClearupResponse)},
+  { 146, -1, sizeof(DsClearupRequest)},
+  { 153, -1, sizeof(DsClearupResponse)},
+  { 160, -1, sizeof(GetLockInfoRequest)},
+  { 167, -1, sizeof(GetLockInfoResponse)},
+  { 173, -1, sizeof(DsGetLockInfoRequest)},
+  { 180, -1, sizeof(DsGetLockInfoResponse)},
+  { 187, -1, sizeof(SelectRequest)},
+  { 198, -1, sizeof(RowValue)},
+  { 206, -1, sizeof(RowIntent)},
+  { 215, -1, sizeof(Row)},
+  { 223, -1, sizeof(SelectResponse)},
+  { 231, -1, sizeof(DsSelectRequest)},
+  { 238, -1, sizeof(DsSelectResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -501,6 +516,7 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_LockError_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_UnexpectedVer_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_StatusConflict_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_ServerError_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_TxnError_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_PrepareRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_PrepareResponse_default_instance_),
@@ -545,7 +561,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 30);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 31);
 }
 
 }  // namespace
@@ -567,7 +583,9 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_UnexpectedVer_default_instance_);_StatusConflict_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_StatusConflict_default_instance_);_TxnError_default_instance_._instance.DefaultConstruct();
+      &_StatusConflict_default_instance_);_ServerError_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_ServerError_default_instance_);_TxnError_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_TxnError_default_instance_);_PrepareRequest_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -619,6 +637,8 @@ void TableStruct::InitDefaultsImpl() {
       ::txnpb::TxnIntent::internal_default_instance());
   _LockError_default_instance_._instance.get_mutable()->info_ = const_cast< ::txnpb::LockInfo*>(
       ::txnpb::LockInfo::internal_default_instance());
+  _TxnError_default_instance_._instance.get_mutable()->server_err_ = const_cast< ::txnpb::ServerError*>(
+      ::txnpb::ServerError::internal_default_instance());
   _TxnError_default_instance_._instance.get_mutable()->lock_err_ = const_cast< ::txnpb::LockError*>(
       ::txnpb::LockError::internal_default_instance());
   _TxnError_default_instance_._instance.get_mutable()->unexpected_ver_ = const_cast< ::txnpb::UnexpectedVer*>(
@@ -707,72 +727,75 @@ void AddDescriptorsImpl() {
       "\n\004info\030\002 \001(\0132\017.txnpb.LockInfo\"F\n\rUnexpec"
       "tedVer\022\013\n\003key\030\001 \001(\014\022\024\n\014expected_ver\030\002 \001("
       "\004\022\022\n\nactual_ver\030\003 \001(\004\"2\n\016StatusConflict\022"
-      " \n\006status\030\001 \001(\0162\020.txnpb.TxnStatus\"\204\002\n\010Tx"
-      "nError\022)\n\010err_type\030\001 \001(\0162\027.txnpb.TxnErro"
-      "r.ErrType\022\"\n\010lock_err\030\002 \001(\0132\020.txnpb.Lock"
-      "Error\022,\n\016unexpected_ver\030\003 \001(\0132\024.txnpb.Un"
-      "expectedVer\022.\n\017status_conflict\030\004 \001(\0132\025.t"
-      "xnpb.StatusConflict\"K\n\007ErrType\022\013\n\007UNKNOW"
-      "N\020\000\022\n\n\006LOCKED\020\001\022\022\n\016UNEXPECTED_VER\020\002\022\023\n\017S"
-      "TATUS_CONFLICT\020\003\"\247\001\n\016PrepareRequest\022\016\n\006t"
-      "xn_id\030\001 \001(\t\022\r\n\005local\030\002 \001(\010\022!\n\007intents\030\003 "
-      "\003(\0132\020.txnpb.TxnIntent\022\023\n\013primary_key\030\004 \001"
-      "(\014\022\020\n\010lock_ttl\030\005 \001(\004\022\026\n\016secondary_keys\030\006"
-      " \003(\014\022\024\n\014strict_check\030\020 \001(\010\"2\n\017PrepareRes"
-      "ponse\022\037\n\006errors\030\001 \003(\0132\017.txnpb.TxnError\"^"
-      "\n\020DsPrepareRequest\022&\n\006header\030\001 \001(\0132\026.kvr"
-      "pcpb.RequestHeader\022\"\n\003req\030\002 \001(\0132\025.txnpb."
-      "PrepareRequest\"b\n\021DsPrepareResponse\022\'\n\006h"
-      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$\n\004"
-      "resp\030\002 \001(\0132\026.txnpb.PrepareResponse\"`\n\rDe"
-      "cideRequest\022\016\n\006txn_id\030\001 \001(\t\022 \n\006status\030\002 "
-      "\001(\0162\020.txnpb.TxnStatus\022\014\n\004keys\030\003 \003(\014\022\017\n\007r"
-      "ecover\030\004 \001(\010\"F\n\016DecideResponse\022\034\n\003err\030\001 "
-      "\001(\0132\017.txnpb.TxnError\022\026\n\016secondary_keys\030\002"
-      " \003(\014\"\\\n\017DsDecideRequest\022&\n\006header\030\001 \001(\0132"
-      "\026.kvrpcpb.RequestHeader\022!\n\003req\030\002 \001(\0132\024.t"
-      "xnpb.DecideRequest\"`\n\020DsDecideResponse\022\'"
-      "\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022"
-      "#\n\004resp\030\002 \001(\0132\025.txnpb.DecideResponse\"5\n\016"
-      "ClearupRequest\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primar"
-      "y_key\030\002 \001(\014\"/\n\017ClearupResponse\022\034\n\003err\030\001 "
-      "\001(\0132\017.txnpb.TxnError\"^\n\020DsClearupRequest"
-      "\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader"
-      "\022\"\n\003req\030\002 \001(\0132\025.txnpb.ClearupRequest\"b\n\021"
-      "DsClearupResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
-      "cpb.ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.txnpb"
-      ".ClearupResponse\"1\n\022GetLockInfoRequest\022\013"
-      "\n\003key\030\001 \001(\014\022\016\n\006txn_id\030\002 \001(\t\"4\n\023GetLockIn"
-      "foResponse\022\035\n\004info\030\001 \001(\0132\017.txnpb.LockInf"
-      "o\"f\n\024DsGetLockInfoRequest\022&\n\006header\030\001 \001("
-      "\0132\026.kvrpcpb.RequestHeader\022&\n\003req\030\002 \001(\0132\031"
-      ".txnpb.GetLockInfoRequest\"j\n\025DsGetLockIn"
-      "foResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Res"
-      "ponseHeader\022(\n\004resp\030\002 \001(\0132\032.txnpb.GetLoc"
-      "kInfoResponse\"\316\001\n\rSelectRequest\022\013\n\003key\030\001"
-      " \001(\014\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb.Scope\022(\n\nf"
-      "ield_list\030\003 \003(\0132\024.kvrpcpb.SelectField\022%\n"
-      "\rwhere_filters\030\004 \003(\0132\016.kvrpcpb.Match\022!\n\t"
-      "group_bys\030\005 \003(\0132\016.metapb.Column\022\035\n\005limit"
-      "\030\006 \001(\0132\016.kvrpcpb.Limit\"B\n\010RowValue\022\016\n\006fi"
-      "elds\030\001 \001(\014\022\025\n\raggred_counts\030\002 \003(\003\022\017\n\007ver"
-      "sion\030\003 \001(\004\"a\n\tRowIntent\022\016\n\006txn_id\030\001 \001(\t\022"
-      "\023\n\013primary_key\030\002 \001(\014\022\017\n\007timeout\030\003 \001(\010\022\036\n"
-      "\005value\030\n \001(\0132\017.txnpb.RowValue\"T\n\003Row\022\013\n\003"
-      "key\030\001 \001(\014\022\036\n\005value\030\002 \001(\0132\017.txnpb.RowValu"
-      "e\022 \n\006intent\030\003 \001(\0132\020.txnpb.RowIntent\"H\n\016S"
-      "electResponse\022\014\n\004code\030\001 \001(\005\022\030\n\004rows\030\002 \003("
-      "\0132\n.txnpb.Row\022\016\n\006offset\030\003 \001(\004\"\\\n\017DsSelec"
-      "tRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reque"
-      "stHeader\022!\n\003req\030\002 \001(\0132\024.txnpb.SelectRequ"
-      "est\"`\n\020DsSelectResponse\022\'\n\006header\030\001 \001(\0132"
-      "\027.kvrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025"
-      ".txnpb.SelectResponse* \n\006OpType\022\n\n\006INSER"
-      "T\020\000\022\n\n\006DELETE\020\001*1\n\tTxnStatus\022\010\n\004INIT\020\000\022\r"
-      "\n\tCOMMITTED\020\001\022\013\n\007ABORTED\020\002b\006proto3"
+      " \n\006status\030\001 \001(\0162\020.txnpb.TxnStatus\"(\n\013Ser"
+      "verError\022\014\n\004code\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t\"\276\002\n\010"
+      "TxnError\022)\n\010err_type\030\001 \001(\0162\027.txnpb.TxnEr"
+      "ror.ErrType\022&\n\nserver_err\030\002 \001(\0132\022.txnpb."
+      "ServerError\022\"\n\010lock_err\030\003 \001(\0132\020.txnpb.Lo"
+      "ckError\022,\n\016unexpected_ver\030\004 \001(\0132\024.txnpb."
+      "UnexpectedVer\022.\n\017status_conflict\030\005 \001(\0132\025"
+      ".txnpb.StatusConflict\"]\n\007ErrType\022\013\n\007UNKN"
+      "OWN\020\000\022\020\n\014SERVER_ERROR\020\001\022\n\n\006LOCKED\020\002\022\022\n\016U"
+      "NEXPECTED_VER\020\003\022\023\n\017STATUS_CONFLICT\020\004\"\247\001\n"
+      "\016PrepareRequest\022\016\n\006txn_id\030\001 \001(\t\022\r\n\005local"
+      "\030\002 \001(\010\022!\n\007intents\030\003 \003(\0132\020.txnpb.TxnInten"
+      "t\022\023\n\013primary_key\030\004 \001(\014\022\020\n\010lock_ttl\030\005 \001(\004"
+      "\022\026\n\016secondary_keys\030\006 \003(\014\022\024\n\014strict_check"
+      "\030\020 \001(\010\"2\n\017PrepareResponse\022\037\n\006errors\030\001 \003("
+      "\0132\017.txnpb.TxnError\"^\n\020DsPrepareRequest\022&"
+      "\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\""
+      "\n\003req\030\002 \001(\0132\025.txnpb.PrepareRequest\"b\n\021Ds"
+      "PrepareResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
+      "b.ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.txnpb.P"
+      "repareResponse\"`\n\rDecideRequest\022\016\n\006txn_i"
+      "d\030\001 \001(\t\022 \n\006status\030\002 \001(\0162\020.txnpb.TxnStatu"
+      "s\022\014\n\004keys\030\003 \003(\014\022\017\n\007recover\030\004 \001(\010\"F\n\016Deci"
+      "deResponse\022\034\n\003err\030\001 \001(\0132\017.txnpb.TxnError"
+      "\022\026\n\016secondary_keys\030\002 \003(\014\"\\\n\017DsDecideRequ"
+      "est\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHea"
+      "der\022!\n\003req\030\002 \001(\0132\024.txnpb.DecideRequest\"`"
+      "\n\020DsDecideResponse\022\'\n\006header\030\001 \001(\0132\027.kvr"
+      "pcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.txnp"
+      "b.DecideResponse\"5\n\016ClearupRequest\022\016\n\006tx"
+      "n_id\030\001 \001(\t\022\023\n\013primary_key\030\002 \001(\014\"/\n\017Clear"
+      "upResponse\022\034\n\003err\030\001 \001(\0132\017.txnpb.TxnError"
+      "\"^\n\020DsClearupRequest\022&\n\006header\030\001 \001(\0132\026.k"
+      "vrpcpb.RequestHeader\022\"\n\003req\030\002 \001(\0132\025.txnp"
+      "b.ClearupRequest\"b\n\021DsClearupResponse\022\'\n"
+      "\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$"
+      "\n\004resp\030\002 \001(\0132\026.txnpb.ClearupResponse\"1\n\022"
+      "GetLockInfoRequest\022\013\n\003key\030\001 \001(\014\022\016\n\006txn_i"
+      "d\030\002 \001(\t\"4\n\023GetLockInfoResponse\022\035\n\004info\030\001"
+      " \001(\0132\017.txnpb.LockInfo\"f\n\024DsGetLockInfoRe"
+      "quest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestH"
+      "eader\022&\n\003req\030\002 \001(\0132\031.txnpb.GetLockInfoRe"
+      "quest\"j\n\025DsGetLockInfoResponse\022\'\n\006header"
+      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022(\n\004resp\030"
+      "\002 \001(\0132\032.txnpb.GetLockInfoResponse\"\316\001\n\rSe"
+      "lectRequest\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132"
+      "\016.kvrpcpb.Scope\022(\n\nfield_list\030\003 \003(\0132\024.kv"
+      "rpcpb.SelectField\022%\n\rwhere_filters\030\004 \003(\013"
+      "2\016.kvrpcpb.Match\022!\n\tgroup_bys\030\005 \003(\0132\016.me"
+      "tapb.Column\022\035\n\005limit\030\006 \001(\0132\016.kvrpcpb.Lim"
+      "it\"B\n\010RowValue\022\016\n\006fields\030\001 \001(\014\022\025\n\raggred"
+      "_counts\030\002 \003(\003\022\017\n\007version\030\003 \001(\004\"a\n\tRowInt"
+      "ent\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primary_key\030\002 \001(\014"
+      "\022\017\n\007timeout\030\003 \001(\010\022\036\n\005value\030\n \001(\0132\017.txnpb"
+      ".RowValue\"T\n\003Row\022\013\n\003key\030\001 \001(\014\022\036\n\005value\030\002"
+      " \001(\0132\017.txnpb.RowValue\022 \n\006intent\030\003 \001(\0132\020."
+      "txnpb.RowIntent\"H\n\016SelectResponse\022\014\n\004cod"
+      "e\030\001 \001(\005\022\030\n\004rows\030\002 \003(\0132\n.txnpb.Row\022\016\n\006off"
+      "set\030\003 \001(\004\"\\\n\017DsSelectRequest\022&\n\006header\030\001"
+      " \001(\0132\026.kvrpcpb.RequestHeader\022!\n\003req\030\002 \001("
+      "\0132\024.txnpb.SelectRequest\"`\n\020DsSelectRespo"
+      "nse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHe"
+      "ader\022#\n\004resp\030\002 \001(\0132\025.txnpb.SelectRespons"
+      "e* \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*1\n\tT"
+      "xnStatus\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007ABO"
+      "RTED\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 3154);
+      descriptor, 3254);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "txn.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -803,6 +826,7 @@ bool TxnError_ErrType_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+    case 4:
       return true;
     default:
       return false;
@@ -811,6 +835,7 @@ bool TxnError_ErrType_IsValid(int value) {
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const TxnError_ErrType TxnError::UNKNOWN;
+const TxnError_ErrType TxnError::SERVER_ERROR;
 const TxnError_ErrType TxnError::LOCKED;
 const TxnError_ErrType TxnError::UNEXPECTED_VER;
 const TxnError_ErrType TxnError::STATUS_CONFLICT;
@@ -3891,7 +3916,372 @@ void StatusConflict::set_status(::txnpb::TxnStatus value) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int ServerError::kCodeFieldNumber;
+const int ServerError::kMsgFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+ServerError::ServerError()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_txn_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:txnpb.ServerError)
+}
+ServerError::ServerError(const ServerError& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  msg_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.msg().size() > 0) {
+    msg_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.msg_);
+  }
+  code_ = from.code_;
+  // @@protoc_insertion_point(copy_constructor:txnpb.ServerError)
+}
+
+void ServerError::SharedCtor() {
+  msg_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  code_ = 0;
+  _cached_size_ = 0;
+}
+
+ServerError::~ServerError() {
+  // @@protoc_insertion_point(destructor:txnpb.ServerError)
+  SharedDtor();
+}
+
+void ServerError::SharedDtor() {
+  msg_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void ServerError::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* ServerError::descriptor() {
+  protobuf_txn_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_txn_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const ServerError& ServerError::default_instance() {
+  protobuf_txn_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+ServerError* ServerError::New(::google::protobuf::Arena* arena) const {
+  ServerError* n = new ServerError;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void ServerError::Clear() {
+// @@protoc_insertion_point(message_clear_start:txnpb.ServerError)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  msg_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  code_ = 0;
+  _internal_metadata_.Clear();
+}
+
+bool ServerError::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:txnpb.ServerError)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // int32 code = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &code_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string msg = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_msg()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->msg().data(), static_cast<int>(this->msg().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "txnpb.ServerError.msg"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:txnpb.ServerError)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:txnpb.ServerError)
+  return false;
+#undef DO_
+}
+
+void ServerError::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:txnpb.ServerError)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 code = 1;
+  if (this->code() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->code(), output);
+  }
+
+  // string msg = 2;
+  if (this->msg().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->msg().data(), static_cast<int>(this->msg().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "txnpb.ServerError.msg");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->msg(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:txnpb.ServerError)
+}
+
+::google::protobuf::uint8* ServerError::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:txnpb.ServerError)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 code = 1;
+  if (this->code() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->code(), target);
+  }
+
+  // string msg = 2;
+  if (this->msg().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->msg().data(), static_cast<int>(this->msg().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "txnpb.ServerError.msg");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        2, this->msg(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:txnpb.ServerError)
+  return target;
+}
+
+size_t ServerError::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:txnpb.ServerError)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string msg = 2;
+  if (this->msg().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->msg());
+  }
+
+  // int32 code = 1;
+  if (this->code() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int32Size(
+        this->code());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void ServerError::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:txnpb.ServerError)
+  GOOGLE_DCHECK_NE(&from, this);
+  const ServerError* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const ServerError>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:txnpb.ServerError)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:txnpb.ServerError)
+    MergeFrom(*source);
+  }
+}
+
+void ServerError::MergeFrom(const ServerError& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:txnpb.ServerError)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.msg().size() > 0) {
+
+    msg_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.msg_);
+  }
+  if (from.code() != 0) {
+    set_code(from.code());
+  }
+}
+
+void ServerError::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:txnpb.ServerError)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void ServerError::CopyFrom(const ServerError& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:txnpb.ServerError)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool ServerError::IsInitialized() const {
+  return true;
+}
+
+void ServerError::Swap(ServerError* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void ServerError::InternalSwap(ServerError* other) {
+  using std::swap;
+  msg_.Swap(&other->msg_);
+  swap(code_, other->code_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata ServerError::GetMetadata() const {
+  protobuf_txn_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_txn_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// ServerError
+
+// int32 code = 1;
+void ServerError::clear_code() {
+  code_ = 0;
+}
+::google::protobuf::int32 ServerError::code() const {
+  // @@protoc_insertion_point(field_get:txnpb.ServerError.code)
+  return code_;
+}
+void ServerError::set_code(::google::protobuf::int32 value) {
+  
+  code_ = value;
+  // @@protoc_insertion_point(field_set:txnpb.ServerError.code)
+}
+
+// string msg = 2;
+void ServerError::clear_msg() {
+  msg_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& ServerError::msg() const {
+  // @@protoc_insertion_point(field_get:txnpb.ServerError.msg)
+  return msg_.GetNoArena();
+}
+void ServerError::set_msg(const ::std::string& value) {
+  
+  msg_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:txnpb.ServerError.msg)
+}
+#if LANG_CXX11
+void ServerError::set_msg(::std::string&& value) {
+  
+  msg_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.ServerError.msg)
+}
+#endif
+void ServerError::set_msg(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  msg_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:txnpb.ServerError.msg)
+}
+void ServerError::set_msg(const char* value, size_t size) {
+  
+  msg_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:txnpb.ServerError.msg)
+}
+::std::string* ServerError::mutable_msg() {
+  
+  // @@protoc_insertion_point(field_mutable:txnpb.ServerError.msg)
+  return msg_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* ServerError::release_msg() {
+  // @@protoc_insertion_point(field_release:txnpb.ServerError.msg)
+  
+  return msg_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void ServerError::set_allocated_msg(::std::string* msg) {
+  if (msg != NULL) {
+    
+  } else {
+    
+  }
+  msg_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), msg);
+  // @@protoc_insertion_point(field_set_allocated:txnpb.ServerError.msg)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int TxnError::kErrTypeFieldNumber;
+const int TxnError::kServerErrFieldNumber;
 const int TxnError::kLockErrFieldNumber;
 const int TxnError::kUnexpectedVerFieldNumber;
 const int TxnError::kStatusConflictFieldNumber;
@@ -3910,6 +4300,11 @@ TxnError::TxnError(const TxnError& from)
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_server_err()) {
+    server_err_ = new ::txnpb::ServerError(*from.server_err_);
+  } else {
+    server_err_ = NULL;
+  }
   if (from.has_lock_err()) {
     lock_err_ = new ::txnpb::LockError(*from.lock_err_);
   } else {
@@ -3930,9 +4325,9 @@ TxnError::TxnError(const TxnError& from)
 }
 
 void TxnError::SharedCtor() {
-  ::memset(&lock_err_, 0, static_cast<size_t>(
+  ::memset(&server_err_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&err_type_) -
-      reinterpret_cast<char*>(&lock_err_)) + sizeof(err_type_));
+      reinterpret_cast<char*>(&server_err_)) + sizeof(err_type_));
   _cached_size_ = 0;
 }
 
@@ -3942,6 +4337,7 @@ TxnError::~TxnError() {
 }
 
 void TxnError::SharedDtor() {
+  if (this != internal_default_instance()) delete server_err_;
   if (this != internal_default_instance()) delete lock_err_;
   if (this != internal_default_instance()) delete unexpected_ver_;
   if (this != internal_default_instance()) delete status_conflict_;
@@ -3976,6 +4372,10 @@ void TxnError::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  if (GetArenaNoVirtual() == NULL && server_err_ != NULL) {
+    delete server_err_;
+  }
+  server_err_ = NULL;
   if (GetArenaNoVirtual() == NULL && lock_err_ != NULL) {
     delete lock_err_;
   }
@@ -4017,10 +4417,22 @@ bool TxnError::MergePartialFromCodedStream(
         break;
       }
 
-      // .txnpb.LockError lock_err = 2;
+      // .txnpb.ServerError server_err = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_server_err()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .txnpb.LockError lock_err = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_lock_err()));
         } else {
@@ -4029,10 +4441,10 @@ bool TxnError::MergePartialFromCodedStream(
         break;
       }
 
-      // .txnpb.UnexpectedVer unexpected_ver = 3;
-      case 3: {
+      // .txnpb.UnexpectedVer unexpected_ver = 4;
+      case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_unexpected_ver()));
         } else {
@@ -4041,10 +4453,10 @@ bool TxnError::MergePartialFromCodedStream(
         break;
       }
 
-      // .txnpb.StatusConflict status_conflict = 4;
-      case 4: {
+      // .txnpb.StatusConflict status_conflict = 5;
+      case 5: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_status_conflict()));
         } else {
@@ -4085,22 +4497,28 @@ void TxnError::SerializeWithCachedSizes(
       1, this->err_type(), output);
   }
 
-  // .txnpb.LockError lock_err = 2;
+  // .txnpb.ServerError server_err = 2;
+  if (this->has_server_err()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, *this->server_err_, output);
+  }
+
+  // .txnpb.LockError lock_err = 3;
   if (this->has_lock_err()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, *this->lock_err_, output);
+      3, *this->lock_err_, output);
   }
 
-  // .txnpb.UnexpectedVer unexpected_ver = 3;
+  // .txnpb.UnexpectedVer unexpected_ver = 4;
   if (this->has_unexpected_ver()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, *this->unexpected_ver_, output);
+      4, *this->unexpected_ver_, output);
   }
 
-  // .txnpb.StatusConflict status_conflict = 4;
+  // .txnpb.StatusConflict status_conflict = 5;
   if (this->has_status_conflict()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      4, *this->status_conflict_, output);
+      5, *this->status_conflict_, output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4123,25 +4541,32 @@ void TxnError::SerializeWithCachedSizes(
       1, this->err_type(), target);
   }
 
-  // .txnpb.LockError lock_err = 2;
+  // .txnpb.ServerError server_err = 2;
+  if (this->has_server_err()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        2, *this->server_err_, deterministic, target);
+  }
+
+  // .txnpb.LockError lock_err = 3;
   if (this->has_lock_err()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        2, *this->lock_err_, deterministic, target);
+        3, *this->lock_err_, deterministic, target);
   }
 
-  // .txnpb.UnexpectedVer unexpected_ver = 3;
+  // .txnpb.UnexpectedVer unexpected_ver = 4;
   if (this->has_unexpected_ver()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        3, *this->unexpected_ver_, deterministic, target);
+        4, *this->unexpected_ver_, deterministic, target);
   }
 
-  // .txnpb.StatusConflict status_conflict = 4;
+  // .txnpb.StatusConflict status_conflict = 5;
   if (this->has_status_conflict()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        4, *this->status_conflict_, deterministic, target);
+        5, *this->status_conflict_, deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4161,21 +4586,28 @@ size_t TxnError::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .txnpb.LockError lock_err = 2;
+  // .txnpb.ServerError server_err = 2;
+  if (this->has_server_err()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->server_err_);
+  }
+
+  // .txnpb.LockError lock_err = 3;
   if (this->has_lock_err()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->lock_err_);
   }
 
-  // .txnpb.UnexpectedVer unexpected_ver = 3;
+  // .txnpb.UnexpectedVer unexpected_ver = 4;
   if (this->has_unexpected_ver()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->unexpected_ver_);
   }
 
-  // .txnpb.StatusConflict status_conflict = 4;
+  // .txnpb.StatusConflict status_conflict = 5;
   if (this->has_status_conflict()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -4217,6 +4649,9 @@ void TxnError::MergeFrom(const TxnError& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.has_server_err()) {
+    mutable_server_err()->::txnpb::ServerError::MergeFrom(from.server_err());
+  }
   if (from.has_lock_err()) {
     mutable_lock_err()->::txnpb::LockError::MergeFrom(from.lock_err());
   }
@@ -4255,6 +4690,7 @@ void TxnError::Swap(TxnError* other) {
 }
 void TxnError::InternalSwap(TxnError* other) {
   using std::swap;
+  swap(server_err_, other->server_err_);
   swap(lock_err_, other->lock_err_);
   swap(unexpected_ver_, other->unexpected_ver_);
   swap(status_conflict_, other->status_conflict_);
@@ -4285,7 +4721,47 @@ void TxnError::set_err_type(::txnpb::TxnError_ErrType value) {
   // @@protoc_insertion_point(field_set:txnpb.TxnError.err_type)
 }
 
-// .txnpb.LockError lock_err = 2;
+// .txnpb.ServerError server_err = 2;
+bool TxnError::has_server_err() const {
+  return this != internal_default_instance() && server_err_ != NULL;
+}
+void TxnError::clear_server_err() {
+  if (GetArenaNoVirtual() == NULL && server_err_ != NULL) delete server_err_;
+  server_err_ = NULL;
+}
+const ::txnpb::ServerError& TxnError::server_err() const {
+  const ::txnpb::ServerError* p = server_err_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.server_err)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::ServerError*>(
+      &::txnpb::_ServerError_default_instance_);
+}
+::txnpb::ServerError* TxnError::mutable_server_err() {
+  
+  if (server_err_ == NULL) {
+    server_err_ = new ::txnpb::ServerError;
+  }
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.server_err)
+  return server_err_;
+}
+::txnpb::ServerError* TxnError::release_server_err() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnError.server_err)
+  
+  ::txnpb::ServerError* temp = server_err_;
+  server_err_ = NULL;
+  return temp;
+}
+void TxnError::set_allocated_server_err(::txnpb::ServerError* server_err) {
+  delete server_err_;
+  server_err_ = server_err;
+  if (server_err) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.server_err)
+}
+
+// .txnpb.LockError lock_err = 3;
 bool TxnError::has_lock_err() const {
   return this != internal_default_instance() && lock_err_ != NULL;
 }
@@ -4325,7 +4801,7 @@ void TxnError::set_allocated_lock_err(::txnpb::LockError* lock_err) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.lock_err)
 }
 
-// .txnpb.UnexpectedVer unexpected_ver = 3;
+// .txnpb.UnexpectedVer unexpected_ver = 4;
 bool TxnError::has_unexpected_ver() const {
   return this != internal_default_instance() && unexpected_ver_ != NULL;
 }
@@ -4365,7 +4841,7 @@ void TxnError::set_allocated_unexpected_ver(::txnpb::UnexpectedVer* unexpected_v
   // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.unexpected_ver)
 }
 
-// .txnpb.StatusConflict status_conflict = 4;
+// .txnpb.StatusConflict status_conflict = 5;
 bool TxnError::has_status_conflict() const {
   return this != internal_default_instance() && status_conflict_ != NULL;
 }

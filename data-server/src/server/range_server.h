@@ -94,6 +94,12 @@ private:
     void KVRangeDelete(common::ProtoMessage *msg);
     void KVScan(common::ProtoMessage *msg);
 
+    void TxnPrepare(common::ProtoMessage *msg);
+    void TxnDecide(common::ProtoMessage *msg);
+    void TxnClearup(common::ProtoMessage *msg);
+    void TxnGetLockInfo(common::ProtoMessage *msg);
+    void TxnSelect(common::ProtoMessage* msg);
+
     void TimeOut(const kvrpcpb::RequestHeader &req,
                  kvrpcpb::ResponseHeader *resp);
     void RangeNotFound(const kvrpcpb::RequestHeader &req,

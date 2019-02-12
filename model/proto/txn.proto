@@ -71,18 +71,25 @@ message StatusConflict {
     TxnStatus status = 1;
 }
 
+message ServerError {
+    int32 code = 1;
+    string msg = 2;
+}
+
 message TxnError {
     enum ErrType {
         UNKNOWN = 0;
-        LOCKED = 1;
-        UNEXPECTED_VER = 2;
-        STATUS_CONFLICT = 3;
+        SERVER_ERROR = 1;
+        LOCKED = 2;
+        UNEXPECTED_VER = 3;
+        STATUS_CONFLICT = 4;
     }
 
-    ErrType err_type  = 1;
-    LockError lock_err = 2;
-    UnexpectedVer unexpected_ver = 3;
-    StatusConflict status_conflict = 4;
+    ErrType err_type = 1;
+    ServerError server_err = 2;
+    LockError lock_err = 3;
+    UnexpectedVer unexpected_ver = 4;
+    StatusConflict status_conflict = 5;
 }
 
 

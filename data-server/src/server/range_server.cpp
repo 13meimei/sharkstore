@@ -22,6 +22,7 @@
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/metapb.pb.h"
 #include "proto/gen/schpb.pb.h"
+#include "proto/gen/txn.pb.h"
 #include "storage/metric.h"
 #include "run_status.h"
 
@@ -465,6 +466,21 @@ void RangeServer::DealTask(common::ProtoMessage *msg) {
             break;
         case funcpb::kFuncKvScan:
             KVScan(msg);
+            break;
+        case funcpb::kFuncTxnPrepare:
+            TxnPrepare(msg);
+            break;
+        case funcpb::kFuncTxnDecide:
+            TxnDecide(msg);
+            break;
+        case funcpb::kFuncTxnClearup:
+            TxnClearup(msg);
+            break;
+        case funcpb::kFuncTxnGetLockInfo:
+            TxnGetLockInfo(msg);
+            break;
+        case funcpb::kFuncTxnSelect:
+            TxnSelect(msg);
             break;
         default:
             FLOG_ERROR("func id is Invalid %d", header.func_id);
@@ -1094,6 +1110,51 @@ void RangeServer::KVScan(common::ProtoMessage *msg) {
     auto range = CheckAndDecodeRequest("KVScan", req, resp, msg);
     if (range != nullptr) {
         range->KVScan(msg, req);
+    }
+}
+
+void RangeServer::TxnPrepare(common::ProtoMessage *msg) {
+    txnpb::DsPrepareRequest req;
+    txnpb::DsPrepareResponse *resp = nullptr;
+    auto range = CheckAndDecodeRequest("TxnPrepare", req, resp, msg);
+    if (range != nullptr) {
+        range->TxnPrepare(msg, req);
+    }
+}
+
+void RangeServer::TxnDecide(common::ProtoMessage *msg) {
+    txnpb::DsDecideRequest req;
+    txnpb::DsDecideResponse *resp = nullptr;
+    auto range = CheckAndDecodeRequest("TxnDecide", req, resp, msg);
+    if (range != nullptr) {
+        range->TxnDecide(msg, req);
+    }
+}
+
+void RangeServer::TxnClearup(common::ProtoMessage *msg) {
+    txnpb::DsClearupRequest req;
+    txnpb::DsClearupResponse *resp = nullptr;
+    auto range = CheckAndDecodeRequest("TxnClearup", req, resp, msg);
+    if (range != nullptr) {
+        range->TxnClearup(msg, req);
+    }
+}
+
+void RangeServer::TxnGetLockInfo(common::ProtoMessage *msg) {
+    txnpb::DsGetLockInfoRequest req;
+    txnpb::DsGetLockInfoResponse *resp = nullptr;
+    auto range = CheckAndDecodeRequest("TxnGetLockInfo", req, resp, msg);
+    if (range != nullptr) {
+        range->TxnGetLockInfo(msg, req);
+    }
+}
+
+void RangeServer::TxnSelect(common::ProtoMessage* msg) {
+    txnpb::DsSelectRequest req;
+    txnpb::DsSelectResponse *resp = nullptr;
+    auto range = CheckAndDecodeRequest("TxnSelect", req, resp, msg);
+    if (range != nullptr) {
+        range->TxnSelect(msg, req);
     }
 }
 
