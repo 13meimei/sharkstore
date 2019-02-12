@@ -378,8 +378,8 @@ static void *accept_thread_entrance(void *arg) {
             session->stask = sf_clone_task(context, session->rtask);
             if (session->stask == NULL) {
                 close(income_sock);
-                sf_session_free(&context->socket_session, session_id);
                 free_queue_push(session->rtask);
+                sf_session_free(&context->socket_session, session_id);
                 continue;
             }
 

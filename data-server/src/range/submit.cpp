@@ -38,6 +38,18 @@ void SubmitContext::SendTimeout(common::SocketSession* session) {
         case raft_cmdpb::CmdType::Delete:
             Reply(session, new kvrpcpb::DsDeleteResponse, err);
             break;
+        case raft_cmdpb::CmdType::Lock:
+            Reply(session, new kvrpcpb::DsLockResponse, err);
+            break;
+        case raft_cmdpb::CmdType::LockUpdate:
+            Reply(session, new kvrpcpb::DsLockUpdateResponse, err);
+            break;
+        case raft_cmdpb::CmdType::Unlock:
+            Reply(session, new kvrpcpb::DsUnlockResponse, err);
+            break;
+        case raft_cmdpb::CmdType::UnlockForce:
+            Reply(session, new kvrpcpb::DsUnlockForceResponse, err);
+            break;
         default:
             FLOG_ERROR("SubmitContext::SendTimeout: unknown cmd type: %d", static_cast<int>(type_));
             delete err;

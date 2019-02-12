@@ -710,6 +710,8 @@ void sf_socket_notify(int sock, short event, void *arg, int type) {
 
                 context->socket_close_callback(task, EIO);
             }
+        } else if (session->state == SS_CLOSED) {
+            context->socket_close_callback(task, EIO);
         } else {
             if (sf_set_send_event(task) != 0) {
                 FLOG_WARN("client ip: %s, fd: %d add recv event error",
