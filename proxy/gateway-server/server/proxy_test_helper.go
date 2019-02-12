@@ -463,7 +463,7 @@ func testGetCommand(t *testing.T, table *Table, p *Proxy, filter *Filter, stmt *
 func testSetCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected *Reply) {
 	reply, err := query.setCommand(p, table)
 	if err != nil {
-		t.Fatal("set command error: ", err)
+		t.Fatalf("set command error: %v", err)
 	}
 	assert.DeepEqual(t, reply, expected)
 }
@@ -473,6 +473,14 @@ func testUpdCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected
 	reply, err := query.updCommand(p, table)
 	if err != nil {
 		t.Fatal("upd command error: ", err)
+	}
+	assert.DeepEqual(t, reply, expected)
+}
+
+func testDelCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected *Reply) {
+	reply, err := query.delCommand(p, table)
+	if err != nil {
+		t.Fatal("del command error: ", err)
 	}
 	assert.DeepEqual(t, reply, expected)
 }

@@ -280,7 +280,7 @@ func verifyUniqueness(recordKvPairs, indexKvPairs []*kvrpcpb.KeyValue) bool {
 	if len(recordKvPairs) <= 1 || len(indexKvPairs) <= 1 {
 		return true
 	}
-	fmt.Printf(fmt.Sprintf("start to verify uniqueness"))
+	log.Debug("start to verify uniqueness")
 	var checkDupMap = make(map[string]int, 0)
 	for _, recordKv := range recordKvPairs {
 		key := string(recordKv.GetKey())

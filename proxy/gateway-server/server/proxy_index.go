@@ -26,8 +26,21 @@ func (p *Proxy) deleteIndexes(context *dskv.ReqContext, t *Table, indexKeys [][]
 	if len(indexKeys) == 0 {
 		return
 	}
-	//todo
-
+	//todo batch delete and ps support
+	//now := p.clock.Now()
+	//for _, indexKey := range indexKeys {
+	//	dreq := &kvrpcpb.DeleteRequest{
+	//		Key:          indexKey,
+	//		Timestamp:    &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical},
+	//	}
+	//	var affected uint64
+	//	affected, err = p.deleteRemote(t.DbName(), t.Name(), dreq)
+	//	if err != nil {
+	//		fmt.Println(fmt.Sprintf("delete index key %v err: %v", indexKey, err))
+	//		return
+	//	}
+	//	fmt.Println(fmt.Sprintf("delete index key %v ok, affected %v", indexKey, affected))
+	//}
 	return nil
 }
 

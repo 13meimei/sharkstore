@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	"pkg-go/ds_client"
+	"proxy/store/dskv"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
 	"model/pkg/kvrpcpb"
+	"model/pkg/metapb"
 	"model/pkg/timestamp"
+	"util"
 	"util/log"
-	"proxy/store/dskv"
 )
 
 // HandleDelete handle delete
@@ -70,6 +72,74 @@ func (p *Proxy) doDelete(t *Table, matches []Match) (affected uint64, err error)
 		log.Error("[delete]get pk scope failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
 		return 0, err
 	}
+
+	//delete index data
+	indexFields := t.AllIndexes()
+	indexCount := len(indexFields)
+	if indexCount > 0 {
+		log.Debug("[delete]start to retrieve index data, indexCount: %v", indexCount)
+		selectFields := getSelectFields(t, indexFields)
+		//retrieve: pk value and index field old value
+		//index1(old),...,indexn(old),pk1,...,pkn, correspond to selectFields
+		var (
+			pksAndOldIdxData [][]*Row
+			oldIndexKeys     [][]byte
+		)
+		sreq := &kvrpcpb.SelectRequest{
+			Key:          key,
+			Scope:        scope,
+			FieldList:    selectFields,
+			WhereFilters: pbMatches,
+		}
+		pksAndOldIdxData, err = p.selectRemote(t, sreq)
+		if err != nil {
+			log.Error("[delete]selectRemoteForIndex error: %v", err)
+			return
+		}
+
+		for _, partRData := range pksAndOldIdxData {
+			for _, rData := range partRData {
+				fmt.Println(fmt.Sprintf("[delete]select index row data: %v", rData))
+				for i := 0; i < indexCount; i++ {
+					var (
+						oldKey      []byte
+						idxOldValue []byte
+					)
+					col := selectFields[i].Column
+					fmt.Println(fmt.Sprintf("[delete]index data: field %v, value %v", rData.fields[i].col, rData.fields[i].value))
+					idxOldValue, err = formatValue(rData.fields[i].value)
+					if err != nil {
+						return
+					}
+					oldKey, err = encodeUniqueIndexKey(t, col, idxOldValue)
+					if err != nil {
+						return
+					}
+					if !col.Unique {
+						// 编码主键
+						for j := range t.PKS() {
+							col := selectFields[indexCount+j].Column
+							fmt.Println(fmt.Sprintf("[delete]non-unique index data: index %v field %v, value %v", indexCount+j, col.Name, rData.fields[indexCount+j].value))
+							var pkValue []byte
+							pkValue, err = formatValue(rData.fields[indexCount+j].value)
+							oldKey, err = util.EncodePrimaryKey(oldKey, col, pkValue)
+							if err != nil {
+								log.Error("[delete]encode Primary key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
+								return
+							}
+						}
+					}
+					fmt.Println(fmt.Sprintf("[delete]assemble old index key: %v", oldKey))
+					oldIndexKeys = append(oldIndexKeys, oldKey)
+				}
+			}
+		}
+		context := dskv.NewPRConext(dskv.GetMaxBackoff)
+		if err = p.deleteIndexes(context, t, oldIndexKeys); err != nil {
+			return
+		}
+	}
+
 	// TODO: sync pool
 	now := p.clock.Now()
 	dreq := &kvrpcpb.DeleteRequest{
@@ -87,6 +157,26 @@ func (p *Proxy) doDelete(t *Table, matches []Match) (affected uint64, err error)
 		}
 	}
 	return
+}
+
+func getSelectFields(t *Table, indexCols []*metapb.Column) ([]*kvrpcpb.SelectField) {
+	var (
+		selectFields []*kvrpcpb.SelectField
+	)
+	for _, col := range indexCols {
+		selectFields = append(selectFields, &kvrpcpb.SelectField{
+			Typ:    kvrpcpb.SelectField_Column,
+			Column: col,
+		})
+	}
+	for _, pkColName := range t.PKS() {
+		pkCol := t.FindColumn(pkColName)
+		selectFields = append(selectFields, &kvrpcpb.SelectField{
+			Typ:    kvrpcpb.SelectField_Column,
+			Column: pkCol,
+		})
+	}
+	return selectFields
 }
 
 func (p *Proxy) deleteRemote(db, table string, req *kvrpcpb.DeleteRequest) (uint64, error) {
