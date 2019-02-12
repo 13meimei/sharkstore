@@ -42,13 +42,11 @@ void Range::Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req) {
 
     RANGE_LOG_DEBUG("Delete begin");
 
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsKvDeleteResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
+
         if (!VerifyLeader(err)) {
             break;
         }

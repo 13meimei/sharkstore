@@ -435,6 +435,10 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 		log.Warn("ds reports `RaftEntryTooLarge`, ctx: %s %s", ctx.RequestHeader.String(), ctx.NodeAddr)
 		return false, errors.New(rangeErr.String())
 	}
+	if rangeErr.GetNoLeftSpace() != nil {
+		log.Warn("ds reports `NoLeftSpace`, ctx: %s %s", ctx.RequestHeader.String(), ctx.NodeAddr)
+		return false, errors.New(rangeErr.String())
+	}
 	if rangeErr.GetRangeNotFound() != nil {
 		log.Warn("ds reports `RangeNotFound`, ctx: %s %s", ctx.RequestHeader.String(), ctx.NodeAddr)
 		p.RangeCache.DropRegion(ctx.VID)

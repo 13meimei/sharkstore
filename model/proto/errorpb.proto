@@ -30,11 +30,9 @@ message StaleCommand {
 }
 
 message Timeout {
-
 }
 
 message RaftFail {
-
 }
 
 message StaleEpoch {
@@ -61,6 +59,9 @@ message EntryTooLarge {
     uint64 entry_size = 2;
 }
 
+message NoLeftSpace {
+}
+
 message Error {
     string              message                 = 1;
     NotLeader           not_leader              = 2;
@@ -74,4 +75,5 @@ message Error {
     RaftFail            raft_fail               = 10;
     StaleRange          stale_range             = 11;
     StaleReadIndex      stale_read_index        = 12;
+    NoLeftSpace         no_left_space           = 13;
 }

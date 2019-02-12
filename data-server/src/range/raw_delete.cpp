@@ -43,13 +43,11 @@ void Range::RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &
 
     RANGE_LOG_DEBUG("RawDelete begin");
 
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsKvRawDeleteResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
+
         if (!VerifyLeader(err)) {
             break;
         }

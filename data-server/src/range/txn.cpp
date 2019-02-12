@@ -6,18 +6,17 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
+static void setTxnServerErr(txnpb::TxnError* err, int32_t code, const std::string& msg) {
+    err->set_err_type(txnpb::TxnError_ErrType_SERVER_ERROR);
+    err->mutable_server_err()->set_code(code);
+    err->mutable_server_err()->set_msg(msg);
+}
+
 void Range::TxnPrepare(common::ProtoMessage* msg, txnpb::DsPrepareRequest& req) {
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("TxnPrepare begin");
-
-    if (!CheckWriteable()) {
-        auto resp = new txnpb::DsPrepareResponse;
-        auto err = new txnpb::TxnError;
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
 }
 
 Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_index) {
@@ -27,6 +26,8 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
 void Range::TxnDecide(common::ProtoMessage* msg, txnpb::DsDecideRequest& req) {
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
+
+    RANGE_LOG_DEBUG("TxnDecide begin");
 }
 
 Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index) {
@@ -36,6 +37,9 @@ Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index
 void Range::TxnClearup(common::ProtoMessage* msg, txnpb::DsClearupRequest& req) {
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
+
+    RANGE_LOG_DEBUG("TxnClearup begin");
+
 }
 
 Status Range::ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_index) {

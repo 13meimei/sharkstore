@@ -188,7 +188,7 @@ bool Range::PushHeartBeatMessage() {
 }
 
 Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
-    if (!CheckWriteable()) {
+    if (!VerifyWriteable()) {
         return Status(Status::kIOError, "no left space", "apply");
     }
 
@@ -500,16 +500,22 @@ bool Range::VerifyReadable(uint64_t read_index, errorpb::Error *&err) {
     }
 }
 
-bool Range::CheckWriteable() {
+bool Range::VerifyWriteable(errorpb::Error **err) {
     auto percent = context_->GetFSUsagePercent();
-    if (percent > kStopWriteFsUsagePercent) {
-        RANGE_LOG_ERROR(
-                "filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
-                percent, kStopWriteFsUsagePercent);
-        return false;
-    } else {
+    if (percent < kStopWriteFsUsagePercent) {
         return true;
     }
+
+    RANGE_LOG_ERROR("filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
+            percent, kStopWriteFsUsagePercent);
+
+    if (err != nullptr) {
+        auto no_left_space_err = new errorpb::Error;
+        no_left_space_err ->set_message("no left space");
+        no_left_space_err ->mutable_no_left_space();
+        *err = no_left_space_err;
+    }
+    return false;
 }
 
 bool Range::KeyInRange(const std::string &key) {

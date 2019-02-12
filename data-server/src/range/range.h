@@ -257,7 +257,7 @@ public:
 private:
     bool VerifyLeader(errorpb::Error *&err);
     bool VerifyReadable(uint64_t read_index, errorpb::Error *&err);
-    bool CheckWriteable();
+    bool VerifyWriteable(errorpb::Error **err = nullptr); // 检查是否磁盘空间已满
     bool KeyInRange(const std::string &key);
     bool KeyInRange(const std::string &key, errorpb::Error *&err);
 

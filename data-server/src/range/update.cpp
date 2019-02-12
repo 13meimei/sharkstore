@@ -16,18 +16,11 @@ void Range::Update(common::ProtoMessage *msg, kvrpcpb::DsUpdateRequest &req) {
 
     RANGE_LOG_DEBUG("Update begin");
 
-    if (!VerifyLeader(err)) {
+    if (!VerifyLeader(err) || !VerifyWriteable(&err)) {
         RANGE_LOG_WARN("Update error: %s", err->message().c_str());
 
         auto resp = new kvrpcpb::DsUpdateResponse;
         return SendError(msg, req.header(), resp, err);
-    }
-
-
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsUpdateResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
     }
 
     auto epoch = req.header().range_epoch();

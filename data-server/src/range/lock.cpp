@@ -97,6 +97,10 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
     errorpb::Error *err = nullptr;
 
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
+
         if (!VerifyLeader(err)) {
             RANGE_LOG_WARN("Lock error: %s", err->message().c_str());
             break;
@@ -333,6 +337,10 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
     lock::EncodeKey(&encode_key, meta_.GetTableID(), req.req().key());
     errorpb::Error *err = nullptr;
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
+
         if (!VerifyLeader(err)) {
             break;
         }

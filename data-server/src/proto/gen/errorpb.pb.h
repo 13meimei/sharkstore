@@ -41,6 +41,9 @@ extern ErrorDefaultTypeInternal _Error_default_instance_;
 class KeyNotInRange;
 class KeyNotInRangeDefaultTypeInternal;
 extern KeyNotInRangeDefaultTypeInternal _KeyNotInRange_default_instance_;
+class NoLeftSpace;
+class NoLeftSpaceDefaultTypeInternal;
+extern NoLeftSpaceDefaultTypeInternal _NoLeftSpace_default_instance_;
 class NotLeader;
 class NotLeaderDefaultTypeInternal;
 extern NotLeaderDefaultTypeInternal _NotLeader_default_instance_;
@@ -1238,6 +1241,96 @@ class EntryTooLarge : public ::google::protobuf::Message /* @@protoc_insertion_p
 };
 // -------------------------------------------------------------------
 
+class NoLeftSpace : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:errorpb.NoLeftSpace) */ {
+ public:
+  NoLeftSpace();
+  virtual ~NoLeftSpace();
+
+  NoLeftSpace(const NoLeftSpace& from);
+
+  inline NoLeftSpace& operator=(const NoLeftSpace& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  NoLeftSpace(NoLeftSpace&& from) noexcept
+    : NoLeftSpace() {
+    *this = ::std::move(from);
+  }
+
+  inline NoLeftSpace& operator=(NoLeftSpace&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const NoLeftSpace& default_instance();
+
+  static inline const NoLeftSpace* internal_default_instance() {
+    return reinterpret_cast<const NoLeftSpace*>(
+               &_NoLeftSpace_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    11;
+
+  void Swap(NoLeftSpace* other);
+  friend void swap(NoLeftSpace& a, NoLeftSpace& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline NoLeftSpace* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  NoLeftSpace* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const NoLeftSpace& from);
+  void MergeFrom(const NoLeftSpace& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(NoLeftSpace* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:errorpb.NoLeftSpace)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable int _cached_size_;
+  friend struct protobuf_errorpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:errorpb.Error) */ {
  public:
   Error();
@@ -1272,7 +1365,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Error_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    11;
+    12;
 
   void Swap(Error* other);
   friend void swap(Error& a, Error& b) {
@@ -1432,6 +1525,15 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::errorpb::StaleReadIndex* release_stale_read_index();
   void set_allocated_stale_read_index(::errorpb::StaleReadIndex* stale_read_index);
 
+  // .errorpb.NoLeftSpace no_left_space = 13;
+  bool has_no_left_space() const;
+  void clear_no_left_space();
+  static const int kNoLeftSpaceFieldNumber = 13;
+  const ::errorpb::NoLeftSpace& no_left_space() const;
+  ::errorpb::NoLeftSpace* mutable_no_left_space();
+  ::errorpb::NoLeftSpace* release_no_left_space();
+  void set_allocated_no_left_space(::errorpb::NoLeftSpace* no_left_space);
+
   // @@protoc_insertion_point(class_scope:errorpb.Error)
  private:
 
@@ -1448,6 +1550,7 @@ class Error : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::errorpb::RaftFail* raft_fail_;
   ::errorpb::StaleRange* stale_range_;
   ::errorpb::StaleReadIndex* stale_read_index_;
+  ::errorpb::NoLeftSpace* no_left_space_;
   mutable int _cached_size_;
   friend struct protobuf_errorpb_2eproto::TableStruct;
 };
@@ -2015,6 +2118,10 @@ inline void EntryTooLarge::set_entry_size(::google::protobuf::uint64 value) {
 
 // -------------------------------------------------------------------
 
+// NoLeftSpace
+
+// -------------------------------------------------------------------
+
 // Error
 
 // string message = 1;
@@ -2510,10 +2617,52 @@ inline void Error::set_allocated_stale_read_index(::errorpb::StaleReadIndex* sta
   // @@protoc_insertion_point(field_set_allocated:errorpb.Error.stale_read_index)
 }
 
+// .errorpb.NoLeftSpace no_left_space = 13;
+inline bool Error::has_no_left_space() const {
+  return this != internal_default_instance() && no_left_space_ != NULL;
+}
+inline void Error::clear_no_left_space() {
+  if (GetArenaNoVirtual() == NULL && no_left_space_ != NULL) delete no_left_space_;
+  no_left_space_ = NULL;
+}
+inline const ::errorpb::NoLeftSpace& Error::no_left_space() const {
+  const ::errorpb::NoLeftSpace* p = no_left_space_;
+  // @@protoc_insertion_point(field_get:errorpb.Error.no_left_space)
+  return p != NULL ? *p : *reinterpret_cast<const ::errorpb::NoLeftSpace*>(
+      &::errorpb::_NoLeftSpace_default_instance_);
+}
+inline ::errorpb::NoLeftSpace* Error::mutable_no_left_space() {
+  
+  if (no_left_space_ == NULL) {
+    no_left_space_ = new ::errorpb::NoLeftSpace;
+  }
+  // @@protoc_insertion_point(field_mutable:errorpb.Error.no_left_space)
+  return no_left_space_;
+}
+inline ::errorpb::NoLeftSpace* Error::release_no_left_space() {
+  // @@protoc_insertion_point(field_release:errorpb.Error.no_left_space)
+  
+  ::errorpb::NoLeftSpace* temp = no_left_space_;
+  no_left_space_ = NULL;
+  return temp;
+}
+inline void Error::set_allocated_no_left_space(::errorpb::NoLeftSpace* no_left_space) {
+  delete no_left_space_;
+  no_left_space_ = no_left_space;
+  if (no_left_space) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:errorpb.Error.no_left_space)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

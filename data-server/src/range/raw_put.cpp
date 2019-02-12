@@ -40,13 +40,11 @@ void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
 
     RANGE_LOG_DEBUG("RawPut begin");
 
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsKvRawPutResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
+
         if (!VerifyLeader(err)) {
             break;
         }
