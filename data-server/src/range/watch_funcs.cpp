@@ -288,7 +288,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             RANGE_LOG_DEBUG("PureGet key scope %s---%s", EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbKeyEnd).c_str());
 
             //need to encode and decode
-            std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
+            std::shared_ptr<storage::IteratorInterface> iterator(store_->NewIterator(dbKey, dbKeyEnd));
             uint32_t count{0};
 
             for (int i = 0; iterator->Valid() ; ++i) {
@@ -741,7 +741,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         }
 
         RANGE_LOG_DEBUG("ApplyWatchDel key scope %s---%s", EncodeToHexString(dbKey).c_str(), EncodeToHexString(dbKeyEnd).c_str());
-        std::shared_ptr<storage::Iterator> iterator(store_->NewIterator(dbKey, dbKeyEnd));
+        std::shared_ptr<storage::IteratorInterface> iterator(store_->NewIterator(dbKey, dbKeyEnd));
 
         for (int i = 0; iterator->Valid(); ++i) {
             delKeys.push_back(std::move(iterator->key()));

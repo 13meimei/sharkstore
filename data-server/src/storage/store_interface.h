@@ -48,9 +48,9 @@ public:
                     uint64_t *real_size, std::string *split_key) = 0;
 
 public:
-    virtual Iterator *NewIterator(const ::kvrpcpb::Scope &scope) = 0;
+    virtual IteratorInterface *NewIterator(const ::kvrpcpb::Scope &scope) = 0;
 
-    virtual Iterator *NewIterator(std::string start = std::string(),
+    virtual IteratorInterface *NewIterator(std::string start = std::string(),
                           std::string limit = std::string()) = 0;
 
     virtual Status BatchDelete(const std::vector <std::string> &keys) = 0;

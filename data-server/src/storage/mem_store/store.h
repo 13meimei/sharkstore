@@ -3,12 +3,12 @@ _Pragma("once");
 #include <mutex>
 
 #include "iterator.h"
-#include "metric.h"
+#include "storage/metric.h"
 #include "range/split_policy.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
-#include "field_value.h"
-#include "store_interface.h"
+#include "storage/field_value.h"
+#include "storage/store_interface.h"
 #include <mem_store/mem_store.h>
 
 // test fixture forward declare for friend class
@@ -58,8 +58,8 @@ public:
             uint64_t *real_size, std::string *split_key);
 
 public:
-    Iterator* NewIterator(const ::kvrpcpb::Scope& scope);
-    Iterator* NewIterator(std::string start = std::string(),
+    IteratorInterface* NewIterator(const ::kvrpcpb::Scope& scope);
+    IteratorInterface* NewIterator(std::string start = std::string(),
                           std::string limit = std::string());
     Status BatchDelete(const std::vector<std::string>& keys);
     bool KeyExists(const std::string& key);

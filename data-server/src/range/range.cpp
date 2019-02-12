@@ -10,7 +10,7 @@
 
 #include "snapshot.h"
 #include "range_logger.h"
-#include "storage/mem_db.h"
+#include "storage/mem_store/store.h"
 #include <mem_store/mem_store.h>
 
 namespace sharkstore {

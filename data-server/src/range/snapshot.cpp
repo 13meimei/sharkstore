@@ -5,7 +5,7 @@ namespace dataserver {
 namespace range {
 
 Snapshot::Snapshot(uint64_t applied, raft_cmdpb::SnapshotContext&& ctx,
-                   storage::Iterator* iter)
+                   storage::IteratorInterface* iter)
     : applied_(applied), context_(ctx), iter_(iter) {}
 
 Snapshot::~Snapshot() { Close(); }

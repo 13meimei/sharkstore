@@ -518,7 +518,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
 
         if (req.case_() == kvrpcpb::EC_Exists ||
             req.case_() == kvrpcpb::EC_AnyCase) {
-            std::unique_ptr<storage::Iterator> iterator(
+            std::unique_ptr<storage::IteratorInterface> iterator(
                 store_->NewIterator(start, limit));
             int maxCount = checkMaxCount(req.max_count());
             std::vector<std::string> delKeys(maxCount);
@@ -563,7 +563,7 @@ void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
     auto ds_resp = new kvrpcpb::DsKvScanResponse;
     auto start = std::max(req.req().start(), start_key_);
     auto limit = std::min(req.req().limit(), meta_.GetEndKey());
-    std::unique_ptr<storage::Iterator> iterator(
+    std::unique_ptr<storage::IteratorInterface> iterator(
         store_->NewIterator(start, limit));
 
     int max_count = checkMaxCount(req.req().max_count());

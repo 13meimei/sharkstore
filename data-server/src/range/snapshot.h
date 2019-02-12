@@ -11,7 +11,7 @@ namespace range {
 class Snapshot : public raft::Snapshot {
 public:
     Snapshot(uint64_t applied, raft_cmdpb::SnapshotContext&& ctx,
-             storage::Iterator* iter);
+             storage::IteratorInterface* iter);
     ~Snapshot();
 
     Status Next(std::string* data, bool* over) override;
@@ -22,7 +22,7 @@ public:
 private:
     uint64_t applied_ = 0;
     raft_cmdpb::SnapshotContext context_;
-    storage::Iterator* iter_ = nullptr;
+    storage::IteratorInterface* iter_ = nullptr;
 };
 
 } /* namespace range */

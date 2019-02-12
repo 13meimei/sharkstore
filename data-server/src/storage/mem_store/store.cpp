@@ -1,14 +1,15 @@
-#include "mem_db.h"
+#include "store.h"
+#include "iterator.h"
 #include <common/ds_config.h>
 
-#include "aggregate_calc.h"
+#include "storage/aggregate_calc.h"
 #include "base/util.h"
 #include "common/ds_config.h"
 #include "common/ds_encoding.h"
-#include "field_value.h"
+#include "storage/field_value.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/redispb.pb.h"
-#include "row_fetcher.h"
+#include "storage/row_fetcher.h"
 
 namespace sharkstore {
 
@@ -36,14 +37,25 @@ MemStore::MemStore(const metapb::Range& meta, memstore::Store<std::string>* db):
 MemStore::~MemStore() {}
 
 Status MemStore::Get(const std::string& key, std::string* value) {
+    auto ret = db_->Get(key, value);
+    if (ret != 0) {
+        return Status(Status::kIOError);
+    }
+    addMetricRead(1, key.size() + value->size());
     return Status::OK();
 }
 
 Status MemStore::Put(const std::string& key, const std::string& value) {
+    auto ret = db_->Put(key, value);
+    if (ret != 0) {
+        return Status(Status::kIOError);
+    }
+    addMetricWrite(1, key.size() + value.size());
     return Status::OK();
 }
 
 Status MemStore::Delete(const std::string& key) {
+    db_->Delete(key);
     return Status::OK();
 }
 
@@ -233,12 +245,12 @@ std::string MemStore::GetEndKey() const {
     return end_key_;
 }
 
-Iterator* MemStore::NewIterator(const kvrpcpb::Scope& scope) {
+IteratorInterface* MemStore::NewIterator(const kvrpcpb::Scope& scope) {
     return nullptr;
 }
 
-Iterator* MemStore::NewIterator(std::string start, std::string limit) {
-    return nullptr;
+IteratorInterface* MemStore::NewIterator(std::string start, std::string limit) {
+    return new MemIterator(db_->NewIterator(start, limit), start, limit);
 }
 
 Status MemStore::BatchDelete(const std::vector<std::string>& keys) {
@@ -249,12 +261,12 @@ bool MemStore::KeyExists(const std::string& key) {
     return false;
 }
 
-Status MemStore::BatchSet(
-    const std::vector<std::pair<std::string, std::string>>& keyValues) {
+Status MemStore::BatchSet(const std::vector<std::pair<std::string, std::string>>& keyValues) {
     return Status::OK();
 }
 
 Status MemStore::RangeDelete(const std::string& start, const std::string& limit) {
+    db_->DeleteRange(start, limit);
     return Status::OK();
 }
 
@@ -322,7 +334,7 @@ Status MemStore::StatSize(uint64_t split_size, range::SplitKeyMode mode,
     // start_key_.length() + 5
     auto max_len = start_key_.length() + 5;
 
-    std::unique_ptr<Iterator> it(NewIterator());
+    std::unique_ptr<IteratorInterface> it(NewIterator());
     std::string middle_key;
     std::string first_key;
 
