@@ -35,6 +35,7 @@ namespace server {
 
 static const std::string kMetaPathSuffix = "meta";
 static const std::string kDataPathSuffix = "data";
+static const std::string kTxnCFName = "txn";
 
 int RangeServer::Init(ContextServer *context) {
     FLOG_INFO("RangeServer Init begin ...");
@@ -46,8 +47,6 @@ int RangeServer::Init(ContextServer *context) {
         FLOG_ERROR("RangeServer Init error ...");
         return -1;
     }
-
-    context_->rocks_db = db_;
 
     // 打开meta db
     auto meta_path = JoinFilePath({ds_config.rocksdb_config.path, kMetaPathSuffix});
@@ -258,94 +257,99 @@ void RangeServer::buildDBOptions(rocksdb::Options& ops) {
     }
 }
 
+static void buildBlobOptions(rocksdb::blob_db::BlobDBOptions& bops) {
+    assert(ds_config.rocksdb_config.min_blob_size >= 0);
+    bops.min_blob_size = static_cast<uint64_t>(ds_config.rocksdb_config.min_blob_size);
+    bops.enable_garbage_collection = ds_config.rocksdb_config.enable_garbage_collection;
+    bops.blob_file_size = ds_config.rocksdb_config.blob_file_size;
+    bops.ttl_range_secs = ds_config.rocksdb_config.blob_ttl_range;
+    // compress
+    auto compress_type =
+            static_cast<rocksdb::CompressionType>(ds_config.rocksdb_config.blob_compression);
+    switch (compress_type) {
+        case rocksdb::kSnappyCompression: // 1
+        case rocksdb::kZlibCompression:  // 2
+        case rocksdb::kBZip2Compression: // 3
+        case rocksdb::kLZ4Compression: // 4
+        case rocksdb::kLZ4HCCompression: // 5
+        case rocksdb::kXpressCompression: // 6
+        case rocksdb::kZSTD:
+            bops.compression = compress_type;
+            break;
+        default:
+            (void)bops.compression;
+    }
+
+#ifdef BLOB_EXTEND_OPTIONS
+    bops.gc_file_expired_percent = ds_config.rocksdb_config.blob_gc_percent;
+    if (ds_config.rocksdb_config.blob_cache_size > 0) {
+        bops.blob_cache = rocksdb::NewLRUCache(ds_config.rocksdb_config.blob_cache_size);
+    }
+#endif
+}
+
+
 int RangeServer::OpenDB() {
     // 创建db的父目录
     auto db_path = JoinFilePath({ds_config.rocksdb_config.path, kDataPathSuffix});
-    int ret = MakeDirAll(db_path, 0755);
-    if (ret != 0) {
-        FLOG_ERROR("create rocksdb directory(%s) failed(%s)", db_path.c_str(),
-                   strErrno(errno).c_str());
+    if (MakeDirAll(db_path, 0755) != 0) {
+        FLOG_ERROR("create rocksdb directory(%s) failed(%s)", db_path.c_str(), strErrno(errno).c_str());
         return -1;
     }
 
     rocksdb::Options ops;
     buildDBOptions(ops);
+    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
+    // default column family
+    column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
+    // txn column family
+    column_families.emplace_back(kTxnCFName, rocksdb::ColumnFamilyOptions());
+    auto ttl = ds_config.rocksdb_config.ttl;
+    std::vector<int32_t> ttls{ttl, 0}; // keep same vector index with column_families
 
-    if (ds_config.rocksdb_config.storage_type == 0){
-        if (ds_config.rocksdb_config.ttl == 0) {
-            auto ret = rocksdb::DB::Open(ops, db_path, &db_);
-            if (!ret.ok()) {
-                FLOG_ERROR("open rocksdb(%s) failed(%s)", db_path.c_str(),
-                           ret.ToString().c_str());
-                return -1;
-            }
-        } else if (ds_config.rocksdb_config.ttl > 0) {
-            FLOG_WARN("rocksdb ttl enabled. ttl=%d", ds_config.rocksdb_config.ttl);
+    rocksdb::Status ret;
+    if (ds_config.rocksdb_config.storage_type == 0){ // open normal rocksdb
+        if (ttl == 0) {
+            ret = rocksdb::DB::Open(ops, db_path, column_families, &cf_handles_, &db_);
+        } else if (ttl > 0) { // with ttl
+            FLOG_WARN("rocksdb ttl enabled. ttl=%d", ttl);
             rocksdb::DBWithTTL *ttl_db = nullptr;
-            auto ret =
-                rocksdb::DBWithTTL::Open(ops, db_path, &ttl_db, ds_config.rocksdb_config.ttl);
-            if (!ret.ok()) {
-                FLOG_ERROR("open rocksdb(%s) failed(%s)", db_path.c_str(),
-                           ret.ToString().c_str());
-                return -1;
-            } else {
-                db_ = ttl_db;
-            }
+            ret = rocksdb::DBWithTTL::Open(ops, db_path, column_families, &cf_handles_, &ttl_db, ttls);
+            db_ = ttl_db;
         } else {
-            FLOG_ERROR("invalid rocksdb ttl(%d)", ds_config.rocksdb_config.ttl);
+            FLOG_ERROR("invalid rocksdb ttl: %d", ttl);
             return -1;
         }
-    } else if (ds_config.rocksdb_config.storage_type == 1) {
+    } else if (ds_config.rocksdb_config.storage_type == 1) { // open blobdb
         rocksdb::blob_db::BlobDBOptions bops;
-        assert(ds_config.rocksdb_config.min_blob_size >= 0);
-        bops.min_blob_size = static_cast<uint64_t>(ds_config.rocksdb_config.min_blob_size);
-        bops.enable_garbage_collection = ds_config.rocksdb_config.enable_garbage_collection;
-        bops.blob_file_size = ds_config.rocksdb_config.blob_file_size;
-        bops.ttl_range_secs = ds_config.rocksdb_config.blob_ttl_range;
-        // compress
-        auto compress_type =
-                static_cast<rocksdb::CompressionType>(ds_config.rocksdb_config.blob_compression);
-        switch (compress_type) {
-            case rocksdb::kSnappyCompression: // 1
-            case rocksdb::kZlibCompression:  // 2
-            case rocksdb::kBZip2Compression: // 3
-            case rocksdb::kLZ4Compression: // 4
-            case rocksdb::kLZ4HCCompression: // 5
-            case rocksdb::kXpressCompression: // 6
-            case rocksdb::kZSTD:
-                bops.compression = compress_type;
-                break;
-            default:
-                (void)bops.compression;
-        }
-
-#ifdef BLOB_EXTEND_OPTIONS
-        bops.gc_file_expired_percent = ds_config.rocksdb_config.blob_gc_percent;
-        if (ds_config.rocksdb_config.blob_cache_size > 0) {
-            bops.blob_cache = rocksdb::NewLRUCache(ds_config.rocksdb_config.blob_cache_size);
-        }
-#endif
-
+        buildBlobOptions(bops);
         rocksdb::blob_db::BlobDB *bdb = nullptr;
-        auto ret = rocksdb::blob_db::BlobDB::Open(ops, bops, db_path, &bdb);
-        if (!ret.ok()){
-            FLOG_ERROR("open rocksdb_blob(%s) failed(%s)", db_path.c_str(),
-                       ret.ToString().c_str());
-            return -1;
-        } else {
-            db_ = bdb;
-        }
+        ret = rocksdb::blob_db::BlobDB::Open(ops, bops, db_path, column_families, &cf_handles_, &bdb);
+        db_ = bdb;
     } else {
         FLOG_ERROR("invalid rocksdb storage_type(%d)", ds_config.rocksdb_config.storage_type);
         return -1;
     }
+
+    // check open ret
+    if (!ret.ok()) {
+        FLOG_ERROR("open rocksdb failed(%s): %s", db_path.c_str(), ret.ToString().c_str());
+        return -1;
+    }
+
+    // assign to context
+    context_->rocks_db = db_;
+    assert(cf_handles_.size() == 2);
+    context_->txn_handle = cf_handles_[1];
     return 0;
 }
 
 void RangeServer::CloseDB() {
-    if (db_ != nullptr) {
-        delete db_;
+    for (auto handle : cf_handles_) {
+        delete handle;
     }
+    delete db_;
+    db_ = nullptr;
 }
 
 void RangeServer::Clear() {

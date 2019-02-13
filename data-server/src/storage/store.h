@@ -9,6 +9,7 @@ _Pragma("once");
 #include "range/split_policy.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
+#include "proto/gen/txn.pb.h"
 #include "field_value.h"
 
 // test fixture forward declare for friend class
@@ -30,6 +31,20 @@ public:
     Store(const Store&) = delete;
     Store& operator=(const Store&) = delete;
 
+    void SetEndKey(std::string end_key);
+    std::string GetEndKey() const;
+
+    const std::vector<metapb::Column>& GetPrimaryKeys() const { return primary_keys_; }
+
+    void ResetMetric() { metric_.Reset(); }
+    void CollectMetric(MetricStat* stat) { metric_.Collect(stat); }
+
+    // 统计存储实际大小，并且根据split_size返回中间key
+    Status StatSize(uint64_t split_size, range::SplitKeyMode mode,
+                    uint64_t *real_size, std::string *split_key);
+    // 从rocksdb中删除当前range的数据
+    Status Truncate();
+
     Status Get(const std::string& key, std::string* value);
     Status Put(const std::string& key, const std::string& value);
     Status Delete(const std::string& key);
@@ -39,27 +54,17 @@ public:
     Status Select(const kvrpcpb::SelectRequest& req,
                   kvrpcpb::SelectResponse* resp);
     Status DeleteRows(const kvrpcpb::DeleteRequest& req, uint64_t* affected);
-    Status Truncate();
 
+    // watch funcs
     Status WatchPut(const watchpb::KvWatchPutRequest& req, int64_t version);
     Status WatchDelete(const watchpb::KvWatchDeleteRequest& req);
-    Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req,
-            watchpb::DsKvWatchGetMultiResponse *resp);
-    Status WatchScan();
+    Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req, watchpb::DsKvWatchGetMultiResponse *resp);
 
-    void SetEndKey(std::string end_key);
-    std::string GetEndKey() const;
-
-    const std::vector<metapb::Column>& GetPrimaryKeys() const {
-        return primary_keys_;
-    }
-
-    void ResetMetric() { metric_.Reset(); }
-    void CollectMetric(MetricStat* stat) { metric_.Collect(stat); }
-
-    // 统计存储实际大小，并且根据split_size返回中间key
-    Status StatSize(uint64_t split_size, range::SplitKeyMode mode,
-            uint64_t *real_size, std::string *split_key);
+    void TxnPrepare(const txnpb::PrepareRequest& req, txnpb::PrepareResponse* resp);
+    void TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
+    void TxnClearup(const txnpb::ClearupRequest& req, txnpb::ClearupResponse* resp);
+    void TxnGetLockInfo(const txnpb::GetLockInfoRequest& req, txnpb::GetLockInfoResponse* resp);
+    void TxnSelect(const txnpb::SelectRequest& req, txnpb::SelectResponse* resp);
 
 public:
     Iterator* NewIterator(const ::kvrpcpb::Scope& scope);
@@ -89,6 +94,8 @@ private:
     std::string encodeWatchValue(const watchpb::WatchKeyValue& kv, int64_t version) const;
     bool decodeWatchKey(const std::string& key, watchpb::WatchKeyValue *kv) const;
     bool decodeWatchValue(const std::string& value, watchpb::WatchKeyValue *kv) const;
+
+    Status getTxnLock(const std::string&key, txnpb::TxnValue* value);
 
     Status parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key);
 

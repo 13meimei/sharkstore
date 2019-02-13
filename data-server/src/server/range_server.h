@@ -153,6 +153,7 @@ private:
     std::thread range_heartbeat_;
 
     rocksdb::DB *db_ = nullptr;
+    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles_;
     storage::MetaStore *meta_store_ = nullptr;
 
     ContextServer *context_ = nullptr;

@@ -10,7 +10,6 @@ _Pragma("once");
 #include "base/shared_mutex.h"
 #include "base/util.h"
 
-#include "common/generater.h"
 #include "common/ds_encoding.h"
 #include "common/socket_session.h"
 #include "storage/store.h"
