@@ -11,9 +11,9 @@ namespace storage {
 
 class RowFetcher {
 public:
-    RowFetcher(Store& s, const kvrpcpb::SelectRequest& req);
-    RowFetcher(Store& s, const kvrpcpb::UpdateRequest& req);
-    RowFetcher(Store& s, const kvrpcpb::DeleteRequest& req);
+    RowFetcher(StoreInterface& s, const kvrpcpb::SelectRequest& req);
+    RowFetcher(StoreInterface& s, const kvrpcpb::UpdateRequest& req);
+    RowFetcher(StoreInterface& s, const kvrpcpb::DeleteRequest& req);
 
     ~RowFetcher();
 
@@ -28,11 +28,11 @@ private:
     Status nextScope(RowResult* result, bool* over);
 
 private:
-    Store& store_;
+    StoreInterface& store_;
     RowDecoder decoder_;
 
     std::string key_;
-    Iterator* iter_ = nullptr;
+    IteratorInterface* iter_ = nullptr;
     Status last_status_;
     bool matched_ = false;
     size_t iter_count_ = 0;

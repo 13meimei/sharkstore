@@ -10,6 +10,7 @@
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/redispb.pb.h"
 #include "storage/row_fetcher.h"
+#include "frame/sf_logger.h"
 
 namespace sharkstore {
 
@@ -37,6 +38,9 @@ MemStore::MemStore(const metapb::Range& meta, memstore::Store<std::string>* db):
 MemStore::~MemStore() {}
 
 Status MemStore::Get(const std::string& key, std::string* value) {
+    FLOG_DEBUG("mem store get: key(%s) key_len(%d)",
+               key.c_str(), key.length());
+
     auto ret = db_->Get(key, value);
     if (ret != 0) {
         return Status(Status::kIOError);
@@ -46,6 +50,9 @@ Status MemStore::Get(const std::string& key, std::string* value) {
 }
 
 Status MemStore::Put(const std::string& key, const std::string& value) {
+    FLOG_DEBUG("mem store put: key(%s) key_len(%d) value(%s) value len(%v)",
+               key.c_str(), key.length(), value.c_str(), value.length());
+
     auto ret = db_->Put(key, value);
     if (ret != 0) {
         return Status(Status::kIOError);
@@ -60,6 +67,24 @@ Status MemStore::Delete(const std::string& key) {
 }
 
 Status MemStore::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
+    FLOG_DEBUG("mem store insert...");
+
+    uint64_t bytes_written = 0;
+    std::string value;
+    bool check_dup = req.check_duplicate();
+    *affected = 0;
+    for (int i = 0; i < req.rows_size(); ++i) {
+        const kvrpcpb::KeyValue& kv = req.rows(i);
+        auto s = db_->Put(kv.key(), kv.value());
+        if (s != 0) {
+            FLOG_ERROR("mem store put key(%s) failed", kv.key().c_str());
+            return Status(Status::kIOError);
+        }
+        *affected = *affected + 1;
+        bytes_written += (kv.key().size(), kv.value().size());
+    }
+
+    addMetricWrite(*affected, bytes_written);
     return Status::OK();
 }
 
@@ -212,17 +237,117 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
 
 Status MemStore::selectSimple(const kvrpcpb::SelectRequest& req,
                            kvrpcpb::SelectResponse* resp) {
-    return Status::OK();
+    RowFetcher f(*this, req);
+    Status s;
+    std::unique_ptr<RowResult> r(new RowResult);
+    bool over = false;
+    uint64_t count = 0;
+    uint64_t all = 0;
+    uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
+    uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
+    while (!over && s.ok()) {
+        over = false;
+        s = f.Next(r.get(), &over);
+        if (s.ok() && !over) {
+            ++all;
+            if (all > offset) {
+                addRow(req, resp, *r);
+                if (++count >= limit) break;
+            }
+        }
+    }
+    resp->set_offset(all);
+    return s;
 }
 
 Status MemStore::selectAggre(const kvrpcpb::SelectRequest& req,
                           kvrpcpb::SelectResponse* resp) {
-    return Status::OK();
+    // 暂时不支持带group by的聚合函数
+    if (req.group_bys_size() > 0) {
+        return Status(Status::kNotSupported, "select",
+                      "aggregateion with group by clause");
+    }
+
+    std::vector<std::unique_ptr<AggreCalculator>> aggre_cals;
+    aggre_cals.reserve(req.field_list_size());
+    for (int i = 0; i < req.field_list_size(); ++i) {
+        const auto& field = req.field_list(i);
+        assert(field.typ() == kvrpcpb::SelectField_Type_AggreFunction);
+        // TODO:
+        auto cal = AggreCalculator::New(
+                field.aggre_func(), field.has_column() ? &field.column() : nullptr);
+        if (cal == nullptr) {
+            return Status(
+                    Status::kNotSupported, "select",
+                    std::string("aggregate funtion: ") + field.aggre_func());
+        } else {
+            aggre_cals.push_back(std::move(cal));
+        }
+    }
+
+    RowFetcher f(*this, req);
+    Status s;
+    std::unique_ptr<RowResult> r(new RowResult);
+    bool over = false;
+    while (!over && s.ok()) {
+        over = false;
+        s = f.Next(r.get(), &over);
+        if (s.ok() && !over) {
+            for (size_t i = 0; i < aggre_cals.size(); ++i) {
+                const auto& field = req.field_list(i);
+                if (field.has_column()) {
+                    aggre_cals[i]->Add(r->GetField(field.column().id()));
+                } else {
+                    aggre_cals[i]->Add(nullptr);
+                }
+            }
+        }
+    }
+    if (s.ok()) {
+        std::string buf;
+        auto row = resp->add_rows();
+        for (auto& cal : aggre_cals) {
+            auto f = cal->Result();
+            EncodeFieldValue(&buf, f.get());
+            row->add_aggred_counts(cal->Count());
+        }
+        row->set_fields(buf);
+    }
+    return s;
 }
 
 Status MemStore::Select(const kvrpcpb::SelectRequest& req,
                      kvrpcpb::SelectResponse* resp) {
-    return Status::OK();
+    if (req.field_list_size() == 0) {
+        return Status(Status::kNotSupported, "select",
+                      "invalid select field list size");
+    }
+
+    bool has_aggre = false, has_column = false;
+    for (int i = 0; i < req.field_list_size(); ++i) {
+        auto type = req.field_list(i).typ();
+        switch (type) {
+            case kvrpcpb::SelectField_Type_Column:
+                has_column = true;
+                break;
+            case kvrpcpb::SelectField_Type_AggreFunction:
+                has_aggre = true;
+                break;
+            default:
+                return Status(Status::kInvalidArgument, "select",
+                              std::string("unknown select field type: ") +
+                              kvrpcpb::SelectField_Type_Name(type));
+        }
+    }
+    // 既有聚合函数又有普通的列，暂时不支持
+    if (has_aggre && has_column) {
+        return Status(Status::kNotSupported, "select",
+                      "mixture of aggregate and column select field");
+    } else if (has_column) {
+        return selectSimple(req, resp);
+    } else {
+        return selectAggre(req, resp);
+    }
 }
 
 Status MemStore::DeleteRows(const kvrpcpb::DeleteRequest& req,

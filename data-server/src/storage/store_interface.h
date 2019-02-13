@@ -63,6 +63,10 @@ public:
     virtual Status RangeDelete(const std::string &start, const std::string &limit) = 0;
 
     virtual Status ApplySnapshot(const std::vector <std::string> &datas) = 0;
+
+public:
+    virtual void addMetricRead(uint64_t keys, uint64_t bytes) = 0;
+    virtual void addMetricWrite(uint64_t keys, uint64_t bytes) = 0;
 };
 
 } //namespace sharkstore
