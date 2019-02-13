@@ -18,7 +18,7 @@ public:
     range::SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
 
     rocksdb::DB *DBInstance() override { return server_->rocks_db; }
-    rocksdb::ColumnFamilyHandle *TxnCFHandle() { return server_->txn_handle; }
+    rocksdb::ColumnFamilyHandle *TxnCFHandle() override { return server_->txn_handle; }
     master::Worker* MasterClient() override  { return server_->master_worker; }
     raft::RaftServer* RaftServer() override { return server_->raft_server; }
     storage::MetaStore* MetaStore() override { return server_->meta_store; }

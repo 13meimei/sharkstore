@@ -5,14 +5,10 @@ namespace dataserver {
 namespace range {
 
 using namespace sharkstore::monitor;
+using namespace txnpb;
 
-static void setTxnServerErr(txnpb::TxnError* err, int32_t code, const std::string& msg) {
-    err->set_err_type(txnpb::TxnError_ErrType_SERVER_ERROR);
-    err->mutable_server_err()->set_code(code);
-    err->mutable_server_err()->set_msg(msg);
-}
 
-bool Range::KeyInRange(const txnpb::PrepareRequest& req, const metapb::RangeEpoch& epoch, errorpb::Error** err) {
+bool Range::KeyInRange(const PrepareRequest& req, const metapb::RangeEpoch& epoch, errorpb::Error** err) {
     assert(err != nullptr);
     bool in_range = true;
     std::string wrong_key;
@@ -33,7 +29,7 @@ bool Range::KeyInRange(const txnpb::PrepareRequest& req, const metapb::RangeEpoc
     return false;
 }
 
-bool Range::KeyInRange(const txnpb::DecideRequest& req, const metapb::RangeEpoch& epoch, errorpb::Error** err) {
+bool Range::KeyInRange(const DecideRequest& req, const metapb::RangeEpoch& epoch, errorpb::Error** err) {
     assert(err != nullptr);
     bool in_range = true;
     std::string wrong_key;
@@ -54,7 +50,7 @@ bool Range::KeyInRange(const txnpb::DecideRequest& req, const metapb::RangeEpoch
     return false;
 }
 
-void Range::TxnPrepare(common::ProtoMessage* msg, txnpb::DsPrepareRequest& req) {
+void Range::TxnPrepare(common::ProtoMessage* msg, DsPrepareRequest& req) {
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
@@ -88,7 +84,7 @@ void Range::TxnPrepare(common::ProtoMessage* msg, txnpb::DsPrepareRequest& req) 
 
     if (err != nullptr) {
         RANGE_LOG_WARN("TxnPrepare error: %s", err->message().c_str());
-        auto resp = new txnpb::DsPrepareResponse;
+        auto resp = new DsPrepareResponse;
         return SendError(msg, req.header(), resp, err);
     }
 }
@@ -100,27 +96,26 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     auto &req = cmd.txn_prepare_req();
     auto btime = get_micro_second();
     errorpb::Error *err = nullptr;
+    std::unique_ptr<PrepareResponse> resp(new PrepareResponse);
 
     do {
         if (!KeyInRange(req, cmd.verify_epoch(), &err)) {
             break;
         }
-        // TODO:
+        store_->TxnPrepare(req, resp.get());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new txnpb::DsPrepareResponse;
-        if (!ret.ok()) {
-            setTxnServerErr(resp->mutable_resp()->add_errors(), ret.code(), ret.ToString());
-        }
-        ReplySubmit(cmd, resp, err, btime);
+        auto ds_resp = new DsPrepareResponse;
+        ds_resp->set_allocated_resp(resp.release());
+        ReplySubmit(cmd, ds_resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }
     return ret;
 }
 
-void Range::TxnDecide(common::ProtoMessage* msg, txnpb::DsDecideRequest& req) {
+void Range::TxnDecide(common::ProtoMessage* msg, DsDecideRequest& req) {
     RANGE_LOG_DEBUG("TxnDecide begin");
 
     errorpb::Error *err = nullptr;
@@ -152,7 +147,7 @@ void Range::TxnDecide(common::ProtoMessage* msg, txnpb::DsDecideRequest& req) {
 
     if (err != nullptr) {
         RANGE_LOG_WARN("TxnDecide error: %s", err->message().c_str());
-        auto resp = new txnpb::DsPrepareResponse;
+        auto resp = new DsPrepareResponse;
         return SendError(msg, req.header(), resp, err);
     }
 }
@@ -164,20 +159,23 @@ Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index
     auto &req = cmd.txn_decide_req();
     auto btime = get_micro_second();
     errorpb::Error *err = nullptr;
+    std::unique_ptr<DecideResponse> resp(new DecideResponse);
+    uint64_t bytes_written = 0;
 
     do {
         if (!KeyInRange(req, cmd.verify_epoch(), &err)) {
             break;
         }
-        // TODO:
+        bytes_written = store_->TxnDecide(req, resp.get());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new txnpb::DsDecideResponse;
-        if (!ret.ok()) {
-            setTxnServerErr(resp->mutable_resp()->mutable_err(), ret.code(), ret.ToString());
+        auto ds_resp = new txnpb::DsDecideResponse;
+        ds_resp->set_allocated_resp(resp.release());
+        ReplySubmit(cmd, ds_resp, err, btime);
+        if (bytes_written > 0) {
+            CheckSplit(bytes_written);
         }
-        ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -227,6 +225,7 @@ Status Range::ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     auto &req = cmd.txn_clearup_req();
     auto btime = get_micro_second();
     errorpb::Error *err = nullptr;
+    std::unique_ptr<ClearupResponse> resp(new ClearupResponse);
 
     do {
         if (!EpochIsEqual(cmd.verify_epoch(), err)) {
@@ -235,15 +234,13 @@ Status Range::ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_inde
         if (!KeyInRange(req.primary_key(), err)) {
             break;
         }
-        // TODO:
+        store_->TxnClearup(req, resp.get());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new txnpb::DsClearupResponse;
-        if (!ret.ok()) {
-            setTxnServerErr(resp->mutable_resp()->mutable_err(), ret.code(), ret.ToString());
-        }
-        ReplySubmit(cmd, resp, err, btime);
+        auto ds_resp = new txnpb::DsClearupResponse;
+        ds_resp->set_allocated_resp(resp.release());
+        ReplySubmit(cmd, ds_resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }

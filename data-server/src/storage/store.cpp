@@ -19,12 +19,13 @@ static const size_t kDefaultMaxSelectLimit = 10000;
 
 static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r);
 
-Store::Store(const metapb::Range& meta, rocksdb::DB* db) :
+Store::Store(const metapb::Range& meta, rocksdb::DB* db, rocksdb::ColumnFamilyHandle* txn_cf) :
     table_id_(meta.table_id()) ,
     range_id_(meta.id()),
     start_key_(meta.start_key()),
     end_key_(meta.end_key()),
-    db_(db) {
+    db_(db),
+    txn_cf_(txn_cf) {
     assert(!start_key_.empty());
     assert(!end_key_.empty());
     assert(meta.primary_keys_size() > 0);
@@ -87,7 +88,7 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
         for (int i = 0; i < req.rows_size(); ++i) {
             const kvrpcpb::KeyValue& kv = req.rows(i);
             if (check_dup) {
-                s = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true), kv.key(), &value);
+                s = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum, true), kv.key(), &value);
                 if (s.ok()) {
                     return Status(Status::kDuplicate);
                 } else if (!s.IsNotFound()) {
@@ -97,15 +98,12 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
             s = blobdb->PutWithTTL(write_options_,rocksdb::Slice(kv.key()),rocksdb::Slice(kv.value()),ds_config.rocksdb_config.ttl);
             if (!s.ok()) {
                 return Status(Status::kIOError, "blobdb put", s.ToString());
-            }else{
+            }else {
                 addMetricWrite(*affected, kv.key().size()+kv.value().size());
                 *affected = *affected + 1;
             }
-
         }
-
-       return Status::OK();
-
+        return Status::OK();
     }
 
     uint64_t bytes_written = 0;

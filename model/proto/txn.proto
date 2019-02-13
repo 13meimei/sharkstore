@@ -99,7 +99,7 @@ message PrepareRequest {
     bool local                           = 2;   // 事务只涉及本地一个range，可优化为1PL
     repeated TxnIntent intents           = 3;
     bytes primary_key                    = 4;
-    uint64 lock_ttl                      = 5;
+    uint64 lock_ttl                      = 5;  // 单位 ms，毫秒
     repeated bytes secondary_keys        = 6;  // 只发往primary row
     
     bool strict_check                    = 16; // 前期做一些正确性检查

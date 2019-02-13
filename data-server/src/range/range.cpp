@@ -25,7 +25,7 @@ Range::Range(RangeContext* context, const metapb::Range &meta) :
 	id_(meta.id()),
 	start_key_(meta.start_key()),
 	meta_(meta),
-	store_(new storage::Store(meta, context->DBInstance())) {
+	store_(new storage::Store(meta, context->DBInstance(), context->TxnCFHandle())) {
     eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
                                         ds_config.watch_config.buffer_queue_size);
 }
@@ -568,8 +568,7 @@ void Range::ClearExpiredContext() {
 
 
 errorpb::Error *Range::NoLeaderError() {
-    errorpb::Error *err = new errorpb::Error;
-
+    auto err = new errorpb::Error;
     err->set_message("no leader");
     err->mutable_not_leader()->set_range_id(id_);
     meta_.GetEpoch(err->mutable_not_leader()->mutable_epoch());
@@ -578,39 +577,34 @@ errorpb::Error *Range::NoLeaderError() {
 }
 
 errorpb::Error *Range::NotLeaderError(metapb::Peer &&peer) {
-    errorpb::Error *err = new errorpb::Error;
-
+    auto err = new errorpb::Error;
     err->set_message("not leader");
     err->mutable_not_leader()->set_range_id(id_);
     err->mutable_not_leader()->set_allocated_leader(new metapb::Peer(std::move(peer)));
     meta_.GetEpoch(err->mutable_not_leader()->mutable_epoch());
-
     return err;
 }
 
 errorpb::Error *Range::KeyNotInRange(const std::string &key) {
-    errorpb::Error *err = new errorpb::Error;
-
+    auto err = new errorpb::Error;
     err->set_message("key not in range");
     err->mutable_key_not_in_range()->set_range_id(id_);
     err->mutable_key_not_in_range()->set_key(key);
     err->mutable_key_not_in_range()->set_start_key(start_key_);
-
     // end_key change at range split time
     err->mutable_key_not_in_range()->set_end_key(meta_.GetEndKey());
-
     return err;
 }
 
 errorpb::Error *Range::RaftFailError() {
-    errorpb::Error *err = new errorpb::Error;
+    auto err = new errorpb::Error;
     err->set_message("raft submit fail");
     err->mutable_raft_fail();
     return err;
 }
 
 errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
-    errorpb::Error *err = new errorpb::Error;
+    auto err = new errorpb::Error;
     std::string msg = "stale epoch, req version:";
     msg += std::to_string(epoch.version());
     msg += " cur version:";
@@ -632,7 +626,7 @@ errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
 }
 
 errorpb::Error *Range::StaleReadIndexError(uint64_t read_index, uint64_t current_index) {
-    errorpb::Error *err = new errorpb::Error;
+    auto err = new errorpb::Error;
     err->mutable_stale_read_index()->set_read_index(read_index);
     err->mutable_stale_read_index()->set_replica_index(current_index);
     return err;

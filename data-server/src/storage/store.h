@@ -25,7 +25,7 @@ static const unsigned char kStoreKVPrefixByte = '\x01';
 
 class Store {
 public:
-    Store(const metapb::Range& meta, rocksdb::DB* db);
+    Store(const metapb::Range& meta, rocksdb::DB* db, rocksdb::ColumnFamilyHandle* txn_cf);
     ~Store();
 
     Store(const Store&) = delete;
@@ -61,7 +61,7 @@ public:
     Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req, watchpb::DsKvWatchGetMultiResponse *resp);
 
     void TxnPrepare(const txnpb::PrepareRequest& req, txnpb::PrepareResponse* resp);
-    void TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
+    uint64_t TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
     void TxnClearup(const txnpb::ClearupRequest& req, txnpb::ClearupResponse* resp);
     void TxnGetLockInfo(const txnpb::GetLockInfoRequest& req, txnpb::GetLockInfoResponse* resp);
     void TxnSelect(const txnpb::SelectRequest& req, txnpb::SelectResponse* resp);
@@ -95,7 +95,10 @@ private:
     bool decodeWatchKey(const std::string& key, watchpb::WatchKeyValue *kv) const;
     bool decodeWatchValue(const std::string& value, watchpb::WatchKeyValue *kv) const;
 
-    Status getTxnLock(const std::string&key, txnpb::TxnValue* value);
+    bool checkLockable(const std::string& txn_id, const std::string& key, txnpb::TxnError** err);
+    Status getTxnValue(const std::string&key, txnpb::TxnValue* value);
+    void writeTxnValue(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
+            rocksdb::WriteBatch* batch, txnpb::TxnError** error);
 
     Status parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key);
 
@@ -108,6 +111,7 @@ private:
     mutable std::mutex key_lock_;
 
     rocksdb::DB* db_;
+    rocksdb::ColumnFamilyHandle* txn_cf_;
     rocksdb::WriteOptions write_options_;
 
     std::vector<metapb::Column> primary_keys_;
