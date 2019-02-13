@@ -260,7 +260,10 @@ private:
     bool VerifyWriteable(errorpb::Error **err = nullptr); // 检查是否磁盘空间已满
     bool KeyInRange(const std::string &key);
     bool KeyInRange(const std::string &key, errorpb::Error *&err);
-
+    bool KeyInRange(const txnpb::PrepareRequest& req, const metapb::RangeEpoch& epoch,
+            errorpb::Error** err);
+    bool KeyInRange(const txnpb::DecideRequest& req, const metapb::RangeEpoch& epoch,
+            errorpb::Error** err);
     bool EpochIsEqual(const metapb::RangeEpoch &epoch);
     bool EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&);
 
