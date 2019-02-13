@@ -359,49 +359,21 @@ func (p *Proxy) batchInsert(context *dskv.ReqContext, t *Table, kvPairs []*kvrpc
 	// 首先排序,这个很重要
 	sort.Sort(KvParisSlice(kvPairs))
 
-	var kvGroup [][]*kvrpcpb.KeyValue
-	retryKVPairs = make([]*kvrpcpb.KeyValue, 0)
 	// 按照route的范围划分kv group
-	ggroup := make(map[uint64][]*kvrpcpb.KeyValue)
-	for _, kv := range kvPairs {
-		log.Debug("task insert add key[%v]", kv.GetKey())
-		l, _err := t.ranges.LocateKey(context.GetBackOff(), kv.GetKey())
-		if _err != nil {
-			err = _err
-			log.Warn("locate key failed, err %v", err)
-			return
-		}
-		var group []*kvrpcpb.KeyValue
-		var ok bool
-		if group, ok = ggroup[l.Region.Id]; !ok {
-			group = make([]*kvrpcpb.KeyValue, 0)
-			ggroup[l.Region.Id] = group
-		}
-		group = append(group, kv)
+	var kvGroup [][]*kvrpcpb.KeyValue
+	kvGroup, err = regroupKvPairsByRange(context, t, kvPairs)
 
-		//map copy value must reset
-		ggroup[l.Region.Id] = group
-		// 每100个kv切割一下
-		if len(group) >= 100 {
-			kvGroup = append(kvGroup, group)
-			delete(ggroup, l.Region.Id)
-		}
-	}
-	for _, group := range ggroup {
-		if len(group) > 0 {
-			kvGroup = append(kvGroup, group)
-		}
-	}
 	log.Debug("%s, task insert %s group size: %d", context, t.GetName(), len(kvGroup))
+
+	retryKVPairs = make([]*kvrpcpb.KeyValue, 0)
+
 	// 只需要访问一个range
 	if len(kvGroup) == 1 {
 		affected, duplicateKey, err = p.insert(context, t, kvGroup[0])
 		if err != nil && err == dskv.ErrRouteChange {
 			retryKVPairs = append(retryKVPairs, kvGroup[0]...)
-			return 0, nil, retryKVPairs, err
-		} else {
-			return affected, duplicateKey, retryKVPairs, err
 		}
+		return
 	}
 	startTime := time.Now()
 	// for more range batch insert
@@ -420,7 +392,6 @@ func (p *Proxy) batchInsert(context *dskv.ReqContext, t *Table, kvPairs []*kvrpc
 		tasks = append(tasks, task)
 	}
 	// 存在部分task不能被回收的问题，但是不会造成内存泄漏
-	retryKVPairs = make([]*kvrpcpb.KeyValue, 0)
 	for _, task := range tasks {
 		err_ := task.Wait()
 		if err_ != nil {
@@ -450,11 +421,48 @@ func (p *Proxy) batchInsert(context *dskv.ReqContext, t *Table, kvPairs []*kvrpc
 	return
 }
 
+// 按照route的范围划分kv group
+func regroupKvPairsByRange(context *dskv.ReqContext, t *Table, kvPairs []*kvrpcpb.KeyValue) (kvGroup [][]*kvrpcpb.KeyValue, err error) {
+	ggroup := make(map[uint64][]*kvrpcpb.KeyValue)
+	for _, kv := range kvPairs {
+		log.Debug("task insert add key[%v]", kv.GetKey())
+		l, _err := t.ranges.LocateKey(context.GetBackOff(), kv.GetKey())
+		if _err != nil {
+			err = _err
+			log.Warn("locate key failed, err %v", err)
+			return
+		}
+		var (
+			group []*kvrpcpb.KeyValue
+			ok    bool
+		)
+		if group, ok = ggroup[l.Region.Id]; !ok {
+			group = make([]*kvrpcpb.KeyValue, 0)
+			ggroup[l.Region.Id] = group
+		}
+		group = append(group, kv)
+
+		//map copy value must reset
+		ggroup[l.Region.Id] = group
+		// 每100个kv切割一下
+		if len(group) >= 100 {
+			kvGroup = append(kvGroup, group)
+			delete(ggroup, l.Region.Id)
+		}
+	}
+	for _, group := range ggroup {
+		if len(group) > 0 {
+			kvGroup = append(kvGroup, group)
+		}
+	}
+	return
+}
+
 func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValue) (affected uint64, duplicateKey []byte, err error) {
 	var (
 		recordKvPairs, indexKvPairs []*kvrpcpb.KeyValue
 	)
-	//recordKvPairs: encode record kvPair
+	//recordKvPairs: encode business record kvPair
 	//indexKvPairs: encode unique and non-unique index kvPair
 	recordKvPairs, indexKvPairs, err = p.EncodeRows(t, colMap, rows)
 	if err != nil {
