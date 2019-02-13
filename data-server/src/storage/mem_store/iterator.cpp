@@ -14,7 +14,12 @@ MemIterator::MemIterator(memstore::Iterator<std::string, std::string>* it,
 
 MemIterator::~MemIterator() {}
 
-bool MemIterator::Valid() { return rit_->Valid(); }
+bool MemIterator::Valid() {
+    if (rit_ == nullptr) {
+        return false;
+    }
+    return rit_->Valid();
+}
 
 void MemIterator::Next() { rit_->Next(); }
 
