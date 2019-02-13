@@ -20,14 +20,13 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"proxy/gateway-server/errors"
-	"proxy/gateway-server/mysql"
-	"proxy/gateway-server/sqlparser"
-	"proxy/metric"
 	"util"
 	"util/hack"
 	golog "util/log"
+	"proxy/metric"
+	"proxy/gateway-server/errors"
+	"proxy/gateway-server/mysql"
+	"proxy/gateway-server/sqlparser"
 )
 
 /*处理query语句*/
@@ -37,7 +36,6 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	start := time.Now()
 	defer func() {
 		if e := recover(); e != nil {
-			//golog.OutputSql("Error", "err:%v,sql:%s", e, sql)
 			golog.Info("err:%v,sql:%s", e, sql)
 
 			if err, ok := e.(error); ok {
@@ -69,18 +67,6 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	}()
 
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
-	//	hasHandled, err := c.preHandleShard(sql)
-	//	if err != nil {
-	//		golog.Error("server", "preHandleShard", err.Error(), 0,
-	//			"sql", sql,
-	//			"hasHandled", hasHandled,
-	//		)
-	//		return err
-	//	}
-	//	if hasHandled {
-	//		return nil
-	//	}
-
 	var stmt sqlparser.Statement
 	stmt, err = sqlparser.Parse(sql) //解析sql语句,得到的stmt是一个interface
 	if err != nil {

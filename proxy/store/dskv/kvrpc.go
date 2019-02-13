@@ -6,6 +6,7 @@ import (
 
 	"model/pkg/kvrpcpb"
 	"model/pkg/errorpb"
+	"model/pkg/txn"
 )
 
 func EnumName(m map[int32]string, v int32) string {
@@ -41,18 +42,24 @@ const (
 	Type_Unlock      Type = 22
 	Type_UnlockForce Type = 23
 	Type_LockScan    Type = 24
+	Type_TxPrepare   Type = 30
+	Type_TxDecide    Type = 31
+	Type_TxCleanup   Type = 32
 )
 
 var Type_name = map[int32]string{
-	0: "InvalidType",
-	1: "RawGet",
-	2: "RawPut",
-	3: "RawDelete",
-	4: "RawExecute",
-	5: "Insert",
-	6: "Select",
-	7: "Delete",
-	8: "Update",
+	0:  "InvalidType",
+	1:  "RawGet",
+	2:  "RawPut",
+	3:  "RawDelete",
+	4:  "RawExecute",
+	5:  "Insert",
+	6:  "Select",
+	7:  "Delete",
+	8:  "Update",
+	30: "TxPrepare",
+	31: "TxDecide",
+	32: "TxCleanup",
 }
 var Type_value = map[string]int32{
 	"InvalidType": 0,
@@ -64,6 +71,9 @@ var Type_value = map[string]int32{
 	"Select":      6,
 	"Delete":      7,
 	"Update":      8,
+	"TxPrepare":   30,
+	"TxDecide":    31,
+	"TxCleanup":   32,
 }
 
 func (x Type) String() string {
@@ -96,6 +106,10 @@ type Request struct {
 	KvDeleteReq   *kvrpcpb.DsKvDeleteRequest
 	KvBatchDelReq *kvrpcpb.DsKvBatchDeleteRequest
 	KvRangeDelReq *kvrpcpb.DsKvRangeDeleteRequest
+
+	TxPrepareReq *txnpb.DsPrepareRequest
+	TxDecideReq  *txnpb.DsDecideRequest
+	TxCleanupReq *txnpb.DsClearupRequest
 }
 
 func (m *Request) Reset() {
@@ -252,6 +266,27 @@ func (m *Request) GetKvRangeDelReq() *kvrpcpb.DsKvRangeDeleteRequest {
 	return nil
 }
 
+func (m *Request) GetTxPrepareReq() *txnpb.DsPrepareRequest {
+	if m != nil {
+		return m.TxPrepareReq
+	}
+	return nil
+}
+
+func (m *Request) GetTxDecideReq() *txnpb.DsDecideRequest {
+	if m != nil {
+		return m.TxDecideReq
+	}
+	return nil
+}
+
+func (m *Request) GetTxCleanupReq() *txnpb.DsClearupRequest {
+	if m != nil {
+		return m.TxCleanupReq
+	}
+	return nil
+}
+
 type Response struct {
 	Type           Type
 	RawGetResp     *kvrpcpb.DsKvRawGetResponse
@@ -278,6 +313,10 @@ type Response struct {
 	KvDeleteResp   *kvrpcpb.DsKvDeleteResponse
 	KvBatchDelResp *kvrpcpb.DsKvBatchDeleteResponse
 	KvRangeDelResp *kvrpcpb.DsKvRangeDeleteResponse
+
+	TxPrepareResp *txnpb.DsPrepareResponse
+	TxDecideResp  *txnpb.DsDecideResponse
+	TxCleanupResp *txnpb.DsClearupResponse
 }
 
 func (m *Response) GetType() Type {
@@ -429,6 +468,27 @@ func (m *Response) GetKvRangeDelResp() *kvrpcpb.DsKvRangeDeleteResponse {
 	return nil
 }
 
+func (m *Response) GetTxPrepareResp() *txnpb.DsPrepareResponse {
+	if m != nil {
+		return m.TxPrepareResp
+	}
+	return nil
+}
+
+func (m *Response) GetTxDecideResp() *txnpb.DsDecideResponse {
+	if m != nil {
+		return m.TxDecideResp
+	}
+	return nil
+}
+
+func (m *Response) GetTxCleanupResp() *txnpb.DsClearupResponse {
+	if m != nil {
+		return m.TxCleanupResp
+	}
+	return nil
+}
+
 func (resp *Response) GetErr() (pErr *errorpb.Error, err error) {
 	switch resp.Type {
 	case Type_RawPut:
@@ -471,6 +531,12 @@ func (resp *Response) GetErr() (pErr *errorpb.Error, err error) {
 		pErr = resp.KvBatchDelResp.GetHeader().GetError()
 	case Type_KvRangeDel:
 		pErr = resp.KvRangeDelResp.GetHeader().GetError()
+	case Type_TxPrepare:
+		pErr = resp.TxPrepareResp.GetHeader().GetError()
+	case Type_TxDecide:
+		pErr = resp.TxDecideResp.GetHeader().GetError()
+	case Type_TxCleanup:
+		pErr = resp.TxCleanupResp.GetHeader().GetError()
 	default:
 		err = fmt.Errorf("invalid response type %s", resp.Type.String())
 	}

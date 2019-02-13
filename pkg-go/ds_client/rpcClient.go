@@ -15,6 +15,7 @@ import (
 	"model/pkg/kvrpcpb"
 	"model/pkg/schpb"
 	"model/pkg/watchpb"
+	"model/pkg/txn"
 	"pkg-go/util"
 	"util/log"
 
@@ -85,8 +86,11 @@ func init() {
 	msgType[uint16(funcpb.FunctionID_kFuncLockUpdate)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncUnlock)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncUnlockForce)] = &MsgTypeGroup{0x02, 0x12}
-
 	msgType[uint16(funcpb.FunctionID_kFuncKvSet)] = &MsgTypeGroup{0x02, 0x12}
+
+	msgType[uint16(funcpb.FunctionID_kFuncTxnPrepare)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnDecide)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnClearup)] = &MsgTypeGroup{0x02, 0x12}
 
 	msgType[uint16(funcpb.FunctionID_kFuncCreateRange)] = &MsgTypeGroup{0x01, 0x11}
 	msgType[uint16(funcpb.FunctionID_kFuncDeleteRange)] = &MsgTypeGroup{0x01, 0x11}
@@ -109,7 +113,7 @@ func getMsgType(funcId uint16) *MsgTypeGroup {
 
 // 链路状态
 const (
-	LINK_INIT = iota
+	LINK_INIT     = iota
 	LINK_CONN
 	LINK_CLOSED
 	LINK_BAN_CONN
@@ -170,6 +174,11 @@ type RpcClient interface {
 	SetNodeLogLevel(ctx context.Context, in *schpb.SetNodeLogLevelRequest) (*schpb.SetNodeLogLevelResponse, error)
 	OfflineRange(ctx context.Context, in *schpb.OfflineRangeRequest) (*schpb.OfflineRangeResponse, error)
 	ReplaceRange(ctx context.Context, in *schpb.ReplaceRangeRequest) (*schpb.ReplaceRangeResponse, error)
+
+	//tx
+	TxPrepare(ctx context.Context, in *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error)
+	TxDecide(ctx context.Context, in *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error)
+	TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
 
 	// ds_admin
 	Admin(ctx context.Context, in *ds_adminpb.AdminRequest) (*ds_adminpb.AdminResponse, error)
@@ -704,6 +713,39 @@ func (c *DSRpcClient) WatchDelete(ctx context.Context, in *watchpb.DsKvWatchDele
 func (c *DSRpcClient) WatchGet(ctx context.Context, in *watchpb.DsKvWatchGetMultiRequest) (*watchpb.DsKvWatchGetMultiResponse, error) {
 	out := new(watchpb.DsKvWatchGetMultiResponse)
 	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncPureGet), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxPrepare(ctx context.Context, in *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error) {
+	out := new(txnpb.DsPrepareResponse)
+	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncTxnPrepare), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxDecide(ctx context.Context, in *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error) {
+	out := new(txnpb.DsDecideResponse)
+	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncTxnDecide), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error) {
+	out := new(txnpb.DsClearupResponse)
+	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncTxnClearup), ctx, in, out)
 	in.GetHeader().TraceId = msgId
 	if err != nil {
 		return nil, err

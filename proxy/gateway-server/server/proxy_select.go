@@ -51,10 +51,10 @@ func (p *Proxy) HandleSelect(db string, stmt *sqlparser.Select, args []interface
 	}
 
 	// 解析where条件
-	var matchs []Match
+	var matches []Match
 	if stmt.Where != nil {
 		// TODO: 支持OR表达式
-		matchs, err = parser.parseWhere(stmt.Where)
+		matches, err = parser.parseWhere(stmt.Where)
 		if err != nil {
 			log.Error("handle select parse where error(%v)", err.Error())
 			return nil, err
@@ -79,12 +79,12 @@ func (p *Proxy) HandleSelect(db string, stmt *sqlparser.Select, args []interface
 		log.Debug("where %v", stmt.Where)
 		log.Debug("have %v", stmt.Having)
 		log.Debug("cols %v", cols)
-		log.Debug("matchs %v", matchs)
+		log.Debug("matches %v", matches)
 	}
 
 	//parseTime = time.Now()
 	// 向dataserver查询
-	rowss, err := p.doSelect(t, fieldList, matchs, limit, nil)
+	rowss, err := p.doSelect(t, fieldList, matches, limit, nil)
 	if err != nil {
 		return nil, err
 	}

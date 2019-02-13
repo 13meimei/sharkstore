@@ -7,6 +7,7 @@ import (
 	"proxy/metric"
 	"util/log"
 	"model/pkg/kvrpcpb"
+	"model/pkg/txn"
 )
 
 //func (p *KvProxy) SqlInsert(req *kvrpcpb.InsertRequest, scope *kvrpcpb.Scope) ([]*kvrpcpb.InsertResponse, error) {
@@ -249,4 +250,14 @@ func (p KvParisSlice) Swap(i int, j int) {
 
 func (p KvParisSlice) Less(i int, j int) bool {
 	return bytes.Compare(p[i].GetKey(), p[j].GetKey()) < 0
+}
+
+func (p *KvProxy) TxPrepare(rContext *ReqContext, req *txnpb.PrepareRequest, key []byte) (*txnpb.PrepareResponse, error) {
+	return nil, nil
+}
+func (p *KvProxy) TxDecide(rContext *ReqContext, req *txnpb.DecideRequest, key []byte) (*txnpb.DecideResponse, error) {
+	return nil, nil
+}
+func (p *KvProxy) TxCleanup(rContext *ReqContext, req *txnpb.ClearupRequest, key []byte) (*txnpb.ClearupResponse, error) {
+	return nil, nil
 }

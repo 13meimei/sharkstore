@@ -175,6 +175,28 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 			goto Err
 		}
 		resp.KvRangeDelResp = _resp
+
+	case Type_TxPrepare:
+		_resp, _err := p.Cli.TxPrepare(ctx, addr, req.GetTxPrepareReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxPrepareResp = _resp
+	case Type_TxDecide:
+		_resp, _err := p.Cli.TxDecide(ctx, addr, req.GetTxDecideReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxDecideResp = _resp
+	case Type_TxCleanup:
+		_resp, _err := p.Cli.TxCleanup(ctx, addr, req.GetTxCleanupReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxCleanupResp = _resp
 	default:
 		return nil, false, ErrInternalError
 	}
@@ -260,6 +282,16 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 	case Type_KvRangeDel:
 		header = req.KvRangeDelReq.GetHeader()
 		timeout = client.ReadTimeoutShort
+
+	case Type_TxPrepare:
+		header = req.TxPrepareReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
+	case Type_TxDecide:
+		header = req.TxDecideReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
+	case Type_TxCleanup:
+		header = req.TxCleanupReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
 	default:
 		return timeout, header, fmt.Errorf("invalid request type %s", req.Type.String())
 	}
