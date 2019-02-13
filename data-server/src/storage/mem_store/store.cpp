@@ -371,7 +371,8 @@ std::string MemStore::GetEndKey() const {
 }
 
 IteratorInterface* MemStore::NewIterator(const kvrpcpb::Scope& scope) {
-    return nullptr;
+    return new MemIterator(db_->NewIterator(scope.start(), scope.limit()),
+                           scope.start(), scope.limit());
 }
 
 IteratorInterface* MemStore::NewIterator(std::string start, std::string limit) {
