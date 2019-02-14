@@ -202,7 +202,7 @@ message SelectRequest {
 message RowValue {
     bytes fields                 = 1;              //  encoded fields
     repeated int64 aggred_counts = 2;              // aggregated row count(for avg)
-    uint64 version               = 3;             // version
+    uint64 version               = 3;              // version
 }
 
 message RowIntent {

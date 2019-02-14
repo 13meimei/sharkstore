@@ -19,6 +19,8 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+using TxnErrorPtr = std::unique_ptr<txnpb::TxnError>;
+
 // 行前缀长度: 1字节特殊标记+8字节table id
 static const size_t kRowPrefixLength = 9;
 static const unsigned char kStoreKVPrefixByte = '\x01';
@@ -95,10 +97,11 @@ private:
     bool decodeWatchKey(const std::string& key, watchpb::WatchKeyValue *kv) const;
     bool decodeWatchValue(const std::string& value, watchpb::WatchKeyValue *kv) const;
 
-    bool checkLockable(const std::string& txn_id, const std::string& key, txnpb::TxnError** err);
     Status getTxnValue(const std::string&key, txnpb::TxnValue* value);
-    void writeTxnValue(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
-            rocksdb::WriteBatch* batch, txnpb::TxnError** error);
+    TxnErrorPtr checkLockable(const std::string& key, const std::string& txn_id, bool *exist_flag);
+    TxnErrorPtr checkUniqueAndVersion(const txnpb::TxnIntent& intent);
+    TxnErrorPtr prepareIntent(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
+            rocksdb::WriteBatch* batch);
 
     Status parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key);
 
