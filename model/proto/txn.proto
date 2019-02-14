@@ -35,6 +35,7 @@ message TxnValue {
     TxnIntent intent            = 2; // 本行预写数据
     bytes primary_key           = 3; // 指向primary row
     uint64 expired_at           = 4; // 绝对时间
+    uint64 version              = 5; // version when prepare
 
     // only exists in primary row, used as txn record
     TxnStatus txn_status          = 10; 

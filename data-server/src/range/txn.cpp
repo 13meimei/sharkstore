@@ -102,7 +102,7 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
         if (!KeyInRange(req, cmd.verify_epoch(), &err)) {
             break;
         }
-        store_->TxnPrepare(req, resp.get());
+        store_->TxnPrepare(req, raft_index, resp.get());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {

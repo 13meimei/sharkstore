@@ -89,10 +89,12 @@ TxnErrorPtr Store::checkLockable(const std::string& key, const std::string& txn_
 
 TxnErrorPtr Store::checkUniqueAndVersion(const txnpb::TxnIntent& intent) {
     // TODO:
+    // TODO: load version from txn and data
     return nullptr;
 }
 
-TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& intent, rocksdb::WriteBatch* batch) {
+TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& intent,
+        uint64_t version, rocksdb::WriteBatch* batch) {
     // check lockable
     bool exist_flag = false;
     auto err = checkLockable(intent.key(), req.txn_id(), &exist_flag);
@@ -134,7 +136,7 @@ TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& int
     return nullptr;
 }
 
-void Store::TxnPrepare(const PrepareRequest& req, PrepareResponse* resp) {
+void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareResponse* resp) {
     bool primary_lockable = true;
     rocksdb::WriteBatch batch;
     for (const auto& intent: req.intents()) {
@@ -164,10 +166,34 @@ void Store::TxnPrepare(const PrepareRequest& req, PrepareResponse* resp) {
 }
 
 uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
+    for (const auto& key: req.keys()) {
+    }
     return 0;
 }
 
 void Store::TxnClearup(const ClearupRequest& req, ClearupResponse* resp) {
+    txnpb::TxnValue value;
+    auto s = getTxnValue(req.primary_key(), &value);
+    if (!s.ok()) {
+        if (s.code() != Status::kNotFound) {
+            setTxnServerErr(resp->mutable_err(), s.code(), s.ToString());
+        }
+        return;
+    }
+    // s is ok now
+    if (value.txn_id() != req.txn_id()) { // success
+        return;
+    }
+    if (!value.intent().is_primary()) {
+        setTxnServerErr(resp->mutable_err(), Status::kInvalidArgument, "target key is not primary");
+        return;
+    }
+    // delete intent
+    auto ret = db_->Delete(rocksdb::WriteOptions(), txn_cf_, req.primary_key());
+    if (!ret.ok()) {
+        setTxnServerErr(resp->mutable_err(), Status::kIOError, ret.ToString());
+        return;
+    }
 }
 
 void Store::TxnGetLockInfo(const GetLockInfoRequest& req, GetLockInfoResponse* resp) {

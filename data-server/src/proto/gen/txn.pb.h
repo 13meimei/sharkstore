@@ -509,6 +509,12 @@ class TxnValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::uint64 expired_at() const;
   void set_expired_at(::google::protobuf::uint64 value);
 
+  // uint64 version = 5;
+  void clear_version();
+  static const int kVersionFieldNumber = 5;
+  ::google::protobuf::uint64 version() const;
+  void set_version(::google::protobuf::uint64 value);
+
   // .txnpb.TxnStatus txn_status = 10;
   void clear_txn_status();
   static const int kTxnStatusFieldNumber = 10;
@@ -524,6 +530,7 @@ class TxnValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::internal::ArenaStringPtr primary_key_;
   ::txnpb::TxnIntent* intent_;
   ::google::protobuf::uint64 expired_at_;
+  ::google::protobuf::uint64 version_;
   int txn_status_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
@@ -4394,6 +4401,20 @@ inline void TxnValue::set_expired_at(::google::protobuf::uint64 value) {
   
   expired_at_ = value;
   // @@protoc_insertion_point(field_set:txnpb.TxnValue.expired_at)
+}
+
+// uint64 version = 5;
+inline void TxnValue::clear_version() {
+  version_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 TxnValue::version() const {
+  // @@protoc_insertion_point(field_get:txnpb.TxnValue.version)
+  return version_;
+}
+inline void TxnValue::set_version(::google::protobuf::uint64 value) {
+  
+  version_ = value;
+  // @@protoc_insertion_point(field_set:txnpb.TxnValue.version)
 }
 
 // .txnpb.TxnStatus txn_status = 10;

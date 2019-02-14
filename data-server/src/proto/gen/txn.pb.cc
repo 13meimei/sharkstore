@@ -249,6 +249,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnValue, intent_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnValue, primary_key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnValue, expired_at_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnValue, version_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnValue, txn_status_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnValue, secondary_keys_),
   ~0u,  // no _has_bits_
@@ -478,35 +479,35 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(TxnIntent)},
   { 11, -1, sizeof(TxnValue)},
-  { 22, -1, sizeof(LockInfo)},
-  { 33, -1, sizeof(LockError)},
-  { 40, -1, sizeof(UnexpectedVer)},
-  { 48, -1, sizeof(StatusConflict)},
-  { 54, -1, sizeof(ServerError)},
-  { 61, -1, sizeof(TxnError)},
-  { 71, -1, sizeof(PrepareRequest)},
-  { 83, -1, sizeof(PrepareResponse)},
-  { 89, -1, sizeof(DsPrepareRequest)},
-  { 96, -1, sizeof(DsPrepareResponse)},
-  { 103, -1, sizeof(DecideRequest)},
-  { 112, -1, sizeof(DecideResponse)},
-  { 119, -1, sizeof(DsDecideRequest)},
-  { 126, -1, sizeof(DsDecideResponse)},
-  { 133, -1, sizeof(ClearupRequest)},
-  { 140, -1, sizeof(ClearupResponse)},
-  { 146, -1, sizeof(DsClearupRequest)},
-  { 153, -1, sizeof(DsClearupResponse)},
-  { 160, -1, sizeof(GetLockInfoRequest)},
-  { 167, -1, sizeof(GetLockInfoResponse)},
-  { 173, -1, sizeof(DsGetLockInfoRequest)},
-  { 180, -1, sizeof(DsGetLockInfoResponse)},
-  { 187, -1, sizeof(SelectRequest)},
-  { 198, -1, sizeof(RowValue)},
-  { 206, -1, sizeof(RowIntent)},
-  { 215, -1, sizeof(Row)},
-  { 223, -1, sizeof(SelectResponse)},
-  { 231, -1, sizeof(DsSelectRequest)},
-  { 238, -1, sizeof(DsSelectResponse)},
+  { 23, -1, sizeof(LockInfo)},
+  { 34, -1, sizeof(LockError)},
+  { 41, -1, sizeof(UnexpectedVer)},
+  { 49, -1, sizeof(StatusConflict)},
+  { 55, -1, sizeof(ServerError)},
+  { 62, -1, sizeof(TxnError)},
+  { 72, -1, sizeof(PrepareRequest)},
+  { 84, -1, sizeof(PrepareResponse)},
+  { 90, -1, sizeof(DsPrepareRequest)},
+  { 97, -1, sizeof(DsPrepareResponse)},
+  { 104, -1, sizeof(DecideRequest)},
+  { 113, -1, sizeof(DecideResponse)},
+  { 120, -1, sizeof(DsDecideRequest)},
+  { 127, -1, sizeof(DsDecideResponse)},
+  { 134, -1, sizeof(ClearupRequest)},
+  { 141, -1, sizeof(ClearupResponse)},
+  { 147, -1, sizeof(DsClearupRequest)},
+  { 154, -1, sizeof(DsClearupResponse)},
+  { 161, -1, sizeof(GetLockInfoRequest)},
+  { 168, -1, sizeof(GetLockInfoResponse)},
+  { 174, -1, sizeof(DsGetLockInfoRequest)},
+  { 181, -1, sizeof(DsGetLockInfoResponse)},
+  { 188, -1, sizeof(SelectRequest)},
+  { 199, -1, sizeof(RowValue)},
+  { 207, -1, sizeof(RowIntent)},
+  { 216, -1, sizeof(Row)},
+  { 224, -1, sizeof(SelectResponse)},
+  { 232, -1, sizeof(DsSelectRequest)},
+  { 239, -1, sizeof(DsSelectResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -715,87 +716,87 @@ void AddDescriptorsImpl() {
       "b.proto\"\203\001\n\tTxnIntent\022\032\n\003typ\030\001 \001(\0162\r.txn"
       "pb.OpType\022\013\n\003key\030\002 \001(\014\022\r\n\005value\030\003 \001(\014\022\024\n"
       "\014check_unique\030\004 \001(\010\022\024\n\014expected_ver\030\005 \001("
-      "\004\022\022\n\nis_primary\030\006 \001(\010\"\243\001\n\010TxnValue\022\016\n\006tx"
+      "\004\022\022\n\nis_primary\030\006 \001(\010\"\264\001\n\010TxnValue\022\016\n\006tx"
       "n_id\030\001 \001(\t\022 \n\006intent\030\002 \001(\0132\020.txnpb.TxnIn"
       "tent\022\023\n\013primary_key\030\003 \001(\014\022\022\n\nexpired_at\030"
-      "\004 \001(\004\022$\n\ntxn_status\030\n \001(\0162\020.txnpb.TxnSta"
-      "tus\022\026\n\016secondary_keys\030\013 \003(\014\"\216\001\n\010LockInfo"
-      "\022\016\n\006txn_id\030\001 \001(\t\022\017\n\007timeout\030\002 \001(\010\022\022\n\nis_"
-      "primary\030\n \001(\010\022\023\n\013primary_key\030\013 \001(\014\022 \n\006st"
-      "atus\030\014 \001(\0162\020.txnpb.TxnStatus\022\026\n\016secondar"
-      "y_keys\030\r \003(\014\"7\n\tLockError\022\013\n\003key\030\001 \001(\014\022\035"
-      "\n\004info\030\002 \001(\0132\017.txnpb.LockInfo\"F\n\rUnexpec"
-      "tedVer\022\013\n\003key\030\001 \001(\014\022\024\n\014expected_ver\030\002 \001("
-      "\004\022\022\n\nactual_ver\030\003 \001(\004\"2\n\016StatusConflict\022"
-      " \n\006status\030\001 \001(\0162\020.txnpb.TxnStatus\"(\n\013Ser"
-      "verError\022\014\n\004code\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t\"\276\002\n\010"
-      "TxnError\022)\n\010err_type\030\001 \001(\0162\027.txnpb.TxnEr"
-      "ror.ErrType\022&\n\nserver_err\030\002 \001(\0132\022.txnpb."
-      "ServerError\022\"\n\010lock_err\030\003 \001(\0132\020.txnpb.Lo"
-      "ckError\022,\n\016unexpected_ver\030\004 \001(\0132\024.txnpb."
-      "UnexpectedVer\022.\n\017status_conflict\030\005 \001(\0132\025"
-      ".txnpb.StatusConflict\"]\n\007ErrType\022\013\n\007UNKN"
-      "OWN\020\000\022\020\n\014SERVER_ERROR\020\001\022\n\n\006LOCKED\020\002\022\022\n\016U"
-      "NEXPECTED_VER\020\003\022\023\n\017STATUS_CONFLICT\020\004\"\247\001\n"
-      "\016PrepareRequest\022\016\n\006txn_id\030\001 \001(\t\022\r\n\005local"
-      "\030\002 \001(\010\022!\n\007intents\030\003 \003(\0132\020.txnpb.TxnInten"
-      "t\022\023\n\013primary_key\030\004 \001(\014\022\020\n\010lock_ttl\030\005 \001(\004"
-      "\022\026\n\016secondary_keys\030\006 \003(\014\022\024\n\014strict_check"
-      "\030\020 \001(\010\"2\n\017PrepareResponse\022\037\n\006errors\030\001 \003("
-      "\0132\017.txnpb.TxnError\"^\n\020DsPrepareRequest\022&"
-      "\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\""
-      "\n\003req\030\002 \001(\0132\025.txnpb.PrepareRequest\"b\n\021Ds"
-      "PrepareResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
-      "b.ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.txnpb.P"
-      "repareResponse\"`\n\rDecideRequest\022\016\n\006txn_i"
-      "d\030\001 \001(\t\022 \n\006status\030\002 \001(\0162\020.txnpb.TxnStatu"
-      "s\022\014\n\004keys\030\003 \003(\014\022\017\n\007recover\030\004 \001(\010\"F\n\016Deci"
-      "deResponse\022\034\n\003err\030\001 \001(\0132\017.txnpb.TxnError"
-      "\022\026\n\016secondary_keys\030\002 \003(\014\"\\\n\017DsDecideRequ"
-      "est\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHea"
-      "der\022!\n\003req\030\002 \001(\0132\024.txnpb.DecideRequest\"`"
-      "\n\020DsDecideResponse\022\'\n\006header\030\001 \001(\0132\027.kvr"
-      "pcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.txnp"
-      "b.DecideResponse\"5\n\016ClearupRequest\022\016\n\006tx"
-      "n_id\030\001 \001(\t\022\023\n\013primary_key\030\002 \001(\014\"/\n\017Clear"
-      "upResponse\022\034\n\003err\030\001 \001(\0132\017.txnpb.TxnError"
-      "\"^\n\020DsClearupRequest\022&\n\006header\030\001 \001(\0132\026.k"
-      "vrpcpb.RequestHeader\022\"\n\003req\030\002 \001(\0132\025.txnp"
-      "b.ClearupRequest\"b\n\021DsClearupResponse\022\'\n"
-      "\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$"
-      "\n\004resp\030\002 \001(\0132\026.txnpb.ClearupResponse\"1\n\022"
-      "GetLockInfoRequest\022\013\n\003key\030\001 \001(\014\022\016\n\006txn_i"
-      "d\030\002 \001(\t\"4\n\023GetLockInfoResponse\022\035\n\004info\030\001"
-      " \001(\0132\017.txnpb.LockInfo\"f\n\024DsGetLockInfoRe"
+      "\004 \001(\004\022\017\n\007version\030\005 \001(\004\022$\n\ntxn_status\030\n \001"
+      "(\0162\020.txnpb.TxnStatus\022\026\n\016secondary_keys\030\013"
+      " \003(\014\"\216\001\n\010LockInfo\022\016\n\006txn_id\030\001 \001(\t\022\017\n\007tim"
+      "eout\030\002 \001(\010\022\022\n\nis_primary\030\n \001(\010\022\023\n\013primar"
+      "y_key\030\013 \001(\014\022 \n\006status\030\014 \001(\0162\020.txnpb.TxnS"
+      "tatus\022\026\n\016secondary_keys\030\r \003(\014\"7\n\tLockErr"
+      "or\022\013\n\003key\030\001 \001(\014\022\035\n\004info\030\002 \001(\0132\017.txnpb.Lo"
+      "ckInfo\"F\n\rUnexpectedVer\022\013\n\003key\030\001 \001(\014\022\024\n\014"
+      "expected_ver\030\002 \001(\004\022\022\n\nactual_ver\030\003 \001(\004\"2"
+      "\n\016StatusConflict\022 \n\006status\030\001 \001(\0162\020.txnpb"
+      ".TxnStatus\"(\n\013ServerError\022\014\n\004code\030\001 \001(\005\022"
+      "\013\n\003msg\030\002 \001(\t\"\276\002\n\010TxnError\022)\n\010err_type\030\001 "
+      "\001(\0162\027.txnpb.TxnError.ErrType\022&\n\nserver_e"
+      "rr\030\002 \001(\0132\022.txnpb.ServerError\022\"\n\010lock_err"
+      "\030\003 \001(\0132\020.txnpb.LockError\022,\n\016unexpected_v"
+      "er\030\004 \001(\0132\024.txnpb.UnexpectedVer\022.\n\017status"
+      "_conflict\030\005 \001(\0132\025.txnpb.StatusConflict\"]"
+      "\n\007ErrType\022\013\n\007UNKNOWN\020\000\022\020\n\014SERVER_ERROR\020\001"
+      "\022\n\n\006LOCKED\020\002\022\022\n\016UNEXPECTED_VER\020\003\022\023\n\017STAT"
+      "US_CONFLICT\020\004\"\247\001\n\016PrepareRequest\022\016\n\006txn_"
+      "id\030\001 \001(\t\022\r\n\005local\030\002 \001(\010\022!\n\007intents\030\003 \003(\013"
+      "2\020.txnpb.TxnIntent\022\023\n\013primary_key\030\004 \001(\014\022"
+      "\020\n\010lock_ttl\030\005 \001(\004\022\026\n\016secondary_keys\030\006 \003("
+      "\014\022\024\n\014strict_check\030\020 \001(\010\"2\n\017PrepareRespon"
+      "se\022\037\n\006errors\030\001 \003(\0132\017.txnpb.TxnError\"^\n\020D"
+      "sPrepareRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcp"
+      "b.RequestHeader\022\"\n\003req\030\002 \001(\0132\025.txnpb.Pre"
+      "pareRequest\"b\n\021DsPrepareResponse\022\'\n\006head"
+      "er\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$\n\004res"
+      "p\030\002 \001(\0132\026.txnpb.PrepareResponse\"`\n\rDecid"
+      "eRequest\022\016\n\006txn_id\030\001 \001(\t\022 \n\006status\030\002 \001(\016"
+      "2\020.txnpb.TxnStatus\022\014\n\004keys\030\003 \003(\014\022\017\n\007reco"
+      "ver\030\004 \001(\010\"F\n\016DecideResponse\022\034\n\003err\030\001 \001(\013"
+      "2\017.txnpb.TxnError\022\026\n\016secondary_keys\030\002 \003("
+      "\014\"\\\n\017DsDecideRequest\022&\n\006header\030\001 \001(\0132\026.k"
+      "vrpcpb.RequestHeader\022!\n\003req\030\002 \001(\0132\024.txnp"
+      "b.DecideRequest\"`\n\020DsDecideResponse\022\'\n\006h"
+      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004"
+      "resp\030\002 \001(\0132\025.txnpb.DecideResponse\"5\n\016Cle"
+      "arupRequest\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primary_k"
+      "ey\030\002 \001(\014\"/\n\017ClearupResponse\022\034\n\003err\030\001 \001(\013"
+      "2\017.txnpb.TxnError\"^\n\020DsClearupRequest\022&\n"
+      "\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n"
+      "\003req\030\002 \001(\0132\025.txnpb.ClearupRequest\"b\n\021DsC"
+      "learupResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb"
+      ".ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.txnpb.Cl"
+      "earupResponse\"1\n\022GetLockInfoRequest\022\013\n\003k"
+      "ey\030\001 \001(\014\022\016\n\006txn_id\030\002 \001(\t\"4\n\023GetLockInfoR"
+      "esponse\022\035\n\004info\030\001 \001(\0132\017.txnpb.LockInfo\"f"
+      "\n\024DsGetLockInfoRequest\022&\n\006header\030\001 \001(\0132\026"
+      ".kvrpcpb.RequestHeader\022&\n\003req\030\002 \001(\0132\031.tx"
+      "npb.GetLockInfoRequest\"j\n\025DsGetLockInfoR"
+      "esponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respon"
+      "seHeader\022(\n\004resp\030\002 \001(\0132\032.txnpb.GetLockIn"
+      "foResponse\"\316\001\n\rSelectRequest\022\013\n\003key\030\001 \001("
+      "\014\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb.Scope\022(\n\nfiel"
+      "d_list\030\003 \003(\0132\024.kvrpcpb.SelectField\022%\n\rwh"
+      "ere_filters\030\004 \003(\0132\016.kvrpcpb.Match\022!\n\tgro"
+      "up_bys\030\005 \003(\0132\016.metapb.Column\022\035\n\005limit\030\006 "
+      "\001(\0132\016.kvrpcpb.Limit\"B\n\010RowValue\022\016\n\006field"
+      "s\030\001 \001(\014\022\025\n\raggred_counts\030\002 \003(\003\022\017\n\007versio"
+      "n\030\003 \001(\004\"a\n\tRowIntent\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013"
+      "primary_key\030\002 \001(\014\022\017\n\007timeout\030\003 \001(\010\022\036\n\005va"
+      "lue\030\n \001(\0132\017.txnpb.RowValue\"T\n\003Row\022\013\n\003key"
+      "\030\001 \001(\014\022\036\n\005value\030\002 \001(\0132\017.txnpb.RowValue\022 "
+      "\n\006intent\030\003 \001(\0132\020.txnpb.RowIntent\"H\n\016Sele"
+      "ctResponse\022\014\n\004code\030\001 \001(\005\022\030\n\004rows\030\002 \003(\0132\n"
+      ".txnpb.Row\022\016\n\006offset\030\003 \001(\004\"\\\n\017DsSelectRe"
       "quest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestH"
-      "eader\022&\n\003req\030\002 \001(\0132\031.txnpb.GetLockInfoRe"
-      "quest\"j\n\025DsGetLockInfoResponse\022\'\n\006header"
-      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022(\n\004resp\030"
-      "\002 \001(\0132\032.txnpb.GetLockInfoResponse\"\316\001\n\rSe"
-      "lectRequest\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132"
-      "\016.kvrpcpb.Scope\022(\n\nfield_list\030\003 \003(\0132\024.kv"
-      "rpcpb.SelectField\022%\n\rwhere_filters\030\004 \003(\013"
-      "2\016.kvrpcpb.Match\022!\n\tgroup_bys\030\005 \003(\0132\016.me"
-      "tapb.Column\022\035\n\005limit\030\006 \001(\0132\016.kvrpcpb.Lim"
-      "it\"B\n\010RowValue\022\016\n\006fields\030\001 \001(\014\022\025\n\raggred"
-      "_counts\030\002 \003(\003\022\017\n\007version\030\003 \001(\004\"a\n\tRowInt"
-      "ent\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primary_key\030\002 \001(\014"
-      "\022\017\n\007timeout\030\003 \001(\010\022\036\n\005value\030\n \001(\0132\017.txnpb"
-      ".RowValue\"T\n\003Row\022\013\n\003key\030\001 \001(\014\022\036\n\005value\030\002"
-      " \001(\0132\017.txnpb.RowValue\022 \n\006intent\030\003 \001(\0132\020."
-      "txnpb.RowIntent\"H\n\016SelectResponse\022\014\n\004cod"
-      "e\030\001 \001(\005\022\030\n\004rows\030\002 \003(\0132\n.txnpb.Row\022\016\n\006off"
-      "set\030\003 \001(\004\"\\\n\017DsSelectRequest\022&\n\006header\030\001"
-      " \001(\0132\026.kvrpcpb.RequestHeader\022!\n\003req\030\002 \001("
-      "\0132\024.txnpb.SelectRequest\"`\n\020DsSelectRespo"
-      "nse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHe"
-      "ader\022#\n\004resp\030\002 \001(\0132\025.txnpb.SelectRespons"
-      "e* \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*1\n\tT"
-      "xnStatus\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007ABO"
-      "RTED\020\002b\006proto3"
+      "eader\022!\n\003req\030\002 \001(\0132\024.txnpb.SelectRequest"
+      "\"`\n\020DsSelectResponse\022\'\n\006header\030\001 \001(\0132\027.k"
+      "vrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.tx"
+      "npb.SelectResponse* \n\006OpType\022\n\n\006INSERT\020\000"
+      "\022\n\n\006DELETE\020\001*1\n\tTxnStatus\022\010\n\004INIT\020\000\022\r\n\tC"
+      "OMMITTED\020\001\022\013\n\007ABORTED\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 3254);
+      descriptor, 3271);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "txn.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -1484,6 +1485,7 @@ const int TxnValue::kTxnIdFieldNumber;
 const int TxnValue::kIntentFieldNumber;
 const int TxnValue::kPrimaryKeyFieldNumber;
 const int TxnValue::kExpiredAtFieldNumber;
+const int TxnValue::kVersionFieldNumber;
 const int TxnValue::kTxnStatusFieldNumber;
 const int TxnValue::kSecondaryKeysFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -1647,6 +1649,20 @@ bool TxnValue::MergePartialFromCodedStream(
         break;
       }
 
+      // uint64 version = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &version_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       // .txnpb.TxnStatus txn_status = 10;
       case 10: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
@@ -1727,6 +1743,11 @@ void TxnValue::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(4, this->expired_at(), output);
   }
 
+  // uint64 version = 5;
+  if (this->version() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(5, this->version(), output);
+  }
+
   // .txnpb.TxnStatus txn_status = 10;
   if (this->txn_status() != 0) {
     ::google::protobuf::internal::WireFormatLite::WriteEnum(
@@ -1781,6 +1802,11 @@ void TxnValue::SerializeWithCachedSizes(
   // uint64 expired_at = 4;
   if (this->expired_at() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(4, this->expired_at(), target);
+  }
+
+  // uint64 version = 5;
+  if (this->version() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(5, this->version(), target);
   }
 
   // .txnpb.TxnStatus txn_status = 10;
@@ -1848,6 +1874,13 @@ size_t TxnValue::ByteSizeLong() const {
         this->expired_at());
   }
 
+  // uint64 version = 5;
+  if (this->version() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->version());
+  }
+
   // .txnpb.TxnStatus txn_status = 10;
   if (this->txn_status() != 0) {
     total_size += 1 +
@@ -1898,6 +1931,9 @@ void TxnValue::MergeFrom(const TxnValue& from) {
   if (from.expired_at() != 0) {
     set_expired_at(from.expired_at());
   }
+  if (from.version() != 0) {
+    set_version(from.version());
+  }
   if (from.txn_status() != 0) {
     set_txn_status(from.txn_status());
   }
@@ -1932,6 +1968,7 @@ void TxnValue::InternalSwap(TxnValue* other) {
   primary_key_.Swap(&other->primary_key_);
   swap(intent_, other->intent_);
   swap(expired_at_, other->expired_at_);
+  swap(version_, other->version_);
   swap(txn_status_, other->txn_status_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
@@ -2103,6 +2140,20 @@ void TxnValue::set_expired_at(::google::protobuf::uint64 value) {
   
   expired_at_ = value;
   // @@protoc_insertion_point(field_set:txnpb.TxnValue.expired_at)
+}
+
+// uint64 version = 5;
+void TxnValue::clear_version() {
+  version_ = GOOGLE_ULONGLONG(0);
+}
+::google::protobuf::uint64 TxnValue::version() const {
+  // @@protoc_insertion_point(field_get:txnpb.TxnValue.version)
+  return version_;
+}
+void TxnValue::set_version(::google::protobuf::uint64 value) {
+  
+  version_ = value;
+  // @@protoc_insertion_point(field_set:txnpb.TxnValue.version)
 }
 
 // .txnpb.TxnStatus txn_status = 10;

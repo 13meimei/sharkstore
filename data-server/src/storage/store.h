@@ -62,7 +62,7 @@ public:
     Status WatchDelete(const watchpb::KvWatchDeleteRequest& req);
     Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req, watchpb::DsKvWatchGetMultiResponse *resp);
 
-    void TxnPrepare(const txnpb::PrepareRequest& req, txnpb::PrepareResponse* resp);
+    void TxnPrepare(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);
     uint64_t TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
     void TxnClearup(const txnpb::ClearupRequest& req, txnpb::ClearupResponse* resp);
     void TxnGetLockInfo(const txnpb::GetLockInfoRequest& req, txnpb::GetLockInfoResponse* resp);
@@ -101,7 +101,7 @@ private:
     TxnErrorPtr checkLockable(const std::string& key, const std::string& txn_id, bool *exist_flag);
     TxnErrorPtr checkUniqueAndVersion(const txnpb::TxnIntent& intent);
     TxnErrorPtr prepareIntent(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
-            rocksdb::WriteBatch* batch);
+            uint64_t version, rocksdb::WriteBatch* batch);
 
     Status parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key);
 
