@@ -4,7 +4,7 @@ _Pragma("once");
 #include <rocksdb/utilities/blob_db/blob_db.h>
 #include <mutex>
 
-#include "iterator.h"
+#include "iterator_interface.h"
 #include "metric.h"
 #include "range/split_policy.h"
 #include "proto/gen/kvrpcpb.pb.h"
@@ -23,9 +23,9 @@ namespace storage {
 static const size_t kRowPrefixLength = 9;
 static const unsigned char kStoreKVPrefixByte = '\x01';
 
-class Store: public StoreInterface {
+class Store {
 public:
-    Store(const metapb::Range& meta, rocksdb::DB* db);
+    Store(const metapb::Range& meta, DbInterface* db);
     ~Store();
 
     Store(const Store&) = delete;
@@ -63,8 +63,8 @@ public:
             uint64_t *real_size, std::string *split_key);
 
 public:
-    Iterator* NewIterator(const ::kvrpcpb::Scope& scope);
-    Iterator* NewIterator(std::string start = std::string(),
+    IteratorInterface* NewIterator(const ::kvrpcpb::Scope& scope);
+    IteratorInterface* NewIterator(std::string start = std::string(),
                           std::string limit = std::string());
     Status BatchDelete(const std::vector<std::string>& keys);
     bool KeyExists(const std::string& key);
@@ -101,8 +101,7 @@ private:
     std::string end_key_;
     mutable std::mutex key_lock_;
 
-    rocksdb::DB* db_;
-    rocksdb::WriteOptions write_options_;
+    DbInterface* db_;
 
     std::vector<metapb::Column> primary_keys_;
 

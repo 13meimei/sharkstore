@@ -8,6 +8,7 @@ _Pragma("once");
 #include "stats.h"
 #include "split_policy.h"
 #include "server/context_server.h"
+#include "storage/db_interface.h"
 
 namespace sharkstore {
 
@@ -34,7 +35,8 @@ public:
     // 分裂策略
     virtual SplitPolicy* GetSplitPolicy() = 0;
 
-    virtual rocksdb::DB *DBInstance() = 0;
+    // fixme
+    virtual storage::DbInterface* DBInstance() = 0;
     virtual master::Worker* MasterClient() = 0;
     virtual raft::RaftServer* RaftServer() = 0;
     virtual storage::MetaStore* MetaStore() = 0;

@@ -43,10 +43,10 @@ public:
     WatcherSet& operator=(const WatcherSet&) = delete;
     ~WatcherSet();
 
-    WatchCode AddKeyWatcher(const WatcherKey&, WatcherPtr&, storage::StoreInterface *);
+    WatchCode AddKeyWatcher(const WatcherKey&, WatcherPtr&, storage::Store*);
     WatchCode DelKeyWatcher(const WatcherKey&, WatcherId);
     WatchCode GetKeyWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& , const WatcherKey&, const int64_t &version);
-    WatchCode AddPrefixWatcher(const PrefixKey&, WatcherPtr&, storage::StoreInterface *);
+    WatchCode AddPrefixWatcher(const PrefixKey&, WatcherPtr&, storage::Store*);
     WatchCode DelPrefixWatcher(const PrefixKey&, WatcherId);
     WatchCode GetPrefixWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& , const PrefixKey&, const int64_t &version);
     bool ChgGlobalVersion(const uint64_t &ver) noexcept {
@@ -70,7 +70,7 @@ public:
         }
     };
 
-    std::pair<int32_t, bool> loadFromDb(storage::StoreInterface *store, const watchpb::EventType &evtType, const std::string &fromKey,
+    std::pair<int32_t, bool> loadFromDb(storage::Store* store, const watchpb::EventType &evtType, const std::string &fromKey,
                        const std::string &endKey, const int64_t &startVersion, const uint64_t &tableId,
                        watchpb::DsWatchResponse *dsResp);
 
@@ -92,7 +92,7 @@ private:
     std::condition_variable         watcher_expire_cond_;
     uint64_t                global_version_{0};
 private:
-    WatchCode AddWatcher(const WatcherKey&, WatcherPtr&, WatcherMap&, KeyMap&, storage::StoreInterface *, bool prefixFlag = false);
+    WatchCode AddWatcher(const WatcherKey&, WatcherPtr&, WatcherMap&, KeyMap&, storage::Store*, bool prefixFlag = false);
     WatchCode DelWatcher(const WatcherKey&, WatcherId, WatcherMap&, KeyMap&);
     WatchCode GetWatchers(const watchpb::EventType &evtType, std::vector<WatcherPtr>& vec, const WatcherKey&, WatcherMap&, WatcherValue *watcherVal, bool prefixFlag = false);
 

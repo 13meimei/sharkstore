@@ -9,6 +9,7 @@
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/redispb.pb.h"
 #include "row_fetcher.h"
+#include "db_interface.h"
 
 namespace sharkstore {
 
@@ -19,7 +20,7 @@ static const size_t kDefaultMaxSelectLimit = 10000;
 
 static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r);
 
-Store::Store(const metapb::Range& meta, rocksdb::DB* db) :
+Store::Store(const metapb::Range& meta, storage::DbInterface* db) :
     table_id_(meta.table_id()) ,
     range_id_(meta.id()),
     start_key_(meta.start_key()),
@@ -31,14 +32,12 @@ Store::Store(const metapb::Range& meta, rocksdb::DB* db) :
     for (int i = 0; i < meta.primary_keys_size(); ++i) {
         primary_keys_.push_back(meta.primary_keys(i));
     }
-
-    write_options_.disableWAL = ds_config.rocksdb_config.disable_wal;
 }
 
 Store::~Store() {}
 
 Status Store::Get(const std::string& key, std::string* value) {
-    rocksdb::Status s = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true), key, value);
+    auto s = db_->Get(key, value);
     if (s.ok()) {
         addMetricRead(1, key.size() + value->size());
         return Status::OK();
@@ -506,8 +505,7 @@ std::string Store::GetEndKey() const {
     return end_key_;
 }
 
-Iterator* Store::NewIterator(const kvrpcpb::Scope& scope) {
-    auto it = db_->NewIterator(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true));
+IteratorInterface* Store::NewIterator(const kvrpcpb::Scope& scope) {
     std::string start = scope.start();
     std::string limit = scope.limit();
     if (start.empty() || start < start_key_) {
@@ -520,11 +518,11 @@ Iterator* Store::NewIterator(const kvrpcpb::Scope& scope) {
             limit = end_key_;
         }
     }
-    return new Iterator(it, start, limit);
+    auto read_options = rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true)
+    return db_->NewIterator(&read_options, start, limit);
 }
 
-Iterator* Store::NewIterator(std::string start, std::string limit) {
-    auto it = db_->NewIterator(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true));
+IteratorInterface* Store::NewIterator(std::string start, std::string limit) {
     if (start.empty() || start < start_key_) {
         start = start_key_;
     }
@@ -535,7 +533,8 @@ Iterator* Store::NewIterator(std::string start, std::string limit) {
             limit = end_key_;
         }
     }
-    return new Iterator(it, start, limit);
+    auto read_options = rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true)
+    return db_->NewIterator(&read_options, start, limit);
 }
 
 Status Store::BatchDelete(const std::vector<std::string>& keys) {
@@ -674,7 +673,7 @@ Status Store::StatSize(uint64_t split_size, range::SplitKeyMode mode,
     // start_key_.length() + 5
     auto max_len = start_key_.length() + 5;
 
-    std::unique_ptr<Iterator> it(NewIterator());
+    std::unique_ptr<IteratorInterface> it(NewIterator());
     std::string middle_key;
     std::string first_key;
 

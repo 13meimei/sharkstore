@@ -135,7 +135,7 @@ WatcherSet::~WatcherSet() {
 
 
 // private add/del watcher
-WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, WatcherMap& key_watchers, KeyMap& key_map, storage::StoreInterface *store, bool prefixFlag ) {
+WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, WatcherMap& key_watchers, KeyMap& key_map, storage::Store* store, bool prefixFlag ) {
     int64_t beginTime(getticks());
 
     std::unique_lock<std::mutex> lock_queue(watcher_queue_mutex_);
@@ -417,7 +417,7 @@ WatchCode WatcherSet::GetWatchers(const watchpb::EventType &evtType, std::vector
 }
 
 // key add/del watcher
-WatchCode WatcherSet::AddKeyWatcher(const WatcherKey& key, WatcherPtr& w_ptr, storage::StoreInterface *store) {
+WatchCode WatcherSet::AddKeyWatcher(const WatcherKey& key, WatcherPtr& w_ptr, storage::Store* store) {
     return AddWatcher(key, w_ptr, key_watcher_map_, key_map_, store);
 }
 
@@ -449,7 +449,7 @@ WatchCode WatcherSet::GetKeyWatchers(const watchpb::EventType &evtType, std::vec
 }
 
 // prefix add/del watcher
-WatchCode WatcherSet::AddPrefixWatcher(const PrefixKey& prefix, WatcherPtr& w_ptr, storage::StoreInterface *store) {
+WatchCode WatcherSet::AddPrefixWatcher(const PrefixKey& prefix, WatcherPtr& w_ptr, storage::Store* store) {
     return AddWatcher(prefix, w_ptr, prefix_watcher_map_, prefix_map_, store, true);
 }
 
@@ -479,7 +479,7 @@ WatchCode WatcherSet::GetPrefixWatchers(const watchpb::EventType &evtType, std::
     return retCode;
 }
 
-std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::StoreInterface *store, const watchpb::EventType &evtType, const std::string &fromKey,
+std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::Store* store, const watchpb::EventType &evtType, const std::string &fromKey,
                    const std::string &endKey, const int64_t &startVersion, const uint64_t &tableId,
                    watchpb::DsWatchResponse *dsResp) {
 

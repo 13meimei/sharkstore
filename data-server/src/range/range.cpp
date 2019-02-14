@@ -27,14 +27,7 @@ Range::Range(RangeContext* context, const metapb::Range &meta) :
 	id_(meta.id()),
 	start_key_(meta.start_key()),
 	meta_(meta) {
-    // store is configurable
-    if (strcasecmp(ds_config.engine_config.name, "rocksdb") == 0) {
-        store_ = std::unique_ptr<storage::StoreInterface>(new storage::Store(meta, context->DBInstance()));
-    } else if (strcasecmp(ds_config.engine_config.name, "memory") == 0) {
-        store_ = std::unique_ptr<storage::StoreInterface>(new storage::MemStore(meta, new memstore::Store<std::string>()));
-    } else {
-        store_ = nullptr;
-    }
+    store_ = std::unique_ptr<storage::Store>(new storage::Store(meta, context->DBInstance()));
     eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
                                           ds_config.watch_config.buffer_queue_size);
 }

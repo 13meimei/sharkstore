@@ -1,0 +1,8 @@
+//
+// Created by young on 19-2-14.
+//
+
+#ifndef SHARKSTORE_DS_WRITE_BATCH_H
+#define SHARKSTORE_DS_WRITE_BATCH_H
+
+#endif //SHARKSTORE_DS_WRITE_BATCH_H

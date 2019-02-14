@@ -305,7 +305,7 @@ private:
     watch::CEventBuffer *eventBuffer = nullptr;
     SubmitQueue submit_queue_;
 
-    std::unique_ptr<storage::StoreInterface> store_;
+    std::unique_ptr<storage::Store> store_;
     std::shared_ptr<raft::Raft> raft_;
 
     int64_t max_count_ = 1000;

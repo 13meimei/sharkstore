@@ -5,6 +5,7 @@
 
 #include "common/socket_session.h"
 #include "raft/server.h"
+#include "storage/db_interface.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -35,7 +36,7 @@ struct ContextServer {
     common::SocketSession *socket_session = nullptr;
     master::Worker *master_worker = nullptr;
 
-    rocksdb::DB *rocks_db = nullptr;
+    storage::DbInterface* rocks_db = nullptr; // fixme and rename
     std::shared_ptr<rocksdb::Cache> block_cache;  // rocksdb block cache
     std::shared_ptr<rocksdb::Cache> row_cache; // rocksdb row cache
     std::shared_ptr<rocksdb::Statistics> db_stats; // rocksdb stats

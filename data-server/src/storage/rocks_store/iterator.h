@@ -10,11 +10,11 @@ namespace storage {
 
 class Metric;
 
-class Iterator: public IteratorInterface{
+class RocksIterator: public IteratorInterface{
 public:
-    Iterator(rocksdb::Iterator* it, const std::string& start,
+    RocksIterator(rocksdb::Iterator* it, const std::string& start,
              const std::string& limit);
-    ~Iterator();
+    ~RocksIterator();
 
     bool Valid();
     void Next();
