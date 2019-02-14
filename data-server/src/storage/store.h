@@ -97,11 +97,18 @@ private:
     bool decodeWatchKey(const std::string& key, watchpb::WatchKeyValue *kv) const;
     bool decodeWatchValue(const std::string& value, watchpb::WatchKeyValue *kv) const;
 
-    Status getTxnValue(const std::string&key, txnpb::TxnValue* value);
+    Status getTxnValue(const std::string& key, txnpb::TxnValue* value);
+    Status writeTxnValue(const txnpb::TxnValue& value, rocksdb::WriteBatch* batch);
     TxnErrorPtr checkLockable(const std::string& key, const std::string& txn_id, bool *exist_flag);
     TxnErrorPtr checkUniqueAndVersion(const txnpb::TxnIntent& intent);
     TxnErrorPtr prepareIntent(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
             uint64_t version, rocksdb::WriteBatch* batch);
+
+    Status commitIntent(const txnpb::TxnIntent& intent, uint64_t version, rocksdb::WriteBatch* batch);
+    TxnErrorPtr decidePrimary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch);
+    TxnErrorPtr decideSecondary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch);
+    TxnErrorPtr decide(const txnpb::DecideRequest& req, const std::string& key, uint64_t& bytes_written,
+            rocksdb::WriteBatch* batch, std::vector<std::string>* secondary_keys = nullptr);
 
     Status parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key);
 
