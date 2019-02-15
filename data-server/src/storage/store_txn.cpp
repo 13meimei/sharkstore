@@ -91,10 +91,11 @@ static TxnErrorPtr newUnexpectedVerErr(const std::string& key, uint64_t expected
     return err;
 }
 
-static TxnErrorPtr newAlreadyExistErr(const std::string& key) {
+static TxnErrorPtr newNotUniqueErr(const std::string& key) {
     TxnErrorPtr err(new TxnError);
-    err->set_err_type(TxnError_ErrType_ALREADY_EXIST);
-    err->mutable_already_exist()->set_key(key);
+    err->set_err_type(TxnError_ErrType_NOT_UNIQUE);
+    err->mutable_not_unique()->set_key(key);
+    return err;
 }
 
 // TODO: load from memory
@@ -146,12 +147,45 @@ TxnErrorPtr Store::checkLockable(const std::string& key, const std::string& txn_
     }
 }
 
+static Status decodeTxnVersion(const std::string& value, uint64_t *version) {
+    uint32_t col_id = 0;
+    EncodeType enc_type;
+    size_t tag_offset = 0;
+    for (size_t offset = 0; offset < value.size();) {
+        tag_offset = offset;
+        if (!DecodeValueTag(value, tag_offset, &col_id, &enc_type)) {
+            return Status(Status::kCorruption,
+                          std::string("decode value tag failed at offset ") + std::to_string(offset),
+                          EncodeToHexString(value));
+        }
+        if (col_id != kVersionColumnID) {
+            if (!SkipValue(value, offset)) {
+                return Status(Status::kCorruption,
+                              std::string("skip value tag failed at offset ") + std::to_string(offset),
+                              EncodeToHexString(value));
+            }
+        } else {
+            int64_t iversion = 0;
+            if (!DecodeIntValue(value, offset, &iversion)) {
+                return Status(Status::kCorruption,
+                              std::string("decode int value failed at offset ") + std::to_string(offset),
+                              EncodeToHexString(value));
+            } else {
+                *version = static_cast<uint64_t>(iversion);
+                return Status::OK();
+            }
+        }
+    }
+    return Status::OK();
+}
+
 Status Store::getKeyVersion(const std::string& key, uint64_t *version) {
     std::string value;
     auto s = this->Get(key, &value);
     if (!s.ok()) {
         return s;
     }
+    return decodeTxnVersion(value, version);
 }
 
 TxnErrorPtr Store::checkUniqueAndVersion(const txnpb::TxnIntent& intent) {
@@ -162,7 +196,7 @@ TxnErrorPtr Store::checkUniqueAndVersion(const txnpb::TxnIntent& intent) {
     }
 
     if (intent.check_unique() && s.ok()) {
-        return newAlreadyExistErr(intent.key());
+        return newNotUniqueErr(intent.key());
     }
 
     if (intent.expected_ver() > 0 && version != intent.expected_ver()) {
@@ -203,6 +237,7 @@ TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& int
 }
 
 void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareResponse* resp) {
+    // TODO: local txn
     bool primary_lockable = true;
     rocksdb::WriteBatch batch;
     for (const auto& intent: req.intents()) {
@@ -254,7 +289,7 @@ Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version, roc
 }
 
 TxnErrorPtr Store::decidePrimary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch) {
-    if (value.txn_status() != INIT) {
+    if (value.txn_status() != txnpb::INIT) {
         if (value.txn_status() != status) {
             return newStatusConflictErr(value.txn_status());
         } else { // already decided
@@ -263,7 +298,7 @@ TxnErrorPtr Store::decidePrimary(const txnpb::TxnValue& value, txnpb::TxnStatus 
     }
 
     // txn status is INIT now
-    assert(value.txn_status() == INIT);
+    assert(value.txn_status() == txnpb::INIT);
     // update to new status;
     auto new_value = value;
     new_value.set_txn_status(status);
