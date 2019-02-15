@@ -8,6 +8,7 @@
 #include "base/status.h"
 #include "write_batch_interface.h"
 #include "iterator_interface.h"
+#include "write_batch_interface.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -19,6 +20,8 @@ public:
     virtual ~DbInterface() = default;
 
     virtual Status Get(const std::string& key, std::string* value) = 0;
+    virtual Status Get(void* column_family,
+                       const std::string& key, std::string* value) = 0;
     virtual Status Put(const std::string& key, const std::string& value) = 0;
     virtual Status Write(WriteBatchInterface* batch) = 0;
     virtual Status Delete(const std::string& batch) = 0;
@@ -26,6 +29,10 @@ public:
                                const std::string& begin_key, const std::string& end_key) = 0;
     virtual void* DefaultColumnFamily() = 0;
     virtual IteratorInterface* NewIterator(const std::string& start, const std::string& limit) = 0;
+
+public:
+    virtual Status Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) = 0;
+    virtual WriteBatchInterface&& NewBatch() = 0;
 };
 
 }

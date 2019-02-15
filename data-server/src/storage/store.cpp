@@ -38,25 +38,19 @@ Store::~Store() {}
 
 Status Store::Get(const std::string& key, std::string* value) {
     auto s = db_->Get(key, value);
-    if (s.ok()) {
-        addMetricRead(1, key.size() + value->size());
-        return Status::OK();
-    } else if (s.IsNotFound()) {
-        return Status(Status::kNotFound);
-    } else {
-        return Status(Status::kIOError, "get", s.ToString());
+    switch (s.code()) {
+        case Status::kOk:
+            addMetricRead(1, key.size() + value->size());
+            return Status::OK();
+        case Status::kNotFound:
+            return Status(Status::kNotFound);
+        default:
+            return Status(Status::kIOError, "get", s.ToString());
     }
 }
 
 Status Store::Put(const std::string& key, const std::string& value) {
-    rocksdb::Status s;
-    if(ds_config.rocksdb_config.storage_type == 1 && ds_config.rocksdb_config.ttl > 0){
-        auto *blobdb = static_cast<rocksdb::blob_db::BlobDB*>(db_);
-        s = blobdb->PutWithTTL(write_options_,rocksdb::Slice(key),rocksdb::Slice(value),ds_config.rocksdb_config.ttl);
-    }else{
-        s = db_->Put(write_options_, key, value);
-    }
-
+    auto s = db_->Put(key, value);
     if (s.ok()) {
         addMetricWrite(1, key.size() + value.size());
         return Status::OK();
@@ -65,78 +59,20 @@ Status Store::Put(const std::string& key, const std::string& value) {
 }
 
 Status Store::Delete(const std::string& key) {
-    rocksdb::Status s = db_->Delete(write_options_, key);
-    if (s.ok()) {
-        addMetricWrite(1, key.size());
-        return Status::OK();
-    } else if (s.IsNotFound()) {
-        return Status(Status::kNotFound);
-    } else {
-        return Status(Status::kIOError, "delete", s.ToString());
+    auto s = db_->Delete(key);
+    switch (s.code()) {
+        case Status::kOk:
+            addMetricWrite(1, key.size());
+            return Status::OK();
+        case Status::kNotFound:
+            return Status(Status::kNotFound);
+        default:
+            return Status(Status::kIOError, "delete", s.ToString());
     }
 }
 
 Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
-    if(ds_config.rocksdb_config.storage_type == 1 && ds_config.rocksdb_config.ttl > 0){
-        auto *blobdb = static_cast<rocksdb::blob_db::BlobDB*>(db_);
-        std::string value;
-        rocksdb::Status s;
-        bool check_dup = req.check_duplicate();
-        *affected = 0;
-        for (int i = 0; i < req.rows_size(); ++i) {
-            const kvrpcpb::KeyValue& kv = req.rows(i);
-            if (check_dup) {
-                s = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true), kv.key(), &value);
-                if (s.ok()) {
-                    return Status(Status::kDuplicate);
-                } else if (!s.IsNotFound()) {
-                    return Status(Status::kIOError, "get", s.ToString());
-                }
-            }
-            s = blobdb->PutWithTTL(write_options_,rocksdb::Slice(kv.key()),rocksdb::Slice(kv.value()),ds_config.rocksdb_config.ttl);
-            if (!s.ok()) {
-                return Status(Status::kIOError, "blobdb put", s.ToString());
-            }else{
-                addMetricWrite(*affected, kv.key().size()+kv.value().size());
-                *affected = *affected + 1;
-            }
-
-        }
-
-       return Status::OK();
-
-    }
-
-    uint64_t bytes_written = 0;
-    rocksdb::WriteBatch batch;
-    rocksdb::Status s;
-    std::string value;
-    bool check_dup = req.check_duplicate();
-    *affected = 0;
-    for (int i = 0; i < req.rows_size(); ++i) {
-        const kvrpcpb::KeyValue& kv = req.rows(i);
-        if (check_dup) {
-            s = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true), kv.key(), &value);
-            if (s.ok()) {
-                return Status(Status::kDuplicate);
-            } else if (!s.IsNotFound()) {
-                return Status(Status::kIOError, "get", s.ToString());
-            }
-        }
-        s = batch.Put(kv.key(), kv.value());
-        if (!s.ok()) {
-            return Status(Status::kIOError, "batch put", s.ToString());
-        }
-        *affected = *affected + 1;
-        bytes_written += (kv.key().size(), kv.value().size());
-    }
-    s = db_->Write(write_options_, &batch);
-    if (!s.ok()) {
-        return Status(Status::kIOError, "batch write", s.ToString());
-    } else {
-        addMetricWrite(*affected, bytes_written);
-        return Status::OK();
-    }
+    return db_->Insert(req, affected);
 }
 
 Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint64_t* update_bytes) {
@@ -149,7 +85,7 @@ Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint
     uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
     uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
 
-    rocksdb::WriteBatch batch;
+    auto batch = db_->NewBatch();
     uint64_t bytes_written = 0;
 
     while (!over && s.ok()) {
@@ -176,7 +112,7 @@ Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint
     }
 
     if (s.ok()) {
-        auto rs = db_->Write(write_options_, &batch);
+        auto rs = db_->Write(&batch);
         if (!rs.ok()) {
             s = Status(Status::kIOError, "update batch write", rs.ToString());
         }
@@ -450,7 +386,7 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
     Status s;
     std::unique_ptr<RowResult> r(new RowResult);
     bool over = false;
-    rocksdb::WriteBatch batch;
+    auto batch = db_->NewBatch();
     uint64_t bytes_written = 0;
 
     while (!over && s.ok()) {
@@ -465,7 +401,7 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
     }
 
     if (s.ok()) {
-        auto rs = db_->Write(write_options_, &batch);
+        auto rs = db_->Write(&batch);
         if (!rs.ok()) {
             s = Status(Status::kIOError, "delete batch write", rs.ToString());
         } else {
@@ -477,7 +413,7 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
 }
 
 Status Store::Truncate() {
-    rocksdb::WriteOptions op;
+    rocksdb::WriteOptions op; // fixme
 
     std::unique_lock<std::mutex> lock(key_lock_);
     auto family = db_->DefaultColumnFamily();
@@ -486,7 +422,7 @@ Status Store::Truncate() {
     assert(!end_key_.empty());
     assert(start_key_ < end_key_);
 
-    auto s = db_->DeleteRange(op, family, start_key_, end_key_);
+    auto s = db_->DeleteRange(family, start_key_, end_key_);
     if (!s.ok()) {
         return Status(Status::kIOError, "delete range", s.ToString());
     }
@@ -518,8 +454,7 @@ IteratorInterface* Store::NewIterator(const kvrpcpb::Scope& scope) {
             limit = end_key_;
         }
     }
-    auto read_options = rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true)
-    return db_->NewIterator(&read_options, start, limit);
+    return db_->NewIterator(start, limit);
 }
 
 IteratorInterface* Store::NewIterator(std::string start, std::string limit) {
@@ -533,8 +468,7 @@ IteratorInterface* Store::NewIterator(std::string start, std::string limit) {
             limit = end_key_;
         }
     }
-    auto read_options = rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true)
-    return db_->NewIterator(&read_options, start, limit);
+    return db_->NewIterator(start, limit);
 }
 
 Status Store::BatchDelete(const std::vector<std::string>& keys) {
@@ -543,13 +477,13 @@ Status Store::BatchDelete(const std::vector<std::string>& keys) {
     uint64_t keys_written = 0;
     uint64_t bytes_written = 0;
 
-    rocksdb::WriteBatch batch;
+    auto batch = db_->NewBatch();
     for (auto& key : keys) {
         batch.Delete(key);
         ++keys_written;
         bytes_written += key.size();
     }
-    auto ret = db_->Write(write_options_, &batch);
+    auto ret = db_->Write(&batch);
     if (ret.ok()) {
         addMetricWrite(keys_written, bytes_written);
         return Status::OK();
@@ -560,8 +494,7 @@ Status Store::BatchDelete(const std::vector<std::string>& keys) {
 
 bool Store::KeyExists(const std::string& key) {
     rocksdb::PinnableSlice value;
-    auto ret = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true), db_->DefaultColumnFamily(), key,
-                        &value);
+    auto ret = db_->Get(db_->DefaultColumnFamily(), key, &value);
     addMetricRead(1, key.size() + value.size());
     return ret.ok();
 }
@@ -573,13 +506,13 @@ Status Store::BatchSet(
     uint64_t keys_written = 0;
     uint64_t bytes_written = 0;
 
-    rocksdb::WriteBatch batch;
+    auto batch = db_->NewBatch();
     for (auto& kv : keyValues) {
         batch.Put(kv.first, kv.second);
         ++keys_written;
         bytes_written += (kv.first.size() + kv.second.size());
     }
-    auto ret = db_->Write(write_options_, &batch);
+    auto ret = db_->Write(&batch);
     if (ret.ok()) {
         addMetricWrite(keys_written, bytes_written);
         return Status::OK();
@@ -589,13 +522,13 @@ Status Store::BatchSet(
 }
 
 Status Store::RangeDelete(const std::string& start, const std::string& limit) {
-    auto ret = db_->DeleteRange(write_options_, db_->DefaultColumnFamily(),
+    auto ret = db_->DeleteRange(db_->DefaultColumnFamily(),
                                 start, limit);
     return Status(ret.ok() ? Status::OK() : Status(Status::kUnknown));
 }
 
 Status Store::ApplySnapshot(const std::vector<std::string>& datas) {
-    rocksdb::WriteBatch batch;
+    auto batch = db_->NewBatch();
     for (const auto& data : datas) {
         raft_cmdpb::SnapshotKVPair p;
         if (!p.ParseFromString(data)) {
@@ -605,7 +538,7 @@ Status Store::ApplySnapshot(const std::vector<std::string>& datas) {
             batch.Put(p.key(), p.value());
         }
     }
-    auto ret = db_->Write(write_options_, &batch);
+    auto ret = db_->Write(&batch);
     if (!ret.ok()) {
         return Status(Status::kIOError, "snap batch write", ret.ToString());
     } else {
