@@ -81,8 +81,8 @@ message NotFound {
     bytes key = 1;
 }
 
-// 比如Insert时该行已存在、唯一索引已存在
-message AlreadyExist {
+// 比如Insert时该行已存在或者唯一索引已存在
+message NotUnique {
     bytes key = 1;
 }
 
@@ -94,7 +94,7 @@ message TxnError {
         UNEXPECTED_VER = 3;
         STATUS_CONFLICT = 4;
         NOT_FOUND = 5;
-        ALREADY_EXIST = 6;
+        NOT_UNIQUE = 6;
     }
 
     ErrType err_type = 1;
@@ -103,7 +103,7 @@ message TxnError {
     UnexpectedVer unexpected_ver = 4;
     StatusConflict status_conflict = 5;
     NotFound not_found = 6;
-    AlreadyExist already_exist = 7;
+    NotUnique not_unique = 7;
 }
 
 

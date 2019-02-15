@@ -91,6 +91,12 @@ static TxnErrorPtr newUnexpectedVerErr(const std::string& key, uint64_t expected
     return err;
 }
 
+static TxnErrorPtr newAlreadyExistErr(const std::string& key) {
+    TxnErrorPtr err(new TxnError);
+    err->set_err_type(TxnError_ErrType_ALREADY_EXIST);
+    err->mutable_already_exist()->set_key(key);
+}
+
 // TODO: load from memory
 Status Store::getTxnValue(const std::string &key, TxnValue *value) {
     std::string db_value;
@@ -156,13 +162,12 @@ TxnErrorPtr Store::checkUniqueAndVersion(const txnpb::TxnIntent& intent) {
     }
 
     if (intent.check_unique() && s.ok()) {
+        return newAlreadyExistErr(intent.key());
     }
 
-    if (intent.expected_ver() > 0) {
+    if (intent.expected_ver() > 0 && version != intent.expected_ver()) {
+        return newUnexpectedVerErr(intent.key(), intent.expected_ver(), version);
     }
-
-    // TODO:
-    // TODO: load version both from txn and data
     return nullptr;
 }
 
