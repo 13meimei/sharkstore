@@ -72,7 +72,7 @@ Status Store::Delete(const std::string& key) {
 }
 
 Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
-    return db_->Insert(req, affected);
+    return db_->Insert(this, req, affected);
 }
 
 Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint64_t* update_bytes) {
@@ -99,10 +99,11 @@ Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint
 
                 s = updateRow(&kv, *r);
                 if (!s.ok()) {
+                    delete batch;
                     return s;
                 }
 
-                batch.Put(kv.key(), kv.value());
+                batch->Put(kv.key(), kv.value());
                 ++(*affected);
                 bytes_written += kv.key().size() + kv.value().size();
 
@@ -112,13 +113,14 @@ Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint
     }
 
     if (s.ok()) {
-        auto rs = db_->Write(&batch);
+        auto rs = db_->Write(batch);
         if (!rs.ok()) {
             s = Status(Status::kIOError, "update batch write", rs.ToString());
         }
     }
 
     *update_bytes = bytes_written;
+    delete batch;
     return s;
 }
 
@@ -394,14 +396,14 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
         s = f.Next(r.get(), &over);
         if (s.ok() && !over) {
             assert(!r->Key().empty());
-            batch.Delete(r->Key());
+            batch->Delete(r->Key());
             ++(*affected);
             bytes_written += r->Key().size();
         }
     }
 
     if (s.ok()) {
-        auto rs = db_->Write(&batch);
+        auto rs = db_->Write(batch);
         if (!rs.ok()) {
             s = Status(Status::kIOError, "delete batch write", rs.ToString());
         } else {
@@ -409,6 +411,7 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
         }
     }
 
+    delete batch;
     return s;
 }
 
@@ -479,20 +482,23 @@ Status Store::BatchDelete(const std::vector<std::string>& keys) {
 
     auto batch = db_->NewBatch();
     for (auto& key : keys) {
-        batch.Delete(key);
+        batch->Delete(key);
         ++keys_written;
         bytes_written += key.size();
     }
-    auto ret = db_->Write(&batch);
+    auto ret = db_->Write(batch);
     if (ret.ok()) {
         addMetricWrite(keys_written, bytes_written);
+        delete batch;
         return Status::OK();
     } else {
+        delete batch;
         return Status(Status::kIOError, "BatchDelete", ret.ToString());
     }
 }
 
 bool Store::KeyExists(const std::string& key) {
+//    std::string value;
     rocksdb::PinnableSlice value;
     auto ret = db_->Get(db_->DefaultColumnFamily(), key, &value);
     addMetricRead(1, key.size() + value.size());
@@ -508,15 +514,17 @@ Status Store::BatchSet(
 
     auto batch = db_->NewBatch();
     for (auto& kv : keyValues) {
-        batch.Put(kv.first, kv.second);
+        batch->Put(kv.first, kv.second);
         ++keys_written;
         bytes_written += (kv.first.size() + kv.second.size());
     }
-    auto ret = db_->Write(&batch);
+    auto ret = db_->Write(batch);
     if (ret.ok()) {
         addMetricWrite(keys_written, bytes_written);
+        delete batch;
         return Status::OK();
     } else {
+        delete batch;
         return Status(Status::kIOError, "BatchSet", ret.ToString());
     }
 }
@@ -535,13 +543,15 @@ Status Store::ApplySnapshot(const std::vector<std::string>& datas) {
             return Status(Status::kCorruption, "apply snapshot data",
                           "deserilize return false");
         } else {
-            batch.Put(p.key(), p.value());
+            batch->Put(p.key(), p.value());
         }
     }
-    auto ret = db_->Write(&batch);
+    auto ret = db_->Write(batch);
     if (!ret.ok()) {
+        delete batch;
         return Status(Status::kIOError, "snap batch write", ret.ToString());
     } else {
+        delete batch;
         return Status::OK();
     }
 }

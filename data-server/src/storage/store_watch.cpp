@@ -93,7 +93,7 @@ Status Store::WatchGet(const watchpb::DsKvWatchGetMultiRequest& req,
     auto start = encodeWatchKey(req.kv());
     auto limit = NextComparable(start);
     assert(!limit.empty());
-    std::unique_ptr<Iterator> iter(NewIterator(start ,limit));
+    std::unique_ptr<IteratorInterface> iter(NewIterator(start ,limit));
     while (iter->Valid()) {
         auto resp_kv = resp->add_kvs();
         if (!decodeWatchKey(iter->key(), resp_kv)) {

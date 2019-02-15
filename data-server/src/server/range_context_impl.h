@@ -17,7 +17,7 @@ public:
 
     range::SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
 
-    storage::DbInterface *DBInstance() override { return server_->rocks_db; }
+    storage::DbInterface *DBInstance() override { return server_->db; }
     master::Worker* MasterClient() override  { return server_->master_worker; }
     raft::RaftServer* RaftServer() override { return server_->raft_server; }
     storage::MetaStore* MetaStore() override { return server_->meta_store; }

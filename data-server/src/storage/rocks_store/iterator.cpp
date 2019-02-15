@@ -4,7 +4,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-RocksIterator::RocksIterator(rocksdb::RocksIterator* it, const std::string& start,
+RocksIterator::RocksIterator(rocksdb::Iterator* it, const std::string& start,
                    const std::string& limit)
     : rit_(it), limit_(limit) {
     assert(!start.empty());

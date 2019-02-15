@@ -21,6 +21,7 @@
 
 #include "server/context_server.h"
 #include "watch/watch_server.h"
+#include "storage/db_interface.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -53,8 +54,9 @@ public:
     void OnAskSplitResp(const mspb::AskSplitResponse &) override;
     void CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) override;
 
-private:
     void buildDBOptions(rocksdb::Options& ops);
+
+private:
     int OpenDB();
     void CloseDB();
 
@@ -146,7 +148,7 @@ private:
     std::vector<std::thread> worker_;
     std::thread range_heartbeat_;
 
-    rocksdb::DB *db_ = nullptr;
+    storage::DbInterface *db_ = nullptr;
     storage::MetaStore *meta_store_ = nullptr;
 
     ContextServer *context_ = nullptr;

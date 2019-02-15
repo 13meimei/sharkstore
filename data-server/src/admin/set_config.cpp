@@ -36,7 +36,7 @@ static Status setLogLevel(server::ContextServer* ctx, const std::string& value) 
 
 #define SET_ROCKSDB_OPTIONS(opt) \
     {"rocksdb."#opt, [](server::ContextServer *ctx, const std::string& value) { \
-        auto db = ctx->rocks_db; \
+        auto db = ctx->db; \
         auto s = db->SetOptions(db->DefaultColumnFamily(), {{#opt, value}}); \
         if (!s.ok()) { \
             return Status(Status::kIOError, "SetOptions", s.ToString()); \
@@ -47,7 +47,7 @@ static Status setLogLevel(server::ContextServer* ctx, const std::string& value) 
 
 #define SET_ROCKSDB_DBOPTIONS(opt) \
     {"rocksdb."#opt, [](server::ContextServer *ctx, const std::string& value) { \
-        auto db = ctx->rocks_db; \
+        auto db = ctx->db; \
         auto s = db->SetDBOptions({{#opt, value}}); \
         if (!s.ok()) { \
             return Status(Status::kIOError, "SetDBOptions", s.ToString()); \

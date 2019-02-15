@@ -8,7 +8,6 @@ _Pragma("once");
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
 #include "storage/field_value.h"
-#include "storage/store_interface.h"
 #include <mem_store/mem_store.h>
 
 // test fixture forward declare for friend class
@@ -18,7 +17,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-class MemStore final: public StoreInterface {
+class MemStore final: public DbInterface {
 public:
     MemStore(const metapb::Range& meta, memstore::Store<std::string>* db);
     ~MemStore();

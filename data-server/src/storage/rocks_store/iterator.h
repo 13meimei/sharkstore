@@ -2,7 +2,7 @@ _Pragma("once");
 
 #include <rocksdb/db.h>
 #include "base/status.h"
-#include "iterator_interface.h"
+#include "storage/iterator_interface.h"
 
 namespace sharkstore {
 namespace dataserver {

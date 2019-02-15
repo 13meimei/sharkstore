@@ -3,35 +3,31 @@
 //
 
 #include "store.h"
-#include "iterator.h"
 #include <rocksdb/utilities/blob_db/blob_db.h>
 #include <common/ds_config.h>
-
+#include <rocksdb/db.h>
+#include <rocksdb/options.h>
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-//    write_options_.disableWAL = ds_config.rocksdb_config.disable_wal;
-//rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true)
-
-RocksStore::RocksStore(const rocksdb::ReadOptions& read_options,
+RocksStore::RocksStore(rocksdb::DB* db, const rocksdb::ReadOptions& read_options,
            const rocksdb::WriteOptions& write_options):
-        read_options_(read_options), write_options_(write_options) {
+        db_(db), read_options_(read_options), write_options_(write_options) {
 
 }
-
-RocksStore::~RocksStore() {}
 
 Status RocksStore::Get(const std::string &key, std::string *value) {
     auto s = db_->Get(read_options_, key, value);
-    return Status(s.code());
+    return Status(static_cast<Status::Code>(s.code()));
 }
 
 Status RocksStore::Get(void* column_family,
-           const std::string& key, std::string* value) {
-    auto s = db_->Get(static_cast<rocksdb::ColumnFamilyHandle*>(column_family),
-                      key, value);
+           const std::string& key, void* value) {
+    auto s = db_->Get(read_options_, static_cast<rocksdb::ColumnFamilyHandle*>(column_family),
+                      key, static_cast<rocksdb::PinnableSlice*>(value));
+    return Status(static_cast<Status::Code>(s.code()));
 }
 
 Status RocksStore::Put(const std::string &key, const std::string &value) {
@@ -41,20 +37,19 @@ Status RocksStore::Put(const std::string &key, const std::string &value) {
         auto *blobdb = static_cast<rocksdb::blob_db::BlobDB*>(db_);
         s = blobdb->PutWithTTL(write_options_,rocksdb::Slice(key),rocksdb::Slice(value),ds_config.rocksdb_config.ttl);
     } else {
-        s = db_->Put(write_options_, key, value));
+        s = db_->Put(write_options_, key, value);
     }
-
-    return Status(s.code());
+    return Status(static_cast<Status::Code>(s.code()));
 }
 
-Status RocksStore::Write(WriteBatchInterface *batch) {
-    auto s = db_->Write(write_options_, batch);
-    return Status(s.code());
+Status RocksStore::Write(WriteBatchInterface* batch) {
+    auto s = db_->Write(write_options_, dynamic_cast<RocksWriteBatch*>(batch)->getBatch());
+    return Status(static_cast<Status::Code>(s.code()));
 }
 
-Status RocksStore::Delete(const std::string &batch) {
-    auto s = db_->Delete(write_options_, batch);
-    return Status(s.code());
+Status RocksStore::Delete(const std::string &key) {
+    auto s = db_->Delete(write_options_, key);
+    return Status(static_cast<Status::Code>(s.code()));
 }
 
 Status RocksStore::DeleteRange(void *column_family,
@@ -62,7 +57,7 @@ Status RocksStore::DeleteRange(void *column_family,
     auto s = db_->DeleteRange(write_options_,
                               static_cast<rocksdb::ColumnFamilyHandle*>(column_family),
                               begin_key, end_key);
-    return Status(s.code());
+    return Status(static_cast<Status::Code>(s.code()));
 }
 
 void* RocksStore::DefaultColumnFamily() {
@@ -70,10 +65,16 @@ void* RocksStore::DefaultColumnFamily() {
 }
 
 IteratorInterface* RocksStore::NewIterator(const std::string& start, const std::string& limit) {
-    return new RocksIterator(read_options_, start, limit);
+    auto it = db_->NewIterator(read_options_);
+    return new RocksIterator(it, start, limit);
 }
 
-Status RocksStore::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
+void RocksStore::GetProperty(const std::string& k, std::string* v) {
+    db_->GetProperty(k, v);
+}
+
+Status RocksStore::Insert(storage::Store* store,
+                          const kvrpcpb::InsertRequest& req, uint64_t* affected) {
     if (ds_config.rocksdb_config.storage_type == 1 && ds_config.rocksdb_config.ttl > 0) {
         auto *blobdb = static_cast<rocksdb::blob_db::BlobDB *>(db_);
         std::string value;
@@ -95,7 +96,7 @@ Status RocksStore::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected)
             if (!s.ok()) {
                 return Status(Status::kIOError, "blobdb put", s.ToString());
             } else {
-                addMetricWrite(*affected, kv.key().size() + kv.value().size());
+                store->addMetricWrite(*affected, kv.key().size() + kv.value().size());
                 *affected = *affected + 1;
             }
 
@@ -132,13 +133,37 @@ Status RocksStore::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected)
     if (!s.ok()) {
         return Status(Status::kIOError, "batch write", s.ToString());
     } else {
-        addMetricWrite(*affected, bytes_written);
+        store->addMetricWrite(*affected, bytes_written);
         return Status::OK();
     }
 }
 
-WriteBatchInterface&& RocksStore::NewBatch() {
-    return std::move(rocksdb::WriteBatch());
+WriteBatchInterface* RocksStore::NewBatch() {
+    return new RocksWriteBatch;
+}
+
+Status RocksStore::SetOptions(void* column_family,
+                              const std::unordered_map<std::string, std::string>& new_options) {
+    auto s = db_->SetOptions(static_cast<rocksdb::ColumnFamilyHandle*>(column_family), new_options);
+    return Status(static_cast<Status::Code>(s.code()));
+}
+
+Status RocksStore::SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) {
+    auto s = db_->SetDBOptions(new_options);
+    return Status(static_cast<Status::Code>(s.code()));
+}
+
+Status RocksStore::CompactRange(void* options,
+                         void* begin, void* end) {
+    auto s= db_->CompactRange(*static_cast<rocksdb::CompactRangeOptions*>(options),
+                              static_cast<rocksdb::Slice*>(begin),
+                              static_cast<rocksdb::Slice*>(end));
+    return Status(static_cast<Status::Code>(s.code()));
+}
+
+Status RocksStore::Flush(void* fops) {
+    auto s = db_->Flush(*static_cast<rocksdb::FlushOptions*>(fops));
+    return Status(static_cast<Status::Code>(s.code()));
 }
 
 }}}

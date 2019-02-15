@@ -10,7 +10,7 @@ _Pragma("once");
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
 #include "field_value.h"
-#include "store_interface.h"
+#include "db_interface.h"
 
 // test fixture forward declare for friend class
 namespace sharkstore { namespace test { namespace helper { class StoreTestFixture; }}}
@@ -23,6 +23,7 @@ namespace storage {
 static const size_t kRowPrefixLength = 9;
 static const unsigned char kStoreKVPrefixByte = '\x01';
 
+class DbInterface;
 class Store {
 public:
     Store(const metapb::Range& meta, DbInterface* db);
@@ -74,6 +75,10 @@ public:
 
     Status ApplySnapshot(const std::vector<std::string>& datas);
 
+public:
+    void addMetricRead(uint64_t keys, uint64_t bytes);
+    void addMetricWrite(uint64_t keys, uint64_t bytes);
+
 private:
     friend class RowFetcher;
     friend class ::sharkstore::test::helper::StoreTestFixture;
@@ -82,9 +87,6 @@ private:
                         kvrpcpb::SelectResponse* resp);
     Status selectAggre(const kvrpcpb::SelectRequest& req,
                        kvrpcpb::SelectResponse* resp);
-
-    void addMetricRead(uint64_t keys, uint64_t bytes);
-    void addMetricWrite(uint64_t keys, uint64_t bytes);
 
     std::string encodeWatchKey(const watchpb::WatchKeyValue& kv) const;
     std::string encodeWatchValue(const watchpb::WatchKeyValue& kv, int64_t version) const;

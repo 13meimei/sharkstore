@@ -276,7 +276,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
 
         auto resp = ds_resp;
         auto btime = get_micro_second();
-        storage::Iterator *it = nullptr;
+        storage::IteratorInterface *it = nullptr;
         Status::Code code = Status::kOk;
 
         if (prefix) {

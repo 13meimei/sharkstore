@@ -108,9 +108,9 @@ void RunStatus::printStatistics() {
 }
 
 void RunStatus::printDBMetric() {
-    assert(context_->rocks_db != nullptr);
+    assert(context_->db != nullptr);
     assert(context_->block_cache != nullptr);
-    auto db = context_->rocks_db;
+    auto db = context_->db;
     std::string tr_mem_usage;
     db->GetProperty("rocksdb.estimate-table-readers-mem", &tr_mem_usage);
     std::string mem_table_usage;

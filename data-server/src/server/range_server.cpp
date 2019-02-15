@@ -27,6 +27,7 @@
 
 #include "server.h"
 #include "range_context_impl.h"
+#include "storage/rocks_store/store.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -46,7 +47,7 @@ int RangeServer::Init(ContextServer *context) {
         return -1;
     }
 
-    context_->rocks_db = db_;
+    context_->db = db_;
 
     // 打开meta db
     auto meta_path = JoinFilePath({ds_config.rocksdb_config.path, kMetaPathSuffix});
@@ -257,7 +258,11 @@ void RangeServer::buildDBOptions(rocksdb::Options& ops) {
     }
 }
 
-int RangeServer::OpenDB() {
+static int newRocksDB(RangeServer* server, storage::DbInterface** db_ptr) {
+    auto write_options = rocksdb::WriteOptions();
+    write_options.disableWAL = ds_config.rocksdb_config.disable_wal;
+    auto read_options = rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true);
+
     // 创建db的父目录
     auto db_path = JoinFilePath({ds_config.rocksdb_config.path, kDataPathSuffix});
     int ret = MakeDirAll(db_path, 0755);
@@ -267,12 +272,14 @@ int RangeServer::OpenDB() {
         return -1;
     }
 
-    rocksdb::Options ops;
-    buildDBOptions(ops);
+    rocksdb::DB* db;
 
-    if (ds_config.rocksdb_config.storage_type == 0){
+    rocksdb::Options ops;
+    server->buildDBOptions(ops);
+
+    if (ds_config.rocksdb_config.storage_type == 0) {
         if (ds_config.rocksdb_config.ttl == 0) {
-            auto ret = rocksdb::DB::Open(ops, db_path, &db_);
+            auto ret = rocksdb::DB::Open(ops, db_path, &db);
             if (!ret.ok()) {
                 FLOG_ERROR("open rocksdb(%s) failed(%s)", db_path.c_str(),
                            ret.ToString().c_str());
@@ -282,13 +289,13 @@ int RangeServer::OpenDB() {
             FLOG_WARN("rocksdb ttl enabled. ttl=%d", ds_config.rocksdb_config.ttl);
             rocksdb::DBWithTTL *ttl_db = nullptr;
             auto ret =
-                rocksdb::DBWithTTL::Open(ops, db_path, &ttl_db, ds_config.rocksdb_config.ttl);
+                    rocksdb::DBWithTTL::Open(ops, db_path, &ttl_db, ds_config.rocksdb_config.ttl);
             if (!ret.ok()) {
                 FLOG_ERROR("open rocksdb(%s) failed(%s)", db_path.c_str(),
                            ret.ToString().c_str());
                 return -1;
             } else {
-                db_ = ttl_db;
+                db = ttl_db;
             }
         } else {
             FLOG_ERROR("invalid rocksdb ttl(%d)", ds_config.rocksdb_config.ttl);
@@ -315,30 +322,50 @@ int RangeServer::OpenDB() {
                 bops.compression = compress_type;
                 break;
             default:
-                (void)bops.compression;
+                (void) bops.compression;
         }
 
 #ifdef BLOB_EXTEND_OPTIONS
         bops.gc_file_expired_percent = ds_config.rocksdb_config.blob_gc_percent;
-        if (ds_config.rocksdb_config.blob_cache_size > 0) {
-            bops.blob_cache = rocksdb::NewLRUCache(ds_config.rocksdb_config.blob_cache_size);
-        }
+            if (ds_config.rocksdb_config.blob_cache_size > 0) {
+                bops.blob_cache = rocksdb::NewLRUCache(ds_config.rocksdb_config.blob_cache_size);
+            }
 #endif
 
         rocksdb::blob_db::BlobDB *bdb = nullptr;
         auto ret = rocksdb::blob_db::BlobDB::Open(ops, bops, db_path, &bdb);
-        if (!ret.ok()){
+        if (!ret.ok()) {
             FLOG_ERROR("open rocksdb_blob(%s) failed(%s)", db_path.c_str(),
                        ret.ToString().c_str());
             return -1;
         } else {
-            db_ = bdb;
+            db = bdb;
         }
     } else {
         FLOG_ERROR("invalid rocksdb storage_type(%d)", ds_config.rocksdb_config.storage_type);
         return -1;
     }
+
+    *db_ptr = new storage::RocksStore(db, read_options, write_options);
     return 0;
+}
+
+static int newMemDB(storage::DbInterface** db_ptr) {
+
+    // fixme
+    return 0;
+}
+
+int RangeServer::OpenDB() {
+    std::string engine_name(ds_config.engine_config.name);
+    if (strcasecmp(engine_name.c_str(), "rocksdb") == 0) {
+        return newRocksDB(this, &db_);
+    } else if (strcasecmp(engine_name.c_str(), "memory") == 0) {
+        return newMemDB(&db_);
+    } else {
+        FLOG_ERROR("unknown engine name");
+        return -1;
+    }
 }
 
 void RangeServer::CloseDB() {

@@ -207,14 +207,14 @@ set(SOURCES
     src/range/submit.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
-    src/storage/iterator.cpp
     src/storage/meta_store.cpp
     src/storage/metric.cpp
     src/storage/row_decoder.cpp
     src/storage/row_fetcher.cpp
     src/storage/store.cpp
-    src/storage/mem_store/store.cpp
-    src/storage/mem_store/iterator.cpp
+    src/storage/rocks_store/store.cpp
+    src/storage/rocks_store/iterator.cpp
+    src/storage/rocks_store/write_batch.cpp
     src/storage/store_watch.cpp
     src/master/client.cpp
     src/master/connection.cpp
