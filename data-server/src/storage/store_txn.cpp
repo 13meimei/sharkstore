@@ -9,18 +9,20 @@ namespace storage {
 using namespace txnpb;
 using namespace std::chrono;
 
+// TODO: add metrics
+
 static uint64_t calExpireAt(uint64_t ttl) {
-    auto seconds = system_clock::now().time_since_epoch();
-    return ttl + duration_cast<milliseconds>(seconds).count();
+    auto epoch = system_clock::now().time_since_epoch();
+    return ttl + duration_cast<milliseconds>(epoch).count();
 }
 
 static bool isExpired(uint64_t expired_at) {
-    auto seconds = system_clock::now().time_since_epoch();
-    auto now = duration_cast<milliseconds>(seconds).count();
+    auto epoch = system_clock::now().time_since_epoch();
+    auto now = duration_cast<milliseconds>(epoch).count();
     return static_cast<uint64_t>(now) > expired_at;
 }
 
-static void assignTxnValue(const PrepareRequest& req, const TxnIntent& intent, uint64_t version, TxnValue* value) {
+static void fillTxnValue(const PrepareRequest& req, const TxnIntent& intent, uint64_t version, TxnValue* value) {
     value->set_txn_id(req.txn_id());
     value->mutable_intent()->CopyFrom(intent);
     value->set_primary_key(req.primary_key());
@@ -73,6 +75,15 @@ static TxnErrorPtr newStatusConflictErr(TxnStatus status) {
     return err;
 }
 
+static TxnErrorPtr newUnexpectedVerErr(const std::string& key, uint64_t expected, uint64_t actual) {
+    TxnErrorPtr err(new TxnError);
+    err->set_err_type(TxnError_ErrType_UNEXPECTED_VER);
+    err->mutable_unexpected_ver()->set_key(key);
+    err->mutable_unexpected_ver()->set_expected_ver(expected);
+    err->mutable_unexpected_ver()->set_actual_ver(actual);
+    return err;
+}
+
 // TODO: load from memory
 Status Store::getTxnValue(const std::string &key, TxnValue *value) {
     std::string db_value;
@@ -92,7 +103,7 @@ Status Store::getTxnValue(const std::string &key, TxnValue *value) {
 Status Store::writeTxnValue(const txnpb::TxnValue& value, rocksdb::WriteBatch* batch) {
     std::string db_value;
     if (!value.SerializeToString(&db_value)) {
-        return Status(Status::kCorruption, "serialze txn value", value.ShortDebugString());
+        return Status(Status::kCorruption, "serialize txn value", value.ShortDebugString());
     }
     assert(!value.intent().key().empty());
     auto s = batch->Put(txn_cf_, value.intent().key(), db_value);
@@ -151,7 +162,7 @@ TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& int
 
     // append to batch
     TxnValue txn_value;
-    assignTxnValue(req, intent, version, &txn_value);
+    fillTxnValue(req, intent, version, &txn_value);
     auto s = writeTxnValue(txn_value, batch);
     if (!s.ok()) {
         return newTxnServerErr(s.code(), "serialize txn value failed");
@@ -270,6 +281,7 @@ TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& ke
     }
     // assign secondary_keys in recover mode
     if (secondary_keys != nullptr) {
+        assert(value.intent().is_primary());
         for (const auto& skey: value.secondary_keys()) {
             secondary_keys->push_back(skey);
         }
@@ -291,8 +303,8 @@ uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
             std::vector<std::string> secondary_keys;
             err = decide(req, key, bytes_written, &batch, &secondary_keys);
             if (!secondary_keys.empty()) {
-                for (std::size_t i = 0; i < secondary_keys.size(); ++i) {
-                    resp->add_secondary_keys(std::move(secondary_keys[i]));
+                for (auto& skey: secondary_keys) {
+                    resp->add_secondary_keys(std::move(skey));
                 }
             }
         } else {
@@ -338,6 +350,8 @@ void Store::TxnClearup(const ClearupRequest& req, ClearupResponse* resp) {
 }
 
 void Store::TxnGetLockInfo(const GetLockInfoRequest& req, GetLockInfoResponse* resp) {
+    TxnValue value;
+    auto ret = getTxnValue(req.key(), &value);
 }
 
 void Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {

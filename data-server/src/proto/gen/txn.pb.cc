@@ -53,6 +53,11 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<ServerError>
      _instance;
 } _ServerError_default_instance_;
+class NotExistDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<NotExist>
+     _instance;
+} _NotExist_default_instance_;
 class TxnErrorDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<TxnError>
@@ -179,7 +184,7 @@ namespace protobuf_txn_2eproto {
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[31];
+::google::protobuf::Metadata file_level_metadata[32];
 const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[3];
 
 }  // namespace
@@ -195,6 +200,7 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::AuxillaryParseTableField
 };
 PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
     TableStruct::schema[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
@@ -292,6 +298,12 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerError, code_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerError, msg_),
   ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NotExist, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NotExist, key_),
+  ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -301,6 +313,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, lock_err_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, unexpected_ver_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, status_conflict_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(TxnError, not_exist_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(PrepareRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -402,6 +415,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetLockInfoResponse, err_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(GetLockInfoResponse, info_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(DsGetLockInfoRequest, _internal_metadata_),
@@ -484,30 +498,31 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 41, -1, sizeof(UnexpectedVer)},
   { 49, -1, sizeof(StatusConflict)},
   { 55, -1, sizeof(ServerError)},
-  { 62, -1, sizeof(TxnError)},
-  { 72, -1, sizeof(PrepareRequest)},
-  { 84, -1, sizeof(PrepareResponse)},
-  { 90, -1, sizeof(DsPrepareRequest)},
-  { 97, -1, sizeof(DsPrepareResponse)},
-  { 104, -1, sizeof(DecideRequest)},
-  { 113, -1, sizeof(DecideResponse)},
-  { 120, -1, sizeof(DsDecideRequest)},
-  { 127, -1, sizeof(DsDecideResponse)},
-  { 134, -1, sizeof(ClearupRequest)},
-  { 141, -1, sizeof(ClearupResponse)},
-  { 147, -1, sizeof(DsClearupRequest)},
-  { 154, -1, sizeof(DsClearupResponse)},
-  { 161, -1, sizeof(GetLockInfoRequest)},
-  { 168, -1, sizeof(GetLockInfoResponse)},
-  { 174, -1, sizeof(DsGetLockInfoRequest)},
-  { 181, -1, sizeof(DsGetLockInfoResponse)},
-  { 188, -1, sizeof(SelectRequest)},
-  { 199, -1, sizeof(RowValue)},
-  { 207, -1, sizeof(RowIntent)},
-  { 216, -1, sizeof(Row)},
-  { 224, -1, sizeof(SelectResponse)},
-  { 232, -1, sizeof(DsSelectRequest)},
-  { 239, -1, sizeof(DsSelectResponse)},
+  { 62, -1, sizeof(NotExist)},
+  { 68, -1, sizeof(TxnError)},
+  { 79, -1, sizeof(PrepareRequest)},
+  { 91, -1, sizeof(PrepareResponse)},
+  { 97, -1, sizeof(DsPrepareRequest)},
+  { 104, -1, sizeof(DsPrepareResponse)},
+  { 111, -1, sizeof(DecideRequest)},
+  { 120, -1, sizeof(DecideResponse)},
+  { 127, -1, sizeof(DsDecideRequest)},
+  { 134, -1, sizeof(DsDecideResponse)},
+  { 141, -1, sizeof(ClearupRequest)},
+  { 148, -1, sizeof(ClearupResponse)},
+  { 154, -1, sizeof(DsClearupRequest)},
+  { 161, -1, sizeof(DsClearupResponse)},
+  { 168, -1, sizeof(GetLockInfoRequest)},
+  { 175, -1, sizeof(GetLockInfoResponse)},
+  { 182, -1, sizeof(DsGetLockInfoRequest)},
+  { 189, -1, sizeof(DsGetLockInfoResponse)},
+  { 196, -1, sizeof(SelectRequest)},
+  { 207, -1, sizeof(RowValue)},
+  { 215, -1, sizeof(RowIntent)},
+  { 224, -1, sizeof(Row)},
+  { 232, -1, sizeof(SelectResponse)},
+  { 240, -1, sizeof(DsSelectRequest)},
+  { 247, -1, sizeof(DsSelectResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -518,6 +533,7 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_UnexpectedVer_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_StatusConflict_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_ServerError_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_NotExist_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_TxnError_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_PrepareRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_PrepareResponse_default_instance_),
@@ -562,7 +578,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 31);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 32);
 }
 
 }  // namespace
@@ -586,7 +602,9 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_StatusConflict_default_instance_);_ServerError_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_ServerError_default_instance_);_TxnError_default_instance_._instance.DefaultConstruct();
+      &_ServerError_default_instance_);_NotExist_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_NotExist_default_instance_);_TxnError_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_TxnError_default_instance_);_PrepareRequest_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
@@ -646,6 +664,8 @@ void TableStruct::InitDefaultsImpl() {
       ::txnpb::UnexpectedVer::internal_default_instance());
   _TxnError_default_instance_._instance.get_mutable()->status_conflict_ = const_cast< ::txnpb::StatusConflict*>(
       ::txnpb::StatusConflict::internal_default_instance());
+  _TxnError_default_instance_._instance.get_mutable()->not_exist_ = const_cast< ::txnpb::NotExist*>(
+      ::txnpb::NotExist::internal_default_instance());
   _DsPrepareRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
       ::kvrpcpb::RequestHeader::internal_default_instance());
   _DsPrepareRequest_default_instance_._instance.get_mutable()->req_ = const_cast< ::txnpb::PrepareRequest*>(
@@ -674,6 +694,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::ResponseHeader::internal_default_instance());
   _DsClearupResponse_default_instance_._instance.get_mutable()->resp_ = const_cast< ::txnpb::ClearupResponse*>(
       ::txnpb::ClearupResponse::internal_default_instance());
+  _GetLockInfoResponse_default_instance_._instance.get_mutable()->err_ = const_cast< ::txnpb::TxnError*>(
+      ::txnpb::TxnError::internal_default_instance());
   _GetLockInfoResponse_default_instance_._instance.get_mutable()->info_ = const_cast< ::txnpb::LockInfo*>(
       ::txnpb::LockInfo::internal_default_instance());
   _DsGetLockInfoRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
@@ -730,73 +752,76 @@ void AddDescriptorsImpl() {
       "expected_ver\030\002 \001(\004\022\022\n\nactual_ver\030\003 \001(\004\"2"
       "\n\016StatusConflict\022 \n\006status\030\001 \001(\0162\020.txnpb"
       ".TxnStatus\"(\n\013ServerError\022\014\n\004code\030\001 \001(\005\022"
-      "\013\n\003msg\030\002 \001(\t\"\276\002\n\010TxnError\022)\n\010err_type\030\001 "
-      "\001(\0162\027.txnpb.TxnError.ErrType\022&\n\nserver_e"
-      "rr\030\002 \001(\0132\022.txnpb.ServerError\022\"\n\010lock_err"
-      "\030\003 \001(\0132\020.txnpb.LockError\022,\n\016unexpected_v"
-      "er\030\004 \001(\0132\024.txnpb.UnexpectedVer\022.\n\017status"
-      "_conflict\030\005 \001(\0132\025.txnpb.StatusConflict\"]"
-      "\n\007ErrType\022\013\n\007UNKNOWN\020\000\022\020\n\014SERVER_ERROR\020\001"
-      "\022\n\n\006LOCKED\020\002\022\022\n\016UNEXPECTED_VER\020\003\022\023\n\017STAT"
-      "US_CONFLICT\020\004\"\247\001\n\016PrepareRequest\022\016\n\006txn_"
-      "id\030\001 \001(\t\022\r\n\005local\030\002 \001(\010\022!\n\007intents\030\003 \003(\013"
-      "2\020.txnpb.TxnIntent\022\023\n\013primary_key\030\004 \001(\014\022"
-      "\020\n\010lock_ttl\030\005 \001(\004\022\026\n\016secondary_keys\030\006 \003("
-      "\014\022\024\n\014strict_check\030\020 \001(\010\"2\n\017PrepareRespon"
-      "se\022\037\n\006errors\030\001 \003(\0132\017.txnpb.TxnError\"^\n\020D"
-      "sPrepareRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcp"
-      "b.RequestHeader\022\"\n\003req\030\002 \001(\0132\025.txnpb.Pre"
-      "pareRequest\"b\n\021DsPrepareResponse\022\'\n\006head"
-      "er\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$\n\004res"
-      "p\030\002 \001(\0132\026.txnpb.PrepareResponse\"`\n\rDecid"
-      "eRequest\022\016\n\006txn_id\030\001 \001(\t\022 \n\006status\030\002 \001(\016"
-      "2\020.txnpb.TxnStatus\022\014\n\004keys\030\003 \003(\014\022\017\n\007reco"
-      "ver\030\004 \001(\010\"F\n\016DecideResponse\022\034\n\003err\030\001 \001(\013"
-      "2\017.txnpb.TxnError\022\026\n\016secondary_keys\030\002 \003("
-      "\014\"\\\n\017DsDecideRequest\022&\n\006header\030\001 \001(\0132\026.k"
-      "vrpcpb.RequestHeader\022!\n\003req\030\002 \001(\0132\024.txnp"
-      "b.DecideRequest\"`\n\020DsDecideResponse\022\'\n\006h"
-      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004"
-      "resp\030\002 \001(\0132\025.txnpb.DecideResponse\"5\n\016Cle"
-      "arupRequest\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primary_k"
-      "ey\030\002 \001(\014\"/\n\017ClearupResponse\022\034\n\003err\030\001 \001(\013"
-      "2\017.txnpb.TxnError\"^\n\020DsClearupRequest\022&\n"
-      "\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n"
-      "\003req\030\002 \001(\0132\025.txnpb.ClearupRequest\"b\n\021DsC"
-      "learupResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb"
-      ".ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.txnpb.Cl"
-      "earupResponse\"1\n\022GetLockInfoRequest\022\013\n\003k"
-      "ey\030\001 \001(\014\022\016\n\006txn_id\030\002 \001(\t\"4\n\023GetLockInfoR"
-      "esponse\022\035\n\004info\030\001 \001(\0132\017.txnpb.LockInfo\"f"
-      "\n\024DsGetLockInfoRequest\022&\n\006header\030\001 \001(\0132\026"
-      ".kvrpcpb.RequestHeader\022&\n\003req\030\002 \001(\0132\031.tx"
-      "npb.GetLockInfoRequest\"j\n\025DsGetLockInfoR"
-      "esponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respon"
-      "seHeader\022(\n\004resp\030\002 \001(\0132\032.txnpb.GetLockIn"
-      "foResponse\"\316\001\n\rSelectRequest\022\013\n\003key\030\001 \001("
-      "\014\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb.Scope\022(\n\nfiel"
-      "d_list\030\003 \003(\0132\024.kvrpcpb.SelectField\022%\n\rwh"
-      "ere_filters\030\004 \003(\0132\016.kvrpcpb.Match\022!\n\tgro"
-      "up_bys\030\005 \003(\0132\016.metapb.Column\022\035\n\005limit\030\006 "
-      "\001(\0132\016.kvrpcpb.Limit\"B\n\010RowValue\022\016\n\006field"
-      "s\030\001 \001(\014\022\025\n\raggred_counts\030\002 \003(\003\022\017\n\007versio"
-      "n\030\003 \001(\004\"a\n\tRowIntent\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013"
-      "primary_key\030\002 \001(\014\022\017\n\007timeout\030\003 \001(\010\022\036\n\005va"
-      "lue\030\n \001(\0132\017.txnpb.RowValue\"T\n\003Row\022\013\n\003key"
-      "\030\001 \001(\014\022\036\n\005value\030\002 \001(\0132\017.txnpb.RowValue\022 "
-      "\n\006intent\030\003 \001(\0132\020.txnpb.RowIntent\"H\n\016Sele"
-      "ctResponse\022\014\n\004code\030\001 \001(\005\022\030\n\004rows\030\002 \003(\0132\n"
-      ".txnpb.Row\022\016\n\006offset\030\003 \001(\004\"\\\n\017DsSelectRe"
-      "quest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestH"
-      "eader\022!\n\003req\030\002 \001(\0132\024.txnpb.SelectRequest"
-      "\"`\n\020DsSelectResponse\022\'\n\006header\030\001 \001(\0132\027.k"
-      "vrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.tx"
-      "npb.SelectResponse* \n\006OpType\022\n\n\006INSERT\020\000"
-      "\022\n\n\006DELETE\020\001*1\n\tTxnStatus\022\010\n\004INIT\020\000\022\r\n\tC"
-      "OMMITTED\020\001\022\013\n\007ABORTED\020\002b\006proto3"
+      "\013\n\003msg\030\002 \001(\t\"\027\n\010NotExist\022\013\n\003key\030\001 \001(\t\"\361\002"
+      "\n\010TxnError\022)\n\010err_type\030\001 \001(\0162\027.txnpb.Txn"
+      "Error.ErrType\022&\n\nserver_err\030\002 \001(\0132\022.txnp"
+      "b.ServerError\022\"\n\010lock_err\030\003 \001(\0132\020.txnpb."
+      "LockError\022,\n\016unexpected_ver\030\004 \001(\0132\024.txnp"
+      "b.UnexpectedVer\022.\n\017status_conflict\030\005 \001(\013"
+      "2\025.txnpb.StatusConflict\022\"\n\tnot_exist\030\006 \001"
+      "(\0132\017.txnpb.NotExist\"l\n\007ErrType\022\013\n\007UNKNOW"
+      "N\020\000\022\020\n\014SERVER_ERROR\020\001\022\n\n\006LOCKED\020\002\022\022\n\016UNE"
+      "XPECTED_VER\020\003\022\023\n\017STATUS_CONFLICT\020\004\022\r\n\tNO"
+      "T_EXIST\020\005\"\247\001\n\016PrepareRequest\022\016\n\006txn_id\030\001"
+      " \001(\t\022\r\n\005local\030\002 \001(\010\022!\n\007intents\030\003 \003(\0132\020.t"
+      "xnpb.TxnIntent\022\023\n\013primary_key\030\004 \001(\014\022\020\n\010l"
+      "ock_ttl\030\005 \001(\004\022\026\n\016secondary_keys\030\006 \003(\014\022\024\n"
+      "\014strict_check\030\020 \001(\010\"2\n\017PrepareResponse\022\037"
+      "\n\006errors\030\001 \003(\0132\017.txnpb.TxnError\"^\n\020DsPre"
+      "pareRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Re"
+      "questHeader\022\"\n\003req\030\002 \001(\0132\025.txnpb.Prepare"
+      "Request\"b\n\021DsPrepareResponse\022\'\n\006header\030\001"
+      " \001(\0132\027.kvrpcpb.ResponseHeader\022$\n\004resp\030\002 "
+      "\001(\0132\026.txnpb.PrepareResponse\"`\n\rDecideReq"
+      "uest\022\016\n\006txn_id\030\001 \001(\t\022 \n\006status\030\002 \001(\0162\020.t"
+      "xnpb.TxnStatus\022\014\n\004keys\030\003 \003(\014\022\017\n\007recover\030"
+      "\004 \001(\010\"F\n\016DecideResponse\022\034\n\003err\030\001 \001(\0132\017.t"
+      "xnpb.TxnError\022\026\n\016secondary_keys\030\002 \003(\014\"\\\n"
+      "\017DsDecideRequest\022&\n\006header\030\001 \001(\0132\026.kvrpc"
+      "pb.RequestHeader\022!\n\003req\030\002 \001(\0132\024.txnpb.De"
+      "cideRequest\"`\n\020DsDecideResponse\022\'\n\006heade"
+      "r\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004resp"
+      "\030\002 \001(\0132\025.txnpb.DecideResponse\"5\n\016Clearup"
+      "Request\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primary_key\030\002"
+      " \001(\014\"/\n\017ClearupResponse\022\034\n\003err\030\001 \001(\0132\017.t"
+      "xnpb.TxnError\"^\n\020DsClearupRequest\022&\n\006hea"
+      "der\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n\003req"
+      "\030\002 \001(\0132\025.txnpb.ClearupRequest\"b\n\021DsClear"
+      "upResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Res"
+      "ponseHeader\022$\n\004resp\030\002 \001(\0132\026.txnpb.Clearu"
+      "pResponse\"1\n\022GetLockInfoRequest\022\013\n\003key\030\001"
+      " \001(\014\022\016\n\006txn_id\030\002 \001(\t\"R\n\023GetLockInfoRespo"
+      "nse\022\034\n\003err\030\001 \001(\0132\017.txnpb.TxnError\022\035\n\004inf"
+      "o\030\002 \001(\0132\017.txnpb.LockInfo\"f\n\024DsGetLockInf"
+      "oRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reque"
+      "stHeader\022&\n\003req\030\002 \001(\0132\031.txnpb.GetLockInf"
+      "oRequest\"j\n\025DsGetLockInfoResponse\022\'\n\006hea"
+      "der\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022(\n\004re"
+      "sp\030\002 \001(\0132\032.txnpb.GetLockInfoResponse\"\316\001\n"
+      "\rSelectRequest\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001"
+      "(\0132\016.kvrpcpb.Scope\022(\n\nfield_list\030\003 \003(\0132\024"
+      ".kvrpcpb.SelectField\022%\n\rwhere_filters\030\004 "
+      "\003(\0132\016.kvrpcpb.Match\022!\n\tgroup_bys\030\005 \003(\0132\016"
+      ".metapb.Column\022\035\n\005limit\030\006 \001(\0132\016.kvrpcpb."
+      "Limit\"B\n\010RowValue\022\016\n\006fields\030\001 \001(\014\022\025\n\ragg"
+      "red_counts\030\002 \003(\003\022\017\n\007version\030\003 \001(\004\"a\n\tRow"
+      "Intent\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primary_key\030\002 "
+      "\001(\014\022\017\n\007timeout\030\003 \001(\010\022\036\n\005value\030\n \001(\0132\017.tx"
+      "npb.RowValue\"T\n\003Row\022\013\n\003key\030\001 \001(\014\022\036\n\005valu"
+      "e\030\002 \001(\0132\017.txnpb.RowValue\022 \n\006intent\030\003 \001(\013"
+      "2\020.txnpb.RowIntent\"H\n\016SelectResponse\022\014\n\004"
+      "code\030\001 \001(\005\022\030\n\004rows\030\002 \003(\0132\n.txnpb.Row\022\016\n\006"
+      "offset\030\003 \001(\004\"\\\n\017DsSelectRequest\022&\n\006heade"
+      "r\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022!\n\003req\030\002"
+      " \001(\0132\024.txnpb.SelectRequest\"`\n\020DsSelectRe"
+      "sponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respons"
+      "eHeader\022#\n\004resp\030\002 \001(\0132\025.txnpb.SelectResp"
+      "onse* \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*1"
+      "\n\tTxnStatus\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007"
+      "ABORTED\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 3271);
+      descriptor, 3377);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "txn.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -828,6 +853,7 @@ bool TxnError_ErrType_IsValid(int value) {
     case 2:
     case 3:
     case 4:
+    case 5:
       return true;
     default:
       return false;
@@ -840,6 +866,7 @@ const TxnError_ErrType TxnError::SERVER_ERROR;
 const TxnError_ErrType TxnError::LOCKED;
 const TxnError_ErrType TxnError::UNEXPECTED_VER;
 const TxnError_ErrType TxnError::STATUS_CONFLICT;
+const TxnError_ErrType TxnError::NOT_EXIST;
 const TxnError_ErrType TxnError::ErrType_MIN;
 const TxnError_ErrType TxnError::ErrType_MAX;
 const int TxnError::ErrType_ARRAYSIZE;
@@ -4331,11 +4358,323 @@ void ServerError::set_allocated_msg(::std::string* msg) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int NotExist::kKeyFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+NotExist::NotExist()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_txn_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:txnpb.NotExist)
+}
+NotExist::NotExist(const NotExist& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.key().size() > 0) {
+    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
+  }
+  // @@protoc_insertion_point(copy_constructor:txnpb.NotExist)
+}
+
+void NotExist::SharedCtor() {
+  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  _cached_size_ = 0;
+}
+
+NotExist::~NotExist() {
+  // @@protoc_insertion_point(destructor:txnpb.NotExist)
+  SharedDtor();
+}
+
+void NotExist::SharedDtor() {
+  key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void NotExist::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* NotExist::descriptor() {
+  protobuf_txn_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_txn_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const NotExist& NotExist::default_instance() {
+  protobuf_txn_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+NotExist* NotExist::New(::google::protobuf::Arena* arena) const {
+  NotExist* n = new NotExist;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void NotExist::Clear() {
+// @@protoc_insertion_point(message_clear_start:txnpb.NotExist)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  _internal_metadata_.Clear();
+}
+
+bool NotExist::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:txnpb.NotExist)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string key = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_key()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->key().data(), static_cast<int>(this->key().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "txnpb.NotExist.key"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:txnpb.NotExist)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:txnpb.NotExist)
+  return false;
+#undef DO_
+}
+
+void NotExist::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:txnpb.NotExist)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string key = 1;
+  if (this->key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->key().data(), static_cast<int>(this->key().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "txnpb.NotExist.key");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->key(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:txnpb.NotExist)
+}
+
+::google::protobuf::uint8* NotExist::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:txnpb.NotExist)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string key = 1;
+  if (this->key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->key().data(), static_cast<int>(this->key().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "txnpb.NotExist.key");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->key(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:txnpb.NotExist)
+  return target;
+}
+
+size_t NotExist::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:txnpb.NotExist)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string key = 1;
+  if (this->key().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->key());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void NotExist::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:txnpb.NotExist)
+  GOOGLE_DCHECK_NE(&from, this);
+  const NotExist* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const NotExist>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:txnpb.NotExist)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:txnpb.NotExist)
+    MergeFrom(*source);
+  }
+}
+
+void NotExist::MergeFrom(const NotExist& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:txnpb.NotExist)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.key().size() > 0) {
+
+    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
+  }
+}
+
+void NotExist::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:txnpb.NotExist)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void NotExist::CopyFrom(const NotExist& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:txnpb.NotExist)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool NotExist::IsInitialized() const {
+  return true;
+}
+
+void NotExist::Swap(NotExist* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void NotExist::InternalSwap(NotExist* other) {
+  using std::swap;
+  key_.Swap(&other->key_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata NotExist::GetMetadata() const {
+  protobuf_txn_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_txn_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// NotExist
+
+// string key = 1;
+void NotExist::clear_key() {
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+const ::std::string& NotExist::key() const {
+  // @@protoc_insertion_point(field_get:txnpb.NotExist.key)
+  return key_.GetNoArena();
+}
+void NotExist::set_key(const ::std::string& value) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:txnpb.NotExist.key)
+}
+#if LANG_CXX11
+void NotExist::set_key(::std::string&& value) {
+  
+  key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.NotExist.key)
+}
+#endif
+void NotExist::set_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:txnpb.NotExist.key)
+}
+void NotExist::set_key(const char* value, size_t size) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:txnpb.NotExist.key)
+}
+::std::string* NotExist::mutable_key() {
+  
+  // @@protoc_insertion_point(field_mutable:txnpb.NotExist.key)
+  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+::std::string* NotExist::release_key() {
+  // @@protoc_insertion_point(field_release:txnpb.NotExist.key)
+  
+  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+void NotExist::set_allocated_key(::std::string* key) {
+  if (key != NULL) {
+    
+  } else {
+    
+  }
+  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
+  // @@protoc_insertion_point(field_set_allocated:txnpb.NotExist.key)
+}
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int TxnError::kErrTypeFieldNumber;
 const int TxnError::kServerErrFieldNumber;
 const int TxnError::kLockErrFieldNumber;
 const int TxnError::kUnexpectedVerFieldNumber;
 const int TxnError::kStatusConflictFieldNumber;
+const int TxnError::kNotExistFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 TxnError::TxnError()
@@ -4371,6 +4710,11 @@ TxnError::TxnError(const TxnError& from)
   } else {
     status_conflict_ = NULL;
   }
+  if (from.has_not_exist()) {
+    not_exist_ = new ::txnpb::NotExist(*from.not_exist_);
+  } else {
+    not_exist_ = NULL;
+  }
   err_type_ = from.err_type_;
   // @@protoc_insertion_point(copy_constructor:txnpb.TxnError)
 }
@@ -4392,6 +4736,7 @@ void TxnError::SharedDtor() {
   if (this != internal_default_instance()) delete lock_err_;
   if (this != internal_default_instance()) delete unexpected_ver_;
   if (this != internal_default_instance()) delete status_conflict_;
+  if (this != internal_default_instance()) delete not_exist_;
 }
 
 void TxnError::SetCachedSize(int size) const {
@@ -4439,6 +4784,10 @@ void TxnError::Clear() {
     delete status_conflict_;
   }
   status_conflict_ = NULL;
+  if (GetArenaNoVirtual() == NULL && not_exist_ != NULL) {
+    delete not_exist_;
+  }
+  not_exist_ = NULL;
   err_type_ = 0;
   _internal_metadata_.Clear();
 }
@@ -4516,6 +4865,18 @@ bool TxnError::MergePartialFromCodedStream(
         break;
       }
 
+      // .txnpb.NotExist not_exist = 6;
+      case 6: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_not_exist()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -4572,6 +4933,12 @@ void TxnError::SerializeWithCachedSizes(
       5, *this->status_conflict_, output);
   }
 
+  // .txnpb.NotExist not_exist = 6;
+  if (this->has_not_exist()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      6, *this->not_exist_, output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -4620,6 +4987,13 @@ void TxnError::SerializeWithCachedSizes(
         5, *this->status_conflict_, deterministic, target);
   }
 
+  // .txnpb.NotExist not_exist = 6;
+  if (this->has_not_exist()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        6, *this->not_exist_, deterministic, target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -4663,6 +5037,13 @@ size_t TxnError::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->status_conflict_);
+  }
+
+  // .txnpb.NotExist not_exist = 6;
+  if (this->has_not_exist()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->not_exist_);
   }
 
   // .txnpb.TxnError.ErrType err_type = 1;
@@ -4712,6 +5093,9 @@ void TxnError::MergeFrom(const TxnError& from) {
   if (from.has_status_conflict()) {
     mutable_status_conflict()->::txnpb::StatusConflict::MergeFrom(from.status_conflict());
   }
+  if (from.has_not_exist()) {
+    mutable_not_exist()->::txnpb::NotExist::MergeFrom(from.not_exist());
+  }
   if (from.err_type() != 0) {
     set_err_type(from.err_type());
   }
@@ -4745,6 +5129,7 @@ void TxnError::InternalSwap(TxnError* other) {
   swap(lock_err_, other->lock_err_);
   swap(unexpected_ver_, other->unexpected_ver_);
   swap(status_conflict_, other->status_conflict_);
+  swap(not_exist_, other->not_exist_);
   swap(err_type_, other->err_type_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
@@ -4930,6 +5315,46 @@ void TxnError::set_allocated_status_conflict(::txnpb::StatusConflict* status_con
     
   }
   // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.status_conflict)
+}
+
+// .txnpb.NotExist not_exist = 6;
+bool TxnError::has_not_exist() const {
+  return this != internal_default_instance() && not_exist_ != NULL;
+}
+void TxnError::clear_not_exist() {
+  if (GetArenaNoVirtual() == NULL && not_exist_ != NULL) delete not_exist_;
+  not_exist_ = NULL;
+}
+const ::txnpb::NotExist& TxnError::not_exist() const {
+  const ::txnpb::NotExist* p = not_exist_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.not_exist)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::NotExist*>(
+      &::txnpb::_NotExist_default_instance_);
+}
+::txnpb::NotExist* TxnError::mutable_not_exist() {
+  
+  if (not_exist_ == NULL) {
+    not_exist_ = new ::txnpb::NotExist;
+  }
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.not_exist)
+  return not_exist_;
+}
+::txnpb::NotExist* TxnError::release_not_exist() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnError.not_exist)
+  
+  ::txnpb::NotExist* temp = not_exist_;
+  not_exist_ = NULL;
+  return temp;
+}
+void TxnError::set_allocated_not_exist(::txnpb::NotExist* not_exist) {
+  delete not_exist_;
+  not_exist_ = not_exist;
+  if (not_exist) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.not_exist)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -10250,6 +10675,7 @@ void GetLockInfoRequest::set_allocated_txn_id(::std::string* txn_id) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GetLockInfoResponse::kErrFieldNumber;
 const int GetLockInfoResponse::kInfoFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -10266,6 +10692,11 @@ GetLockInfoResponse::GetLockInfoResponse(const GetLockInfoResponse& from)
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_err()) {
+    err_ = new ::txnpb::TxnError(*from.err_);
+  } else {
+    err_ = NULL;
+  }
   if (from.has_info()) {
     info_ = new ::txnpb::LockInfo(*from.info_);
   } else {
@@ -10275,7 +10706,9 @@ GetLockInfoResponse::GetLockInfoResponse(const GetLockInfoResponse& from)
 }
 
 void GetLockInfoResponse::SharedCtor() {
-  info_ = NULL;
+  ::memset(&err_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&info_) -
+      reinterpret_cast<char*>(&err_)) + sizeof(info_));
   _cached_size_ = 0;
 }
 
@@ -10285,6 +10718,7 @@ GetLockInfoResponse::~GetLockInfoResponse() {
 }
 
 void GetLockInfoResponse::SharedDtor() {
+  if (this != internal_default_instance()) delete err_;
   if (this != internal_default_instance()) delete info_;
 }
 
@@ -10317,6 +10751,10 @@ void GetLockInfoResponse::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  if (GetArenaNoVirtual() == NULL && err_ != NULL) {
+    delete err_;
+  }
+  err_ = NULL;
   if (GetArenaNoVirtual() == NULL && info_ != NULL) {
     delete info_;
   }
@@ -10334,10 +10772,22 @@ bool GetLockInfoResponse::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .txnpb.LockInfo info = 1;
+      // .txnpb.TxnError err = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_err()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .txnpb.LockInfo info = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_info()));
         } else {
@@ -10372,10 +10822,16 @@ void GetLockInfoResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .txnpb.LockInfo info = 1;
+  // .txnpb.TxnError err = 1;
+  if (this->has_err()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, *this->err_, output);
+  }
+
+  // .txnpb.LockInfo info = 2;
   if (this->has_info()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, *this->info_, output);
+      2, *this->info_, output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -10392,11 +10848,18 @@ void GetLockInfoResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .txnpb.LockInfo info = 1;
+  // .txnpb.TxnError err = 1;
+  if (this->has_err()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        1, *this->err_, deterministic, target);
+  }
+
+  // .txnpb.LockInfo info = 2;
   if (this->has_info()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
-        1, *this->info_, deterministic, target);
+        2, *this->info_, deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -10416,7 +10879,14 @@ size_t GetLockInfoResponse::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .txnpb.LockInfo info = 1;
+  // .txnpb.TxnError err = 1;
+  if (this->has_err()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->err_);
+  }
+
+  // .txnpb.LockInfo info = 2;
   if (this->has_info()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -10452,6 +10922,9 @@ void GetLockInfoResponse::MergeFrom(const GetLockInfoResponse& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.has_err()) {
+    mutable_err()->::txnpb::TxnError::MergeFrom(from.err());
+  }
   if (from.has_info()) {
     mutable_info()->::txnpb::LockInfo::MergeFrom(from.info());
   }
@@ -10481,6 +10954,7 @@ void GetLockInfoResponse::Swap(GetLockInfoResponse* other) {
 }
 void GetLockInfoResponse::InternalSwap(GetLockInfoResponse* other) {
   using std::swap;
+  swap(err_, other->err_);
   swap(info_, other->info_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
@@ -10494,7 +10968,47 @@ void GetLockInfoResponse::InternalSwap(GetLockInfoResponse* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // GetLockInfoResponse
 
-// .txnpb.LockInfo info = 1;
+// .txnpb.TxnError err = 1;
+bool GetLockInfoResponse::has_err() const {
+  return this != internal_default_instance() && err_ != NULL;
+}
+void GetLockInfoResponse::clear_err() {
+  if (GetArenaNoVirtual() == NULL && err_ != NULL) delete err_;
+  err_ = NULL;
+}
+const ::txnpb::TxnError& GetLockInfoResponse::err() const {
+  const ::txnpb::TxnError* p = err_;
+  // @@protoc_insertion_point(field_get:txnpb.GetLockInfoResponse.err)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::TxnError*>(
+      &::txnpb::_TxnError_default_instance_);
+}
+::txnpb::TxnError* GetLockInfoResponse::mutable_err() {
+  
+  if (err_ == NULL) {
+    err_ = new ::txnpb::TxnError;
+  }
+  // @@protoc_insertion_point(field_mutable:txnpb.GetLockInfoResponse.err)
+  return err_;
+}
+::txnpb::TxnError* GetLockInfoResponse::release_err() {
+  // @@protoc_insertion_point(field_release:txnpb.GetLockInfoResponse.err)
+  
+  ::txnpb::TxnError* temp = err_;
+  err_ = NULL;
+  return temp;
+}
+void GetLockInfoResponse::set_allocated_err(::txnpb::TxnError* err) {
+  delete err_;
+  err_ = err;
+  if (err) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txnpb.GetLockInfoResponse.err)
+}
+
+// .txnpb.LockInfo info = 2;
 bool GetLockInfoResponse::has_info() const {
   return this != internal_default_instance() && info_ != NULL;
 }

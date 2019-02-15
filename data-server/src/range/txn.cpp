@@ -250,6 +250,35 @@ Status Range::ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_inde
 void Range::TxnGetLockInfo(common::ProtoMessage* msg, txnpb::DsGetLockInfoRequest& req) {
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
+
+    errorpb::Error *err = nullptr;
+    auto ds_resp = new txnpb::DsGetLockInfoResponse;
+    auto header = ds_resp->mutable_header();
+
+    do {
+        if (!VerifyLeader(err)) {
+            break;
+        }
+
+        if (!EpochIsEqual(req.header().range_epoch(), err)) {
+            break;
+        }
+
+        if (!KeyInRange(req.req().key(), err)) {
+            break;
+        }
+
+        auto now = get_micro_second();
+        store_->TxnGetLockInfo(req.req(), ds_resp->mutable_resp());
+        context_->Statistics()->PushTime(HistogramType::kStore, now - btime);
+    } while (false);
+
+    if (err != nullptr) {
+        RANGE_LOG_ERROR("TxnGetLockInfo failed: %s", err->ShortDebugString().c_str());
+    }
+
+    common::SetResponseHeader(req.header(), header, err);
+    context_->SocketSession()->Send(msg, ds_resp);
 }
 
 void Range::TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req) {

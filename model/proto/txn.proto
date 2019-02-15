@@ -77,6 +77,10 @@ message ServerError {
     string msg = 2;
 }
 
+message NotExist {
+    string key = 1;
+}
+
 message TxnError {
     enum ErrType {
         UNKNOWN = 0;
@@ -84,6 +88,7 @@ message TxnError {
         LOCKED = 2;
         UNEXPECTED_VER = 3;
         STATUS_CONFLICT = 4;
+        NOT_EXIST = 5;
     }
 
     ErrType err_type = 1;
@@ -91,6 +96,7 @@ message TxnError {
     LockError lock_err = 3;
     UnexpectedVer unexpected_ver = 4;
     StatusConflict status_conflict = 5;
+    NotExist not_exist = 6;
 }
 
 
@@ -175,7 +181,8 @@ message GetLockInfoRequest {
 }
 
 message GetLockInfoResponse {
-    LockInfo info = 1;
+    TxnError err = 1;
+    LockInfo info = 2;
 }
 
 message DsGetLockInfoRequest {
