@@ -47,14 +47,7 @@ static TxnErrorPtr newTxnServerErr(int32_t code, const std::string& msg) {
     return err;
 }
 
-static TxnErrorPtr newLockedError(const TxnValue& value) {
-    TxnErrorPtr err(new TxnError);
-    err->set_err_type(TxnError_ErrType_LOCKED);
-
-    auto lock_err = err->mutable_lock_err();
-    lock_err->set_key(value.intent().key());
-
-    auto lock_info = lock_err->mutable_info();
+static void fillLockInfo(LockInfo* lock_info, const TxnValue& value) {
     lock_info->set_txn_id(value.txn_id());
     lock_info->set_timeout(isExpired(value.expired_at()));
     lock_info->set_is_primary(value.intent().is_primary());
@@ -65,6 +58,14 @@ static TxnErrorPtr newLockedError(const TxnValue& value) {
             lock_info->add_secondary_keys(skey);
         }
     }
+}
+
+static TxnErrorPtr newLockedError(const TxnValue& value) {
+    TxnErrorPtr err(new TxnError);
+    err->set_err_type(TxnError_ErrType_LOCKED);
+    auto lock_err = err->mutable_lock_err();
+    lock_err->set_key(value.intent().key());
+    fillLockInfo(lock_err->mutable_info(), value);
     return err;
 }
 
@@ -73,6 +74,11 @@ static TxnErrorPtr newStatusConflictErr(TxnStatus status) {
     err->set_err_type(TxnError_ErrType_STATUS_CONFLICT);
     err->mutable_status_conflict()->set_status(status);
     return err;
+}
+
+static void setNotExistErr(TxnError* err, const std::string& key) {
+    err->set_err_type(TxnError_ErrType_NOT_EXIST);
+    err->mutable_not_exist()->set_key(key);
 }
 
 static TxnErrorPtr newUnexpectedVerErr(const std::string& key, uint64_t expected, uint64_t actual) {
@@ -349,9 +355,20 @@ void Store::TxnClearup(const ClearupRequest& req, ClearupResponse* resp) {
     }
 }
 
+
 void Store::TxnGetLockInfo(const GetLockInfoRequest& req, GetLockInfoResponse* resp) {
     TxnValue value;
     auto ret = getTxnValue(req.key(), &value);
+    if (!ret.ok()) {
+        if (ret.code() == Status::kNotFound) {
+            setNotExistErr(resp->mutable_err(), req.key());
+        } else {
+            setTxnServerErr(resp->mutable_err(), ret.code(), ret.ToString());
+        }
+        return;
+    }
+    // ret is ok now
+    fillLockInfo(resp->mutable_info(), value);
 }
 
 void Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
