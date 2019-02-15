@@ -24,6 +24,7 @@ using TxnErrorPtr = std::unique_ptr<txnpb::TxnError>;
 // 行前缀长度: 1字节特殊标记+8字节table id
 static const size_t kRowPrefixLength = 9;
 static const unsigned char kStoreKVPrefixByte = '\x01';
+static const uint32_t kVersionColumnID = std::numeric_limits<uint32_t>::max();
 
 class Store {
 public:
@@ -100,6 +101,7 @@ private:
     Status getTxnValue(const std::string& key, txnpb::TxnValue* value);
     Status writeTxnValue(const txnpb::TxnValue& value, rocksdb::WriteBatch* batch);
     TxnErrorPtr checkLockable(const std::string& key, const std::string& txn_id, bool *exist_flag);
+    Status getKeyVersion(const std::string& key, uint64_t *version);
     TxnErrorPtr checkUniqueAndVersion(const txnpb::TxnIntent& intent);
     TxnErrorPtr prepareIntent(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
             uint64_t version, rocksdb::WriteBatch* batch);

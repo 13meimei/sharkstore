@@ -1,6 +1,7 @@
 #include "store.h"
 
 #include "base/util.h"
+#include "common/ds_encoding.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -76,9 +77,9 @@ static TxnErrorPtr newStatusConflictErr(TxnStatus status) {
     return err;
 }
 
-static void setNotExistErr(TxnError* err, const std::string& key) {
-    err->set_err_type(TxnError_ErrType_NOT_EXIST);
-    err->mutable_not_exist()->set_key(key);
+static void setNotFoundErr(TxnError* err, const std::string& key) {
+    err->set_err_type(TxnError_ErrType_NOT_FOUND);
+    err->mutable_not_found()->set_key(key);
 }
 
 static TxnErrorPtr newUnexpectedVerErr(const std::string& key, uint64_t expected, uint64_t actual) {
@@ -139,7 +140,27 @@ TxnErrorPtr Store::checkLockable(const std::string& key, const std::string& txn_
     }
 }
 
+Status Store::getKeyVersion(const std::string& key, uint64_t *version) {
+    std::string value;
+    auto s = this->Get(key, &value);
+    if (!s.ok()) {
+        return s;
+    }
+}
+
 TxnErrorPtr Store::checkUniqueAndVersion(const txnpb::TxnIntent& intent) {
+    uint64_t version = 0;
+    auto s = getKeyVersion(intent.key(), &version);
+    if (!s.ok() && s.code() != Status::kNotFound) {
+        return newTxnServerErr(s.code(), s.ToString());
+    }
+
+    if (intent.check_unique() && s.ok()) {
+    }
+
+    if (intent.expected_ver() > 0) {
+    }
+
     // TODO:
     // TODO: load version both from txn and data
     return nullptr;
@@ -206,7 +227,24 @@ void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareRespo
 }
 
 Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version, rocksdb::WriteBatch* batch) {
-    // TODO:
+    rocksdb::Status s ;
+    switch (intent.typ()) {
+    case DELETE:
+        s = batch->Delete(intent.key());
+        break;
+    case INSERT: {
+        // append version field
+        std::string db_value = intent.value();
+        EncodeIntValue(&db_value, kVersionColumnID, static_cast<int64_t>(version));
+        s = batch->Put(intent.key(), db_value);
+        break;
+    }
+    default:
+        return Status(Status::kInvalidArgument, "intent type", std::to_string(intent.typ()));
+    }
+    if (!s.ok()) {
+        return Status(Status::kIOError, "commit intent", s.ToString());
+    }
     return Status::OK();
 }
 
@@ -361,7 +399,7 @@ void Store::TxnGetLockInfo(const GetLockInfoRequest& req, GetLockInfoResponse* r
     auto ret = getTxnValue(req.key(), &value);
     if (!ret.ok()) {
         if (ret.code() == Status::kNotFound) {
-            setNotExistErr(resp->mutable_err(), req.key());
+            setNotFoundErr(resp->mutable_err(), req.key());
         } else {
             setTxnServerErr(resp->mutable_err(), ret.code(), ret.ToString());
         }

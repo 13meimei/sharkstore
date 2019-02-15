@@ -34,6 +34,9 @@
 #include "metapb.pb.h"
 // @@protoc_insertion_point(includes)
 namespace txnpb {
+class AlreadyExist;
+class AlreadyExistDefaultTypeInternal;
+extern AlreadyExistDefaultTypeInternal _AlreadyExist_default_instance_;
 class ClearupRequest;
 class ClearupRequestDefaultTypeInternal;
 extern ClearupRequestDefaultTypeInternal _ClearupRequest_default_instance_;
@@ -88,9 +91,9 @@ extern LockErrorDefaultTypeInternal _LockError_default_instance_;
 class LockInfo;
 class LockInfoDefaultTypeInternal;
 extern LockInfoDefaultTypeInternal _LockInfo_default_instance_;
-class NotExist;
-class NotExistDefaultTypeInternal;
-extern NotExistDefaultTypeInternal _NotExist_default_instance_;
+class NotFound;
+class NotFoundDefaultTypeInternal;
+extern NotFoundDefaultTypeInternal _NotFound_default_instance_;
 class PrepareRequest;
 class PrepareRequestDefaultTypeInternal;
 extern PrepareRequestDefaultTypeInternal _PrepareRequest_default_instance_;
@@ -155,13 +158,14 @@ enum TxnError_ErrType {
   TxnError_ErrType_LOCKED = 2,
   TxnError_ErrType_UNEXPECTED_VER = 3,
   TxnError_ErrType_STATUS_CONFLICT = 4,
-  TxnError_ErrType_NOT_EXIST = 5,
+  TxnError_ErrType_NOT_FOUND = 5,
+  TxnError_ErrType_ALREADY_EXIST = 6,
   TxnError_ErrType_TxnError_ErrType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   TxnError_ErrType_TxnError_ErrType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool TxnError_ErrType_IsValid(int value);
 const TxnError_ErrType TxnError_ErrType_ErrType_MIN = TxnError_ErrType_UNKNOWN;
-const TxnError_ErrType TxnError_ErrType_ErrType_MAX = TxnError_ErrType_NOT_EXIST;
+const TxnError_ErrType TxnError_ErrType_ErrType_MAX = TxnError_ErrType_ALREADY_EXIST;
 const int TxnError_ErrType_ErrType_ARRAYSIZE = TxnError_ErrType_ErrType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* TxnError_ErrType_descriptor();
@@ -1148,24 +1152,24 @@ class ServerError : public ::google::protobuf::Message /* @@protoc_insertion_poi
 };
 // -------------------------------------------------------------------
 
-class NotExist : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.NotExist) */ {
+class NotFound : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.NotFound) */ {
  public:
-  NotExist();
-  virtual ~NotExist();
+  NotFound();
+  virtual ~NotFound();
 
-  NotExist(const NotExist& from);
+  NotFound(const NotFound& from);
 
-  inline NotExist& operator=(const NotExist& from) {
+  inline NotFound& operator=(const NotFound& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  NotExist(NotExist&& from) noexcept
-    : NotExist() {
+  NotFound(NotFound&& from) noexcept
+    : NotFound() {
     *this = ::std::move(from);
   }
 
-  inline NotExist& operator=(NotExist&& from) noexcept {
+  inline NotFound& operator=(NotFound&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -1175,29 +1179,29 @@ class NotExist : public ::google::protobuf::Message /* @@protoc_insertion_point(
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const NotExist& default_instance();
+  static const NotFound& default_instance();
 
-  static inline const NotExist* internal_default_instance() {
-    return reinterpret_cast<const NotExist*>(
-               &_NotExist_default_instance_);
+  static inline const NotFound* internal_default_instance() {
+    return reinterpret_cast<const NotFound*>(
+               &_NotFound_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
     7;
 
-  void Swap(NotExist* other);
-  friend void swap(NotExist& a, NotExist& b) {
+  void Swap(NotFound* other);
+  friend void swap(NotFound& a, NotFound& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline NotExist* New() const PROTOBUF_FINAL { return New(NULL); }
+  inline NotFound* New() const PROTOBUF_FINAL { return New(NULL); }
 
-  NotExist* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  NotFound* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
   void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
   void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const NotExist& from);
-  void MergeFrom(const NotExist& from);
+  void CopyFrom(const NotFound& from);
+  void MergeFrom(const NotFound& from);
   void Clear() PROTOBUF_FINAL;
   bool IsInitialized() const PROTOBUF_FINAL;
 
@@ -1213,7 +1217,7 @@ class NotExist : public ::google::protobuf::Message /* @@protoc_insertion_point(
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(NotExist* other);
+  void InternalSwap(NotFound* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -1229,7 +1233,7 @@ class NotExist : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   // accessors -------------------------------------------------------
 
-  // string key = 1;
+  // bytes key = 1;
   void clear_key();
   static const int kKeyFieldNumber = 1;
   const ::std::string& key() const;
@@ -1238,12 +1242,117 @@ class NotExist : public ::google::protobuf::Message /* @@protoc_insertion_point(
   void set_key(::std::string&& value);
   #endif
   void set_key(const char* value);
-  void set_key(const char* value, size_t size);
+  void set_key(const void* value, size_t size);
   ::std::string* mutable_key();
   ::std::string* release_key();
   void set_allocated_key(::std::string* key);
 
-  // @@protoc_insertion_point(class_scope:txnpb.NotExist)
+  // @@protoc_insertion_point(class_scope:txnpb.NotFound)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr key_;
+  mutable int _cached_size_;
+  friend struct protobuf_txn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class AlreadyExist : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.AlreadyExist) */ {
+ public:
+  AlreadyExist();
+  virtual ~AlreadyExist();
+
+  AlreadyExist(const AlreadyExist& from);
+
+  inline AlreadyExist& operator=(const AlreadyExist& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  AlreadyExist(AlreadyExist&& from) noexcept
+    : AlreadyExist() {
+    *this = ::std::move(from);
+  }
+
+  inline AlreadyExist& operator=(AlreadyExist&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const AlreadyExist& default_instance();
+
+  static inline const AlreadyExist* internal_default_instance() {
+    return reinterpret_cast<const AlreadyExist*>(
+               &_AlreadyExist_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    8;
+
+  void Swap(AlreadyExist* other);
+  friend void swap(AlreadyExist& a, AlreadyExist& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline AlreadyExist* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  AlreadyExist* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const AlreadyExist& from);
+  void MergeFrom(const AlreadyExist& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(AlreadyExist* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // bytes key = 1;
+  void clear_key();
+  static const int kKeyFieldNumber = 1;
+  const ::std::string& key() const;
+  void set_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_key(::std::string&& value);
+  #endif
+  void set_key(const char* value);
+  void set_key(const void* value, size_t size);
+  ::std::string* mutable_key();
+  ::std::string* release_key();
+  void set_allocated_key(::std::string* key);
+
+  // @@protoc_insertion_point(class_scope:txnpb.AlreadyExist)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -1287,7 +1396,7 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_TxnError_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    8;
+    9;
 
   void Swap(TxnError* other);
   friend void swap(TxnError& a, TxnError& b) {
@@ -1343,8 +1452,10 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
     TxnError_ErrType_UNEXPECTED_VER;
   static const ErrType STATUS_CONFLICT =
     TxnError_ErrType_STATUS_CONFLICT;
-  static const ErrType NOT_EXIST =
-    TxnError_ErrType_NOT_EXIST;
+  static const ErrType NOT_FOUND =
+    TxnError_ErrType_NOT_FOUND;
+  static const ErrType ALREADY_EXIST =
+    TxnError_ErrType_ALREADY_EXIST;
   static inline bool ErrType_IsValid(int value) {
     return TxnError_ErrType_IsValid(value);
   }
@@ -1404,14 +1515,23 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::txnpb::StatusConflict* release_status_conflict();
   void set_allocated_status_conflict(::txnpb::StatusConflict* status_conflict);
 
-  // .txnpb.NotExist not_exist = 6;
-  bool has_not_exist() const;
-  void clear_not_exist();
-  static const int kNotExistFieldNumber = 6;
-  const ::txnpb::NotExist& not_exist() const;
-  ::txnpb::NotExist* mutable_not_exist();
-  ::txnpb::NotExist* release_not_exist();
-  void set_allocated_not_exist(::txnpb::NotExist* not_exist);
+  // .txnpb.NotFound not_found = 6;
+  bool has_not_found() const;
+  void clear_not_found();
+  static const int kNotFoundFieldNumber = 6;
+  const ::txnpb::NotFound& not_found() const;
+  ::txnpb::NotFound* mutable_not_found();
+  ::txnpb::NotFound* release_not_found();
+  void set_allocated_not_found(::txnpb::NotFound* not_found);
+
+  // .txnpb.AlreadyExist already_exist = 7;
+  bool has_already_exist() const;
+  void clear_already_exist();
+  static const int kAlreadyExistFieldNumber = 7;
+  const ::txnpb::AlreadyExist& already_exist() const;
+  ::txnpb::AlreadyExist* mutable_already_exist();
+  ::txnpb::AlreadyExist* release_already_exist();
+  void set_allocated_already_exist(::txnpb::AlreadyExist* already_exist);
 
   // .txnpb.TxnError.ErrType err_type = 1;
   void clear_err_type();
@@ -1427,7 +1547,8 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::txnpb::LockError* lock_err_;
   ::txnpb::UnexpectedVer* unexpected_ver_;
   ::txnpb::StatusConflict* status_conflict_;
-  ::txnpb::NotExist* not_exist_;
+  ::txnpb::NotFound* not_found_;
+  ::txnpb::AlreadyExist* already_exist_;
   int err_type_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
@@ -1468,7 +1589,7 @@ class PrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_PrepareRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    9;
+    10;
 
   void Swap(PrepareRequest* other);
   friend void swap(PrepareRequest& a, PrepareRequest& b) {
@@ -1645,7 +1766,7 @@ class PrepareResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_PrepareResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    10;
+    11;
 
   void Swap(PrepareResponse* other);
   friend void swap(PrepareResponse& a, PrepareResponse& b) {
@@ -1748,7 +1869,7 @@ class DsPrepareRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsPrepareRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    11;
+    12;
 
   void Swap(DsPrepareRequest* other);
   friend void swap(DsPrepareRequest& a, DsPrepareRequest& b) {
@@ -1858,7 +1979,7 @@ class DsPrepareResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsPrepareResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    12;
+    13;
 
   void Swap(DsPrepareResponse* other);
   friend void swap(DsPrepareResponse& a, DsPrepareResponse& b) {
@@ -1968,7 +2089,7 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_DecideRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    13;
+    14;
 
   void Swap(DecideRequest* other);
   friend void swap(DecideRequest& a, DecideRequest& b) {
@@ -2110,7 +2231,7 @@ class DecideResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_DecideResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    14;
+    15;
 
   void Swap(DecideResponse* other);
   friend void swap(DecideResponse& a, DecideResponse& b) {
@@ -2233,7 +2354,7 @@ class DsDecideRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsDecideRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    15;
+    16;
 
   void Swap(DsDecideRequest* other);
   friend void swap(DsDecideRequest& a, DsDecideRequest& b) {
@@ -2343,7 +2464,7 @@ class DsDecideResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsDecideResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    16;
+    17;
 
   void Swap(DsDecideResponse* other);
   friend void swap(DsDecideResponse& a, DsDecideResponse& b) {
@@ -2453,7 +2574,7 @@ class ClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_ClearupRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    17;
+    18;
 
   void Swap(ClearupRequest* other);
   friend void swap(ClearupRequest& a, ClearupRequest& b) {
@@ -2573,7 +2694,7 @@ class ClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_ClearupResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    18;
+    19;
 
   void Swap(ClearupResponse* other);
   friend void swap(ClearupResponse& a, ClearupResponse& b) {
@@ -2673,7 +2794,7 @@ class DsClearupRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsClearupRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    19;
+    20;
 
   void Swap(DsClearupRequest* other);
   friend void swap(DsClearupRequest& a, DsClearupRequest& b) {
@@ -2783,7 +2904,7 @@ class DsClearupResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsClearupResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    20;
+    21;
 
   void Swap(DsClearupResponse* other);
   friend void swap(DsClearupResponse& a, DsClearupResponse& b) {
@@ -2893,7 +3014,7 @@ class GetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_GetLockInfoRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    21;
+    22;
 
   void Swap(GetLockInfoRequest* other);
   friend void swap(GetLockInfoRequest& a, GetLockInfoRequest& b) {
@@ -3013,7 +3134,7 @@ class GetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_inser
                &_GetLockInfoResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    22;
+    23;
 
   void Swap(GetLockInfoResponse* other);
   friend void swap(GetLockInfoResponse& a, GetLockInfoResponse& b) {
@@ -3123,7 +3244,7 @@ class DsGetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_inse
                &_DsGetLockInfoRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    23;
+    24;
 
   void Swap(DsGetLockInfoRequest* other);
   friend void swap(DsGetLockInfoRequest& a, DsGetLockInfoRequest& b) {
@@ -3233,7 +3354,7 @@ class DsGetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_ins
                &_DsGetLockInfoResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    24;
+    25;
 
   void Swap(DsGetLockInfoResponse* other);
   friend void swap(DsGetLockInfoResponse& a, DsGetLockInfoResponse& b) {
@@ -3343,7 +3464,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_SelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    25;
+    26;
 
   void Swap(SelectRequest* other);
   friend void swap(SelectRequest& a, SelectRequest& b) {
@@ -3507,7 +3628,7 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_RowValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    26;
+    27;
 
   void Swap(RowValue* other);
   friend void swap(RowValue& a, RowValue& b) {
@@ -3633,7 +3754,7 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_RowIntent_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    27;
+    28;
 
   void Swap(RowIntent* other);
   friend void swap(RowIntent& a, RowIntent& b) {
@@ -3770,7 +3891,7 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
                &_Row_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    28;
+    29;
 
   void Swap(Row* other);
   friend void swap(Row& a, Row& b) {
@@ -3895,7 +4016,7 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_SelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    29;
+    30;
 
   void Swap(SelectResponse* other);
   friend void swap(SelectResponse& a, SelectResponse& b) {
@@ -4012,7 +4133,7 @@ class DsSelectRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsSelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    30;
+    31;
 
   void Swap(DsSelectRequest* other);
   friend void swap(DsSelectRequest& a, DsSelectRequest& b) {
@@ -4122,7 +4243,7 @@ class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsSelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    31;
+    32;
 
   void Swap(DsSelectResponse* other);
   friend void swap(DsSelectResponse& a, DsSelectResponse& b) {
@@ -5125,59 +5246,116 @@ inline void ServerError::set_allocated_msg(::std::string* msg) {
 
 // -------------------------------------------------------------------
 
-// NotExist
+// NotFound
 
-// string key = 1;
-inline void NotExist::clear_key() {
+// bytes key = 1;
+inline void NotFound::clear_key() {
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& NotExist::key() const {
-  // @@protoc_insertion_point(field_get:txnpb.NotExist.key)
+inline const ::std::string& NotFound::key() const {
+  // @@protoc_insertion_point(field_get:txnpb.NotFound.key)
   return key_.GetNoArena();
 }
-inline void NotExist::set_key(const ::std::string& value) {
+inline void NotFound::set_key(const ::std::string& value) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txnpb.NotExist.key)
+  // @@protoc_insertion_point(field_set:txnpb.NotFound.key)
 }
 #if LANG_CXX11
-inline void NotExist::set_key(::std::string&& value) {
+inline void NotFound::set_key(::std::string&& value) {
   
   key_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txnpb.NotExist.key)
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.NotFound.key)
 }
 #endif
-inline void NotExist::set_key(const char* value) {
+inline void NotFound::set_key(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txnpb.NotExist.key)
+  // @@protoc_insertion_point(field_set_char:txnpb.NotFound.key)
 }
-inline void NotExist::set_key(const char* value, size_t size) {
+inline void NotFound::set_key(const void* value, size_t size) {
   
   key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txnpb.NotExist.key)
+  // @@protoc_insertion_point(field_set_pointer:txnpb.NotFound.key)
 }
-inline ::std::string* NotExist::mutable_key() {
+inline ::std::string* NotFound::mutable_key() {
   
-  // @@protoc_insertion_point(field_mutable:txnpb.NotExist.key)
+  // @@protoc_insertion_point(field_mutable:txnpb.NotFound.key)
   return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* NotExist::release_key() {
-  // @@protoc_insertion_point(field_release:txnpb.NotExist.key)
+inline ::std::string* NotFound::release_key() {
+  // @@protoc_insertion_point(field_release:txnpb.NotFound.key)
   
   return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void NotExist::set_allocated_key(::std::string* key) {
+inline void NotFound::set_allocated_key(::std::string* key) {
   if (key != NULL) {
     
   } else {
     
   }
   key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:txnpb.NotExist.key)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.NotFound.key)
+}
+
+// -------------------------------------------------------------------
+
+// AlreadyExist
+
+// bytes key = 1;
+inline void AlreadyExist::clear_key() {
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& AlreadyExist::key() const {
+  // @@protoc_insertion_point(field_get:txnpb.AlreadyExist.key)
+  return key_.GetNoArena();
+}
+inline void AlreadyExist::set_key(const ::std::string& value) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:txnpb.AlreadyExist.key)
+}
+#if LANG_CXX11
+inline void AlreadyExist::set_key(::std::string&& value) {
+  
+  key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.AlreadyExist.key)
+}
+#endif
+inline void AlreadyExist::set_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:txnpb.AlreadyExist.key)
+}
+inline void AlreadyExist::set_key(const void* value, size_t size) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:txnpb.AlreadyExist.key)
+}
+inline ::std::string* AlreadyExist::mutable_key() {
+  
+  // @@protoc_insertion_point(field_mutable:txnpb.AlreadyExist.key)
+  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* AlreadyExist::release_key() {
+  // @@protoc_insertion_point(field_release:txnpb.AlreadyExist.key)
+  
+  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void AlreadyExist::set_allocated_key(::std::string* key) {
+  if (key != NULL) {
+    
+  } else {
+    
+  }
+  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
+  // @@protoc_insertion_point(field_set_allocated:txnpb.AlreadyExist.key)
 }
 
 // -------------------------------------------------------------------
@@ -5358,44 +5536,84 @@ inline void TxnError::set_allocated_status_conflict(::txnpb::StatusConflict* sta
   // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.status_conflict)
 }
 
-// .txnpb.NotExist not_exist = 6;
-inline bool TxnError::has_not_exist() const {
-  return this != internal_default_instance() && not_exist_ != NULL;
+// .txnpb.NotFound not_found = 6;
+inline bool TxnError::has_not_found() const {
+  return this != internal_default_instance() && not_found_ != NULL;
 }
-inline void TxnError::clear_not_exist() {
-  if (GetArenaNoVirtual() == NULL && not_exist_ != NULL) delete not_exist_;
-  not_exist_ = NULL;
+inline void TxnError::clear_not_found() {
+  if (GetArenaNoVirtual() == NULL && not_found_ != NULL) delete not_found_;
+  not_found_ = NULL;
 }
-inline const ::txnpb::NotExist& TxnError::not_exist() const {
-  const ::txnpb::NotExist* p = not_exist_;
-  // @@protoc_insertion_point(field_get:txnpb.TxnError.not_exist)
-  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::NotExist*>(
-      &::txnpb::_NotExist_default_instance_);
+inline const ::txnpb::NotFound& TxnError::not_found() const {
+  const ::txnpb::NotFound* p = not_found_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.not_found)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::NotFound*>(
+      &::txnpb::_NotFound_default_instance_);
 }
-inline ::txnpb::NotExist* TxnError::mutable_not_exist() {
+inline ::txnpb::NotFound* TxnError::mutable_not_found() {
   
-  if (not_exist_ == NULL) {
-    not_exist_ = new ::txnpb::NotExist;
+  if (not_found_ == NULL) {
+    not_found_ = new ::txnpb::NotFound;
   }
-  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.not_exist)
-  return not_exist_;
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.not_found)
+  return not_found_;
 }
-inline ::txnpb::NotExist* TxnError::release_not_exist() {
-  // @@protoc_insertion_point(field_release:txnpb.TxnError.not_exist)
+inline ::txnpb::NotFound* TxnError::release_not_found() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnError.not_found)
   
-  ::txnpb::NotExist* temp = not_exist_;
-  not_exist_ = NULL;
+  ::txnpb::NotFound* temp = not_found_;
+  not_found_ = NULL;
   return temp;
 }
-inline void TxnError::set_allocated_not_exist(::txnpb::NotExist* not_exist) {
-  delete not_exist_;
-  not_exist_ = not_exist;
-  if (not_exist) {
+inline void TxnError::set_allocated_not_found(::txnpb::NotFound* not_found) {
+  delete not_found_;
+  not_found_ = not_found;
+  if (not_found) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.not_exist)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.not_found)
+}
+
+// .txnpb.AlreadyExist already_exist = 7;
+inline bool TxnError::has_already_exist() const {
+  return this != internal_default_instance() && already_exist_ != NULL;
+}
+inline void TxnError::clear_already_exist() {
+  if (GetArenaNoVirtual() == NULL && already_exist_ != NULL) delete already_exist_;
+  already_exist_ = NULL;
+}
+inline const ::txnpb::AlreadyExist& TxnError::already_exist() const {
+  const ::txnpb::AlreadyExist* p = already_exist_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.already_exist)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::AlreadyExist*>(
+      &::txnpb::_AlreadyExist_default_instance_);
+}
+inline ::txnpb::AlreadyExist* TxnError::mutable_already_exist() {
+  
+  if (already_exist_ == NULL) {
+    already_exist_ = new ::txnpb::AlreadyExist;
+  }
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.already_exist)
+  return already_exist_;
+}
+inline ::txnpb::AlreadyExist* TxnError::release_already_exist() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnError.already_exist)
+  
+  ::txnpb::AlreadyExist* temp = already_exist_;
+  already_exist_ = NULL;
+  return temp;
+}
+inline void TxnError::set_allocated_already_exist(::txnpb::AlreadyExist* already_exist) {
+  delete already_exist_;
+  already_exist_ = already_exist;
+  if (already_exist) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.already_exist)
 }
 
 // -------------------------------------------------------------------
@@ -7833,6 +8051,8 @@ inline void DsSelectResponse::set_allocated_resp(::txnpb::SelectResponse* resp) 
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

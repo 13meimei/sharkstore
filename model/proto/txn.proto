@@ -77,8 +77,13 @@ message ServerError {
     string msg = 2;
 }
 
-message NotExist {
-    string key = 1;
+message NotFound {
+    bytes key = 1;
+}
+
+// 比如Insert时该行已存在、唯一索引已存在
+message AlreadyExist {
+    bytes key = 1;
 }
 
 message TxnError {
@@ -88,7 +93,8 @@ message TxnError {
         LOCKED = 2;
         UNEXPECTED_VER = 3;
         STATUS_CONFLICT = 4;
-        NOT_EXIST = 5;
+        NOT_FOUND = 5;
+        ALREADY_EXIST = 6;
     }
 
     ErrType err_type = 1;
@@ -96,7 +102,8 @@ message TxnError {
     LockError lock_err = 3;
     UnexpectedVer unexpected_ver = 4;
     StatusConflict status_conflict = 5;
-    NotExist not_exist = 6;
+    NotFound not_found = 6;
+    AlreadyExist already_exist = 7;
 }
 
 
