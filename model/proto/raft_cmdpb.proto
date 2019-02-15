@@ -131,9 +131,15 @@ message PeerTask {
     metapb.Peer        peer           = 2;
 }
 
+enum CFType {
+    CF_DEFAULT = 0;
+    CF_TXN = 1;
+}
+
 message SnapshotKVPair {
     bytes key   = 1;
     bytes value = 2;
+    CFType cf_type = 3;
 }
 
 message SnapshotContext {

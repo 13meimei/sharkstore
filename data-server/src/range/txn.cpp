@@ -237,6 +237,14 @@ Status Range::ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_inde
         store_->TxnClearup(req, resp.get());
     } while (false);
 
+    if (err != nullptr) {
+        RANGE_LOG_ERROR("TxnClearup %s failed: %s", req.primary_key().c_str(),
+                        err->ShortDebugString().c_str());
+    } else if (resp->has_err()) {
+        RANGE_LOG_ERROR("TxnClearup %s failed: %s", req.primary_key().c_str(),
+                resp->err().ShortDebugString().c_str());
+    }
+
     if (cmd.cmd_id().node_id() == node_id_) {
         auto ds_resp = new txnpb::DsClearupResponse;
         ds_resp->set_allocated_resp(resp.release());

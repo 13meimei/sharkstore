@@ -477,19 +477,23 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
 
 Status Store::Truncate() {
     rocksdb::WriteOptions op;
+    auto family = db_->DefaultColumnFamily();
+    assert(!start_key_.empty());
 
     std::unique_lock<std::mutex> lock(key_lock_);
-    auto family = db_->DefaultColumnFamily();
-
-    assert(!start_key_.empty());
     assert(!end_key_.empty());
     assert(start_key_ < end_key_);
 
+    // truncate default column family
     auto s = db_->DeleteRange(op, family, start_key_, end_key_);
     if (!s.ok()) {
         return Status(Status::kIOError, "delete range", s.ToString());
     }
-
+    // truncate txn column family
+    s = db_->DeleteRange(op, txn_cf_, start_key_, end_key_);
+    if (!s.ok()) {
+        return Status(Status::kIOError, "delete range", s.ToString());
+    }
     return Status::OK();
 };
 
@@ -598,10 +602,18 @@ Status Store::ApplySnapshot(const std::vector<std::string>& datas) {
     for (const auto& data : datas) {
         raft_cmdpb::SnapshotKVPair p;
         if (!p.ParseFromString(data)) {
-            return Status(Status::kCorruption, "apply snapshot data",
-                          "deserilize return false");
-        } else {
+            return Status(Status::kCorruption, "apply snapshot data", "deserilize return false");
+        }
+        switch (p.cf_type()) {
+        case raft_cmdpb::CF_DEFAULT:
             batch.Put(p.key(), p.value());
+            break;
+        case raft_cmdpb::CF_TXN:
+            batch.Put(txn_cf_, p.key(), p.value());
+            break;
+        default:
+            return Status(Status::kInvalidArgument, "apply snapshot data: invalid cf type: ",
+                    std::to_string(p.cf_type()));
         }
     }
     auto ret = db_->Write(write_options_, &batch);

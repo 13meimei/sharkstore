@@ -80,7 +80,7 @@ namespace protobuf_raft_5fcmdpb_2eproto {
 namespace {
 
 ::google::protobuf::Metadata file_level_metadata[11];
-const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[1];
+const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[2];
 
 }  // namespace
 
@@ -203,6 +203,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SnapshotKVPair, key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SnapshotKVPair, value_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SnapshotKVPair, cf_type_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SnapshotContext, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -221,7 +222,7 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 43, -1, sizeof(Command)},
   { 80, -1, sizeof(PeerTask)},
   { 87, -1, sizeof(SnapshotKVPair)},
-  { 94, -1, sizeof(SnapshotContext)},
+  { 95, -1, sizeof(SnapshotContext)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -425,24 +426,26 @@ void AddDescriptorsImpl() {
       ".DecideRequest\022.\n\017txn_clearup_req\030> \001(\0132"
       "\025.txnpb.ClearupRequest\"P\n\010PeerTask\022(\n\014ve"
       "rify_epoch\030\001 \001(\0132\022.metapb.RangeEpoch\022\032\n\004"
-      "peer\030\002 \001(\0132\014.metapb.Peer\",\n\016SnapshotKVPa"
-      "ir\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\".\n\017Snapsh"
-      "otContext\022\033\n\004meta\030\001 \001(\0132\r.metapb.Range*\310"
-      "\003\n\007CmdType\022\013\n\007Invalid\020\000\022\n\n\006RawGet\020\001\022\n\n\006R"
-      "awPut\020\002\022\r\n\tRawDelete\020\003\022\016\n\nRawExecute\020\004\022\n"
-      "\n\006Select\020\007\022\n\n\006Insert\020\010\022\n\n\006Delete\020\t\022\n\n\006Up"
-      "date\020\n\022\013\n\007Replace\020\013\022\017\n\013BatchInsert\020\014\022\t\n\005"
-      "KvSet\020\r\022\t\n\005KvGet\020\016\022\016\n\nKvBatchSet\020\017\022\016\n\nKv"
-      "BatchGet\020\020\022\n\n\006KvScan\020\021\022\014\n\010KvDelete\020\022\022\016\n\n"
-      "KvBatchDel\020\023\022\016\n\nKvRangeDel\020\024\022\016\n\nKvWatchP"
-      "ut\020\025\022\016\n\nKvWatchDel\020\026\022\016\n\nAdminSplit\020\036\022\016\n\n"
-      "AdminMerge\020\037\022\025\n\021AdminLeaderChange\020 \022\010\n\004L"
-      "ock\020(\022\016\n\nLockUpdate\020)\022\n\n\006Unlock\020*\022\017\n\013Unl"
-      "ockForce\020+\022\016\n\nTxnPrepare\0202\022\r\n\tTxnDecide\020"
-      "3\022\016\n\nTxnClearup\0204b\006proto3"
+      "peer\030\002 \001(\0132\014.metapb.Peer\"Q\n\016SnapshotKVPa"
+      "ir\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\022#\n\007cf_typ"
+      "e\030\003 \001(\0162\022.raft_cmdpb.CFType\".\n\017SnapshotC"
+      "ontext\022\033\n\004meta\030\001 \001(\0132\r.metapb.Range*\310\003\n\007"
+      "CmdType\022\013\n\007Invalid\020\000\022\n\n\006RawGet\020\001\022\n\n\006RawP"
+      "ut\020\002\022\r\n\tRawDelete\020\003\022\016\n\nRawExecute\020\004\022\n\n\006S"
+      "elect\020\007\022\n\n\006Insert\020\010\022\n\n\006Delete\020\t\022\n\n\006Updat"
+      "e\020\n\022\013\n\007Replace\020\013\022\017\n\013BatchInsert\020\014\022\t\n\005KvS"
+      "et\020\r\022\t\n\005KvGet\020\016\022\016\n\nKvBatchSet\020\017\022\016\n\nKvBat"
+      "chGet\020\020\022\n\n\006KvScan\020\021\022\014\n\010KvDelete\020\022\022\016\n\nKvB"
+      "atchDel\020\023\022\016\n\nKvRangeDel\020\024\022\016\n\nKvWatchPut\020"
+      "\025\022\016\n\nKvWatchDel\020\026\022\016\n\nAdminSplit\020\036\022\016\n\nAdm"
+      "inMerge\020\037\022\025\n\021AdminLeaderChange\020 \022\010\n\004Lock"
+      "\020(\022\016\n\nLockUpdate\020)\022\n\n\006Unlock\020*\022\017\n\013Unlock"
+      "Force\020+\022\016\n\nTxnPrepare\0202\022\r\n\tTxnDecide\0203\022\016"
+      "\n\nTxnClearup\0204*$\n\006CFType\022\016\n\nCF_DEFAULT\020\000"
+      "\022\n\n\006CF_TXN\020\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 2625);
+      descriptor, 2700);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "raft_cmdpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -502,6 +505,20 @@ bool CmdType_IsValid(int value) {
     case 50:
     case 51:
     case 52:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::google::protobuf::EnumDescriptor* CFType_descriptor() {
+  protobuf_raft_5fcmdpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_raft_5fcmdpb_2eproto::file_level_enum_descriptors[1];
+}
+bool CFType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
       return true;
     default:
       return false;
@@ -5812,6 +5829,7 @@ void PeerTask::set_allocated_peer(::metapb::Peer* peer) {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int SnapshotKVPair::kKeyFieldNumber;
 const int SnapshotKVPair::kValueFieldNumber;
+const int SnapshotKVPair::kCfTypeFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 SnapshotKVPair::SnapshotKVPair()
@@ -5835,12 +5853,14 @@ SnapshotKVPair::SnapshotKVPair(const SnapshotKVPair& from)
   if (from.value().size() > 0) {
     value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
   }
+  cf_type_ = from.cf_type_;
   // @@protoc_insertion_point(copy_constructor:raft_cmdpb.SnapshotKVPair)
 }
 
 void SnapshotKVPair::SharedCtor() {
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  cf_type_ = 0;
   _cached_size_ = 0;
 }
 
@@ -5885,6 +5905,7 @@ void SnapshotKVPair::Clear() {
 
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  cf_type_ = 0;
   _internal_metadata_.Clear();
 }
 
@@ -5916,6 +5937,21 @@ bool SnapshotKVPair::MergePartialFromCodedStream(
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_value()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .raft_cmdpb.CFType cf_type = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
+          int value;
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          set_cf_type(static_cast< ::raft_cmdpb::CFType >(value));
         } else {
           goto handle_unusual;
         }
@@ -5960,6 +5996,12 @@ void SnapshotKVPair::SerializeWithCachedSizes(
       2, this->value(), output);
   }
 
+  // .raft_cmdpb.CFType cf_type = 3;
+  if (this->cf_type() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      3, this->cf_type(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -5986,6 +6028,12 @@ void SnapshotKVPair::SerializeWithCachedSizes(
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         2, this->value(), target);
+  }
+
+  // .raft_cmdpb.CFType cf_type = 3;
+  if (this->cf_type() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
+      3, this->cf_type(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -6017,6 +6065,12 @@ size_t SnapshotKVPair::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->value());
+  }
+
+  // .raft_cmdpb.CFType cf_type = 3;
+  if (this->cf_type() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::EnumSize(this->cf_type());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -6056,6 +6110,9 @@ void SnapshotKVPair::MergeFrom(const SnapshotKVPair& from) {
 
     value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
   }
+  if (from.cf_type() != 0) {
+    set_cf_type(from.cf_type());
+  }
 }
 
 void SnapshotKVPair::CopyFrom(const ::google::protobuf::Message& from) {
@@ -6084,6 +6141,7 @@ void SnapshotKVPair::InternalSwap(SnapshotKVPair* other) {
   using std::swap;
   key_.Swap(&other->key_);
   value_.Swap(&other->value_);
+  swap(cf_type_, other->cf_type_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -6200,6 +6258,20 @@ void SnapshotKVPair::set_allocated_value(::std::string* value) {
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.SnapshotKVPair.value)
+}
+
+// .raft_cmdpb.CFType cf_type = 3;
+void SnapshotKVPair::clear_cf_type() {
+  cf_type_ = 0;
+}
+::raft_cmdpb::CFType SnapshotKVPair::cf_type() const {
+  // @@protoc_insertion_point(field_get:raft_cmdpb.SnapshotKVPair.cf_type)
+  return static_cast< ::raft_cmdpb::CFType >(cf_type_);
+}
+void SnapshotKVPair::set_cf_type(::raft_cmdpb::CFType value) {
+  
+  cf_type_ = value;
+  // @@protoc_insertion_point(field_set:raft_cmdpb.SnapshotKVPair.cf_type)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

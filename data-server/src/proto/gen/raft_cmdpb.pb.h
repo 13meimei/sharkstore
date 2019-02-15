@@ -138,6 +138,27 @@ inline bool CmdType_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<CmdType>(
     CmdType_descriptor(), name, value);
 }
+enum CFType {
+  CF_DEFAULT = 0,
+  CF_TXN = 1,
+  CFType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  CFType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool CFType_IsValid(int value);
+const CFType CFType_MIN = CF_DEFAULT;
+const CFType CFType_MAX = CF_TXN;
+const int CFType_ARRAYSIZE = CFType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* CFType_descriptor();
+inline const ::std::string& CFType_Name(CFType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    CFType_descriptor(), value);
+}
+inline bool CFType_Parse(
+    const ::std::string& name, CFType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<CFType>(
+    CFType_descriptor(), name, value);
+}
 // ===================================================================
 
 class SplitRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:raft_cmdpb.SplitRequest) */ {
@@ -1469,12 +1490,19 @@ class SnapshotKVPair : public ::google::protobuf::Message /* @@protoc_insertion_
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
 
+  // .raft_cmdpb.CFType cf_type = 3;
+  void clear_cf_type();
+  static const int kCfTypeFieldNumber = 3;
+  ::raft_cmdpb::CFType cf_type() const;
+  void set_cf_type(::raft_cmdpb::CFType value);
+
   // @@protoc_insertion_point(class_scope:raft_cmdpb.SnapshotKVPair)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::google::protobuf::internal::ArenaStringPtr value_;
+  int cf_type_;
   mutable int _cached_size_;
   friend struct protobuf_raft_5fcmdpb_2eproto::TableStruct;
 };
@@ -3295,6 +3323,20 @@ inline void SnapshotKVPair::set_allocated_value(::std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.SnapshotKVPair.value)
 }
 
+// .raft_cmdpb.CFType cf_type = 3;
+inline void SnapshotKVPair::clear_cf_type() {
+  cf_type_ = 0;
+}
+inline ::raft_cmdpb::CFType SnapshotKVPair::cf_type() const {
+  // @@protoc_insertion_point(field_get:raft_cmdpb.SnapshotKVPair.cf_type)
+  return static_cast< ::raft_cmdpb::CFType >(cf_type_);
+}
+inline void SnapshotKVPair::set_cf_type(::raft_cmdpb::CFType value) {
+  
+  cf_type_ = value;
+  // @@protoc_insertion_point(field_set:raft_cmdpb.SnapshotKVPair.cf_type)
+}
+
 // -------------------------------------------------------------------
 
 // SnapshotContext
@@ -3376,6 +3418,11 @@ template <> struct is_proto_enum< ::raft_cmdpb::CmdType> : ::google::protobuf::i
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::raft_cmdpb::CmdType>() {
   return ::raft_cmdpb::CmdType_descriptor();
+}
+template <> struct is_proto_enum< ::raft_cmdpb::CFType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::raft_cmdpb::CFType>() {
+  return ::raft_cmdpb::CFType_descriptor();
 }
 
 }  // namespace protobuf
