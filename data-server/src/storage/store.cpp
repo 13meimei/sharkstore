@@ -416,8 +416,6 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
 }
 
 Status Store::Truncate() {
-    rocksdb::WriteOptions op; // fixme
-
     std::unique_lock<std::mutex> lock(key_lock_);
     auto family = db_->DefaultColumnFamily();
 

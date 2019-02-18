@@ -215,6 +215,9 @@ set(SOURCES
     src/storage/rocks_store/store.cpp
     src/storage/rocks_store/iterator.cpp
     src/storage/rocks_store/write_batch.cpp
+    src/storage/mem_store/store.cpp
+    src/storage/mem_store/iterator.cpp
+    src/storage/mem_store/write_batch.cpp
     src/storage/store_watch.cpp
     src/master/client.cpp
     src/master/connection.cpp

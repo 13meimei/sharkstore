@@ -12,8 +12,7 @@ class Metric;
 
 class MemIterator: public IteratorInterface{
 public:
-    MemIterator(memstore::Iterator<std::string, std::string>* it,
-                const std::string& start, const std::string& limit);
+    MemIterator(memstore::Iterator<std::string, std::string>* it);
     ~MemIterator();
 
     bool Valid();
@@ -28,7 +27,6 @@ public:
 
 private:
     memstore::Iterator<std::string, std::string>* rit_ = nullptr;
-    const std::string limit_;
 };
 
 } /* namespace storage */

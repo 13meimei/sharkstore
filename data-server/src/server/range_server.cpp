@@ -28,6 +28,7 @@
 #include "server.h"
 #include "range_context_impl.h"
 #include "storage/rocks_store/store.h"
+#include "storage/mem_store/store.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -351,8 +352,7 @@ static int newRocksDB(RangeServer* server, storage::DbInterface** db_ptr) {
 }
 
 static int newMemDB(storage::DbInterface** db_ptr) {
-
-    // fixme
+    *db_ptr = new storage::MemStore();
     return 0;
 }
 

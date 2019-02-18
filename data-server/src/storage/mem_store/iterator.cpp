@@ -5,11 +5,9 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-MemIterator::MemIterator(memstore::Iterator<std::string, std::string>* it,
-                         const std::string& start, const std::string& limit)
-    :rit_(it), limit_(limit) {
-    assert(!start.empty());
-    assert(!limit.empty());
+MemIterator::MemIterator(memstore::Iterator<std::string, std::string>* it)
+    :rit_(it) {
+
 }
 
 MemIterator::~MemIterator() {}

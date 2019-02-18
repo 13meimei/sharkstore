@@ -36,7 +36,7 @@ struct ContextServer {
     common::SocketSession *socket_session = nullptr;
     master::Worker *master_worker = nullptr;
 
-    storage::DbInterface* db = nullptr; // fixme and rename
+    storage::DbInterface* db = nullptr;
     std::shared_ptr<rocksdb::Cache> block_cache;  // rocksdb block cache
     std::shared_ptr<rocksdb::Cache> row_cache; // rocksdb row cache
     std::shared_ptr<rocksdb::Statistics> db_stats; // rocksdb stats

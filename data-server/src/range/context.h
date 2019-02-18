@@ -35,7 +35,6 @@ public:
     // 分裂策略
     virtual SplitPolicy* GetSplitPolicy() = 0;
 
-    // fixme
     virtual storage::DbInterface* DBInstance() = 0;
     virtual master::Worker* MasterClient() = 0;
     virtual raft::RaftServer* RaftServer() = 0;
