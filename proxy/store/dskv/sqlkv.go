@@ -253,11 +253,68 @@ func (p KvParisSlice) Less(i int, j int) bool {
 }
 
 func (p *KvProxy) TxPrepare(rContext *ReqContext, req *txnpb.PrepareRequest, key []byte) (*txnpb.PrepareResponse, error) {
-	return nil, nil
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_TxPrepare
+	in.TxPrepareReq = &txnpb.DsPrepareRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, _, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("TxPrepare", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("TxPrepare", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetTxPrepareResp().GetResp()
+	return response, nil
 }
 func (p *KvProxy) TxDecide(rContext *ReqContext, req *txnpb.DecideRequest, key []byte) (*txnpb.DecideResponse, error) {
-	return nil, nil
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_TxDecide
+	in.TxDecideReq = &txnpb.DsDecideRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, _, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("TxDecide", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("TxDecide", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetTxDecideResp().GetResp()
+	return response, nil
 }
 func (p *KvProxy) TxCleanup(rContext *ReqContext, req *txnpb.ClearupRequest, key []byte) (*txnpb.ClearupResponse, error) {
-	return nil, nil
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_TxCleanup
+	in.TxCleanupReq = &txnpb.DsClearupRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, _, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("TxCleanup", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("TxCleanup", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetTxCleanupResp().GetResp()
+	return response, nil
 }

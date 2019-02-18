@@ -11,48 +11,46 @@ import (
 	"util/log"
 	"model/pkg/kvrpcpb"
 	"model/pkg/timestamp"
+	"model/pkg/txn"
 	"pkg-go/ds_client"
 	"proxy/store/dskv"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
 )
 
-func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface{}) (*mysql.Result, error) {
-	//var parseTime time.Time
-	//start := time.Now()
-	//defer func() {
-	//	delay := time.Since(start)
-	//	trace := sqlparser.NewTrackedBuffer(nil)
-	//	stmt.Format(trace)
-	//	//p.sqlStats(trace.String(), time.Since(start), time.Since(parseTime))
-	//	//p.metric.AddApiWithDelay("insert", true, delay)
-	//	if delay > time.Duration(p.config.InsertSlowLog)*time.Millisecond {
-	//		log.Info("[insert slow log] %v %v", delay.String(), trace.String())
-	//	}
-	//}()
+/**
+return:
+	txIntents,
+	mysql.Result(affectedRows, lastInsertId)
+	error
+ */
+func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface{}) (
+	intents []*txnpb.TxnIntent, res *mysql.Result, err error) {
 
 	parser := &StmtParser{}
-
 	// 解析表名
 	tableName := parser.parseTable(stmt)
 	t := p.router.FindTable(db, tableName)
 	if t == nil {
-		log.Error("[insert] table %s.%s doesn't exist", db, tableName)
-		return nil, fmt.Errorf("Table '%s.%s' doesn't exist", db, tableName)
+		err = fmt.Errorf("Table '%s.%s' doesn't exist ", db, tableName)
+		log.Error("[insert] find table err: %v", err)
+		return
 	}
 
 	// 解析插入列名
 	cols, err := parser.parseInsertCols(stmt)
 	if err != nil {
 		log.Error("[insert] parse columns error(%v)", err)
-		return nil, fmt.Errorf("handle insert parseColumn err %s", err.Error())
+		err = fmt.Errorf("handle insert parseColumn err %s", err.Error())
+		return
 	}
 	// 没有指定列名，添加表的所有列
 	if len(cols) == 0 {
 		columns := t.GetAllColumns()
 		if len(columns) == 0 {
 			log.Error("[insert] get table(%s.%s) all columns from router failed", db, tableName)
-			return nil, fmt.Errorf("could not get colums info table(%s.%s)", db, tableName)
+			err = fmt.Errorf("could not get colums info table(%s.%s)", db, tableName)
+			return
 		}
 		for _, c := range columns {
 			cols = append(cols, c.Name)
@@ -60,16 +58,19 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 	}
 
 	// 解析插入行值（可能有多行）
-	rows, err := parser.parseInsertValues(stmt)
+	var rows []InsertRowValue
+	rows, err = parser.parseInsertValues(stmt)
 	if err != nil {
 		log.Error("[insert] table %s.%s parse row values error(%v)", db, tableName, err)
-		return nil, fmt.Errorf("handle insert parseRow err %s", err.Error())
+		err = fmt.Errorf("handle insert parseRow err %s", err.Error())
+		return
 	}
 	// 检查每行值的个数跟列名个数是否相等
 	for i, r := range rows {
 		if len(r) != len(cols) {
 			log.Error("[insert] table %s.%s Column count doesn't match value count at row %d(%d != %d)", db, tableName, i, len(r), len(cols))
-			return nil, fmt.Errorf("Column count doesn't match value count at row %d", i)
+			err = fmt.Errorf("Column count doesn't match value count at row %d", i)
+			return
 		}
 	}
 
@@ -77,26 +78,28 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 	colMap, t, err := p.matchInsertValues(t, cols)
 	if err != nil {
 		log.Error("[insert] table %s.%s match column values error(%v)", db, tableName, err)
-		return nil, err
+		return
 	}
 	// 检查是否缺少主键列
 	pkName, err := p.checkPKMissing(t, colMap)
 	if err != nil {
 		log.Error("[insert] table %s.%s missing column(%v)", db, tableName, err)
-		return nil, err
+		return
 	}
 	lasInsertId := uint64(0)
 	//填充自增id值
 	if len(pkName) > 0 {
 		colMap[pkName] = len(colMap)
-		ids, err := p.msCli.GetAutoIncId(t.GetDbId(), t.GetId(), uint32(len(rows)))
+		var ids []uint64
+		ids, err = p.msCli.GetAutoIncId(t.GetDbId(), t.GetId(), uint32(len(rows)))
 		if err != nil {
 			log.Error("[insert] table %s.%s get auto_increment value err, %v", db, tableName, err)
-			return nil, err
+			return
 		}
 		if len(ids) != len(rows) {
 			log.Error("[insert] table %s.%s get auto_increment value err, %v", db, tableName, err)
-			return nil, fmt.Errorf("get auto increment id size %d not equal insert size %d", len(ids), len(rows))
+			err = fmt.Errorf("get auto increment id size %d not equal insert size %d", len(ids), len(rows))
+			return
 		}
 		for i, row := range rows {
 			row = append(row, []byte(fmt.Sprintf("%v", ids[i])))
@@ -106,31 +109,17 @@ func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface
 		//see http://dev.mysql.com/doc/refman/5.6/en/information-functions.html#function_last-insert-id
 		lasInsertId = uint64(ids[0])
 	}
-
-	//parseTime = time.Now()
-	// 编码、执行插入
-	res := new(mysql.Result)
-	affected, duplicateKey, err := p.insertRows(t, colMap, rows)
+	affected := uint64(len(rows))
+	intents, err = p.insertRows(t, colMap, rows)
 	if err != nil {
 		log.Error("insert error table[%s:%s], err %s", db, tableName, err.Error())
-		return nil, err
-	} else if affected != uint64(len(rows)) {
-		log.Error("insert error table[%s:%s],request num:%d,inserted num:%d", db, tableName, len(rows), affected)
-		return nil, ErrAffectRows
+		return
 	}
-	if len(duplicateKey) != 0 {
-		resErr := new(mysql.SqlError)
-		resErr.Code = mysql.ER_DUP_ENTRY
-		resErr.State = "23000"
-		message := ` Duplicate entry `
-		message += `for key 'PRIMARY'`
-		resErr.Message = message
-		return nil, resErr
-	}
+	res = new(mysql.Result)
 	res.AffectedRows = affected
 	res.InsertId = lasInsertId
 	res.Status = 0
-	return res, nil
+	return
 }
 
 // 查找每列对应的列值的偏移，处理自动添加列逻辑
@@ -253,53 +242,41 @@ func (p *Proxy) encodeRecordRow(t *Table, colMap map[string]int, rowValue Insert
 	}, nil
 }
 
-func (p *Proxy) EncodeRows(t *Table, colMap map[string]int, rows []InsertRowValue) ([]*kvrpcpb.KeyValue, []*kvrpcpb.KeyValue, error) {
+func (p *Proxy) EncodeRows(t *Table, colMap map[string]int, rows []InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
 	var (
-		err                         error
-		recordKvPairs, indexKvPairs []*kvrpcpb.KeyValue
+		err         error
+		rowsKvPairs []*kvrpcpb.KeyValue
 	)
 	for _, r := range rows {
 		var recordKvPair *kvrpcpb.KeyValue
 		recordKvPair, err = p.EncodeRow(t, colMap, r)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		recordKvPairs = append(recordKvPairs, recordKvPair)
+		rowsKvPairs = append(rowsKvPairs, recordKvPair)
 
 		var tIndexKvPairs []*kvrpcpb.KeyValue
 		tIndexKvPairs, err = p.EncodeIndexes(t, colMap, r)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		indexKvPairs = append(indexKvPairs, tIndexKvPairs...)
+		rowsKvPairs = append(rowsKvPairs, tIndexKvPairs...)
 	}
-	return recordKvPairs, indexKvPairs, nil
+	return rowsKvPairs, nil
 }
 
-func verifyUniqueness(recordKvPairs, indexKvPairs []*kvrpcpb.KeyValue) bool {
-	if len(recordKvPairs) <= 1 || len(indexKvPairs) <= 1 {
+func verifyUniqueness(rowsKvPairs []*kvrpcpb.KeyValue) bool {
+	if len(rowsKvPairs) <= 1 {
 		return true
 	}
 	log.Debug("start to verify uniqueness")
 	var checkDupMap = make(map[string]int, 0)
-	for _, recordKv := range recordKvPairs {
+	for _, recordKv := range rowsKvPairs {
 		key := string(recordKv.GetKey())
 		if _, ok := checkDupMap[key]; !ok {
 			checkDupMap[key] = 1
 		} else {
-			log.Error("verifyUniqueness: primary key duplicate")
-			return false
-		}
-	}
-	for _, indexKv := range indexKvPairs {
-		if indexKv.GetValue() == nil { //non-unique index
-			continue
-		}
-		key := string(indexKv.GetKey())
-		if _, ok := checkDupMap[key]; !ok {
-			checkDupMap[key] = 1
-		} else {
-			log.Error("verifyUniqueness: index key duplicate")
+			log.Error("verifyUniqueness: key duplicate")
 			return false
 		}
 	}
@@ -458,33 +435,43 @@ func regroupKvPairsByRange(context *dskv.ReqContext, t *Table, kvPairs []*kvrpcp
 	return
 }
 
-func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValue) (affected uint64, duplicateKey []byte, err error) {
+func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValue) (intents []*txnpb.TxnIntent, err error) {
+	//encode business record kvPair、unique and non-unique index kvPair
 	var (
-		recordKvPairs, indexKvPairs []*kvrpcpb.KeyValue
+		kvPairs []*kvrpcpb.KeyValue
 	)
-	//recordKvPairs: encode business record kvPair
-	//indexKvPairs: encode unique and non-unique index kvPair
-	recordKvPairs, indexKvPairs, err = p.EncodeRows(t, colMap, rows)
+	kvPairs, err = p.EncodeRows(t, colMap, rows)
 	if err != nil {
 		return
 	}
 
 	//verify index key uniqueness in a request
-	if t.GetPkDupCheck() && !verifyUniqueness(recordKvPairs, indexKvPairs) {
+	if t.GetPkDupCheck() && !verifyUniqueness(kvPairs) {
 		err = fmt.Errorf("table %v: insert duplicate pk or unique index", t.GetName())
 		return
 	}
-	context := dskv.NewPRConext(dskv.InsertMaxBackoff)
-	//check Index by insert operate response
-	if err = p.insertIndexes(context, t, indexKvPairs); err != nil {
-		return
+
+	intents = make([]*txnpb.TxnIntent, len(kvPairs))
+	for i, kvPair := range kvPairs {
+		intent := &txnpb.TxnIntent{
+			Typ:         txnpb.OpType_INSERT,
+			Key:         kvPair.GetKey(),
+			Value:       kvPair.GetValue(),
+			CheckUnique: true,
+			ExpectedVer: 0,
+		}
+		if i == 0 {
+			intent.IsPrimary = true
+		}
+		intents[i] = intent
 	}
-	//insert data
-	affected, duplicateKey, err = p.insertRowsWithContext(context, t, recordKvPairs)
-	if err != nil {
-		return
-	}
-	log.Debug("[insert]%s execute finish", context)
+	//context := dskv.NewPRConext(dskv.InsertMaxBackoff)
+	////insert data
+	//affected, duplicateKey, err = p.insertRowsWithContext(context, t, rowsKvPairs)
+	//if err != nil {
+	//	return
+	//}
+	//log.Debug("[insert]%s execute finish", context)
 	return
 }
 

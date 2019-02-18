@@ -165,6 +165,11 @@ type RpcClient interface {
 	WatchDelete(ctx context.Context, in *watchpb.DsKvWatchDeleteRequest) (*watchpb.DsKvWatchDeleteResponse, error)
 	WatchGet(ctx context.Context, in *watchpb.DsKvWatchGetMultiRequest) (*watchpb.DsKvWatchGetMultiResponse, error)
 
+	//tx
+	TxPrepare(ctx context.Context, in *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error)
+	TxDecide(ctx context.Context, in *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error)
+	TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
+
 	// admin
 	CreateRange(ctx context.Context, in *schpb.CreateRangeRequest) (*schpb.CreateRangeResponse, error)
 	DeleteRange(ctx context.Context, in *schpb.DeleteRangeRequest) (*schpb.DeleteRangeResponse, error)
@@ -174,11 +179,6 @@ type RpcClient interface {
 	SetNodeLogLevel(ctx context.Context, in *schpb.SetNodeLogLevelRequest) (*schpb.SetNodeLogLevelResponse, error)
 	OfflineRange(ctx context.Context, in *schpb.OfflineRangeRequest) (*schpb.OfflineRangeResponse, error)
 	ReplaceRange(ctx context.Context, in *schpb.ReplaceRangeRequest) (*schpb.ReplaceRangeResponse, error)
-
-	//tx
-	TxPrepare(ctx context.Context, in *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error)
-	TxDecide(ctx context.Context, in *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error)
-	TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
 
 	// ds_admin
 	Admin(ctx context.Context, in *ds_adminpb.AdminRequest) (*ds_adminpb.AdminResponse, error)

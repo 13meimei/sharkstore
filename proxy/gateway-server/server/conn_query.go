@@ -23,6 +23,7 @@ import (
 	"util"
 	"util/hack"
 	golog "util/log"
+	"model/pkg/txn"
 	"proxy/metric"
 	"proxy/gateway-server/errors"
 	"proxy/gateway-server/mysql"
@@ -147,16 +148,32 @@ func (c *ClientConn) newEmptyResultset(stmt *sqlparser.Select) *mysql.Resultset 
 	return r
 }
 
-func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) error {
+func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) (err error) {
 	if len(c.db) == 0 {
 		return errors.ErrNoDatabase
 	}
 	if golog.GetFileLogger().IsEnableDebug() {
-		golog.Debug("table:%v,cols:%v,rows:%v, args:%v", stmt.Table, stmt.Columns, stmt.Rows, args)
+		golog.Debug("[insert]table:%v,cols:%v,rows:%v, args:%v", stmt.Table, stmt.Columns, stmt.Rows, args)
 	}
-	ret, err := c.server.proxy.HandleInsert(c.db, stmt, args)
+	var (
+		local   bool
+		ret     *mysql.Result
+		intents []*txnpb.TxnIntent
+	)
+	if !c.isInTransaction() {
+		local = true
+		c.tx = NewTx(local, 0)
+	}
+
+	//verify, encode
+	intents, ret, err = c.server.proxy.HandleInsert(c.db, stmt, args)
 	if err != nil {
-		golog.Error("insert failed, err[%v]", err)
+		golog.Error("[insert]HandleInsert failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	err = c.tx.Insert(intents)
+	if err != nil {
+		golog.Error("[insert]txnInsert failed, err[%v]", err)
 		return c.writeError(err)
 	}
 	golog.Debug("insert success")

@@ -14,6 +14,7 @@ import (
 	"util"
 	"sync"
 
+	"model/pkg/txn"
 	"model/pkg/metapb"
 	"util/bufalloc"
 	"util/log"
@@ -332,7 +333,7 @@ func formatReply(columnMap map[string]*metapb.Column, rowss [][]*Row, order []*O
 					row_ = append(row_, nil)
 					continue
 				}
-				if _,find := columnMap[f.col]; !find {
+				if _, find := columnMap[f.col]; !find {
 					row_ = append(row_, f.value)
 					continue
 				}
@@ -485,7 +486,7 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	// TODO：支持默认值
 
 	// 检查是否缺少pk
-	pkName,  err := proxy.checkPKMissing(t, colMap)
+	pkName, err := proxy.checkPKMissing(t, colMap)
 	if err != nil {
 		log.Error("[insert] table %s.%s missing column(%v)", db, tableName, err)
 		return nil, err
@@ -508,17 +509,22 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		}
 	}
 
-	affected, duplicateKey, err := proxy.insertRows(t, colMap, rows)
+	var (
+		intents []*txnpb.TxnIntent
+		tx      TX
+	)
+	intents, err = proxy.insertRows(t, colMap, rows)
 	if err != nil {
 		log.Error("insert error %s- %s:%s", db, tableName, err.Error())
 		return nil, err
 	}
-	if len(duplicateKey) > 0 {
-		return nil, fmt.Errorf("duplicate key: %v", duplicateKey)
-	} else if affected != uint64(len(rows)) {
-		log.Error("insert error table[%s:%s],request num:%d,inserted num:%d", db, tableName, len(rows), affected)
-		return nil, ErrAffectRows
+	tx = NewTx(true, 0)
+	err = tx.Insert(intents)
+	if err != nil {
+		log.Error("insert error %s- %s:%s", db, tableName, err.Error())
+		return nil, err
 	}
+	affected := uint64(len(rows))
 	return &Reply{
 		Code:         0,
 		RowsAffected: affected,
@@ -530,7 +536,7 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	db := t.DbName()
 	tableName := t.Name()
 	// 解析列
-	columns, err:= query.parseUpdateFields()
+	columns, err := query.parseUpdateFields()
 	if err != nil {
 		log.Error("parse columns error: %v", err)
 		return nil, err
@@ -778,7 +784,7 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		userName := r.FormValue("userName")
 		resp, err := s.proxy.Unlock(dbName, tableName, lockName, uuid, userName)
 		if err != nil {
-			w.Write([]byte("unlock: "+err.Error()))
+			w.Write([]byte("unlock: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
@@ -791,7 +797,7 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		userName := r.FormValue("userName")
 		resp, err := s.proxy.UnlockForce(dbName, tableName, lockName, userName)
 		if err != nil {
-			w.Write([]byte("unlockforce: "+err.Error()))
+			w.Write([]byte("unlockforce: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
@@ -807,12 +813,12 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := s.proxy.LockScan(dbName, tableName, startKey, endKey, uint32(number))
 		if err != nil {
-			w.Write([]byte("lockscan: "+err.Error()))
+			w.Write([]byte("lockscan: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
 		if err != nil {
-			w.Write([]byte("lockscan reply marshal: "+err.Error()))
+			w.Write([]byte("lockscan reply marshal: " + err.Error()))
 			return
 		}
 		w.Write(reply)
@@ -926,6 +932,7 @@ func (s *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) {
 }
 
 var metricConfigLock sync.Mutex
+
 func (s *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) {
 	reply := new(Response)
 	defer httpSendReply(w, reply)
