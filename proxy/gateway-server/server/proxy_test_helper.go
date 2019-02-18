@@ -241,7 +241,7 @@ func testProxyInsert(t *testing.T, p *Proxy, expectedAffected uint64, sql string
 	if !ok {
 		t.Fatalf("not insert stamentent: %s", sql)
 	}
-	res, err := p.HandleInsert(testDBName, stmt, nil)
+	_, res, err := p.HandleInsert(testDBName, stmt, nil)
 	if err != nil {
 		if  err == dskv.ErrRouteChange{
 			t.Logf("insert failed, %v, sqlL%v", err, sql)

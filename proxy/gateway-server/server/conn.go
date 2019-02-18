@@ -22,9 +22,9 @@ import (
 	//"runtime"
 	"sync"
 
-	"proxy/gateway-server/mysql"
 	"util/hack"
 	"util/log"
+	"proxy/gateway-server/mysql"
 )
 
 //client <-> proxy
@@ -58,6 +58,8 @@ type ClientConn struct {
 	stmtId uint32
 
 	stmts map[uint32]*Stmt //prepare相关,client端到proxy的stmt
+
+	tx TX
 }
 
 var DEFAULT_CAPABILITY uint32 = mysql.CLIENT_LONG_PASSWORD | mysql.CLIENT_LONG_FLAG |
@@ -72,14 +74,14 @@ func (c *ClientConn) IsAllowConnect() bool {
 
 func (c *ClientConn) Handshake() error {
 	if err := c.writeInitialHandshake(); err != nil {
-		log.Info("server Handshake %v send initial handshake err: %v",c.connectionId,  err.Error())
+		log.Info("server Handshake %v send initial handshake err: %v", c.connectionId, err.Error())
 		return err
 	}
 
 	if err := c.readHandshakeResponse(); err != nil {
 		//
 		log.Info("server readHandshakeResponse %v  msg:read Handshake Response err: %v ",
-			c.connectionId,err.Error())
+			c.connectionId, err.Error())
 		return err
 	}
 
