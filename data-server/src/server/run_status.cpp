@@ -4,6 +4,7 @@
 #include <thread>
 
 #include <fastcommon/shared_func.h>
+#include <common/ds_config.h>
 
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -108,6 +109,9 @@ void RunStatus::printStatistics() {
 }
 
 void RunStatus::printDBMetric() {
+    if (strcasecmp(ds_config.engine_config.name, "rocksdb") != 0) {
+        return;
+    }
     assert(context_->db != nullptr);
     assert(context_->block_cache != nullptr);
     auto db = context_->db;
