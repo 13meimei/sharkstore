@@ -200,7 +200,6 @@ set(SOURCES
     src/range/split.cpp
     src/range/split_policy.cpp
     src/range/peer.cpp
-    src/range/snapshot.cpp
     src/range/kv_funcs.cpp
 	src/range/watch.cpp
 	src/range/watch_funcs.cpp
@@ -213,6 +212,7 @@ set(SOURCES
     src/storage/metric.cpp
     src/storage/row_decoder.cpp
     src/storage/row_fetcher.cpp
+    src/storage/snapshot.cpp
     src/storage/store.cpp
     src/storage/store_watch.cpp
     src/storage/store_txn.cpp

@@ -9,6 +9,7 @@
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/redispb.pb.h"
 #include "row_fetcher.h"
+#include "snapshot.h"
 
 namespace sharkstore {
 
@@ -595,6 +596,31 @@ Status Store::RangeDelete(const std::string& start, const std::string& limit) {
     auto ret = db_->DeleteRange(write_options_, db_->DefaultColumnFamily(),
                                 start, limit);
     return Status(ret.ok() ? Status::OK() : Status(Status::kUnknown));
+}
+
+Status Store::GetSnapshot(uint64_t apply_index, std::string&& context,
+        std::shared_ptr<raft::Snapshot>* snapshot) {
+    assert(snapshot != nullptr);
+
+    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
+    cf_handles.push_back(db_->DefaultColumnFamily());
+    cf_handles.push_back(txn_cf_);
+
+    std::vector<rocksdb::Iterator*> iterators;
+    rocksdb::ReadOptions rops;
+    rops.fill_cache = false;
+    auto s = db_->NewIterators(rops, cf_handles, &iterators);
+    if (!s.ok()) {
+        return Status(Status::kIOError, "create iterators", s.ToString());
+    }
+
+    assert(iterators.size() == 2);
+    auto end_key = GetEndKey();
+    auto default_iter = new Iterator(iterators[0], start_key_, end_key);
+    auto txn_iter = new Iterator(iterators[1], start_key_, end_key);
+    snapshot->reset(new Snapshot(apply_index, std::move(context), default_iter, txn_iter));
+
+    return Status::OK();
 }
 
 Status Store::ApplySnapshot(const std::vector<std::string>& datas) {

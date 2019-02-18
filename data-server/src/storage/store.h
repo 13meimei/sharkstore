@@ -11,6 +11,7 @@ _Pragma("once");
 #include "proto/gen/watchpb.pb.h"
 #include "proto/gen/txn.pb.h"
 #include "field_value.h"
+#include "raft/snapshot.h"
 
 // test fixture forward declare for friend class
 namespace sharkstore { namespace test { namespace helper { class StoreTestFixture; }}}
@@ -79,6 +80,8 @@ public:
         const std::vector<std::pair<std::string, std::string>>& keyValues);
     Status RangeDelete(const std::string& start, const std::string& limit);
 
+    Status GetSnapshot(uint64_t apply_index, std::string&& context,
+            std::shared_ptr<raft::Snapshot>* snapshot);
     Status ApplySnapshot(const std::vector<std::string>& datas);
 
 private:

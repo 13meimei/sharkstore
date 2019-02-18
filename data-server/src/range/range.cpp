@@ -8,7 +8,6 @@
 #include "server/run_status.h"
 #include "storage/meta_store.h"
 
-#include "snapshot.h"
 #include "range_logger.h"
 
 namespace sharkstore {
@@ -283,7 +282,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 
 Status Range::Submit(const raft_cmdpb::Command &cmd) {
     if (is_leader_) {
-        std::string str_cmd = std::move(cmd.SerializeAsString());
+        std::string str_cmd = cmd.SerializeAsString();
         if (str_cmd.empty()) {
             return Status(Status::kCorruption, "protobuf serialize failed", "");
         }
@@ -341,8 +340,19 @@ void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
 std::shared_ptr<raft::Snapshot> Range::GetSnapshot() {
     raft_cmdpb::SnapshotContext ctx;
     meta_.Get(ctx.mutable_meta());
-    return std::shared_ptr<raft::Snapshot>(
-        new Snapshot(apply_index_, std::move(ctx), store_->NewIterator()));
+    std::string ctx_str;
+    if (!ctx.SerializeToString(&ctx_str)) {
+        RANGE_LOG_ERROR("serialize snapshot context failed!");
+        return nullptr;
+    }
+
+    std::shared_ptr<raft::Snapshot> snapshot;
+    auto s = store_->GetSnapshot(apply_index_, std::move(ctx_str), &snapshot);
+    if (!s.ok()) {
+        RANGE_LOG_ERROR("get snapshot failed: %s", s.ToString().c_str());
+        return nullptr;
+    }
+    return snapshot;
 }
 
 Status Range::ApplySnapshotStart(const std::string &context) {
