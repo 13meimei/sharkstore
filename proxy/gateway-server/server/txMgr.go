@@ -1,20 +1,21 @@
 package server
 
 import (
+	"fmt"
 	"util/log"
 	"model/pkg/txn"
 	"proxy/store/dskv"
-	"master-server/engine/errors"
 )
 
 const (
-	TXN_INTENT_MAX_LENGTH = 50
-	TXN_DEFAULT_TIMEOUT  uint64 = 30
+	TXN_INTENT_MAX_LENGTH        = 100
+	TXN_DEFAULT_TIMEOUT   uint64 = 50
 )
 
 type TX interface {
 	GetTxId() string
-	IsLocal() bool
+	IsImplicit() bool
+	GetPrimaryKey() []byte
 	Insert([]*txnpb.TxnIntent) error
 	Update([]*txnpb.TxnIntent) error
 	Select([]*txnpb.TxnIntent) error
@@ -24,21 +25,23 @@ type TX interface {
 }
 
 type TxObj struct {
-	txId  string
-	local bool
-	//todo
+	txId       string
+	implicit   bool
+	primaryKey []byte
 
-	status  txnpb.TxnStatus
+	status txnpb.TxnStatus
+
 	intents []*txnpb.TxnIntent
 
+	//todo init
 	proxy *Proxy
 
 	Timeout uint64
 }
 
-func NewTx(local bool, timeout uint64) TX {
+func NewTx(implicit bool, timeout uint64) TX {
 	//todo generate txnId
-	tx := &TxObj{txId: "", local: local}
+	tx := &TxObj{txId: "", implicit: implicit}
 	ttl := TXN_DEFAULT_TIMEOUT
 	if timeout > 0 {
 		ttl = timeout
@@ -54,11 +57,25 @@ func (t *TxObj) GetTxId() string {
 	return ""
 }
 
-func (t *TxObj) IsLocal() bool {
+func (t *TxObj) IsImplicit() bool {
 	if t != nil {
-		return t.local
+		return t.implicit
 	}
 	return false
+}
+
+func (t *TxObj) GetPrimaryKey() []byte {
+	if t != nil {
+		return t.primaryKey
+	}
+	return nil
+}
+
+func (t *TxObj) getTxIntents() []*txnpb.TxnIntent {
+	if t != nil {
+		return t.intents
+	}
+	return nil
 }
 
 func (t *TxObj) Insert(intents []*txnpb.TxnIntent) (err error) {
@@ -66,15 +83,19 @@ func (t *TxObj) Insert(intents []*txnpb.TxnIntent) (err error) {
 		log.Info("[txn]insert intent is empty")
 		return
 	}
-	for _, intent := range intents {
+	for i, intent := range intents {
+		if i == 0 && len(t.GetPrimaryKey()) == 0 {
+			intent.IsPrimary = true
+			t.primaryKey = intent.GetKey()
+		}
 		t.intents = append(t.intents, intent)
 	}
-	if len(t.intents) > TXN_INTENT_MAX_LENGTH {
-		err = errors.New("")
+
+	if err = t.checkTxnIntentLength(); err != nil {
 		return
 	}
 
-	if t.IsLocal() {
+	if t.IsImplicit() {
 		if err = t.Commit(); err != nil {
 			t.Rollback()
 			return
@@ -83,21 +104,22 @@ func (t *TxObj) Insert(intents []*txnpb.TxnIntent) (err error) {
 	return nil
 }
 
-
 func (t *TxObj) Update(intents []*txnpb.TxnIntent) (err error) {
 	if len(intents) == 0 {
 		log.Info("[txn]update intent is empty")
 		return
 	}
-	for _, intent := range intents {
+	for i, intent := range intents {
+		if i == 0 && len(t.GetPrimaryKey()) == 0 {
+			intent.IsPrimary = true
+			t.primaryKey = intent.GetKey()
+		}
 		t.intents = append(t.intents, intent)
 	}
-	if len(t.intents) > TXN_INTENT_MAX_LENGTH {
-		err = errors.New("")
+	if err = t.checkTxnIntentLength(); err != nil {
 		return
 	}
-
-	if t.IsLocal() {
+	if t.IsImplicit() {
 		if err = t.Commit(); err != nil {
 			t.Rollback()
 			return
@@ -110,22 +132,23 @@ func (t *TxObj) Select(intents []*txnpb.TxnIntent) (err error) {
 	return
 }
 
-
-
 func (t *TxObj) Delete(intents []*txnpb.TxnIntent) (err error) {
 	if len(intents) == 0 {
 		log.Info("[txn]delete intent is empty")
 		return
 	}
-	for _, intent := range intents {
+	for i, intent := range intents {
+		if i == 0 && len(t.GetPrimaryKey()) == 0 {
+			intent.IsPrimary = true
+			t.primaryKey = intent.GetKey()
+		}
 		t.intents = append(t.intents, intent)
 	}
-	if len(t.intents) > TXN_INTENT_MAX_LENGTH {
-		err = errors.New("")
+	if err = t.checkTxnIntentLength(); err != nil {
 		return
 	}
 
-	if t.IsLocal() {
+	if t.IsImplicit() {
 		if err = t.Commit(); err != nil {
 			t.Rollback()
 			return
@@ -134,49 +157,287 @@ func (t *TxObj) Delete(intents []*txnpb.TxnIntent) (err error) {
 	return nil
 }
 
-
-//prepare and decide
+//prepare and decide 2PL
 func (t *TxObj) Commit() (err error) {
+	var passed bool
+	passed, err = t.changeTxStatus(txnpb.TxnStatus_COMMITTED)
+	if err != nil || !passed {
+		return
+	}
 	if len(t.intents) == 0 {
 		return
 	}
-	var (
-		priIntentsGroup []*txnpb.TxnIntent
-		secIntentsGroup [][]*txnpb.TxnIntent
-	)
-	priIntentsGroup, secIntentsGroup, err = regroupIntentsByRange(nil, nil, t.intents)
-	if err != nil {
+	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
+	var errForRetry error
+	for {
+		if errForRetry != nil {
+			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
+			if errForRetry != nil {
+				log.Error("[commit]%s execute timeout", ctx)
+				return
+			}
+		}
+		//prepare: first write primary intents, second write secondary intents
+		var (
+			priIntentsGroup []*txnpb.TxnIntent
+			secIntentsGroup [][]*txnpb.TxnIntent
+		)
+		priIntentsGroup, secIntentsGroup, err = regroupIntentsByRange(ctx, nil, t.intents)
+		if err != nil {
+			return
+		}
+		//todo local txn optimize to 1PL
+		isLocal := isLocalTxn(priIntentsGroup, secIntentsGroup)
+
+		//prepare primary row intents
+		err = t.preparePrimaryIntents(ctx, priIntentsGroup, isLocal)
+		if err != nil {
+			if err == dskv.ErrRouteChange {
+				continue
+			}
+			return
+		}
+		if !isLocal {
+			//concurrency prepare secondary row intents
+			err = t.prepareSecondaryIntents(ctx, secIntentsGroup, isLocal)
+			if err != nil {
+				if err == dskv.ErrRouteChange {
+					continue
+				}
+				return
+			}
+		}
+		//decide:
+		err = t.decidePrimaryIntents(ctx, priIntentsGroup, txnpb.TxnStatus_COMMITTED)
+		if err != nil {
+			return
+		}
+		go func() {
+			t.asyncDecideSecondaryAndClear(ctx, secIntentsGroup, txnpb.TxnStatus_COMMITTED)
+		}()
+	}
+	return
+}
+
+/**
+  rollback current transaction because of error, and so on
+ */
+func (t *TxObj) Rollback() (err error) {
+	var passed bool
+	passed, err = t.changeTxStatus(txnpb.TxnStatus_ABORTED)
+	if err != nil || !passed {
 		return
 	}
-	t.prepareIntents(priIntentsGroup, secIntentsGroup)
+	if len(t.intents) == 0 {
+		return
+	}
+	//ctx := dskv.NewPRConext(int(t.Timeout * 1000))
+	//var (
+	//	priIntentsGroup []*txnpb.TxnIntent
+	//	secIntentsGroup [][]*txnpb.TxnIntent
+	//)
+	//priIntentsGroup, secIntentsGroup, err = regroupIntentsByRange(ctx, nil, t.intents)
+	//if err != nil {
+	//	return
+	//}
 	return
 }
 
-func (t *TxObj) prepareIntents(priIntents []*txnpb.TxnIntent, secIntents [][]*txnpb.TxnIntent) {
-	//prepare primary row intents
-	preparePrimaryIntents(priIntents)
-	//concurrency preparpe secondary row intents
-	prepareSecondaryIntents(secIntents)
-}
-
-func (t *TxObj) decideIntents() {
+/**
+  rollback previous expired transaction
+ */
+func (t *TxObj) recover() {
 
 }
 
-func (t *TxObj) Rollback() (err error) {
+func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent, isLocal bool) (err error) {
+	if len(priIntents) == 0 {
+		return
+	}
+	var (
+		req = &txnpb.PrepareRequest{
+			TxnId:         t.GetTxId(),
+			Local:         isLocal,
+			Intents:       priIntents,
+			PrimaryKey:    t.GetPrimaryKey(),
+			LockTtl:       t.Timeout,
+			SecondaryKeys: t.getSecondaryKeys(),
+		}
+		errForRetry error
+	)
+
+	for {
+		if errForRetry != nil {
+			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
+			if errForRetry != nil {
+				log.Error("[commit]%s execute prepare primary intents timeout", ctx)
+				return
+			}
+		}
+		var prepareResp *txnpb.PrepareResponse
+		prepareResp, err = t.proxy.handlePrepare(ctx, req, nil)
+		if err != nil {
+			return err
+		}
+		if len(prepareResp.Errors) > 0 {
+			needClearTxs := make([][]byte, 0)
+			for _, txError := range prepareResp.GetErrors() {
+				switch txError.GetErrType() {
+				case txnpb.TxnError_LOCKED:
+					lockErr := txError.GetLockErr()
+					if lockErr.GetInfo() != nil && lockErr.GetInfo().GetTimeout() {
+						needClearTxs = append(needClearTxs, lockErr.GetKey())
+					}
+				default:
+					err = GetTxnError(txError)
+					return
+
+				}
+			}
+
+			if len(needClearTxs) > 0 {
+				//clearTimeoutTxn(needClearTxs)
+			}
+
+		}
+	}
+	return
+
+}
+
+func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnIntent, isLocal bool) (err error) {
+	if len(secIntents) == 0 {
+		return
+	}
+	var errChannel = make(chan error, len(secIntents))
+	defer close(errChannel)
+	for _, group := range secIntents {
+		go func(intents []*txnpb.TxnIntent) {
+			req := &txnpb.PrepareRequest{
+				TxnId:      t.GetTxId(),
+				Local:      isLocal,
+				Intents:    intents,
+				PrimaryKey: t.GetPrimaryKey(),
+				LockTtl:    t.Timeout,
+			}
+			var prepareResp *txnpb.PrepareResponse
+			prepareResp, err = t.proxy.handlePrepare(ctx, req, nil)
+			if err != nil {
+				errChannel <- err
+				return
+			}
+			if len(prepareResp.Errors) > 0 {
+				//	for _, respErr := range prepareResp.Errors {
+				//		switch respErr.ErrType {
+				//		case
+				//		}
+				//	}
+			}
+			errChannel <- nil
+		}(group)
+	}
+	for i := 0; i < len(secIntents); i++ {
+		if v := <-errChannel; v != nil {
+			return v
+		}
+	}
 	return
 }
 
-func writeIntentsByRange(intents []*txnpb.TxnIntent) {
-
+func (t *TxObj) decidePrimaryIntents(ctx *dskv.ReqContext, intents []*txnpb.TxnIntent, status txnpb.TxnStatus) (err error) {
+	var passed bool
+	passed, err = t.changeTxStatus(status)
+	if err != nil || !passed {
+		return
+	}
+	var keys = make([][]byte, len(intents))
+	for _, intent := range intents {
+		keys = append(keys, intent.GetKey())
+	}
+	req := &txnpb.DecideRequest{
+		TxnId:  t.GetTxId(),
+		Status: status,
+		Keys:   keys,
+	}
+	t.proxy.handleDecide(ctx, req, nil)
+	return
 }
 
-func preparePrimaryIntents(priIntents []*txnpb.TxnIntent) {
-
+func (t *TxObj) asyncDecideSecondaryAndClear(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnIntent, status txnpb.TxnStatus) (err error) {
+	if len(secIntents) == 0 {
+		return
+	}
+	var errChannel = make(chan error, len(secIntents))
+	for _, group := range secIntents {
+		go func(intents []*txnpb.TxnIntent) {
+			//var keys = make([][]byte, len(intents))
+			//for _, intent := range intents {
+			//	keys = append(keys, intent.GetKey())
+			//}
+			//req := &txnpb.DecideRequest{
+			//	TxnId:  t.GetTxId(),
+			//	Status: status,
+			//	Keys:   keys,
+			//}
+			//var decideResp *txnpb.DecideResponse
+			//decideResp, err = t.proxy.handleDecide(ctx, req, nil)
+			//if err != nil {
+			//	errChannel <- err
+			//	return
+			//}
+			errChannel <- nil
+		}(group)
+	}
+	for i := 0; i < len(secIntents); i++ {
+		if v := <-errChannel; v != nil {
+			return v
+		}
+	}
+	t.proxy.handleCleanup(ctx, t.GetTxId(), t.GetPrimaryKey(), nil)
+	return
 }
 
-func prepareSecondaryIntents(secIntents [][]*txnpb.TxnIntent) {
+func (t *TxObj) checkTxnIntentLength() error {
+	length := len(t.getTxIntents())
+	if length > TXN_INTENT_MAX_LENGTH {
+		return fmt.Errorf("tx length [%v] is exceed max limit [%v]", length, TXN_INTENT_MAX_LENGTH)
+	}
+	return nil
+}
 
+func (t *TxObj) changeTxStatus(newStatus txnpb.TxnStatus) (bool, error) {
+	if newStatus != txnpb.TxnStatus_INIT &&
+		newStatus != txnpb.TxnStatus_COMMITTED &&
+		newStatus != txnpb.TxnStatus_ABORTED {
+		return false, getErrTxnStatusNoSupported(newStatus)
+	}
+	var (
+		passed    bool
+		err       error
+		oldStatus = t.status
+	)
+	switch oldStatus {
+	case txnpb.TxnStatus_INIT:
+		passed = true
+	case txnpb.TxnStatus_COMMITTED:
+		if newStatus == txnpb.TxnStatus_INIT {
+			err = getErrTxnStatusConflicted(oldStatus, newStatus)
+		} else if newStatus == txnpb.TxnStatus_ABORTED {
+			passed = true
+		}
+	case txnpb.TxnStatus_ABORTED:
+		err = getErrTxnStatusConflicted(oldStatus, newStatus)
+	default:
+		err = getErrTxnStatusNoSupported(oldStatus)
+	}
+	if err != nil || !passed {
+		return passed, err
+	}
+	t.status = newStatus
+	if oldStatus != newStatus {
+		log.Info("change transaction[%v] status[%v] to [%v]", t.GetTxId(), oldStatus, newStatus)
+	}
+	return passed, nil
 }
 
 // 按照route的范围划分intents
@@ -208,15 +469,15 @@ func regroupIntentsByRange(context *dskv.ReqContext, t *Table, intents []*txnpb.
 		}
 		group = append(group, intent)
 		ggroup[l.Region.Id] = group
-		// 每100个kv切割一下
-		if len(group) >= 100 {
-			if l.Region.Id == pkRangeId {
-				priIntentsGroup = group
-			} else {
-				secIntentsGroup = append(secIntentsGroup, group)
-			}
-			delete(ggroup, l.Region.Id)
-		}
+		//// 每100个kv切割一下
+		//if len(group) >= 100 {
+		//	if l.Region.Id == pkRangeId {
+		//		priIntentsGroup = group
+		//	} else {
+		//		secIntentsGroup = append(secIntentsGroup, group)
+		//	}
+		//	delete(ggroup, l.Region.Id)
+		//}
 	}
 	for rangeId, group := range ggroup {
 		if len(group) == 0 {
@@ -229,4 +490,55 @@ func regroupIntentsByRange(context *dskv.ReqContext, t *Table, intents []*txnpb.
 		}
 	}
 	return priIntentsGroup, secIntentsGroup, nil
+}
+
+func (t *TxObj) getSecondaryKeys() [][]byte {
+	if len(t.intents) == 1 {
+		return nil
+	}
+	var secondaryKeys [][]byte
+	secondaryKeys = make([][]byte, len(t.intents)-1)
+	for _, intent := range t.intents {
+		if intent.GetIsPrimary() {
+			continue
+		}
+		secondaryKeys = append(secondaryKeys, intent.GetKey())
+	}
+	return secondaryKeys
+}
+
+func isLocalTxn(priIntents []*txnpb.TxnIntent, secIntents [][]*txnpb.TxnIntent) bool {
+	if len(priIntents) > 0 && len(secIntents) == 0 {
+		return true
+	}
+	return false
+}
+
+func getErrTxnStatusConflicted(oldStatus, newStatus txnpb.TxnStatus) error {
+	return fmt.Errorf("tx status[%v] change to [%v] is conflicted", oldStatus, newStatus)
+}
+
+func getErrTxnStatusNoSupported(status txnpb.TxnStatus) error {
+	return fmt.Errorf("tx status[%v] is not supported", status)
+}
+
+func GetTxnError(txError *txnpb.TxnError) error{
+	var err error
+	switch txError.GetErrType() {
+	case txnpb.TxnError_SERVER_ERROR:
+		err = fmt.Errorf("SERVER_ERROR")
+	case txnpb.TxnError_LOCKED:
+		err = fmt.Errorf("TXN EXSIST LOCKED")
+	case txnpb.TxnError_UNEXPECTED_VER:
+		err = fmt.Errorf("UNEXPECTED VERSION")
+	case txnpb.TxnError_STATUS_CONFLICT:
+		err = fmt.Errorf("TXN STATUS CONFLICT")
+	case txnpb.TxnError_NOT_FOUND:
+		err = fmt.Errorf("NOT FOUND")
+	case txnpb.TxnError_NOT_UNIQUE:
+		err = fmt.Errorf("NOT UNIQUE")
+	default:
+		err = fmt.Errorf("UNKNOWN TXN Err")
+	}
+	return err
 }

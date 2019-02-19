@@ -6,22 +6,18 @@ import (
 	"model/pkg/txn"
 )
 
-func (p *Proxy) TxPrepare(context *dskv.ReqContext, t *Table) (*txnpb.PrepareResponse, error) {
-	req := &txnpb.PrepareRequest{
-	}
+func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t *Table) (*txnpb.PrepareResponse, error) {
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
 	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
-	resp, err := proxy.TxPrepare(nil, req, nil)
+	resp, err := proxy.TxPrepare(ctx, req, nil)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (p *Proxy) TxDecide(context *dskv.ReqContext, t *Table) (*txnpb.DecideResponse, error) {
-	req := &txnpb.DecideRequest{
-	}
+func (p *Proxy) handleDecide(context *dskv.ReqContext, req *txnpb.DecideRequest, t *Table) (*txnpb.DecideResponse, error) {
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
 	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
@@ -32,8 +28,10 @@ func (p *Proxy) TxDecide(context *dskv.ReqContext, t *Table) (*txnpb.DecideRespo
 	return resp, nil
 }
 
-func (p *Proxy) TxCleanup(context *dskv.ReqContext, t *Table) (*txnpb.ClearupResponse, error) {
+func (p *Proxy) handleCleanup(context *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (*txnpb.ClearupResponse, error) {
 	req := &txnpb.ClearupRequest{
+		TxnId:      txId,
+		PrimaryKey: primaryKey,
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)

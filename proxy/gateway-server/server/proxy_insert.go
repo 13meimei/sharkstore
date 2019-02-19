@@ -460,9 +460,6 @@ func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValu
 			CheckUnique: true,
 			ExpectedVer: 0,
 		}
-		if i == 0 {
-			intent.IsPrimary = true
-		}
 		intents[i] = intent
 	}
 	//context := dskv.NewPRConext(dskv.InsertMaxBackoff)

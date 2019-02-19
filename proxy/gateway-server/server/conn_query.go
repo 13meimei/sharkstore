@@ -156,13 +156,13 @@ func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) (e
 		golog.Debug("[insert]table:%v,cols:%v,rows:%v, args:%v", stmt.Table, stmt.Columns, stmt.Rows, args)
 	}
 	var (
-		local   bool
+		implicit   bool
 		ret     *mysql.Result
 		intents []*txnpb.TxnIntent
 	)
 	if !c.isInTransaction() {
-		local = true
-		c.tx = NewTx(local, 0)
+		implicit = true
+		c.tx = NewTx(implicit, 0)
 	}
 
 	//verify, encode
