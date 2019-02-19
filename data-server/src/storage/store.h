@@ -25,6 +25,9 @@ using TxnErrorPtr = std::unique_ptr<txnpb::TxnError>;
 // 行前缀长度: 1字节特殊标记+8字节table id
 static const size_t kRowPrefixLength = 9;
 static const unsigned char kStoreKVPrefixByte = '\x01';
+
+static const size_t kDefaultMaxSelectLimit = 10000;
+
 static const uint32_t kVersionColumnID = std::numeric_limits<uint32_t>::max();
 
 class Store {

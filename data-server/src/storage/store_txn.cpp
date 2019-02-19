@@ -2,6 +2,7 @@
 
 #include "base/util.h"
 #include "common/ds_encoding.h"
+#include "select_txn.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -462,6 +463,27 @@ Status Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
                     kvrpcpb::SelectField_Type_Name(type));
         }
     }
+
+    TxnRowFetcher  f(*this, req);
+    Status s;
+    bool over = false;
+    uint64_t count = 0;
+    uint64_t all = 0;
+    uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
+    uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
+    while (!over && s.ok()) {
+        over = false;
+//        s = f.Next(r.get(), &over);
+//        if (s.ok() && !over) {
+//            ++all;
+//            if (all > offset) {
+//                addRow(req, resp, *r);
+//                if (++count >= limit) break;
+//            }
+//        }
+    }
+    resp->set_offset(all);
+    return s;
 
     return Status(Status::kNotSupported);
 }

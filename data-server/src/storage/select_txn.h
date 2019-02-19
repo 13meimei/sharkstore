@@ -19,7 +19,7 @@ public:
     void SetVersion(uint64_t ver) { version_ = ver; }
 
     FieldValue* GetField(uint64_t col) const;
-    bool AddField(uint64_t col, FieldValue* fval);
+    bool AddField(uint64_t col, std::unique_ptr<FieldValue>& field);
 
 private:
     uint64_t version_ = 0;
@@ -35,10 +35,11 @@ public:
     TxnRowDecoder& operator=(const TxnRowDecoder&) = delete;
 
     Status DecodeAndFilter(const std::string& key, const std::string& buf,
-                           TxnRowValue* result, bool* matched);
+                           TxnRowValue& row, bool& matched);
 
 private:
-    Status decode(const std::string& key, const std::string& buf, TxnRowValue* row);
+    Status decodePrimaryKeys(const std::string& key, TxnRowValue& row);
+    Status decodeFields(const std::string& buf, TxnRowValue& row);
 
 private:
     const std::vector<metapb::Column>& primary_keys_;
@@ -54,9 +55,13 @@ public:
     TxnRowFetcher(const TxnRowFetcher&) = delete;
     TxnRowFetcher& operator=(const TxnRowFetcher&) = delete;
 
-    Status Next(txnpb::Row* row);
+    Status Next(txnpb::Row& row, bool& over);
 
 private:
+    Store& store_;
+    TxnRowDecoder decoder_;
+    Iterator* data_iter_ = nullptr;
+    Iterator* txn_iter_ = nullptr;
 };
 
 

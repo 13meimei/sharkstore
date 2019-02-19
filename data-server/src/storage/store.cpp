@@ -16,7 +16,6 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-static const size_t kDefaultMaxSelectLimit = 10000;
 
 static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r);
 

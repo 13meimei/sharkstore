@@ -19,8 +19,13 @@ RowResult::~RowResult() {
     Reset();
 }
 
-bool RowResult::AddField(uint64_t col, FieldValue* fval) {
-    return fields_.emplace(col, fval).second;
+bool RowResult::AddField(uint64_t col, std::unique_ptr<FieldValue>& field) {
+    auto ret = fields_.emplace(col, field.get()).second;
+    if (ret) {
+        auto p = field.release();
+        (void)p;
+    }
+    return ret;
 }
 
 FieldValue* RowResult::GetField(uint64_t col) const {
@@ -95,7 +100,7 @@ Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) 
     assert(!primary_keys_.empty());
     Status status;
     for (const auto& column: primary_keys_) {
-        FieldValue* value = nullptr;
+        std::unique_ptr<FieldValue> value;
         auto it = cols_.find(column.id());
         if (it != cols_.end()) {
             status = decodePK(key, offset, column, &value);
@@ -103,14 +108,11 @@ Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) 
             status = decodePK(key, offset, column, nullptr);
         }
         if (!status.ok()) {
-            delete value;
             return status;
-        } else {
-            if (value != nullptr) {
-                if (!result->AddField(column.id(), value)) {
-                    delete value;
-                    return Status(Status::kDuplicate, "repeated field on column", column.name());
-                }
+        }
+        if (value != nullptr) {
+            if (!result->AddField(column.id(), value)) {
+                return Status(Status::kDuplicate, "repeated field on column", column.name());
             }
         }
     }
@@ -167,12 +169,13 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
                 result->AddUpdateField(col_id, &f);
 
                 // 解析kvrpcfield为fieldvalue
-                std::unique_ptr<FieldValue> cf = nullptr;
-                auto s = parseThreshold(f.value(), f.column(), &cf);
+                std::unique_ptr<FieldValue> cf;
+                s = parseThreshold(f.value(), f.column(), cf);
                 if (!s.ok()) {
                     FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
                     return Status(Status::kUnknown, std::string("parse update field value failed:1 " + s.ToString()), "");
                 }
+                // TODO: fix release
                 result->AddUpdateFieldDelta(col_id, cf.release());
             }
 
@@ -180,16 +183,13 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
         }
 
         // 解码列值
-        FieldValue* value = nullptr;
-        auto status = decodeField(buf, offset, it->second, &value);
+        std::unique_ptr<FieldValue> value;
+        auto status = decodeField(buf, offset, it->second, value);
         if (!status.ok()) {
-            delete value;
             return status;
-        } else {
-            if (!result->AddField(it->first, value)) {
-                delete value;
-                return Status(Status::kDuplicate, "repeated field on column", it->second.name());
-            }
+        }
+        if (!result->AddField(it->first, value)) {
+            return Status(Status::kDuplicate, "repeated field on column", it->second.name());
         }
 
         // 记录所有非主键列的值在value中的偏移和长度
@@ -203,8 +203,8 @@ Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf,
             result->AddUpdateField(col_id, &f);
 
             // 解析kvrpcfield为fieldvalue
-            std::unique_ptr<FieldValue> cf = nullptr;
-            auto s = parseThreshold(f.value(), f.column(), &cf);
+            std::unique_ptr<FieldValue> cf;
+            s = parseThreshold(f.value(), f.column(), cf);
             if (!s.ok()) {
                 FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
                 return Status(Status::kUnknown, std::string("parse update field value failed:2 " + s.ToString()), "");
@@ -258,16 +258,13 @@ Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowRes
         }
 
         // 解码列值
-        FieldValue* value = nullptr;
-        auto status = decodeField(buf, offset, it->second, &value);
+        std::unique_ptr<FieldValue> value;
+        auto status = decodeField(buf, offset, it->second, value);
         if (!status.ok()) {
-            delete value;
             return status;
-        } else {
-            if (!result->AddField(it->first, value)) {
-                delete value;
-                return Status(Status::kDuplicate, "repeated field on column", it->second.name());
-            }
+        }
+        if (!result->AddField(it->first, value)) {
+            return Status(Status::kDuplicate, "repeated field on column", it->second.name());
         }
     }
     return Status::OK();
@@ -285,7 +282,7 @@ Status RowDecoder::DecodeAndFilter(const std::string& key, const std::string& bu
 
     *matched = true;
     if (!filters_.empty()) {
-        return matchRow(*result, filters_, matched);
+        return matchRow(*result, filters_, *matched);
     } else {
         return Status::OK();
     }
