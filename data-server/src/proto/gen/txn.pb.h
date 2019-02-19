@@ -3801,9 +3801,9 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
 
   // accessors -------------------------------------------------------
 
-  // string txn_id = 1;
+  // string txn_id = 2;
   void clear_txn_id();
-  static const int kTxnIdFieldNumber = 1;
+  static const int kTxnIdFieldNumber = 2;
   const ::std::string& txn_id() const;
   void set_txn_id(const ::std::string& value);
   #if LANG_CXX11
@@ -3815,9 +3815,9 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::std::string* release_txn_id();
   void set_allocated_txn_id(::std::string* txn_id);
 
-  // bytes primary_key = 2;
+  // bytes primary_key = 3;
   void clear_primary_key();
-  static const int kPrimaryKeyFieldNumber = 2;
+  static const int kPrimaryKeyFieldNumber = 3;
   const ::std::string& primary_key() const;
   void set_primary_key(const ::std::string& value);
   #if LANG_CXX11
@@ -3838,9 +3838,15 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::txnpb::RowValue* release_value();
   void set_allocated_value(::txnpb::RowValue* value);
 
-  // bool timeout = 3;
+  // .txnpb.OpType op_type = 1;
+  void clear_op_type();
+  static const int kOpTypeFieldNumber = 1;
+  ::txnpb::OpType op_type() const;
+  void set_op_type(::txnpb::OpType value);
+
+  // bool timeout = 4;
   void clear_timeout();
-  static const int kTimeoutFieldNumber = 3;
+  static const int kTimeoutFieldNumber = 4;
   bool timeout() const;
   void set_timeout(bool value);
 
@@ -3851,6 +3857,7 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::google::protobuf::internal::ArenaStringPtr txn_id_;
   ::google::protobuf::internal::ArenaStringPtr primary_key_;
   ::txnpb::RowValue* value_;
+  int op_type_;
   bool timeout_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
@@ -7520,7 +7527,21 @@ inline void RowValue::set_version(::google::protobuf::uint64 value) {
 
 // RowIntent
 
-// string txn_id = 1;
+// .txnpb.OpType op_type = 1;
+inline void RowIntent::clear_op_type() {
+  op_type_ = 0;
+}
+inline ::txnpb::OpType RowIntent::op_type() const {
+  // @@protoc_insertion_point(field_get:txnpb.RowIntent.op_type)
+  return static_cast< ::txnpb::OpType >(op_type_);
+}
+inline void RowIntent::set_op_type(::txnpb::OpType value) {
+  
+  op_type_ = value;
+  // @@protoc_insertion_point(field_set:txnpb.RowIntent.op_type)
+}
+
+// string txn_id = 2;
 inline void RowIntent::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -7573,7 +7594,7 @@ inline void RowIntent::set_allocated_txn_id(::std::string* txn_id) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.RowIntent.txn_id)
 }
 
-// bytes primary_key = 2;
+// bytes primary_key = 3;
 inline void RowIntent::clear_primary_key() {
   primary_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -7626,7 +7647,7 @@ inline void RowIntent::set_allocated_primary_key(::std::string* primary_key) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.RowIntent.primary_key)
 }
 
-// bool timeout = 3;
+// bool timeout = 4;
 inline void RowIntent::clear_timeout() {
   timeout_ = false;
 }

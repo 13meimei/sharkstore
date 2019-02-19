@@ -221,9 +221,10 @@ message RowValue {
 }
 
 message RowIntent {
-    string txn_id           = 1;
-    bytes primary_key       = 2;
-    bool timeout            = 3;
+    OpType op_type          = 1;
+    string txn_id           = 2;
+    bytes primary_key       = 3;
+    bool timeout            = 4;
     RowValue value          = 10;
 }
 

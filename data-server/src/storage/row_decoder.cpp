@@ -7,13 +7,11 @@
 #include "common/ds_encoding.h"
 #include "field_value.h"
 #include "store.h"
+#include "row_util.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
-
-static Status parseThreshold(const std::string& thres, const metapb::Column& col,
-                             std::unique_ptr<FieldValue>* value);
 
 RowResult::RowResult() {}
 
@@ -88,73 +86,6 @@ RowDecoder::RowDecoder(
 
 RowDecoder::~RowDecoder() {}
 
-static Status decodePK(const std::string& key, size_t& offset, const metapb::Column& col,
-                       FieldValue** value) {
-    switch (col.data_type()) {
-        case metapb::Tinyint:
-        case metapb::Smallint:
-        case metapb::Int:
-        case metapb::BigInt: {
-            if (col.unsigned_()) {
-                uint64_t i = 0;
-                if (!DecodeUvarintAscending(key, offset, &i)) {
-                    return Status(
-                            Status::kCorruption,
-                            std::string("decode row unsigned int pk failed at offset ") + std::to_string(offset),
-                            EncodeToHexString(key));
-                }
-                if (value != nullptr) *value = new FieldValue(i);
-            } else {
-                int64_t i = 0;
-                if (!DecodeVarintAscending(key, offset, &i)) {
-                    return Status(
-                            Status::kCorruption,
-                            std::string("decode row int pk failed at offset ") + std::to_string(offset),
-                            EncodeToHexString(key));
-                }
-                if (value != nullptr) *value = new FieldValue(i);
-            }
-            return Status::OK();
-        }
-
-        case metapb::Float:
-        case metapb::Double: {
-            double d = 0;
-            if (!DecodeFloatAscending(key, offset, &d)) {
-                return Status(Status::kCorruption,
-                              std::string("decode row float pk failed at offset ") +
-                              std::to_string(offset),
-                              EncodeToHexString(key));
-            }
-            if (value != nullptr) *value = new FieldValue(d);
-            return Status::OK();
-        }
-
-        case metapb::Varchar:
-        case metapb::Binary:
-        case metapb::Date:
-        case metapb::TimeStamp: {
-            std::string* s = new std::string();
-            if (!DecodeBytesAscending(key, offset, s)) {
-                delete s;
-                return Status(Status::kCorruption,
-                              std::string("decode row string pk failed at offset ") +
-                              std::to_string(offset),
-                              EncodeToHexString(key));
-            }
-            if (value != nullptr) {
-                *value = new FieldValue(s);
-            } else {
-                delete s;
-            }
-            return Status::OK();
-        }
-
-        default:
-            return Status(Status::kNotSupported, "unknown decode field type", col.name());
-    }
-    return Status::OK();
-}
 
 Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) {
     if (key.size() <= kRowPrefixLength) {
@@ -186,62 +117,6 @@ Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) 
     return Status::OK();
 }
 
-static Status decodeField(const std::string& buf, size_t& offset, const metapb::Column& col,
-                          FieldValue** value) {
-    switch (col.data_type()) {
-        case metapb::Tinyint:
-        case metapb::Smallint:
-        case metapb::Int:
-        case metapb::BigInt: {
-            int64_t i = 0;
-            if (!DecodeIntValue(buf, offset, &i)) {
-                return Status(
-                    Status::kCorruption,
-                    std::string("decode row int value failed at offset ") + std::to_string(offset),
-                    EncodeToHexString(buf));
-            }
-            if (col.unsigned_()) {
-                *value = new FieldValue(static_cast<uint64_t>(i));
-            } else {
-                *value = new FieldValue(i);
-            }
-            return Status::OK();
-        }
-
-        case metapb::Float:
-        case metapb::Double: {
-            double d = 0;
-            if (!DecodeFloatValue(buf, offset, &d)) {
-                return Status(Status::kCorruption,
-                              std::string("decode row float value failed at offset ") +
-                                  std::to_string(offset),
-                              EncodeToHexString(buf));
-            }
-            *value = new FieldValue(d);
-            return Status::OK();
-        }
-
-        case metapb::Varchar:
-        case metapb::Binary:
-        case metapb::Date:
-        case metapb::TimeStamp: {
-            std::string* s = new std::string();
-            if (!DecodeBytesValue(buf, offset, s)) {
-                delete s;
-                return Status(Status::kCorruption,
-                              std::string("decode row string value failed at offset ") +
-                                  std::to_string(offset),
-                              EncodeToHexString(buf));
-            }
-            *value = new FieldValue(s);
-            return Status::OK();
-        }
-
-        default:
-            return Status(Status::kNotSupported, "unknown decode field type", col.name());
-    }
-    return Status::OK();
-}
 
 Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf, RowResult* result) {
     result->Reset();
@@ -391,7 +266,6 @@ Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowRes
         } else {
             if (!result->AddField(it->first, value)) {
                 delete value;
-                FLOG_DEBUG("add field id: %lu", it->second.id());
                 return Status(Status::kDuplicate, "repeated field on column", it->second.name());
             }
         }
@@ -399,94 +273,6 @@ Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowRes
     return Status::OK();
 }
 
-static Status parseThreshold(const std::string& thres, const metapb::Column& col,
-                             std::unique_ptr<FieldValue>* value) {
-    switch (col.data_type()) {
-        case metapb::Tinyint:
-        case metapb::Smallint:
-        case metapb::Int:
-        case metapb::BigInt: {
-            if (!col.unsigned_()) {
-                int64_t i = strtoll(thres.c_str(), NULL, 10);
-                value->reset(new FieldValue(i));
-            } else {
-                uint64_t i = strtoull(thres.c_str(), NULL, 10);
-                value->reset(new FieldValue(i));
-            }
-            break;
-        }
-
-        case metapb::Float:
-        case metapb::Double: {
-            double d = strtod(thres.c_str(), NULL);
-            value->reset(new FieldValue(d));
-            break;
-        }
-
-        case metapb::Varchar:
-        case metapb::Binary:
-        case metapb::Date:
-        case metapb::TimeStamp: {
-            std::string* s = new std::string(thres);
-            value->reset(new FieldValue(s));
-            break;
-        }
-
-        default:
-            return Status(Status::kNotSupported, "unknown match threshold col type", col.name());
-    }
-    return Status::OK();
-}
-
-static bool filter(const RowResult& result, const std::vector<kvrpcpb::Match>& filters) {
-    for (auto it = filters.cbegin(); it != filters.cend(); ++it) {
-        const kvrpcpb::Match& m = *it;
-        auto f = result.GetField(m.column().id());
-        if (nullptr == f) {
-            return false;
-        }
-        std::unique_ptr<FieldValue> cf = nullptr;
-        auto s = parseThreshold(m.threshold(), m.column(), &cf);
-        if (!s.ok()) {
-            FLOG_ERROR("select parse threshold failed: %s", s.ToString().c_str());
-            return false;
-        }
-        assert(cf != nullptr);
-        switch (m.match_type()) {
-            case kvrpcpb::Equal:
-                if (!fcompare(*f, *cf, CompareOp::kEqual)) return false;
-                break;
-            case kvrpcpb::NotEqual: {
-                bool not_equal =
-                    fcompare(*f, *cf, CompareOp::kGreater) || fcompare(*cf, *f, CompareOp::kLess);
-                if (!not_equal) return false;
-                break;
-            }
-            case kvrpcpb::Less:
-                if (!fcompare(*f, *cf, CompareOp::kLess)) return false;
-                break;
-            case kvrpcpb::LessOrEqual: {
-                bool le =
-                    fcompare(*f, *cf, CompareOp::kLess) || fcompare(*cf, *f, CompareOp::kEqual);
-                if (!le) return false;
-                break;
-            }
-            case kvrpcpb::Larger:
-                if (!fcompare(*f, *cf, CompareOp::kGreater)) return false;
-                break;
-            case kvrpcpb::LargerOrEqual: {
-                bool ge =
-                    fcompare(*f, *cf, CompareOp::kGreater) || fcompare(*cf, *f, CompareOp::kEqual);
-                if (!ge) return false;
-                break;
-            }
-            default:
-                FLOG_ERROR("select unknown match type: %s", kvrpcpb::MatchType_Name(m.match_type()).c_str());
-                return false;
-        }
-    }
-    return true;
-}
 
 Status RowDecoder::DecodeAndFilter(const std::string& key, const std::string& buf,
                                    RowResult* result, bool* matched) {
@@ -499,9 +285,10 @@ Status RowDecoder::DecodeAndFilter(const std::string& key, const std::string& bu
 
     *matched = true;
     if (!filters_.empty()) {
-        *matched = filter(*result, filters_);
+        return matchRow(*result, filters_, matched);
+    } else {
+        return Status::OK();
     }
-    return Status::OK();
 }
 
 std::string RowDecoder::DebugString() const {

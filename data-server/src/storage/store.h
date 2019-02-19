@@ -68,7 +68,7 @@ public:
     uint64_t TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
     void TxnClearup(const txnpb::ClearupRequest& req, txnpb::ClearupResponse* resp);
     void TxnGetLockInfo(const txnpb::GetLockInfoRequest& req, txnpb::GetLockInfoResponse* resp);
-    void TxnSelect(const txnpb::SelectRequest& req, txnpb::SelectResponse* resp);
+    Status TxnSelect(const txnpb::SelectRequest& req, txnpb::SelectResponse* resp);
 
 public:
     Iterator* NewIterator(const ::kvrpcpb::Scope& scope);

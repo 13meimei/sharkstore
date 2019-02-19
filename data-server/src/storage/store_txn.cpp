@@ -414,8 +414,10 @@ void Store::TxnClearup(const ClearupRequest& req, ClearupResponse* resp) {
     if (!s.ok()) {
         if (s.code() != Status::kNotFound) {
             setTxnServerErr(resp->mutable_err(), s.code(), s.ToString());
+            return;
+        } else {
+            return; // not found, success
         }
-        return;
     }
     // s is ok now
     if (value.txn_id() != req.txn_id()) { // success
@@ -425,6 +427,7 @@ void Store::TxnClearup(const ClearupRequest& req, ClearupResponse* resp) {
         setTxnServerErr(resp->mutable_err(), Status::kInvalidArgument, "target key is not primary");
         return;
     }
+
     // delete intent
     auto ret = db_->Delete(rocksdb::WriteOptions(), txn_cf_, req.primary_key());
     if (!ret.ok()) {
@@ -432,7 +435,6 @@ void Store::TxnClearup(const ClearupRequest& req, ClearupResponse* resp) {
         return;
     }
 }
-
 
 void Store::TxnGetLockInfo(const GetLockInfoRequest& req, GetLockInfoResponse* resp) {
     TxnValue value;
@@ -449,7 +451,19 @@ void Store::TxnGetLockInfo(const GetLockInfoRequest& req, GetLockInfoResponse* r
     fillLockInfo(resp->mutable_info(), value);
 }
 
-void Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
+Status Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
+    // currently aggregation is not supported
+    for (int i = 0; i < req.field_list_size(); ++i) {
+        auto type = req.field_list(i).typ();
+        if (type == kvrpcpb::SelectField_Type_AggreFunction) {
+            return Status(Status::kNotSupported);
+        } else if (type != kvrpcpb::SelectField_Type_Column) {
+            return Status(Status::kInvalidArgument, "unknown select field type",
+                    kvrpcpb::SelectField_Type_Name(type));
+        }
+    }
+
+    return Status(Status::kNotSupported);
 }
 
 

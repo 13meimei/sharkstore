@@ -428,9 +428,8 @@ Status Store::Select(const kvrpcpb::SelectRequest& req,
                 has_aggre = true;
                 break;
             default:
-                return Status(Status::kInvalidArgument, "select",
-                              std::string("unknown select field type: ") +
-                                  kvrpcpb::SelectField_Type_Name(type));
+                return Status(Status::kInvalidArgument, "unknown select field type",
+                              kvrpcpb::SelectField_Type_Name(type));
         }
     }
     // 既有聚合函数又有普通的列，暂时不支持

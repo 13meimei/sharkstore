@@ -292,6 +292,52 @@ void Range::TxnGetLockInfo(common::ProtoMessage* msg, txnpb::DsGetLockInfoReques
 void Range::TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req) {
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
+
+    RANGE_LOG_DEBUG("Select begin");
+
+    errorpb::Error *err = nullptr;
+    auto ds_resp = new txnpb::DsSelectResponse;
+    do {
+        if (!VerifyLeader(err)) {
+            break;
+        }
+
+        if (!EpochIsEqual(req.header().range_epoch(), err)) {
+            break;
+        }
+
+        auto key = req.req().key();
+        if (!key.empty() && !KeyInRange(key, err)) {
+            break;
+        }
+
+        auto resp = ds_resp->mutable_resp();
+        auto ret = store_->TxnSelect(req.req(), resp);
+        auto etime = get_micro_second();
+        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
+
+        if (!ret.ok()) {
+            RANGE_LOG_ERROR("TxnSelect from store error: %s", ret.ToString().c_str());
+            resp->set_code(static_cast<int>(ret.code()));
+            break;
+        }
+
+        if (key.empty() && !EpochIsEqual(req.header().range_epoch(), err)) {
+            ds_resp->clear_resp();
+            RANGE_LOG_WARN("epoch change Select error: %s", err->message().c_str());
+        }
+    } while (false);
+
+    if (err != nullptr) {
+        RANGE_LOG_WARN("TxnSelect error: %s", err->message().c_str());
+    } else {
+        RANGE_LOG_DEBUG("TxnSelect result: code=%d, rows=%d",
+                        (ds_resp->has_resp() ? ds_resp->resp().code() : 0),
+                        (ds_resp->has_resp() ? ds_resp->resp().rows_size() : 0));
+    }
+
+    common::SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
+    context_->SocketSession()->Send(msg, ds_resp);
 }
 
 }  // namespace range

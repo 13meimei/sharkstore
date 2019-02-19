@@ -468,6 +468,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RowIntent, op_type_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RowIntent, txn_id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RowIntent, primary_key_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RowIntent, timeout_),
@@ -533,10 +534,10 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 203, -1, sizeof(SelectRequest)},
   { 214, -1, sizeof(RowValue)},
   { 222, -1, sizeof(RowIntent)},
-  { 231, -1, sizeof(Row)},
-  { 239, -1, sizeof(SelectResponse)},
-  { 247, -1, sizeof(DsSelectRequest)},
-  { 254, -1, sizeof(DsSelectResponse)},
+  { 232, -1, sizeof(Row)},
+  { 240, -1, sizeof(SelectResponse)},
+  { 248, -1, sizeof(DsSelectRequest)},
+  { 255, -1, sizeof(DsSelectResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -825,24 +826,25 @@ void AddDescriptorsImpl() {
       "\003(\0132\016.kvrpcpb.Match\022!\n\tgroup_bys\030\005 \003(\0132\016"
       ".metapb.Column\022\035\n\005limit\030\006 \001(\0132\016.kvrpcpb."
       "Limit\"B\n\010RowValue\022\016\n\006fields\030\001 \001(\014\022\025\n\ragg"
-      "red_counts\030\002 \003(\003\022\017\n\007version\030\003 \001(\004\"a\n\tRow"
-      "Intent\022\016\n\006txn_id\030\001 \001(\t\022\023\n\013primary_key\030\002 "
-      "\001(\014\022\017\n\007timeout\030\003 \001(\010\022\036\n\005value\030\n \001(\0132\017.tx"
-      "npb.RowValue\"T\n\003Row\022\013\n\003key\030\001 \001(\014\022\036\n\005valu"
-      "e\030\002 \001(\0132\017.txnpb.RowValue\022 \n\006intent\030\003 \001(\013"
-      "2\020.txnpb.RowIntent\"H\n\016SelectResponse\022\014\n\004"
-      "code\030\001 \001(\005\022\030\n\004rows\030\002 \003(\0132\n.txnpb.Row\022\016\n\006"
-      "offset\030\003 \001(\004\"\\\n\017DsSelectRequest\022&\n\006heade"
-      "r\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022!\n\003req\030\002"
-      " \001(\0132\024.txnpb.SelectRequest\"`\n\020DsSelectRe"
-      "sponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respons"
-      "eHeader\022#\n\004resp\030\002 \001(\0132\025.txnpb.SelectResp"
-      "onse* \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*1"
-      "\n\tTxnStatus\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007"
-      "ABORTED\020\002b\006proto3"
+      "red_counts\030\002 \003(\003\022\017\n\007version\030\003 \001(\004\"\201\001\n\tRo"
+      "wIntent\022\036\n\007op_type\030\001 \001(\0162\r.txnpb.OpType\022"
+      "\016\n\006txn_id\030\002 \001(\t\022\023\n\013primary_key\030\003 \001(\014\022\017\n\007"
+      "timeout\030\004 \001(\010\022\036\n\005value\030\n \001(\0132\017.txnpb.Row"
+      "Value\"T\n\003Row\022\013\n\003key\030\001 \001(\014\022\036\n\005value\030\002 \001(\013"
+      "2\017.txnpb.RowValue\022 \n\006intent\030\003 \001(\0132\020.txnp"
+      "b.RowIntent\"H\n\016SelectResponse\022\014\n\004code\030\001 "
+      "\001(\005\022\030\n\004rows\030\002 \003(\0132\n.txnpb.Row\022\016\n\006offset\030"
+      "\003 \001(\004\"\\\n\017DsSelectRequest\022&\n\006header\030\001 \001(\013"
+      "2\026.kvrpcpb.RequestHeader\022!\n\003req\030\002 \001(\0132\024."
+      "txnpb.SelectRequest\"`\n\020DsSelectResponse\022"
+      "\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader"
+      "\022#\n\004resp\030\002 \001(\0132\025.txnpb.SelectResponse* \n"
+      "\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*1\n\tTxnSt"
+      "atus\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007ABORTED"
+      "\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 3457);
+      descriptor, 3490);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "txn.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -13347,6 +13349,7 @@ void RowValue::set_version(::google::protobuf::uint64 value) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int RowIntent::kOpTypeFieldNumber;
 const int RowIntent::kTxnIdFieldNumber;
 const int RowIntent::kPrimaryKeyFieldNumber;
 const int RowIntent::kTimeoutFieldNumber;
@@ -13379,7 +13382,9 @@ RowIntent::RowIntent(const RowIntent& from)
   } else {
     value_ = NULL;
   }
-  timeout_ = from.timeout_;
+  ::memcpy(&op_type_, &from.op_type_,
+    static_cast<size_t>(reinterpret_cast<char*>(&timeout_) -
+    reinterpret_cast<char*>(&op_type_)) + sizeof(timeout_));
   // @@protoc_insertion_point(copy_constructor:txnpb.RowIntent)
 }
 
@@ -13438,7 +13443,9 @@ void RowIntent::Clear() {
     delete value_;
   }
   value_ = NULL;
-  timeout_ = false;
+  ::memset(&op_type_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&timeout_) -
+      reinterpret_cast<char*>(&op_type_)) + sizeof(timeout_));
   _internal_metadata_.Clear();
 }
 
@@ -13452,10 +13459,25 @@ bool RowIntent::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string txn_id = 1;
+      // .txnpb.OpType op_type = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+          int value;
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          set_op_type(static_cast< ::txnpb::OpType >(value));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string txn_id = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_txn_id()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -13468,10 +13490,10 @@ bool RowIntent::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes primary_key = 2;
-      case 2: {
+      // bytes primary_key = 3;
+      case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_primary_key()));
         } else {
@@ -13480,10 +13502,10 @@ bool RowIntent::MergePartialFromCodedStream(
         break;
       }
 
-      // bool timeout = 3;
-      case 3: {
+      // bool timeout = 4;
+      case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
@@ -13532,25 +13554,31 @@ void RowIntent::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string txn_id = 1;
+  // .txnpb.OpType op_type = 1;
+  if (this->op_type() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      1, this->op_type(), output);
+  }
+
+  // string txn_id = 2;
   if (this->txn_id().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->txn_id().data(), static_cast<int>(this->txn_id().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
       "txnpb.RowIntent.txn_id");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->txn_id(), output);
+      2, this->txn_id(), output);
   }
 
-  // bytes primary_key = 2;
+  // bytes primary_key = 3;
   if (this->primary_key().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      2, this->primary_key(), output);
+      3, this->primary_key(), output);
   }
 
-  // bool timeout = 3;
+  // bool timeout = 4;
   if (this->timeout() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(3, this->timeout(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteBool(4, this->timeout(), output);
   }
 
   // .txnpb.RowValue value = 10;
@@ -13573,7 +13601,13 @@ void RowIntent::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string txn_id = 1;
+  // .txnpb.OpType op_type = 1;
+  if (this->op_type() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
+      1, this->op_type(), target);
+  }
+
+  // string txn_id = 2;
   if (this->txn_id().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->txn_id().data(), static_cast<int>(this->txn_id().length()),
@@ -13581,19 +13615,19 @@ void RowIntent::SerializeWithCachedSizes(
       "txnpb.RowIntent.txn_id");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->txn_id(), target);
+        2, this->txn_id(), target);
   }
 
-  // bytes primary_key = 2;
+  // bytes primary_key = 3;
   if (this->primary_key().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        2, this->primary_key(), target);
+        3, this->primary_key(), target);
   }
 
-  // bool timeout = 3;
+  // bool timeout = 4;
   if (this->timeout() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(3, this->timeout(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(4, this->timeout(), target);
   }
 
   // .txnpb.RowValue value = 10;
@@ -13620,14 +13654,14 @@ size_t RowIntent::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // string txn_id = 1;
+  // string txn_id = 2;
   if (this->txn_id().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->txn_id());
   }
 
-  // bytes primary_key = 2;
+  // bytes primary_key = 3;
   if (this->primary_key().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
@@ -13641,7 +13675,13 @@ size_t RowIntent::ByteSizeLong() const {
         *this->value_);
   }
 
-  // bool timeout = 3;
+  // .txnpb.OpType op_type = 1;
+  if (this->op_type() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::EnumSize(this->op_type());
+  }
+
+  // bool timeout = 4;
   if (this->timeout() != 0) {
     total_size += 1 + 1;
   }
@@ -13686,6 +13726,9 @@ void RowIntent::MergeFrom(const RowIntent& from) {
   if (from.has_value()) {
     mutable_value()->::txnpb::RowValue::MergeFrom(from.value());
   }
+  if (from.op_type() != 0) {
+    set_op_type(from.op_type());
+  }
   if (from.timeout() != 0) {
     set_timeout(from.timeout());
   }
@@ -13718,6 +13761,7 @@ void RowIntent::InternalSwap(RowIntent* other) {
   txn_id_.Swap(&other->txn_id_);
   primary_key_.Swap(&other->primary_key_);
   swap(value_, other->value_);
+  swap(op_type_, other->op_type_);
   swap(timeout_, other->timeout_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
@@ -13731,7 +13775,21 @@ void RowIntent::InternalSwap(RowIntent* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // RowIntent
 
-// string txn_id = 1;
+// .txnpb.OpType op_type = 1;
+void RowIntent::clear_op_type() {
+  op_type_ = 0;
+}
+::txnpb::OpType RowIntent::op_type() const {
+  // @@protoc_insertion_point(field_get:txnpb.RowIntent.op_type)
+  return static_cast< ::txnpb::OpType >(op_type_);
+}
+void RowIntent::set_op_type(::txnpb::OpType value) {
+  
+  op_type_ = value;
+  // @@protoc_insertion_point(field_set:txnpb.RowIntent.op_type)
+}
+
+// string txn_id = 2;
 void RowIntent::clear_txn_id() {
   txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -13784,7 +13842,7 @@ void RowIntent::set_allocated_txn_id(::std::string* txn_id) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.RowIntent.txn_id)
 }
 
-// bytes primary_key = 2;
+// bytes primary_key = 3;
 void RowIntent::clear_primary_key() {
   primary_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -13837,7 +13895,7 @@ void RowIntent::set_allocated_primary_key(::std::string* primary_key) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.RowIntent.primary_key)
 }
 
-// bool timeout = 3;
+// bool timeout = 4;
 void RowIntent::clear_timeout() {
   timeout_ = false;
 }
