@@ -162,7 +162,7 @@ func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) (e
 	)
 	if !c.isInTransaction() {
 		implicit = true
-		c.tx = NewTx(implicit, 0)
+		c.tx = NewTx(implicit, c.server.proxy, 0)
 	}
 
 	//verify, encode

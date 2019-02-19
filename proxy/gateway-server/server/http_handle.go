@@ -518,7 +518,7 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		log.Error("insert error %s- %s:%s", db, tableName, err.Error())
 		return nil, err
 	}
-	tx = NewTx(true, 0)
+	tx = NewTx(true, proxy, 0)
 	err = tx.Insert(intents)
 	if err != nil {
 		log.Error("insert error %s- %s:%s", db, tableName, err.Error())

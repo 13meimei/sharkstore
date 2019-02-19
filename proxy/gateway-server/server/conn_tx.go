@@ -34,7 +34,7 @@ func (c *ClientConn) handleBegin() error {
 		}
 	}
 	c.status |= mysql.SERVER_STATUS_IN_TRANS
-	c.tx = NewTx(false, 0)
+	c.tx = NewTx(false, c.server.proxy, 0)
 	return c.writeOK(nil)
 }
 
