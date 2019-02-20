@@ -3,27 +3,15 @@
 #include "base/util.h"
 #include "common/ds_encoding.h"
 #include "select_txn.h"
+#include "util.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
 using namespace txnpb;
-using namespace std::chrono;
 
 // TODO: add metrics
-
-static uint64_t calExpireAt(uint64_t ttl) {
-    auto epoch = system_clock::now().time_since_epoch();
-    return ttl + duration_cast<milliseconds>(epoch).count();
-}
-
-static bool isExpired(uint64_t expired_at) {
-    auto epoch = system_clock::now().time_since_epoch();
-    auto now = duration_cast<milliseconds>(epoch).count();
-    return static_cast<uint64_t>(now) > expired_at;
-}
-
 static void fillTxnValue(const PrepareRequest& req, const TxnIntent& intent, uint64_t version, TxnValue* value) {
     value->set_txn_id(req.txn_id());
     value->mutable_intent()->CopyFrom(intent);
@@ -100,7 +88,7 @@ static TxnErrorPtr newNotUniqueErr(const std::string& key) {
 }
 
 // TODO: load from memory
-Status Store::getTxnValue(const std::string &key, TxnValue *value) {
+Status Store::GetTxnValue(const std::string &key, TxnValue *value) {
     std::string db_value;
     auto s = db_->Get(rocksdb::ReadOptions(), txn_cf_, key, &db_value);
     if (s.IsNotFound()) {
@@ -131,7 +119,7 @@ Status Store::writeTxnValue(const txnpb::TxnValue& value, rocksdb::WriteBatch* b
 
 TxnErrorPtr Store::checkLockable(const std::string& key, const std::string& txn_id, bool *exist_flag) {
     TxnValue value;
-    auto s = getTxnValue(key, &value);
+    auto s = GetTxnValue(key, &value);
     switch (s.code()) {
     case Status::kNotFound:
         return nullptr;
@@ -334,7 +322,7 @@ TxnErrorPtr Store::decideSecondary(const txnpb::TxnValue& value, txnpb::TxnStatu
 TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& key, uint64_t& bytes_written,
                    rocksdb::WriteBatch* batch, std::vector<std::string>* secondary_keys) {
     TxnValue value;
-    auto s = getTxnValue(key, &value);
+    auto s = GetTxnValue(key, &value);
     if (!s.ok()) {
         if (s.code() == Status::kNotFound) {
             return nullptr;
@@ -411,7 +399,7 @@ uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
 
 void Store::TxnClearup(const ClearupRequest& req, ClearupResponse* resp) {
     txnpb::TxnValue value;
-    auto s = getTxnValue(req.primary_key(), &value);
+    auto s = GetTxnValue(req.primary_key(), &value);
     if (!s.ok()) {
         if (s.code() != Status::kNotFound) {
             setTxnServerErr(resp->mutable_err(), s.code(), s.ToString());
@@ -439,7 +427,7 @@ void Store::TxnClearup(const ClearupRequest& req, ClearupResponse* resp) {
 
 void Store::TxnGetLockInfo(const GetLockInfoRequest& req, GetLockInfoResponse* resp) {
     TxnValue value;
-    auto ret = getTxnValue(req.key(), &value);
+    auto ret = GetTxnValue(req.key(), &value);
     if (!ret.ok()) {
         if (ret.code() == Status::kNotFound) {
             setNotFoundErr(resp->mutable_err(), req.key());
@@ -464,7 +452,7 @@ Status Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
         }
     }
 
-    TxnRowFetcher  f(*this, req);
+    auto fetcher = NewTxnRowFetcher(*this, req);
     Status s;
     bool over = false;
     uint64_t count = 0;
@@ -473,19 +461,18 @@ Status Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
     uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
     while (!over && s.ok()) {
         over = false;
-//        s = f.Next(r.get(), &over);
-//        if (s.ok() && !over) {
-//            ++all;
-//            if (all > offset) {
-//                addRow(req, resp, *r);
-//                if (++count >= limit) break;
-//            }
-//        }
+        std::unique_ptr<txnpb::Row> row(new txnpb::Row);
+        s = fetcher->Next(*row, over);
+        if (s.ok() && !over) {
+            ++all;
+            if (all > offset) {
+                resp->add_rows()->Swap(row.get());
+                if (++count >= limit) break;
+            }
+        }
     }
     resp->set_offset(all);
     return s;
-
-    return Status(Status::kNotSupported);
 }
 
 

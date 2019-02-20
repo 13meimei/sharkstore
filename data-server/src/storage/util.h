@@ -10,6 +10,9 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+uint64_t calExpireAt(uint64_t ttl);
+bool isExpired(uint64_t expired_at);
+
 Status decodePK(const std::string& key, size_t& offset, const metapb::Column& col,
         std::unique_ptr<FieldValue>* field);
 

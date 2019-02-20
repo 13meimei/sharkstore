@@ -7,7 +7,7 @@
 #include "common/ds_encoding.h"
 #include "field_value.h"
 #include "store.h"
-#include "row_util.h"
+#include "util.h"
 
 namespace sharkstore {
 namespace dataserver {

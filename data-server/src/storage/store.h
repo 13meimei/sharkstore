@@ -67,6 +67,8 @@ public:
     Status WatchDelete(const watchpb::KvWatchDeleteRequest& req);
     Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req, watchpb::DsKvWatchGetMultiResponse *resp);
 
+    Status GetTxnValue(const std::string& key, txnpb::TxnValue* value);
+
     void TxnPrepare(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);
     uint64_t TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
     void TxnClearup(const txnpb::ClearupRequest& req, txnpb::ClearupResponse* resp);
@@ -104,7 +106,6 @@ private:
     bool decodeWatchKey(const std::string& key, watchpb::WatchKeyValue *kv) const;
     bool decodeWatchValue(const std::string& value, watchpb::WatchKeyValue *kv) const;
 
-    Status getTxnValue(const std::string& key, txnpb::TxnValue* value);
     Status writeTxnValue(const txnpb::TxnValue& value, rocksdb::WriteBatch* batch);
     TxnErrorPtr checkLockable(const std::string& key, const std::string& txn_id, bool *exist_flag);
     Status getKeyVersion(const std::string& key, uint64_t *version);

@@ -21,6 +21,8 @@ public:
     FieldValue* GetField(uint64_t col) const;
     bool AddField(uint64_t col, std::unique_ptr<FieldValue>& field);
 
+    void Encode(const txnpb::SelectRequest& req, txnpb::RowValue* to);
+
 private:
     uint64_t version_ = 0;
     std::map<uint64_t, FieldValue*> fields_;
@@ -50,20 +52,52 @@ private:
 class TxnRowFetcher {
 public:
     TxnRowFetcher(Store& s, const txnpb::SelectRequest& req);
-    ~TxnRowFetcher();
+
+    virtual ~TxnRowFetcher() = default;
 
     TxnRowFetcher(const TxnRowFetcher&) = delete;
     TxnRowFetcher& operator=(const TxnRowFetcher&) = delete;
 
-    Status Next(txnpb::Row& row, bool& over);
+    virtual Status Next(txnpb::Row& row, bool& over) = 0;
+
+protected:
+    Status addRow(const std::string& key, const std::string& buf, txnpb::Row& row);
+    Status addIntent(const txnpb::TxnValue& txn_value, txnpb::Row& row);
+
+protected:
+    Store& store_;
+    const txnpb::SelectRequest& req_;
+    TxnRowDecoder decoder_;
+};
+
+std::unique_ptr<TxnRowFetcher> NewTxnRowFetcher(Store& s, const txnpb::SelectRequest& req);
+
+class PointRowFetcher : public TxnRowFetcher {
+public:
+    PointRowFetcher(Store& s, const txnpb::SelectRequest& req);
+    ~PointRowFetcher() = default;
+
+    Status Next(txnpb::Row& row, bool& over) override;
 
 private:
-    Store& store_;
-    TxnRowDecoder decoder_;
+    Status getFromData(txnpb::Row& row);
+    Status getFromIntent(txnpb::Row& row);
+
+private:
+    bool fetched_ = false;
+};
+
+class RangeRowFetcher : public TxnRowFetcher {
+public:
+    RangeRowFetcher(Store& s, const txnpb::SelectRequest& req);
+    ~RangeRowFetcher();
+
+    Status Next(txnpb::Row& row, bool& over) override;
+
+private:
     Iterator* data_iter_ = nullptr;
     Iterator* txn_iter_ = nullptr;
 };
-
 
 } /* namespace storage */
 } /* namespace dataserver */

@@ -1,10 +1,25 @@
-#include "row_util.h"
+#include "util.h"
+
+#include <chrono>
 
 #include "common/ds_encoding.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
+
+using namespace std::chrono;
+
+uint64_t calExpireAt(uint64_t ttl) {
+    auto epoch = system_clock::now().time_since_epoch();
+    return ttl + duration_cast<milliseconds>(epoch).count();
+}
+
+bool isExpired(uint64_t expired_at) {
+    auto epoch = system_clock::now().time_since_epoch();
+    auto now = duration_cast<milliseconds>(epoch).count();
+    return static_cast<uint64_t>(now) > expired_at;
+}
 
 Status decodePK(const std::string& key, size_t& offset, const metapb::Column& col,
                 std::unique_ptr<FieldValue>* field) {
