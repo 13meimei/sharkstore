@@ -67,6 +67,7 @@ public:
     Status WatchDelete(const watchpb::KvWatchDeleteRequest& req);
     Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req, watchpb::DsKvWatchGetMultiResponse *resp);
 
+    Status GetTxnValue(const std::string& key, std::string& db_value);
     Status GetTxnValue(const std::string& key, txnpb::TxnValue* value);
 
     void TxnPrepare(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);

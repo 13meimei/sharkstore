@@ -88,13 +88,22 @@ static TxnErrorPtr newNotUniqueErr(const std::string& key) {
 }
 
 // TODO: load from memory
-Status Store::GetTxnValue(const std::string &key, TxnValue *value) {
-    std::string db_value;
+Status Store::GetTxnValue(const std::string& key, std::string& db_value) {
     auto s = db_->Get(rocksdb::ReadOptions(), txn_cf_, key, &db_value);
     if (s.IsNotFound()) {
         return Status(Status::kNotFound);
     } else if (!s.ok()) {
         return Status(Status::kIOError, "get txn value", s.ToString());
+    } else {
+        return Status::OK();
+    }
+}
+
+Status Store::GetTxnValue(const std::string &key, TxnValue *value) {
+    std::string db_value;
+    auto s = GetTxnValue(key, db_value);
+    if (!s.ok()) {
+        return s;
     }
     if (!value->ParseFromString(db_value)) {
         return Status(Status::kCorruption, "parse txn value", EncodeToHex(db_value));

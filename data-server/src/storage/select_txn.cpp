@@ -160,37 +160,42 @@ TxnRowFetcher::TxnRowFetcher(Store& s, const txnpb::SelectRequest& req):
 }
 
 
-Status TxnRowFetcher::getRow(const std::string& key, const std::string& db_val,
-              const txnpb::TxnValue* txn_val, txnpb::Row& row) {
-    // 存在事务intent且事务状态已经确定
-    if (txn_val != nullptr && txn_val->intent().is_primary() && txn_val->txn_status() != txnpb::INIT) {
-        const auto& intent = txn_val->intent();
-        auto txn_status = txn_val->txn_status();
+Status TxnRowFetcher::getRow(const std::string& key, const std::string& data_value,
+        const std::string& intent_value, txnpb::Row& row) {
+    if (!intent_value.empty()) {
+        txnpb::TxnValue txn_value;
+        if (!txn_value.ParseFromString(intent_value)) {
+            return Status(Status::kCorruption, "parse txn value", EncodeToHex(intent_value));
+        }
+
+        const auto& intent = txn_value.intent();
         assert(key == intent.key());
-        switch (txn_status) {
+        if (intent.is_primary()) { // primary可以直接确定当前事务的状态
+            auto txn_status = txn_value.txn_status();
+            switch (txn_status) {
             case txnpb::COMMITTED:
                 if (intent.typ() == txnpb::INSERT) { // 使用intent里的value
-                    return getRow(key, intent.value(), nullptr, row);
+                    return getRow(key, intent.value(), "", row);
                 } else { // 被删除
                     return Status(Status::kNotFound);
                 }
             case txnpb::ABORTED:
-                return getRow(key, db_val, nullptr, row);
+                return getRow(key, data_value, "", row);
+            case txnpb::INIT:
+                return getRow(key, data_value, nullptr, row);
             default:
                 return Status(Status::kInvalidArgument, "txn status", std::to_string(txn_status));
+            }
+        } else {
+            auto s = addIntent(txn_value, row);
+            if (!s.ok()) {
+                return s;
+            }
         }
     }
 
-    if (!db_val.empty()) {
-        auto s = addDefault(key, db_val, row);
-        if (!s.ok()) {
-            return s;
-        }
-    }
-
-    if (txn_val != nullptr) {
-        assert(key == txn_val->intent().key());
-        auto s = addIntent(*txn_val, row);
+    if (!data_value.empty()) {
+        auto s = addDefault(key, data_value, row);
         if (!s.ok()) {
             return s;
         }
@@ -263,24 +268,23 @@ Status PointRowFetcher::Next(txnpb::Row& row, bool& over) {
 
     fetched_ = true;
 
-    std::string db_val;
-    auto s = store_.Get(req_.key(), &db_val);
+    std::string data_value;
+    auto s = store_.Get(req_.key(), &data_value);
     if (s.code() == Status::kNotFound) {
-        db_val.clear();
+        data_value.clear();
     } else if (!s.ok()) {
         return s; // error
     }
 
-    txnpb::TxnValue txn_value;
-    txnpb::TxnValue *txn_value_ptr = nullptr;
-    s = store_.GetTxnValue(req_.key(), &txn_value);
-    if (s.ok()) {
-        txn_value_ptr = &txn_value;
-    } else if (s.code() != Status::kNotFound) {
+    std::string intent_value;
+    s = store_.GetTxnValue(req_.key(), intent_value);
+    if (s.code() == Status::kNotFound) {
+        intent_value.clear();
+    } else if (!s.ok()) {
         return s; // error
     }
 
-    s = getRow(req_.key(), db_val, txn_value_ptr, row);
+    s = getRow(req_.key(), data_value, intent_value, row);
     if (s.code() == Status::kNotFound) {
         over = true;
         return Status::OK();
@@ -297,12 +301,92 @@ RangeRowFetcher::RangeRowFetcher(Store& s, const txnpb::SelectRequest& req) :
 }
 
 Status RangeRowFetcher::Next(txnpb::Row& row, bool& over) {
-    if (!last_status_.ok()) {
-        over = true;
-        return last_status_;
+    while (last_status_.ok() && !over_) {
+        if (tryGetRow(row)) {
+            break;
+        }
+    }
+    over = over_;
+    return last_status_;
+}
+
+bool RangeRowFetcher::checkIterValid() {
+    auto s = data_iter_->status();
+    if (!s.ok()) {
+        last_status_ = std::move(s);
+        return false;
+    }
+    s = txn_iter_->status();
+    if (!s.ok()) {
+        last_status_ = std::move(s);
+        return false;
+    }
+    if (!data_iter_->Valid() && !txn_iter_->Valid()) {
+        over_ = true;
+        return false;
+    }
+    return true;
+}
+
+bool RangeRowFetcher::tryGetRow(txnpb::Row &row) {
+    if (!checkIterValid()) {
+        return false;
     }
 
-    return Status(Status::kNotSupported);
+    bool has_data = false, has_intent = false;
+    std::string data_key, intent_key;
+
+    if (data_iter_->Valid()) {
+        data_key = data_iter_->key();
+    }
+    if (txn_iter_->Valid()) {
+        intent_key = txn_iter_->key();
+    }
+
+    if (data_key.empty() && intent_key.empty()) {
+        last_status_ = Status(Status::kIOError, "range row fetch", "both iterator current key is empty");
+        return false;
+    } else if (data_key.empty()) {
+        has_intent = true;  // 只有txn迭代器有数据
+    } else if (intent_key.empty()) {
+        has_data = true; // 只有data迭代器有数据
+    } else {  // 取key较小的
+        if (data_key == intent_key) {
+            has_data = true;
+            has_intent = true;
+        } else if (data_key < intent_key) {
+            has_data = true;
+        } else {
+            has_intent = true;
+        }
+    }
+
+    // read data iter
+    std::string key;
+    std::string data_value;
+    if (has_data) {
+        key = std::move(data_key);
+        data_value = data_iter_->value();
+        data_iter_->Next();
+    }
+
+    // read txn iter
+    std::string intent_value;
+    if (has_intent) {
+        key = std::move(intent_key);
+        intent_value = txn_iter_->value();
+        txn_iter_->Next();
+    }
+
+    auto s = getRow(key, data_value, intent_value, row);
+    if (s.code() == Status::kNotFound) {
+        return false;
+    } else if (!s.ok()) {
+        last_status_ = std::move(s);
+        return false;
+    } else {
+        return true;
+    }
 }
 
 } /* namespace storage */

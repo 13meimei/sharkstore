@@ -61,8 +61,8 @@ public:
     virtual Status Next(txnpb::Row& row, bool& over) = 0;
 
 protected:
-    Status getRow(const std::string& key, const std::string& db_val,
-            const txnpb::TxnValue* txn_val, txnpb::Row& row);
+    Status getRow(const std::string& key, const std::string& data_value,
+            const std::string& intent_value, txnpb::Row& row);
 
 private:
     // add data from default cf
@@ -98,11 +98,14 @@ public:
     Status Next(txnpb::Row& row, bool& over) override;
 
 private:
+    bool tryGetRow(txnpb::Row& row);
+    bool checkIterValid();
 
 private:
     std::unique_ptr<Iterator> data_iter_;
     std::unique_ptr<Iterator> txn_iter_;
     Status last_status_;
+    bool over_ = false;
 };
 
 } /* namespace storage */
