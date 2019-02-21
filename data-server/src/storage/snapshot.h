@@ -11,7 +11,8 @@ namespace storage {
 class Snapshot : public raft::Snapshot {
 public:
     Snapshot(uint64_t applied, std::string&& context,
-            Iterator *data_iter, Iterator *txn_iter);
+            std::unique_ptr<Iterator> data_iter,
+            std::unique_ptr<Iterator> txn_iter);
 
     ~Snapshot();
 
@@ -27,9 +28,9 @@ private:
 private:
     uint64_t applied_ = 0;
     std::string context_;
-    Iterator* data_iter_ = nullptr;
+    std::unique_ptr<Iterator> data_iter_;
+    std::unique_ptr<Iterator> txn_iter_;
     bool data_over_ = false;
-    Iterator* txn_iter_ = nullptr;
 };
 
 } /* namespace storage */

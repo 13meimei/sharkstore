@@ -61,7 +61,12 @@ public:
     virtual Status Next(txnpb::Row& row, bool& over) = 0;
 
 protected:
-    Status addRow(const std::string& key, const std::string& buf, txnpb::Row& row);
+    Status getRow(const std::string& key, const std::string& db_val,
+            const txnpb::TxnValue* txn_val, txnpb::Row& row);
+
+private:
+    // add data from default cf
+    Status addDefault(const std::string& key, const std::string& buf, txnpb::Row& row);
     Status addIntent(const txnpb::TxnValue& txn_value, txnpb::Row& row);
 
 protected:
@@ -72,6 +77,7 @@ protected:
 
 std::unique_ptr<TxnRowFetcher> NewTxnRowFetcher(Store& s, const txnpb::SelectRequest& req);
 
+
 class PointRowFetcher : public TxnRowFetcher {
 public:
     PointRowFetcher(Store& s, const txnpb::SelectRequest& req);
@@ -80,23 +86,23 @@ public:
     Status Next(txnpb::Row& row, bool& over) override;
 
 private:
-    Status getFromData(txnpb::Row& row);
-    Status getFromIntent(txnpb::Row& row);
-
-private:
     bool fetched_ = false;
 };
+
 
 class RangeRowFetcher : public TxnRowFetcher {
 public:
     RangeRowFetcher(Store& s, const txnpb::SelectRequest& req);
-    ~RangeRowFetcher();
+    ~RangeRowFetcher() = default;
 
     Status Next(txnpb::Row& row, bool& over) override;
 
 private:
-    Iterator* data_iter_ = nullptr;
-    Iterator* txn_iter_ = nullptr;
+
+private:
+    std::unique_ptr<Iterator> data_iter_;
+    std::unique_ptr<Iterator> txn_iter_;
+    Status last_status_;
 };
 
 } /* namespace storage */

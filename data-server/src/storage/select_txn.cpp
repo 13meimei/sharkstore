@@ -159,7 +159,52 @@ TxnRowFetcher::TxnRowFetcher(Store& s, const txnpb::SelectRequest& req):
     decoder_(s.GetPrimaryKeys(), req) {
 }
 
-Status TxnRowFetcher::addRow(const std::string& key, const std::string& buf, txnpb::Row& row) {
+
+Status TxnRowFetcher::getRow(const std::string& key, const std::string& db_val,
+              const txnpb::TxnValue* txn_val, txnpb::Row& row) {
+    // 存在事务intent且事务状态已经确定
+    if (txn_val != nullptr && txn_val->intent().is_primary() && txn_val->txn_status() != txnpb::INIT) {
+        const auto& intent = txn_val->intent();
+        auto txn_status = txn_val->txn_status();
+        assert(key == intent.key());
+        switch (txn_status) {
+            case txnpb::COMMITTED:
+                if (intent.typ() == txnpb::INSERT) { // 使用intent里的value
+                    return getRow(key, intent.value(), nullptr, row);
+                } else { // 被删除
+                    return Status(Status::kNotFound);
+                }
+            case txnpb::ABORTED:
+                return getRow(key, db_val, nullptr, row);
+            default:
+                return Status(Status::kInvalidArgument, "txn status", std::to_string(txn_status));
+        }
+    }
+
+    if (!db_val.empty()) {
+        auto s = addDefault(key, db_val, row);
+        if (!s.ok()) {
+            return s;
+        }
+    }
+
+    if (txn_val != nullptr) {
+        assert(key == txn_val->intent().key());
+        auto s = addIntent(*txn_val, row);
+        if (!s.ok()) {
+            return s;
+        }
+    }
+
+    if (row.has_value() || row.has_intent()) {
+        row.set_key(key);
+    } else {
+        return Status(Status::kNotFound);
+    }
+    return Status::OK();
+}
+
+Status TxnRowFetcher::addDefault(const std::string& key, const std::string& buf, txnpb::Row& row) {
     TxnRowValue value;
     bool matched = false;
     auto s = decoder_.DecodeAndFilter(key, buf, value, matched);
@@ -186,6 +231,7 @@ Status TxnRowFetcher::addIntent(const txnpb::TxnValue &txn_value, txnpb::Row &ro
         }
         value.Encode(req_, row.mutable_intent()->mutable_value());
     }
+
     auto row_intent = row.mutable_intent();
     row_intent->set_txn_id(txn_value.txn_id());
     row_intent->set_op_type(txn_value.intent().typ());
@@ -217,58 +263,45 @@ Status PointRowFetcher::Next(txnpb::Row& row, bool& over) {
 
     fetched_ = true;
 
-    auto s = getFromData(row);
-    if (!s.ok()) {
-        return s;
+    std::string db_val;
+    auto s = store_.Get(req_.key(), &db_val);
+    if (s.code() == Status::kNotFound) {
+        db_val.clear();
+    } else if (!s.ok()) {
+        return s; // error
     }
-    s = getFromIntent(row);
-    if (!s.ok()) {
-        return s;
-    }
-    if (row.has_value() || row.has_intent()) { // got row or intent
-        row.set_key(req_.key());
-    } else { // get nothing
-        over = true;
-    }
-    return Status::OK();
-}
 
-Status PointRowFetcher::getFromData(txnpb::Row& row) {
-    std::string buf;
-    auto s = store_.Get(req_.key(), &buf);
-    if (s.ok()) {
-        return addRow(req_.key(), buf, row);
-    } else if (s.code() == Status::kNotFound) {
-        return Status::OK();
-    } else {
-        return s;
-    }
-}
-
-Status PointRowFetcher::getFromIntent(txnpb::Row& row) {
     txnpb::TxnValue txn_value;
-    auto s = store_.GetTxnValue(req_.key(), &txn_value);
+    txnpb::TxnValue *txn_value_ptr = nullptr;
+    s = store_.GetTxnValue(req_.key(), &txn_value);
     if (s.ok()) {
-        return addIntent(txn_value, row);
-    } else if (s.code() == Status::kNotFound) {
+        txn_value_ptr = &txn_value;
+    } else if (s.code() != Status::kNotFound) {
+        return s; // error
+    }
+
+    s = getRow(req_.key(), db_val, txn_value_ptr, row);
+    if (s.code() == Status::kNotFound) {
+        over = true;
         return Status::OK();
     } else {
         return s;
     }
 }
-
 
 /// RangeRowFetcher
 RangeRowFetcher::RangeRowFetcher(Store& s, const txnpb::SelectRequest& req) :
     TxnRowFetcher(s, req) {
-}
-
-RangeRowFetcher::~RangeRowFetcher() {
-    delete data_iter_;
-    delete txn_iter_;
+    last_status_ = store_.NewIterators(data_iter_, txn_iter_,
+            req_.scope().start(), req_.scope().limit());
 }
 
 Status RangeRowFetcher::Next(txnpb::Row& row, bool& over) {
+    if (!last_status_.ok()) {
+        over = true;
+        return last_status_;
+    }
+
     return Status(Status::kNotSupported);
 }
 

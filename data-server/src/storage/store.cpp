@@ -596,10 +596,9 @@ Status Store::RangeDelete(const std::string& start, const std::string& limit) {
     return Status(ret.ok() ? Status::OK() : Status(Status::kUnknown));
 }
 
-Status Store::GetSnapshot(uint64_t apply_index, std::string&& context,
-        std::shared_ptr<raft::Snapshot>* snapshot) {
-    assert(snapshot != nullptr);
 
+Status Store::NewIterators(std::unique_ptr<Iterator>& data_iter, std::unique_ptr<Iterator>& txn_iter,
+                    const std::string& start, const std::string& limit) {
     std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
     cf_handles.push_back(db_->DefaultColumnFamily());
     cf_handles.push_back(txn_cf_);
@@ -612,12 +611,34 @@ Status Store::GetSnapshot(uint64_t apply_index, std::string&& context,
         return Status(Status::kIOError, "create iterators", s.ToString());
     }
 
-    assert(iterators.size() == 2);
+    std::string final_start = start, final_end = limit;
+    if (final_start.empty() || final_start < start_key_) {
+        final_start = start_key_;
+    }
     auto end_key = GetEndKey();
-    auto default_iter = new Iterator(iterators[0], start_key_, end_key);
-    auto txn_iter = new Iterator(iterators[1], start_key_, end_key);
-    snapshot->reset(new Snapshot(apply_index, std::move(context), default_iter, txn_iter));
+    if (final_end.empty() || final_end > end_key) {
+        final_end = end_key;
+    }
+    assert(final_start >= start_key_);
+    assert(final_end <= end_key);
 
+    assert(iterators.size() == 2);
+    data_iter.reset(new Iterator(iterators[0], final_start, final_end));
+    txn_iter.reset(new Iterator(iterators[1], final_start, final_end));
+
+    return Status::OK();
+}
+
+Status Store::GetSnapshot(uint64_t apply_index, std::string&& context,
+        std::shared_ptr<raft::Snapshot>* snapshot) {
+    assert(snapshot != nullptr);
+
+    std::unique_ptr<Iterator> data_iter, txn_iter;
+    auto s = this->NewIterators(data_iter, txn_iter);
+    if (!s.ok()) {
+        return s;
+    }
+    snapshot->reset(new Snapshot(apply_index, std::move(context), std::move(data_iter), std::move(txn_iter)));
     return Status::OK();
 }
 

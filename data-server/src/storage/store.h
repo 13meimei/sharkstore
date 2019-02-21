@@ -85,6 +85,9 @@ public:
         const std::vector<std::pair<std::string, std::string>>& keyValues);
     Status RangeDelete(const std::string& start, const std::string& limit);
 
+    Status NewIterators(std::unique_ptr<Iterator>& data_iter, std::unique_ptr<Iterator>& txn_iter,
+            const std::string& start = "", const std::string& limit = "");
+
     Status GetSnapshot(uint64_t apply_index, std::string&& context,
             std::shared_ptr<raft::Snapshot>* snapshot);
     Status ApplySnapshot(const std::vector<std::string>& datas);

@@ -5,11 +5,11 @@ namespace dataserver {
 namespace storage {
 
 Snapshot::Snapshot(uint64_t applied, std::string&& context,
-        Iterator *data_iter, Iterator *txn_iter) :
+        std::unique_ptr<Iterator> data_iter, std::unique_ptr<Iterator> txn_iter) :
         applied_(applied),
         context_(std::move(context)),
-        data_iter_(data_iter),
-        txn_iter_(txn_iter) {
+        data_iter_(std::move(data_iter)),
+        txn_iter_(std::move(txn_iter)) {
 }
 
 Snapshot::~Snapshot() {
@@ -23,7 +23,7 @@ Status Snapshot::Context(std::string* context) {
 
 Status Snapshot::Next(std::string* data, bool* over) {
     if (!data_over_) {
-        auto s = next(data_iter_, raft_cmdpb::CF_DEFAULT, data, &data_over_);
+        auto s = next(data_iter_.get(), raft_cmdpb::CF_DEFAULT, data, &data_over_);
         if (!s.ok()) {
             return s;
         }
@@ -32,7 +32,7 @@ Status Snapshot::Next(std::string* data, bool* over) {
         }
     }
     // data_over_ == true
-    return next(txn_iter_, raft_cmdpb::CF_TXN, data, over);
+    return next(txn_iter_.get(), raft_cmdpb::CF_TXN, data, over);
 }
 
 
@@ -54,11 +54,8 @@ Status Snapshot::next(Iterator* iter, raft_cmdpb::CFType cf_type, std::string* d
 }
 
 void Snapshot::Close() {
-    delete data_iter_;
-    data_iter_ = nullptr;
-
-    delete txn_iter_;
-    txn_iter_= nullptr;
+    data_iter_.reset();
+    txn_iter_.reset();
 }
 
 
