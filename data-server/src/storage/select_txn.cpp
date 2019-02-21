@@ -333,32 +333,28 @@ bool RangeRowFetcher::tryGetRow(txnpb::Row &row) {
         return false;
     }
 
+    assert(data_iter_->Valid() || txn_iter_->Valid());
+
     bool has_data = false, has_intent = false;
     std::string data_key, intent_key;
-
-    if (data_iter_->Valid()) {
+    auto both_valid = data_iter_->Valid() && txn_iter_->Valid();
+    if (both_valid) {
         data_key = data_iter_->key();
-    }
-    if (txn_iter_->Valid()) {
         intent_key = txn_iter_->key();
-    }
-
-    if (data_key.empty() && intent_key.empty()) {
-        last_status_ = Status(Status::kIOError, "range row fetch", "both iterator current key is empty");
-        return false;
-    } else if (data_key.empty()) {
-        has_intent = true;  // 只有txn迭代器有数据
-    } else if (intent_key.empty()) {
-        has_data = true; // 只有data迭代器有数据
-    } else {  // 取key较小的
-        if (data_key == intent_key) {
+        if (data_key == intent_key) { // 都取
             has_data = true;
             has_intent = true;
-        } else if (data_key < intent_key) {
+        } else if (data_key < intent_key) { // 取小的
             has_data = true;
         } else {
             has_intent = true;
         }
+    } else if (data_iter_->Valid()) { // only data valid
+        data_key = data_iter_->key();
+        has_data = true;
+    } else { // only intent valid
+        intent_key = txn_iter_->key();
+        has_intent = true;
     }
 
     // read data iter
