@@ -19,18 +19,15 @@ import (
 )
 
 /**
-return:
-	txIntents,
-	mysql.Result(affectedRows, lastInsertId)
-	error
+	return: table, txIntents, mysql.Result(affectedRows, lastInsertId), error
  */
 func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface{}) (
-	intents []*txnpb.TxnIntent, res *mysql.Result, err error) {
+	t *Table, intents []*txnpb.TxnIntent, res *mysql.Result, err error) {
 
 	parser := &StmtParser{}
 	// 解析表名
 	tableName := parser.parseTable(stmt)
-	t := p.router.FindTable(db, tableName)
+	t = p.router.FindTable(db, tableName)
 	if t == nil {
 		err = fmt.Errorf("Table '%s.%s' doesn't exist ", db, tableName)
 		log.Error("[insert] find table err: %v", err)
@@ -457,7 +454,7 @@ func (p *Proxy) insertRows(t *Table, colMap map[string]int, rows []InsertRowValu
 			Typ:         txnpb.OpType_INSERT,
 			Key:         kvPair.GetKey(),
 			Value:       kvPair.GetValue(),
-			CheckUnique: true,
+			CheckUnique: t.GetPkDupCheck(),
 			ExpectedVer: 0,
 		}
 		intents[i] = intent

@@ -156,9 +156,10 @@ func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) (e
 		golog.Debug("[insert]table:%v,cols:%v,rows:%v, args:%v", stmt.Table, stmt.Columns, stmt.Rows, args)
 	}
 	var (
-		implicit   bool
-		ret     *mysql.Result
-		intents []*txnpb.TxnIntent
+		implicit bool
+		ret      *mysql.Result
+		t        *Table
+		intents  []*txnpb.TxnIntent
 	)
 	if !c.isInTransaction() {
 		implicit = true
@@ -166,45 +167,88 @@ func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) (e
 	}
 
 	//verify, encode
-	intents, ret, err = c.server.proxy.HandleInsert(c.db, stmt, args)
+	t, intents, ret, err = c.server.proxy.HandleInsert(c.db, stmt, args)
 	if err != nil {
 		golog.Error("[insert]HandleInsert failed, err[%v]", err)
 		return c.writeError(err)
 	}
+	c.tx.SetTable(t)
 	err = c.tx.Insert(intents)
 	if err != nil {
 		golog.Error("[insert]txnInsert failed, err[%v]", err)
 		return c.writeError(err)
 	}
-	golog.Debug("insert success")
+	if golog.GetFileLogger().IsEnableDebug() {
+		golog.Debug("insert success")
+	}
 	return c.writeOK(ret)
 }
 
-func (c *ClientConn) handleDelete(stmt *sqlparser.Delete, args []interface{}) error {
+func (c *ClientConn) handleDelete(stmt *sqlparser.Delete, args []interface{}) (err error) {
 	if len(c.db) == 0 {
 		return errors.ErrNoDatabase
 	}
 	if golog.GetFileLogger().IsEnableDebug() {
 		golog.Debug("table:%v,where:%v, args:%v", stmt.Table, stmt.Where, args)
 	}
-	ret, err := c.server.proxy.HandleDelete(c.db, stmt, args)
-	if err != nil {
-		return err
+	var (
+		implicit bool
+		ret      *mysql.Result
+		t        *Table
+		intents  []*txnpb.TxnIntent
+	)
+	if !c.isInTransaction() {
+		implicit = true
+		c.tx = NewTx(implicit, c.server.proxy, 0)
 	}
-	//TODO:return execut nums
+
+	//verify, encode
+	t, intents, ret, err = c.server.proxy.HandleDelete(c.db, stmt, args)
+	if err != nil {
+		golog.Error("[delete]HandleDelete failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	c.tx.SetTable(t)
+	err = c.tx.Delete(intents)
+	if err != nil {
+		golog.Error("[delete]txnDelete failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	if golog.GetFileLogger().IsEnableDebug() {
+		golog.Debug("delete success")
+	}
 	return c.writeOK(ret)
 }
 
-func (c *ClientConn) handleUpdate(stmt *sqlparser.Update, args []interface{}) error {
+func (c *ClientConn) handleUpdate(stmt *sqlparser.Update, args []interface{}) (err error) {
 	if len(c.db) == 0 {
 		return errors.ErrNoDatabase
 	}
 	if golog.GetFileLogger().IsEnableDebug() {
 		golog.Debug("table:%v, expr:%v, where:%v", stmt.Table, stmt.Exprs, stmt.Where)
 	}
-	ret, err := c.server.proxy.HandleUpdate(c.db, stmt, args)
+
+	var (
+		implicit bool
+		ret      *mysql.Result
+		t        *Table
+		intents  []*txnpb.TxnIntent
+	)
+	if !c.isInTransaction() {
+		implicit = true
+		c.tx = NewTx(implicit, c.server.proxy, 0)
+	}
+
+	//verify, encode
+	t, intents, ret, err = c.server.proxy.HandleUpdate(c.db, stmt, args)
 	if err != nil {
-		golog.Error("update failed, err[%v]", err)
+		golog.Error("[update]HandleUpdate failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	c.tx.SetTable(t)
+	err = c.tx.Update(intents)
+	if err != nil {
+		golog.Error("[update]txnUpdate failed, err[%v]", err)
 		return c.writeError(err)
 	}
 	if golog.GetFileLogger().IsEnableDebug() {

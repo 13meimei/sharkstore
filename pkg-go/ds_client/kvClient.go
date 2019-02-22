@@ -46,6 +46,8 @@ type KvClient interface {
 	TxPrepare(ctx context.Context, addr string, req *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error)
 	TxDecide(ctx context.Context, addr string, req *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error)
 	TxCleanup(ctx context.Context, addr string, req *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
+	TxSelect(ctx context.Context, addr string, req *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error)
+	TxGetLock(ctx context.Context, addr string, req *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error)
 }
 
 type KvRpcClient struct {
@@ -292,6 +294,24 @@ func (c *KvRpcClient) TxCleanup(ctx context.Context, addr string, req *txnpb.DsC
 		return nil, err
 	}
 	resp, err := conn.TxCleanup(ctx, req)
+	return resp, err
+}
+
+func (c *KvRpcClient) TxSelect(ctx context.Context, addr string, req *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.TxSelect(ctx, req)
+	return resp, err
+}
+
+func (c *KvRpcClient) TxGetLock(ctx context.Context, addr string, req *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.TxGetLock(ctx, req)
 	return resp, err
 }
 

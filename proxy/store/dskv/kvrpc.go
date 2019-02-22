@@ -45,6 +45,7 @@ const (
 	Type_TxPrepare   Type = 30
 	Type_TxDecide    Type = 31
 	Type_TxCleanup   Type = 32
+	Type_TxGetLock   Type = 33
 )
 
 var Type_name = map[int32]string{
@@ -60,6 +61,7 @@ var Type_name = map[int32]string{
 	30: "TxPrepare",
 	31: "TxDecide",
 	32: "TxCleanup",
+	33: "TxGetLock",
 }
 var Type_value = map[string]int32{
 	"InvalidType": 0,
@@ -74,6 +76,7 @@ var Type_value = map[string]int32{
 	"TxPrepare":   30,
 	"TxDecide":    31,
 	"TxCleanup":   32,
+	"TxGetLock":   33,
 }
 
 func (x Type) String() string {
@@ -87,10 +90,10 @@ type Request struct {
 	RawDeleteReq  *kvrpcpb.DsKvRawDeleteRequest
 	RawExecuteReq *kvrpcpb.DsKvRawExecuteRequest
 
-	SelectReq     *kvrpcpb.DsSelectRequest
-	InsertReq     *kvrpcpb.DsInsertRequest
-	DeleteReq     *kvrpcpb.DsDeleteRequest
-	UpdateReq     *kvrpcpb.DsUpdateRequest
+	SelectReq *kvrpcpb.DsSelectRequest
+	InsertReq *kvrpcpb.DsInsertRequest
+	DeleteReq *kvrpcpb.DsDeleteRequest
+	UpdateReq *kvrpcpb.DsUpdateRequest
 
 	LockReq        *kvrpcpb.DsLockRequest
 	LockUpdateReq  *kvrpcpb.DsLockUpdateRequest
@@ -110,6 +113,8 @@ type Request struct {
 	TxPrepareReq *txnpb.DsPrepareRequest
 	TxDecideReq  *txnpb.DsDecideRequest
 	TxCleanupReq *txnpb.DsClearupRequest
+	TxSelectReq  *txnpb.DsSelectRequest
+	TxGetLockReq *txnpb.DsGetLockInfoRequest
 }
 
 func (m *Request) Reset() {
@@ -287,6 +292,20 @@ func (m *Request) GetTxCleanupReq() *txnpb.DsClearupRequest {
 	return nil
 }
 
+func (m *Request) GetTxSelectReq() *txnpb.DsSelectRequest {
+	if m != nil {
+		return m.TxSelectReq
+	}
+	return nil
+}
+
+func (m *Request) GetTxLockInfo() *txnpb.DsGetLockInfoRequest {
+	if m != nil {
+		return m.TxGetLockReq
+	}
+	return nil
+}
+
 type Response struct {
 	Type           Type
 	RawGetResp     *kvrpcpb.DsKvRawGetResponse
@@ -317,6 +336,8 @@ type Response struct {
 	TxPrepareResp *txnpb.DsPrepareResponse
 	TxDecideResp  *txnpb.DsDecideResponse
 	TxCleanupResp *txnpb.DsClearupResponse
+	TxSelectResp  *txnpb.DsSelectResponse
+	TxGetLockResp *txnpb.DsGetLockInfoResponse
 }
 
 func (m *Response) GetType() Type {
@@ -489,6 +510,20 @@ func (m *Response) GetTxCleanupResp() *txnpb.DsClearupResponse {
 	return nil
 }
 
+func (m *Response) GetTxSelectResp() *txnpb.DsSelectResponse {
+	if m != nil {
+		return m.TxSelectResp
+	}
+	return nil
+}
+
+func (m *Response) GetTxLockInfoResp() *txnpb.DsGetLockInfoResponse {
+	if m != nil {
+		return m.TxGetLockResp
+	}
+	return nil
+}
+
 func (resp *Response) GetErr() (pErr *errorpb.Error, err error) {
 	switch resp.Type {
 	case Type_RawPut:
@@ -537,6 +572,8 @@ func (resp *Response) GetErr() (pErr *errorpb.Error, err error) {
 		pErr = resp.TxDecideResp.GetHeader().GetError()
 	case Type_TxCleanup:
 		pErr = resp.TxCleanupResp.GetHeader().GetError()
+	case Type_TxGetLock:
+		pErr = resp.TxGetLockResp.GetHeader().GetError()
 	default:
 		err = fmt.Errorf("invalid response type %s", resp.Type.String())
 	}

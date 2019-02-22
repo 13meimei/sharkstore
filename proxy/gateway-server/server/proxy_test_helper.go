@@ -241,7 +241,7 @@ func testProxyInsert(t *testing.T, p *Proxy, expectedAffected uint64, sql string
 	if !ok {
 		t.Fatalf("not insert stamentent: %s", sql)
 	}
-	_, res, err := p.HandleInsert(testDBName, stmt, nil)
+	_, _, res, err := p.HandleInsert(testDBName, stmt, nil)
 	if err != nil {
 		if  err == dskv.ErrRouteChange{
 			t.Logf("insert failed, %v, sqlL%v", err, sql)
@@ -270,7 +270,7 @@ func testProxyDelete(t *testing.T, p *Proxy, expectAffected uint64, sql string) 
 	if !ok {
 		t.Fatalf("not delete stamentent: %s", sql)
 	}
-	res, err := p.HandleDelete(testDBName, stmt, nil)
+	_, _, res, err := p.HandleDelete(testDBName, stmt, nil)
 	if err != nil {
 		t.Fatalf("delete faile: %v, sql: %s", err, sql)
 	}
@@ -535,7 +535,7 @@ func testProxyUpdate(t *testing.T, p *Proxy, expectedAffected uint64, sql string
 	if !ok {
 		t.Fatalf("not update stamentent: %s", sql)
 	}
-	res, err := p.HandleUpdate(testDBName, stmt, nil)
+	_, _, res, err := p.HandleUpdate(testDBName, stmt, nil)
 	if err != nil {
 		if  err == dskv.ErrRouteChange{
 			t.Logf("update failed, %v, sqlL%v", err, sql)

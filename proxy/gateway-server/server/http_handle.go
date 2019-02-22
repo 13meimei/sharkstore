@@ -259,7 +259,7 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 			}
 		}
 		// 向dataserver查询
-		//filter := &Filter{columns: columns, matchs: matchs}
+		//filter := &Filter{columns: columns, matches: matches}
 
 		limit := query.parseLimit()
 		log.Debug("getcommand limit: %v", limit)
@@ -279,7 +279,7 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 			// TODO
 			for _, pk := range query.Command.PKs {
 				matches, err := query.parseMatches(pk)
-				//filter := &Filter{columns: columns, matchs: matchs}
+				//filter := &Filter{columns: columns, matches: matches}
 				if err != nil {
 					log.Error("[get] handle parse where error: %v", err)
 					return nil, err
@@ -519,6 +519,7 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		return nil, err
 	}
 	tx = NewTx(true, proxy, 0)
+	tx.SetTable(t)
 	err = tx.Insert(intents)
 	if err != nil {
 		log.Error("insert error %s- %s:%s", db, tableName, err.Error())
@@ -547,7 +548,10 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		return nil, err
 	}
 
-	var affected uint64
+	var (
+		intents  []*txnpb.TxnIntent
+		affected uint64
+	)
 	if len(query.Command.PKs) == 0 {
 		var matches []Match = nil
 		var err error
@@ -564,7 +568,7 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		log.Debug("updcommand limit: %v", limit)
 
 		scope := query.parseScope()
-		affected, err = proxy.doUpdate(t, fieldList, matches, limit, scope)
+		intents, affected, err = proxy.doUpdate(t, fieldList, matches, limit, scope)
 		if err != nil {
 			log.Error("updcommand doUpdate error: %v", err)
 			return nil, err
@@ -596,6 +600,7 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 					return nil, err
 				}
 				allAffected += task.rest.affected
+				intents = append(intents, task.rest.intents...)
 				PutUpdateTask(task)
 			}
 		} else {
@@ -604,12 +609,20 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 				log.Error("[update] handle parse where error: %v", err)
 				return nil, err
 			}
-			affected, err = proxy.doUpdate(t, fieldList, matches, nil, nil)
+			intents, affected, err = proxy.doUpdate(t, fieldList, matches, nil, nil)
 			if err != nil {
 				log.Error("update do failed, err[%v]", err)
 				return nil, err
 			}
 		}
+	}
+
+	tx := NewTx(true, proxy, 0)
+	tx.SetTable(t)
+	err = tx.Update(intents)
+	if err != nil {
+		log.Error("update error %s- %s:%s", db, tableName, err.Error())
+		return nil, err
 	}
 	return &Reply{
 		Code:         0,
@@ -632,13 +645,19 @@ func (query *Query) delCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	}
 
 	// 向dataserver查询
-	affectedRows, err := proxy.doDelete(t, matches)
+	intents, affected, err := proxy.doDelete(t, matches)
+	if err != nil {
+		return nil, err
+	}
+	tx := NewTx(true, proxy, 0)
+	tx.SetTable(t)
+	err = tx.Delete(intents)
 	if err != nil {
 		return nil, err
 	}
 	return &Reply{
 		Code:         0,
-		RowsAffected: affectedRows,
+		RowsAffected: affected,
 	}, nil
 }
 

@@ -91,6 +91,8 @@ func init() {
 	msgType[uint16(funcpb.FunctionID_kFuncTxnPrepare)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncTxnDecide)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncTxnClearup)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnSelect)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnGetLockInfo)] = &MsgTypeGroup{0x02, 0x12}
 
 	msgType[uint16(funcpb.FunctionID_kFuncCreateRange)] = &MsgTypeGroup{0x01, 0x11}
 	msgType[uint16(funcpb.FunctionID_kFuncDeleteRange)] = &MsgTypeGroup{0x01, 0x11}
@@ -169,6 +171,8 @@ type RpcClient interface {
 	TxPrepare(ctx context.Context, in *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error)
 	TxDecide(ctx context.Context, in *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error)
 	TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
+	TxSelect(ctx context.Context, in *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error)
+	TxGetLock(ctx context.Context, in *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error)
 
 	// admin
 	CreateRange(ctx context.Context, in *schpb.CreateRangeRequest) (*schpb.CreateRangeResponse, error)
@@ -746,6 +750,36 @@ func (c *DSRpcClient) TxDecide(ctx context.Context, in *txnpb.DsDecideRequest) (
 func (c *DSRpcClient) TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error) {
 	out := new(txnpb.DsClearupResponse)
 	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncTxnClearup), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxSelect(ctx context.Context, in *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error) {
+	out := new(txnpb.DsSelectResponse)
+	var fastFlag uint8
+	if len(in.GetReq().GetKey()) > 0 {
+		fastFlag = 1
+	}
+	msgId, err := c.executeWithFlags(uint16(funcpb.FunctionID_kFuncTxnSelect), ctx, in, out, fastFlag)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxGetLock(ctx context.Context, in *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error) {
+	out := new(txnpb.DsGetLockInfoResponse)
+	var fastFlag uint8
+	if len(in.GetReq().GetKey()) > 0 {
+		fastFlag = 1
+	}
+	msgId, err := c.executeWithFlags(uint16(funcpb.FunctionID_kFuncTxnGetLockInfo), ctx, in, out, fastFlag)
 	in.GetHeader().TraceId = msgId
 	if err != nil {
 		return nil, err

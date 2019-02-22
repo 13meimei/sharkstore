@@ -99,12 +99,12 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 		}
 		resp.InsertResp = _resp
 	case Type_Select:
-		_resp, _err := p.Cli.Select(ctx, addr, req.GetSelectReq())
+		_resp, _err := p.Cli.TxSelect(ctx, addr, req.GetTxSelectReq())
 		if _err != nil {
 			err = _err
 			goto Err
 		}
-		resp.SelectResp = _resp
+		resp.TxSelectResp = _resp
 	case Type_Delete:
 		_resp, _err := p.Cli.Delete(ctx, addr, req.GetDeleteReq())
 		if _err != nil {
@@ -197,6 +197,13 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 			goto Err
 		}
 		resp.TxCleanupResp = _resp
+	case Type_TxGetLock:
+		_resp, _err := p.Cli.TxGetLock(ctx, addr, req.GetTxLockInfo())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxGetLockResp = _resp
 	default:
 		return nil, false, ErrInternalError
 	}
@@ -292,6 +299,9 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 	case Type_TxCleanup:
 		header = req.TxCleanupReq.GetHeader()
 		timeout = client.ReadTimeoutMedium
+	case Type_TxGetLock:
+		header = req.TxGetLockReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
 	default:
 		return timeout, header, fmt.Errorf("invalid request type %s", req.Type.String())
 	}
@@ -327,7 +337,6 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 	var addr string
 	var timeout time.Duration
 	var reqHeader *kvrpcpb.RequestHeader
-	//var pErr *errorpb.Error
 	l, err = p.RangeCache.LocateKey(bo, key)
 	if err != nil {
 		log.Error("locate key=%v failed, err=%v", key, err)

@@ -11,48 +11,54 @@ import (
 	"proxy/store/dskv"
 	"pkg-go/ds_client"
 	"model/pkg/kvrpcpb"
+	"model/pkg/txn"
 )
 
 // HandleUpdate handle update
-func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface{}) (*mysql.Result, error) {
-	var err error
+func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface{}) (
+	t *Table, intents []*txnpb.TxnIntent, res *mysql.Result, err error) {
+
 	parser := &StmtParser{}
 	// 解析表名
 	tableName := parser.parseTable(stmt)
-	t := p.router.FindTable(db, tableName)
+	t = p.router.FindTable(db, tableName)
 	if t == nil {
-		log.Error("[update] table %s.%s doesn.t exist", db, tableName)
-		return nil, fmt.Errorf("Table '%s.%s' doesn't exist", db, tableName)
+		err = fmt.Errorf("Table '%s.%s' doesn't exist ", db, tableName)
+		log.Error("[update] find table err: %v", err)
+		return
 	}
 
 	var fieldList []*kvrpcpb.Field
 	fieldList, err = parser.parseUpdateFields(t, stmt)
 	if err != nil {
 		log.Error("[update] parse update exprs failed: %v", err)
-		return nil, fmt.Errorf("parse update exprs failed: %v", err)
+		err = fmt.Errorf("parse update exprs failed: %v", err)
+		return
 	}
 
 	// 解析where条件
-	var matchs []Match
+	var matches []Match
 	if stmt.Where != nil {
 		// TODO: 支持OR表达式
-		matchs, err = parser.parseWhere(stmt.Where)
+		matches, err = parser.parseWhere(stmt.Where)
 		if err != nil {
 			log.Error("[update] parse where error(%v)", err.Error())
-			return nil, err
+			return
 		}
 	}
 
 	var limit *Limit
 	if stmt.Limit != nil {
-		offset, count, err := parseLimit(stmt.Limit)
+		var offset, count uint64
+		offset, count, err = parseLimit(stmt.Limit)
 		if err != nil {
 			log.Error("[update] parse limit error[%v]", err)
-			return nil, err
+			return
 		}
 		if offset != 0 {
 			log.Error("[update] unsupported limit offset")
-			return nil, fmt.Errorf("parse update limit failed: unsupported limit offset")
+			err = fmt.Errorf("parse update limit failed: unsupported limit offset")
+			return
 		}
 		//todo 是否需要加限制
 		//if count > DefaultMaxRawCount {
@@ -67,19 +73,20 @@ func (p *Proxy) HandleUpdate(db string, stmt *sqlparser.Update, args []interface
 	//}
 
 	if log.GetFileLogger().IsEnableDebug() {
-		log.Debug("update exprs: %v, matchs: %v, limit: %v", fieldList, matchs, limit)
+		log.Debug("update exprs: %v, matchs: %v, limit: %v", fieldList, matches, limit)
 	}
-	affected, err := p.doUpdate(t, fieldList, matchs, limit, nil)
+	var affected uint64
+	intents, affected, err = p.doUpdate(t, fieldList, matches, limit, nil)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	res := new(mysql.Result)
+	res = new(mysql.Result)
 	res.AffectedRows = affected
-	return res, nil
+	return
 }
 
-func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limit *Limit, userScope *Scope) (affected uint64, err error) {
+func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limit *Limit, userScope *Scope) (intents []*txnpb.TxnIntent, affected uint64, err error) {
 	var (
 		key       []byte
 		scope     *kvrpcpb.Scope
@@ -129,7 +136,7 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 			oldIndexKeys     [][]byte
 			newIndexKvPairs  []*kvrpcpb.KeyValue
 		)
-		sreq := &kvrpcpb.SelectRequest{
+		sreq := &txnpb.SelectRequest{
 			Key:          key,
 			Scope:        scope,
 			FieldList:    selectFields,
@@ -218,25 +225,27 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 				}
 			}
 		}
-		context := dskv.NewPRConext(dskv.GetMaxBackoff)
-		//delete index data
-		if err = p.deleteIndexes(context, t, oldIndexKeys); err != nil {
-			return
-		}
-		//insert index data
-		if err = p.insertIndexes(context, t, newIndexKvPairs); err != nil {
-			return
-		}
+		//context := dskv.NewPRConext(dskv.GetMaxBackoff)
+		////delete index data
+		//if err = p.deleteIndexes(context, t, oldIndexKeys); err != nil {
+		//	return
+		//}
+		////insert index data
+		//if err = p.insertIndexes(context, t, newIndexKvPairs); err != nil {
+		//	return
+		//}
 	}
-	// TODO: pool
-	sreq := &kvrpcpb.UpdateRequest{
-		Key:          key,
-		Scope:        scope,
-		Fields:       exprs,
-		WhereFilters: pbMatches,
-		Limit:        pbLimit,
-	}
-	return p.updateRemote(t, sreq)
+	//// TODO: pool
+	//sreq := &kvrpcpb.UpdateRequest{
+	//	Key:          key,
+	//	Scope:        scope,
+	//	Fields:       exprs,
+	//	WhereFilters: pbMatches,
+	//	Limit:        pbLimit,
+	//}
+	//return p.updateRemote(t, sreq)
+	//todo add intents
+	return
 }
 
 func getSelectFieldsFromExprs(t *Table, exprs []*kvrpcpb.Field) ([]*kvrpcpb.SelectField, map[string]*kvrpcpb.Field) {

@@ -49,7 +49,7 @@ func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t
 				}
 			}
 			//recover expired txs
-			if err = p.handleRecoverExpiredTxs(expiredTxs); err != nil {
+			if err = p.handleRecoverTxs(expiredTxs, t); err != nil {
 				return
 			}
 			continue
@@ -61,55 +61,136 @@ func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t
 /**
 	recover(commit or rollback) previous expired transaction
  */
-func (p *Proxy) handleRecoverExpiredTxs(expiredTxs []*txnpb.LockError) (err error) {
+func (p *Proxy) handleRecoverTxs(expiredTxs []*txnpb.LockError, t *Table) (err error) {
 	if len(expiredTxs) == 0 {
 		return
 	}
 	var errChannel = make(chan error, len(expiredTxs))
 	defer close(errChannel)
-	recoverFunc := func(txnLock *txnpb.LockError) {
+	recoverFunc := func(subCtx *dskv.ReqContext, lock *txnpb.LockError) {
 		var (
-			lockInfo      = txnLock.GetInfo()
-			primaryKey    = lockInfo.GetPrimaryKey()
-			isPrimary     = lockInfo.IsPrimary
-			status        = txnpb.TxnStatus_ABORTED
-			ctx           = dskv.NewPRConext(int(TXN_DEFAULT_TIMEOUT * 1000))
-			secondaryKeys [][]byte
+			lockInfo   = lock.GetInfo()
+			txId       = lockInfo.GetTxnId()
+			primaryKey = lockInfo.GetPrimaryKey()
+			e          error
 		)
-		//first try to decide expired tx to aborted status
-		secondaryKeys, err = p.tryRollbackTxn(ctx, lockInfo.GetTxnId(), &status, lockInfo.GetPrimaryKey(), isPrimary)
-		if err != nil {
-			errChannel <- err
-			return
+		if lock.GetInfo().IsPrimary {
+			e = p.handleRecoverPrimary(subCtx, txId, primaryKey, lockInfo.GetSecondaryKeys(), false, t)
+		} else {
+			e = p.handleRecoverSecondary(subCtx, txId, primaryKey, t)
 		}
-		if isPrimary {
-			secondaryKeys = txnLock.GetInfo().GetSecondaryKeys()
+		if e != nil {
+			log.Error("recover expired tx %v err %v", txId, err)
 		}
-		//todo opt
+		errChannel <- e
+	}
+	ctx := dskv.NewPRConext(int(TXN_DEFAULT_TIMEOUT * 1000))
+	for _, expiredTx := range expiredTxs {
+		cClone := ctx.Clone()
+		go recoverFunc(cClone, expiredTx)
+	}
+	var errCount int
+	for i := 0; i < len(expiredTxs); i++ {
+		if e := <-errChannel; e != nil {
+			errCount++
+			err = e
+		}
+	}
+	if errCount > 0 {
+		return fmt.Errorf("batch recover expired txs err, errorCount %v", errCount)
+	}
+	return
+}
+
+func (p *Proxy) handleRecoverPrimary(ctx *dskv.ReqContext, txId string, primaryKey []byte,
+	secondaryKeys [][]byte, recover bool, t *Table) (err error) {
+
+	var status = txnpb.TxnStatus_ABORTED
+	//first try to decide expired tx to aborted status
+	if recover {
+		status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, recover, t)
+	} else {
+		status, _, err = p.tryRollbackTxn(ctx, txId, primaryKey, recover, t)
+	}
+	if err != nil {
+		return
+	}
+	if status == txnpb.TxnStatus_COMMITTED {
+		log.Error("rollback txn error, because ds let commit")
+	}
+	//todo opt
+	//decide all secondary keys
+	err = p.decideSecondaryKeys(ctx, txId, status, secondaryKeys, t)
+	if err != nil {
+		return
+	}
+	//decide primary key
+	err = p.decidePrimaryKey(ctx, txId, status, primaryKey, t)
+	if err != nil {
+		return
+	}
+	//clear up
+	return p.handleCleanup(ctx, txId, primaryKey, t)
+}
+
+func (p *Proxy) handleRecoverSecondary(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (err error) {
+	var (
+		status        = txnpb.TxnStatus_ABORTED
+		secondaryKeys [][]byte
+	)
+	//first try to decide expired tx to aborted status
+	status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, true, t)
+	if err != nil {
+		return
+	}
+	if status == txnpb.TxnStatus_COMMITTED {
+		log.Error("rollback txn error, because ds let commit")
+	}
+	//todo opt
+	//decide all secondary keys
+	err = p.decideSecondaryKeys(ctx, txId, status, secondaryKeys, t)
+	if err != nil {
+		return
+	}
+	//decide primary key
+	err = p.decidePrimaryKey(ctx, txId, status, primaryKey, t)
+	if err != nil {
+		return
+	}
+	//clear up
+	return p.handleCleanup(ctx, txId, primaryKey, t)
+}
+
+func (p *Proxy) asyncRecoverSecondary(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (txnpb.TxnStatus, error) {
+	var (
+		status        = txnpb.TxnStatus_ABORTED
+		err           error
+		secondaryKeys [][]byte
+	)
+	//first try to decide expired tx to aborted status
+	status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, true, t)
+	if err != nil {
+		return status, err
+	}
+	if status == txnpb.TxnStatus_COMMITTED {
+		log.Error("rollback txn error, because ds let commit")
+	}
+	//todo opt
+	go func(p *Proxy, txId string, primaryKey []byte, sta txnpb.TxnStatus) {
 		//decide all secondary keys
-		err = p.decideSecondaryKeys(ctx, lockInfo.GetTxnId(), status, secondaryKeys, nil)
+		err = p.decideSecondaryKeys(ctx, txId, sta, secondaryKeys, t)
 		if err != nil {
-			errChannel <- err
 			return
 		}
 		//decide primary key
-		err = p.decidePrimaryKey(ctx, lockInfo.GetTxnId(), status, primaryKey, nil)
+		err = p.decidePrimaryKey(ctx, txId, sta, primaryKey, t)
 		if err != nil {
-			errChannel <- err
 			return
 		}
 		//clear up
-		err = p.handleCleanup(ctx, lockInfo.GetTxnId(), primaryKey, nil)
-		if err != nil {
-			errChannel <- err
-			return
-		}
-	}
-
-	for _, expiredTx := range expiredTxs {
-		go recoverFunc(expiredTx)
-	}
-	return
+		p.handleCleanup(ctx, txId, primaryKey, t)
+	}(p, txId, primaryKey, status)
+	return status, err
 }
 
 func (p *Proxy) decidePrimaryKey(ctx *dskv.ReqContext, txId string, status txnpb.TxnStatus, primaryKey []byte, t *Table) (err error) {
@@ -135,7 +216,7 @@ func (p *Proxy) decidePrimaryKey(ctx *dskv.ReqContext, txId string, status txnpb
 			Keys:   [][]byte{primaryKey},
 		}
 		//todo re find route
-		resp, err = p.handleDecide(ctx, req, nil)
+		resp, err = p.handleDecide(ctx, req, t)
 		if err != nil {
 			if err == dskv.ErrRouteChange {
 				errForRetry = err
@@ -173,7 +254,7 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 			Status: status,
 			Keys:   secondaryKeys,
 		}
-		resp, err = p.handleDecide(ctx, req, nil)
+		resp, err = p.handleDecide(ctx, req, t)
 		if err != nil {
 			if err == dskv.ErrRouteChange {
 				errForRetry = err
@@ -189,12 +270,14 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 	}
 }
 
-func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, status *txnpb.TxnStatus, primaryKey []byte, recover bool) (
-	secondaryKeys [][]byte, err error) {
+func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, primaryKey []byte, recover bool, t *Table) (
+	status txnpb.TxnStatus, secondaryKeys [][]byte, err error) {
+
+	status = txnpb.TxnStatus_ABORTED
 	var (
 		req = &txnpb.DecideRequest{
 			TxnId:  txId,
-			Status: *status,
+			Status: status,
 			Keys:   [][]byte{primaryKey},
 		}
 		resp        *txnpb.DecideResponse
@@ -208,7 +291,7 @@ func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, status *txnpb.
 				return
 			}
 		}
-		resp, err = p.handleDecide(ctx, req, nil)
+		resp, err = p.handleDecide(ctx, req, t)
 		if err != nil {
 			if err == dskv.ErrRouteChange {
 				errForRetry = err
@@ -220,7 +303,7 @@ func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, status *txnpb.
 			switch resp.Err.GetErrType() {
 			case txnpb.TxnError_STATUS_CONFLICT:
 				//failure, commit
-				*status = txnpb.TxnStatus_COMMITTED
+				status = txnpb.TxnStatus_COMMITTED
 				log.Info("handleRecover: txn[%v] retry to aborted and return status conflict", txId)
 			default:
 				err = convertTxnErr(resp.Err)
@@ -252,7 +335,7 @@ func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []by
 	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 
 	var (
-		resp *txnpb.ClearupResponse
+		resp        *txnpb.ClearupResponse
 		errForRetry error
 	)
 	for {
@@ -278,57 +361,31 @@ func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []by
 	}
 }
 
+func (p *Proxy) handleGetLockInfo(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (resp *txnpb.GetLockInfoResponse, err error) {
+	req := &txnpb.GetLockInfoRequest{
+		TxnId: txId,
+		Key:   primaryKey,
+	}
+	proxy := dskv.GetKvProxy()
+	defer dskv.PutKvProxy(proxy)
+	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 
-func handleSecondary(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnIntent,
-	handleFunc func(*dskv.ReqContext, []*txnpb.TxnIntent, chan *TxnDealHandle)) (err error) {
-	var (
-		finalSecIntents  = make([][]*txnpb.TxnIntent, 0)
-		handleIntents    = secIntents
-		needRetryIntents []*txnpb.TxnIntent
-		errForRetry      error
-	)
+	var errForRetry error
 	for {
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
 			if errForRetry != nil {
-				log.Error("[commit]%s execute secondary intents timeout", ctx)
+				log.Error("[getLockInfo]%s execute timeout", ctx)
 				return
 			}
 		}
-		if err == dskv.ErrRouteChange {
-			_, handleIntents, err = regroupIntentsByRange(ctx, nil, needRetryIntents)
-			if err != nil {
-				return
-			}
-		}
-		handleGroup := len(handleIntents)
-		var handleChannel = make(chan *TxnDealHandle, handleGroup)
-		for _, group := range handleIntents {
-			cClone := ctx.Clone()
-			go handleFunc(cClone, group, handleChannel)
-		}
-		for i := 0; i < handleGroup; i++ {
-			txnHandle := <-handleChannel
-			if txnHandle.err != nil {
-				if txnHandle.err == dskv.ErrRouteChange {
-					needRetryIntents = append(needRetryIntents, txnHandle.intents...)
-				} else {
-					close(handleChannel)
-					return
-				}
-			} else {
-				finalSecIntents = append(finalSecIntents, txnHandle.intents)
-			}
-		}
-		close(handleChannel)
-		if len(needRetryIntents) > 0 {
-			errForRetry = dskv.ErrRouteChange
+		resp, err = proxy.TxGetLock(ctx, req, req.GetKey())
+		if err != nil && err == dskv.ErrRouteChange {
+			errForRetry = err
 			continue
 		}
-		break
+		return
 	}
-	secIntents = finalSecIntents
-	return
 }
 
 func convertTxnErr(txError *txnpb.TxnError) error {
@@ -351,7 +408,6 @@ func convertTxnErr(txError *txnpb.TxnError) error {
 	}
 	return err
 }
-
 
 type TxnDealHandle struct {
 	intents []*txnpb.TxnIntent

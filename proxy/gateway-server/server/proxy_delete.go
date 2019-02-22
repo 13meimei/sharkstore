@@ -2,7 +2,8 @@ package server
 
 import (
 	"fmt"
-
+	"util"
+	"util/log"
 	"pkg-go/ds_client"
 	"proxy/store/dskv"
 	"proxy/gateway-server/mysql"
@@ -10,12 +11,12 @@ import (
 	"model/pkg/kvrpcpb"
 	"model/pkg/metapb"
 	"model/pkg/timestamp"
-	"util"
-	"util/log"
+	"model/pkg/txn"
 )
 
 // HandleDelete handle delete
-func (p *Proxy) HandleDelete(db string, stmt *sqlparser.Delete, args []interface{}) (*mysql.Result, error) {
+func (p *Proxy) HandleDelete(db string, stmt *sqlparser.Delete, args []interface{}) (
+	t *Table, intents []*txnpb.TxnIntent, res *mysql.Result, err error) {
 	//var parseTime time.Time
 	//start := time.Now()
 	//defer func() {
@@ -33,44 +34,50 @@ func (p *Proxy) HandleDelete(db string, stmt *sqlparser.Delete, args []interface
 
 	// 解析表明
 	tableName := parser.parseTable(stmt)
-	t := p.router.FindTable(db, tableName)
+	t = p.router.FindTable(db, tableName)
 	if t == nil {
-		log.Error("[delete] table %s.%s doesn.t exist", db, tableName)
-		return nil, fmt.Errorf("Table '%s.%s' doesn't exist", db, tableName)
+		err = fmt.Errorf("Table '%s.%s' doesn't exist ", db, tableName)
+		log.Error("[delete] find table err: %v", err)
+		return
 	}
 
-	var matchs []Match
+	var matches []Match
 	if stmt.Where != nil {
-		var err error
-		matchs, err = parser.parseWhere(stmt.Where)
+		matches, err = parser.parseWhere(stmt.Where)
 		if err != nil {
 			log.Error("handle delete parse where error(%v)", err)
-			return nil, err
+			return
 		}
-		log.Debug("matchs %v", matchs)
+		log.Debug("matches %v", matches)
 	}
 
 	//parseTime = time.Now()
-	affectedRows, err := p.doDelete(t, matchs)
+	var affected uint64
+	intents, affected, err = p.doDelete(t, matches)
 	if err != nil {
-		return nil, err
+		return
 	}
-	ret := new(mysql.Result)
-	ret.AffectedRows = affectedRows
-	ret.Status = 0
-	return ret, nil
+	res = new(mysql.Result)
+	res.AffectedRows = affected
+	res.Status = 0
+	return
 }
 
-func (p *Proxy) doDelete(t *Table, matches []Match) (affected uint64, err error) {
-	pbMatches, err := makePBMatches(t, matches)
+func (p *Proxy) doDelete(t *Table, matches []Match) (intents []*txnpb.TxnIntent, affected uint64, err error) {
+	var (
+		pbMatches []*kvrpcpb.Match
+		key       []byte
+		scope     *kvrpcpb.Scope
+	)
+	pbMatches, err = makePBMatches(t, matches)
 	if err != nil {
 		log.Error("[delete]covert where matches failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
-		return 0, err
+		return
 	}
-	key, scope, err := findPKScope(t, pbMatches)
+	key, scope, err = findPKScope(t, pbMatches)
 	if err != nil {
 		log.Error("[delete]get pk scope failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
-		return 0, err
+		return
 	}
 
 	//delete index data
@@ -85,7 +92,7 @@ func (p *Proxy) doDelete(t *Table, matches []Match) (affected uint64, err error)
 			pksAndOldIdxData [][]*Row
 			oldIndexKeys     [][]byte
 		)
-		sreq := &kvrpcpb.SelectRequest{
+		sreq := &txnpb.SelectRequest{
 			Key:          key,
 			Scope:        scope,
 			FieldList:    selectFields,
