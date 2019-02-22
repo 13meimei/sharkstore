@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"util"
 	"util/log"
 	"model/pkg/txn"
 	"proxy/store/dskv"
@@ -45,8 +46,8 @@ type TxObj struct {
 }
 
 func NewTx(implicit bool, p *Proxy, timeout uint64) TX {
-	//todo generate txnId
-	tx := &TxObj{txId: "", proxy: p, implicit: implicit}
+	txId := util.NewUuid()
+	tx := &TxObj{txId: txId, proxy: p, implicit: implicit}
 	ttl := TXN_DEFAULT_TIMEOUT
 	if timeout > 0 {
 		ttl = timeout
