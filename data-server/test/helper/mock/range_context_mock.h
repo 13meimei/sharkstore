@@ -26,6 +26,7 @@ public:
     SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
 
     rocksdb::DB *DBInstance() override { return db_; }
+    rocksdb::ColumnFamilyHandle *TxnCFHandle() override { return cf_handles_[1]; }
     master::Worker* MasterClient() override { return master_worker_.get(); }
     raft::RaftServer* RaftServer() override { return raft_server_.get(); }
     storage::MetaStore* MetaStore() override { return meta_store_.get(); }
@@ -47,6 +48,7 @@ public:
 private:
     std::string path_;
     rocksdb::DB *db_ = nullptr;
+    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles_;
     std::unique_ptr<storage::MetaStore> meta_store_;
     std::unique_ptr<master::Worker> master_worker_;
     std::unique_ptr<raft::RaftServer> raft_server_;

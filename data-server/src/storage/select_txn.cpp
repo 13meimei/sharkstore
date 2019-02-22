@@ -2,11 +2,14 @@
 
 #include "base/util.h"
 #include "common/ds_encoding.h"
+#include "frame/sf_logger.h"
 #include "util.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
+
+static const size_t kIteratorTooManyKeys = 1000;
 
 TxnRowValue::~TxnRowValue() {
     std::for_each(fields_.begin(), fields_.end(),
@@ -306,6 +309,13 @@ Status RangeRowFetcher::Next(txnpb::Row& row, bool& over) {
             break;
         }
     }
+
+    ++iter_count_;
+    if (iter_count_ % kIteratorTooManyKeys == kIteratorTooManyKeys - 1) {
+        FLOG_WARN("iterator too many keys(%" PRIu64 ", req: %s",
+                iter_count_, req_.ShortDebugString().c_str());
+    }
+
     over = over_;
     return last_status_;
 }
