@@ -292,7 +292,7 @@ endif()
 
 message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 
-add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp test/range/test_public_funcs.h)
+add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(
