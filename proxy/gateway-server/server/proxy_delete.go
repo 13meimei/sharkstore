@@ -10,7 +10,6 @@ import (
 	"proxy/gateway-server/sqlparser"
 	"model/pkg/kvrpcpb"
 	"model/pkg/metapb"
-	"model/pkg/timestamp"
 	"model/pkg/txn"
 )
 
@@ -80,110 +79,111 @@ func (p *Proxy) doDelete(t *Table, matches []Match) (intents []*txnpb.TxnIntent,
 		return
 	}
 
-	//delete index data
-	indexFields := t.AllIndexes()
-	indexCount := len(indexFields)
-	if indexCount > 0 {
-		log.Debug("[delete]start to retrieve index data, indexCount: %v", indexCount)
-		selectFields := getSelectFields(t, indexFields)
-		//retrieve: pk value and index field old value
-		//index1(old),...,indexn(old),pk1,...,pkn, correspond to selectFields
-		var (
-			pksAndOldIdxData [][]*Row
-			oldIndexKeys     [][]byte
-		)
-		sreq := &txnpb.SelectRequest{
-			Key:          key,
-			Scope:        scope,
-			FieldList:    selectFields,
-			WhereFilters: pbMatches,
-		}
-		pksAndOldIdxData, err = p.selectRemote(t, sreq)
-		if err != nil {
-			log.Error("[delete]selectRemoteForIndex error: %v", err)
-			return
-		}
-
-		for _, partRData := range pksAndOldIdxData {
-			for _, rData := range partRData {
-				fmt.Println(fmt.Sprintf("[delete]select index row data: %v", rData))
-				for i := 0; i < indexCount; i++ {
-					var (
-						oldKey      []byte
-						idxOldValue []byte
-					)
-					col := selectFields[i].Column
-					fmt.Println(fmt.Sprintf("[delete]index data: field %v, value %v", rData.fields[i].col, rData.fields[i].value))
-					idxOldValue, err = formatValue(rData.fields[i].value)
-					if err != nil {
-						return
-					}
-					oldKey, err = encodeUniqueIndexKey(t, col, idxOldValue)
-					if err != nil {
-						return
-					}
-					if !col.Unique {
-						// 编码主键
-						for j := range t.PKS() {
-							col := selectFields[indexCount+j].Column
-							fmt.Println(fmt.Sprintf("[delete]non-unique index data: index %v field %v, value %v", indexCount+j, col.Name, rData.fields[indexCount+j].value))
-							var pkValue []byte
-							pkValue, err = formatValue(rData.fields[indexCount+j].value)
-							oldKey, err = util.EncodePrimaryKey(oldKey, col, pkValue)
-							if err != nil {
-								log.Error("[delete]encode Primary key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
-								return
-							}
-						}
-					}
-					fmt.Println(fmt.Sprintf("[delete]assemble old index key: %v", oldKey))
-					oldIndexKeys = append(oldIndexKeys, oldKey)
-				}
-			}
-		}
-		context := dskv.NewPRConext(dskv.GetMaxBackoff)
-		if err = p.deleteIndexes(context, t, oldIndexKeys); err != nil {
-			return
-		}
-	}
-
-	// TODO: sync pool
-	now := p.clock.Now()
-	dreq := &kvrpcpb.DeleteRequest{
+	//delete index data and row data
+	sreq := &txnpb.SelectRequest{
 		Key:          key,
 		Scope:        scope,
 		WhereFilters: pbMatches,
-		Timestamp:    &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical},
 	}
-	affected, err = p.deleteRemote(t.DbName(), t.Name(), dreq)
+	var delKeys [][]byte
+	delKeys, err = p.selectForDelete(t, sreq)
 	if err != nil {
-		log.Error("[delete]delete failed. err: %v, key: %v, scope: %v", err, key, scope)
-	} else {
-		if log.GetFileLogger().IsEnableDebug() {
-			log.Debug("[delete]delete success. affected: %v, key: %v, scope: %v", affected, key, scope)
+		return
+	}
+	if len(delKeys) == 0 {
+		return
+	}
+	intents = make([]*txnpb.TxnIntent, len(delKeys))
+	for i, key := range delKeys {
+		intent := &txnpb.TxnIntent{
+			Typ:         txnpb.OpType_DELETE,
+			Key:         key,
+			CheckUnique: false,
+			ExpectedVer: 0, //TODO
 		}
+		intents[i] = intent
 	}
 	return
 }
 
-func getSelectFields(t *Table, indexCols []*metapb.Column) ([]*kvrpcpb.SelectField) {
+func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([][]byte, error) {
+	var (
+		delKeys       [][]byte
+		err           error
+		pksAndIdxData [][]*Row
+	)
+	indexFields := t.AllIndexes()
+	indexCount := len(indexFields)
+	log.Debug("[delete]start to select data, indexCount: %v", indexCount)
+	selectFields, colMap := getSelectFields(t, indexFields)
+	//retrieve: pk value and index field old value
+	//pk1,...,pkn,index1(old),...,indexn(old), correspond to selectFields
+	sreq.FieldList = selectFields
+	pksAndIdxData, err = p.selectRemote(t, sreq)
+	if err != nil {
+		log.Error("[delete]select row error: %v", err)
+		return nil, err
+	}
+	for _, partRData := range pksAndIdxData {
+		for _, rData := range partRData {
+			log.Debug("[delete]select row data: %v", rData)
+			var rowKey []byte
+			for i, field := range selectFields {
+				var (
+					col        = field.GetColumn()
+					fieldValue []byte
+				)
+				fieldValue, err = formatValue(rData.fields[i].value)
+				if err != nil {
+					log.Error("[delete]field %v value %v change to byte array err:%v", rData.fields[i].col, rData.fields[i].value, err)
+					return nil, err
+				}
+				if col.GetPrimaryKey() == 1 {
+					rowKey, err = util.EncodePrimaryKey(rowKey, col, fieldValue)
+					continue
+				}
+				if col.GetIndex() {
+					var indexKey []byte
+					log.Info("[delete]index data: field %v, value %v", col.GetName(), fieldValue)
+					indexKey, err = encodeIndexKey(t, col, colMap, fieldValue, rData)
+					if err != nil {
+						log.Error("[delete]field %v value %v change to byte array err:%v", rData.fields[i].col, rData.fields[i].value, err)
+						return nil, err
+					}
+					log.Info("[delete]assemble old index key: %v, new index Key: %v, new index value: %v", indexKey)
+					delKeys = append(delKeys, indexKey)
+				}
+			}
+			if len(rowKey) > 0 {
+				delKeys = append(delKeys, rowKey)
+			}
+		}
+	}
+	return delKeys, nil
+}
+
+func getSelectFields(t *Table, indexCols []*metapb.Column) ([]*kvrpcpb.SelectField, map[string]int) {
 	var (
 		selectFields []*kvrpcpb.SelectField
+		pkColMap     = make(map[string]int, 0)
 	)
-	for _, col := range indexCols {
-		selectFields = append(selectFields, &kvrpcpb.SelectField{
-			Typ:    kvrpcpb.SelectField_Column,
-			Column: col,
-		})
-	}
-	for _, pkColName := range t.PKS() {
+	for i, pkColName := range t.PKS() {
 		pkCol := t.FindColumn(pkColName)
 		selectFields = append(selectFields, &kvrpcpb.SelectField{
 			Typ:    kvrpcpb.SelectField_Column,
 			Column: pkCol,
 		})
+		pkColMap[pkColName] = i
 	}
-	return selectFields
+	pkCount := len(t.PKS())
+	for j, col := range indexCols {
+		selectFields = append(selectFields, &kvrpcpb.SelectField{
+			Typ:    kvrpcpb.SelectField_Column,
+			Column: col,
+		})
+		pkColMap[col.GetName()] = pkCount + j
+	}
+	return selectFields, pkColMap
 }
 
 func (p *Proxy) deleteRemote(db, table string, req *kvrpcpb.DeleteRequest) (uint64, error) {

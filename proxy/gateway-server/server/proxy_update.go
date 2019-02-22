@@ -12,6 +12,7 @@ import (
 	"pkg-go/ds_client"
 	"model/pkg/kvrpcpb"
 	"model/pkg/txn"
+	"model/pkg/metapb"
 )
 
 // HandleUpdate handle update
@@ -119,139 +120,193 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 			log.Debug("[update]pk key: [%v], scope: %v", key, scope)
 		}
 	}
-	//检查更新的字段是否包含需要更新的index字段
-	selectFields, idxNewValExprMap := getSelectFieldsFromExprs(t, exprs)
-	indexCount := len(idxNewValExprMap)
-	if indexCount > 0 {
-		log.Debug("[update]start to retrieve index data, indexCount: %v", indexCount)
-		selectColMap := make(map[string]int, len(selectFields))
-		for i, filed := range selectFields {
-			selectColMap[filed.Column.Name] = i
-		}
 
-		//retrieve: pk value and index field old value
-		//index1(old),...,indexn(old),pk1,...,pkn, correspond to selectFields
-		var (
-			pksAndOldIdxData [][]*Row
-			oldIndexKeys     [][]byte
-			newIndexKvPairs  []*kvrpcpb.KeyValue
-		)
-		sreq := &txnpb.SelectRequest{
-			Key:          key,
-			Scope:        scope,
-			FieldList:    selectFields,
-			WhereFilters: pbMatches,
-			Limit:        pbLimit,
+	//delete index data, insert index data and row data
+	sreq := &txnpb.SelectRequest{
+		Key:          key,
+		Scope:        scope,
+		WhereFilters: pbMatches,
+		Limit:        pbLimit,
+	}
+	var (
+		oldIndexKeys [][]byte
+		newKvPairs   []*kvrpcpb.KeyValue
+	)
+	oldIndexKeys, newKvPairs, err = p.selectForUpdate(t, sreq, exprs)
+	if err != nil {
+		return
+	}
+	if len(oldIndexKeys) == 0 && len(newKvPairs) == 0 {
+		return
+	}
+	intents = make([]*txnpb.TxnIntent, len(oldIndexKeys)+len(newKvPairs))
+	for i, key := range oldIndexKeys {
+		intent := &txnpb.TxnIntent{
+			Typ:         txnpb.OpType_DELETE,
+			Key:         key,
+			CheckUnique: false,
+			ExpectedVer: 0, //TODO
 		}
-		pksAndOldIdxData, err = p.selectRemote(t, sreq)
-		if err != nil {
-			log.Error("[update]selectRemoteForIndex error: %v", err)
-			return
-		}
-		for _, partRData := range pksAndOldIdxData {
-			for _, rData := range partRData {
-				fmt.Println(fmt.Sprintf("[update]select index row data: %v", rData))
-				for i := 0; i < indexCount; i++ {
-					var (
-						oldKey           []byte
-						idxOldValue      []byte
-						newKey, newValue []byte
-					)
-					col := selectFields[i].Column
-					idxOldValue, err = formatValue(rData.fields[i].value)
-					if err != nil {
-						log.Error("[update]field %v value %v change to byte array err:%v", rData.fields[i].col, rData.fields[i].value, err)
-						return
-					}
-					oldKey, err = encodeUniqueIndexKey(t, col, idxOldValue)
-					if err != nil {
-						log.Error("[update]encode unique index old key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
-						return
-					}
-					expr := idxNewValExprMap[col.Name]
-					//if expr.FieldType !=  kvrpcpb.FieldType_Assign {
-					//	todo expression update of index field
-					//  idxNewValue :=  expr.Value
-					//}
-					newKey, err = encodeUniqueIndexKey(t, col, expr.Value)
-					if err != nil {
-						log.Error("[update]encode unique index new key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
-						return
-					}
-					if !col.Unique {
-						// 编码主键
-						for j := range t.PKS() {
-							col := selectFields[indexCount+j].Column
-							var pkValue []byte
-							pkValue, err = formatValue(rData.fields[indexCount+j].value)
-							if err != nil {
-								log.Error("[update]field %v value %v change to byte array err: %v", col.Name, rData.fields[indexCount+j].value, err)
-								return
-							}
-							oldKey, err = util.EncodePrimaryKey(oldKey, col, pkValue)
-							if err != nil {
-								log.Error("[update]encode Primary key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
-								return
-							}
-							newKey, err = util.EncodePrimaryKey(newKey, col, pkValue)
-							if err != nil {
-								log.Error("[update]encode Primary key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
-								return
-							}
+		intents[i] = intent
+	}
 
+	for i, kvPair := range newKvPairs {
+		intent := &txnpb.TxnIntent{
+			Typ:         txnpb.OpType_INSERT,
+			Key:         kvPair.GetKey(),
+			Value:       kvPair.GetValue(),
+			CheckUnique: false,
+			ExpectedVer: 0,
+		}
+		intents[i+len(oldIndexKeys)] = intent
+	}
+	return
+}
+
+func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kvrpcpb.Field, ) ([][]byte, []*kvrpcpb.KeyValue, error) {
+	var (
+		oldIndexKeys [][]byte
+		newKvPairs   []*kvrpcpb.KeyValue
+		err          error
+		selectFields []*kvrpcpb.SelectField
+		colMap       = make(map[string]int, 0)
+		results      [][]*Row
+	)
+	selectFields, colMap, err = getSelectFieldsOfTable(t)
+	if err != nil {
+		return nil, nil, err
+	}
+	sreq.FieldList = selectFields
+	results, err = p.selectRemote(t, sreq)
+	if err != nil {
+		log.Error("[update]select row error: %v", err)
+		return nil, nil, err
+	}
+	var exprMap = make(map[string]*kvrpcpb.Field, 0)
+	for _, expr := range exprs {
+		exprMap[expr.Column.Name] = expr
+	}
+	var rowValues []InsertRowValue
+	for _, partRData := range results {
+		for _, rData := range partRData {
+			log.Info("[update]select row data: %v", rData)
+			var rowValue InsertRowValue
+			for i, field := range sreq.GetFieldList() {
+				var (
+					col                = field.GetColumn()
+					oldValue, newValue []byte
+					oldKey             []byte
+				)
+				//business data
+				oldValue, err = formatValue(rData.fields[i].value)
+				if err != nil {
+					log.Error("[update]field %v value %v change to byte array err:%v", rData.fields[i].col, rData.fields[i].value, err)
+					return nil, nil, err
+				}
+				if expr, ok := exprMap[col.GetName()]; ok {
+					newValue = computeUpdExpr(col, expr, oldValue)
+					rowValue = append(rowValue, newValue)
+					//old index key
+					if col.GetIndex() {
+						oldKey, err = encodeIndexKey(t, col, colMap, newValue, rData)
+						if err != nil {
+							log.Error("[update]field %v value %v change to byte array err:%v", rData.fields[i].col, rData.fields[i].value, err)
+							return nil, nil, err
 						}
-					} else {
-						for j := range t.PKS() {
-							col := selectFields[indexCount+j].Column
-							var pkValue []byte
-							pkValue, err = formatValue(rData.fields[indexCount+j].value)
-							if err != nil {
-								log.Error("[update]pk field %v value %v change to byte array err: %v", col.Name, rData.fields[indexCount+j].value, err)
-								return
-							}
-							newValue, err = util.EncodePrimaryKey(newValue, col, pkValue)
-							if err != nil {
-								log.Error("[update]encode Primary key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
-								return
-							}
-						}
+						log.Info("[update]assemble old index key: %v, new index Key: %v, new index value: %v", oldKey)
+						oldIndexKeys = append(oldIndexKeys, oldKey)
 					}
-					fmt.Println(fmt.Sprintf("[update]assemble old index key: %v, new index Key: %v, new index value: %v", oldKey, newKey, newValue))
-					oldIndexKeys = append(oldIndexKeys, oldKey)
-					newIndexKvPairs = append(newIndexKvPairs, &kvrpcpb.KeyValue{
-						Key:   newKey,
-						Value: newValue,
-					})
+				} else {
+					rowValue = append(rowValue, oldValue)
 				}
 			}
+			rowValues = append(rowValues, rowValue)
 		}
-		//context := dskv.NewPRConext(dskv.GetMaxBackoff)
-		////delete index data
-		//if err = p.deleteIndexes(context, t, oldIndexKeys); err != nil {
-		//	return
-		//}
-		////insert index data
-		//if err = p.insertIndexes(context, t, newIndexKvPairs); err != nil {
-		//	return
-		//}
 	}
-	//// TODO: pool
-	//sreq := &kvrpcpb.UpdateRequest{
-	//	Key:          key,
-	//	Scope:        scope,
-	//	Fields:       exprs,
-	//	WhereFilters: pbMatches,
-	//	Limit:        pbLimit,
-	//}
-	//return p.updateRemote(t, sreq)
-	//todo add intents
+	newKvPairs, err = p.EncodeRows(t, colMap, rowValues)
+	if err != nil {
+		log.Error("[update]encode row kv pair err:%v", err)
+		return nil, nil, err
+	}
+	return oldIndexKeys, newKvPairs, nil
+}
+func encodeIndexKey(t *Table, col *metapb.Column, colMap map[string]int, idxValue []byte, row *Row) (key []byte, err error) {
+	key, err = encodeUniqueIndexKey(t, col, idxValue)
+	if err != nil {
+		log.Error("encode unique index key for table[%v:%v] err: %v", t.GetDbName(), t.GetName(), err)
+		return
+	}
+	if !col.Unique {
+		// 编码主键
+		for _, pkName := range t.PKS() {
+			colIndex := colMap[pkName]
+			var pkValue []byte
+			pkValue, err = formatValue(row.fields[colIndex].value)
+			if err != nil {
+				log.Error("field %v value %v change to byte array err: %v", col.Name, row.fields[colIndex].value, err)
+				return
+			}
+			key, err = util.EncodePrimaryKey(key, col, pkValue)
+			if err != nil {
+				log.Error("encode Primary key for table[%v:%v] err: %v", t.GetDbName(), t.GetName(), err)
+				return
+			}
+		}
+	}
 	return
+}
+
+func computeUpdExpr(col *metapb.Column, expr *kvrpcpb.Field, oldValue []byte) []byte {
+	var newValue []byte
+	//merge update
+	switch expr.GetFieldType() {
+	case kvrpcpb.FieldType_Assign:
+		newValue = expr.GetValue()
+	case kvrpcpb.FieldType_Plus:
+		switch col.GetDataType() {
+		case metapb.DataType_Tinyint:
+		case metapb.DataType_Smallint:
+		case metapb.DataType_Int:
+		case metapb.DataType_BigInt:
+		case metapb.DataType_Float:
+		case metapb.DataType_Double:
+		default:
+		}
+	case kvrpcpb.FieldType_Minus:
+	case kvrpcpb.FieldType_Mult:
+	case kvrpcpb.FieldType_Div:
+		newValue = oldValue
+	}
+	return newValue
+
+}
+
+func getSelectFieldsOfTable(t *Table) ([]*kvrpcpb.SelectField, map[string]int, error) {
+	var err error
+	columns := t.GetAllColumns()
+	if len(columns) == 0 {
+		err = fmt.Errorf("could not get colums info table(%s.%s)", t.GetDbName(), t.GetName())
+		log.Error("[update] get table(%s.%s) all columns from router failed", t.GetDbName(), t.GetName())
+		return nil, nil, err
+	}
+	var (
+		selectFields []*kvrpcpb.SelectField
+		colMap       = make(map[string]int, 0)
+	)
+	for i, c := range columns {
+		selectFields = append(selectFields, &kvrpcpb.SelectField{
+			Typ:    kvrpcpb.SelectField_Column,
+			Column: c,
+		})
+		colMap[c.GetName()] = i
+	}
+	return selectFields, colMap, nil
 }
 
 func getSelectFieldsFromExprs(t *Table, exprs []*kvrpcpb.Field) ([]*kvrpcpb.SelectField, map[string]*kvrpcpb.Field) {
 	var (
 		idxNewValExprMap = make(map[string]*kvrpcpb.Field, 0)
-		selectFields       []*kvrpcpb.SelectField
+		selectFields     []*kvrpcpb.SelectField
 	)
 	for _, expr := range exprs {
 		if expr.Column.Index {

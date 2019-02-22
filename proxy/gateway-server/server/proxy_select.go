@@ -191,7 +191,7 @@ func (p *Proxy) singleSelectRemote(ctx *dskv.ReqContext, t *Table, req *txnpb.Se
 	return [][]*kvrpcpb.Row{resRows}, nil
 }
 
-//read single key
+//select single key
 func (p *Proxy) selectSingleKey(ctx *dskv.ReqContext, t *Table, req *txnpb.SelectRequest, key []byte) ([]*txnpb.Row, error) {
 	var (
 		resp *txnpb.SelectResponse
@@ -225,7 +225,12 @@ func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.Sel
 				}
 				if status == txnpb.TxnStatus_COMMITTED {
 					//use row intent
-					resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: row.GetIntent().GetValue().GetFields()})
+					switch intentInfo.GetOpType() {
+					case txnpb.OpType_INSERT:
+						resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: intentInfo.GetValue().GetFields()})
+					default:
+						continue
+					}
 				} else {
 					//use row value
 					resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: row.GetValue().GetFields()})
@@ -249,18 +254,24 @@ func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.Sel
 						if err != nil {
 							return
 						}
+						//ignore intent, use row value, consider time order
 						resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: tempRows[0].GetValue().GetFields()})
 					}
 					err = convertTxnErr(lockResp.Err)
 					return
 				}
 				switch lockResp.GetInfo().GetStatus() {
-				case txnpb.TxnStatus_ABORTED, txnpb.TxnStatus_INIT:
-					//use row value
-					resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: row.GetValue().GetFields()})
 				case txnpb.TxnStatus_COMMITTED:
 					//use row intent
-					resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: row.GetIntent().GetValue().GetFields()})
+					switch row.GetIntent().GetOpType() {
+					case txnpb.OpType_INSERT:
+						resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: intentInfo.GetValue().GetFields()})
+					default:
+						continue
+					}
+				default:
+					//ignore intent, use row value
+					resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: row.GetValue().GetFields()})
 				}
 			}
 		} else {
