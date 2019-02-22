@@ -30,10 +30,15 @@ Status RangeContextMock::Init() {
     path_ = path;
     rocksdb::Options ops;
     ops.create_if_missing = true;
-    auto s = rocksdb::DB::Open(ops, JoinFilePath({path_, "data"}), &db_);
+    ops.create_missing_column_families = true;
+    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
+    column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
+    column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
+    auto s = rocksdb::DB::Open(ops, JoinFilePath({path_, "data"}), column_families, &cf_handles_, &db_);
     if (!s.ok()) {
         return Status(Status::kIOError, "open rocksdb", s.ToString());
     }
+    assert(cf_handles_.size() == 2);
     // open meta db
     meta_store_.reset(new storage::MetaStore(JoinFilePath({path_, "meta"})));
     auto ret = meta_store_->Open();
@@ -61,6 +66,9 @@ Status RangeContextMock::Init() {
 }
 
 void RangeContextMock::Destroy() {
+    for (auto handle : cf_handles_) {
+        delete handle;
+    }
     if (!path_.empty()) {
         RemoveDirAll(path_.c_str());
     }

@@ -49,6 +49,7 @@ protected:
 private:
     std::string tmp_dir_;
     rocksdb::DB* db_ = nullptr;
+    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles_;
 };
 
 } /* namespace helper */

@@ -299,6 +299,7 @@ int RangeServer::OpenDB() {
 
     rocksdb::Options ops;
     buildDBOptions(ops);
+    ops.create_missing_column_families = true;
     std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
     // default column family
     column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());

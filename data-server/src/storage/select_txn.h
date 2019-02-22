@@ -106,6 +106,7 @@ private:
     std::unique_ptr<Iterator> txn_iter_;
     Status last_status_;
     bool over_ = false;
+    uint64_t iter_count_;
 };
 
 } /* namespace storage */
