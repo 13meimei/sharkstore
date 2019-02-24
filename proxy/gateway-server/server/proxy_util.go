@@ -3,12 +3,11 @@ package server
 import (
 	"bytes"
 	"fmt"
-
-	"model/pkg/metapb"
-
-	"model/pkg/kvrpcpb"
 	"util"
 	"util/log"
+	"model/pkg/metapb"
+	"model/pkg/txn"
+	"model/pkg/kvrpcpb"
 )
 
 var supportedAggreFuncs = map[string]struct{}{
@@ -273,15 +272,15 @@ func nextComparableBytes(b []byte) []byte {
 	return nil
 }
 
-func decodeRow(t *Table, fieldList []*kvrpcpb.SelectField, pbrow *kvrpcpb.Row) (*Row, error) {
-	if len(pbrow.Fields) == 0 {
+func decodeRow(t *Table, fieldList []*kvrpcpb.SelectField, pbrow *txnpb.Row) (*Row, error) {
+	if len(pbrow.GetValue().GetFields()) == 0 {
 		return nil, nil
 	}
 
 	r := &Row{fields: make([]Field, len(fieldList))}
 	var val interface{}
 	var err error
-	data := pbrow.Fields
+	data := pbrow.GetValue().GetFields()
 	for i, f := range fieldList {
 		if f.Typ == kvrpcpb.SelectField_AggreFunction && f.AggreFunc == "count" {
 			// count的结果类型跟原列类型不一样
@@ -309,14 +308,14 @@ func decodeRow(t *Table, fieldList []*kvrpcpb.SelectField, pbrow *kvrpcpb.Row) (
 		// if f.Typ == kvrpcpb.SelectField_AggreFunction {
 		// 	r.fields[i].aggreFunc = f.AggreFunc
 		// }
-		if i < len(pbrow.AggredCounts) {
-			r.fields[i].aggreCount = pbrow.AggredCounts[i]
+		if i < len(pbrow.GetValue().GetAggredCounts()) {
+			r.fields[i].aggreCount = pbrow.Value.AggredCounts[i]
 		}
 	}
 	return r, nil
 }
 
-func decodeRows(t *Table, fieldList []*kvrpcpb.SelectField, pbRows [][]*kvrpcpb.Row) ([][]*Row, error) {
+func decodeRows(t *Table, fieldList []*kvrpcpb.SelectField, pbRows [][]*txnpb.Row) ([][]*Row, error) {
 	rowss := make([][]*Row, 0, len(pbRows))
 	for _, prs := range pbRows {
 		rows := make([]*Row, 0, len(prs))

@@ -85,32 +85,15 @@ func (p *Proxy) doDelete(t *Table, matches []Match) (intents []*txnpb.TxnIntent,
 		Scope:        scope,
 		WhereFilters: pbMatches,
 	}
-	var delKeys [][]byte
-	delKeys, err = p.selectForDelete(t, sreq)
-	if err != nil {
-		return
-	}
-	if len(delKeys) == 0 {
-		return
-	}
-	intents = make([]*txnpb.TxnIntent, len(delKeys))
-	for i, key := range delKeys {
-		intent := &txnpb.TxnIntent{
-			Typ:         txnpb.OpType_DELETE,
-			Key:         key,
-			CheckUnique: false,
-			ExpectedVer: 0, //TODO
-		}
-		intents[i] = intent
-	}
+	intents, err = p.selectForDelete(t, sreq)
 	return
 }
 
-func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([][]byte, error) {
+func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([]*txnpb.TxnIntent, error) {
 	var (
-		delKeys       [][]byte
+		intents       []*txnpb.TxnIntent
 		err           error
-		pksAndIdxData [][]*Row
+		pksAndIdxData [][]*txnpb.Row
 	)
 	indexFields := t.AllIndexes()
 	indexCount := len(indexFields)
@@ -119,23 +102,33 @@ func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([][]byte, 
 	//retrieve: pk value and index field old value
 	//pk1,...,pkn,index1(old),...,indexn(old), correspond to selectFields
 	sreq.FieldList = selectFields
-	pksAndIdxData, err = p.selectRemote(t, sreq)
+	pksAndIdxData, err = p.selectRemoteNoDecode(t, sreq)
 	if err != nil {
 		log.Error("[delete]select row error: %v", err)
 		return nil, err
 	}
 	for _, partRData := range pksAndIdxData {
 		for _, rData := range partRData {
-			log.Debug("[delete]select row data: %v", rData)
-			var rowKey []byte
+			var (
+				rValue *Row
+				rowKey []byte
+				rVersion = rData.GetValue().GetVersion()
+
+			)
+			rValue, err = decodeRow(t, selectFields, rData)
+			if err != nil {
+				log.Error("[delete]decode row err: %v", err)
+				return nil, err
+			}
+			log.Debug("[delete]select row data: %v", rValue)
 			for i, field := range selectFields {
 				var (
 					col        = field.GetColumn()
 					fieldValue []byte
 				)
-				fieldValue, err = formatValue(rData.fields[i].value)
+				fieldValue, err = formatValue(rValue.fields[i].value)
 				if err != nil {
-					log.Error("[delete]field %v value %v change to byte array err:%v", rData.fields[i].col, rData.fields[i].value, err)
+					log.Error("[delete]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
 					return nil, err
 				}
 				if col.GetPrimaryKey() == 1 {
@@ -145,21 +138,31 @@ func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([][]byte, 
 				if col.GetIndex() {
 					var indexKey []byte
 					log.Info("[delete]index data: field %v, value %v", col.GetName(), fieldValue)
-					indexKey, err = encodeIndexKey(t, col, colMap, fieldValue, rData)
+					indexKey, err = encodeIndexKey(t, col, colMap, fieldValue, rValue)
 					if err != nil {
-						log.Error("[delete]field %v value %v change to byte array err:%v", rData.fields[i].col, rData.fields[i].value, err)
+						log.Error("[delete]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
 						return nil, err
 					}
 					log.Info("[delete]assemble old index key: %v, new index Key: %v, new index value: %v", indexKey)
-					delKeys = append(delKeys, indexKey)
+					intents = append(intents, &txnpb.TxnIntent{
+						Typ:         txnpb.OpType_DELETE,
+						Key:         indexKey,
+						CheckUnique: false,
+						ExpectedVer: rVersion,
+					})
 				}
 			}
 			if len(rowKey) > 0 {
-				delKeys = append(delKeys, rowKey)
+				intents = append(intents, &txnpb.TxnIntent{
+					Typ:         txnpb.OpType_DELETE,
+					Key:         rowKey,
+					CheckUnique: false,
+					ExpectedVer: rVersion,
+				})
 			}
 		}
 	}
-	return delKeys, nil
+	return intents, nil
 }
 
 func getSelectFields(t *Table, indexCols []*metapb.Column) ([]*kvrpcpb.SelectField, map[string]int) {

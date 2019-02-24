@@ -156,14 +156,12 @@ func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) (e
 		golog.Debug("[insert]table:%v,cols:%v,rows:%v, args:%v", stmt.Table, stmt.Columns, stmt.Rows, args)
 	}
 	var (
-		implicit bool
-		ret      *mysql.Result
-		t        *Table
-		intents  []*txnpb.TxnIntent
+		ret     *mysql.Result
+		t       *Table
+		intents []*txnpb.TxnIntent
 	)
 	if !c.isInTransaction() {
-		implicit = true
-		c.tx = NewTx(implicit, c.server.proxy, 0)
+		c.tx = NewTx(true, c.server.proxy, 0)
 	}
 
 	//verify, encode
@@ -192,14 +190,12 @@ func (c *ClientConn) handleDelete(stmt *sqlparser.Delete, args []interface{}) (e
 		golog.Debug("table:%v,where:%v, args:%v", stmt.Table, stmt.Where, args)
 	}
 	var (
-		implicit bool
-		ret      *mysql.Result
-		t        *Table
-		intents  []*txnpb.TxnIntent
+		ret     *mysql.Result
+		t       *Table
+		intents []*txnpb.TxnIntent
 	)
 	if !c.isInTransaction() {
-		implicit = true
-		c.tx = NewTx(implicit, c.server.proxy, 0)
+		c.tx = NewTx(true, c.server.proxy, 0)
 	}
 
 	//verify, encode
@@ -229,14 +225,12 @@ func (c *ClientConn) handleUpdate(stmt *sqlparser.Update, args []interface{}) (e
 	}
 
 	var (
-		implicit bool
-		ret      *mysql.Result
-		t        *Table
-		intents  []*txnpb.TxnIntent
+		ret     *mysql.Result
+		t       *Table
+		intents []*txnpb.TxnIntent
 	)
 	if !c.isInTransaction() {
-		implicit = true
-		c.tx = NewTx(implicit, c.server.proxy, 0)
+		c.tx = NewTx(true, c.server.proxy, 0)
 	}
 
 	//verify, encode

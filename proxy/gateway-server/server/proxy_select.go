@@ -147,8 +147,19 @@ func (p *Proxy) doSelect(t *Table, fieldList []*kvrpcpb.SelectField, matches []M
 }
 
 func (p *Proxy) selectRemote(t *Table, req *txnpb.SelectRequest) ([][]*Row, error) {
+	rows, err := p.selectRemoteNoDecode(t, req)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, nil
+	}
+	return decodeRows(t, req.FieldList, rows)
+}
+
+func (p *Proxy) selectRemoteNoDecode(t *Table, req *txnpb.SelectRequest) ([][]*txnpb.Row, error) {
 	var (
-		pbRows  [][]*kvrpcpb.Row
+		pbRows  [][]*txnpb.Row
 		err     error
 		context = dskv.NewPRConext(dskv.GetMaxBackoff)
 	)
@@ -165,14 +176,10 @@ func (p *Proxy) selectRemote(t *Table, req *txnpb.SelectRequest) ([][]*Row, erro
 			pbRows, err = p.rangeSelectRemote(context, t, req)
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	return decodeRows(t, req.FieldList, pbRows)
+	return pbRows, err
 }
 
-func (p *Proxy) singleSelectRemote(ctx *dskv.ReqContext, t *Table, req *txnpb.SelectRequest, key []byte) ([][]*kvrpcpb.Row, error) {
+func (p *Proxy) singleSelectRemote(ctx *dskv.ReqContext, t *Table, req *txnpb.SelectRequest, key []byte) ([][]*txnpb.Row, error) {
 	rows, err := p.selectSingleKey(ctx, t, req, key)
 	if err != nil {
 		return nil, err
@@ -183,12 +190,12 @@ func (p *Proxy) singleSelectRemote(ctx *dskv.ReqContext, t *Table, req *txnpb.Se
 	if len(rows) == 0 {
 		return nil, nil
 	}
-	var resRows []*kvrpcpb.Row
-	resRows, err = handleTxRows(p, ctx, t, req, key, rows)
+	var resRows []*txnpb.Row
+	resRows, err = handleTxRows(p, ctx, t, req, rows)
 	if err != nil {
 		return nil, err
 	}
-	return [][]*kvrpcpb.Row{resRows}, nil
+	return [][]*txnpb.Row{resRows}, nil
 }
 
 //select single key
@@ -210,80 +217,88 @@ func (p *Proxy) selectSingleKey(ctx *dskv.ReqContext, t *Table, req *txnpb.Selec
 	return resp.GetRows(), nil
 }
 
-func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.SelectRequest, key []byte, rows []*txnpb.Row) (resRows []*kvrpcpb.Row, err error) {
-	resRows = make([]*kvrpcpb.Row, 0)
+func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.SelectRequest, rows []*txnpb.Row) (resRows []*txnpb.Row, err error) {
+	resRows = make([]*txnpb.Row, 0)
 	for _, row := range rows {
-		if row.GetIntent() != nil {
-			intentInfo := row.GetIntent()
+		var (
+			rowIntent = row.GetIntent()
+			rowValue  = row.GetValue()
+		)
+		if rowIntent != nil {
 			//must be secondary row
-			if intentInfo.GetTimeout() {
+			var (
+				txId       = rowIntent.GetTxnId()
+				primaryKey = rowIntent.GetPrimaryKey()
+				status     txnpb.TxnStatus
+			)
+			if rowIntent.GetTimeout() {
 				//try to aborted
-				var status txnpb.TxnStatus
-				status, err = p.asyncRecoverSecondary(ctx, intentInfo.GetTxnId(), intentInfo.GetPrimaryKey(), t)
+				status, err = p.asyncRecoverSecondary(ctx, txId, primaryKey, t)
 				if err != nil {
 					return
-				}
-				if status == txnpb.TxnStatus_COMMITTED {
-					//use row intent
-					switch intentInfo.GetOpType() {
-					case txnpb.OpType_INSERT:
-						resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: intentInfo.GetValue().GetFields()})
-					default:
-						continue
-					}
-				} else {
-					//use row value
-					resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: row.GetValue().GetFields()})
 				}
 			} else {
 				//GetLockInfo
 				var lockResp *txnpb.GetLockInfoResponse
-				lockResp, err = p.handleGetLockInfo(ctx, intentInfo.GetTxnId(), intentInfo.GetPrimaryKey(), t)
+				lockResp, err = p.handleGetLockInfo(ctx, txId, primaryKey, t)
 				if err != nil {
 					return
 				}
 				if lockResp.GetErr() != nil {
-					if lockResp.Err.GetErrType() == txnpb.TxnError_NOT_FOUND {
+					if lockResp.GetErr().GetErrType() == txnpb.TxnError_NOT_FOUND {
 						//retry read single key
-						req := &txnpb.SelectRequest{
-							Key:       row.GetKey(),
-							FieldList: sourceReq.GetFieldList(),
-						}
-						var tempRows []*txnpb.Row
+						var (
+							req = &txnpb.SelectRequest{
+								Key:       row.GetKey(),
+								FieldList: sourceReq.GetFieldList(),
+							}
+							tempRows []*txnpb.Row
+						)
 						tempRows, err = p.selectSingleKey(ctx, t, req, req.GetKey())
 						if err != nil {
 							return
 						}
 						//ignore intent, use row value, consider time order
-						resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: tempRows[0].GetValue().GetFields()})
+						if len(tempRows) == 1 && tempRows[0].GetValue() != nil {
+							row.Value = tempRows[0].GetValue()
+							row.Intent = nil
+							resRows = append(resRows, row)
+							continue
+						}
 					}
-					err = convertTxnErr(lockResp.Err)
+					err = convertTxnErr(lockResp.GetErr())
 					return
 				}
-				switch lockResp.GetInfo().GetStatus() {
-				case txnpb.TxnStatus_COMMITTED:
-					//use row intent
-					switch row.GetIntent().GetOpType() {
-					case txnpb.OpType_INSERT:
-						resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: intentInfo.GetValue().GetFields()})
-					default:
-						continue
-					}
+				status = lockResp.GetInfo().GetStatus()
+			}
+			if status == txnpb.TxnStatus_COMMITTED {
+				//use row intent
+				switch rowIntent.GetOpType() {
+				case txnpb.OpType_INSERT:
+					row.Value = rowIntent.GetValue()
+					row.Intent = nil
+					resRows = append(resRows, row)
 				default:
-					//ignore intent, use row value
-					resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: row.GetValue().GetFields()})
+					continue
+				}
+			} else {
+				//ignore intent, use row value
+				if rowValue != nil {
+					row.Intent = nil
+					resRows = append(resRows, row)
 				}
 			}
-		} else {
-			resRows = append(resRows, &kvrpcpb.Row{Key: row.GetKey(), Fields: row.GetValue().GetFields()})
+		} else if rowValue != nil {
+			row.Intent = nil
+			resRows = append(resRows, row)
 		}
 	}
 	return
 }
 
-func (p *Proxy) rangeSelectRemote(context *dskv.ReqContext, t *Table, sreq *txnpb.SelectRequest) ([][]*kvrpcpb.Row, error) {
+func (p *Proxy) rangeSelectRemote(context *dskv.ReqContext, t *Table, sreq *txnpb.SelectRequest) ([][]*txnpb.Row, error) {
 	var (
-		allRows          [][]*kvrpcpb.Row
+		allRows          [][]*txnpb.Row
 		err              error
 		scope            = sreq.Scope
 		limit            = sreq.Limit
@@ -349,8 +364,8 @@ func (p *Proxy) rangeSelectRemote(context *dskv.ReqContext, t *Table, sreq *txnp
 				log.Debug("===route %d offset %d rows(%d) %v", route.Region.Id, resp.GetOffset(), len(resp.GetRows()), resp.GetRows())
 			}
 		}
-		var rows []*kvrpcpb.Row
-		rows, err = handleTxRows(p, context, t, req, key, resp.GetRows())
+		var rows []*txnpb.Row
+		rows, err = handleTxRows(p, context, t, req, resp.GetRows())
 		if err != nil {
 			return nil, err
 		}
