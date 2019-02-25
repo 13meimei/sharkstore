@@ -5,54 +5,7 @@ import (
 	"util/log"
 	"model/pkg/metapb"
 	"model/pkg/kvrpcpb"
-	"proxy/store/dskv"
 )
-
-// insert unique index key, 如果存在，则报错
-func (p *Proxy) insertIndexes(context *dskv.ReqContext, t *Table, indexKvPairs []*kvrpcpb.KeyValue) (err error) {
-	if len(indexKvPairs) == 0 {
-		return
-	}
-	_, _, err = p.insertRowsWithContext(context, t, indexKvPairs)
-	if err != nil {
-		log.Error("insert indexes to table [%v:%v] error", t.GetDbId(), t.GetId())
-		return
-	}
-	return nil
-}
-
-// delete index key
-func (p *Proxy) deleteIndexes(context *dskv.ReqContext, t *Table, indexKeys [][]byte) (err error) {
-	if len(indexKeys) == 0 {
-		return
-	}
-	//todo batch delete and ps support
-	//now := p.clock.Now()
-	//for _, indexKey := range indexKeys {
-	//	dreq := &kvrpcpb.DeleteRequest{
-	//		Key:          indexKey,
-	//		Timestamp:    &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical},
-	//	}
-	//	var affected uint64
-	//	affected, err = p.deleteRemote(t.DbName(), t.Name(), dreq)
-	//	if err != nil {
-	//		fmt.Println(fmt.Sprintf("delete index key %v err: %v", indexKey, err))
-	//		return
-	//	}
-	//	fmt.Println(fmt.Sprintf("delete index key %v ok, affected %v", indexKey, affected))
-	//}
-	return nil
-}
-
-// check unique index key, 如果存在，则报错
-func (p *Proxy) checkUniqueIndexes(context *dskv.ReqContext, t *Table, uniqueKvPairs []*kvrpcpb.KeyValue) bool {
-	var existUniqIndex bool
-	//todo
-	//for _, kvPair := range uniqueKvPairs {
-	//
-	//}
-	return existUniqIndex
-}
 
 // EncodeIndexes: encode unique and non-unique index data
 func (p *Proxy) EncodeIndexes(t *Table, colMap map[string]int, rowValue InsertRowValue) ([]*kvrpcpb.KeyValue, error) {
