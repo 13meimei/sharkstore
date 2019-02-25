@@ -128,13 +128,14 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 		WhereFilters: pbMatches,
 		Limit:        pbLimit,
 	}
-	intents, err = p.selectForUpdate(t, sreq, exprs)
+	intents, affected, err = p.selectForUpdate(t, sreq, exprs)
 	return
 }
 
-func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kvrpcpb.Field, ) ([]*txnpb.TxnIntent, error) {
+func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kvrpcpb.Field, ) ([]*txnpb.TxnIntent, uint64, error) {
 	var (
 		intents      []*txnpb.TxnIntent
+		affected     uint64
 		err          error
 		selectFields []*kvrpcpb.SelectField
 		colMap       = make(map[string]int, 0)
@@ -142,16 +143,16 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 	)
 	selectFields, colMap, err = getSelectFieldsOfTable(t)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	sreq.FieldList = selectFields
 	results, err = p.selectRemoteNoDecode(t, sreq)
 	if err != nil {
 		log.Error("[update]select row error: %v", err)
-		return nil, err
+		return nil, 0, err
 	}
 	if len(results) == 0 {
-		return nil, nil
+		return nil, 0, nil
 	}
 	var exprMap = make(map[string]*kvrpcpb.Field, 0)
 	for _, expr := range exprs {
@@ -160,13 +161,13 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 	for _, partRData := range results {
 		for _, rData := range partRData {
 			var (
-				rValue *Row
+				rValue   *Row
 				rowValue InsertRowValue
 			)
 			rValue, err = decodeRow(t, selectFields, rData)
 			if err != nil {
 				log.Error("[delete]decode row err: %v", err)
-				return nil, err
+				return nil, 0, err
 			}
 			log.Debug("[update]select row data: %v", rValue)
 			for i, field := range sreq.GetFieldList() {
@@ -179,7 +180,7 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 				oldValue, err = formatValue(rValue.fields[i].value)
 				if err != nil {
 					log.Error("[update]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
-					return nil, err
+					return nil, 0, err
 				}
 				if expr, ok := exprMap[col.GetName()]; ok {
 					newValue = computeUpdExpr(col, expr, oldValue)
@@ -189,7 +190,7 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 						oldKey, err = encodeIndexKey(t, col, colMap, newValue, rValue)
 						if err != nil {
 							log.Error("[update]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
-							return nil, err
+							return nil, 0, err
 						}
 						log.Info("[update]assemble old index key: %v, new index Key: %v, new index value: %v", oldKey)
 						intents = append(intents, &txnpb.TxnIntent{
@@ -207,8 +208,9 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 			recordKvPair, err = p.EncodeRow(t, colMap, rowValue)
 			if err != nil {
 				log.Error("[update]encode row kv pair err:%v", err)
-				return nil, err
+				return nil, 0, err
 			}
+			affected += 1
 			intents = append(intents, &txnpb.TxnIntent{
 				Typ:         txnpb.OpType_INSERT,
 				Key:         recordKvPair.GetKey(),
@@ -220,7 +222,7 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 			tIndexKvPairs, err = p.EncodeIndexes(t, colMap, rowValue)
 			if err != nil {
 				log.Error("[update]encode index kv pair err:%v", err)
-				return nil, err
+				return nil, 0, err
 			}
 			for _, idxKvPair := range tIndexKvPairs {
 				intents = append(intents, &txnpb.TxnIntent{
@@ -233,7 +235,7 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 			}
 		}
 	}
-	return intents, nil
+	return intents, affected, nil
 }
 func encodeIndexKey(t *Table, col *metapb.Column, colMap map[string]int, idxValue []byte, row *Row) (key []byte, err error) {
 	key, err = encodeUniqueIndexKey(t, col, idxValue)
