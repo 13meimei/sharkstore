@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "common/ds_config.h"
-#include "common/socket_session_impl.h"
 
 #include "master/worker_impl.h"
 #include "admin/admin_server.h"
@@ -23,11 +22,10 @@ namespace server {
 DataServer::DataServer() {
     context_ = new ContextServer;
 
-    context_->worker = new Worker;
+    context_->worker = new Worker(ds_config.fast_worker_num, ds_config.slow_worker_num);
 
     context_->run_status = new RunStatus;
     context_->range_server = new RangeServer;
-    context_->socket_session = new common::SocketSessionImpl;
 
     // create master worker
     std::vector<std::string> ms_addrs;

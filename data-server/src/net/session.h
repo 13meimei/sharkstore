@@ -5,7 +5,7 @@ _Pragma("once");
 #include <asio/ip/tcp.hpp>
 #include <asio/streambuf.hpp>
 
-#include "handler.h"
+#include "message.h"
 #include "options.h"
 #include "protocol.h"
 

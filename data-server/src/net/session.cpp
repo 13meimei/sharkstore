@@ -102,7 +102,7 @@ void Session::readBody() {
     if (head_.body_length == 0) {
         if (head_.func_id == kHeartbeatFuncID) { // response heartbeat
             auto msg = NewMessage();
-            msg->head.SetResp(head_);
+            msg->head.SetResp(head_, 0);
             Write(msg);
         }
         readHead();

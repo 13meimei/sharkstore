@@ -6,7 +6,6 @@
 #include <mutex>
 #include <string>
 
-#include "common/socket_client.h"
 #include "frame/sf_status.h"
 #include "monitor/isystemstatus.h"
 #include "monitor/syscommon.h"

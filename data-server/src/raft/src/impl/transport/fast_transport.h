@@ -1,6 +1,5 @@
 _Pragma("once");
 
-#include "common/socket_server.h"
 #include "raft/node_resolver.h"
 
 #include "transport.h"

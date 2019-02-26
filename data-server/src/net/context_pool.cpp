@@ -1,12 +1,15 @@
-#include "io_context_pool.h"
+#include "context_pool.h"
 
+#include "base/util.h"
 #include "frame/sf_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace net {
 
-IOContextPool::IOContextPool(size_t size) : pool_size_(size) {
+IOContextPool::IOContextPool(size_t size, const std::string& name) :
+    pool_size_(size),
+    pool_name_(name) {
     for (size_t i = 0; i < size; ++i) {
         auto context = std::make_shared<asio::io_context>();
         auto guard = asio::make_work_guard(*context);
@@ -21,9 +24,13 @@ IOContextPool::~IOContextPool() {
 }
 
 void IOContextPool::Start() {
-    int i = 0;
-    for (const auto& ctx : io_contexts_) {
-        std::thread t(std::bind(&IOContextPool::runLoop, this, ctx, i++));
+    for (unsigned i = 0; i < io_contexts_.size(); ++i) {
+        std::thread t(std::bind(&IOContextPool::runLoop, this, io_contexts_[i], i));
+
+        char name[16] = {'\0'};
+        snprintf(name, 16, "%s-io:%u", pool_name_.c_str(), i);
+        AnnotateThread(t.native_handle(), name);
+
         threads_.push_back(std::move(t));
     }
 }

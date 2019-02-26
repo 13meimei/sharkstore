@@ -32,7 +32,7 @@ struct Head {
     uint32_t body_length = 0;
 
     // set from a request head, self is a response head
-    void SetResp(const Head& req);
+    void SetResp(const Head& req, uint32_t body_len);
 
     // encode to network byte order
     void Encode();

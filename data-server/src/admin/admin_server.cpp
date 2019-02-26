@@ -23,7 +23,7 @@ Status AdminServer::Start(uint16_t port) {
     net::ServerOptions sops;
     sops.io_threads_num = 0;
     sops.max_connections = 200;
-    net_server_.reset(new net::Server(sops));
+    net_server_.reset(new net::Server(sops, "admin"));
 
     auto ret = net_server_->ListenAndServe("0.0.0.0", port,
             [this](const net::Context& ctx, const net::MessagePtr& msg) {

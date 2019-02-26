@@ -19,23 +19,9 @@ namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-int Worker::Init(ContextServer *context) {
-    FLOG_INFO("Worker Init begin ...");
-
-    strcpy(ds_config.worker_config.thread_name_prefix, "work");
-
-    if (socket_server_.Init(&ds_config.worker_config, &worker_status_) != 0) {
-        FLOG_ERROR("Worker Init error ...");
-        return -1;
-    }
-
-    socket_server_.set_recv_done(ds_worker_deal_callback);
-    socket_server_.set_send_done(ds_send_done_callback);
-
-    context_ = context;
-
-    FLOG_INFO("Worker Init end ...");
-    return 0;
+Worker::Worker(size_t fast_worker_size, size_t slow_worker_size) :
+    fast_worker_size_(fast_worker_size),
+    slow_worker_size_(slow_worker_size) {
 }
 
 void Worker::StartWorker(std::vector<std::thread> &worker,
@@ -62,9 +48,7 @@ void Worker::StartWorker(std::vector<std::thread> &worker,
                 }
             }
             FLOG_INFO("Worker thread exit...");
-            __sync_fetch_and_sub(&worker_status_.actual_worker_threads, 1);
         });
-        __sync_fetch_and_add(&worker_status_.actual_worker_threads, 1);
     }
 }
 
@@ -72,29 +56,24 @@ int Worker::Start() {
     FLOG_INFO("Worker Start begin ...");
 
     // start fast worker
-    StartWorker(fast_worker_, fast_queue_, ds_config.fast_worker_num);
+    StartWorker(fast_workers_, fast_queue_, ds_config.fast_worker_num);
 
     int i = 0;
     char fast_name[32] = {'\0'};
-    for (auto &work : fast_worker_) {
+    for (auto &work : fast_workers_) {
         auto handle = work.native_handle();
         snprintf(fast_name, 32, "fast_worker:%d", i++);
         AnnotateThread(handle, fast_name);
     }
     // start slow worker
-    StartWorker(slow_worker_, slow_queue_, ds_config.slow_worker_num);
+    StartWorker(slow_workers_, slow_queue_, ds_config.slow_worker_num);
 
     char slow_name[32] = {'\0'};
     i = 0;
-    for (auto &work : slow_worker_) {
+    for (auto &work : slow_workers_) {
         auto handle = work.native_handle();
         snprintf(slow_name, 32, "slow_worker:%d", i++);
         AnnotateThread(handle, slow_name);
-    }
-
-    if (socket_server_.Start() != 0) {
-        FLOG_ERROR("Worker Start error ...");
-        return -1;
     }
 
     FLOG_INFO("Worker Start end ...");
@@ -104,19 +83,17 @@ int Worker::Start() {
 void Worker::Stop() {
     FLOG_INFO("Worker Stop begin ...");
 
-    socket_server_.Stop();
-
-    auto size = fast_worker_.size();
+    auto size = fast_workers_.size();
     for (decltype(size) i = 0; i < size; i++) {
-        if (fast_worker_[i].joinable()) {
-            fast_worker_[i].join();
+        if (fast_workers_[i].joinable()) {
+            fast_workers_[i].join();
         }
     }
 
-    size = slow_worker_.size();
+    size = slow_workers_.size();
     for (decltype(size) i = 0; i < size; i++) {
-        if (slow_worker_[i].joinable()) {
-            slow_worker_[i].join();
+        if (slow_workers_[i].joinable()) {
+            slow_workers_[i].join();
         }
     }
 
@@ -127,21 +104,6 @@ void Worker::Stop() {
 }
 
 void Worker::Push(common::ProtoMessage *task) {
-    sf_session_entry_t *entry;
-    task->socket = &socket_server_;
-
-    if (task->header.func_id == 0) {  // funcpb::FunctionID::kFuncHeartbeat = 0
-        entry = task->socket->lookup_session_entry(task->session_id);
-        if (entry == nullptr) {
-            FLOG_DEBUG("Heartbeat ip: %s, session_id %" PRIu64,
-                       entry->rtask->client_ip, task->session_id);
-        } else {
-            FLOG_DEBUG("session: %" PRId64 " is alive", task->session_id);
-        }
-        context_->socket_session->Send(task, nullptr);
-        return;
-    }
-
     if (isSlow(task)) {
         auto slot = ++slot_seed_ % ds_config.slow_worker_num;
         auto mq = slow_queue_.msg_queue[slot];

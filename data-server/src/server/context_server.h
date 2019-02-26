@@ -3,7 +3,6 @@
 
 #include <rocksdb/db.h>
 
-#include "common/socket_session.h"
 #include "raft/server.h"
 
 namespace sharkstore {
@@ -31,7 +30,6 @@ struct ContextServer {
 
     RunStatus *run_status = nullptr;
     RangeServer *range_server = nullptr;
-    common::SocketSession *socket_session = nullptr;
     master::Worker *master_worker = nullptr;
 
     // rocksdb

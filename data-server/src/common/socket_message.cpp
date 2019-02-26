@@ -6,21 +6,6 @@ namespace sharkstore {
 namespace dataserver {
 namespace common {
 
-ProtoMessage *GetProtoMessage(const void *data) {
-    auto msg = new ProtoMessage;
-
-    // 解析头部
-    auto proto_header = (ds_proto_header_t *)(data);
-    ds_unserialize_header(proto_header, &(msg->header));
-
-    // 拷贝数据
-    if (msg->header.body_len > 0) {
-        msg->body.resize(static_cast<size_t>(msg->header.body_len));
-        memcpy(msg->body.data(), (char *)data + header_size, msg->body.size());
-    }
-    return msg;
-}
-
 bool GetMessage(const char *data, size_t size,
                 google::protobuf::Message *req, bool zero_copy) {
     if (zero_copy) {

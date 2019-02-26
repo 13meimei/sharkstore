@@ -14,7 +14,7 @@ namespace net {
 
 class IOContextPool final {
 public:
-    explicit IOContextPool(size_t size);
+    IOContextPool(size_t size, const std::string& name);
     ~IOContextPool();
 
     IOContextPool(const IOContextPool&) = delete;
@@ -35,6 +35,7 @@ private:
     using WorkGuard = asio::executor_work_guard<asio::io_context::executor_type>;
 
     const size_t pool_size_ = 0;
+    const std::string pool_name_;
 
     std::vector<std::shared_ptr<asio::io_context>> io_contexts_;
     std::vector<WorkGuard> work_guards_;

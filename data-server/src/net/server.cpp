@@ -1,20 +1,24 @@
 #include "server.h"
 
+#include "base/util.h"
 #include "frame/sf_logger.h"
 
-#include "io_context_pool.h"
+#include "context_pool.h"
 #include "session.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace net {
 
-Server::Server(const ServerOptions& opt)
-    : opt_(opt),
-      acceptor_(context_),
-      context_pool_(new IOContextPool(opt.io_threads_num)) {}
+Server::Server(const ServerOptions& opt, const std::string& name) :
+    opt_(opt),
+    acceptor_(context_),
+    context_pool_(new IOContextPool(opt.io_threads_num, name)) {
+}
 
-Server::~Server() { Stop(); }
+Server::~Server() {
+    Stop();
+}
 
 Status Server::ListenAndServe(const std::string& listen_ip, uint16_t listen_port,
                               const Handler& handler) {
@@ -36,12 +40,18 @@ Status Server::ListenAndServe(const std::string& listen_ip, uint16_t listen_port
     context_pool_->Start();
 
     doAccept();
+
     thr_.reset(new std::thread([this]() {
         try {
             context_.run();
         } catch (...) {
         }
     }));
+
+    char thr_name[16] = {'\0'};
+    snprintf(thr_name, 16, "%s-acpt", name_.c_str());
+    AnnotateThread(thr_->native_handle(), thr_name);
+
     thr_->detach();
 
     return Status::OK();

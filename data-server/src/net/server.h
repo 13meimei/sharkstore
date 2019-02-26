@@ -6,7 +6,7 @@ _Pragma("once");
 
 #include "base/status.h"
 
-#include "handler.h"
+#include "message.h"
 #include "options.h"
 
 namespace sharkstore {
@@ -17,7 +17,7 @@ class IOContextPool;
 
 class Server final {
 public:
-    explicit Server(const ServerOptions& opt);
+    Server(const ServerOptions& opt, const std::string& name);
     ~Server();
 
     Server(const Server&) = delete;
@@ -34,6 +34,7 @@ private:
 
 private:
     const ServerOptions opt_;
+    const std::string name_;
     Handler handler_;
 
     bool stopped_ = false;
