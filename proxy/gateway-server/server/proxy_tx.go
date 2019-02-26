@@ -10,6 +10,9 @@ import (
 )
 
 func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t *Table) (err error) {
+	if len(req.GetIntents()) == 0 {
+		return
+	}
 	var (
 		resp        *txnpb.PrepareResponse
 		errForRetry error
@@ -28,7 +31,7 @@ func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t
 				return
 			}
 		}
-		resp, err = proxy.TxPrepare(ctx, req, nil)
+		resp, err = proxy.TxPrepare(ctx, req, req.GetIntents()[0].GetKey())
 		if err != nil {
 			return
 		}

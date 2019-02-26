@@ -216,6 +216,7 @@ func (t *TxObj) Commit() (err error) {
 	 */
 	err = t.preparePrimaryIntents(ctx, priIntentsGroup, secIntentsGroup)
 	if err != nil {
+		log.Error("prepare tx %v primary intents error %v", t.GetTxId(), err)
 		return
 	}
 	//todo local txn optimize to 1PL
@@ -223,12 +224,14 @@ func (t *TxObj) Commit() (err error) {
 	//concurrency prepare secondary row intents
 	err = t.prepareSecondaryIntents(ctx, secIntentsGroup)
 	if err != nil {
+		log.Error("prepare tx %v secondary intents error %v", t.GetTxId(), err)
 		return
 	}
 
 	//decide:
 	err = t.decidePrimaryIntents(ctx, priIntentsGroup, secIntentsGroup, txnpb.TxnStatus_COMMITTED)
 	if err != nil {
+		log.Error("decide tx %v primary intents error %v", t.GetTxId(), err)
 		return
 	}
 	//async call
@@ -265,6 +268,7 @@ func (t *TxObj) Rollback() (err error) {
 }
 
 func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent, secIntents [][]*txnpb.TxnIntent) (err error) {
+	log.Info("start to prepare tx %v primary intents", t.GetTxId())
 	var (
 		req = &txnpb.PrepareRequest{
 			TxnId:         t.GetTxId(),
@@ -274,7 +278,6 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 		}
 		errForRetry error
 	)
-
 	/**
 		loop solve: occur ErrRouteChange when prepare intents with primary row, regroup intents
 	 */
@@ -305,6 +308,7 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 		err = t.proxy.handlePrepare(ctx, req, t.GetTable())
 		if err != nil {
 			if err == dskv.ErrRouteChange {
+				log.Warn("prepare tx %v primary intents router change, retry")
 				errForRetry = err
 				continue
 			}
@@ -316,10 +320,12 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 }
 
 func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnIntent) (err error) {
+	log.Info("start to prepare tx %v secondary intents, intents size %v", t.GetTxId(), len(secIntents))
 	if len(secIntents) == 0 {
 		return
 	}
 	doPrepareFunc := func(tx *TxObj, subCtx *dskv.ReqContext, intents []*txnpb.TxnIntent, handleChannel chan *TxnDealHandle) {
+		log.Info("prepare tx %v secondary intents %v", tx.GetTxId(), intents)
 		req := &txnpb.PrepareRequest{
 			TxnId:      tx.GetTxId(),
 			Local:      tx.IsLocal(),
@@ -343,6 +349,8 @@ func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*tx
 
 func (t *TxObj) decidePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent,
 	secIntents [][]*txnpb.TxnIntent, status txnpb.TxnStatus) (err error) {
+
+	log.Info("decide tx %v primary intents", t.GetTxId())
 
 	var passed bool
 	passed, err = t.changeTxStatus(status)

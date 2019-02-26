@@ -240,7 +240,7 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 		header = req.InsertReq.GetHeader()
 		timeout = client.ReadTimeoutShort
 	case Type_Select:
-		header = req.SelectReq.GetHeader()
+		header = req.TxSelectReq.GetHeader()
 		timeout = client.ReadTimeoutMedium
 	case Type_Delete:
 		header = req.DeleteReq.GetHeader()
