@@ -117,18 +117,21 @@ func (t *TxObj) Insert(intents []*txnpb.TxnIntent) (err error) {
 		}
 		t.intents = append(t.intents, intent)
 	}
-
 	if err = t.checkTxIntentLength(); err != nil {
 		return
 	}
-
+	log.Debug("tx %v cache inserted intents success", t.GetTxId())
 	if t.IsImplicit() {
 		if err = t.Commit(); err != nil {
-			t.Rollback()
+			log.Error("tx %v commit implicitly failed, err: %v", t.GetTxId(), err)
+			if e := t.Rollback(); e != nil {
+				log.Error("tx %v rollback implicitly failed, err: %v", t.GetTxId(), err)
+			}
 			return
 		}
+		log.Info("tx %v commit implicitly success", t.GetTxId())
 	}
-	return nil
+	return
 }
 
 func (t *TxObj) Update(intents []*txnpb.TxnIntent) (err error) {
@@ -147,13 +150,18 @@ func (t *TxObj) Update(intents []*txnpb.TxnIntent) (err error) {
 	if err = t.checkTxIntentLength(); err != nil {
 		return
 	}
+	log.Debug("tx %v cache updated intents success", t.GetTxId())
 	if t.IsImplicit() {
 		if err = t.Commit(); err != nil {
-			t.Rollback()
+			log.Error("tx %v commit implicitly failed, err: %v", t.GetTxId(), err)
+			if e := t.Rollback(); e != nil {
+				log.Error("tx %v rollback implicitly failed, err: %v", t.GetTxId(), err)
+			}
 			return
 		}
+		log.Info("tx %v commit implicitly success", t.GetTxId())
 	}
-	return nil
+	return
 }
 
 func (t *TxObj) Select(intents []*txnpb.TxnIntent) (err error) {
@@ -175,14 +183,18 @@ func (t *TxObj) Delete(intents []*txnpb.TxnIntent) (err error) {
 	if err = t.checkTxIntentLength(); err != nil {
 		return
 	}
-
+	log.Debug("tx %v cache deleted intents success", t.GetTxId())
 	if t.IsImplicit() {
 		if err = t.Commit(); err != nil {
-			t.Rollback()
+			log.Error("tx %v commit implicitly failed, err: %v", t.GetTxId(), err)
+			if e := t.Rollback(); e != nil {
+				log.Error("tx %v rollback implicitly failed, err: %v", t.GetTxId(), err)
+			}
 			return
 		}
+		log.Info("tx %v commit implicitly success", t.GetTxId())
 	}
-	return nil
+	return
 }
 
 /**
@@ -191,8 +203,11 @@ func (t *TxObj) Delete(intents []*txnpb.TxnIntent) (err error) {
 	decide:  decide primary intents, then async to decide secondary intents, last clear tx record
  */
 func (t *TxObj) Commit() (err error) {
-	var passed bool
-	passed, err = t.changeTxStatus(txnpb.TxnStatus_COMMITTED)
+	var (
+		passed bool
+		status = txnpb.TxnStatus_COMMITTED
+	)
+	passed, err = t.changeTxStatus(status)
 	if err != nil || !passed {
 		return
 	}
@@ -229,7 +244,7 @@ func (t *TxObj) Commit() (err error) {
 	}
 
 	//decide:
-	err = t.decidePrimaryIntents(ctx, priIntentsGroup, secIntentsGroup, txnpb.TxnStatus_COMMITTED)
+	err = t.decidePrimaryIntents(ctx, priIntentsGroup, secIntentsGroup, status)
 	if err != nil {
 		log.Error("decide tx %v primary intents error %v", t.GetTxId(), err)
 		return
@@ -238,7 +253,7 @@ func (t *TxObj) Commit() (err error) {
 	//todo goroutine num control
 	go func(intents [][]*txnpb.TxnIntent) {
 		var e error
-		if e = t.decideSecondaryIntents(intents, txnpb.TxnStatus_COMMITTED); e != nil {
+		if e = t.decideSecondaryIntents(intents, status); e != nil {
 			log.Warn("async decide txn %v secondary intent error %v", t.GetTxId(), e)
 			return
 		}
@@ -248,6 +263,7 @@ func (t *TxObj) Commit() (err error) {
 		return
 	}(secIntentsGroup)
 	//}
+	log.Info("txn %v commit success", t.GetTxId())
 	return
 }
 
@@ -264,7 +280,13 @@ func (t *TxObj) Rollback() (err error) {
 		return
 	}
 	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
-	return t.proxy.handleRecoverPrimary(ctx, t.GetTxId(), t.GetPrimaryKey(), nil, true, t.GetTable())
+	err = t.proxy.handleRecoverPrimary(ctx, t.GetTxId(), t.GetPrimaryKey(), nil, true, t.GetTable())
+	if err != nil {
+		log.Info("txn %v rollback err %v", t.GetTxId(), err)
+		return
+	}
+	log.Info("txn %v rollback success", t.GetTxId())
+	return
 }
 
 func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent, secIntents [][]*txnpb.TxnIntent) (err error) {
@@ -351,12 +373,6 @@ func (t *TxObj) decidePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.T
 	secIntents [][]*txnpb.TxnIntent, status txnpb.TxnStatus) (err error) {
 
 	log.Info("decide tx %v primary intents", t.GetTxId())
-
-	var passed bool
-	passed, err = t.changeTxStatus(status)
-	if err != nil || !passed {
-		return
-	}
 
 	//todo refactor and abstract to func call about error: ErrRouteChange
 	var errForRetry error
