@@ -13,14 +13,14 @@ RPCRequest::RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_m
     begin_time(NowMicros()) {
 }
 
-bool RPCRequest::ParseTo(google::protobuf::Message* proto_req, bool zero_copy) {
+bool RPCRequest::ParseTo(google::protobuf::Message& proto_req, bool zero_copy) {
     auto data = msg->body.data();
     auto len = static_cast<int>(msg->body.size());
     if (zero_copy) {
         google::protobuf::io::ArrayInputStream input(data, len);
-        return proto_req->ParseFromZeroCopyStream(&input);
+        return proto_req.ParseFromZeroCopyStream(&input);
     } else {
-        return proto_req->ParseFromArray(data, len);
+        return proto_req.ParseFromArray(data, len);
     }
 }
 

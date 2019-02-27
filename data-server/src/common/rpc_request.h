@@ -16,12 +16,13 @@ namespace dataserver {
 struct RPCRequest {
     net::Context ctx;
     net::MessagePtr msg;
+    int64_t expire_time = 0; // TODO:
     int64_t begin_time = 0;
 
     RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_msg);
 
     // Parse to request proto msg
-    bool ParseTo(google::protobuf::Message* proto_req, bool zero_copy = true);
+    bool ParseTo(google::protobuf::Message& proto_req, bool zero_copy = true);
 
     // Send response
     void Reply(const google::protobuf::Message& proto_resp);

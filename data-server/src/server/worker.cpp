@@ -99,8 +99,10 @@ bool Worker::WorkThreadGroup::Push(RPCRequest* msg) {
     return threads_[idx]->Push(msg);
 }
 
-void Worker::WorkThreadGroup::DealTask(RPCRequest* msg) {
-    rs_->DealTask(msg);
+void Worker::WorkThreadGroup::DealTask(RPCRequest* req_ptr) {
+    // transfer request ownership to range server
+    std::unique_ptr<RPCRequest> req(req_ptr);
+    rs_->DealTask(std::move(req));
 }
 
 uint64_t Worker::WorkThreadGroup::PendingSize() const {

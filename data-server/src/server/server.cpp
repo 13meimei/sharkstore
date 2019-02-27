@@ -14,10 +14,16 @@
 #include "run_status.h"
 #include "version.h"
 #include "worker.h"
+#include "rpc_server.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace server {
+
+static void buildRPCOptions(net::ServerOptions& opt) {
+    opt.io_threads_num = ds_config.worker_config.event_recv_threads;
+    opt.max_connections = 50000;
+}
 
 DataServer::DataServer() {
     context_ = new ContextServer;
@@ -26,6 +32,10 @@ DataServer::DataServer() {
 
     context_->run_status = new RunStatus;
     context_->range_server = new RangeServer;
+
+    net::ServerOptions sopt;
+    buildRPCOptions(sopt);
+    context_->rpc_server = new RPCServer(sopt);
 
     // create master worker
     std::vector<std::string> ms_addrs;
@@ -39,6 +49,7 @@ DataServer::DataServer() {
 }
 
 DataServer::~DataServer() {
+    delete context_->rpc_server;
     delete context_->worker;
     delete context_->master_worker;
     delete context_->run_status;
@@ -134,6 +145,13 @@ int DataServer::Start() {
         return -1;
     }
 
+    auto rpc_port = static_cast<uint16_t>(ds_config.worker_config.port);
+    ret = context_->rpc_server->Start("0.0.0.0", rpc_port, context_->worker);
+    if (!ret.ok()) {
+        FLOG_ERROR("start rpc server failed: %s", ret.ToString().c_str());
+        return -1;
+    }
+
     ret = admin_server_->Start(static_cast<uint16_t>(ds_config.manager_config.port));
     if (!ret.ok()) {
         FLOG_ERROR("start admin server failed: %s", ret.ToString().c_str());
@@ -165,6 +183,9 @@ int DataServer::Start() {
 void DataServer::Stop() {
     if (admin_server_) {
         admin_server_->Stop();
+    }
+    if (context_->rpc_server) {
+        context_->rpc_server->Stop();
     }
 
     if (context_->worker != nullptr) {

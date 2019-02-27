@@ -1,5 +1,4 @@
-#ifndef FBASE_DATASERVER_SERVER_DS_SERVER_H_
-#define FBASE_DATASERVER_SERVER_DS_SERVER_H_
+_Pragma("once");
 
 #include "context_server.h"
 
@@ -41,5 +40,3 @@ private:
 } /* namespace server */
 } /* namespace dataserver  */
 } /* namespace sharkstore */
-
-#endif /* end of include guard: FBASE_DATASERVER_SERVER_DS_SERVER_H_ */

@@ -37,6 +37,46 @@ static const std::string kMetaPathSuffix = "meta";
 static const std::string kDataPathSuffix = "data";
 static const std::string kTxnCFName = "txn";
 
+
+#define FORWARD_TO_RANGE(req, RequestT, ResponseT, RangeFunc) \
+    do { \
+        RequestT proto_req; \
+        auto rng = this->DecodeAndFind<RequestT, ResponseT>(req, proto_req, #RangeFunc); \
+        if (rng != nullptr) { \
+            rng->RangeFunc(std::move(req), proto_req); \
+        } \
+    } while (false)
+
+template <class RequestT, class ResponseT>
+std::shared_ptr<range::Range> RangeServer::DecodeAndFind(
+        const std::unique_ptr<RPCRequest>& req, RequestT& proto_req, const char* func_name) {
+    if (!req->ParseTo(proto_req)) {
+        FLOG_ERROR("deserialize %s request failed", func_name);
+        return nullptr;
+    }
+
+    FLOG_DEBUG("%s called. req: %s", func_name, proto_req.DebugString().c_str());
+
+    // check timeout
+    if (req->expire_time != 0 && req->expire_time < getticks()) {
+        FLOG_WARN("%s request timeout from %s", func_name, req->ctx.remote_addr.c_str());
+        ResponseT proto_resp;
+        TimeOut(proto_req.header(), proto_resp.mutable_header());
+        req->Reply(proto_resp);
+        return nullptr;
+    }
+
+    auto range = Find(proto_req.header().range_id());
+    if (range == nullptr) {
+        FLOG_ERROR("%s request not found range_id %" PRIu64 " failed", func_name, proto_req.header().range_id());
+        ResponseT proto_resp;
+        RangeNotFound(proto_req.header(), proto_resp.mutable_header());
+        req->Reply(proto_resp);
+        return nullptr;
+    }
+    return range;
+}
+
 int RangeServer::Init(ContextServer *context) {
     FLOG_INFO("RangeServer Init begin ...");
 
@@ -360,169 +400,164 @@ void RangeServer::Clear() {
     RemoveDirAll(ds_config.rocksdb_config.path);
 }
 
-void RangeServer::DealTask(common::ProtoMessage *msg) {
-    ds_header_t &header = msg->header;
+void RangeServer::DealTask(std::unique_ptr<RPCRequest> req) {
+    const auto& header = req->msg->head;
 
     FLOG_DEBUG(
-        "server start deal %s task, sid=%" PRId64 ", msgid=%" PRId64,
+        "server start deal %s task from %s, msgid=%" PRId64,
         funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(header.func_id)).c_str(),
-        msg->session_id, msg->header.msg_id);
+        req->ctx.remote_addr.c_str(), header.msg_id);
 
     switch (header.func_id) {
         case funcpb::kFuncRawGet:
-            RawGet(msg);
+            FORWARD_TO_RANGE(req, kvrpcpb::DsKvRawGetRequest, kvrpcpb::DsKvRawGetResponse, RawGet);
             break;
         case funcpb::kFuncRawPut:
-            RawPut(msg);
+            FORWARD_TO_RANGE(req, kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse, RawPut);
             break;
-        case funcpb::kFuncRawDelete:
-            RawDelete(msg);
-            break;
-        case funcpb::kFuncInsert:
-            Insert(msg);
-            break;
-        case funcpb::kFuncUpdate:
-            Update(msg);
-            break;
-        case funcpb::kFuncSelect:
-            Select(msg);
-            break;
-        case funcpb::kFuncDelete:
-            Delete(msg);
-            break;
-        case funcpb::kFuncWatchGet:
-            WatchGet(msg);
-            break;
-//      case funcpb::kFuncWatchBatchGet:
-//          WatchBatchGet(msg);
-//          break;
-        case funcpb::kFuncPureGet:
-            PureGet(msg);
-            break;
-        case funcpb::kFuncWatchPut:
-            WatchPut(msg);
-            break;
-        case funcpb::kFuncWatchDel:
-            WatchDel(msg);
-            break;
-        case funcpb::kFuncCreateRange:
-            CreateRange(msg);
+//        case funcpb::kFuncRawDelete:
+//            FORWARD_TO_RANGE(req, kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse, RawPut);
+//            RawDelete(msg);
+//            break;
+//        case funcpb::kFuncInsert:
+//            Insert(msg);
+//            break;
+//        case funcpb::kFuncUpdate:
+//            Update(msg);
+//            break;
+//        case funcpb::kFuncSelect:
+//            Select(msg);
+//            break;
+//        case funcpb::kFuncDelete:
+//            Delete(msg);
+//            break;
+//        case funcpb::kFuncWatchGet:
+//            WatchGet(msg);
+//            break;
+//        case funcpb::kFuncPureGet:
+//            PureGet(msg);
+//            break;
+//        case funcpb::kFuncWatchPut:
+//            WatchPut(msg);
+//            break;
+//        case funcpb::kFuncWatchDel:
+//            WatchDel(msg);
+//            break;
+         case funcpb::kFuncCreateRange:
+            CreateRange(*req);
             break;
         case funcpb::kFuncDeleteRange:
-            DeleteRange(msg);
+            DeleteRange(*req);
             break;
         case funcpb::kFuncRangeTransferLeader:
-            TransferLeader(msg);
+            TransferLeader(*req);
             break;
         case funcpb::kFuncReplaceRange:
-            ReplaceRange(msg);
+            ReplaceRange(*req);
             break;
         case funcpb::kFuncOfflineRange:
-            OfflineRange(msg);
+            OfflineRange(*req);
             break;
         case funcpb::kFuncGetPeerInfo:
-            GetPeerInfo(msg);
+            GetPeerInfo(*req);
             break;
         case funcpb::kFuncSetNodeLogLevel:
-            SetLogLevel(msg);
+            SetLogLevel(*req);
             break;
-
-        // lock
-        case funcpb::kFuncLock:
-            Lock(msg);
-            break;
-        case funcpb::kFuncLockUpdate:
-            LockUpdate(msg);
-            break;
-        case funcpb::kFuncUnlock:
-            Unlock(msg);
-            break;
-        case funcpb::kFuncUnlockForce:
-            UnlockForce(msg);
-            break;
-        case funcpb::kFuncLockWatch:
-            LockWatch(msg);
-            break;
-        case funcpb::kFuncLockGet:
-            LockGet(msg);
-            break;
-
-        // following for redis commands
-        case funcpb::kFuncKvSet:
-            KVSet(msg);
-            break;
-        case funcpb::kFuncKvGet:
-            KVGet(msg);
-            break;
-        case funcpb::kFuncKvBatchSet:
-            KVBatchSet(msg);
-            break;
-        case funcpb::kFuncKvBatchGet:
-            KVBatchGet(msg);
-            break;
-        case funcpb::kFuncKvDel:
-            KVDelete(msg);
-            break;
-        case funcpb::kFuncKvBatchDel:
-            KVBatchDelete(msg);
-            break;
-        case funcpb::kFuncKvRangeDel:
-            KVRangeDelete(msg);
-            break;
-        case funcpb::kFuncKvScan:
-            KVScan(msg);
-            break;
-        case funcpb::kFuncTxnPrepare:
-            TxnPrepare(msg);
-            break;
-        case funcpb::kFuncTxnDecide:
-            TxnDecide(msg);
-            break;
-        case funcpb::kFuncTxnClearup:
-            TxnClearup(msg);
-            break;
-        case funcpb::kFuncTxnGetLockInfo:
-            TxnGetLockInfo(msg);
-            break;
-        case funcpb::kFuncTxnSelect:
-            TxnSelect(msg);
-            break;
+//
+//        // lock
+//        case funcpb::kFuncLock:
+//            Lock(msg);
+//            break;
+//        case funcpb::kFuncLockUpdate:
+//            LockUpdate(msg);
+//            break;
+//        case funcpb::kFuncUnlock:
+//            Unlock(msg);
+//            break;
+//        case funcpb::kFuncUnlockForce:
+//            UnlockForce(msg);
+//            break;
+//        case funcpb::kFuncLockWatch:
+//            LockWatch(msg);
+//            break;
+//        case funcpb::kFuncLockGet:
+//            LockGet(msg);
+//            break;
+//
+//        // following for redis commands
+//        case funcpb::kFuncKvSet:
+//            KVSet(msg);
+//            break;
+//        case funcpb::kFuncKvGet:
+//            KVGet(msg);
+//            break;
+//        case funcpb::kFuncKvBatchSet:
+//            KVBatchSet(msg);
+//            break;
+//        case funcpb::kFuncKvBatchGet:
+//            KVBatchGet(msg);
+//            break;
+//        case funcpb::kFuncKvDel:
+//            KVDelete(msg);
+//            break;
+//        case funcpb::kFuncKvBatchDel:
+//            KVBatchDelete(msg);
+//            break;
+//        case funcpb::kFuncKvRangeDel:
+//            KVRangeDelete(msg);
+//            break;
+//        case funcpb::kFuncKvScan:
+//            KVScan(msg);
+//            break;
+//        case funcpb::kFuncTxnPrepare:
+//            TxnPrepare(msg);
+//            break;
+//        case funcpb::kFuncTxnDecide:
+//            TxnDecide(msg);
+//            break;
+//        case funcpb::kFuncTxnClearup:
+//            TxnClearup(msg);
+//            break;
+//        case funcpb::kFuncTxnGetLockInfo:
+//            TxnGetLockInfo(msg);
+//            break;
+//        case funcpb::kFuncTxnSelect:
+//            TxnSelect(msg);
+//            break;
         default:
             FLOG_ERROR("func id is Invalid %d", header.func_id);
-            return context_->socket_session->Send(msg, nullptr);
     }
 }
 
-void RangeServer::CreateRange(common::ProtoMessage *msg) {
-    schpb::CreateRangeRequest req;
-    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
+void RangeServer::CreateRange(RPCRequest& req) {
+    schpb::CreateRangeRequest create_req;
+    if (!req.ParseTo(create_req)) {
         FLOG_ERROR("deserialize create range request failed");
-        return context_->socket_session->Send(msg, nullptr);
+        return;
     }
 
-    FLOG_INFO("range[%" PRIu64 "] recv create range from master", req.range().id());
+    FLOG_INFO("range[%" PRIu64 "] recv create range from master", create_req.range().id());
 
     errorpb::Error *err = nullptr;
-    auto resp = new schpb::CreateRangeResponse;
+    schpb::CreateRangeResponse create_resp;
     do {
         std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
 
-        auto it = ranges_.find(req.range().id());
+        auto it = ranges_.find(create_req.range().id());
         if (it != ranges_.end()) {
-            FLOG_WARN("range[%" PRIu64 "] already exist.", req.range().id());
+            FLOG_WARN("range[%" PRIu64 "] already exist.", create_req.range().id());
 
-            if (!it->second->EpochIsEqual(req.range())) {
+            if (!it->second->EpochIsEqual(create_req.range())) {
                 err = new errorpb::Error;
                 auto meta = new metapb::Range(it->second->options());
-
                 err->mutable_stale_range()->set_allocated_range(meta);
                 err->set_message("range already exist but epoch no equal");
             }
-
             break;
         }
 
-        auto ret = meta_store_->AddRange(req.range());
+        auto ret = meta_store_->AddRange(create_req.range());
         if (!ret.ok()) {
             err = new errorpb::Error;
             err->set_message("create range seriaize meta failed");
@@ -531,23 +566,22 @@ void RangeServer::CreateRange(common::ProtoMessage *msg) {
             break;
         }
 
-        ret = CreateRange(req.range());
+        ret = CreateRange(create_req.range());
         if (!ret.ok() && ret.code() != Status::kDuplicate) {
             err = new errorpb::Error;
             err->set_message(ret.ToString());
 
-            meta_store_->DelRange(req.range().id());
-            FLOG_ERROR("create range failed %" PRIu64, req.range().id());
+            meta_store_->DelRange(create_req.range().id());
+            FLOG_ERROR("create range failed %" PRIu64, create_req.range().id());
             break;
         }
 
     } while (false);
 
     if (err != nullptr) {
-        resp->mutable_header()->set_allocated_error(err);
+        create_resp.mutable_header()->set_allocated_error(err);
     }
-
-    return context_->socket_session->Send(msg, resp);
+    req.Reply(create_resp);
 }
 
 Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader,
@@ -585,25 +619,24 @@ Status RangeServer::CreateRange(const metapb::Range &range, uint64_t leader,
     return ret;
 }
 
-void RangeServer::DeleteRange(common::ProtoMessage *msg) {
-    schpb::DeleteRangeRequest req;
-    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
+void RangeServer::DeleteRange(RPCRequest& req) {
+    schpb::DeleteRangeRequest del_req;
+    if (!req.ParseTo(del_req)) {
         FLOG_ERROR("deserialize delete range request failed");
-        return context_->socket_session->Send(msg, nullptr);
+        return;
     }
 
     FLOG_WARN("range[%" PRIu64 "] recv DeleteRange request. peer_id=%" PRIu64,
-            req.range_id(), req.peer_id());
+            del_req.range_id(), del_req.peer_id());
 
-    auto resp = new schpb::DeleteRangeResponse;
-    auto s = DeleteRange(req.range_id(), req.peer_id());
+    schpb::DeleteRangeResponse del_resp;
+    auto s = DeleteRange(del_req.range_id(), del_req.peer_id());
     if (!s.ok()) {
-        FLOG_ERROR("range[%" PRIu64 "] delete failed: %s", req.range_id(), s.ToString().c_str());
-
-        auto err = resp->mutable_header()->mutable_error();
+        FLOG_ERROR("range[%" PRIu64 "] delete failed: %s", del_req.range_id(), s.ToString().c_str());
+        auto err = del_resp.mutable_header()->mutable_error();
         err->set_message(s.ToString());
     }
-    return context_->socket_session->Send(msg, resp);
+    req.Reply(del_resp);
 }
 
 Status RangeServer::DeleteRange(uint64_t range_id, uint64_t peer_id) {
@@ -642,20 +675,20 @@ Status RangeServer::DeleteRange(uint64_t range_id, uint64_t peer_id) {
     return Status::OK();
 }
 
-void RangeServer::OfflineRange(common::ProtoMessage *msg) {
-    schpb::OfflineRangeRequest req;
-    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
+void RangeServer::OfflineRange(RPCRequest& req) {
+    schpb::OfflineRangeRequest off_req;
+    if (!req.ParseTo(off_req)) {
         FLOG_ERROR("deserialize offline range request failed");
-        return context_->socket_session->Send(msg, nullptr);
+        return;
     }
 
-    auto resp = new schpb::OfflineRangeResponse;
-    if (OfflineRange(req.rangeid()) != 0) {
-        auto err = resp->mutable_header()->mutable_error();
+    schpb::OfflineRangeResponse off_resp;
+    if (OfflineRange(off_req.rangeid()) != 0) {
+        auto err = off_resp.mutable_header()->mutable_error();
         err->set_message("offline range failed");
     }
 
-    context_->socket_session->Send(msg, resp);
+    req.Reply(off_resp);
 }
 
 int RangeServer::OfflineRange(uint64_t range_id) {
@@ -710,102 +743,97 @@ int RangeServer::CloseRange(uint64_t range_id) {
     return 0;
 }
 
-void RangeServer::ReplaceRange(common::ProtoMessage *msg) {
-    schpb::ReplaceRangeRequest req;
-    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
+void RangeServer::ReplaceRange(RPCRequest& req) {
+    schpb::ReplaceRangeRequest replace_req;
+    if (!req.ParseTo(replace_req)) {
         FLOG_ERROR("deserialize replace range request failed");
-        return context_->socket_session->Send(msg, nullptr);
+        return;
     }
 
-    FLOG_WARN("start update range. old=%" PRIu64 ", new=%" PRIu64, req.old_range_id(),
-              req.new_range().id());
+    FLOG_WARN("start update range. old=%" PRIu64 ", new=%" PRIu64, replace_req.old_range_id(),
+            replace_req.new_range().id());
 
-    auto resp = new schpb::ReplaceRangeResponse;
+    schpb::ReplaceRangeResponse replace_resp;
     do {
-        if (CloseRange(req.old_range_id()) != 0) {
-            auto err = resp->mutable_header()->mutable_error();
+        if (CloseRange(replace_req.old_range_id()) != 0) {
+            auto err = replace_resp.mutable_header()->mutable_error();
             err->set_message("close old range failed");
             break;
         }
 
         std::unique_lock<sharkstore::shared_mutex> lock(rw_lock_);
-        auto ret = CreateRange(req.new_range());
+        auto ret = CreateRange(replace_req.new_range());
         if (!ret.ok()) {
-            auto err = resp->mutable_header()->mutable_error();
+            auto err = replace_resp.mutable_header()->mutable_error();
             err->set_message("create range failed");
         }
     } while (false);
 
-    context_->socket_session->Send(msg, resp);
+    req.Reply(replace_resp);
 }
 
-void RangeServer::TransferLeader(common::ProtoMessage *msg) {
-    schpb::TransferRangeLeaderRequest req;
-    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
+void RangeServer::TransferLeader(RPCRequest& req) {
+    schpb::TransferRangeLeaderRequest transfer_req;
+    if (!req.ParseTo(transfer_req)) {
         FLOG_ERROR("deserialize transfer leader request failed");
-        return context_->socket_session->Send(msg, nullptr);
+        return;
     }
 
-    auto resp = new schpb::TransferRangeLeaderResponse;
-
-    auto range = Find(req.range_id());
+    schpb::TransferRangeLeaderResponse transfer_resp;
+    auto range = Find(transfer_req.range_id());
     if (range == nullptr) {
         FLOG_ERROR("TransferLeade request not found range_id %" PRIu64 " failed",
-                   req.range_id());
+                   transfer_req.range_id());
     } else {
         range->TransferLeader();
     }
 
-    context_->socket_session->Send(msg, resp);
+    req.Reply(transfer_resp);
 }
 
-void RangeServer::GetPeerInfo(common::ProtoMessage *msg) {
-    schpb::GetPeerInfoRequest req;
-
-    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
+void RangeServer::GetPeerInfo(RPCRequest& req) {
+    schpb::GetPeerInfoRequest get_req;
+    if (!req.ParseTo(get_req)) {
         FLOG_ERROR("deserialize transfer leader request failed");
-        return context_->socket_session->Send(msg, nullptr);
+        return;
     }
 
-    auto resp = new schpb::GetPeerInfoResponse;
-
+    schpb::GetPeerInfoResponse get_resp;
     raft::RaftStatus peer_info;
-
-    auto range = Find(req.range_id());
+    auto range = Find(get_req.range_id());
     if (range == nullptr) {
         FLOG_ERROR("TransferLeade request not found range_id %" PRIu64 " failed",
-                   req.range_id());
+                   get_req.range_id());
 
-        auto err = resp->mutable_header()->mutable_error();
+        auto err = get_resp.mutable_header()->mutable_error();
         err->set_message("range not found");
-        err->mutable_range_not_found()->set_range_id(req.range_id());
+        err->mutable_range_not_found()->set_range_id(get_req.range_id());
     } else {
         range->GetPeerInfo(&peer_info);
-        resp->set_index(peer_info.index);
-        resp->set_term(peer_info.term);
-        resp->set_commit(peer_info.commit);
+        get_resp.set_index(peer_info.index);
+        get_resp.set_term(peer_info.term);
+        get_resp.set_commit(peer_info.commit);
 
-        auto replica = resp->mutable_replica();
+        auto replica = get_resp.mutable_replica();
         range->GetReplica(replica);
     }
 
-    context_->socket_session->Send(msg, resp);
+    req.Reply(get_resp);
 }
 
-void RangeServer::SetLogLevel(common::ProtoMessage *msg) {
-    schpb::SetNodeLogLevelRequest req;
-
-    if (!common::GetMessage(msg->body.data(), msg->body.size(), &req)) {
+void RangeServer::SetLogLevel(RPCRequest& req) {
+    schpb::SetNodeLogLevelRequest set_req;
+    if (!req.ParseTo(set_req)) {
         FLOG_ERROR("deserialize transfer leader request failed");
-        return context_->socket_session->Send(msg, nullptr);
+        return;
     }
 
-    auto resp = new schpb::SetNodeLogLevelResponse;
+    schpb::SetNodeLogLevelResponse set_resp;
     char level[8];
-    snprintf(level, 8, "%s", req.level().c_str());
+    snprintf(level, 8, "%s", set_req.level().c_str());
     set_log_level(level);
 
-    context_->socket_session->Send(msg, resp);
+    req.Reply(set_resp);
 }
 
 size_t RangeServer::GetRangesSize() const {
@@ -831,336 +859,6 @@ std::shared_ptr<range::Range> RangeServer::Find(uint64_t range_id) {
     }
 
     return it->second;
-}
-
-void RangeServer::RawGet(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvRawGetRequest req;
-    kvrpcpb::DsKvRawGetResponse *resp;
-
-    auto range = CheckAndDecodeRequest("RawGet", req, resp, msg);
-    if (range != nullptr) {
-        range->RawGet(msg, req);
-    }
-}
-
-void RangeServer::RawPut(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvRawPutRequest req;
-    kvrpcpb::DsKvRawPutResponse *resp;
-
-    auto range = CheckAndDecodeRequest("RawPut", req, resp, msg);
-    if (range != nullptr) {
-        range->RawPut(msg, req);
-    }
-}
-
-void RangeServer::RawDelete(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvRawDeleteRequest req;
-    kvrpcpb::DsKvRawDeleteResponse *resp;
-
-    auto range = CheckAndDecodeRequest("RawDelete", req, resp, msg);
-    if (range != nullptr) {
-        range->RawDelete(msg, req);
-    }
-}
-
-void RangeServer::Insert(common::ProtoMessage *msg) {
-    kvrpcpb::DsInsertRequest req;
-    kvrpcpb::DsInsertResponse *resp;
-
-    auto range = CheckAndDecodeRequest("Insert", req, resp, msg);
-    if (range != nullptr) {
-        range->Insert(msg, req);
-    }
-}
-
-void RangeServer::Update(common::ProtoMessage *msg) {
-    kvrpcpb::DsUpdateRequest req;
-    kvrpcpb::DsUpdateResponse *resp;
-
-    auto range = CheckAndDecodeRequest("Update", req, resp, msg);
-    if (range != nullptr) {
-        range->Update(msg, req);
-    }
-}
-
-void RangeServer::Select(common::ProtoMessage *msg) {
-    kvrpcpb::DsSelectRequest req;
-    kvrpcpb::DsSelectResponse *resp;
-
-    auto range = CheckAndDecodeRequest("Select", req, resp, msg);
-    if (range != nullptr) {
-        range->Select(msg, req);
-    }
-}
-
-void RangeServer::Delete(common::ProtoMessage *msg) {
-    kvrpcpb::DsDeleteRequest req;
-    kvrpcpb::DsKvDeleteResponse *resp;
-
-    auto range = CheckAndDecodeRequest("Delete", req, resp, msg);
-    if (range != nullptr) {
-        range->Delete(msg, req);
-    }
-}
-
-void RangeServer::WatchGet(common::ProtoMessage *msg) {
-    watchpb::DsWatchRequest req;
-    watchpb::DsWatchResponse *resp;
-
-    auto range = CheckAndDecodeRequest("WatchGet", req, resp, msg);
-    if (range != nullptr) {
-        range->WatchGet(msg, req);
-    }
-}
-
-void RangeServer::PureGet(common::ProtoMessage *msg) {
-    watchpb::DsKvWatchGetMultiRequest req;
-    watchpb::DsKvWatchGetMultiResponse *resp;
-
-    auto range = CheckAndDecodeRequest("PureGet", req, resp, msg);
-    if (range != nullptr) {
-        range->PureGet(msg, req);
-    }
-}
-
-void RangeServer::WatchPut(common::ProtoMessage *msg) {
-    watchpb::DsKvWatchPutRequest req;
-    watchpb::DsKvWatchPutResponse *resp;
-
-    auto range = CheckAndDecodeRequest("WatchPut", req, resp, msg);
-    if (range != nullptr) {
-        range->WatchPut(msg, req);
-    }
-}
-
-void RangeServer::WatchDel(common::ProtoMessage *msg) {
-    watchpb::DsKvWatchDeleteRequest req;
-    watchpb::DsKvWatchDeleteResponse *resp;
-
-    auto range = CheckAndDecodeRequest("WatchDel", req, resp, msg);
-    if (range != nullptr) {
-        range->WatchDel(msg, req);
-    }
-}
-
-template <class RequestT, class ResponseT>
-std::shared_ptr<range::Range> RangeServer::CheckAndDecodeRequest(
-    const char *func_name, RequestT &request, ResponseT *&respone,
-    common::ProtoMessage *msg) {
-    if (!common::GetMessage(msg->body.data(), msg->body.size(),
-                                              &request)) {
-        FLOG_ERROR("deserialize %s request failed", func_name);
-        context_->socket_session->Send(msg, nullptr);
-        return nullptr;
-    }
-
-    FLOG_DEBUG("%s called. req: %s", func_name, request.DebugString().c_str());
-
-    // check timeout
-    if (msg->expire_time < getticks()) {
-        FLOG_WARN("%s request timeout", func_name);
-        respone = new ResponseT;
-        TimeOut(request.header(), respone->mutable_header());
-        context_->socket_session->Send(msg, respone);
-        return nullptr;
-    }
-
-    auto range = Find(request.header().range_id());
-    if (range == nullptr) {
-        FLOG_ERROR("%s request not found range_id %" PRIu64 " failed", func_name,
-                   request.header().range_id());
-        respone = new ResponseT;
-        RangeNotFound(request.header(), respone->mutable_header());
-        context_->socket_session->Send(msg, respone);
-        return nullptr;
-    }
-
-    return range;
-}
-
-void RangeServer::Lock(common::ProtoMessage *msg) {
-    kvrpcpb::DsLockRequest req;
-    kvrpcpb::DsLockResponse *resp;
-
-    auto range = CheckAndDecodeRequest("Lock", req, resp, msg);
-    if (range != nullptr) {
-        range->Lock(msg, req);
-    }
-}
-
-void RangeServer::LockUpdate(common::ProtoMessage *msg) {
-    kvrpcpb::DsLockUpdateRequest req;
-    kvrpcpb::DsLockUpdateResponse *resp;
-
-    auto range = CheckAndDecodeRequest("LockUpdate", req, resp, msg);
-    if (range != nullptr) {
-        range->LockUpdate(msg, req);
-    }
-}
-
-void RangeServer::Unlock(common::ProtoMessage *msg) {
-    kvrpcpb::DsUnlockRequest req;
-    kvrpcpb::DsUnlockResponse *resp;
-
-    auto range = CheckAndDecodeRequest("Unlock", req, resp, msg);
-    if (range != nullptr) {
-        range->Unlock(msg, req);
-    }
-}
-
-void RangeServer::UnlockForce(common::ProtoMessage *msg) {
-    kvrpcpb::DsUnlockForceRequest req;
-    kvrpcpb::DsUnlockForceResponse *resp;
-
-    auto range = CheckAndDecodeRequest("UnlockForce", req, resp, msg);
-    if (range != nullptr) {
-        range->UnlockForce(msg, req);
-    }
-}
-
-void RangeServer::LockWatch(common::ProtoMessage *msg) {
-    watchpb::DsWatchRequest req;
-    watchpb::DsWatchResponse* resp;
-
-    auto range = CheckAndDecodeRequest("LockWatch", req, resp, msg);
-    if (range != nullptr) {
-        range->LockWatch(msg, req);
-    }
-}
-
-void RangeServer::LockGet(common::ProtoMessage *msg) {
-    kvrpcpb::DsLockGetRequest req;
-    kvrpcpb::DsLockGetResponse *resp;
-
-    auto range = CheckAndDecodeRequest("LockGet", req, resp, msg);
-    if (range != nullptr) {
-        range->LockGet(msg, req);
-    }
-}
-
-void RangeServer::KVSet(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvSetRequest req;
-    kvrpcpb::DsKvSetResponse *resp;
-
-    auto range = CheckAndDecodeRequest("KVSet", req, resp, msg);
-    if (range != nullptr) {
-        range->KVSet(msg, req);
-    }
-}
-
-void RangeServer::KVGet(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvGetRequest req;
-    kvrpcpb::DsKvGetResponse *resp;
-
-    auto range = CheckAndDecodeRequest("KVGet", req, resp, msg);
-    if (range != nullptr) {
-        range->KVGet(msg, req);
-    }
-}
-
-void RangeServer::KVBatchSet(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvBatchSetRequest req;
-    kvrpcpb::DsKvBatchSetResponse *resp;
-
-    auto range = CheckAndDecodeRequest("KVBatchSet", req, resp, msg);
-    if (range != nullptr) {
-        range->KVBatchSet(msg, req);
-    }
-}
-
-void RangeServer::KVBatchGet(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvBatchGetRequest req;
-    kvrpcpb::DsKvBatchGetResponse *resp;
-
-    auto range = CheckAndDecodeRequest("KVBatchGet", req, resp, msg);
-    if (range != nullptr) {
-        range->KVBatchGet(msg, req);
-    }
-}
-
-void RangeServer::KVDelete(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvDeleteRequest req;
-    kvrpcpb::DsKvDeleteResponse *resp;
-
-    auto range = CheckAndDecodeRequest("KVDelete", req, resp, msg);
-    if (range != nullptr) {
-        range->KVDelete(msg, req);
-    }
-}
-
-void RangeServer::KVBatchDelete(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvBatchDeleteRequest req;
-    kvrpcpb::DsKvBatchDeleteResponse *resp;
-
-    auto range = CheckAndDecodeRequest("KVBatchDelete", req, resp, msg);
-    if (range != nullptr) {
-        range->KVBatchDelete(msg, req);
-    }
-}
-
-void RangeServer::KVRangeDelete(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvRangeDeleteRequest req;
-    kvrpcpb::DsKvRangeDeleteResponse *resp;
-
-    auto range = CheckAndDecodeRequest("KVRangeDelete", req, resp, msg);
-    if (range != nullptr) {
-        range->KVRangeDelete(msg, req);
-    }
-}
-
-void RangeServer::KVScan(common::ProtoMessage *msg) {
-    kvrpcpb::DsKvScanRequest req;
-    kvrpcpb::DsKvScanResponse *resp;
-
-    auto range = CheckAndDecodeRequest("KVScan", req, resp, msg);
-    if (range != nullptr) {
-        range->KVScan(msg, req);
-    }
-}
-
-void RangeServer::TxnPrepare(common::ProtoMessage *msg) {
-    txnpb::DsPrepareRequest req;
-    txnpb::DsPrepareResponse *resp = nullptr;
-    auto range = CheckAndDecodeRequest("TxnPrepare", req, resp, msg);
-    if (range != nullptr) {
-        range->TxnPrepare(msg, req);
-    }
-}
-
-void RangeServer::TxnDecide(common::ProtoMessage *msg) {
-    txnpb::DsDecideRequest req;
-    txnpb::DsDecideResponse *resp = nullptr;
-    auto range = CheckAndDecodeRequest("TxnDecide", req, resp, msg);
-    if (range != nullptr) {
-        range->TxnDecide(msg, req);
-    }
-}
-
-void RangeServer::TxnClearup(common::ProtoMessage *msg) {
-    txnpb::DsClearupRequest req;
-    txnpb::DsClearupResponse *resp = nullptr;
-    auto range = CheckAndDecodeRequest("TxnClearup", req, resp, msg);
-    if (range != nullptr) {
-        range->TxnClearup(msg, req);
-    }
-}
-
-void RangeServer::TxnGetLockInfo(common::ProtoMessage *msg) {
-    txnpb::DsGetLockInfoRequest req;
-    txnpb::DsGetLockInfoResponse *resp = nullptr;
-    auto range = CheckAndDecodeRequest("TxnGetLockInfo", req, resp, msg);
-    if (range != nullptr) {
-        range->TxnGetLockInfo(msg, req);
-    }
-}
-
-void RangeServer::TxnSelect(common::ProtoMessage* msg) {
-    txnpb::DsSelectRequest req;
-    txnpb::DsSelectResponse *resp = nullptr;
-    auto range = CheckAndDecodeRequest("TxnSelect", req, resp, msg);
-    if (range != nullptr) {
-        range->TxnSelect(msg, req);
-    }
 }
 
 Status RangeServer::SplitRange(uint64_t old_range_id, const raft_cmdpb::SplitRequest &req,
@@ -1205,7 +903,7 @@ void RangeServer::TimeOut(const kvrpcpb::RequestHeader &req,
     err->set_message("time out");
     err->mutable_timeout();
 
-    common::SetResponseHeader(req, resp, err);
+    SetResponseHeader(req, resp, err);
 }
 
 void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
@@ -1214,7 +912,7 @@ void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
     err->set_message("range not found");
     err->mutable_range_not_found()->set_range_id(req.range_id());
 
-    common::SetResponseHeader(req, resp, err);
+    SetResponseHeader(req, resp, err);
 }
 
 Status RangeServer::recover(const metapb::Range& meta) {

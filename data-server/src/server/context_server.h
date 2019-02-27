@@ -22,6 +22,7 @@ class Worker;
 class RunStatus;
 class RangeServer;
 class RunStatus;
+class RPCServer;
 
 struct ContextServer {
     uint64_t node_id = 0;
@@ -31,6 +32,7 @@ struct ContextServer {
     RunStatus *run_status = nullptr;
     RangeServer *range_server = nullptr;
     master::Worker *master_worker = nullptr;
+    RPCServer *rpc_server = nullptr;
 
     // rocksdb
     rocksdb::DB *rocks_db = nullptr;

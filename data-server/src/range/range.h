@@ -11,6 +11,7 @@ _Pragma("once");
 #include "base/util.h"
 
 #include "common/ds_encoding.h"
+#include "common/rpc_request.h"
 #include "storage/store.h"
 #include "raft/raft.h"
 #include "raft/statemachine.h"
@@ -83,7 +84,7 @@ public:
 
     // lock
     bool LockQuery(const std::string &key, kvrpcpb::LockValue* lock_value);
-    void Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req);
+    void Lock(std::unique_ptr<RPCRequest> msg, kvrpcpb::DsLockRequest &req);
     void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
     void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
     void UnlockForce(common::ProtoMessage *msg, kvrpcpb::DsUnlockForceRequest &req);

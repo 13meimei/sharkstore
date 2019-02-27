@@ -70,7 +70,7 @@ private:
 
         void Start();
         bool Push(RPCRequest* msg);
-        void DealTask(RPCRequest* msg);
+        void DealTask(RPCRequest* req_ptr);
         uint64_t PendingSize() const;
         uint64_t Clear();
 
