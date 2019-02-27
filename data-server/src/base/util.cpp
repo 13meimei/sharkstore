@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 #include <errno.h>
@@ -366,6 +367,12 @@ std::string FindMiddle(const std::string& left, const std::string& right) {
     }
 
     return result;
+}
+
+int64_t NowMicros() {
+    timeval tv;
+    gettimeofday(&tv, nullptr);
+    return static_cast<int64_t>(tv.tv_sec) * 1000000 + tv.tv_usec;
 }
 
 } /* namespace sharkstore */

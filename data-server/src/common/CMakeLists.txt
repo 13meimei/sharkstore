@@ -3,7 +3,7 @@ set(common_SOURCES
     ds_proto.c
     ds_version.c
     ds_encoding.cpp
-    socket_message.cpp
+    rpc_request.cpp
 )
 
 foreach(f IN LISTS common_SOURCES) 

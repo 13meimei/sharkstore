@@ -34,7 +34,7 @@ Worker::WorkThread::~WorkThread() {
     }
 }
 
-bool Worker::WorkThread::Push(common::ProtoMessage* msg) {
+bool Worker::WorkThread::Push(RPCRequest* msg) {
     que_.push(msg);
     return true;
 }
@@ -45,7 +45,7 @@ uint64_t Worker::WorkThread::PendingSize() const {
 
 uint64_t Worker::WorkThread::Clear() {
     uint64_t count = 0;
-    common::ProtoMessage *task = nullptr;
+    RPCRequest* task = nullptr;
     while (g_continue_flag) {
         if (que_.try_pop(task)) {
             delete task;
@@ -58,7 +58,7 @@ uint64_t Worker::WorkThread::Clear() {
 }
 
 void Worker::WorkThread::runLoop() {
-    common::ProtoMessage *task = nullptr;
+    RPCRequest *task = nullptr;
     while (g_continue_flag) {
         if (que_.try_pop(task)) {
             parent_group_->DealTask(task);
@@ -94,12 +94,12 @@ void Worker::WorkThreadGroup::Start() {
     }
 }
 
-bool Worker::WorkThreadGroup::Push(common::ProtoMessage* msg) {
+bool Worker::WorkThreadGroup::Push(RPCRequest* msg) {
     auto idx = ++round_robin_counter_ % threads_.size();
     return threads_[idx]->Push(msg);
 }
 
-void Worker::WorkThreadGroup::DealTask(common::ProtoMessage* msg) {
+void Worker::WorkThreadGroup::DealTask(RPCRequest* msg) {
     rs_->DealTask(msg);
 }
 
@@ -137,7 +137,7 @@ Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* ra
 void Worker::Stop() {
 }
 
-void Worker::Push(common::ProtoMessage *task) {
+void Worker::Push(RPCRequest* task) {
     if (!isSlowTask(task)) {
         fast_workers_->Push(task);
     } else {
@@ -156,7 +156,7 @@ size_t Worker::ClearQueue(bool fast, bool slow) {
     return count;
 }
 
-bool Worker::isSlowTask(common::ProtoMessage *task) {
+bool Worker::isSlowTask(RPCRequest *task) {
     const auto& head = task->msg->head;
     if (head.ForceFastFlag()) {
         return false;

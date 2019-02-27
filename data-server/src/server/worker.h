@@ -7,7 +7,7 @@ _Pragma("once");
 #include <vector>
 #include <tbb/concurrent_queue.h>
 
-#include "common/socket_message.h"
+#include "common/rpc_request.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -15,7 +15,7 @@ namespace server {
 
 class RangeServer;
 
-using TaskHandler = std::function<void(common::ProtoMessage*)>;
+using RPCHandler = std::function<void(RPCRequest*)>;
 
 class Worker final {
 public:
@@ -28,7 +28,7 @@ public:
     Status Start(int fast_worker_size, int slow_worker_size, RangeServer* range_server);
     void Stop();
 
-    void Push(common::ProtoMessage* msg);
+    void Push(RPCRequest* req);
 
     void PrintQueueSize();
     size_t ClearQueue(bool fast, bool slow);
@@ -46,7 +46,7 @@ private:
         WorkThread(const WorkThread&) = delete;
         WorkThread& operator=(const WorkThread&) = delete;
 
-        bool Push(common::ProtoMessage* msg);
+        bool Push(RPCRequest* req);
         uint64_t PendingSize() const;
         uint64_t Clear();
 
@@ -56,7 +56,7 @@ private:
     private:
         WorkThreadGroup* parent_group_ = nullptr;
         const size_t capacity_ = 0;
-        tbb::concurrent_queue<common::ProtoMessage*> que_;
+        tbb::concurrent_queue<RPCRequest*> que_;
         std::thread thr_;
     };
 
@@ -69,8 +69,8 @@ private:
         WorkThreadGroup& operator=(const WorkThreadGroup&) = delete;
 
         void Start();
-        bool Push(common::ProtoMessage* msg);
-        void DealTask(common::ProtoMessage* msg);
+        bool Push(RPCRequest* msg);
+        void DealTask(RPCRequest* msg);
         uint64_t PendingSize() const;
         uint64_t Clear();
 
@@ -85,7 +85,7 @@ private:
     };
 
 private:
-    static bool isSlowTask(common::ProtoMessage *task);
+    static bool isSlowTask(RPCRequest *task);
 
 private:
     std::unique_ptr<WorkThreadGroup> fast_workers_;

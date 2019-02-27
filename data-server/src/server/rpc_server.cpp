@@ -1,7 +1,7 @@
 #include "rpc_server.h"
 
 #include "frame/sf_logger.h"
-#include "common/socket_message.h"
+#include "common/rpc_request.h"
 #include "worker.h"
 
 namespace sharkstore {
@@ -40,9 +40,7 @@ Status RPCServer::Stop() {
 }
 
 void RPCServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg) {
-    auto task = new common::ProtoMessage;
-    task->msg = msg;
-    task->ctx = ctx;
+    auto task = new RPCRequest(ctx, msg);
     worker_->Push(task);
 }
 
