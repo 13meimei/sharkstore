@@ -15,14 +15,17 @@ import (
 )
 
 const (
+	Store_Prefix_Invalid       uint8 = 0
+
 	//record_data
-	Store_Prefix_Invalid uint8 = 0
-	Store_Prefix_KV      uint8 = 1
-	Store_Prefix_INDEX   uint8 = 2
+	Store_Prefix_KV            uint8 = 1
+	Store_Prefix_INDEX         uint8 = 2
 
 	//meta_data
-	Store_Prefix_Range   uint8 = 2
-	Store_Prefix_RaftLog uint8 = 3
+	Store_Prefix_Range         uint8 = 2
+	Store_Prefix_RaftLog       uint8 = 3
+	Store_Prefix_Node          uint8 = 4
+	Store_Prefix_Range_Version uint8 = 5
 )
 
 func Encode(v proto.Message) ([]byte, error) {
@@ -263,7 +266,7 @@ func DecodePrimaryKey2(buf []byte, col *metapb.Column) ([]byte, interface{}, err
 
 // EncodeIndexKey 编码索引列ID 索引列 保持排序属性
 func EncodeIndexKey(buf []byte, col *metapb.Column, sval []byte) ([]byte, error) {
-	buf =  encoding.EncodeUvarintAscending(buf, col.GetId())
+	buf = encoding.EncodeUvarintAscending(buf, col.GetId())
 	if len(sval) == 0 {
 		return encoding.EncodeNullAscending(buf), nil
 	}
