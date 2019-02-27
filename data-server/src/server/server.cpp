@@ -186,10 +186,6 @@ void DataServer::Stop() {
     }
 }
 
-void DataServer::DealTask(common::ProtoMessage *task) {
-    context_->range_server->DealTask(task);
-}
-
 } /* namespace server */
 } /* namespace dataserver  */
 } /* namespace sharkstore */

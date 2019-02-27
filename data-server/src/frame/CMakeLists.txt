@@ -2,12 +2,7 @@ set(frame_SOURCES
     sf_config.c
     sf_logger.c
     sf_service.c
-    sf_socket_buff.c
-    sf_socket.c
-    sf_socket_session.c
-    sf_socket_thread.c
-    sf_status.c
-    sf_util.c
+        sf_util.c
     )
 
 foreach(f IN LISTS frame_SOURCES) 

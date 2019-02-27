@@ -37,7 +37,6 @@ private:
     void readBody();
 
 private:
-
     // all server's sessions count
     static std::atomic<uint64_t> total_count_;
 

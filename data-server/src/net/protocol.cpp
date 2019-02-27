@@ -68,6 +68,10 @@ std::string Head::DebugString() const {
     return ss.str();
 }
 
+bool Head::ForceFastFlag() const {
+    return (flags & static_cast<uint8_t>(net::Flag::kForceFastWorker)) != 0;
+}
+
 }  // namespace net
 }  // namespace dataserver
 }  // namespace sharkstore

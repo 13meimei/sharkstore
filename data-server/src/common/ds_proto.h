@@ -13,9 +13,6 @@
 #define DS_PROTO_FID_RPC_REQ 0x02
 #define DS_PROTO_FID_RPC_RESP 0x12
 
-enum ds_proto_flags {
-    FAST_WORKER_FLAG = 1 << 0,
-};
 
 typedef struct ds_proto_header_s {
     char magic_number[4];

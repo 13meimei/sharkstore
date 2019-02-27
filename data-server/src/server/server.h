@@ -28,8 +28,6 @@ public:
 
     ContextServer *context_server() { return context_; }
 
-    void DealTask(common::ProtoMessage *task);
-
 private:
     DataServer();
 

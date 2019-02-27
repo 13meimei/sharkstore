@@ -19,7 +19,7 @@ bool Context::Write(const MessagePtr& resp_msg) const {
 bool Context::Write(const Head& req_head, std::vector<uint8_t>&& resp_body) const {
     auto resp_msg = NewMessage();
     resp_msg->body = std::move(resp_body);
-    resp_msg->head.SetResp(req_head, resp_msg->body.size());
+    resp_msg->head.SetResp(req_head, static_cast<uint32_t>(resp_msg->body.size()));
     return this->Write(resp_msg);
 }
 

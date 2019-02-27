@@ -5,62 +5,92 @@ _Pragma("once");
 #include <queue>
 #include <thread>
 #include <vector>
-#include <semaphore.h>
+#include <tbb/concurrent_queue.h>
 
 #include "common/socket_message.h"
-#include "lk_queue/lk_queue.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace server {
 
+class RangeServer;
+
 class Worker final {
 public:
-    Worker(size_t fast_worker_size, size_t slow_worker_size);
+    Worker() = default;
     ~Worker() = default;
 
     Worker(const Worker &) = delete;
     Worker &operator=(const Worker &) = delete;
 
-    int Start();
+    Status Start(size_t fast_worker_size, size_t slow_worker_size, RangeServer* range_server);
+
     void Stop();
 
-    // 0: fast queue; 1: slow queue; 2: thread queue
-    void Push(const common::ProtoMessage& task);
+    void Push(common::ProtoMessage* msg);
 
     void PrintQueueSize();
 
     size_t ClearQueue(bool fast, bool slow);
 
-    uint64_t FastQueueSize() const { return fast_queue_.all_msg_size; }
-    uint64_t SlowQueueSize() const { return slow_queue_.all_msg_size; }
+    uint64_t FastQueueSize() const { return fast_workers_->PendingSize(); }
+    uint64_t SlowQueueSize() const { return slow_workers_->PendingSize(); }
 
 private:
-    struct HashQueue {
-        std::vector<lock_free_queue_t *> msg_queue;
-        std::atomic<uint64_t> all_msg_size;
+    class WorkThreadGroup;
 
-        HashQueue() : all_msg_size(0) {}
+    class WorkThread {
+    public:
+        WorkThread(WorkThreadGroup* group, const std::string& name, size_t max_capacity);
+        ~WorkThread();
+
+        WorkThread(const WorkThread&) = delete;
+        WorkThread& operator=(const WorkThread&) = delete;
+
+        bool Push(common::ProtoMessage* msg);
+        uint64_t PendingSize() const;
+        uint64_t Clear();
+
+    private:
+        void runLoop();
+
+    private:
+        WorkThreadGroup* parent_group_ = nullptr;
+        const size_t capacity_ = 0;
+        tbb::concurrent_queue<common::ProtoMessage*> que_;
+        std::thread thr_;
     };
 
-    bool isSlow(common::ProtoMessage *msg);
+    class WorkThreadGroup {
+    public:
+        WorkThreadGroup(RangeServer* rs, size_t num, size_t capacity_per_thread, const std::string& name);
+        ~WorkThreadGroup();
 
-    void DealTask(common::ProtoMessage *task);
-    void Clean(HashQueue &hash_queue);
+        WorkThreadGroup(const WorkThreadGroup&) = delete;
+        WorkThreadGroup& operator=(const WorkThreadGroup&) = delete;
 
-    void StartWorker(std::vector<std::thread> &worker, HashQueue & hash_queue, int num);
+        void Start();
+        bool Push(common::ProtoMessage* msg);
+        void DealTask(common::ProtoMessage* msg);
+        uint64_t PendingSize() const;
+        uint64_t Clear();
+
+    private:
+        RangeServer* const rs_;
+        const size_t thread_num_ = 0;
+        const size_t capacity_ = 0;
+        const std::string name_;
+
+        std::atomic<uint64_t> round_robin_counter_ = {0};
+        std::vector<WorkThread*> threads_;
+    };
 
 private:
-    const size_t fast_worker_size_ = 0;
-    const size_t slow_worker_size_ = 0;
+    static bool isSlowTask(common::ProtoMessage *task);
 
-    std::atomic<uint64_t> slot_seed_;
-
-    HashQueue fast_queue_;
-    HashQueue slow_queue_;
-
-    std::vector<std::thread> fast_workers_;
-    std::vector<std::thread> slow_workers_;
+private:
+    std::unique_ptr<WorkThreadGroup> fast_workers_;
+    std::unique_ptr<WorkThreadGroup> slow_workers_;
 };
 
 } /* namespace server */

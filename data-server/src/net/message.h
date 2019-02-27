@@ -26,7 +26,11 @@ struct Context {
     std::string remote_addr;
     std::string local_addr;
 
+    // 返回true表示投递到connection，
+    // false表示connection已经不存在
     bool Write(const MessagePtr& resp_msg) const;
+
+    // 根据request的头部自动填充response的头部，发送response msg
     bool Write(const Head& req_head, std::vector<uint8_t>&& resp_body) const;
 };
 

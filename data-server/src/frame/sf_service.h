@@ -9,9 +9,6 @@
 #include <fastcommon/ioevent.h>
 
 #include "sf_config.h"
-#include "sf_socket.h"
-#include "sf_socket_buff.h"
-#include "sf_socket_session.h"
 
 typedef int (*sf_user_init_callback_t)();
 typedef void (*sf_user_destroy_callback_t)();

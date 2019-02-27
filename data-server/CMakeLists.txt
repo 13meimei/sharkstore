@@ -46,25 +46,20 @@ include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
 
 # use intel tbb
-OPTION (ENABLE_TBB "Use Intel TBB" ON)
-MESSAGE(STATUS ENABLE_TBB=${ENABLE_TBB})
-if(ENABLE_TBB)
-    find_library(TBB_LIB tbb)
-    if(NOT TBB_LIB)
-        message(FATAL_ERROR "TBB library not found")
-    else()
-        message(STATUS "Found TBB C++ library: " ${TBB_LIB})
-    endif()
+find_library(TBB_LIB tbb)
+if(NOT TBB_LIB)
+    message(FATAL_ERROR "TBB library not found")
+else()
+    message(STATUS "Found TBB C++ library: " ${TBB_LIB})
+endif()
 
-    # find grpc header
-    find_path(TBB_HEADER_PATH tbb/concurrent_queue.h)
-    if(NOT TBB_HEADER_PATH )
-        message(FATAL_ERROR "TBB headers not found")
-    else()
-        message(STATUS "Found TBB headers path: " ${TBB_HEADER_PATH})
-        include_directories(${TBB_HEADER_PATH})
-    endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTBB")
+# find tbb headers
+find_path(TBB_HEADER_PATH tbb/concurrent_queue.h)
+if(NOT TBB_HEADER_PATH )
+    message(FATAL_ERROR "TBB headers not found")
+else()
+    message(STATUS "Found TBB headers path: " ${TBB_HEADER_PATH})
+    include_directories(${TBB_HEADER_PATH})
 endif()
 
 OPTION (ENABLE_TCMALLOC "Use TCMalloc" OFF)
@@ -255,7 +250,6 @@ foreach(f IN LISTS SOURCES)
 endforeach()
 
 add_subdirectory(src/base)
-add_subdirectory(src/lk_queue)
 add_subdirectory(src/common)
 add_subdirectory(src/frame)
 add_subdirectory(src/proto)
@@ -268,23 +262,19 @@ set (depend_LIBRARYS
     sharkstore-net
     sharkstore-common
     sharkstore-frame
-    sharkstore-lkqueue
     sharkstore-base
     ${PROTOBUF_LIBRARY}
     ${GRPC_LIB}
     ${GRPC_CPP_LIB}
     ${ROCKSDB_LIB}
     ${FASTCOMMON_LIB}
+    ${TBB_LIB}
     pthread
     dl
     z
 )
 if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)
-endif()
-
-if(ENABLE_TBB)
-    list(APPEND depend_LIBRARYS ${TBB_LIB})
 endif()
 
 if (ENABLE_TCMALLOC)
