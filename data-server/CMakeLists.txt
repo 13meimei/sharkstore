@@ -173,7 +173,6 @@ message(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
 set(SOURCES
     src/server/main.cpp
-    src/server/callback.cpp
     src/server/server.cpp
     src/server/worker.cpp
     src/server/node_address.cpp

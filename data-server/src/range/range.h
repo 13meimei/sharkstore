@@ -11,7 +11,6 @@ _Pragma("once");
 #include "base/util.h"
 
 #include "common/ds_encoding.h"
-#include "common/socket_session.h"
 #include "storage/store.h"
 #include "raft/raft.h"
 #include "raft/statemachine.h"

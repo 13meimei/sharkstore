@@ -1,12 +1,12 @@
-#ifndef __RUN_STATUS_H__
-#define __RUN_STATUS_H__
+_Pragma("once");
 
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <string>
+#include <thread>
+#include <set>
 
-#include "frame/sf_status.h"
 #include "monitor/isystemstatus.h"
 #include "monitor/syscommon.h"
 #include "monitor/statistics.h"
@@ -76,4 +76,3 @@ private:
 }  // namespace server
 }  // namespace dataserver
 }  // namespace sharkstore
-#endif  //__RUN_STATUS_H__

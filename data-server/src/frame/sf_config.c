@@ -9,8 +9,15 @@
 #include <fastcommon/shared_func.h>
 #include <fastcommon/sockopt.h>
 
-#include "sf_define.h"
 #include "sf_logger.h"
+
+#define SF_DEF_MAX_PACKAGE_SIZE  (16 * 1024)
+#define SF_DEF_MIN_BUFF_SIZE  (64 * 1024)
+#define SF_DEF_MAX_BUFF_SIZE  (64 * 1024)
+
+#define DEFAULT_WORKER_PORT         6180
+#define DEFAULT_MANAGER_PORT        16180
+#define DEFAULT_SOCKET_KEEP_TIME    60*30
 
 // define server
 volatile bool g_continue_flag = true;

@@ -42,7 +42,6 @@ static int setup_schedule_tasks();
 
 static pthread_t schedule_tid;
 static char *conf_filename = NULL;
-static int sf_task_arg_size = sizeof(sf_task_arg_t);
 
 static pthread_mutex_t service_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t service_cond = PTHREAD_COND_INITIALIZER;
@@ -65,21 +64,8 @@ void sf_regist_user_destroy_callback(sf_user_destroy_callback_t user_destroy_fun
 
 int sf_service_init() {
     int result;
-    int init_count;
-
     if ((result = set_rand_seed()) != 0) {
         FLOG_ERROR("set_rand_seed fail, program exit!");
-        return result;
-    }
-    sf_socket_config_t *config = &sf_config.socket_config;
-
-    init_count = config->max_connections < ALLOC_CONNECTIONS_ONCE
-                     ? config->max_connections
-                     : ALLOC_CONNECTIONS_ONCE;
-
-    if ((result = free_queue_init_ex(config->max_connections, init_count,
-                                     ALLOC_CONNECTIONS_ONCE, config->min_buff_size,
-                                     config->max_buff_size, sf_task_arg_size)) != 0) {
         return result;
     }
 

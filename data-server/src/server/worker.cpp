@@ -70,7 +70,7 @@ void Worker::WorkThread::runLoop() {
 }
 
 
-Worker::WorkThreadGroup::WorkThreadGroup(RangeServer* rs, size_t num,
+Worker::WorkThreadGroup::WorkThreadGroup(RangeServer* rs, int num,
         size_t capacity_per_thread, const std::string& name) :
     rs_(rs),
     thread_num_(num),
@@ -86,9 +86,9 @@ Worker::WorkThreadGroup::~WorkThreadGroup() {
 }
 
 void Worker::WorkThreadGroup::Start() {
-    for (size_t i = 0; i < thread_num_; ++i) {
+    for (int i = 0; i < thread_num_; ++i) {
         char buf[16] = {'\0'};
-        snprintf(buf, 16, "%s:%lu", name_.c_str(), i);
+        snprintf(buf, 16, "%s:%d", name_.c_str(), i);
         auto thr = new WorkThread(this, buf, capacity_);
         threads_.push_back(thr);
     }
@@ -120,8 +120,8 @@ uint64_t Worker::WorkThreadGroup::Clear() {
 }
 
 
-Status Worker::Start(size_t fast_worker_size, size_t slow_worker_size, RangeServer* range_server) {
-    FLOG_INFO("Worker Start begin, fast_worker_size: %lu, slow_worker_size: %lu",
+Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* range_server) {
+    FLOG_INFO("Worker Start begin, fast_worker_size: %d, slow_worker_size: %d",
             fast_worker_size, slow_worker_size);
 
     fast_workers_.reset(

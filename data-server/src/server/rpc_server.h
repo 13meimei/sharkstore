@@ -23,15 +23,11 @@ public:
 
 private:
     void onMessage(const net::Context& ctx, const net::MessagePtr& msg);
-    void insert(const net::Context& ctx, const net::MessagePtr& msg);
-    void select(const net::Context& ctx, const net::MessagePtr& msg);
-
-    void reply(const net::Context& ctx, const net::Head& req_head,
-            const ::google::protobuf::Message& resp);
 
 private:
     const net::ServerOptions ops_;
     std::unique_ptr<net::Server> net_server_;
+    Worker* worker_ = nullptr;
 };
 
 } /* namespace server */

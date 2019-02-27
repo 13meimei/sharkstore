@@ -15,6 +15,8 @@ namespace server {
 
 class RangeServer;
 
+using TaskHandler = std::function<void(common::ProtoMessage*)>;
+
 class Worker final {
 public:
     Worker() = default;
@@ -23,16 +25,13 @@ public:
     Worker(const Worker &) = delete;
     Worker &operator=(const Worker &) = delete;
 
-    Status Start(size_t fast_worker_size, size_t slow_worker_size, RangeServer* range_server);
-
+    Status Start(int fast_worker_size, int slow_worker_size, RangeServer* range_server);
     void Stop();
 
     void Push(common::ProtoMessage* msg);
 
     void PrintQueueSize();
-
     size_t ClearQueue(bool fast, bool slow);
-
     uint64_t FastQueueSize() const { return fast_workers_->PendingSize(); }
     uint64_t SlowQueueSize() const { return slow_workers_->PendingSize(); }
 
@@ -63,7 +62,7 @@ private:
 
     class WorkThreadGroup {
     public:
-        WorkThreadGroup(RangeServer* rs, size_t num, size_t capacity_per_thread, const std::string& name);
+        WorkThreadGroup(RangeServer* rs, int num, size_t capacity_per_thread, const std::string& name);
         ~WorkThreadGroup();
 
         WorkThreadGroup(const WorkThreadGroup&) = delete;
@@ -77,7 +76,7 @@ private:
 
     private:
         RangeServer* const rs_;
-        const size_t thread_num_ = 0;
+        const int thread_num_ = 0;
         const size_t capacity_ = 0;
         const std::string name_;
 

@@ -6,7 +6,6 @@
 #include "raft_exception.h"
 #include "raft_impl.h"
 #include "snapshot/manager.h"
-#include "transport/fast_transport.h"
 #include "transport/inprocess_transport.h"
 #include "transport/transport.h"
 
@@ -58,9 +57,8 @@ Status RaftServerImpl::Start() {
     if (ops_.transport_options.use_inprocess_transport) {
         transport_.reset(new transport::InProcessTransport(ops_.node_id));
     } else {
-        transport_.reset(new transport::FastTransport(ops_.transport_options.resolver,
-                                                  ops_.transport_options.send_io_threads,
-                                                  ops_.transport_options.recv_io_threads));
+        // TODO:
+        transport_.reset(new transport::InProcessTransport(ops_.node_id));
     }
     status = transport_->Start(
         ops_.transport_options.listen_ip, ops_.transport_options.listen_port,

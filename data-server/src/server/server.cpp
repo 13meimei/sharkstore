@@ -22,7 +22,7 @@ namespace server {
 DataServer::DataServer() {
     context_ = new ContextServer;
 
-    context_->worker = new Worker(ds_config.fast_worker_num, ds_config.slow_worker_num);
+    context_->worker = new Worker();
 
     context_->run_status = new RunStatus;
     context_->range_server = new RangeServer;
@@ -43,7 +43,6 @@ DataServer::~DataServer() {
     delete context_->master_worker;
     delete context_->run_status;
     delete context_->range_server;
-    delete context_->socket_session;
     delete context_->raft_server;
     delete context_;
 }
@@ -114,10 +113,6 @@ int DataServer::Init() {
         return -1;
     }
 
-    if (context_->worker->Init(context_) != 0) {
-        return -1;
-    }
-
     if (context_->run_status->Init(context_) != 0) {
         return -1;
     }
@@ -132,11 +127,14 @@ int DataServer::Start() {
         return -1;
     }
 
-    if (context_->worker->Start() != 0) {
+    auto ret = context_->worker->Start(ds_config.fast_worker_num,
+            ds_config.slow_worker_num, context_->range_server);
+    if (!ret.ok()) {
+        FLOG_ERROR("start worker failed: %s", ret.ToString().c_str());
         return -1;
     }
 
-    auto ret = admin_server_->Start(ds_config.manager_config.port);
+    ret = admin_server_->Start(static_cast<uint16_t>(ds_config.manager_config.port));
     if (!ret.ok()) {
         FLOG_ERROR("start admin server failed: %s", ret.ToString().c_str());
         return -1;

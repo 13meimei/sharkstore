@@ -24,10 +24,13 @@
 #include "common/ds_version.h"
 #include "frame/sf_service.h"
 
-#include "callback.h"
 #include "version.h"
+#include "server.h"
 
-using sharkstore::dataserver::server::GetVersionInfo;
+using namespace sharkstore::dataserver::server;
+
+int ds_user_init_callback() { return DataServer::Instance().Start(); }
+void ds_user_destroy_callback() { DataServer::Instance().Stop(); }
 
 int main(int argc, char *argv[]) {
     // print version
@@ -36,8 +39,6 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    sf_set_proto_header_size(sizeof(ds_proto_header_t));
-    sf_regist_body_length_callback(ds_get_body_length);
     sf_regist_load_config_callback(load_from_conf_file);
 
     sf_regist_print_version_callback(print_version);
