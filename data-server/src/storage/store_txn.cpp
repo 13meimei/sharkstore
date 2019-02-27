@@ -372,7 +372,7 @@ TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& ke
 }
 
 uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
-    if (req.status() != COMMITTED || req.status() != ABORTED) {
+    if (req.status() != COMMITTED && req.status() != ABORTED) {
         setTxnServerErr(resp->mutable_err(), Status::kInvalidArgument, "invalid txn status");
         return 0;
     }

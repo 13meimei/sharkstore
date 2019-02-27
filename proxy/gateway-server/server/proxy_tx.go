@@ -395,13 +395,17 @@ func convertTxnErr(txError *txnpb.TxnError) error {
 	var err error
 	switch txError.GetErrType() {
 	case txnpb.TxnError_SERVER_ERROR:
-		err = fmt.Errorf("SERVER_ERROR")
+		serverErr := txError.GetServerErr()
+		err = fmt.Errorf("SERVER_ERROR, code:[%v], message:%v", serverErr.GetCode(), serverErr.GetMsg())
 	case txnpb.TxnError_LOCKED:
-		err = fmt.Errorf("TXN EXSIST LOCKED")
+		lockErr := txError.GetLockErr()
+		err = fmt.Errorf("TXN EXSIST LOCKED, lockTxId: %v, timeout:%v", lockErr.GetInfo().GetTxnId(), lockErr.GetInfo().GetTxnId())
 	case txnpb.TxnError_UNEXPECTED_VER:
-		err = fmt.Errorf("UNEXPECTED VERSION")
+		versionErr := txError.GetUnexpectedVer()
+		err = fmt.Errorf("UNEXPECTED VERSION, expectedVer: %v, actualVer:%v", versionErr.GetExpectedVer(), versionErr.GetActualVer())
 	case txnpb.TxnError_STATUS_CONFLICT:
-		err = fmt.Errorf("TXN STATUS CONFLICT")
+		statusConflict := txError.GetStatusConflict()
+		err = fmt.Errorf("TXN STATUS CONFLICT, status: %v", statusConflict.GetStatus())
 	case txnpb.TxnError_NOT_FOUND:
 		err = fmt.Errorf("NOT FOUND")
 	case txnpb.TxnError_NOT_UNIQUE:
