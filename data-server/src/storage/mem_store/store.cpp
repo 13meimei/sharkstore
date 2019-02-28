@@ -79,10 +79,9 @@ Status MemStore::Insert(storage::Store* store,
 //    if (s != 0) {
 //        return Status(Status::kIOError, "batch write", s.ToString());
 //    } else {
-//        store->addMetricWrite(*affected, bytes_written);
-//        return Status::OK();
+        store->addMetricWrite(*affected, bytes_written);
+        return Status::OK();
 //    }
-    return Status::OK();
 }
 
 WriteBatchInterface* MemStore::NewBatch() {
