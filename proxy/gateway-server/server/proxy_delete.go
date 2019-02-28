@@ -126,10 +126,12 @@ func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([]*txnpb.T
 					col        = field.GetColumn()
 					fieldValue []byte
 				)
-				fieldValue, err = formatValue(rValue.fields[i].value)
-				if err != nil {
-					log.Error("[delete]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
-					return nil, 0, err
+				if rValue.fields[i].value != nil {
+					fieldValue, err = formatValue(rValue.fields[i].value)
+					if err != nil {
+						log.Error("[delete]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
+						return nil, 0, err
+					}
 				}
 				if col.GetPrimaryKey() == 1 {
 					rowKey, err = util.EncodePrimaryKey(rowKey, col, fieldValue)

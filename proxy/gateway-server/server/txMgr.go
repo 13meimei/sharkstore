@@ -203,9 +203,6 @@ func (t *TxObj) Delete(intents []*txnpb.TxnIntent) (err error) {
 	decide:  decide primary intents, then async to decide secondary intents, last clear tx record
  */
 func (t *TxObj) Commit() (err error) {
-	if t == nil {
-		return
-	}
 	var (
 		passed bool
 		status = txnpb.TxnStatus_COMMITTED
@@ -274,9 +271,6 @@ func (t *TxObj) Commit() (err error) {
     rollback current transaction
  */
 func (t *TxObj) Rollback() (err error) {
-	if t == nil {
-		return
-	}
 	var passed bool
 	passed, err = t.changeTxStatus(txnpb.TxnStatus_ABORTED)
 	if err != nil || !passed {

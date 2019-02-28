@@ -57,6 +57,9 @@ func (c *ClientConn) handleRollback() (err error) {
 func (c *ClientConn) commit() (err error) {
 	c.status &= ^mysql.SERVER_STATUS_IN_TRANS
 
+	if c.tx == nil {
+		return
+	}
 	if e := c.tx.Commit(); e != nil {
 		err = e
 	}
@@ -67,9 +70,14 @@ func (c *ClientConn) commit() (err error) {
 func (c *ClientConn) rollback() (err error) {
 	c.status &= ^mysql.SERVER_STATUS_IN_TRANS
 
+	if c.tx == nil {
+		return
+	}
+
 	if e := c.tx.Rollback(); e != nil {
 		err = e
 	}
 	c.tx = nil
+
 	return
 }
