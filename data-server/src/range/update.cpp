@@ -28,9 +28,10 @@ void Range::Update(RPCRequestPtr rpc, kvrpcpb::DsUpdateRequest &req) {
         return SendResponse(rpc, resp, req.header(), err);
     }
 
-    SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-        cmd.set_cmd_type(raft_cmdpb::CmdType::Update);
-        cmd.set_allocated_update_req(req.release_req());
+    SubmitCmd<kvrpcpb::DsUpdateResponse>(std::move(rpc), req.header(),
+        [&req](raft_cmdpb::Command &cmd) {
+            cmd.set_cmd_type(raft_cmdpb::CmdType::Update);
+            cmd.set_allocated_update_req(req.release_req());
     });
 }
 

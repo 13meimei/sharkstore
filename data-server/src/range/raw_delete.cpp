@@ -53,9 +53,10 @@ void Range::RawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, boo
             }
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::RawDelete);
-            cmd.set_allocated_kv_raw_delete_req(req.release_req());
+        SubmitCmd<kvrpcpb::DsKvRawDeleteResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::RawDelete);
+                cmd.set_allocated_kv_raw_delete_req(req.release_req());
         });
     } while (false);
 

@@ -132,9 +132,6 @@ private:
     Status Submit(const raft_cmdpb::Command &cmd);
     void ClearExpiredContext();
 
-    // 提交给raft，如果提交失败会直接发送错误回应
-    void SubmitCmd(RPCRequestPtr rpc, const kvrpcpb::RequestHeader& header,
-            const std::function<void(raft_cmdpb::Command &cmd)> &init);
 
     Status Apply(const raft_cmdpb::Command &cmd, uint64_t index);
 
@@ -174,14 +171,6 @@ private:
     void AskSplit(std::string &&key, metapb::Range&& meta, bool force = false);
     void ReportSplit(const metapb::Range &new_range);
 
-    int64_t checkMaxCount(int64_t maxCount) {
-        if (maxCount <= 0) maxCount = std::numeric_limits<int64_t>::max();
-        if (maxCount > max_count_) {
-            //FLOG_WARN("%ld exceeded maxCount(%ld)", maxCount, max_count_);
-            maxCount = max_count_;
-        }
-        return maxCount;
-    }
 
     // 根据request的header设定response的header，然后发送response
     template <class ResponseT>
@@ -192,6 +181,30 @@ private:
         rpc->Reply(resp);
     }
 
+    // 提交给raft，放入队列等Apply的时候再拿出来回应
+    // 如果提交失败会从队列中删除，并发送错误回应
+    template <class ResponseT>
+    void SubmitCmd(RPCRequestPtr rpc, const kvrpcpb::RequestHeader& header,
+                   const std::function<void(raft_cmdpb::Command &cmd)> &init) {
+        raft_cmdpb::Command cmd;
+        init(cmd);
+        // set verify epoch
+        auto epoch = new metapb::RangeEpoch(header.range_epoch());
+        cmd.set_allocated_verify_epoch(epoch);
+        // add to queue
+        auto seq = submit_queue_.Add<ResponseT>(std::move(rpc), cmd.cmd_type(), header);
+        cmd.mutable_cmd_id()->set_node_id(node_id_);
+        cmd.mutable_cmd_id()->set_seq(seq);
+        auto ret = Submit(cmd); // 提交给raft
+        if (!ret.ok()) {
+            RANGE_LOG_ERROR("raft submit failed: %s", ret.ToString().c_str());
+            auto ctx = submit_queue_.Remove(seq);
+            if (ctx != nullptr) {
+                ctx->SendError(RaftFailError()); // 提交失败，发送错误回应
+            }
+        }
+    }
+
     // 走raft的命令处理完，从SubmitQueue取出上下文进行回应
     template <class ResponseT>
     void ReplySubmit(const raft_cmdpb::Command& cmd, ResponseT& resp, errorpb::Error *err, int64_t apply_time) {
@@ -199,7 +212,7 @@ private:
         if (ctx != nullptr) {
             context_->Statistics()->PushTime(monitor::HistogramType::kRaft, apply_time - ctx->SubmitTime());
             ctx->CheckExecuteTime(id_, kTimeTakeWarnThresoldUSec);
-            ctx->FillResponseHeader(resp, err);
+            ctx->FillResponseHeader(resp.mutable_header(), err);
             ctx->SendResponse(resp);
         } else {
             delete err;
@@ -294,8 +307,6 @@ private:
 
     std::unique_ptr<storage::Store> store_;
     std::shared_ptr<raft::Raft> raft_;
-
-    int64_t max_count_ = 1000;
 };
 
 }  // namespace range

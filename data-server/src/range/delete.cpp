@@ -56,10 +56,12 @@ void Range::Delete(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redire
             }
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::Delete);
-            cmd.set_allocated_delete_req(req.release_req());
-        });
+        SubmitCmd<kvrpcpb::DsKvDeleteResponse>(std::move(rpc), req.header(),
+             [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::Delete);
+                cmd.set_allocated_delete_req(req.release_req());
+             }
+        );
     } while (false);
 
     if (err != nullptr) {

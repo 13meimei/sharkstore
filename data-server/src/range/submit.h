@@ -59,7 +59,7 @@ public:
 
     void SendError(errorpb::Error *err) override {
         ResponseT resp;
-        SetResponseHeader(resp, err);
+        FillResponseHeader(resp.mutable_header(), err);
         SendResponse(resp);
     }
 };
@@ -75,8 +75,17 @@ public:
     // 只获取一个递增的ID, for split command
     uint64_t GetSeq();
 
+    template <class ResponseT>
     uint64_t Add(RPCRequestPtr rpc_request, raft_cmdpb::CmdType type,
-            const kvrpcpb::RequestHeader& kv_req_header);
+            const kvrpcpb::RequestHeader& kv_req_header)
+    {
+        auto expire_time = rpc_request->expire_time;
+        SubmitContextPtr ctx(new SubmitContextT<ResponseT>(std::move(rpc_request), type, kv_req_header));
+        std::lock_guard<std::mutex> lock(mu_);
+        ctx_map_.emplace(++seq_, std::move(ctx));
+        expire_que_.emplace(expire_time, seq_);
+        return seq_;
+    }
 
     std::unique_ptr<SubmitContext> Remove(uint64_t seq_id);
 

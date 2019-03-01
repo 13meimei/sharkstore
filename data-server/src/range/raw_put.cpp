@@ -52,9 +52,10 @@ void Range::RawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redi
             }
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::RawPut);
-            cmd.set_allocated_kv_raw_put_req(req.release_req());
+        SubmitCmd<kvrpcpb::DsKvRawPutResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::RawPut);
+                cmd.set_allocated_kv_raw_put_req(req.release_req());
         });
     } while (false);
 

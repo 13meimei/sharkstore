@@ -65,9 +65,10 @@ void Range::TxnPrepare(RPCRequestPtr rpc, DsPrepareRequest& req) {
 
         // submit to raft
         // TODO: check lock in memory
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::TxnPrepare);
-            cmd.set_allocated_txn_prepare_req(req.release_req());
+        SubmitCmd<DsPrepareResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::TxnPrepare);
+                cmd.set_allocated_txn_prepare_req(req.release_req());
         });
     } while (false);
 
@@ -120,15 +121,16 @@ void Range::TxnDecide(RPCRequestPtr rpc, DsDecideRequest& req) {
 
         // submit to raft
         // TODO: check lock in memory
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::TxnDecide);
-            cmd.set_allocated_txn_decide_req(req.release_req());
+        SubmitCmd<DsDecideResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::TxnDecide);
+                cmd.set_allocated_txn_decide_req(req.release_req());
         });
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("TxnDecide error: %s", err->message().c_str());
-        DsPrepareResponse resp;
+        DsDecideResponse resp;
         SendResponse(rpc, resp, req.header(), err);
     }
 }
@@ -181,9 +183,10 @@ void Range::TxnClearup(RPCRequestPtr rpc, txnpb::DsClearupRequest& req) {
             break;
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::TxnClearup);
-            cmd.set_allocated_txn_clearup_req(req.release_req());
+        SubmitCmd<DsClearupResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::TxnClearup);
+                cmd.set_allocated_txn_clearup_req(req.release_req());
         });
     } while (false);
 

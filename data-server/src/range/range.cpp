@@ -298,31 +298,6 @@ Status Range::Submit(const raft_cmdpb::Command &cmd) {
     }
 }
 
-void Range::SubmitCmd(RPCRequestPtr rpc, const kvrpcpb::RequestHeader& header,
-        const std::function<void(raft_cmdpb::Command &cmd)> &init) {
-    raft_cmdpb::Command cmd;
-    init(cmd);
-
-    // set verify epoch
-    auto epoch = new metapb::RangeEpoch(header.range_epoch());
-    cmd.set_allocated_verify_epoch(epoch);
-
-    // add to queue
-    auto seq = submit_queue_.Add(std::move(rpc), cmd.cmd_type(), header);
-    cmd.mutable_cmd_id()->set_node_id(node_id_);
-    cmd.mutable_cmd_id()->set_seq(seq);
-
-    auto ret = Submit(cmd);
-    if (!ret.ok()) {
-        RANGE_LOG_ERROR("raft submit failed: %s", ret.ToString().c_str());
-
-        auto ctx = submit_queue_.Remove(seq);
-        if (ctx != nullptr) {
-            ctx->SendError(RaftFailError());
-        }
-    }
-}
-
 void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
     RANGE_LOG_INFO("Leader Change to Node %" PRIu64, leader);
 
@@ -571,12 +546,19 @@ bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&err) 
     return true;
 }
 
+static errorpb::Error *timeoutError() {
+    auto err = new errorpb::Error;
+    err->set_message("request timeout");
+    err->mutable_timeout();
+    return err;
+}
+
 void Range::ClearExpiredContext() {
     auto expired_seqs = submit_queue_.GetExpired();
     for (auto seq: expired_seqs) {
         auto ctx = submit_queue_.Remove(seq);
         if (ctx) {
-            ctx->SendTimeout();
+            ctx->SendError(timeoutError());
         }
     }
 }

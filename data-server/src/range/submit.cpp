@@ -27,76 +27,6 @@ void SubmitContext::SendResponse(const ::google::protobuf::Message& resp) {
     rpc_request_->Reply(resp);
 }
 
-void SubmitContext::SendError(errorpb::Error *err) {
-    switch (type_) {
-        case raft_cmdpb::CmdType::RawPut: {
-            kvrpcpb::DsKvRawPutResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::RawDelete: {
-            kvrpcpb::DsKvRawDeleteResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::Insert: {
-            kvrpcpb::DsInsertResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::Delete: {
-            kvrpcpb::DsDeleteResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::Lock: {
-            kvrpcpb::DsLockResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::LockUpdate: {
-            kvrpcpb::DsLockUpdateResponse  resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::Unlock: {
-            kvrpcpb::DsUnlockResponse  resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::UnlockForce: {
-            kvrpcpb::DsUnlockForceResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::TxnPrepare: {
-            txnpb::DsPrepareResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::TxnDecide: {
-           txnpb::DsDecideResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        case raft_cmdpb::CmdType::TxnClearup: {
-            txnpb::DsClearupResponse resp;
-            Reply(resp, err);
-            break;
-        }
-        default:
-            FLOG_ERROR("SubmitContext::SendTimeout: unknown cmd type: %d", static_cast<int>(type_));
-            delete err;
-    }
-}
-
-void SubmitContext::SendTimeout() {
-    auto err = new errorpb::Error;
-    err->set_message("request timeout");
-    err->mutable_timeout();
-    SendError(err);
-}
-
 void SubmitContext::CheckExecuteTime(uint64_t rangeID, int64_t thresold_usecs) {
     auto take = NowMicros() - rpc_request_->begin_time;
     if (take > thresold_usecs) {
@@ -114,15 +44,6 @@ uint64_t SubmitQueue::GetSeq() {
     return ++seq_;
 }
 
-uint64_t SubmitQueue::Add(RPCRequestPtr rpc_request, raft_cmdpb::CmdType type,
-             const kvrpcpb::RequestHeader& kv_req_header) {
-    auto expire_time = rpc_request->expire_time;
-    SubmitContextPtr ctx(new SubmitContext(std::move(rpc_request), type, kv_req_header));
-    std::lock_guard<std::mutex> lock(mu_);
-    ctx_map_.emplace(++seq_, std::move(ctx));
-    expire_que_.emplace(expire_time, seq_);
-    return seq_;
-}
 
 std::unique_ptr<SubmitContext> SubmitQueue::Remove(uint64_t seq_id) {
     std::unique_ptr<SubmitContext> ret;

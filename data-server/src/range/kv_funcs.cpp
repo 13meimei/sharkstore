@@ -12,6 +12,17 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
+static const int64_t kDefaultKVMaxCount = 1000;
+
+static int64_t checkMaxCount(int64_t maxCount) {
+    if (maxCount <= 0)
+        maxCount = std::numeric_limits<int64_t>::max();
+    if (maxCount > kDefaultKVMaxCount) {
+        maxCount = kDefaultKVMaxCount ;
+    }
+    return maxCount;
+}
+
 void Range::KVSet(RPCRequestPtr rpc, kvrpcpb::DsKvSetRequest &req) {
     auto &key = req.req().kv().key();
     errorpb::Error *err = nullptr;
@@ -37,10 +48,11 @@ void Range::KVSet(RPCRequestPtr rpc, kvrpcpb::DsKvSetRequest &req) {
             break;
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::KvSet);
-            cmd.set_allocated_kv_set_req(req.release_req());
-        });
+        SubmitCmd<kvrpcpb::DsKvSetResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::KvSet);
+                cmd.set_allocated_kv_set_req(req.release_req());
+            });
     } while (false);
 
     if (err != nullptr) {
@@ -138,9 +150,10 @@ void Range::KVBatchSet(RPCRequestPtr rpc, kvrpcpb::DsKvBatchSetRequest &req) {
             break;
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::KvBatchSet);
-            cmd.set_allocated_kv_batch_set_req(req.release_req());
+        SubmitCmd<kvrpcpb::DsKvBatchSetResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::KvBatchSet);
+                cmd.set_allocated_kv_batch_set_req(req.release_req());
         });
     } while (false);
 
@@ -260,9 +273,10 @@ void Range::KVDelete(RPCRequestPtr rpc, kvrpcpb::DsKvDeleteRequest &req) {
             break;
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::KvDelete);
-            cmd.set_allocated_kv_delete_req(req.release_req());
+        SubmitCmd<kvrpcpb::DsKvDeleteResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::KvDelete);
+                cmd.set_allocated_kv_delete_req(req.release_req());
         });
     } while (false);
 
@@ -334,10 +348,11 @@ void Range::KVBatchDelete(RPCRequestPtr rpc, kvrpcpb::DsKvBatchDeleteRequest &re
         }
     }
 
-    SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-        cmd.set_cmd_type(raft_cmdpb::CmdType::KvBatchDel);
-        cmd.set_allocated_kv_batch_del_req(req.release_req());
-    });
+    SubmitCmd<kvrpcpb::DsKvBatchDeleteResponse>(std::move(rpc), req.header(),
+        [&req](raft_cmdpb::Command &cmd) {
+            cmd.set_cmd_type(raft_cmdpb::CmdType::KvBatchDel);
+            cmd.set_allocated_kv_batch_del_req(req.release_req());
+        });
 }
 
 Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
@@ -410,9 +425,10 @@ void Range::KVRangeDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRangeDeleteRequest &re
         return SendResponse(rpc, resp, req.header(), err);
     }
 
-    SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-        cmd.set_cmd_type(raft_cmdpb::CmdType::KvRangeDel);
-        cmd.set_allocated_kv_range_del_req(req.release_req());
+    SubmitCmd<kvrpcpb::DsKvRangeDeleteResponse>(std::move(rpc), req.header(),
+        [&req](raft_cmdpb::Command &cmd) {
+            cmd.set_cmd_type(raft_cmdpb::CmdType::KvRangeDel);
+            cmd.set_allocated_kv_range_del_req(req.release_req());
     });
 }
 

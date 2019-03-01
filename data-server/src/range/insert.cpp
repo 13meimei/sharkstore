@@ -27,10 +27,12 @@ void Range::Insert(RPCRequestPtr rpc, kvrpcpb::DsInsertRequest &req) {
         return SendResponse(rpc, resp, req.header(), err);
     }
 
-    SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
-        cmd.set_cmd_type(raft_cmdpb::CmdType::Insert);
-        cmd.set_allocated_insert_req(req.release_req());
-    });
+    SubmitCmd<kvrpcpb::DsInsertResponse>(std::move(rpc), req.header(),
+        [&req](raft_cmdpb::Command &cmd) {
+            cmd.set_cmd_type(raft_cmdpb::CmdType::Insert);
+            cmd.set_allocated_insert_req(req.release_req());
+        }
+    );
 }
 
 Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
