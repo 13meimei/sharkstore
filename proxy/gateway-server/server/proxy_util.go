@@ -320,6 +320,7 @@ func decodeRows(t *Table, fieldList []*kvrpcpb.SelectField, pbRows [][]*txnpb.Ro
 	for _, prs := range pbRows {
 		rows := make([]*Row, 0, len(prs))
 		for _, pr := range prs {
+			log.Debug("select result %v", pr)
 			r, err := decodeRow(t, fieldList, pr)
 			if err != nil {
 				return nil, err
