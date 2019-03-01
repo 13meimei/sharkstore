@@ -10,39 +10,10 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-bool Range::RawDeleteSubmit(common::ProtoMessage *msg,
-                            kvrpcpb::DsKvRawDeleteRequest &req) {
-    auto &key = req.req().key();
-
-    if (is_leader_ && KeyInRange(key)) {
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::RawDelete);
-            cmd.set_allocated_kv_raw_delete_req(req.release_req());
-        });
-
-        return ret.ok() ? true : false;
-    }
-
-    return false;
-}
-
-bool Range::RawDeleteTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req) {
-    std::shared_ptr<Range> rng = context_->FindRange(split_range_id_);
-    if (rng == nullptr) {
-        return false;
-    }
-
-    return rng->RawDeleteSubmit(msg, req);
-}
-
-void Range::RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req) {
-    errorpb::Error *err = nullptr;
-
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
-
+void Range::RawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, bool redirect) {
     RANGE_LOG_DEBUG("RawDelete begin");
 
+    errorpb::Error *err = nullptr;
     do {
         if (!VerifyWriteable(&err)) {
             break;
@@ -70,24 +41,29 @@ void Range::RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &
                 break;
             }
 
-            //! is_equal then retry raw delete
-            if (!RawDeleteTry(msg, req)) {
+            // 单key: 不在范围内, 尝试转发给分裂出去的range, 减少网络交互
+            auto rng = context_->FindRange(split_range_id_);
+            if (rng == nullptr || !redirect) {
                 err = StaleEpochError(epoch);
+                break;
+            } else {
+                // 重定向, 只重定向一次
+                rng->RawDelete(std::move(rpc), req, false);
+                return;
             }
-
-            break;
         }
 
-        if (!RawDeleteSubmit(msg, req)) {
-            err = RaftFailError();
-        }
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
+            cmd.set_cmd_type(raft_cmdpb::CmdType::RawDelete);
+            cmd.set_allocated_kv_raw_delete_req(req.release_req());
+        });
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("RawDelete error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsKvRawDeleteResponse;
-        return SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsKvRawDeleteResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -97,7 +73,7 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
 
     RANGE_LOG_DEBUG("ApplyRawDelete begin");
 
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     auto &req = cmd.kv_raw_delete_req();
 
     do {
@@ -108,7 +84,7 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
 
         ret = store_->Delete(req.key());
         context_->Statistics()->PushTime(HistogramType::kStore,
-                                       get_micro_second() - btime);
+                                       NowMicros() - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyRawDelete failed, code:%d, msg:%s", ret.code(),
@@ -119,8 +95,8 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new kvrpcpb::DsKvRawDeleteResponse;
-        resp->mutable_resp()->set_code(ret.code());
+        kvrpcpb::DsKvRawDeleteResponse resp;
+        resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;

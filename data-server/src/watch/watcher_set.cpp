@@ -4,7 +4,6 @@
 #include "range/watch.h"
 
 #include "watcher_set.h"
-#include "common/socket_session_impl.h"
 #include "frame/sf_logger.h"
 
 #include <pthread.h>

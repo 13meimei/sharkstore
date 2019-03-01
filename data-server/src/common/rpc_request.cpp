@@ -11,6 +11,12 @@ RPCRequest::RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_m
     ctx(req_ctx),
     msg(req_msg),
     begin_time(NowMicros()) {
+    expire_time = NowMilliSeconds();
+    if (msg->head.timeout != 0) {
+        expire_time += msg->head.timeout;
+    } else {
+        expire_time += kDefaultRPCRequestTimeoutMS;
+    };
 }
 
 bool RPCRequest::ParseTo(google::protobuf::Message& proto_req, bool zero_copy) {
@@ -38,11 +44,18 @@ void RPCRequest::Reply(const google::protobuf::Message& proto_resp) {
     }
 }
 
-void SetResponseHeader(const kvrpcpb::RequestHeader &req,
-                       kvrpcpb::ResponseHeader *resp,
+
+void SetResponseHeader(kvrpcpb::ResponseHeader* resp,
+                       const kvrpcpb::RequestHeader &req,
                        errorpb::Error *err) {
-    resp->set_cluster_id(req.cluster_id());
-    resp->set_trace_id(req.trace_id());
+    SetResponseHeader(resp, req.cluster_id(), req.cluster_id(), err);
+}
+
+void SetResponseHeader(kvrpcpb::ResponseHeader* resp,
+                       uint64_t cluster_id, uint64_t trace_id,
+                       errorpb::Error *err) {
+    resp->set_cluster_id(cluster_id);
+    resp->set_trace_id(trace_id);
     if (err != nullptr) {
         resp->set_allocated_error(err);
     }

@@ -12,10 +12,7 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-void Range::KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req) {
-    context_->Statistics()->PushTime(HistogramType::kQWait,
-            get_micro_second() - msg->begin_time);
-
+void Range::KVSet(RPCRequestPtr rpc, kvrpcpb::DsKvSetRequest &req) {
     auto &key = req.req().kv().key();
     errorpb::Error *err = nullptr;
 
@@ -40,21 +37,15 @@ void Range::KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req) {
             break;
         }
 
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvSet);
             cmd.set_allocated_kv_set_req(req.release_req());
         });
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("KVSet raft submit error: %s", ret.ToString().c_str());
-
-            err = RaftFailError();
-        }
     } while (false);
 
     if (err != nullptr) {
-        auto resp = new kvrpcpb::DsKvSetResponse;
-        SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsKvSetResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -64,7 +55,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
 
     auto &req = cmd.kv_set_req();
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     do {
         auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
@@ -83,7 +74,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
             }
         }
         ret = store_->Put(req.kv().key(), req.kv().value());
-        context_->Statistics()->PushTime(HistogramType::kStore, get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
 
         if (cmd.cmd_id().node_id() == node_id_) {
             auto len = req.kv().key().size() + req.kv().value().size();
@@ -92,9 +83,9 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new kvrpcpb::DsInsertResponse;
-        resp->mutable_resp()->set_affected_keys(affected_keys);
-        resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
+        kvrpcpb::DsInsertResponse resp;
+        resp.mutable_resp()->set_affected_keys(affected_keys);
+        resp.mutable_resp()->set_code(static_cast<int>(ret.code()));
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
@@ -102,13 +93,9 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-void Range::KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req) {
-    context_->Statistics()->PushTime(HistogramType::kQWait,
-                                   get_micro_second() - msg->begin_time);
-
+void Range::KVGet(RPCRequestPtr rpc, kvrpcpb::DsKvGetRequest &req) {
     errorpb::Error *err = nullptr;
-    auto ds_resp = new kvrpcpb::DsKvGetResponse;
-    auto header = ds_resp->mutable_header();
+    kvrpcpb::DsKvGetResponse ds_resp;
 
     RANGE_LOG_DEBUG("KVGet begin");
     do {
@@ -122,26 +109,19 @@ void Range::KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req) {
             break;
         }
 
-        auto resp = ds_resp->mutable_resp();
-        auto btime = get_micro_second();
+        auto resp = ds_resp.mutable_resp();
+        auto btime = NowMicros();
         auto ret = store_->Get(req.req().key(), resp->mutable_value());
-
-        context_->Statistics()->PushTime(HistogramType::kStore,
-                                       get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
 
         resp->set_code(static_cast<int>(ret.code()));
     } while (false);
 
-    common::SetResponseHeader(req.header(), header, err);
-    context_->SocketSession()->Send(msg, ds_resp);
+    SendResponse(rpc, ds_resp, req.header(), err);
 }
 
-void Range::KVBatchSet(common::ProtoMessage *msg,
-                       kvrpcpb::DsKvBatchSetRequest &req) {
+void Range::KVBatchSet(RPCRequestPtr rpc, kvrpcpb::DsKvBatchSetRequest &req) {
     Status ret;
-    context_->Statistics()->PushTime(HistogramType::kQWait,
-                                   get_micro_second() - msg->begin_time);
-
     errorpb::Error *err = nullptr;
 
     do {
@@ -157,22 +137,17 @@ void Range::KVBatchSet(common::ProtoMessage *msg,
         if (!EpochIsEqual(epoch, err)) {
             break;
         }
-        ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvBatchSet);
             cmd.set_allocated_kv_batch_set_req(req.release_req());
         });
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("KVBatchSet raft submit error: %s", ret.ToString().c_str());
-
-            err = RaftFailError();
-        }
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("KVBatchSet error: %s", err->message().c_str());
-        auto resp = new kvrpcpb::DsKvBatchSetResponse;
-        SendError(msg, req.header(), resp, RaftFailError());
+        kvrpcpb::DsKvBatchSetResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -182,7 +157,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
     auto total_size = 0, total_count = 0;
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
 
     do {
         auto &req = cmd.kv_batch_set_req();
@@ -217,7 +192,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
 
         ret = store_->BatchSet(keyValues);
         context_->Statistics()->PushTime(HistogramType::kStore,
-                                       get_micro_second() - btime);
+                                       NowMicros() - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyKVBatchSet failed, code:%d, msg:%s", ret.code(),
@@ -231,9 +206,9 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new kvrpcpb::DsKvBatchSetResponse;
-        resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
-        resp->mutable_resp()->set_affected_keys(affected_keys);
+        kvrpcpb::DsKvBatchSetResponse resp;
+        resp.mutable_resp()->set_code(static_cast<int>(ret.code()));
+        resp.mutable_resp()->set_affected_keys(affected_keys);
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
@@ -242,14 +217,10 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-void Range::KVBatchGet(common::ProtoMessage *msg,
-                       kvrpcpb::DsKvBatchGetRequest &req) {
-    context_->Statistics()->PushTime(HistogramType::kQWait,
-                                   get_micro_second() - msg->begin_time);
-
+void Range::KVBatchGet(RPCRequestPtr rpc, kvrpcpb::DsKvBatchGetRequest &req) {
     errorpb::Error *err = nullptr;
-    auto ds_resp = new kvrpcpb::DsKvBatchGetResponse;
-    auto header = ds_resp->mutable_header();
+    kvrpcpb::DsKvBatchGetResponse ds_resp;
+    auto header = ds_resp.mutable_header();
     auto total_time = 0L;
 
     uint64_t count = 0;
@@ -261,25 +232,21 @@ void Range::KVBatchGet(common::ProtoMessage *msg,
         if (key.empty() || !KeyInRange(key)) {
             RANGE_LOG_WARN("KVBatchGet error: %s not in range", key.c_str());
         } else {
-            auto kv = ds_resp->mutable_resp()->add_kvs();
-            auto btime = get_micro_second();
+            auto kv = ds_resp.mutable_resp()->add_kvs();
+            auto btime = NowMicros();
             auto ret = store_->Get(key, kv->mutable_value());
-            kv->set_key(std::move(key));
+            kv->set_key(key);
             count++;
             total_size += kv->key().size() + kv->value().size();
-            total_time += get_micro_second() - btime;
+            total_time += NowMicros() - btime;
         }
     }
-
     context_->Statistics()->PushTime(HistogramType::kStore, total_time);
 
-    common::SetResponseHeader(req.header(), header, err);
-    context_->SocketSession()->Send(msg, ds_resp);
+    SendResponse(rpc, ds_resp, req.header(), err);
 }
 
-void Range::KVDelete(common::ProtoMessage *msg, kvrpcpb::DsKvDeleteRequest &req) {
-    context_->Statistics()->PushTime(HistogramType::kQWait, get_micro_second() - msg->begin_time);
-
+void Range::KVDelete(RPCRequestPtr rpc, kvrpcpb::DsKvDeleteRequest &req) {
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
     do {
@@ -293,28 +260,24 @@ void Range::KVDelete(common::ProtoMessage *msg, kvrpcpb::DsKvDeleteRequest &req)
             break;
         }
 
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::KvDelete);
             cmd.set_allocated_kv_delete_req(req.release_req());
         });
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("KVDelete raft submit error: %s", ret.ToString().c_str());
-            err = RaftFailError();
-        }
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("KVDelete error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsKvDeleteResponse;
-        SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsKvDeleteResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
 Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
     Status ret;
     errorpb::Error *err = nullptr;
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
 
     do {
         auto &req = cmd.kv_delete_req();
@@ -327,7 +290,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
 
         ret = store_->Delete(req.key());
         context_->Statistics()->PushTime(HistogramType::kStore,
-                                       get_micro_second() - btime);
+                                       NowMicros() - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyKVDelete failed, code:%d, msg:%s", ret.code(),
@@ -337,8 +300,8 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new kvrpcpb::DsKvDeleteResponse;
-        resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
+        kvrpcpb::DsKvDeleteResponse resp;
+        resp.mutable_resp()->set_code(static_cast<int>(ret.code()));
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
@@ -346,46 +309,35 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-void Range::KVBatchDelete(common::ProtoMessage *msg,
-                          kvrpcpb::DsKvBatchDeleteRequest &req) {
-    context_->Statistics()->PushTime(HistogramType::kQWait,
-                                   get_micro_second() - msg->begin_time);
+void Range::KVBatchDelete(RPCRequestPtr rpc, kvrpcpb::DsKvBatchDeleteRequest &req) {
     errorpb::Error *err = nullptr;
 
     if (!VerifyLeader(err) || !VerifyWriteable(&err)) {
         RANGE_LOG_WARN("Insert error: %s", err->message().c_str());
-
-        auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
-        return SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsKvBatchDeleteResponse resp;
+        return SendResponse(rpc, resp, req.header(), err);
     }
 
     auto epoch = req.header().range_epoch();
     if (!EpochIsEqual(epoch, err)) {
         RANGE_LOG_WARN("Insert error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
-        return SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsKvBatchDeleteResponse resp;
+        return SendResponse(rpc, resp, req.header(), err);
     }
 
     for (int i = 0, count = req.req().keys_size(); i < count; ++i) {
         auto &key = req.req().keys(i);
         if (!KeyInRange(key)) {
-            auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
-            return SendError(msg, req.header(), resp, KeyNotInRange(key));
+            kvrpcpb::DsKvBatchDeleteResponse resp;
+            return SendResponse(rpc, resp, req.header(), KeyNotInRange(key));
         }
     }
 
-    auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+    SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
         cmd.set_cmd_type(raft_cmdpb::CmdType::KvBatchDel);
         cmd.set_allocated_kv_batch_del_req(req.release_req());
     });
-
-    if (!ret.ok()) {
-        RANGE_LOG_ERROR("Insert raft submit error: %s", ret.ToString().c_str());
-
-        auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
-        SendError(msg, req.header(), resp, RaftFailError());
-    }
 }
 
 Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
@@ -393,7 +345,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
 
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
 
     do {
         auto &req = cmd.kv_batch_del_req();
@@ -419,8 +371,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
         }
 
         ret = store_->BatchDelete(delKeys);
-        context_->Statistics()->PushTime(HistogramType::kStore,
-                                       get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyKVBatchDelete failed, code:%d, msg:%s", ret.code(),
@@ -431,9 +382,9 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
-        resp->mutable_resp()->set_code(static_cast<int>(ret.code()));
-        resp->mutable_resp()->set_affected_keys(affected_keys);
+        kvrpcpb::DsKvBatchDeleteResponse resp;
+        resp.mutable_resp()->set_code(static_cast<int>(ret.code()));
+        resp.mutable_resp()->set_affected_keys(affected_keys);
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
@@ -441,39 +392,28 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-void Range::KVRangeDelete(common::ProtoMessage *msg,
-                          kvrpcpb::DsKvRangeDeleteRequest &req) {
-    context_->Statistics()->PushTime(HistogramType::kQWait,
-                                   get_micro_second() - msg->begin_time);
-
+void Range::KVRangeDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRangeDeleteRequest &req) {
     errorpb::Error *err = nullptr;
 
     if (!VerifyLeader(err) || !VerifyWriteable(&err)) {
         RANGE_LOG_WARN("KVRangeDelet error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
-        return SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsKvRangeDeleteResponse resp;
+        return SendResponse(rpc, resp, req.header(), err);
     }
 
     auto epoch = req.header().range_epoch();
     if (!EpochIsEqual(epoch, err)) {
         RANGE_LOG_WARN("KVRangeDelet error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
-        return SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsKvRangeDeleteResponse resp;
+        return SendResponse(rpc, resp, req.header(), err);
     }
 
-    auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+    SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
         cmd.set_cmd_type(raft_cmdpb::CmdType::KvRangeDel);
         cmd.set_allocated_kv_range_del_req(req.release_req());
     });
-
-    if (!ret.ok()) {
-        RANGE_LOG_ERROR("KVRangeDelet raft submit error: %s", ret.ToString().c_str());
-
-        auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
-        SendError(msg, req.header(), resp, RaftFailError());
-    }
 }
 
 Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
@@ -482,7 +422,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
     std::string last_key;
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
 
     do {
         auto &req = cmd.kv_range_del_req();
@@ -517,15 +457,14 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
             ret = store_->RangeDelete(start, limit);
         }
 
-        context_->Statistics()->PushTime(HistogramType::kStore,
-                                       get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
-        resp->mutable_resp()->set_last_key(last_key);
-        resp->mutable_resp()->set_affected_keys(affected_keys);
-        resp->mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
+        kvrpcpb::DsKvRangeDeleteResponse resp;
+        resp.mutable_resp()->set_last_key(last_key);
+        resp.mutable_resp()->set_affected_keys(affected_keys);
+        resp.mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
@@ -534,19 +473,16 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
-    context_->Statistics()->PushTime(HistogramType::kQWait,
-                                   get_micro_second() - msg->begin_time);
-
+void Range::KVScan(RPCRequestPtr rpc, kvrpcpb::DsKvScanRequest &req) {
     errorpb::Error *err = nullptr;
-    auto ds_resp = new kvrpcpb::DsKvScanResponse;
+    kvrpcpb::DsKvScanResponse ds_resp;
     auto start = std::max(req.req().start(), start_key_);
     auto limit = std::min(req.req().limit(), meta_.GetEndKey());
     std::unique_ptr<storage::Iterator> iterator(
         store_->NewIterator(start, limit));
 
     int max_count = checkMaxCount(req.req().max_count());
-    auto resp = ds_resp->mutable_resp();
+    auto resp = ds_resp.mutable_resp();
 
     uint64_t count = 0;
     uint64_t total_size = 0;
@@ -565,66 +501,8 @@ void Range::KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req) {
         resp->set_last_key(resp->kvs(resp->kvs_size() - 1).key());
     }
 
-    common::SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
-    context_->SocketSession()->Send(msg, ds_resp);
+    SendResponse(rpc, ds_resp, req.header(), err);
 }
-
-/*
-void Range::Watch(common::ProtoMessage *msg, watchpb::DsWatchCreateRequest &req) {
-    errorpb::Error *err = nullptr;
-    auto ds_resp = new watchpb::DsWatchResponse;
-
-    do {
-        if (!VerifyLeader(err)) {
-            break;
-        }
-
-        auto &key = req.req().key();
-        if (key.empty()) {
-            FLOG_WARN("range[%" PRIu64 "] watch error: key empty", meta_.id());
-            err = KeyNotInRange(key);
-            break;
-        }
-
-        auto epoch = req.header().range_epoch();
-        bool in_range = KeyInRange(key);
-        bool is_equal = EpochIsEqual(epoch);
-
-        if (!in_range) {
-            if (is_equal) {
-                err = KeyNotInRange(key);
-                break;
-            }
-        }
-
-        auto resp = ds_resp->mutable_resp();
-        std::string value;
-
-        auto ret = store_->Get(req.req().key(), &value);
-        if (ret.code() != sharkstore::Status::OK()) {
-            FLOG_ERROR("range[%" PRIu64 "] watch error: %s", meta_.id(), err->message().c_str());
-            err = Error("store get failed");
-            break;
-        }
-
-        // todo check key VERSION
-
-        // do not send response at this time.
-        // do send when watch event happend or timeout.
-        AddKeyWatcher(req.req().key(), msg);
-        return;
-
-    } while (false);
-
-    if (err != nullptr) {
-        FLOG_WARN("range[%" PRIu64 "] watch error: %s", meta_.id(), err->message().c_str());
-
-        context_->socket_session->SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
-        context_->socket_session->Send(msg, ds_resp);
-    }
-
-}*/
-
 
 }
 }

@@ -183,7 +183,7 @@ set(SOURCES
     src/server/rpc_server.cpp
     src/server/version.cpp
     src/range/range.cpp
-    src/range/lock.cpp
+#    src/range/lock.cpp
     src/range/meta_keeper.cpp
     src/range/raw_get.cpp
     src/range/raw_put.cpp
@@ -196,8 +196,8 @@ set(SOURCES
     src/range/split_policy.cpp
     src/range/peer.cpp
     src/range/kv_funcs.cpp
-	src/range/watch.cpp
-	src/range/watch_funcs.cpp
+#	src/range/watch.cpp
+#	src/range/watch_funcs.cpp
     src/range/submit.cpp
     src/range/txn.cpp
     src/storage/aggregate_calc.cpp
@@ -222,10 +222,10 @@ set(SOURCES
     src/monitor/encodedata.cpp
     src/monitor/histogram.cpp
     src/monitor/rangedata.cpp
-	src/watch/watcher.cpp
-	src/watch/watcher_set.cpp
-	src/watch/watch_server.cpp
-	src/watch/watch_event_buffer.cpp
+#	src/watch/watcher.cpp
+#	src/watch/watcher_set.cpp
+#	src/watch/watch_server.cpp
+#	src/watch/watch_event_buffer.cpp
     src/monitor/statistics.cpp
     src/admin/admin_server.cpp
     src/admin/get_config.cpp
@@ -282,7 +282,7 @@ endif()
 
 message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 
-add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
+add_executable(data-server ${SOURCES})
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(

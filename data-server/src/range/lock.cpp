@@ -87,10 +87,8 @@ bool Range::LockQuery(const std::string &key, kvrpcpb::LockValue* lock_value) {
     return true;
 }
 
-void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
+void Range::Lock(RPCRequestPtr rpc, kvrpcpb::DsLockRequest &req) {
     RANGE_LOG_DEBUG("lock request: %s", req.DebugString().c_str());
-
-    context_->Statistics()->PushTime(HistogramType::kQWait, get_micro_second() - msg->begin_time);
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), req.req().key());
@@ -117,21 +115,15 @@ void Range::Lock(common::ProtoMessage *msg, kvrpcpb::DsLockRequest &req) {
             break;
         }
 
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::Lock);
             cmd.set_allocated_lock_req(req.release_req());
         });
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("Lock raft submit error: %s", ret.ToString().c_str());
-
-            err = RaftFailError();
-        }
     } while (false);
 
     if (err != nullptr) {
-        auto resp = new kvrpcpb::DsLockResponse;
-        SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsLockResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -139,17 +131,17 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     RANGE_LOG_DEBUG("apply lock: %s", cmd.DebugString().c_str());
     Status ret;
     errorpb::Error *err = nullptr;
-    auto atime = get_micro_second();
+    auto atime = NowMicros();
 
 
     auto req = cmd.lock_req(); // TODO: remove copy
-    auto resp = new (kvrpcpb::DsLockResponse);
+    kvrpcpb::DsLockResponse resp;
     do {
         auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("ApplyLock error: %s", err->message().c_str());
-            resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
-            resp->mutable_resp()->set_error(err->message());
+            resp.mutable_resp()->set_code(LOCK_EPOCH_ERROR);
+            resp.mutable_resp()->set_error(err->message());
             break;
         }
 
@@ -160,14 +152,14 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         // 锁已经存在且owner不是请求者（允许相同id的重复执行lock）
         if (LockQuery(encode_key, &val) && req.value().id() != val.id()) {
             RANGE_LOG_INFO("ApplyLock error: lock [%s] is existed, id: %s", req.key().c_str(), val.id().c_str());
-            resp->mutable_resp()->set_code(LOCK_EXISTED);
-            resp->mutable_resp()->set_error("already locked");
-            resp->mutable_resp()->set_value(val.value());
-            resp->mutable_resp()->set_update_time(val.update_time());
+            resp.mutable_resp()->set_code(LOCK_EXISTED);
+            resp.mutable_resp()->set_error("already locked");
+            resp.mutable_resp()->set_value(val.value());
+            resp.mutable_resp()->set_update_time(val.update_time());
             break;
         }
 
-        auto btime = get_micro_second();
+        auto btime = NowMicros();
         req.mutable_value()->set_update_time(getticks());
         if (req.value().delete_time() != 0) {
             req.mutable_value()->set_delete_time(req.value().delete_time() + getticks());
@@ -180,11 +172,11 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
         lock::EncodeValue(&value_buf, version, req.value(), extend);
         ret = store_->Put(encode_key, value_buf);
-        context_->Statistics()->PushTime(HistogramType::kStore, get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyLock failed, code:%d, msg:%s", ret.code(), ret.ToString().c_str());
-            resp->mutable_resp()->set_code(LOCK_STORE_FAILED);
-            resp->mutable_resp()->set_error("lock failed");
+            resp.mutable_resp()->set_code(LOCK_STORE_FAILED);
+            resp.mutable_resp()->set_error("lock failed");
             break;
         }
 
@@ -204,10 +196,8 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     return ret;
 }
 
-void Range::LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req) {
+void Range::LockUpdate(RPCRequestPtr rpc, kvrpcpb::DsLockUpdateRequest &req) {
     RANGE_LOG_DEBUG("lock update: %s", req.DebugString().c_str());
-
-    context_->Statistics()->PushTime(HistogramType::kQWait, get_micro_second() - msg->begin_time);
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), req.req().key());
@@ -229,21 +219,15 @@ void Range::LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &
             break;
         }
 
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::LockUpdate);
             cmd.set_allocated_lock_update_req(req.release_req());
         });
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("LockUpdate raft submit error: %s", ret.ToString().c_str());
-
-            err = RaftFailError();
-        }
     } while (false);
 
     if (err != nullptr) {
-        auto resp = new kvrpcpb::DsLockUpdateResponse;
-        SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsLockUpdateResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -252,7 +236,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
 
     Status ret;
     errorpb::Error *err = nullptr;
-    auto atime = get_micro_second();
+    auto atime = NowMicros();
     auto &req = cmd.lock_update_req();
     auto resp = new (kvrpcpb::DsLockUpdateResponse);
 
@@ -301,9 +285,9 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         std::string extend;
         lock::EncodeValue(&value_buf, version, val, extend);
 
-        auto btime = get_micro_second();
+        auto btime = NowMicros();
         ret = store_->Put(encode_key, value_buf);
-        context_->Statistics()->PushTime(HistogramType::kStore, get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyLockUpdate failed, code:%d, msg:%s", ret.code(),
                        ret.ToString().c_str());
@@ -328,10 +312,8 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
+void Range::Unlock(RPCRequestPtr rpc, kvrpcpb::DsUnlockRequest &req) {
     RANGE_LOG_DEBUG("unlock: %s", req.DebugString().c_str());
-
-    context_->Statistics()->PushTime(HistogramType::kQWait, get_micro_second() - msg->begin_time);
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), req.req().key());
@@ -348,21 +330,17 @@ void Range::Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req) {
             break;
         }
 
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::Unlock);
             cmd.set_allocated_unlock_req(req.release_req());
         });
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("Unlock raft submit error: %s", ret.ToString().c_str());
-            err = RaftFailError();
-        }
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("Unlock error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsUnlockResponse;
-        SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsUnlockResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
     return;
 }
@@ -372,16 +350,16 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
 
     Status ret;
     errorpb::Error *err = nullptr;
-    auto atime = get_micro_second();
+    auto atime = NowMicros();
     auto &req = cmd.unlock_req();
-    auto resp = new (kvrpcpb::DsUnlockResponse);
+    kvrpcpb::DsUnlockResponse resp;
 
     do {
         auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("ApplyUnlock error: %s", err->message().c_str());
-            resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
-            resp->mutable_resp()->set_error(err->message());
+            resp.mutable_resp()->set_code(LOCK_EPOCH_ERROR);
+            resp.mutable_resp()->set_error(err->message());
             break;
         }
 
@@ -391,29 +369,29 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
         kvrpcpb::LockValue val;
         if (!LockQuery(encode_key, &val)) {
             RANGE_LOG_WARN("ApplyUnlock error: lock [%s] is not existed", req.key().c_str());
-            resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
-            resp->mutable_resp()->set_error("not exist");
+            resp.mutable_resp()->set_code(LOCK_NOT_EXIST);
+            resp.mutable_resp()->set_error("not exist");
             break;
         }
 
         if (req.id() != val.id()) {
             RANGE_LOG_WARN("ApplyUnlock error: lock [%s] not locked with id %s", req.key().c_str(), req.id().c_str());
-            resp->mutable_resp()->set_code(LOCK_ID_MISMATCHED);
-            resp->mutable_resp()->set_error("wrong id: " + val.id());
-            resp->mutable_resp()->set_value(val.value());
-            resp->mutable_resp()->set_update_time(val.update_time());
+            resp.mutable_resp()->set_code(LOCK_ID_MISMATCHED);
+            resp.mutable_resp()->set_error("wrong id: " + val.id());
+            resp.mutable_resp()->set_value(val.value());
+            resp.mutable_resp()->set_update_time(val.update_time());
             break;
         }
-        auto btime = get_micro_second();
+        auto btime = NowMicros();
         ret = store_->Delete(encode_key);
-        context_->Statistics()->PushTime(HistogramType::kStore, get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyUnlock failed, code:%d, msg:%s", ret.code(),
                        ret.ToString().c_str());
-            resp->mutable_resp()->set_code(LOCK_STORE_FAILED);
-            resp->mutable_resp()->set_error("unlock failed");
-            resp->mutable_resp()->set_value(val.value());
-            resp->mutable_resp()->set_update_time(val.update_time());
+            resp.mutable_resp()->set_code(LOCK_STORE_FAILED);
+            resp.mutable_resp()->set_error("unlock failed");
+            resp.mutable_resp()->set_value(val.value());
+            resp.mutable_resp()->set_update_time(val.update_time());
             break;
         }
         RANGE_LOG_DEBUG("ApplyUnlock: lock [%s] is unlock by %s", EncodeToHexString(req.key()).c_str(), req.by().c_str());
@@ -440,11 +418,8 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-void Range::UnlockForce(common::ProtoMessage *msg,
-                        kvrpcpb::DsUnlockForceRequest &req) {
+void Range::UnlockForce(RPCRequestPtr rpc, kvrpcpb::DsUnlockForceRequest &req) {
     RANGE_LOG_DEBUG("unlock force: %s", req.DebugString().c_str());
-
-    context_->Statistics()->PushTime(HistogramType::kQWait, get_micro_second() - msg->begin_time);
 
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), req.req().key());
@@ -457,21 +432,17 @@ void Range::UnlockForce(common::ProtoMessage *msg,
             break;
         }
 
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::UnlockForce);
             cmd.set_allocated_unlock_force_req(req.release_req());
         });
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("UnlockForce raft submit error: %s", ret.ToString().c_str());
-            err = RaftFailError();
-        }
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("UnlockForce error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsUnlockForceResponse;
-        SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsUnlockForceResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -479,16 +450,16 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     RANGE_LOG_DEBUG("apply unlock force: %s", cmd.DebugString().c_str());
     Status ret;
     errorpb::Error *err = nullptr;
-    auto atime = get_micro_second();
+    auto atime = NowMicros();
 
     auto &req = cmd.unlock_force_req();
-    auto resp = new (kvrpcpb::DsUnlockForceResponse);
+    kvrpcpb::DsUnlockForceResponse resp;
     do {
         auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("UnlockForce error: %s", err->message().c_str());
-            resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
-            resp->mutable_resp()->set_error(err->message());
+            resp.mutable_resp()->set_code(LOCK_EPOCH_ERROR);
+            resp.mutable_resp()->set_error(err->message());
             break;
         }
 
@@ -498,20 +469,20 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
         kvrpcpb::LockValue val;
         if (!LockQuery(encode_key, &val)) {
             RANGE_LOG_WARN("ApplyUnlockForce error: lock [%s] is not existed", req.key().c_str());
-            resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
-            resp->mutable_resp()->set_error("not exist");
+            resp.mutable_resp()->set_code(LOCK_NOT_EXIST);
+            resp.mutable_resp()->set_error("not exist");
             break;
         }
 
-        auto btime = get_micro_second();
+        auto btime = NowMicros();
         ret = store_->Delete(encode_key);
-        context_->Statistics()->PushTime(HistogramType::kStore, get_micro_second() - btime);
+        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyForceUnlock failed, code:%d, msg:%s", ret.code(), ret.ToString().c_str());
-            resp->mutable_resp()->set_code(LOCK_STORE_FAILED);
-            resp->mutable_resp()->set_error("force unlock failed");
-            resp->mutable_resp()->set_value(val.value());
-            resp->mutable_resp()->set_update_time(val.update_time());
+            resp.mutable_resp()->set_code(LOCK_STORE_FAILED);
+            resp.mutable_resp()->set_error("force unlock failed");
+            resp.mutable_resp()->set_value(val.value());
+            resp.mutable_resp()->set_update_time(val.update_time());
             break;
         }
 
@@ -537,16 +508,16 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-void Range::LockWatch(common::ProtoMessage *msg, watchpb::DsWatchRequest& req) {
+void Range::LockWatch(RPCRequestPtr rpc, watchpb::DsWatchRequest& req) {
     errorpb::Error *err = nullptr;
     if (req.req().kv().key_size() != 1) {
         RANGE_LOG_INFO("LockWatch: kv key size[%d] != 1", req.req().kv().key_size());
 
         err = new errorpb::Error;
         err->set_message("key list length != 1");
-        auto resp = new watchpb::DsWatchResponse;
-        resp->mutable_resp()->set_code(LOCK_PARAMETER_ERROR);
-        SendError(msg, req.header(), resp, err);
+        watchpb::DsWatchResponse resp;
+        resp.mutable_resp()->set_code(LOCK_PARAMETER_ERROR);
+        SendResponse(rpc, resp, req.header(), err);
         return;
     }
 
@@ -566,17 +537,17 @@ void Range::LockWatch(common::ProtoMessage *msg, watchpb::DsWatchRequest& req) {
         kvrpcpb::LockValue val;
         if (!LockQuery(encode_key, &val)) {
             RANGE_LOG_WARN("LockWatch error: lock encode key [%s] is not existed", EncodeToHexString(encode_key).c_str());
-            auto resp = new watchpb::DsWatchResponse;
-            resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
-            SendError(msg, req.header(), resp, err);
+            watchpb::DsWatchResponse resp;
+            resp.mutable_resp()->set_code(LOCK_NOT_EXIST);
+            SendResponse(rpc, resp, req.header(), err);
             return;
         }
 
         // create watcher
         std::vector<watch::Key*> keys;
         keys.push_back(new watch::Key(req.req().kv().key(0)));
-        int64_t expireTime = (req.req().longpull() > 0)?get_micro_second() + req.req().longpull()*1000:msg->expire_time*1000;
-        auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, msg);
+        int64_t expireTime = (req.req().longpull() > 0)?NowMicros() + req.req().longpull()*1000:rpc->expire_time*1000;
+        auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, rpc);
         // free keys
         for (auto k: keys) {
             delete k;
@@ -594,23 +565,21 @@ void Range::LockWatch(common::ProtoMessage *msg, watchpb::DsWatchRequest& req) {
 
     if (err != nullptr) {
         FLOG_WARN("range[%" PRIu64 "] LockWatch error: %s", id_, err->message().c_str());
-        auto resp = new watchpb::DsWatchResponse;
-        SendError(msg, req.header(), resp, err);
+        watchpb::DsWatchResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
-void Range::LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req) {
+void Range::LockScan(RPCRequestPtr rpc, kvrpcpb::DsLockScanRequest &req) {
     FLOG_DEBUG("lock scan: %s", req.DebugString().c_str());
-    context_->Statistics()->PushTime(HistogramType::kQWait, get_micro_second() - msg->begin_time);
-
     errorpb::Error *err = nullptr;
-    auto ds_resp = new kvrpcpb::DsLockScanResponse;
+    kvrpcpb::DsLockScanResponse ds_resp;
     auto start = std::max(req.req().start(), start_key_);
     auto limit = std::min(req.req().limit(), meta_.GetEndKey());
     std::unique_ptr<storage::Iterator> iterator(store_->NewIterator(start, limit));
 
     int max_count = checkMaxCount(static_cast<int64_t >(req.req().count()));
-    auto resp = ds_resp->mutable_resp();
+    auto resp = ds_resp.mutable_resp();
 
     uint64_t count = 0;
     uint64_t total_size = 0;
@@ -634,14 +603,13 @@ void Range::LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req)
         FLOG_DEBUG("last key: %s", lastInfo.key().c_str());
     }
 
-    common::SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
-    context_->SocketSession()->Send(msg, ds_resp);
+    SendResponse(rpc, resp, req.header(), err);
 }
 
-void Range::LockGet(common::ProtoMessage *msg, kvrpcpb::DsLockGetRequest &req) {
+void Range::LockGet(RPCRequestPtr rpc, kvrpcpb::DsLockGetRequest &req) {
     RANGE_LOG_DEBUG("LockGet: %s", req.DebugString().c_str());
 
-    auto ds_resp = new kvrpcpb::DsLockGetResponse;
+    kvrpcpb::DsLockGetResponse ds_resp;
     errorpb::Error *err = nullptr;
     std::string encode_key;
     lock::EncodeKey(&encode_key, meta_.GetTableID(), req.req().key());
@@ -667,25 +635,20 @@ void Range::LockGet(common::ProtoMessage *msg, kvrpcpb::DsLockGetRequest &req) {
             RANGE_LOG_WARN("LockGet error: lock [%s] is not existed", req.req().key().c_str());
             err = new errorpb::Error;
             err->set_message("not exist");
-            ds_resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
-            ds_resp->mutable_resp()->set_error("not exist");
+            ds_resp.mutable_resp()->set_code(LOCK_NOT_EXIST);
+            ds_resp.mutable_resp()->set_error("not exist");
             break;
         }
 
         RANGE_LOG_INFO("LockGet ok: id[%s] key[%s] val[%s]", val.id().c_str(),
                        EncodeToHexString(req.req().key()).c_str(), val.DebugString().c_str());
 
-        ds_resp->mutable_resp()->set_code(LOCK_OK);
-        ds_resp->mutable_resp()->set_error("");
-        ds_resp->mutable_resp()->mutable_value()->Swap(&val);
-
-        common::SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
-        context_->SocketSession()->Send(msg, ds_resp);
+        ds_resp.mutable_resp()->set_code(LOCK_OK);
+        ds_resp.mutable_resp()->set_error("");
+        ds_resp.mutable_resp()->mutable_value()->Swap(&val);
     } while (false);
 
-    if (err != nullptr) {
-        SendError(msg, req.header(), ds_resp, err);
-    }
+    SendResponse(rpc, ds_resp, req.header(), err);
 }
 
 

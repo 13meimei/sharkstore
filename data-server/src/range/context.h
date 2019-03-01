@@ -17,7 +17,6 @@ namespace dataserver {
 
 namespace master { class Worker; }
 namespace storage { class MetaStore; }
-namespace common { class SocketSession; }
 namespace watch { class WatchServer; }
 
 namespace range {
@@ -39,7 +38,6 @@ public:
     virtual master::Worker* MasterClient() = 0;
     virtual raft::RaftServer* RaftServer() = 0;
     virtual storage::MetaStore* MetaStore() = 0;
-    virtual common::SocketSession* SocketSession() = 0;
     virtual RangeStats* Statistics() = 0;
     virtual watch::WatchServer* WatchServer() = 0;
 

@@ -18,8 +18,8 @@ _Pragma("once");
 #include "raft/types.h"
 #include "server/context_server.h"
 #include "server/run_status.h"
-#include "watch/watch_event_buffer.h"
-#include "watch/watcher.h"
+//#include "watch/watch_event_buffer.h"
+//#include "watch/watcher.h"
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/mspb.pb.h"
@@ -39,7 +39,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-const int DEFAULT_LOCK_DELETE_TIME_MILLSEC = 3000;
+static const int DEFAULT_LOCK_DELETE_TIME_MILLSEC = 3000;
 enum {
     LOCK_OK = 0,
     LOCK_NOT_EXIST = Status::kNotFound,
@@ -83,84 +83,66 @@ public:
     Status ForceSplit(uint64_t version, std::string* split_key);
 
     // lock
-    bool LockQuery(const std::string &key, kvrpcpb::LockValue* lock_value);
-    void Lock(std::unique_ptr<RPCRequest> msg, kvrpcpb::DsLockRequest &req);
-    void LockUpdate(common::ProtoMessage *msg, kvrpcpb::DsLockUpdateRequest &req);
-    void Unlock(common::ProtoMessage *msg, kvrpcpb::DsUnlockRequest &req);
-    void UnlockForce(common::ProtoMessage *msg, kvrpcpb::DsUnlockForceRequest &req);
-    void LockWatch(common::ProtoMessage *msg, watchpb::DsWatchRequest& req);
-    void LockScan(common::ProtoMessage *msg, kvrpcpb::DsLockScanRequest &req);
-    void LockGet(common::ProtoMessage *msg, kvrpcpb::DsLockGetRequest &req);
+//    bool LockQuery(const std::string &key, kvrpcpb::LockValue* lock_value);
+//    void Lock(RPCRequestPtr rpc, kvrpcpb::DsLockRequest &req);
+//    void LockUpdate(RPCRequestPtr rpc, kvrpcpb::DsLockUpdateRequest &req);
+//    void Unlock(RPCRequestPtr rpc, kvrpcpb::DsUnlockRequest &req);
+//    void UnlockForce(RPCRequestPtr rpc, kvrpcpb::DsUnlockForceRequest &req);
+//    void LockWatch(RPCRequestPtr rpc, watchpb::DsWatchRequest& req);
+//    void LockScan(RPCRequestPtr rpc, kvrpcpb::DsLockScanRequest &req);
+//    void LockGet(RPCRequestPtr rpc, kvrpcpb::DsLockGetRequest &req);
 
     // KV
-    void RawGet(common::ProtoMessage *msg, kvrpcpb::DsKvRawGetRequest &req);
-    void RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
-    void RawDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
+    void RawGet(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawGetRequest &req, bool redirect = true);
+    void RawPut(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawPutRequest &req, bool redirect = true);
+    void RawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, bool redirect = true);
 
-    void Insert(common::ProtoMessage *msg, kvrpcpb::DsInsertRequest &req);
-    void Update(common::ProtoMessage *msg, kvrpcpb::DsUpdateRequest &req);
-    void Select(common::ProtoMessage *msg, kvrpcpb::DsSelectRequest &req);
-    void Delete(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
-    
-    void KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req);
-    void KVGet(common::ProtoMessage *msg, kvrpcpb::DsKvGetRequest &req);
-    void KVBatchSet(common::ProtoMessage *msg, kvrpcpb::DsKvBatchSetRequest &req);
-    void KVBatchGet(common::ProtoMessage *msg, kvrpcpb::DsKvBatchGetRequest &req);
-    void KVDelete(common::ProtoMessage *msg, kvrpcpb::DsKvDeleteRequest &req);
-    void KVBatchDelete(common::ProtoMessage *msg, kvrpcpb::DsKvBatchDeleteRequest &req);
-    void KVRangeDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRangeDeleteRequest &req);
-    void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
+    void Insert(RPCRequestPtr rpc, kvrpcpb::DsInsertRequest &req);
+    void Update(RPCRequestPtr rpc, kvrpcpb::DsUpdateRequest &req);
+    void Select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redirect = true);
+    void Delete(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redirect = true);
+
+    void KVSet(RPCRequestPtr rpc, kvrpcpb::DsKvSetRequest &req);
+    void KVGet(RPCRequestPtr rpc, kvrpcpb::DsKvGetRequest &req);
+    void KVBatchSet(RPCRequestPtr rpc, kvrpcpb::DsKvBatchSetRequest &req);
+    void KVBatchGet(RPCRequestPtr rpc, kvrpcpb::DsKvBatchGetRequest &req);
+    void KVDelete(RPCRequestPtr rpc, kvrpcpb::DsKvDeleteRequest &req);
+    void KVBatchDelete(RPCRequestPtr rpc, kvrpcpb::DsKvBatchDeleteRequest &req);
+    void KVRangeDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRangeDeleteRequest &req);
+    void KVScan(RPCRequestPtr rpc, kvrpcpb::DsKvScanRequest &req);
 
     // TXN
-    void TxnPrepare(common::ProtoMessage* msg, txnpb::DsPrepareRequest& req);
-    void TxnDecide(common::ProtoMessage* msg, txnpb::DsDecideRequest& req);
-    void TxnClearup(common::ProtoMessage* msg, txnpb::DsClearupRequest& req);
-    void TxnGetLockInfo(common::ProtoMessage* msg, txnpb::DsGetLockInfoRequest& req);
-    void TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req);
+    void TxnPrepare(RPCRequestPtr rpc, txnpb::DsPrepareRequest& req);
+    void TxnDecide(RPCRequestPtr rpc, txnpb::DsDecideRequest& req);
+    void TxnClearup(RPCRequestPtr rpc, txnpb::DsClearupRequest& req);
+    void TxnGetLockInfo(RPCRequestPtr rpc, txnpb::DsGetLockInfoRequest& req);
+    void TxnSelect(RPCRequestPtr rpc, txnpb::DsSelectRequest& req);
 
     //KV watch series
-    Status GetAndResp(watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey,
-            const bool &prefix, int64_t &version, watchpb::DsWatchResponse *dsResp);
-    void WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req);
-    void PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
-    void WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
-    void WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
-    bool WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
-    bool WatchDeleteSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
+//    Status GetAndResp(watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey,
+//            const bool &prefix, int64_t &version, watchpb::DsWatchResponse *dsResp);
+//    void WatchGet(RPCRequestPtr rpc, watchpb::DsWatchRequest &req) {}
+//    void PureGet(RPCRequestPtr rpc, watchpb::DsKvWatchGetMultiRequest &req) {}
+//    void WatchPut(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req) {}
+//    void WatchDel(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) {}
+//    bool WatchPutSubmit(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req) { return true; }
+//    bool WatchDeleteSubmit(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) { return true; }
 
-public:
-    kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
-    kvrpcpb::SelectResponse *SelectResp(const kvrpcpb::DsSelectRequest &req);
-    // RawPutSubmit cannot be called repeatedly
-    bool RawPutSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
-    // RawDeleteSubmit cannot be called repeatedly
-    bool RawDeleteSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
-    // DeleteSubmit cannot be called repeatedly
-    bool DeleteSubmit(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
-
-private:
-    void ClearExpiredContext();
-
-private:
-    kvrpcpb::KvRawGetResponse *RawGetTry(const std::string &key);
-    kvrpcpb::SelectResponse *SelectTry(const kvrpcpb::DsSelectRequest &req);
-    bool RawPutTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req);
-    bool RawDeleteTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawDeleteRequest &req);
-    bool DeleteTry(common::ProtoMessage *msg, kvrpcpb::DsDeleteRequest &req);
-    
 private:
     Status Submit(const raft_cmdpb::Command &cmd);
+    void ClearExpiredContext();
 
-    Status SubmitCmd(common::ProtoMessage *msg, const kvrpcpb::RequestHeader& header,
-                     const std::function<void(raft_cmdpb::Command &cmd)> &init);
+    // 提交给raft，如果提交失败会直接发送错误回应
+    void SubmitCmd(RPCRequestPtr rpc, const kvrpcpb::RequestHeader& header,
+            const std::function<void(raft_cmdpb::Command &cmd)> &init);
 
     Status Apply(const raft_cmdpb::Command &cmd, uint64_t index);
 
     Status ApplyRawPut(const raft_cmdpb::Command &cmd);
     Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
 
-    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raft_index);
-    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+//    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+//    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raft_index);
 
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
     Status ApplyUpdate(const raft_cmdpb::Command &cmd);
@@ -178,10 +160,10 @@ private:
     Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd);
     Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd);
 
-    Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raft_index);
-    Status ApplyLockUpdate(const raft_cmdpb::Command &cmd);
-    Status ApplyUnlock(const raft_cmdpb::Command &cmd);
-    Status ApplyUnlockForce(const raft_cmdpb::Command &cmd);
+//    Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+//    Status ApplyLockUpdate(const raft_cmdpb::Command &cmd);
+//    Status ApplyUnlock(const raft_cmdpb::Command &cmd);
+//    Status ApplyUnlockForce(const raft_cmdpb::Command &cmd);
 
     Status ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_index);
     Status ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index);
@@ -201,26 +183,26 @@ private:
         return maxCount;
     }
 
-    template <class R>
-    void SendError(common::ProtoMessage *msg, const kvrpcpb::RequestHeader &req, R *resp,
-                   errorpb::Error *err) {
-        auto header = resp->mutable_header();
-
-        common::SetResponseHeader(req, header, err);
-        context_->SocketSession()->Send(msg, resp);
+    // 根据request的header设定response的header，然后发送response
+    template <class ResponseT>
+    void SendResponse(const RPCRequestPtr& rpc, ResponseT& resp,
+            const kvrpcpb::RequestHeader &req, errorpb::Error *err = nullptr) {
+        auto header = resp.mutable_header();
+        SetResponseHeader(header, req, err);
+        rpc->Reply(resp);
     }
 
-    template <class R>
-    void ReplySubmit(const raft_cmdpb::Command& cmd, R *resp, errorpb::Error *err, int64_t apply_time) {
+    // 走raft的命令处理完，从SubmitQueue取出上下文进行回应
+    template <class ResponseT>
+    void ReplySubmit(const raft_cmdpb::Command& cmd, ResponseT& resp, errorpb::Error *err, int64_t apply_time) {
         auto ctx = submit_queue_.Remove(cmd.cmd_id().seq());
         if (ctx != nullptr) {
-            context_->Statistics()->PushTime(monitor::HistogramType::kRaft, apply_time - ctx->CreateTime());
+            context_->Statistics()->PushTime(monitor::HistogramType::kRaft, apply_time - ctx->SubmitTime());
             ctx->CheckExecuteTime(id_, kTimeTakeWarnThresoldUSec);
-            ctx->Reply(context_->SocketSession(), resp, err);
+            ctx->Reply(resp, err);
         } else {
-            RANGE_LOG_WARN("Apply cmd id %" PRIu64 " not found", cmd.cmd_id().seq());
-            delete resp;
             delete err;
+            RANGE_LOG_WARN("Apply cmd id %" PRIu64 " not found", cmd.cmd_id().seq());
         }
     }
 
@@ -280,9 +262,9 @@ private:
 private:
     friend class ::sharkstore::test::helper::RangeTestFixture;
 
-    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version,
-            std::string &errMsg, bool prefix = false);
-    int32_t SendNotify( watch::WatcherPtr& w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
+//    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version,
+//            std::string &errMsg, bool prefix = false);
+//    int32_t SendNotify( watch::WatcherPtr& w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
 
 private:
     static const int kTimeTakeWarnThresoldUSec = 500000;
@@ -306,7 +288,7 @@ private:
     std::atomic<uint64_t> statis_size_ = {0};
     uint64_t split_range_id_ = 0;
 
-    watch::CEventBuffer *eventBuffer = nullptr;
+//    watch::CEventBuffer *eventBuffer = nullptr;
     SubmitQueue submit_queue_;
 
     std::unique_ptr<storage::Store> store_;

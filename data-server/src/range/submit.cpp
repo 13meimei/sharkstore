@@ -1,5 +1,6 @@
 #include "submit.h"
 
+#include "base/util.h"
 #include "frame/sf_logger.h"
 #include "frame/sf_util.h"
 #include "proto/gen/funcpb.pb.h"
@@ -8,85 +9,109 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
-SubmitContext::SubmitContext(const kvrpcpb::RequestHeader &req_header,
-        raft_cmdpb::CmdType type, common::ProtoMessage *msg) :
-    cluster_id_(req_header.cluster_id()),
-    trace_id_(req_header.trace_id()),
-    create_time_(get_micro_second()),
+
+SubmitContext::SubmitContext(RPCRequestPtr rpc_request,
+        raft_cmdpb::CmdType type, const kvrpcpb::RequestHeader& kv_header) :
+    submit_time_(NowMicros()),
+    rpc_request_(std::move(rpc_request)),
     type_(type),
-    msg_(msg) {
+    cluster_id_(kv_header.cluster_id()),
+    trace_id_(kv_header.trace_id()) {
 }
 
-SubmitContext::~SubmitContext() {
-    delete msg_;
-}
-
-void SubmitContext::SendTimeout(common::SocketSession* session) {
-    auto err = new errorpb::Error;
-    err->set_message("request timeout");
-    err->mutable_timeout();
+void SubmitContext::SendError(errorpb::Error *err) {
     switch (type_) {
-        case raft_cmdpb::CmdType::RawPut:
-            Reply(session, new kvrpcpb::DsKvRawPutResponse, err);
+        case raft_cmdpb::CmdType::RawPut: {
+            kvrpcpb::DsKvRawPutResponse resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::RawDelete:
-            Reply(session, new kvrpcpb::DsKvRawDeleteResponse, err);
+        }
+        case raft_cmdpb::CmdType::RawDelete: {
+            kvrpcpb::DsKvRawDeleteResponse resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::Insert:
-            Reply(session, new kvrpcpb::DsInsertResponse, err);
+        }
+        case raft_cmdpb::CmdType::Insert: {
+            kvrpcpb::DsInsertResponse resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::Delete:
-            Reply(session, new kvrpcpb::DsDeleteResponse, err);
+        }
+        case raft_cmdpb::CmdType::Delete: {
+            kvrpcpb::DsDeleteResponse resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::Lock:
-            Reply(session, new kvrpcpb::DsLockResponse, err);
+        }
+        case raft_cmdpb::CmdType::Lock: {
+            kvrpcpb::DsLockResponse resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::LockUpdate:
-            Reply(session, new kvrpcpb::DsLockUpdateResponse, err);
+        }
+        case raft_cmdpb::CmdType::LockUpdate: {
+            kvrpcpb::DsLockUpdateResponse  resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::Unlock:
-            Reply(session, new kvrpcpb::DsUnlockResponse, err);
+        }
+        case raft_cmdpb::CmdType::Unlock: {
+            kvrpcpb::DsUnlockResponse  resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::UnlockForce:
-            Reply(session, new kvrpcpb::DsUnlockForceResponse, err);
+        }
+        case raft_cmdpb::CmdType::UnlockForce: {
+            kvrpcpb::DsUnlockForceResponse resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::TxnPrepare:
-            Reply(session, new txnpb::DsPrepareResponse, err);
+        }
+        case raft_cmdpb::CmdType::TxnPrepare: {
+            txnpb::DsPrepareResponse resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::TxnDecide:
-            Reply(session, new txnpb::DsDecideResponse, err);
+        }
+        case raft_cmdpb::CmdType::TxnDecide: {
+           txnpb::DsDecideResponse resp;
+            Reply(resp, err);
             break;
-        case raft_cmdpb::CmdType::TxnClearup:
-            Reply(session, new txnpb::DsClearupResponse, err);
+        }
+        case raft_cmdpb::CmdType::TxnClearup: {
+            txnpb::DsClearupResponse resp;
+            Reply(resp, err);
             break;
+        }
         default:
             FLOG_ERROR("SubmitContext::SendTimeout: unknown cmd type: %d", static_cast<int>(type_));
             delete err;
     }
 }
 
-void SubmitContext::CheckExecuteTime(uint64_t rangeID, int64_t thresold_usecs) {
-    auto take = get_micro_second() - msg_->begin_time;
-    if (take > thresold_usecs) {
-        auto method = funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(msg_->header.func_id));
-        FLOG_WARN("range[%" PRIu64 "] %s takes too long(%" PRId64 " ms), sid=%" PRId64 ", msgid=%" PRId64,
-                rangeID, method.c_str(), take / 1000, msg_->session_id, msg_->header.msg_id);
-    }
+void SubmitContext::SendTimeout() {
+    auto err = new errorpb::Error;
+    err->set_message("request timeout");
+    err->mutable_timeout();
+    SendError(err);
 }
 
+void SubmitContext::CheckExecuteTime(uint64_t rangeID, int64_t thresold_usecs) {
+    auto take = NowMicros() - rpc_request_->begin_time;
+    if (take > thresold_usecs) {
+        auto func_id = rpc_request_->msg->head.func_id;
+        const auto& method = funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(func_id));
+        auto msg_id = rpc_request_->msg->head.msg_id;
+
+        FLOG_WARN("range[%" PRIu64 "] %s takes too long(%" PRId64 " ms), from=%s, msgid=%" PRId64,
+                rangeID, method.c_str(), take / 1000, rpc_request_->ctx.remote_addr.c_str(), msg_id);
+    }
+}
 
 uint64_t SubmitQueue::GetSeq() {
     std::lock_guard<std::mutex> lock(mu_);
     return ++seq_;
 }
 
-uint64_t SubmitQueue::Add(const kvrpcpb::RequestHeader& req_header,
-             raft_cmdpb::CmdType type, common::ProtoMessage *msg) {
-    SubmitContextPtr ctx(new SubmitContext(req_header, type, msg));
-
+uint64_t SubmitQueue::Add(RPCRequestPtr rpc_request, raft_cmdpb::CmdType type,
+             const kvrpcpb::RequestHeader& kv_req_header) {
+    SubmitContextPtr ctx(new SubmitContext(std::move(rpc_request), type, kv_req_header));
     std::lock_guard<std::mutex> lock(mu_);
     ctx_map_.emplace(++seq_, std::move(ctx));
-    expire_que_.emplace(msg->expire_time, seq_);
+    expire_que_.emplace(rpc_request->expire_time, seq_);
     return seq_;
 }
 

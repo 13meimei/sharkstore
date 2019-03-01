@@ -50,14 +50,8 @@ bool Range::KeyInRange(const DecideRequest& req, const metapb::RangeEpoch& epoch
     return false;
 }
 
-void Range::TxnPrepare(common::ProtoMessage* msg, DsPrepareRequest& req) {
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
-
-    RANGE_LOG_DEBUG("TxnPrepare begin");
-
+void Range::TxnPrepare(RPCRequestPtr rpc, DsPrepareRequest& req) {
     errorpb::Error *err = nullptr;
-
     do {
         if (!VerifyWriteable(&err)) {
             break;
@@ -71,21 +65,16 @@ void Range::TxnPrepare(common::ProtoMessage* msg, DsPrepareRequest& req) {
 
         // submit to raft
         // TODO: check lock in memory
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::TxnPrepare);
             cmd.set_allocated_txn_prepare_req(req.release_req());
         });
-        if (!ret.ok()) {
-            RANGE_LOG_WARN("TxnPrepare sumbit to raft failed: %s", ret.ToString().c_str());
-            err = RaftFailError();
-            break;
-        }
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("TxnPrepare error: %s", err->message().c_str());
-        auto resp = new DsPrepareResponse;
-        return SendError(msg, req.header(), resp, err);
+        DsPrepareResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -94,10 +83,9 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
 
     Status ret;
     auto &req = cmd.txn_prepare_req();
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     errorpb::Error *err = nullptr;
     std::unique_ptr<PrepareResponse> resp(new PrepareResponse);
-
     do {
         if (!KeyInRange(req, cmd.verify_epoch(), &err)) {
             break;
@@ -106,8 +94,8 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto ds_resp = new DsPrepareResponse;
-        ds_resp->set_allocated_resp(resp.release());
+        DsPrepareResponse ds_resp;
+        ds_resp.set_allocated_resp(resp.release());
         ReplySubmit(cmd, ds_resp, err, btime);
     } else if (err != nullptr) {
         delete err;
@@ -115,13 +103,10 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     return ret;
 }
 
-void Range::TxnDecide(common::ProtoMessage* msg, DsDecideRequest& req) {
+void Range::TxnDecide(RPCRequestPtr rpc, DsDecideRequest& req) {
     RANGE_LOG_DEBUG("TxnDecide begin");
 
     errorpb::Error *err = nullptr;
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
-
     do {
         if (!VerifyWriteable(&err)) {
             break;
@@ -132,23 +117,19 @@ void Range::TxnDecide(common::ProtoMessage* msg, DsDecideRequest& req) {
         if (!KeyInRange(req.req(), req.header().range_epoch(), &err)) {
             break;
         }
+
         // submit to raft
         // TODO: check lock in memory
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::TxnDecide);
             cmd.set_allocated_txn_decide_req(req.release_req());
         });
-        if (!ret.ok()) {
-            RANGE_LOG_WARN("TxnDecide sumbit to raft failed: %s", ret.ToString().c_str());
-            err = RaftFailError();
-            break;
-        }
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("TxnDecide error: %s", err->message().c_str());
-        auto resp = new DsPrepareResponse;
-        return SendError(msg, req.header(), resp, err);
+        DsPrepareResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -157,7 +138,7 @@ Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index
 
     Status ret;
     auto &req = cmd.txn_decide_req();
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     errorpb::Error *err = nullptr;
     std::unique_ptr<DecideResponse> resp(new DecideResponse);
     uint64_t bytes_written = 0;
@@ -170,8 +151,8 @@ Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto ds_resp = new txnpb::DsDecideResponse;
-        ds_resp->set_allocated_resp(resp.release());
+        txnpb::DsDecideResponse ds_resp;
+        ds_resp.set_allocated_resp(resp.release());
         ReplySubmit(cmd, ds_resp, err, btime);
         if (bytes_written > 0) {
             CheckSplit(bytes_written);
@@ -182,13 +163,10 @@ Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index
     return ret;
 }
 
-void Range::TxnClearup(common::ProtoMessage* msg, txnpb::DsClearupRequest& req) {
+void Range::TxnClearup(RPCRequestPtr rpc, txnpb::DsClearupRequest& req) {
     RANGE_LOG_DEBUG("TxnClearup  begin");
 
     errorpb::Error *err = nullptr;
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
-
     do {
         if (!VerifyWriteable(&err)) {
             break;
@@ -202,28 +180,25 @@ void Range::TxnClearup(common::ProtoMessage* msg, txnpb::DsClearupRequest& req) 
         if (!KeyInRange(req.req().primary_key(), err)) {
             break;
         }
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
+
+        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::TxnClearup);
             cmd.set_allocated_txn_clearup_req(req.release_req());
         });
-        if (!ret.ok()) {
-            RANGE_LOG_WARN("TxnClearup sumbit to raft failed: %s", ret.ToString().c_str());
-            err = RaftFailError();
-            break;
-        }
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("TxnClearup error: %s", err->message().c_str());
-        auto resp = new txnpb::DsClearupResponse;
-        return SendError(msg, req.header(), resp, err);
+
+        txnpb::DsClearupResponse resp;
+        return SendResponse(rpc, resp, req.header(), err);
     }
 }
 
 Status Range::ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_index) {
     Status ret;
     auto &req = cmd.txn_clearup_req();
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     errorpb::Error *err = nullptr;
     std::unique_ptr<ClearupResponse> resp(new ClearupResponse);
 
@@ -246,8 +221,8 @@ Status Range::ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     }
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto ds_resp = new txnpb::DsClearupResponse;
-        ds_resp->set_allocated_resp(resp.release());
+        txnpb::DsClearupResponse ds_resp;
+        ds_resp.set_allocated_resp(resp.release());
         ReplySubmit(cmd, ds_resp, err, btime);
     } else if (err != nullptr) {
         delete err;
@@ -255,13 +230,10 @@ Status Range::ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     return ret;
 }
 
-void Range::TxnGetLockInfo(common::ProtoMessage* msg, txnpb::DsGetLockInfoRequest& req) {
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
-
+void Range::TxnGetLockInfo(RPCRequestPtr rpc, txnpb::DsGetLockInfoRequest& req) {
+    auto btime = NowMicros();
     errorpb::Error *err = nullptr;
-    auto ds_resp = new txnpb::DsGetLockInfoResponse;
-    auto header = ds_resp->mutable_header();
+    txnpb::DsGetLockInfoResponse ds_resp;
 
     do {
         if (!VerifyLeader(err)) {
@@ -276,8 +248,8 @@ void Range::TxnGetLockInfo(common::ProtoMessage* msg, txnpb::DsGetLockInfoReques
             break;
         }
 
-        auto now = get_micro_second();
-        store_->TxnGetLockInfo(req.req(), ds_resp->mutable_resp());
+        auto now = NowMicros();
+        store_->TxnGetLockInfo(req.req(), ds_resp.mutable_resp());
         context_->Statistics()->PushTime(HistogramType::kStore, now - btime);
     } while (false);
 
@@ -285,18 +257,15 @@ void Range::TxnGetLockInfo(common::ProtoMessage* msg, txnpb::DsGetLockInfoReques
         RANGE_LOG_ERROR("TxnGetLockInfo failed: %s", err->ShortDebugString().c_str());
     }
 
-    common::SetResponseHeader(req.header(), header, err);
-    context_->SocketSession()->Send(msg, ds_resp);
+    SendResponse(rpc, ds_resp, req.header(), err);
 }
 
-void Range::TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req) {
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
-
+void Range::TxnSelect(RPCRequestPtr rpc, txnpb::DsSelectRequest& req) {
     RANGE_LOG_DEBUG("Select begin");
 
+    auto btime = NowMicros();
     errorpb::Error *err = nullptr;
-    auto ds_resp = new txnpb::DsSelectResponse;
+   txnpb::DsSelectResponse ds_resp;
     do {
         if (!VerifyLeader(err)) {
             break;
@@ -311,9 +280,9 @@ void Range::TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req) {
             break;
         }
 
-        auto resp = ds_resp->mutable_resp();
+        auto resp = ds_resp.mutable_resp();
         auto ret = store_->TxnSelect(req.req(), resp);
-        auto etime = get_micro_second();
+        auto etime = NowMicros();
         context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
 
         if (!ret.ok()) {
@@ -323,7 +292,7 @@ void Range::TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req) {
         }
 
         if (key.empty() && !EpochIsEqual(req.header().range_epoch(), err)) {
-            ds_resp->clear_resp();
+            ds_resp.clear_resp();
             RANGE_LOG_WARN("epoch change Select error: %s", err->message().c_str());
         }
     } while (false);
@@ -332,12 +301,11 @@ void Range::TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req) {
         RANGE_LOG_WARN("TxnSelect error: %s", err->message().c_str());
     } else {
         RANGE_LOG_DEBUG("TxnSelect result: code=%d, rows=%d",
-                        (ds_resp->has_resp() ? ds_resp->resp().code() : 0),
-                        (ds_resp->has_resp() ? ds_resp->resp().rows_size() : 0));
+                        (ds_resp.has_resp() ? ds_resp.resp().code() : 0),
+                        (ds_resp.has_resp() ? ds_resp.resp().rows_size() : 0));
     }
 
-    common::SetResponseHeader(req.header(), ds_resp->mutable_header(), err);
-    context_->SocketSession()->Send(msg, ds_resp);
+    SendResponse(rpc, ds_resp, req.header(), err);
 }
 
 }  // namespace range

@@ -81,15 +81,12 @@ Status Range::GetAndResp( watch::WatcherPtr pWatcher, const watchpb::WatchCreate
 }
 
 
-void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
+void Range::WatchGet(RPCRequestPtr rpc, watchpb::DsWatchRequest &req) {
     errorpb::Error *err = nullptr;
 
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
+    auto btime = NowMicros();
 
-
-    auto ds_resp = new watchpb::DsWatchResponse;
-    auto header = ds_resp->mutable_header();
+    watchpb::DsWatchResponse ds_resp;
     std::string dbKey{""};
     std::string dbValue{""};
     int64_t dbVersion{0};
@@ -97,7 +94,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     auto prefix = req.req().prefix();
     auto tmpKv = req.req().kv();
 
-    RANGE_LOG_DEBUG("WatchGet begin  msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
+    RANGE_LOG_DEBUG("WatchGet begin  msgid: %" PRId64 " from: %s",
+            rpc->msg->head.msg_id, rpc->ctx.remote_addr.c_str());
 
     do {
         if (!VerifyLeader(err)) {
@@ -128,8 +126,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
     if (err != nullptr) {
         RANGE_LOG_WARN("WatchGet error: %s", err->message().c_str());
-        common::SetResponseHeader(req.header(), header, err);
-        context_->SocketSession()->Send(msg, ds_resp);
+        SendResponse(rpc, ds_resp, req.header(), err);
         return;
     }
 
@@ -150,8 +147,8 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
     }
 
     //int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
-    int64_t expireTime = (req.req().longpull() > 0)?get_micro_second() + req.req().longpull()*1000:msg->expire_time*1000;
-    auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, msg);
+    int64_t expireTime = (req.req().longpull() > 0) ? NowMicros() + req.req().longpull()*1000 : rpc->expire_time*1000;
+    auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, rpc);
     // free keys
     for (auto k: keys) {
         delete k;
@@ -202,11 +199,11 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
         delete ds_resp;
         return;
     } else if(watch::WATCH_WATCHER_NOT_NEED == wcode) {
-        auto btime = get_micro_second();
+        auto btime = NowMicros();
         //to do get from db again
         GetAndResp(w_ptr, req.req(), dbKey, prefix, dbVersion, ds_resp);
         context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
-                                       get_micro_second() - btime);
+                                       NowMicros() - btime);
         w_ptr->Send(ds_resp);
         return;
     } else {
@@ -219,7 +216,7 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req) {
     errorpb::Error *err = nullptr;
 
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
     auto ds_resp = new watchpb::DsKvWatchGetMultiResponse;
@@ -265,7 +262,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         }
 
         auto resp = ds_resp;
-        auto btime = get_micro_second();
+        auto btime = NowMicros();
         storage::Iterator *it = nullptr;
         Status::Code code = Status::kOk;
 
@@ -329,7 +326,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
             RANGE_LOG_DEBUG("PureGet code:%d msg:%s ", ret.code(), ret.ToString().data());
             code = ret.code();
         }
-        context_->Statistics()->PushTime(monitor::HistogramType::kQWait, get_micro_second() - btime);
+        context_->Statistics()->PushTime(monitor::HistogramType::kQWait, NowMicros() - btime);
 
         resp->set_code(static_cast<int32_t>(code));
     } while (false);
@@ -346,7 +343,7 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
     errorpb::Error *err = nullptr;
     std::string dbKey;
 
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
@@ -435,7 +432,7 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
     //auto dbValue = std::make_shared<std::string>();
     //auto extPtr = std::make_shared<std::string>();
 
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("WatchDel begin, msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
@@ -556,7 +553,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
     //RANGE_LOG_DEBUG("ApplyWatchPut begin");
     auto &req = cmd.kv_watch_put_req();
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     watchpb::WatchKeyValue notifyKv;
     notifyKv.CopyFrom(req.kv());
 
@@ -601,10 +598,10 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         }
 
         //save to db
-        auto btime = get_micro_second();
+        auto btime = NowMicros();
         ret = store_->Put(dbKey, dbValue);
         context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
-                                       get_micro_second() - btime);
+                                       NowMicros() - btime);
 
 
         if (!ret.ok()) {
@@ -664,7 +661,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 //    RANGE_LOG_DEBUG("ApplyWatchDel begin");
 
     auto &req = cmd.kv_watch_del_req();
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     watchpb::WatchKeyValue notifyKv;
     notifyKv.CopyFrom(req.kv());
     auto prefix = req.prefix();
@@ -760,10 +757,10 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         idx++;
         FLOG_DEBUG("execute delte...[%" PRId64 "/%" PRIu64 "]", idx, keySize);
 
-        auto btime = get_micro_second();
+        auto btime = NowMicros();
         ret = store_->Delete(it);
         context_->Statistics()->PushTime(monitor::HistogramType::kQWait,
-                                       get_micro_second() - btime);
+                                       NowMicros() - btime);
 
         if (cmd.cmd_id().node_id() == node_id_ && delKeys[keySize-1] == it) {
             //FLOG_DEBUG("Delete:%s del key:%s---last key:%s", ret.ToString().c_str(), EncodeToHexString(it).c_str(), EncodeToHexString(delKeys[keySize-1]).c_str());

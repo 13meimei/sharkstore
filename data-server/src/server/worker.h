@@ -1,10 +1,8 @@
 _Pragma("once");
 
-#include <condition_variable>
-#include <mutex>
-#include <queue>
 #include <thread>
 #include <vector>
+#include <atomic>
 #include <tbb/concurrent_queue.h>
 
 #include "common/rpc_request.h"

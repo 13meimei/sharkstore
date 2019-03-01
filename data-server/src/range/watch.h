@@ -3,7 +3,6 @@ _Pragma("once");
 #include <proto/gen/watchpb.pb.h>
 #include <proto/gen/funcpb.pb.h>
 #include <proto/gen/errorpb.pb.h>
-#include <common/socket_session.h>
 #include <common/ds_encoding.h>
 #include <common/ds_config.h>
 #include <watch/watcher.h>

@@ -40,7 +40,7 @@ public:
     void Stop();
     void Clear();
 
-    void DealTask(std::unique_ptr<RPCRequest> request);
+    void DealTask(RPCRequestPtr rpc);
     void StatisPush(uint64_t range_id);
 
     storage::MetaStore *meta_store() { return meta_store_; }
@@ -67,8 +67,8 @@ private:
                        kvrpcpb::ResponseHeader *resp);
 
     template <class RequestT, class ResponseT>
-    std::shared_ptr<range::Range> RangeServer::DecodeAndFind(
-            const std::unique_ptr<RPCRequest>& req, RequestT& proto_req, const char* func_name);
+    std::shared_ptr<range::Range> DecodeAndFind(const RPCRequestPtr& rpc_request,
+            RequestT& proto_request, const char* func_name);
 
 public:
     Status SplitRange(uint64_t old_range_id, const raft_cmdpb::SplitRequest &req,
@@ -123,5 +123,3 @@ public:
 }  // namespace server
 }  // namespace dataserver
 }  // namespace sharkstore
-
-#endif  //__RANGE_MANAGER_H__

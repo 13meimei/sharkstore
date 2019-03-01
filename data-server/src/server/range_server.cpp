@@ -25,6 +25,7 @@
 #include "proto/gen/txn.pb.h"
 #include "storage/metric.h"
 #include "run_status.h"
+#include "monitor/statistics.h"
 
 #include "server.h"
 #include "range_context_impl.h"
@@ -37,41 +38,40 @@ static const std::string kMetaPathSuffix = "meta";
 static const std::string kDataPathSuffix = "data";
 static const std::string kTxnCFName = "txn";
 
-
-#define FORWARD_TO_RANGE(req, RequestT, ResponseT, RangeFunc) \
+#define FORWARD_TO_RANGE(rpc_request, RequestT, ResponseT, RangeFunc) \
     do { \
-        RequestT proto_req; \
-        auto rng = this->DecodeAndFind<RequestT, ResponseT>(req, proto_req, #RangeFunc); \
+        RequestT proto_request; \
+        auto rng = this->DecodeAndFind<RequestT, ResponseT>(rpc_request, proto_request, #RangeFunc); \
         if (rng != nullptr) { \
-            rng->RangeFunc(std::move(req), proto_req); \
+            rng->RangeFunc(std::move(rpc_request), proto_request); \
         } \
     } while (false)
 
 template <class RequestT, class ResponseT>
 std::shared_ptr<range::Range> RangeServer::DecodeAndFind(
-        const std::unique_ptr<RPCRequest>& req, RequestT& proto_req, const char* func_name) {
-    if (!req->ParseTo(proto_req)) {
+        const RPCRequestPtr& rpc_request, RequestT& proto_request, const char* func_name) {
+    if (!rpc_request->ParseTo(proto_request)) {
         FLOG_ERROR("deserialize %s request failed", func_name);
         return nullptr;
     }
 
-    FLOG_DEBUG("%s called. req: %s", func_name, proto_req.DebugString().c_str());
+    FLOG_DEBUG("%s called. req: %s", func_name, proto_request.DebugString().c_str());
 
     // check timeout
-    if (req->expire_time != 0 && req->expire_time < getticks()) {
-        FLOG_WARN("%s request timeout from %s", func_name, req->ctx.remote_addr.c_str());
+    if (rpc_request->expire_time != 0 && rpc_request->expire_time < getticks()) {
+        FLOG_WARN("%s request timeout from %s", func_name, rpc_request->ctx.remote_addr.c_str());
         ResponseT proto_resp;
-        TimeOut(proto_req.header(), proto_resp.mutable_header());
-        req->Reply(proto_resp);
+        TimeOut(proto_request.header(), proto_resp.mutable_header());
+        rpc_request->Reply(proto_resp);
         return nullptr;
     }
 
-    auto range = Find(proto_req.header().range_id());
+    auto range = Find(proto_request.header().range_id());
     if (range == nullptr) {
-        FLOG_ERROR("%s request not found range_id %" PRIu64 " failed", func_name, proto_req.header().range_id());
+        FLOG_ERROR("%s request not found range_id %" PRIu64 " failed", func_name, proto_request.header().range_id());
         ResponseT proto_resp;
-        RangeNotFound(proto_req.header(), proto_resp.mutable_header());
-        req->Reply(proto_resp);
+        RangeNotFound(proto_request.header(), proto_resp.mutable_header());
+        rpc_request->Reply(proto_resp);
         return nullptr;
     }
     return range;
@@ -104,7 +104,7 @@ int RangeServer::Init(ContextServer *context) {
         FLOG_ERROR("save node id to meta failed(%s)", ret.ToString().c_str());
         return -1;
     } else {
-        FLOG_DEBUG("save node_id (%lu) to meta.", context_->node_id);
+        FLOG_DEBUG("save node_id (%" PRIu64 ") to meta.", context_->node_id);
     }
     context_->meta_store = meta_store_;
 
@@ -112,7 +112,8 @@ int RangeServer::Init(ContextServer *context) {
     range_context_.reset(new RangeContextImpl(context_));
 
     // 初始化WatchServer
-    watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
+    // TODO: enable
+   // watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
 
     std::vector<metapb::Range> range_metas;
     ret = meta_store_->GetAllRange(&range_metas);
@@ -400,131 +401,141 @@ void RangeServer::Clear() {
     RemoveDirAll(ds_config.rocksdb_config.path);
 }
 
-void RangeServer::DealTask(std::unique_ptr<RPCRequest> req) {
-    const auto& header = req->msg->head;
+void RangeServer::DealTask(RPCRequestPtr rpc) {
+    context_->run_status->PushTime(monitor::HistogramType::kQWait, NowMicros() - rpc->begin_time);
+
+    const auto& header = rpc->msg->head;
 
     FLOG_DEBUG(
         "server start deal %s task from %s, msgid=%" PRId64,
         funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(header.func_id)).c_str(),
-        req->ctx.remote_addr.c_str(), header.msg_id);
+        rpc->ctx.remote_addr.c_str(), header.msg_id);
 
     switch (header.func_id) {
-        case funcpb::kFuncRawGet:
-            FORWARD_TO_RANGE(req, kvrpcpb::DsKvRawGetRequest, kvrpcpb::DsKvRawGetResponse, RawGet);
-            break;
-        case funcpb::kFuncRawPut:
-            FORWARD_TO_RANGE(req, kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse, RawPut);
-            break;
-//        case funcpb::kFuncRawDelete:
-//            FORWARD_TO_RANGE(req, kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse, RawPut);
-//            RawDelete(msg);
-//            break;
-//        case funcpb::kFuncInsert:
-//            Insert(msg);
-//            break;
-//        case funcpb::kFuncUpdate:
-//            Update(msg);
-//            break;
-//        case funcpb::kFuncSelect:
-//            Select(msg);
-//            break;
-//        case funcpb::kFuncDelete:
-//            Delete(msg);
-//            break;
-//        case funcpb::kFuncWatchGet:
-//            WatchGet(msg);
-//            break;
-//        case funcpb::kFuncPureGet:
-//            PureGet(msg);
-//            break;
-//        case funcpb::kFuncWatchPut:
-//            WatchPut(msg);
-//            break;
-//        case funcpb::kFuncWatchDel:
-//            WatchDel(msg);
-//            break;
-         case funcpb::kFuncCreateRange:
-            CreateRange(*req);
+        // server level methods
+        case funcpb::kFuncCreateRange:
+            CreateRange(*rpc);
             break;
         case funcpb::kFuncDeleteRange:
-            DeleteRange(*req);
+            DeleteRange(*rpc);
             break;
         case funcpb::kFuncRangeTransferLeader:
-            TransferLeader(*req);
+            TransferLeader(*rpc);
             break;
         case funcpb::kFuncReplaceRange:
-            ReplaceRange(*req);
+            ReplaceRange(*rpc);
             break;
         case funcpb::kFuncOfflineRange:
-            OfflineRange(*req);
+            OfflineRange(*rpc);
             break;
         case funcpb::kFuncGetPeerInfo:
-            GetPeerInfo(*req);
+            GetPeerInfo(*rpc);
             break;
         case funcpb::kFuncSetNodeLogLevel:
-            SetLogLevel(*req);
+            SetLogLevel(*rpc);
             break;
-//
-//        // lock
+
+        // Raw KV methods
+        case funcpb::kFuncRawGet:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvRawGetRequest, kvrpcpb::DsKvRawGetResponse, RawGet);
+            break;
+        case funcpb::kFuncRawPut:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse, RawPut);
+            break;
+        case funcpb::kFuncRawDelete:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse, RawPut);
+            break;
+
+        // SQL methods
+        case funcpb::kFuncInsert:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsInsertRequest, kvrpcpb::DsInsertResponse, Insert);
+            break;
+        case funcpb::kFuncUpdate:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsUpdateRequest, kvrpcpb::DsUpdateResponse, Update);
+            break;
+        case funcpb::kFuncSelect:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsSelectRequest, kvrpcpb::DsSelectResponse, Select);
+            break;
+        case funcpb::kFuncDelete:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsDeleteRequest, kvrpcpb::DsDeleteResponse, Delete);
+            break;
+
+//        // Watch methods
+//        case funcpb::kFuncWatchGet:
+//            FORWARD_TO_RANGE(rpc, watchpb::DsWatchRequest, watchpb::DsWatchResponse, WatchGet);
+//            break;
+//        case funcpb::kFuncPureGet:
+//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchGetMultiRequest, watchpb::DsKvWatchGetMultiResponse, PureGet);
+//            break;
+//        case funcpb::kFuncWatchPut:
+//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchPutRequest, watchpb::DsKvWatchPutResponse, WatchPut);
+//            break;
+//        case funcpb::kFuncWatchDel:
+//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchDeleteRequest, watchpb::DsKvWatchDeleteResponse, WatchDel);
+//            break;
+
+        // lock methods
 //        case funcpb::kFuncLock:
-//            Lock(msg);
+//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockRequest, kvrpcpb::DsLockResponse, Lock);
 //            break;
 //        case funcpb::kFuncLockUpdate:
-//            LockUpdate(msg);
+//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockUpdateRequest, kvrpcpb::DsLockUpdateResponse, LockUpdate);
 //            break;
 //        case funcpb::kFuncUnlock:
-//            Unlock(msg);
+//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsUnlockRequest, kvrpcpb::DsUnlockResponse, Unlock);
 //            break;
 //        case funcpb::kFuncUnlockForce:
-//            UnlockForce(msg);
+//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsUnlockForceRequest, kvrpcpb::DsUnlockForceResponse, UnlockForce);
 //            break;
 //        case funcpb::kFuncLockWatch:
-//            LockWatch(msg);
+//            FORWARD_TO_RANGE(rpc, watchpb::DsWatchRequest, watchpb::DsWatchResponse, LockWatch);
 //            break;
 //        case funcpb::kFuncLockGet:
-//            LockGet(msg);
+//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockGetRequest, kvrpcpb::DsLockGetResponse, LockGet);
 //            break;
-//
-//        // following for redis commands
-//        case funcpb::kFuncKvSet:
-//            KVSet(msg);
-//            break;
-//        case funcpb::kFuncKvGet:
-//            KVGet(msg);
-//            break;
-//        case funcpb::kFuncKvBatchSet:
-//            KVBatchSet(msg);
-//            break;
-//        case funcpb::kFuncKvBatchGet:
-//            KVBatchGet(msg);
-//            break;
-//        case funcpb::kFuncKvDel:
-//            KVDelete(msg);
-//            break;
-//        case funcpb::kFuncKvBatchDel:
-//            KVBatchDelete(msg);
-//            break;
-//        case funcpb::kFuncKvRangeDel:
-//            KVRangeDelete(msg);
-//            break;
-//        case funcpb::kFuncKvScan:
-//            KVScan(msg);
-//            break;
-//        case funcpb::kFuncTxnPrepare:
-//            TxnPrepare(msg);
-//            break;
-//        case funcpb::kFuncTxnDecide:
-//            TxnDecide(msg);
-//            break;
-//        case funcpb::kFuncTxnClearup:
-//            TxnClearup(msg);
-//            break;
-//        case funcpb::kFuncTxnGetLockInfo:
-//            TxnGetLockInfo(msg);
-//            break;
-//        case funcpb::kFuncTxnSelect:
-//            TxnSelect(msg);
-//            break;
+
+        // redis method
+        case funcpb::kFuncKvSet:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvSetRequest, kvrpcpb::DsKvSetResponse, KVSet);
+            break;
+        case funcpb::kFuncKvGet:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvGetRequest, kvrpcpb::DsKvGetResponse, KVGet);
+            break;
+        case funcpb::kFuncKvBatchSet:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvBatchSetRequest, kvrpcpb::DsKvBatchSetResponse, KVBatchSet);
+            break;
+        case funcpb::kFuncKvBatchGet:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvBatchGetRequest, kvrpcpb::DsKvBatchGetResponse, KVBatchGet);
+            break;
+        case funcpb::kFuncKvDel:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvDeleteRequest, kvrpcpb::DsKvDeleteResponse, KVDelete);
+            break;
+        case funcpb::kFuncKvBatchDel:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvBatchDeleteRequest, kvrpcpb::DsKvBatchDeleteResponse, KVBatchDelete);
+            break;
+        case funcpb::kFuncKvRangeDel:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvRangeDeleteRequest, kvrpcpb::DsKvRangeDeleteResponse, KVRangeDelete);
+            break;
+        case funcpb::kFuncKvScan:
+            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvScanRequest, kvrpcpb::DsKvScanResponse, KVScan);
+            break;
+
+        // TXN methods
+        case funcpb::kFuncTxnPrepare:
+            FORWARD_TO_RANGE(rpc, txnpb::DsPrepareRequest, txnpb::DsPrepareResponse, TxnPrepare);
+            break;
+        case funcpb::kFuncTxnDecide:
+            FORWARD_TO_RANGE(rpc, txnpb::DsDecideRequest, txnpb::DsDecideResponse, TxnDecide);
+            break;
+        case funcpb::kFuncTxnClearup:
+            FORWARD_TO_RANGE(rpc, txnpb::DsClearupRequest, txnpb::DsClearupResponse, TxnClearup);
+            break;
+        case funcpb::kFuncTxnGetLockInfo:
+            FORWARD_TO_RANGE(rpc, txnpb::DsGetLockInfoRequest, txnpb::DsGetLockInfoResponse, TxnGetLockInfo);
+            break;
+        case funcpb::kFuncTxnSelect:
+            FORWARD_TO_RANGE(rpc, txnpb::DsSelectRequest, txnpb::DsSelectResponse, TxnSelect);
+            break;
         default:
             FLOG_ERROR("func id is Invalid %d", header.func_id);
     }
@@ -903,7 +914,7 @@ void RangeServer::TimeOut(const kvrpcpb::RequestHeader &req,
     err->set_message("time out");
     err->mutable_timeout();
 
-    SetResponseHeader(req, resp, err);
+    SetResponseHeader(resp, req, err);
 }
 
 void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
@@ -912,7 +923,7 @@ void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
     err->set_message("range not found");
     err->mutable_range_not_found()->set_range_id(req.range_id());
 
-    SetResponseHeader(req, resp, err);
+    SetResponseHeader(resp, req, err);
 }
 
 Status RangeServer::recover(const metapb::Range& meta) {

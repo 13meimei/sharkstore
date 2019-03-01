@@ -375,4 +375,16 @@ int64_t NowMicros() {
     return static_cast<int64_t>(tv.tv_sec) * 1000000 + tv.tv_usec;
 }
 
+int64_t NowMilliSeconds() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (int64_t)tv.tv_sec * 1000 + (int64_t)tv.tv_usec / 1000;
+}
+
+int64_t NowSeconds() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec;
+}
+
 } /* namespace sharkstore */
