@@ -147,7 +147,7 @@ void Range::TxnDecide(common::ProtoMessage* msg, DsDecideRequest& req) {
 
     if (err != nullptr) {
         RANGE_LOG_WARN("TxnDecide error: %s", err->message().c_str());
-        auto resp = new DsPrepareResponse;
+        auto resp = new DsDecideResponse;
         return SendError(msg, req.header(), resp, err);
     }
 }
