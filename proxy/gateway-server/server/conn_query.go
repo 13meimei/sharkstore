@@ -159,19 +159,19 @@ func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) (e
 		ret     *mysql.Result
 		t       *Table
 		intents []*txnpb.TxnIntent
+		tx      = c.tx
 	)
 	if !c.isInTransaction() {
-		c.tx = NewTx(true, c.server.proxy, 0)
+		tx = NewTx(true, c.server.proxy, 0)
 	}
-
 	//verify, encode
 	t, intents, ret, err = c.server.proxy.HandleInsert(c.db, stmt, args)
 	if err != nil {
 		golog.Error("[insert]HandleInsert failed, err[%v]", err)
 		return c.writeError(err)
 	}
-	c.tx.SetTable(t)
-	err = c.tx.Insert(intents)
+	tx.SetTable(t)
+	err = tx.Insert(intents)
 	if err != nil {
 		golog.Error("[insert]txnInsert failed, err[%v]", err)
 		return c.writeError(err)
@@ -193,9 +193,10 @@ func (c *ClientConn) handleDelete(stmt *sqlparser.Delete, args []interface{}) (e
 		ret     *mysql.Result
 		t       *Table
 		intents []*txnpb.TxnIntent
+		tx      = c.tx
 	)
 	if !c.isInTransaction() {
-		c.tx = NewTx(true, c.server.proxy, 0)
+		tx = NewTx(true, c.server.proxy, 0)
 	}
 
 	//verify, encode
@@ -204,8 +205,8 @@ func (c *ClientConn) handleDelete(stmt *sqlparser.Delete, args []interface{}) (e
 		golog.Error("[delete]HandleDelete failed, err[%v]", err)
 		return c.writeError(err)
 	}
-	c.tx.SetTable(t)
-	err = c.tx.Delete(intents)
+	tx.SetTable(t)
+	err = tx.Delete(intents)
 	if err != nil {
 		golog.Error("[delete]txnDelete failed, err[%v]", err)
 		return c.writeError(err)
@@ -228,9 +229,10 @@ func (c *ClientConn) handleUpdate(stmt *sqlparser.Update, args []interface{}) (e
 		ret     *mysql.Result
 		t       *Table
 		intents []*txnpb.TxnIntent
+		tx      = c.tx
 	)
 	if !c.isInTransaction() {
-		c.tx = NewTx(true, c.server.proxy, 0)
+		tx = NewTx(true, c.server.proxy, 0)
 	}
 
 	//verify, encode
@@ -239,8 +241,8 @@ func (c *ClientConn) handleUpdate(stmt *sqlparser.Update, args []interface{}) (e
 		golog.Error("[update]HandleUpdate failed, err[%v]", err)
 		return c.writeError(err)
 	}
-	c.tx.SetTable(t)
-	err = c.tx.Update(intents)
+	tx.SetTable(t)
+	err = tx.Update(intents)
 	if err != nil {
 		golog.Error("[update]txnUpdate failed, err[%v]", err)
 		return c.writeError(err)

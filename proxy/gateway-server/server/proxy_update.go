@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	"bytes"
-
+	"strconv"
 	"util"
 	"util/log"
 	"proxy/gateway-server/mysql"
@@ -176,14 +176,19 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 					oldValue, newValue []byte
 					oldKey             []byte
 				)
-				//business data
-				oldValue, err = formatValue(rValue.fields[i].value)
-				if err != nil {
-					log.Error("[update]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
-					return nil, 0, err
+				//deal business data
+				if rValue.fields[i].value != nil {
+					oldValue, err = formatValue(rValue.fields[i].value)
+					if err != nil {
+						log.Error("[update]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
+						return nil, 0, err
+					}
 				}
 				if expr, ok := exprMap[col.GetName()]; ok {
-					newValue = computeUpdExpr(col, expr, oldValue)
+					if newValue, err = computeUpdExpr(col, expr, oldValue); err != nil {
+						log.Error("[update]compute field %v expr value err: %v", col.GetName(), rValue.fields[i].value, err)
+						return nil, 0, err
+					}
 					rowValue = append(rowValue, newValue)
 					//old index key
 					if col.GetIndex() {
@@ -263,29 +268,114 @@ func encodeIndexKey(t *Table, col *metapb.Column, colMap map[string]int, idxValu
 	return
 }
 
-func computeUpdExpr(col *metapb.Column, expr *kvrpcpb.Field, oldValue []byte) []byte {
-	var newValue []byte
-	//merge update
+func computeUpdExpr(col *metapb.Column, expr *kvrpcpb.Field, oldValue []byte) (newValue []byte, err error) {
 	switch expr.GetFieldType() {
 	case kvrpcpb.FieldType_Assign:
 		newValue = expr.GetValue()
+		return
 	case kvrpcpb.FieldType_Plus:
-		switch col.GetDataType() {
-		case metapb.DataType_Tinyint:
-		case metapb.DataType_Smallint:
-		case metapb.DataType_Int:
-		case metapb.DataType_BigInt:
-		case metapb.DataType_Float:
-		case metapb.DataType_Double:
-		default:
+		if oldValue == nil {
+			newValue = expr.GetValue()
+			return
+		}
+		if len(expr.GetValue()) == 0 {
+			newValue = oldValue
+			return
 		}
 	case kvrpcpb.FieldType_Minus:
+		compareVal := bytes.Compare(oldValue, expr.GetValue())
+		if compareVal == -1 && col.GetUnsigned() {
+			err = fmt.Errorf("Out of range value for column '%v' ", col.GetName())
+			return
+		}
+		if compareVal == 0 {
+			return
+		}
 	case kvrpcpb.FieldType_Mult:
+		if oldValue == nil {
+			return
+		}
 	case kvrpcpb.FieldType_Div:
-		newValue = oldValue
+		if len(expr.GetValue()) == 0 || string(expr.GetValue()) == "0" {
+			err = fmt.Errorf("Out of range value for column '%v' ", col.GetName())
+			return
+		}
+		log.Info("expr value %v", expr.GetValue())
 	}
-	return newValue
+	newValue, err = operate(col, expr, oldValue)
+	return
+}
 
+func operate(col *metapb.Column, expr *kvrpcpb.Field, oldValue []byte) (result []byte, err error) {
+	var (
+		valueStr = string(oldValue)
+		exprStr = string(expr.GetValue())
+	)
+	switch col.DataType {
+	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+		if col.Unsigned {
+			var value1, value2 int64
+			value1, err = strconv.ParseInt(valueStr, 10, 64)
+			if err != nil {
+				return
+			}
+			value2, err = strconv.ParseInt(exprStr, 10, 64)
+			if err != nil {
+				return
+			}
+			switch expr.GetFieldType() {
+			case kvrpcpb.FieldType_Plus:
+				result = []byte(fmt.Sprintf("%v", value1+value2))
+			case kvrpcpb.FieldType_Minus:
+				result = []byte(fmt.Sprintf("%v", value1-value2))
+			case kvrpcpb.FieldType_Mult:
+				result = []byte(fmt.Sprintf("%v", value1*value2))
+			case kvrpcpb.FieldType_Div:
+				result = []byte(fmt.Sprintf("%v", value1/value2))
+			}
+		} else {
+			var value1, value2 uint64
+			value1, err = strconv.ParseUint(valueStr, 10, 64)
+			if err != nil {
+				return
+			}
+			value2, err = strconv.ParseUint(exprStr, 10, 64)
+			if err != nil {
+				return
+			}
+			switch expr.GetFieldType() {
+			case kvrpcpb.FieldType_Plus:
+				result = []byte(fmt.Sprintf("%v", value1+value2))
+			case kvrpcpb.FieldType_Minus:
+				result = []byte(fmt.Sprintf("%v", value1-value2))
+			case kvrpcpb.FieldType_Mult:
+				result = []byte(fmt.Sprintf("%v", value1*value2))
+			case kvrpcpb.FieldType_Div:
+				result = []byte(fmt.Sprintf("%v", value1/value2))
+			}
+		}
+	case metapb.DataType_Float, metapb.DataType_Double:
+		var value1, value2 float64
+		value1, err = strconv.ParseFloat(valueStr, 64)
+		if err != nil {
+			return
+		}
+		value2, err = strconv.ParseFloat(exprStr, 64)
+		if err != nil {
+			return
+		}
+		switch expr.GetFieldType() {
+		case kvrpcpb.FieldType_Plus:
+			result = []byte(fmt.Sprintf("%v", value1+value2))
+		case kvrpcpb.FieldType_Minus:
+			result = []byte(fmt.Sprintf("%v", value1-value2))
+		case kvrpcpb.FieldType_Mult:
+			result = []byte(fmt.Sprintf("%v", value1*value2))
+		case kvrpcpb.FieldType_Div:
+			result = []byte(fmt.Sprintf("%v", value1/value2))
+		}
+	}
+	return
 }
 
 func getSelectFieldsOfTable(t *Table) ([]*kvrpcpb.SelectField, map[string]int, error) {
