@@ -10,7 +10,6 @@ _Pragma("once");
 #include "protocol.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 class Session : public std::enable_shared_from_this<Session> {
@@ -56,5 +55,4 @@ private:
 };
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

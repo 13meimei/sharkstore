@@ -5,7 +5,6 @@
 #include "base/byte_order.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 void Head::SetResp(const Head& req, uint32_t body_len) {
@@ -73,5 +72,4 @@ bool Head::ForceFastFlag() const {
 }
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

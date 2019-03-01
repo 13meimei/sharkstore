@@ -9,7 +9,6 @@ _Pragma("once");
 #include <asio/io_context.hpp>
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 class IOContextPool final {
@@ -47,5 +46,4 @@ private:
 };
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

@@ -7,7 +7,6 @@
 #include "frame/sf_logger.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 std::atomic<uint64_t> Session::total_count_ = {0};
@@ -171,5 +170,4 @@ void Session::Write(const MessagePtr& msg) {
 }
 
 } /* net */
-} /* dataserver  */
 } /* sharkstore  */

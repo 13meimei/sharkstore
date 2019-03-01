@@ -4,7 +4,6 @@
 #include "frame/sf_logger.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 IOContextPool::IOContextPool(size_t size, const std::string& name) :
@@ -66,5 +65,4 @@ void IOContextPool::runLoop(const std::shared_ptr<asio::io_context>& ctx, int i)
 }
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

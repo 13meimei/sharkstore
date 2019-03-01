@@ -3,7 +3,6 @@
 #include "session.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 bool Context::Write(const MessagePtr& resp_msg) const {
@@ -24,5 +23,4 @@ bool Context::Write(const Head& req_head, std::vector<uint8_t>&& resp_body) cons
 }
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

@@ -7,7 +7,6 @@
 #include "session.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 Server::Server(const ServerOptions& opt, const std::string& name) :
@@ -93,5 +92,4 @@ asio::io_context& Server::getContext() {
 }
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

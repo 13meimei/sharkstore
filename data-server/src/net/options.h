@@ -1,7 +1,6 @@
 _Pragma("once");
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 struct SessionOptions {
@@ -33,5 +32,4 @@ struct ServerOptions {
 };
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

@@ -6,7 +6,6 @@ _Pragma("once");
 #include "protocol.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 class Session;
@@ -38,5 +37,4 @@ struct Context {
 using Handler = std::function<void(const Context&, const MessagePtr& msg)>;
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

@@ -4,7 +4,6 @@ _Pragma("once");
 #include "base/status.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 static const uint32_t kMagic = 0x23232323;
@@ -52,5 +51,4 @@ struct Head {
 static constexpr int kHeadSize = sizeof(Head);
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

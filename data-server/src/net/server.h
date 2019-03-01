@@ -10,7 +10,6 @@ _Pragma("once");
 #include "options.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 class IOContextPool;
@@ -49,5 +48,4 @@ private:
 };
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore
