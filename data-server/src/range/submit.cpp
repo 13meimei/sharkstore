@@ -19,6 +19,14 @@ SubmitContext::SubmitContext(RPCRequestPtr rpc_request,
     trace_id_(kv_header.trace_id()) {
 }
 
+void SubmitContext::FillResponseHeader(kvrpcpb::ResponseHeader* header, errorpb::Error *err) {
+    SetResponseHeader(header, cluster_id_, trace_id_, err);
+}
+
+void SubmitContext::SendResponse(const ::google::protobuf::Message& resp) {
+    rpc_request_->Reply(resp);
+}
+
 void SubmitContext::SendError(errorpb::Error *err) {
     switch (type_) {
         case raft_cmdpb::CmdType::RawPut: {
@@ -108,10 +116,11 @@ uint64_t SubmitQueue::GetSeq() {
 
 uint64_t SubmitQueue::Add(RPCRequestPtr rpc_request, raft_cmdpb::CmdType type,
              const kvrpcpb::RequestHeader& kv_req_header) {
+    auto expire_time = rpc_request->expire_time;
     SubmitContextPtr ctx(new SubmitContext(std::move(rpc_request), type, kv_req_header));
     std::lock_guard<std::mutex> lock(mu_);
     ctx_map_.emplace(++seq_, std::move(ctx));
-    expire_que_.emplace(rpc_request->expire_time, seq_);
+    expire_que_.emplace(expire_time, seq_);
     return seq_;
 }
 

@@ -199,7 +199,8 @@ private:
         if (ctx != nullptr) {
             context_->Statistics()->PushTime(monitor::HistogramType::kRaft, apply_time - ctx->SubmitTime());
             ctx->CheckExecuteTime(id_, kTimeTakeWarnThresoldUSec);
-            ctx->Reply(resp, err);
+            ctx->FillResponseHeader(resp, err);
+            ctx->SendResponse(resp);
         } else {
             delete err;
             RANGE_LOG_WARN("Apply cmd id %" PRIu64 " not found", cmd.cmd_id().seq());

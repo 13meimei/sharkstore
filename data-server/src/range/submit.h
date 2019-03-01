@@ -20,23 +20,22 @@ public:
             raft_cmdpb::CmdType type,
             const kvrpcpb::RequestHeader& kv_header);
 
+    virtual ~SubmitContext() = default;
+
     SubmitContext(const SubmitContext&) = delete;
     SubmitContext& operator=(const SubmitContext&) = delete;
 
     int64_t SubmitTime() const { return submit_time_; }
     raft_cmdpb::CmdType Type() const { return type_; }
 
-    template <class ResponseT>
-    void Reply(ResponseT& resp, errorpb::Error *err = nullptr) {
-        // 设置response头部
-        SetResponseHeader(resp.mutable_header(), cluster_id_, trace_id_, err);
-        rpc_request_->Reply(resp);
-    }
-
-    void SendError(errorpb::Error *err);
-    void SendTimeout();
+    // 根据之前保存的request header相关信息，填充response头部
+    void FillResponseHeader(kvrpcpb::ResponseHeader* header, errorpb::Error *err);
+    // 发送response
+    void SendResponse(const ::google::protobuf::Message& resp);
 
     void CheckExecuteTime(uint64_t rangeID, int64_t thresold_usecs);
+
+    virtual void SendError(errorpb::Error *err) = 0;
 
 private:
     int64_t submit_time_ = 0;
@@ -46,6 +45,23 @@ private:
     // save for set response header lately
     uint64_t cluster_id_ = 0;
     uint64_t trace_id_ = 0;
+};
+
+// 根据不同的Response类型
+template <class ResponseT>
+class SubmitContextT : public SubmitContext {
+public:
+    SubmitContextT(RPCRequestPtr rpc_request,
+            raft_cmdpb::CmdType type,
+            const kvrpcpb::RequestHeader& kv_header) :
+        SubmitContext(std::move(rpc_request), type, kv_header)
+    {}
+
+    void SendError(errorpb::Error *err) override {
+        ResponseT resp;
+        SetResponseHeader(resp, err);
+        SendResponse(resp);
+    }
 };
 
 class SubmitQueue {
