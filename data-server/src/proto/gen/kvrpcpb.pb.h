@@ -438,6 +438,41 @@ inline bool MatchType_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<MatchType>(
     MatchType_descriptor(), name, value);
 }
+enum ExprType {
+  E_Invalid = 0,
+  E_LogicAnd = 1,
+  E_LogicOr = 2,
+  E_LogicNot = 3,
+  E_Equal = 11,
+  E_NotEqual = 12,
+  E_Less = 13,
+  E_LessOrEqual = 14,
+  E_Larger = 15,
+  E_LargerOrEqual = 16,
+  E_Plus = 21,
+  E_Minus = 22,
+  E_Mult = 23,
+  E_Div = 24,
+  E_ExprCol = 31,
+  E_ExprConst = 32,
+  ExprType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  ExprType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool ExprType_IsValid(int value);
+const ExprType ExprType_MIN = E_Invalid;
+const ExprType ExprType_MAX = E_ExprConst;
+const int ExprType_ARRAYSIZE = ExprType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* ExprType_descriptor();
+inline const ::std::string& ExprType_Name(ExprType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    ExprType_descriptor(), value);
+}
+inline bool ExprType_Parse(
+    const ::std::string& name, ExprType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ExprType>(
+    ExprType_descriptor(), name, value);
+}
 enum FieldType {
   Assign = 0,
   Plus = 1,
@@ -3204,23 +3239,20 @@ class MatchExt : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   // accessors -------------------------------------------------------
 
-  // repeated .kvrpcpb.Expr expr = 1;
-  int expr_size() const;
+  // .kvrpcpb.Expr expr = 1;
+  bool has_expr() const;
   void clear_expr();
   static const int kExprFieldNumber = 1;
-  const ::kvrpcpb::Expr& expr(int index) const;
-  ::kvrpcpb::Expr* mutable_expr(int index);
-  ::kvrpcpb::Expr* add_expr();
-  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >*
-      mutable_expr();
-  const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >&
-      expr() const;
+  const ::kvrpcpb::Expr& expr() const;
+  ::kvrpcpb::Expr* mutable_expr();
+  ::kvrpcpb::Expr* release_expr();
+  void set_allocated_expr(::kvrpcpb::Expr* expr);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.MatchExt)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr > expr_;
+  ::kvrpcpb::Expr* expr_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -3307,6 +3339,18 @@ class Expr : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
 
   // accessors -------------------------------------------------------
 
+  // repeated .kvrpcpb.Expr child = 5;
+  int child_size() const;
+  void clear_child();
+  static const int kChildFieldNumber = 5;
+  const ::kvrpcpb::Expr& child(int index) const;
+  ::kvrpcpb::Expr* mutable_child(int index);
+  ::kvrpcpb::Expr* add_child();
+  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >*
+      mutable_child();
+  const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >&
+      child() const;
+
   // bytes value = 4;
   void clear_value();
   static const int kValueFieldNumber = 4;
@@ -3330,20 +3374,11 @@ class Expr : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::metapb::Column* release_column();
   void set_allocated_column(::metapb::Column* column);
 
-  // .kvrpcpb.Expr child = 5;
-  bool has_child() const;
-  void clear_child();
-  static const int kChildFieldNumber = 5;
-  const ::kvrpcpb::Expr& child() const;
-  ::kvrpcpb::Expr* mutable_child();
-  ::kvrpcpb::Expr* release_child();
-  void set_allocated_child(::kvrpcpb::Expr* child);
-
-  // uint32 expr_type = 1;
+  // .kvrpcpb.ExprType expr_type = 1;
   void clear_expr_type();
   static const int kExprTypeFieldNumber = 1;
-  ::google::protobuf::uint32 expr_type() const;
-  void set_expr_type(::google::protobuf::uint32 value);
+  ::kvrpcpb::ExprType expr_type() const;
+  void set_expr_type(::kvrpcpb::ExprType value);
 
   // uint32 expr_func = 2;
   void clear_expr_func();
@@ -3355,10 +3390,10 @@ class Expr : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr > child_;
   ::google::protobuf::internal::ArenaStringPtr value_;
   ::metapb::Column* column_;
-  ::kvrpcpb::Expr* child_;
-  ::google::protobuf::uint32 expr_type_;
+  int expr_type_;
   ::google::protobuf::uint32 expr_func_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
@@ -3737,14 +3772,14 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::timestamp::Timestamp* release_timestamp();
   void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
 
-  // .kvrpcpb.MatchExt ext = 10;
-  bool has_ext() const;
-  void clear_ext();
-  static const int kExtFieldNumber = 10;
-  const ::kvrpcpb::MatchExt& ext() const;
-  ::kvrpcpb::MatchExt* mutable_ext();
-  ::kvrpcpb::MatchExt* release_ext();
-  void set_allocated_ext(::kvrpcpb::MatchExt* ext);
+  // .kvrpcpb.MatchExt ext_filter = 10;
+  bool has_ext_filter() const;
+  void clear_ext_filter();
+  static const int kExtFilterFieldNumber = 10;
+  const ::kvrpcpb::MatchExt& ext_filter() const;
+  ::kvrpcpb::MatchExt* mutable_ext_filter();
+  ::kvrpcpb::MatchExt* release_ext_filter();
+  void set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.SelectRequest)
  private:
@@ -3757,7 +3792,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::kvrpcpb::Scope* scope_;
   ::kvrpcpb::Limit* limit_;
   ::timestamp::Timestamp* timestamp_;
-  ::kvrpcpb::MatchExt* ext_;
+  ::kvrpcpb::MatchExt* ext_filter_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -14469,49 +14504,59 @@ inline void Match::set_match_type(::kvrpcpb::MatchType value) {
 
 // MatchExt
 
-// repeated .kvrpcpb.Expr expr = 1;
-inline int MatchExt::expr_size() const {
-  return expr_.size();
+// .kvrpcpb.Expr expr = 1;
+inline bool MatchExt::has_expr() const {
+  return this != internal_default_instance() && expr_ != NULL;
 }
 inline void MatchExt::clear_expr() {
-  expr_.Clear();
+  if (GetArenaNoVirtual() == NULL && expr_ != NULL) delete expr_;
+  expr_ = NULL;
 }
-inline const ::kvrpcpb::Expr& MatchExt::expr(int index) const {
+inline const ::kvrpcpb::Expr& MatchExt::expr() const {
+  const ::kvrpcpb::Expr* p = expr_;
   // @@protoc_insertion_point(field_get:kvrpcpb.MatchExt.expr)
-  return expr_.Get(index);
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Expr*>(
+      &::kvrpcpb::_Expr_default_instance_);
 }
-inline ::kvrpcpb::Expr* MatchExt::mutable_expr(int index) {
+inline ::kvrpcpb::Expr* MatchExt::mutable_expr() {
+  
+  if (expr_ == NULL) {
+    expr_ = new ::kvrpcpb::Expr;
+  }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.MatchExt.expr)
-  return expr_.Mutable(index);
-}
-inline ::kvrpcpb::Expr* MatchExt::add_expr() {
-  // @@protoc_insertion_point(field_add:kvrpcpb.MatchExt.expr)
-  return expr_.Add();
-}
-inline ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >*
-MatchExt::mutable_expr() {
-  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.MatchExt.expr)
-  return &expr_;
-}
-inline const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >&
-MatchExt::expr() const {
-  // @@protoc_insertion_point(field_list:kvrpcpb.MatchExt.expr)
   return expr_;
+}
+inline ::kvrpcpb::Expr* MatchExt::release_expr() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.MatchExt.expr)
+  
+  ::kvrpcpb::Expr* temp = expr_;
+  expr_ = NULL;
+  return temp;
+}
+inline void MatchExt::set_allocated_expr(::kvrpcpb::Expr* expr) {
+  delete expr_;
+  expr_ = expr;
+  if (expr) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.MatchExt.expr)
 }
 
 // -------------------------------------------------------------------
 
 // Expr
 
-// uint32 expr_type = 1;
+// .kvrpcpb.ExprType expr_type = 1;
 inline void Expr::clear_expr_type() {
-  expr_type_ = 0u;
+  expr_type_ = 0;
 }
-inline ::google::protobuf::uint32 Expr::expr_type() const {
+inline ::kvrpcpb::ExprType Expr::expr_type() const {
   // @@protoc_insertion_point(field_get:kvrpcpb.Expr.expr_type)
-  return expr_type_;
+  return static_cast< ::kvrpcpb::ExprType >(expr_type_);
 }
-inline void Expr::set_expr_type(::google::protobuf::uint32 value) {
+inline void Expr::set_expr_type(::kvrpcpb::ExprType value) {
   
   expr_type_ = value;
   // @@protoc_insertion_point(field_set:kvrpcpb.Expr.expr_type)
@@ -14624,44 +14669,34 @@ inline void Expr::set_allocated_value(::std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.Expr.value)
 }
 
-// .kvrpcpb.Expr child = 5;
-inline bool Expr::has_child() const {
-  return this != internal_default_instance() && child_ != NULL;
+// repeated .kvrpcpb.Expr child = 5;
+inline int Expr::child_size() const {
+  return child_.size();
 }
 inline void Expr::clear_child() {
-  if (GetArenaNoVirtual() == NULL && child_ != NULL) delete child_;
-  child_ = NULL;
+  child_.Clear();
 }
-inline const ::kvrpcpb::Expr& Expr::child() const {
-  const ::kvrpcpb::Expr* p = child_;
+inline const ::kvrpcpb::Expr& Expr::child(int index) const {
   // @@protoc_insertion_point(field_get:kvrpcpb.Expr.child)
-  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Expr*>(
-      &::kvrpcpb::_Expr_default_instance_);
+  return child_.Get(index);
 }
-inline ::kvrpcpb::Expr* Expr::mutable_child() {
-  
-  if (child_ == NULL) {
-    child_ = new ::kvrpcpb::Expr;
-  }
+inline ::kvrpcpb::Expr* Expr::mutable_child(int index) {
   // @@protoc_insertion_point(field_mutable:kvrpcpb.Expr.child)
+  return child_.Mutable(index);
+}
+inline ::kvrpcpb::Expr* Expr::add_child() {
+  // @@protoc_insertion_point(field_add:kvrpcpb.Expr.child)
+  return child_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >*
+Expr::mutable_child() {
+  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.Expr.child)
+  return &child_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >&
+Expr::child() const {
+  // @@protoc_insertion_point(field_list:kvrpcpb.Expr.child)
   return child_;
-}
-inline ::kvrpcpb::Expr* Expr::release_child() {
-  // @@protoc_insertion_point(field_release:kvrpcpb.Expr.child)
-  
-  ::kvrpcpb::Expr* temp = child_;
-  child_ = NULL;
-  return temp;
-}
-inline void Expr::set_allocated_child(::kvrpcpb::Expr* child) {
-  delete child_;
-  child_ = child;
-  if (child) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.Expr.child)
 }
 
 // -------------------------------------------------------------------
@@ -15047,44 +15082,44 @@ inline void SelectRequest::set_allocated_timestamp(::timestamp::Timestamp* times
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.SelectRequest.timestamp)
 }
 
-// .kvrpcpb.MatchExt ext = 10;
-inline bool SelectRequest::has_ext() const {
-  return this != internal_default_instance() && ext_ != NULL;
+// .kvrpcpb.MatchExt ext_filter = 10;
+inline bool SelectRequest::has_ext_filter() const {
+  return this != internal_default_instance() && ext_filter_ != NULL;
 }
-inline void SelectRequest::clear_ext() {
-  if (GetArenaNoVirtual() == NULL && ext_ != NULL) delete ext_;
-  ext_ = NULL;
+inline void SelectRequest::clear_ext_filter() {
+  if (GetArenaNoVirtual() == NULL && ext_filter_ != NULL) delete ext_filter_;
+  ext_filter_ = NULL;
 }
-inline const ::kvrpcpb::MatchExt& SelectRequest::ext() const {
-  const ::kvrpcpb::MatchExt* p = ext_;
-  // @@protoc_insertion_point(field_get:kvrpcpb.SelectRequest.ext)
+inline const ::kvrpcpb::MatchExt& SelectRequest::ext_filter() const {
+  const ::kvrpcpb::MatchExt* p = ext_filter_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.SelectRequest.ext_filter)
   return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::MatchExt*>(
       &::kvrpcpb::_MatchExt_default_instance_);
 }
-inline ::kvrpcpb::MatchExt* SelectRequest::mutable_ext() {
+inline ::kvrpcpb::MatchExt* SelectRequest::mutable_ext_filter() {
   
-  if (ext_ == NULL) {
-    ext_ = new ::kvrpcpb::MatchExt;
+  if (ext_filter_ == NULL) {
+    ext_filter_ = new ::kvrpcpb::MatchExt;
   }
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.SelectRequest.ext)
-  return ext_;
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.SelectRequest.ext_filter)
+  return ext_filter_;
 }
-inline ::kvrpcpb::MatchExt* SelectRequest::release_ext() {
-  // @@protoc_insertion_point(field_release:kvrpcpb.SelectRequest.ext)
+inline ::kvrpcpb::MatchExt* SelectRequest::release_ext_filter() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.SelectRequest.ext_filter)
   
-  ::kvrpcpb::MatchExt* temp = ext_;
-  ext_ = NULL;
+  ::kvrpcpb::MatchExt* temp = ext_filter_;
+  ext_filter_ = NULL;
   return temp;
 }
-inline void SelectRequest::set_allocated_ext(::kvrpcpb::MatchExt* ext) {
-  delete ext_;
-  ext_ = ext;
-  if (ext) {
+inline void SelectRequest::set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter) {
+  delete ext_filter_;
+  ext_filter_ = ext_filter;
+  if (ext_filter) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.SelectRequest.ext)
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.SelectRequest.ext_filter)
 }
 
 // -------------------------------------------------------------------
@@ -22354,6 +22389,11 @@ template <> struct is_proto_enum< ::kvrpcpb::MatchType> : ::google::protobuf::in
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::kvrpcpb::MatchType>() {
   return ::kvrpcpb::MatchType_descriptor();
+}
+template <> struct is_proto_enum< ::kvrpcpb::ExprType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::kvrpcpb::ExprType>() {
+  return ::kvrpcpb::ExprType_descriptor();
 }
 template <> struct is_proto_enum< ::kvrpcpb::FieldType> : ::google::protobuf::internal::true_type {};
 template <>

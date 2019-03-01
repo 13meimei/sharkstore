@@ -112,6 +112,93 @@ void SelectRequestBuilder::AddMatch(const std::string& col, kvrpcpb::MatchType t
     w->mutable_threshold()->assign(val);
 }
 
+static ::kvrpcpb::Expr *CreateExprCol(const metapb::Column &col, const std::string &name, ::kvrpcpb::Expr* e) {
+    e->mutable_column()->CopyFrom(col);
+    e->set_expr_type(kvrpcpb::E_ExprCol);
+    e->mutable_column()->set_name(name);
+
+    return e;
+}
+
+static ::kvrpcpb::Expr *CreateExprVal(const metapb::Column& col, const std::string &val, ::kvrpcpb::Expr* e) {
+    e->set_expr_type(kvrpcpb::E_ExprConst);
+    e->set_value(val);
+    e->mutable_column()->CopyFrom(col);
+
+    return e;
+}
+
+static ::kvrpcpb::Expr *CreateExpr(::kvrpcpb::Expr *e, const metapb::Column &col, const std::string& name, 
+        const std::string& val, ::kvrpcpb::ExprType et)
+{
+    e->set_expr_type(et);
+    auto l = e->add_child();
+    CreateExprCol(col, name, l);
+    auto r = e->add_child();
+    CreateExprVal(col, val, r);
+    return e;
+}
+
+void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::string& val,
+        ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix)
+{
+    auto root = req_.mutable_ext_filter()->mutable_expr();
+
+    //parent expr
+    ::kvrpcpb::Expr *pe = nullptr;
+    
+    bool only = false;
+    //empty where condition And Or Not
+    if (root->child_size() == 0) {
+        only = true;
+        printf("first time append expr, %d\n", logic_suffix);
+        if (logic_suffix != ::kvrpcpb::E_Invalid) {
+            root->set_expr_type(logic_suffix);
+        } else {
+            fprintf(stderr, "passin invalid expr_type.");
+            return;
+        }
+    } else {
+        only = false;
+        printf("second time append expr, child_size: %d  logic_suffix: %d\n", 
+                root->child_size(), logic_suffix);
+    }
+    pe = root;
+
+
+    //child expr
+    if (pe->child_size() < 2) {
+        if (pe->expr_type() != logic_suffix) {
+            fprintf(stderr, "warn: %d <> %d\n.", pe->expr_type(), logic_suffix);
+        }
+        auto l = pe->add_child();
+        auto tmp = CreateExpr(l, table_->GetColumn(col), col, val, et);
+        printf("CreateExpr ok\n");
+        //std::swap(l, tmp);
+        printf("add child end %s expr_type: %d   %x\n", only?"first":"second", l->expr_type(), l);
+
+        return;
+    }
+
+    int ts{0};
+    while ((ts = pe->child_size()) > 0) {
+        printf("in cycle\n");
+        for (auto i=0; i<ts; i++) {
+            auto tr = pe->mutable_child(i);
+            if (tr->child_size() < 2) {
+                auto l = tr->add_child();
+                auto tmp = CreateExpr(l, table_->GetColumn(col), col, val, et);
+                //std::swap(l, tmp);
+                printf("add child end... %s expr_type:%d \n", only?"first":"second", l->expr_type());
+                return;
+            }
+        };
+
+        pe = pe->mutable_child(0);
+    }
+    return;
+}
+
 void SelectRequestBuilder::AddLimit(uint64_t count, uint64_t offset) {
     req_.mutable_limit()->set_count(count);
     req_.mutable_limit()->set_offset(offset);

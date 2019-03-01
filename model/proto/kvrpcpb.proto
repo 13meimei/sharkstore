@@ -162,12 +162,35 @@ enum MatchType {
     LargerOrEqual = 16;
 }
 
+enum ExprType {
+    E_Invalid    = 0;
+
+    E_LogicAnd    = 1;
+    E_LogicOr     = 2;
+    E_LogicNot    = 3;
+
+    E_Equal       = 11; 
+    E_NotEqual    = 12;
+    E_Less        = 13;
+    E_LessOrEqual      = 14;
+    E_Larger           = 15;
+    E_LargerOrEqual    = 16;
+
+    E_Plus             = 21;
+    E_Minus            = 22;
+    E_Mult             = 23;
+    E_Div              = 24;
+
+    E_ExprCol     = 31;
+    E_ExprConst   = 32;
+}
+
 enum FieldType {
-    Assign             = 0;
-    Plus               = 1;
-    Minus              = 2;
-    Mult               = 3;
-    Div                = 4;
+    Assign           = 0;
+    Plus             = 1;
+    Minus            = 2;
+    Mult             = 3;
+    Div              = 4;
 }
 
 message Match {
@@ -178,15 +201,15 @@ message Match {
 }
 
 message MatchExt {
-    repeated Expr expr        = 1;
+    Expr expr      = 1;
 }
 
 message Expr {
-    uint32 expr_type        = 1;    // value in enum MatchType
+    ExprType expr_type      = 1;    // uint32
     uint32 expr_func        = 2;    // reserve
-    metapb.Column column    = 3;
-    bytes value             = 4;
-    Expr  child             = 5;    // support multi expr
+    metapb.Column column    = 3;    // left in optimization
+    bytes value             = 4;    // maybe left or right, but right in optimization
+    repeated Expr  child    = 5;    // alwayse 2 expr left and right, but LogicNot
 }
 
 message Limit {
@@ -208,7 +231,7 @@ message SelectRequest {
     Limit limit                         = 6;       // max range query num, 0 means no limit
 
     timestamp.Timestamp timestamp       = 7;       // timestamp
-    MatchExt ext                        = 10;      // extend where condition
+    MatchExt ext_filter                 = 10;      // extend where condition
 }
 
 message Row {

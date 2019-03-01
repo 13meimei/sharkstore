@@ -167,11 +167,18 @@ TEST_F(RangeTestFixture, CURD) {
     }
     // test select
     {
+        printf("test select with match_ext\n");
+
         DsSelectRequest req;
         MakeHeader(req.mutable_header());
         SelectRequestBuilder builder(table_.get());
         builder.AddAllFields();
+        //builder.AppendMatchExt("id", "10", ::kvrpcpb::E_Larger, ::kvrpcpb::E_LogicOr);
+        //builder.AppendMatchExt("id", "24", ::kvrpcpb::E_Less, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "100", ::kvrpcpb::E_Larger, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "200", ::kvrpcpb::E_Less, ::kvrpcpb::E_LogicOr);
         *req.mutable_req() = builder.Build();
+
         DsSelectResponse resp;
         auto s = TestSelect(req, &resp);
         ASSERT_TRUE(s.ok()) << s.ToString();
