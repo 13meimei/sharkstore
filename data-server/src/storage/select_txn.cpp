@@ -185,7 +185,7 @@ Status TxnRowFetcher::getRow(const std::string& key, const std::string& data_val
             case txnpb::ABORTED:
                 return getRow(key, data_value, "", row);
             case txnpb::INIT:
-                return getRow(key, data_value, nullptr, row);
+                return getRow(key, data_value, "", row);
             default:
                 return Status(Status::kInvalidArgument, "txn status", std::to_string(txn_status));
             }
