@@ -56,6 +56,14 @@ void Session::Start() {
     }
 }
 
+void Session::Close() {
+    if (closed_) {
+        return;
+    }
+    auto self(shared_from_this());
+    asio::post(socket_.get_io_context(), [self] { self->doClose(); });
+}
+
 void Session::doClose() {
     if (closed_) {
         return;

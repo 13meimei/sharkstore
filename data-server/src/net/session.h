@@ -19,6 +19,7 @@ public:
     ~Session();
 
     void Start();
+    void Close();
 
     Session(const Session&) = delete;
     Session& operator=(const Session&) = delete;
