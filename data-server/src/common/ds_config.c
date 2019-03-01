@@ -7,9 +7,6 @@
 #include "frame/sf_logger.h"
 #include "frame/sf_util.h"
 
-#include "ds_define.h"
-#include "ds_version.h"
-
 ds_config_t ds_config;
 
 // 加载非负带字节单位的配置项（MB、KB等)

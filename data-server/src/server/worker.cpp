@@ -6,7 +6,6 @@
 
 #include "base/util.h"
 #include "common/ds_config.h"
-#include "common/ds_proto.h"
 #include "frame/sf_config.h"
 #include "frame/sf_logger.h"
 #include "frame/sf_util.h"

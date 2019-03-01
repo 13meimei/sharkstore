@@ -19,9 +19,6 @@
 #include <fastcommon/shared_func.h>
 
 #include "common/ds_config.h"
-#include "common/ds_proto.h"
-#include "common/ds_types.h"
-#include "common/ds_version.h"
 #include "frame/sf_service.h"
 
 #include "version.h"
@@ -40,9 +37,6 @@ int main(int argc, char *argv[]) {
     }
 
     sf_regist_load_config_callback(load_from_conf_file);
-
-    sf_regist_print_version_callback(print_version);
-
     sf_regist_user_init_callback(ds_user_init_callback);
     sf_regist_user_destroy_callback(ds_user_destroy_callback);
 

@@ -48,11 +48,6 @@ static pthread_cond_t service_cond = PTHREAD_COND_INITIALIZER;
 
 static sf_user_init_callback_t sf_user_init_callback;
 static sf_user_destroy_callback_t sf_user_destroy_callback;
-static sf_print_version_callback_t sf_print_version_callback;
-
-void sf_regist_print_version_callback(sf_print_version_callback_t print_version_func) {
-    sf_print_version_callback = print_version_func;
-}
 
 void sf_regist_user_init_callback(sf_user_init_callback_t user_init_func) {
     sf_user_init_callback = user_init_func;
@@ -112,11 +107,6 @@ int sf_service_run(int argc, char *argv[], const char *server_name) {
     if (argc < 2) {
         usage(argv[0]);
         return 1;
-    } else if (argc == 2) {
-        if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
-            sf_print_version_callback();
-            return 0;
-        }
     }
 
     g_current_time = time(NULL);

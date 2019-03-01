@@ -7,7 +7,6 @@
 
 #include "test_util.h"
 #include "base/util.h"
-#include "common/ds_proto.h"
 
 #include "raft/snapshot.h"
 #include "raft/statemachine.h"

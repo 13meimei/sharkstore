@@ -30,8 +30,6 @@ set (test_DEPEND_LIBS
 )
 
 set(test_SRCS
-    fast_net_client.cpp
-    fast_net_server.cpp
     unittest/encoding_unittest.cpp
     unittest/field_value_unittest.cpp
     unittest/meta_store_unittest.cpp

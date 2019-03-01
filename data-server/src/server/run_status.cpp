@@ -7,7 +7,6 @@
 
 #include "base/util.h"
 #include "common/ds_config.h"
-#include "common/ds_version.h"
 #include "frame/sf_logger.h"
 #include "frame/sf_util.h"
 #include "master/worker.h"
@@ -30,9 +29,6 @@ int RunStatus::Start() {
     metric_thread_ = std::thread(&RunStatus::run, this);
     auto handle = metric_thread_.native_handle();
     AnnotateThread(handle, "metric_hb");
-
-    // set monitor version
-    system_status_.PutVersion(get_version());
 
     return 0;
 }

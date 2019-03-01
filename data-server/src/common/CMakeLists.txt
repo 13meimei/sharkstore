@@ -1,8 +1,6 @@
 set(common_SOURCES
     ds_config.c
-    ds_proto.c
-    ds_version.c
-    ds_encoding.cpp
+        ds_encoding.cpp
     rpc_request.cpp
 )
 
