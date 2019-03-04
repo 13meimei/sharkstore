@@ -452,7 +452,7 @@ func (s *Service) EditTable(cId int, dbName, tableName, rangeKeys string, column
 		return err
 	}
 	if editTableResp.Code != 0 {
-		log.Error("master editTable is failed. err:[%v]", editTableResp)
+		log.Error("master editTable is failed. err:[code:%v, msg:%v]", editTableResp.Code, editTableResp.Msg)
 		return common.INTERNAL_ERROR
 	}
 

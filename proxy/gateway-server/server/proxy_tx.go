@@ -9,6 +9,11 @@ import (
 	"util/log"
 )
 
+const (
+	TXN_INTENT_MAX_LENGTH        = 100
+	TXN_DEFAULT_TIMEOUT   uint64 = 50
+)
+
 func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t *Table) (err error) {
 	if len(req.GetIntents()) == 0 {
 		return
@@ -68,6 +73,7 @@ func (p *Proxy) handleRecoverTxs(expiredTxs []*txnpb.LockError, t *Table) (err e
 	if len(expiredTxs) == 0 {
 		return
 	}
+	log.Debug("start to recover expired txs size: %v", len(expiredTxs))
 	recoverFunc := func(subCtx *dskv.ReqContext, lock *txnpb.LockError, table *Table, errs chan error) {
 		var (
 			lockInfo   = lock.GetInfo()
@@ -119,8 +125,9 @@ func (p *Proxy) recoverFromPrimary(ctx *dskv.ReqContext, txId string, primaryKey
 		return
 	}
 	if status == txnpb.TxnStatus_COMMITTED {
-		log.Error("rollback txn error, because ds let commit")
+		log.Warn("rollback txn %v error, because ds let commit", txId)
 	}
+	log.Debug("[from primary key]start to recover tx: %v to status: %v", txId, status)
 	//todo opt
 	//decide all secondary keys
 	err = p.decideSecondaryKeys(ctx, txId, status, secondaryKeys, t)
@@ -143,8 +150,9 @@ func (p *Proxy) recoverFromSecondary(ctx *dskv.ReqContext, txId string, primaryK
 		return status, err
 	}
 	if status == txnpb.TxnStatus_COMMITTED {
-		log.Error("rollback txn error, because ds let commit")
+		log.Warn("rollback txn %v error, because ds let commit", txId)
 	}
+	log.Debug("[from secondary key]start to recover tx: %v  to status: %v", txId, status)
 	if sync {
 		//todo opt
 		//decide all secondary keys
@@ -238,6 +246,7 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, primaryKey []byte, recover bool, t *Table) (
 	status txnpb.TxnStatus, secondaryKeys [][]byte, err error) {
 
+	log.Debug("try to rollback tx[%v]to aborted", txId)
 	status = txnpb.TxnStatus_ABORTED
 	var (
 		req = &txnpb.DecideRequest{
@@ -291,6 +300,7 @@ func (p *Proxy) handleDecide(ctx *dskv.ReqContext, req *txnpb.DecideRequest, t *
 }
 
 func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (err error) {
+	log.Debug("start to clean up primary key intent for tx:[%v]", txId)
 	req := &txnpb.ClearupRequest{
 		TxnId:      txId,
 		PrimaryKey: primaryKey,
@@ -329,6 +339,7 @@ func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []by
 }
 
 func (p *Proxy) handleGetLockInfo(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (resp *txnpb.GetLockInfoResponse, err error) {
+	log.Debug("start to getLockInfo for tx %v", txId)
 	req := &txnpb.GetLockInfoRequest{
 		TxnId: txId,
 		Key:   primaryKey,
@@ -403,7 +414,7 @@ func (t TxnIntentSlice) Less(i int, j int) bool {
 // 按照route的范围划分intents
 func regroupIntentsByRange(context *dskv.ReqContext, t *Table, intents []*txnpb.TxnIntent) ([]*txnpb.TxnIntent, [][]*txnpb.TxnIntent, error) {
 	var (
-		priIntentsGroup []*txnpb.TxnIntent
+		priIntents      []*txnpb.TxnIntent
 		secIntentsGroup [][]*txnpb.TxnIntent
 		err             error
 		pkRangeId       uint64
@@ -429,18 +440,27 @@ func regroupIntentsByRange(context *dskv.ReqContext, t *Table, intents []*txnpb.
 		}
 		group = append(group, intent)
 		ggroup[l.Region.Id] = group
+		// 每100个kv切割一下
+		if len(group) >= TXN_INTENT_MAX_LENGTH {
+			if l.Region.Id == pkRangeId && len(priIntents) == 0 {
+				priIntents = group
+			} else {
+				secIntentsGroup = append(secIntentsGroup, group)
+			}
+			delete(ggroup, l.Region.Id)
+		}
 	}
 	for rangeId, group := range ggroup {
 		if len(group) == 0 {
 			continue
 		}
-		if rangeId == pkRangeId && len(priIntentsGroup) == 0 {
-			priIntentsGroup = group
+		if rangeId == pkRangeId && len(priIntents) == 0 {
+			priIntents = group
 		} else {
 			secIntentsGroup = append(secIntentsGroup, group)
 		}
 	}
-	return priIntentsGroup, secIntentsGroup, nil
+	return priIntents, secIntentsGroup, nil
 }
 
 // 按照route的范围划分keys
@@ -467,6 +487,11 @@ func regroupKeysByRange(context *dskv.ReqContext, t *Table, keys [][]byte) ([][]
 		}
 		group = append(group, key)
 		ggroup[l.Region.Id] = group
+		// 每100个kv切割一下
+		if len(group) >= TXN_INTENT_MAX_LENGTH {
+			keysGroup = append(keysGroup, group)
+			delete(ggroup, l.Region.Id)
+		}
 	}
 	for _, group := range ggroup {
 		if len(group) == 0 {

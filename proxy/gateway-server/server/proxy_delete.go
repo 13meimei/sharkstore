@@ -150,7 +150,9 @@ func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([]*txnpb.T
 						Typ:         txnpb.OpType_DELETE,
 						Key:         indexKey,
 						CheckUnique: false,
-						ExpectedVer: rVersion,
+						//todo need ds to support: query index version
+						//ExpectedVer: rVersion,
+						ExpectedVer: 0,
 					})
 				}
 			}

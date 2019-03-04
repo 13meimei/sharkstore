@@ -9,11 +9,6 @@ import (
 	"proxy/store/dskv"
 )
 
-const (
-	TXN_INTENT_MAX_LENGTH        = 100
-	TXN_DEFAULT_TIMEOUT   uint64 = 50
-)
-
 type TX interface {
 	GetTxId() string
 	IsImplicit() bool
@@ -118,9 +113,6 @@ func (t *TxObj) Insert(intents []*txnpb.TxnIntent) (err error) {
 		}
 		t.intents = append(t.intents, intent)
 	}
-	if err = t.checkTxIntentLength(); err != nil {
-		return
-	}
 	log.Debug("tx %v cache inserted intents success", t.GetTxId())
 	if t.IsImplicit() {
 		if err = t.Commit(); err != nil {
@@ -147,9 +139,6 @@ func (t *TxObj) Update(intents []*txnpb.TxnIntent) (err error) {
 			t.primaryKey = intent.GetKey()
 		}
 		t.intents = append(t.intents, intent)
-	}
-	if err = t.checkTxIntentLength(); err != nil {
-		return
 	}
 	log.Debug("tx %v cache updated intents success", t.GetTxId())
 	if t.IsImplicit() {
@@ -180,9 +169,6 @@ func (t *TxObj) Delete(intents []*txnpb.TxnIntent) (err error) {
 			t.primaryKey = intent.GetKey()
 		}
 		t.intents = append(t.intents, intent)
-	}
-	if err = t.checkTxIntentLength(); err != nil {
-		return
 	}
 	log.Debug("tx %v cache deleted intents success", t.GetTxId())
 	if t.IsImplicit() {
@@ -218,11 +204,11 @@ func (t *TxObj) Commit() (err error) {
 	}
 	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
 	var (
-		priIntentsGroup []*txnpb.TxnIntent
+		priIntents []*txnpb.TxnIntent
 		secIntentsGroup [][]*txnpb.TxnIntent
 	)
 	sort.Sort(TxnIntentSlice(t.intents))
-	priIntentsGroup, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.intents)
+	priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.intents)
 	if err != nil {
 		return
 	}
@@ -231,7 +217,7 @@ func (t *TxObj) Commit() (err error) {
 	  priIntentsGroup and secIntentsGroup size are affected by priIntentsGroup prepare result,
 	  so they can be changed at func 'preparePrimaryIntents'(reference)
 	 */
-	err = t.preparePrimaryIntents(ctx, priIntentsGroup, secIntentsGroup)
+	err = t.preparePrimaryIntents(ctx, priIntents, secIntentsGroup)
 	if err != nil {
 		log.Error("[commit]prepare tx %v primary intents error %v", t.GetTxId(), err)
 		return
@@ -246,7 +232,7 @@ func (t *TxObj) Commit() (err error) {
 	}
 
 	//decide:
-	err = t.decidePrimaryIntents(ctx, priIntentsGroup, secIntentsGroup, status)
+	err = t.decidePrimaryIntents(ctx, priIntents, secIntentsGroup, status)
 	if err != nil {
 		log.Error("[commit]decide tx %v primary intents error %v", t.GetTxId(), err)
 		return
@@ -519,14 +505,6 @@ func (t *TxObj) handleSecondary(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnI
 	}
 	secIntents = finalSecIntents
 	return
-}
-
-func (t *TxObj) checkTxIntentLength() error {
-	length := len(t.getTxIntents())
-	if length > TXN_INTENT_MAX_LENGTH {
-		return fmt.Errorf("tx length [%v] is exceed max limit [%v]", length, TXN_INTENT_MAX_LENGTH)
-	}
-	return nil
 }
 
 func (t *TxObj) changeTxStatus(newStatus txnpb.TxnStatus) (bool, error) {
