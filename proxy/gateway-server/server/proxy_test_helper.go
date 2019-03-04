@@ -21,6 +21,7 @@ import (
 	"util/deepcopy"
 	"os"
 	"util/log"
+	"model/pkg/txn"
 )
 
 const testDBName = "testdb"
@@ -33,13 +34,12 @@ var MockDs *mock_ds.DsRpcServer
 var MockDs1 *mock_ds.DsRpcServer
 var MockMs *mock_ms.Cluster
 
-
 type columnInfo struct {
 	name       string
 	typ        metapb.DataType
 	isPK       bool
 	isUnsigned bool
-	autoInc	   bool
+	autoInc    bool
 }
 
 func bytesPrefix(prefix []byte) ([]byte, []byte) {
@@ -58,7 +58,7 @@ func bytesPrefix(prefix []byte) ([]byte, []byte) {
 
 // 创建一个只处理一个表的Proxy
 func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) *Proxy {
-	rng :=deepcopy.Iface(rng_).(*metapb.Range)
+	rng := deepcopy.Iface(rng_).(*metapb.Range)
 	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
 	node1 := &metapb.Node{Id: 2, ServerAddr: "127.0.0.1:6061"}
 	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
@@ -91,21 +91,21 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 		return nil
 	}
 	p := &Proxy{
-		msCli:   cli,
-		dsCli:   dsClient.NewRPCClient(),
-		router:  NewRouter(cli),
+		msCli:  cli,
+		dsCli:  dsClient.NewRPCClient(),
+		router: NewRouter(cli),
 		config: &Config{MaxLimit: DefaultMaxRawCount,
-						Performance: PerformConfig{
-							GrpcInitWinSize: 1024 * 1024 * 10,
-							GrpcPoolSize:    1,
-						},
+			Performance: PerformConfig{
+				GrpcInitWinSize: 1024 * 1024 * 10,
+				GrpcPoolSize:    1,
+			},
 		},
-		clock:      hlc.NewClock(hlc.UnixNano, 0),
-		ctx:        ctx,
-		cancel:     cancel,
+		clock:  hlc.NewClock(hlc.UnixNano, 0),
+		ctx:    ctx,
+		cancel: cancel,
 
-		maxWorkNum: 1,
-		taskQueues: taskQueues, // XXX otherwise insert submit devide 0 panic
+		maxWorkNum:  1,
+		taskQueues:  taskQueues,        // XXX otherwise insert submit devide 0 panic
 		workRecover: make(chan int, 1), // insert task wait need this
 	}
 
@@ -119,15 +119,15 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 	return p
 }
 
-func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs... *metapb.Range) *Proxy {
+func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ... *metapb.Range) *Proxy {
 	log.Info("create Test Proxy2")
 	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
 	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
 	ms.SetDb(db)
 	ms.SetTable(table)
 	ms.SetNode(node)
-	for _,rng := range rngs {
-		rng :=deepcopy.Iface(rng).(*metapb.Range)
+	for _, rng := range rngs {
+		rng := deepcopy.Iface(rng).(*metapb.Range)
 		ms.SetRange(rng)
 	}
 
@@ -136,8 +136,8 @@ func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs... *metapb.Ran
 	time.Sleep(time.Second)
 	destoryDir(dsPath)
 	ds := mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
-	for _,rng := range rngs {
-		rng :=deepcopy.Iface(rng).(*metapb.Range)
+	for _, rng := range rngs {
+		rng := deepcopy.Iface(rng).(*metapb.Range)
 		ds.SetRange(rng)
 	}
 	go ds.Start()
@@ -155,21 +155,21 @@ func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs... *metapb.Ran
 		return nil
 	}
 	p := &Proxy{
-		msCli:   cli,
-		dsCli:   dsClient.NewRPCClient(),
-		router:  NewRouter(cli),
+		msCli:  cli,
+		dsCli:  dsClient.NewRPCClient(),
+		router: NewRouter(cli),
 		config: &Config{MaxLimit: DefaultMaxRawCount,
 			Performance: PerformConfig{
 				GrpcInitWinSize: 1024 * 1024 * 10,
 				GrpcPoolSize:    1,
 			},
 		},
-		clock:      hlc.NewClock(hlc.UnixNano, 0),
-		ctx:        ctx,
-		cancel:     cancel,
+		clock:  hlc.NewClock(hlc.UnixNano, 0),
+		ctx:    ctx,
+		cancel: cancel,
 
-		maxWorkNum: 1,
-		taskQueues: taskQueues, // XXX otherwise insert submit devide 0 panic
+		maxWorkNum:  1,
+		taskQueues:  taskQueues,        // XXX otherwise insert submit devide 0 panic
 		workRecover: make(chan int, 1), // insert task wait need this
 	}
 
@@ -186,7 +186,7 @@ func destoryDir(path string) {
 	os.RemoveAll(path)
 }
 
-func CloseMock(p *Proxy){
+func CloseMock(p *Proxy) {
 	//p.msCli.Close()
 	//p.dsCli.Close()
 	//time.Sleep(time.Second*30)
@@ -230,20 +230,20 @@ func makeTestTable(colInfos []*columnInfo) *metapb.Table {
 	return table
 }
 
-func testProxyInsert(t *testing.T, p *Proxy, expectedAffected uint64, sql string) {
-	t.Logf("sql> %s ", sql)
+func testProxyInsert(t *testing.T, p *Proxy, expectedAffected uint64, sql string) (table *Table, intents []*txnpb.TxnIntent) {
+	t.Logf("proxy insert sql> %s ", sql)
 
-	sqlstmt, err := sqlparser.Parse(sql)
+	sqlStmt, err := sqlparser.Parse(sql)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("proxy sql parse err %v", err)
 	}
-	stmt, ok := sqlstmt.(*sqlparser.Insert)
+	stmt, ok := sqlStmt.(*sqlparser.Insert)
 	if !ok {
 		t.Fatalf("not insert stamentent: %s", sql)
 	}
-	_, _, res, err := p.HandleInsert(testDBName, stmt, nil)
+	table, intents, res, err := p.HandleInsert(testDBName, stmt, nil)
 	if err != nil {
-		if  err == dskv.ErrRouteChange{
+		if err == dskv.ErrRouteChange {
 			t.Logf("insert failed, %v, sqlL%v", err, sql)
 			return
 		} else {
@@ -257,6 +257,7 @@ func testProxyInsert(t *testing.T, p *Proxy, expectedAffected uint64, sql string
 		time.Sleep(time.Second)
 		t.Fatalf("insert failed. unexpectecd affected rows: %v, expected: %v", res.AffectedRows, expectedAffected)
 	}
+	return
 }
 
 func testProxyDelete(t *testing.T, p *Proxy, expectAffected uint64, sql string) {
@@ -441,7 +442,7 @@ func testGetCommand(t *testing.T, table *Table, p *Proxy, filter *Filter, stmt *
 
 	fieldList, err := makeFieldList(table, cols)
 	if err != nil {
-		t.Fatal("get command, find field list error: " , err)
+		t.Fatalf("get command, find field list error: %v", err)
 	}
 	rowss, err := p.doSelect(table, fieldList, filter.matchs, limit, nil)
 	if err != nil {
@@ -467,7 +468,6 @@ func testSetCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected
 	}
 	assert.DeepEqual(t, reply, expected)
 }
-
 
 func testUpdCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected *Reply) {
 	reply, err := query.updCommand(p, table)
@@ -537,7 +537,7 @@ func testProxyUpdate(t *testing.T, p *Proxy, expectedAffected uint64, sql string
 	}
 	_, _, res, err := p.HandleUpdate(testDBName, stmt, nil)
 	if err != nil {
-		if  err == dskv.ErrRouteChange{
+		if err == dskv.ErrRouteChange {
 			t.Logf("update failed, %v, sqlL%v", err, sql)
 			return
 		} else {

@@ -21,6 +21,9 @@ func TestRestKVHttp(t *testing.T) {
 	}
 	go s.Run()
 
+	//id: auto increment, tinyint
+	//name: varchar
+	//balance: float
 	columnNames := []string{"id", "name", "balance"}
 
 	setQueryRep := &Query{
@@ -65,6 +68,20 @@ func TestRestKVHttp(t *testing.T) {
 		RowsAffected: 4,
 	})
 
+	getQueryRep := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			Field: columnNames,
+		},
+	}
+	expected := [][]interface{}{
+		[]interface{}{1, "myname1", 0.1},
+		[]interface{}{2, "myname2", 0.2},
+		[]interface{}{3, "myname3", 0.3},
+	}
+	assertGetCommand(t, getQueryRep, s.proxy, expected, table)
+
 	setQueryNoPkRep := &Query{
 		DatabaseName: testDBName,
 		TableName:    testTableName,
@@ -79,32 +96,32 @@ func TestRestKVHttp(t *testing.T) {
 		},
 	}
 
-	//自主id无法考虑业务自己赋值的主键
+	//自增id无法考虑业务自己赋值的主键
 	testSetCommand(t, setQueryNoPkRep, table, s.proxy, &Reply{
 		Code:         0,
 		RowsAffected: 4,
 	})
 
-	getAggreQueryRep := &Query{
-		DatabaseName: testDBName,
-		TableName:    testTableName,
-		Command: &Command{
-			Field: []string{},
-			AggreFunc: []*AggreFunc{
-				&AggreFunc{Function: "count", Field: "*"},
-				&AggreFunc{Function: "max", Field: "id"},
-				&AggreFunc{Function: "min", Field: "id"},
-				&AggreFunc{Function: "sum", Field: "balance"},
-			},
-		},
-	}
+	//getAggreQueryRep := &Query{
+	//	DatabaseName: testDBName,
+	//	TableName:    testTableName,
+	//	Command: &Command{
+	//		Field: []string{},
+	//		AggreFunc: []*AggreFunc{
+	//			&AggreFunc{Function: "count", Field: "*"},
+	//			&AggreFunc{Function: "max", Field: "id"},
+	//			&AggreFunc{Function: "min", Field: "id"},
+	//			&AggreFunc{Function: "sum", Field: "balance"},
+	//		},
+	//	},
+	//}
+	//
+	//expected := [][]interface{}{
+	//	[]interface{}{4, 4, 1, 1.0},
+	//}
+	//assertGetCommand(t, getAggreQueryRep, s.proxy, expected, table)
 
-	expected := [][]interface{}{
-		[]interface{}{4, 4, 1, 1.0},
-	}
-	assertGetCommand(t, getAggreQueryRep, s.proxy, expected, table)
-
-	getQueryRep := &Query{
+	getQueryRep = &Query{
 		DatabaseName: testDBName,
 		TableName:    testTableName,
 		Command: &Command{
@@ -820,6 +837,22 @@ func TestRestKVHttpForSecondIndex(t *testing.T) {
 		Code:         0,
 		RowsAffected: 4,
 	})
+
+	//select
+	getQueryRep := &Query{
+		DatabaseName: secondIndexDb,
+		TableName:    secondIndexTable,
+		Command: &Command{
+			Field: []string{"id", "name", "age", "sex"},
+		},
+	}
+	expected := [][]interface{}{
+		[]interface{}{1, "a", 10, "女"},
+		[]interface{}{2, "b", 11, "男"},
+		[]interface{}{3, "c", 5, "女"},
+		[]interface{}{4, "d", 14, "男"},
+	}
+	assertGetCommand(t, getQueryRep, s.proxy, expected, table)
 
 	// test upd
 	updQueryRep := &Query{
