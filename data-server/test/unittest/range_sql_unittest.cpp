@@ -173,10 +173,39 @@ TEST_F(RangeTestFixture, CURD) {
         MakeHeader(req.mutable_header());
         SelectRequestBuilder builder(table_.get());
         builder.AddAllFields();
-        //builder.AppendMatchExt("id", "10", ::kvrpcpb::E_Larger, ::kvrpcpb::E_LogicOr);
-        //builder.AppendMatchExt("id", "24", ::kvrpcpb::E_Less, ::kvrpcpb::E_LogicOr);
-        builder.AppendMatchExt("id", "100", ::kvrpcpb::E_Larger, ::kvrpcpb::E_LogicOr);
-        builder.AppendMatchExt("id", "200", ::kvrpcpb::E_Less, ::kvrpcpb::E_LogicOr);
+        //复合条件 not support math operaton in relation express
+        //where id = 1 or id > 1 and id = 10 - 9
+        //or
+        //  =
+        //      id
+        //      1
+        //  and
+        //      >
+        //          id
+        //          1
+        //      =
+        //          id
+        //          -   
+        //               10
+        //               9
+        //      
+        //id + 19 = 20
+        //auto handler= builder.InitMatchExt(::kvrpcpb::E_LogicOr);
+        //builder.AppendMatchExt(handler, "id", "1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+
+        builder.AppendMatchExt("id", "5", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "4", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "3", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "2", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "0", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        //id > 100 or id < 200
+        //builder.AppendMatchExt("id", "100", ::kvrpcpb::E_Larger, ::kvrpcpb::E_LogicOr);
+        //builder.AppendMatchExt("id", "200", ::kvrpcpb::E_Less, ::kvrpcpb::E_LogicOr);
+
+        //id = 100 or id = 200
+        //builder.AppendMatchExt("id", "100", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicAnd);
+        //builder.AppendMatchExt("id", "200", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
         *req.mutable_req() = builder.Build();
 
         DsSelectResponse resp;

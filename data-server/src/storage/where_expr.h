@@ -41,23 +41,27 @@ public:
     ~CWhereExpr() {};
 
     //TO DO support sql func on column
-    FieldValue* getValFromExpr(
+    FieldValue* GetValFromExpr(
             const RowResult &result,
-            const ::kvrpcpb::Expr &expr,
-            ::kvrpcpb::ExprType et);
+            const ::kvrpcpb::Expr &expr);
 
-    FieldValue* getExprVal(const std::string &inVal,
+    FieldValue* GetExprVal(const std::string &inVal,
                            const metapb::Column &col);
 
-    static bool cmpExpr(const FieldValue* l,
+    static bool CmpExpr(const FieldValue* l,
                         const FieldValue* r,
                         ::kvrpcpb::ExprType et);
 
-    bool filterExpr(const RowResult &result,
+    Status ComputeExpr(const ::kvrpcpb::Expr& expr,
+                       const FieldValue *l,
+                       const FieldValue *r,
+                        FieldValue **fv);
+
+    bool FilterExpr(const RowResult &result,
                     const ::kvrpcpb::Expr &expr);
 
     //filter entrance
-    bool filter(const RowResult &result) {
+    bool Filter(const RowResult &result) {
         if (!ext_filters_->has_expr()) {
             FLOG_WARN("filter() no expr restriction");
             return true;
@@ -69,9 +73,9 @@ public:
             return false;
         }
 
-        FLOG_DEBUG("start execute filterExpr() expr_type: %d child_size: %d %x",
+        FLOG_DEBUG("start execute filterExpr() expr_type: %d child_size: %d %p",
                    expr.expr_type(), expr.child_size(), &expr);
-        return filterExpr(result, expr);
+        return FilterExpr(result, expr);
     }
 
 private:

@@ -504,7 +504,7 @@ static bool filter(const RowResult& result, const std::vector<kvrpcpb::Match>& f
 }
 
 static bool filter_ext(const RowResult& result, const std::shared_ptr<CWhereExpr> where) {
-    return where->filter(result);
+    return where->Filter(result);
 }
 
 Status RowDecoder::DecodeAndFilter(const std::string& key, const std::string& buf,
@@ -522,8 +522,6 @@ Status RowDecoder::DecodeAndFilter(const std::string& key, const std::string& bu
     } else if (!filters_.empty()) {
         *matched = filter(*result, filters_);
     }
-
-    FLOG_DEBUG("DecodeAndFilter() result: %s", (*matched?"true":"false"));
 
     return Status::OK();
 }

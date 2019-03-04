@@ -74,6 +74,19 @@ public:
         return *value_.sval;
     }
 
+    const std::string ToString() const {
+        if (type_ == FieldType::kInt) {
+            return std::to_string(value_.ival);
+        } else if (type_ == FieldType::kUInt) {
+            return std::to_string(value_.uval);
+        } else if (type_ == FieldType::kFloat) {
+            return std::to_string(value_.fval);
+        } else if (type_ == FieldType::kBytes) {
+            return *value_.sval;
+        } else {
+            return "Unknown field value";
+        }
+    }
 public:
     void AssignInt(int64_t v)          { if (type_ == FieldType::kInt)      value_.ival = v; }
     void AssignUint(int64_t v)         { if (type_ == FieldType::kUInt)     value_.uval = v; }
