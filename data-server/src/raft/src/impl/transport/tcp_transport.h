@@ -14,7 +14,7 @@ namespace transport {
 
 class TcpConnection : public Connection {
 public:
-    TcpConnection();
+    explicit TcpConnection(const std::shared_ptr<net::Session>& session);
 
     Status Send(MessagePtr& msg) override;
     Status Close() override;
@@ -74,6 +74,7 @@ private:
 
     std::unique_ptr<ConnectionPool> conn_pool_;
     std::unique_ptr<net::IOContextPool> client_; // 客户端IO线程
+    net::SessionOptions client_opt_;
 };
 
 

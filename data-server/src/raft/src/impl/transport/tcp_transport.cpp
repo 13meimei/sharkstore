@@ -9,7 +9,8 @@ namespace raft {
 namespace impl {
 namespace transport {
 
-TcpConnection::TcpConnection() {
+TcpConnection::TcpConnection(const std::shared_ptr<net::Session>& session) :
+    session_(session) {
 }
 
 Status TcpConnection::Send(MessagePtr& raft_msg) {
@@ -165,8 +166,20 @@ Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
     if (addr.empty()) {
         return Status(Status::kInvalidArgument, "resolve node address", std::to_string(to));
     }
-    // TODO:
-    return Status(Status::kNotSupported);
+    std::string ip, port;
+    auto pos = addr.find(':');
+    if (pos != std::string::npos) {
+        ip = addr.substr(0, pos);
+        port = addr.substr(pos + 1);
+    } else {
+        return Status(Status::kInvalidArgument, "invalid node address", std::to_string(to) + ", addr=" + addr);
+    }
+
+    auto null_handler = [](const net::Context&, const net::MessagePtr&) {};
+    auto session = std::make_shared<net::Session>(client_opt_, null_handler, client_->GetIOContext());
+    session->Connect(ip, port);
+    conn = std::make_shared<TcpConnection>(session);
+    return Status::OK();
 }
 
 Status TcpTransport::GetConnection(uint64_t to, std::shared_ptr<Connection>* conn) {

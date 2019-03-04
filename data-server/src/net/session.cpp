@@ -19,6 +19,10 @@ Session::Session(const SessionOptions& opt, const Handler& handler, asio::ip::tc
     }
 }
 
+Session::Session(const SessionOptions& opt, const Handler& handler, asio::io_context& io_context) :
+    Session(opt, handler, asio::ip::tcp::socket(io_context)) {
+}
+
 Session::~Session() {
     do_close();
 
@@ -76,27 +80,23 @@ void Session::Connect(const std::string& address, const std::string& port) {
 bool Session::init_establish() {
     try {
         auto local_ep = socket_.local_endpoint();
-        session_ctx_.local_addr =
-            local_ep.address().to_string() + ":" + std::to_string(local_ep.port());
+        local_addr_  = local_ep.address().to_string() + ":" + std::to_string(local_ep.port());
 
         auto remote_ep = socket_.remote_endpoint();
-        session_ctx_.remote_addr =
-            remote_ep.address().to_string() + ":" + std::to_string(remote_ep.port());
+        remote_addr_ = remote_ep.address().to_string() + ":" + std::to_string(remote_ep.port());
     } catch (std::exception& e) {
         FLOG_ERROR("[Net] get socket addr error: %s", e.what());
         return false;
     }
 
-    session_ctx_.session = shared_from_this();
     if (direction_ == Direction::kServer) {
-        id_ = std::string("S[") + session_ctx_.remote_addr + "]";
+        id_ = std::string("S[") + remote_addr_ + "]";
     } else {
-        id_ = std::string("C[") + session_ctx_.local_addr + "]";
+        id_ = std::string("C[") + local_addr_ + "]";
     }
     established_ = true;
 
-    FLOG_INFO("%s establised %s->%s", id_.c_str(), session_ctx_.remote_addr.c_str(),
-              session_ctx_.local_addr.c_str());
+    FLOG_INFO("%s establised %s->%s", id_.c_str(), local_addr_.c_str(), remote_addr_.c_str());
 
     return true;
 }
@@ -118,8 +118,6 @@ void Session::do_close() {
     asio::error_code ec;
     socket_.close(ec);
     (void)ec;
-
-    session_ctx_.session.reset();
 
     FLOG_INFO("%s closed. ", id_.c_str());
 }
@@ -164,10 +162,16 @@ void Session::read_body() {
     asio::async_read(socket_, asio::buffer(body_.data(), body_.size()),
                      [this, self](std::error_code ec, std::size_t) {
                          if (!ec) {
+                             Context ctx;
+                             ctx.session = self;
+                             ctx.local_addr = local_addr_;
+                             ctx.remote_addr = remote_addr_;
+
                              auto msg = NewMessage();
                              msg->head = head_;
                              msg->body = std::move(body_);
-                             handler_(session_ctx_, msg);
+
+                             handler_(ctx, msg);
 
                              read_head();
                          } else {

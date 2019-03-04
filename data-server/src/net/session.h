@@ -20,7 +20,8 @@ public:
     };
 
 public:
-    Session(const SessionOptions& opt, const Handler& msg_handler, asio::ip::tcp::socket socket);
+    Session(const SessionOptions& opt, const Handler& handler, asio::ip::tcp::socket socket);
+    Session(const SessionOptions& opt, const Handler& handler, asio::io_context& io_context);
 
     ~Session();
 
@@ -50,7 +51,8 @@ private:
 
     asio::ip::tcp::socket socket_;
     Direction direction_;
-    Context session_ctx_;
+    std::string local_addr_;
+    std::string remote_addr_;
     std::string id_;
 
     bool established_ = false;
