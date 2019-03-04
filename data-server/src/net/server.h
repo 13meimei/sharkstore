@@ -32,8 +32,8 @@ private:
     asio::io_context& getContext();
 
 private:
-    const ServerOptions opt_;
     const std::string name_;
+    ServerOptions opt_;
     Handler handler_;
 
     bool stopped_ = false;

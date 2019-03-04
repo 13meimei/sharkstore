@@ -10,9 +10,13 @@ namespace sharkstore {
 namespace net {
 
 Server::Server(const ServerOptions& opt, const std::string& name) :
+    name_(name),
     opt_(opt),
     acceptor_(context_),
     context_pool_(new IOContextPool(opt.io_threads_num, name)) {
+    if (opt_.session_opt.statistics == nullptr) {
+        opt_.session_opt.statistics = std::make_shared<Statistics>();
+    }
 }
 
 Server::~Server() {
@@ -71,12 +75,10 @@ void Server::doAccept() {
                                                 asio::ip::tcp::socket socket) {
         if (ec) {
             FLOG_ERROR("[Net] accept error: %s", ec.message().c_str());
-        } else if (Session::TotalCount() > opt_.max_connections) {
-            FLOG_WARN("[Net] accept max connection limit reached: %lu",
-                      opt_.max_connections);
+        } else if (opt_.session_opt.statistics->session_count > opt_.max_connections) {
+            FLOG_WARN("[Net] accept max connection limit reached: %" PRId64, opt_.max_connections);
         } else {
-            std::make_shared<Session>(opt_.session_opt, handler_, std::move(socket))
-                ->Start();
+            std::make_shared<Session>(opt_.session_opt, handler_, std::move(socket))->Start();
         }
 
         doAccept();

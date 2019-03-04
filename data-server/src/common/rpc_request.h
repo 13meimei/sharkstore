@@ -5,8 +5,6 @@ _Pragma("once");
 
 #include "proto/gen/errorpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
-
-#include "frame/sf_util.h"
 #include "net/message.h"
 
 namespace sharkstore {
