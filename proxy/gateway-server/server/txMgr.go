@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"sort"
 	"util"
 	"util/log"
 	"model/pkg/txn"
@@ -139,7 +140,7 @@ func (t *TxObj) Update(intents []*txnpb.TxnIntent) (err error) {
 		log.Info("[txn]update intent is empty")
 		return
 	}
-	//todo merge current tx data
+	//todo merge previous txnIntent: the same transaction should be visible
 	for i, intent := range intents {
 		if i == 0 && len(t.GetPrimaryKey()) == 0 {
 			intent.IsPrimary = true
@@ -220,6 +221,7 @@ func (t *TxObj) Commit() (err error) {
 		priIntentsGroup []*txnpb.TxnIntent
 		secIntentsGroup [][]*txnpb.TxnIntent
 	)
+	sort.Sort(TxnIntentSlice(t.intents))
 	priIntentsGroup, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.intents)
 	if err != nil {
 		return
@@ -280,7 +282,7 @@ func (t *TxObj) Rollback() (err error) {
 		return
 	}
 	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
-	err = t.proxy.handleRecoverPrimary(ctx, t.GetTxId(), t.GetPrimaryKey(), nil, true, t.GetTable())
+	err = t.proxy.recoverFromPrimary(ctx, t.GetTxId(), t.GetPrimaryKey(), nil, true, t.GetTable())
 	if err != nil {
 		log.Error("txn %v rollback err %v", t.GetTxId(), err)
 		return
@@ -290,7 +292,7 @@ func (t *TxObj) Rollback() (err error) {
 }
 
 func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent, secIntents [][]*txnpb.TxnIntent) (err error) {
-	log.Info("start to prepare tx %v primary intents", t.GetTxId())
+
 	var (
 		req = &txnpb.PrepareRequest{
 			TxnId:         t.GetTxId(),
@@ -327,6 +329,7 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 		req.Local = isLocal
 		req.Intents = priIntents
 
+		log.Debug("start to prepare tx %v primary intents, local: %v, intents size: %v", t.GetTxId(), isLocal, len(priIntents))
 		err = t.proxy.handlePrepare(ctx, req, t.GetTable())
 		if err != nil {
 			if err == dskv.ErrRouteChange {
@@ -343,12 +346,12 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 }
 
 func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnIntent) (err error) {
-	log.Debug("start to prepare tx %v secondary intents, intents size %v", t.GetTxId(), len(secIntents))
+	log.Debug("start to prepare tx %v secondary intents, range group %v", t.GetTxId(), len(secIntents))
 	if len(secIntents) == 0 {
 		return
 	}
 	doPrepareFunc := func(tx *TxObj, subCtx *dskv.ReqContext, intents []*txnpb.TxnIntent, handleChannel chan *TxnDealHandle) {
-		log.Debug("prepare tx %v secondary intents %v", tx.GetTxId(), intents)
+		log.Debug("doPrepareFunc: prepare tx %v secondary intents %v", tx.GetTxId(), intents)
 		req := &txnpb.PrepareRequest{
 			TxnId:      tx.GetTxId(),
 			Local:      tx.IsLocal(),
@@ -368,14 +371,12 @@ func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*tx
 		log.Error("[commit]txn %v prepare secondary intents err %v", t.GetTxId(), err)
 		return
 	}
-	log.Debug("prepare tx %v primary intents success", t.GetTxId())
+	log.Debug("prepare tx %v secondary intents success", t.GetTxId())
 	return
 }
 
 func (t *TxObj) decidePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent,
 	secIntents [][]*txnpb.TxnIntent, status txnpb.TxnStatus) (err error) {
-
-	log.Debug("decide tx %v primary intents, size: %v", t.GetTxId(), len(priIntents))
 
 	//todo refactor and abstract to func call about error: ErrRouteChange
 	var errForRetry error
@@ -401,7 +402,7 @@ func (t *TxObj) decidePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.T
 				secIntents = append(secIntents, partSecIntents...)
 			}
 		}
-
+		log.Debug("decide tx %v primary intents, intents size: %v", t.GetTxId(), len(priIntents))
 		var keys = make([][]byte, len(priIntents))
 		for i, intent := range priIntents {
 			keys[i] = intent.GetKey()
@@ -430,9 +431,11 @@ func (t *TxObj) decidePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.T
 }
 
 func (t *TxObj) decideSecondaryIntents(secIntents [][]*txnpb.TxnIntent, status txnpb.TxnStatus) (err error) {
+	log.Debug("start to decide tx %v secondary intents, range group %v", t.GetTxId(), len(secIntents))
 	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
 	if len(secIntents) > 0 {
 		doDecideFunc := func(tx *TxObj, subCtx *dskv.ReqContext, intents []*txnpb.TxnIntent, handleChannel chan *TxnDealHandle) {
+			log.Debug("doDecideFunc: decide tx %v secondary intents %v", tx.GetTxId(), intents)
 			var keys = make([][]byte, len(intents))
 			for i, intent := range intents {
 				keys[i] = intent.GetKey()
@@ -496,7 +499,8 @@ func (t *TxObj) handleSecondary(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnI
 		for i := 0; i < handleGroup; i++ {
 			txnHandle := <-handleChannel
 			if txnHandle.err != nil {
-				if txnHandle.err == dskv.ErrRouteChange {
+				err = txnHandle.err
+				if err == dskv.ErrRouteChange {
 					needRetryIntents = append(needRetryIntents, txnHandle.intents...)
 				} else {
 					close(handleChannel)
@@ -558,58 +562,6 @@ func (t *TxObj) changeTxStatus(newStatus txnpb.TxnStatus) (bool, error) {
 		log.Info("change transaction[%v] status[%v] to [%v]", t.GetTxId(), oldStatus, newStatus)
 	}
 	return passed, nil
-}
-
-// 按照route的范围划分intents
-func regroupIntentsByRange(context *dskv.ReqContext, t *Table, intents []*txnpb.TxnIntent) ([]*txnpb.TxnIntent, [][]*txnpb.TxnIntent, error) {
-	var (
-		priIntentsGroup []*txnpb.TxnIntent
-		secIntentsGroup [][]*txnpb.TxnIntent
-		err             error
-		pkRangeId       uint64
-	)
-	ggroup := make(map[uint64][]*txnpb.TxnIntent)
-	for _, intent := range intents {
-		var (
-			l     *dskv.KeyLocation
-			group []*txnpb.TxnIntent
-			ok    bool
-		)
-		l, err = t.ranges.LocateKey(context.GetBackOff(), intent.GetKey())
-		if err != nil {
-			log.Warn("locate key failed, err %v", err)
-			return nil, nil, err
-		}
-		if intent.GetIsPrimary() {
-			pkRangeId = l.Region.Id
-		}
-		if group, ok = ggroup[l.Region.Id]; !ok {
-			group = make([]*txnpb.TxnIntent, 0)
-			ggroup[l.Region.Id] = group
-		}
-		group = append(group, intent)
-		ggroup[l.Region.Id] = group
-		//// 每100个kv切割一下
-		//if len(group) >= 100 {
-		//	if l.Region.Id == pkRangeId {
-		//		priIntentsGroup = group
-		//	} else {
-		//		secIntentsGroup = append(secIntentsGroup, group)
-		//	}
-		//	delete(ggroup, l.Region.Id)
-		//}
-	}
-	for rangeId, group := range ggroup {
-		if len(group) == 0 {
-			continue
-		}
-		if rangeId == pkRangeId && len(priIntentsGroup) == 0 {
-			priIntentsGroup = group
-		} else {
-			secIntentsGroup = append(secIntentsGroup, group)
-		}
-	}
-	return priIntentsGroup, secIntentsGroup, nil
 }
 
 func (t *TxObj) getSecondaryKeys() [][]byte {

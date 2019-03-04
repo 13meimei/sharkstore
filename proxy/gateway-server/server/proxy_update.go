@@ -192,12 +192,12 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 					rowValue = append(rowValue, newValue)
 					//old index key
 					if col.GetIndex() {
-						oldKey, err = encodeIndexKey(t, col, colMap, newValue, rValue)
+						oldKey, err = encodeIndexKey(t, col, colMap, oldValue, rValue)
 						if err != nil {
 							log.Error("[update]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
 							return nil, 0, err
 						}
-						log.Info("[update]assemble old index key: %v, new index Key: %v, new index value: %v", oldKey)
+						log.Debug("[update]assemble old index key: %v", oldKey)
 						intents = append(intents, &txnpb.TxnIntent{
 							Typ:         txnpb.OpType_DELETE,
 							Key:         oldKey,
@@ -215,6 +215,7 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 				log.Error("[update]encode row kv pair err:%v", err)
 				return nil, 0, err
 			}
+			log.Debug("[update]assemble new row Key: %v, row value: %v", recordKvPair.GetKey(), recordKvPair.GetValue())
 			affected += 1
 			intents = append(intents, &txnpb.TxnIntent{
 				Typ:         txnpb.OpType_INSERT,
@@ -230,12 +231,13 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 				return nil, 0, err
 			}
 			for _, idxKvPair := range tIndexKvPairs {
+				log.Debug("[update]assemble new index Key: %v, index value: %v", idxKvPair.GetKey(), idxKvPair.GetValue())
 				intents = append(intents, &txnpb.TxnIntent{
 					Typ:         txnpb.OpType_INSERT,
 					Key:         idxKvPair.GetKey(),
 					Value:       idxKvPair.GetValue(),
-					CheckUnique: false,
-					ExpectedVer: rData.GetValue().GetVersion(),
+					CheckUnique: true,
+					ExpectedVer: 0,
 				})
 			}
 		}

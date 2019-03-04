@@ -232,8 +232,8 @@ func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.Sel
 				status     txnpb.TxnStatus
 			)
 			if rowIntent.GetTimeout() {
-				//try to aborted
-				status, err = p.asyncRecoverSecondary(ctx, txId, primaryKey, t)
+				//try to aborted, async
+				status, err = p.recoverFromSecondary(ctx, txId, primaryKey, t, false)
 				if err != nil {
 					return
 				}
