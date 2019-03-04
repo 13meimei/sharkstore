@@ -142,7 +142,7 @@ func benchmark(s *server.Server) {
 		}
 	}
 
-	//insert data
+	//insert data with auto increment pk
 	if s.GetCfg().BenchConfig.Type == 2 {
 		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
 			go insertNoPkTestData(s, concur, 10000, ip)
@@ -156,7 +156,7 @@ func benchmark(s *server.Server) {
 		}
 	}
 
-	//correct and concurrent check
+	//correct and concurrent check update function
 	if s.GetCfg().BenchConfig.Type == 4 {
 		// when select, check elapsed time and correctness after updating
 		go correctCheck4Update(s)
@@ -215,7 +215,7 @@ func selectTest(s *server.Server, threadNo, total int, ip string) {
 
 }
 
-// check correct when select after update
+// check correct: select after update
 func correctCheck4Update(s *server.Server) {
 	if s.GetCfg().BenchConfig.Scope < 1 || s.GetCfg().BenchConfig.Scope > 16384 {
 		log.Fatal("bench config scope should be between 1 and 16384")
