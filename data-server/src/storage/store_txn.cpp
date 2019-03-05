@@ -217,7 +217,7 @@ TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& int
     }
 
     // check unique and version
-    if (intent.check_unique() || intent.expected_ver()) {
+    if (intent.check_unique() || intent.expected_ver() != 0) {
         err = checkUniqueAndVersion(intent);
         if (err != nullptr) {
             return err;

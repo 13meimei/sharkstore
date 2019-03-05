@@ -301,7 +301,7 @@ func encodeRecordKey(t *Table, colMap map[string]int, rowValue InsertRowValue) (
 }
 
 func encodePrimaryKeys(t *Table, key []byte, colMap map[string]int, rowValue InsertRowValue) ([]byte, error) {
-	var value []byte
+	var value = key
 	var err error
 
 	// 编码主键
@@ -320,7 +320,7 @@ func encodePrimaryKeys(t *Table, key []byte, colMap map[string]int, rowValue Ins
 		if rowValue[i] == nil {
 			return nil, fmt.Errorf("pk(%s) could not be NULL", pk)
 		}
-		value, err = util.EncodePrimaryKey(key, col, rowValue[i])
+		value, err = util.EncodePrimaryKey(value, col, rowValue[i])
 		if err != nil {
 			log.Error("encode Primary key for table[%v:%v] err: %v", t.GetDbId(), t.GetId(), err)
 			return nil, err
