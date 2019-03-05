@@ -11,8 +11,12 @@ _Pragma("once");
 namespace sharkstore {
 namespace net {
 
+// 模型：一个线程一个io_context
+// GetIOContext()使用轮询返回可用的io_context
 class IOContextPool final {
 public:
+    // size: pool(threads) size
+    // name：打印日志和标注线程名
     IOContextPool(size_t size, const std::string& name);
     ~IOContextPool();
 

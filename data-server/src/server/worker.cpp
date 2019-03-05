@@ -8,7 +8,6 @@
 #include "common/ds_config.h"
 #include "frame/sf_config.h"
 #include "frame/sf_logger.h"
-#include "frame/sf_util.h"
 #include "proto/gen/funcpb.pb.h"
 
 #include "run_status.h"

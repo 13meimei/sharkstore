@@ -27,7 +27,7 @@ private:
 private:
     const net::ServerOptions ops_;
     std::unique_ptr<net::Server> net_server_;
-    Worker* worker_ = nullptr;
+    Worker* worker_ = nullptr;  // 用来处理接收到的RPC消息
 };
 
 } /* namespace server */

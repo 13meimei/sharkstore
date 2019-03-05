@@ -28,7 +28,7 @@ Status TcpConnection::Send(MessagePtr& raft_msg) {
 
     auto conn = session_.lock();
     if (!conn) {
-        return Status(Status::kIOError, "connection closed.", "");
+        return Status(Status::kIOError, "connection closed.", std::to_string(raft_msg->to()));
     } else {
         conn->Write(net_msg);
         return Status::OK();
@@ -160,6 +160,7 @@ void TcpTransport::SendMessage(MessagePtr& msg) {
 }
 
 Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
+    // 解析对应node id的地址
     auto addr = resolver_->GetNodeAddress(to);
     if (addr.empty()) {
         RAFT_LOG_ERROR("raft[Transport] could not resolve address of %" PRIu64, to);
@@ -168,6 +169,7 @@ Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
         RAFT_LOG_ERROR("raft[Transport] resolve address of %" PRIu64 " is %s", to, addr.c_str());
     }
 
+    // split ip & port
     std::string ip, port;
     auto pos = addr.find(':');
     if (pos != std::string::npos) {
@@ -178,6 +180,7 @@ Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
         return Status(Status::kInvalidArgument, "invalid node address", std::to_string(to) + ", addr=" + addr);
     }
 
+    // create new session
     auto null_handler = [](const net::Context&, const net::MessagePtr&) {};
     auto session = std::make_shared<net::Session>(client_opt_, null_handler, client_->GetIOContext());
     session->Connect(ip, port);

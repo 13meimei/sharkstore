@@ -5,7 +5,6 @@
 #include <fastcommon/shared_func.h>
 
 #include "frame/sf_logger.h"
-#include "frame/sf_util.h"
 
 ds_config_t ds_config;
 

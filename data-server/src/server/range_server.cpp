@@ -18,7 +18,6 @@
 #include "common/ds_config.h"
 #include "common/ds_encoding.h"
 #include "frame/sf_logger.h"
-#include "frame/sf_util.h"
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/metapb.pb.h"
 #include "proto/gen/schpb.pb.h"
@@ -58,7 +57,7 @@ std::shared_ptr<range::Range> RangeServer::DecodeAndFind(
     FLOG_DEBUG("%s called. req: %s", func_name, proto_request.DebugString().c_str());
 
     // check timeout
-    if (rpc_request->expire_time != 0 && rpc_request->expire_time < getticks()) {
+    if (rpc_request->expire_time != 0 && rpc_request->expire_time < NowMilliSeconds()) {
         FLOG_WARN("%s request timeout from %s", func_name, rpc_request->ctx.remote_addr.c_str());
         ResponseT proto_resp;
         TimeOut(proto_request.header(), proto_resp.mutable_header());
@@ -1029,7 +1028,7 @@ void RangeServer::Heartbeat() {
 
             auto hb = range_heartbeat_queue_.top();
 
-            time_t now = getticks();
+            time_t now = NowMilliSeconds();
             if (hb.first > now) {
                 auto intval = std::chrono::milliseconds(hb.first - now);
                 queue_cond_.wait_for(lock, intval);

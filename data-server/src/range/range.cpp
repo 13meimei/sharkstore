@@ -3,7 +3,6 @@
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include "common/ds_config.h"
-#include "frame/sf_util.h"
 #include "master/worker.h"
 #include "server/range_server.h"
 #include "server/run_status.h"

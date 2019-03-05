@@ -2,7 +2,6 @@
 
 #include "base/util.h"
 #include "frame/sf_logger.h"
-#include "frame/sf_util.h"
 #include "proto/gen/funcpb.pb.h"
 
 namespace sharkstore {
@@ -58,7 +57,7 @@ std::unique_ptr<SubmitContext> SubmitQueue::Remove(uint64_t seq_id) {
 
 std::vector<uint64_t> SubmitQueue::GetExpired(size_t max_count) {
     std::vector<uint64_t> result;
-    auto now = getticks();
+    auto now = NowMilliSeconds();
     {
         std::lock_guard<std::mutex> lock(mu_);
         while (!expire_que_.empty() && result.size() < max_count) {

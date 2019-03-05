@@ -2,7 +2,6 @@
 #include "range_context_impl.h"
 
 #include "common/ds_config.h"
-#include "frame/sf_util.h"
 #include "range_server.h"
 
 namespace sharkstore {
@@ -53,8 +52,8 @@ uint64_t RangeContextImpl::GetFSUsagePercent() const {
 }
 
 void RangeContextImpl::ScheduleHeartbeat(uint64_t range_id, bool delay) {
-    auto expire = delay ? ds_config.hb_config.range_interval * 1000 + getticks() :
-            getticks();
+    auto expire = delay ? ds_config.hb_config.range_interval * 1000 + NowMilliSeconds() :
+            NowMilliSeconds();
     server_->range_server->LeaderQueuePush(range_id, expire);
 }
 
