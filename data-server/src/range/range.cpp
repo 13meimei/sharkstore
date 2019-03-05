@@ -8,7 +8,6 @@
 #include "server/run_status.h"
 #include "storage/meta_store.h"
 
-#include "snapshot.h"
 #include "range_logger.h"
 #include "storage/mem_store/store.h"
 #include <mem_store/mem_store.h>
@@ -190,7 +189,7 @@ bool Range::PushHeartBeatMessage() {
 }
 
 Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
-    if (!CheckWriteable()) {
+    if (!VerifyWriteable()) {
         return Status(Status::kIOError, "no left space", "apply");
     }
 
@@ -228,6 +227,12 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
             return ApplyWatchPut(cmd, index);
         case raft_cmdpb::CmdType::KvWatchDel:
             return ApplyWatchDel(cmd, index);
+        case raft_cmdpb::CmdType::TxnPrepare:
+            return ApplyTxnPrepare(cmd, index);
+        case raft_cmdpb::CmdType::TxnDecide:
+            return ApplyTxnDecide(cmd, index);
+        case raft_cmdpb::CmdType::TxnClearup:
+            return ApplyTxnClearup(cmd, index);
         default:
             RANGE_LOG_ERROR("Apply cmd type error %s", CmdType_Name(cmd.cmd_type()).c_str());
             return Status(Status::kNotSupported, "cmd type not supported", "");
@@ -279,7 +284,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 
 Status Range::Submit(const raft_cmdpb::Command &cmd) {
     if (is_leader_) {
-        std::string str_cmd = std::move(cmd.SerializeAsString());
+        std::string str_cmd = cmd.SerializeAsString();
         if (str_cmd.empty()) {
             return Status(Status::kCorruption, "protobuf serialize failed", "");
         }
@@ -337,8 +342,19 @@ void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
 std::shared_ptr<raft::Snapshot> Range::GetSnapshot() {
     raft_cmdpb::SnapshotContext ctx;
     meta_.Get(ctx.mutable_meta());
-    return std::shared_ptr<raft::Snapshot>(
-        new Snapshot(apply_index_, std::move(ctx), store_->NewIterator()));
+    std::string ctx_str;
+    if (!ctx.SerializeToString(&ctx_str)) {
+        RANGE_LOG_ERROR("serialize snapshot context failed!");
+        return nullptr;
+    }
+
+    std::shared_ptr<raft::Snapshot> snapshot;
+    auto s = store_->GetSnapshot(apply_index_, std::move(ctx_str), &snapshot);
+    if (!s.ok()) {
+        RANGE_LOG_ERROR("get snapshot failed: %s", s.ToString().c_str());
+        return nullptr;
+    }
+    return snapshot;
 }
 
 Status Range::ApplySnapshotStart(const std::string &context) {
@@ -496,16 +512,22 @@ bool Range::VerifyReadable(uint64_t read_index, errorpb::Error *&err) {
     }
 }
 
-bool Range::CheckWriteable() {
+bool Range::VerifyWriteable(errorpb::Error **err) {
     auto percent = context_->GetFSUsagePercent();
-    if (percent > kStopWriteFsUsagePercent) {
-        RANGE_LOG_ERROR(
-                "filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
-                percent, kStopWriteFsUsagePercent);
-        return false;
-    } else {
+    if (percent < kStopWriteFsUsagePercent) {
         return true;
     }
+
+    RANGE_LOG_ERROR("filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
+            percent, kStopWriteFsUsagePercent);
+
+    if (err != nullptr) {
+        auto no_left_space_err = new errorpb::Error;
+        no_left_space_err ->set_message("no left space");
+        no_left_space_err ->mutable_no_left_space();
+        *err = no_left_space_err;
+    }
+    return false;
 }
 
 bool Range::KeyInRange(const std::string &key) {
@@ -558,8 +580,7 @@ void Range::ClearExpiredContext() {
 
 
 errorpb::Error *Range::NoLeaderError() {
-    errorpb::Error *err = new errorpb::Error;
-
+    auto err = new errorpb::Error;
     err->set_message("no leader");
     err->mutable_not_leader()->set_range_id(id_);
     meta_.GetEpoch(err->mutable_not_leader()->mutable_epoch());
@@ -568,39 +589,34 @@ errorpb::Error *Range::NoLeaderError() {
 }
 
 errorpb::Error *Range::NotLeaderError(metapb::Peer &&peer) {
-    errorpb::Error *err = new errorpb::Error;
-
+    auto err = new errorpb::Error;
     err->set_message("not leader");
     err->mutable_not_leader()->set_range_id(id_);
     err->mutable_not_leader()->set_allocated_leader(new metapb::Peer(std::move(peer)));
     meta_.GetEpoch(err->mutable_not_leader()->mutable_epoch());
-
     return err;
 }
 
 errorpb::Error *Range::KeyNotInRange(const std::string &key) {
-    errorpb::Error *err = new errorpb::Error;
-
+    auto err = new errorpb::Error;
     err->set_message("key not in range");
     err->mutable_key_not_in_range()->set_range_id(id_);
     err->mutable_key_not_in_range()->set_key(key);
     err->mutable_key_not_in_range()->set_start_key(start_key_);
-
     // end_key change at range split time
     err->mutable_key_not_in_range()->set_end_key(meta_.GetEndKey());
-
     return err;
 }
 
 errorpb::Error *Range::RaftFailError() {
-    errorpb::Error *err = new errorpb::Error;
+    auto err = new errorpb::Error;
     err->set_message("raft submit fail");
     err->mutable_raft_fail();
     return err;
 }
 
 errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
-    errorpb::Error *err = new errorpb::Error;
+    auto err = new errorpb::Error;
     std::string msg = "stale epoch, req version:";
     msg += std::to_string(epoch.version());
     msg += " cur version:";
@@ -622,7 +638,7 @@ errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
 }
 
 errorpb::Error *Range::StaleReadIndexError(uint64_t read_index, uint64_t current_index) {
-    errorpb::Error *err = new errorpb::Error;
+    auto err = new errorpb::Error;
     err->mutable_stale_read_index()->set_read_index(read_index);
     err->mutable_stale_read_index()->set_replica_index(current_index);
     return err;

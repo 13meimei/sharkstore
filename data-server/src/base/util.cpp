@@ -27,6 +27,14 @@ std::string randomString(size_t length) {
     return str;
 }
 
+std::string randomString(size_t min_length, size_t max_length) {
+    if (min_length >= max_length) {
+        return "";
+    }
+    auto length = min_length + randomInt() % (max_length - min_length);
+    return randomString(length);
+}
+
 std::string strErrno(int errno_copy) {
     static thread_local char errbuf[1025] = {'\0'};
 #ifdef __linux__

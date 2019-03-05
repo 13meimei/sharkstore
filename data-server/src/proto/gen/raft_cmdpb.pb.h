@@ -33,6 +33,7 @@
 #include "metapb.pb.h"
 #include "kvrpcpb.pb.h"
 #include "watchpb.pb.h"
+#include "txn.pb.h"
 // @@protoc_insertion_point(includes)
 namespace raft_cmdpb {
 class CmdID;
@@ -116,12 +117,15 @@ enum CmdType {
   LockUpdate = 41,
   Unlock = 42,
   UnlockForce = 43,
+  TxnPrepare = 50,
+  TxnDecide = 51,
+  TxnClearup = 52,
   CmdType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   CmdType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool CmdType_IsValid(int value);
 const CmdType CmdType_MIN = Invalid;
-const CmdType CmdType_MAX = UnlockForce;
+const CmdType CmdType_MAX = TxnClearup;
 const int CmdType_ARRAYSIZE = CmdType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* CmdType_descriptor();
@@ -133,6 +137,27 @@ inline bool CmdType_Parse(
     const ::std::string& name, CmdType* value) {
   return ::google::protobuf::internal::ParseNamedEnum<CmdType>(
     CmdType_descriptor(), name, value);
+}
+enum CFType {
+  CF_DEFAULT = 0,
+  CF_TXN = 1,
+  CFType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  CFType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool CFType_IsValid(int value);
+const CFType CFType_MIN = CF_DEFAULT;
+const CFType CFType_MAX = CF_TXN;
+const int CFType_ARRAYSIZE = CFType_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* CFType_descriptor();
+inline const ::std::string& CFType_Name(CFType value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    CFType_descriptor(), value);
+}
+inline bool CFType_Parse(
+    const ::std::string& name, CFType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<CFType>(
+    CFType_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -1172,6 +1197,33 @@ class Command : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::kvrpcpb::UpdateRequest* release_update_req();
   void set_allocated_update_req(::kvrpcpb::UpdateRequest* update_req);
 
+  // .txnpb.PrepareRequest txn_prepare_req = 60;
+  bool has_txn_prepare_req() const;
+  void clear_txn_prepare_req();
+  static const int kTxnPrepareReqFieldNumber = 60;
+  const ::txnpb::PrepareRequest& txn_prepare_req() const;
+  ::txnpb::PrepareRequest* mutable_txn_prepare_req();
+  ::txnpb::PrepareRequest* release_txn_prepare_req();
+  void set_allocated_txn_prepare_req(::txnpb::PrepareRequest* txn_prepare_req);
+
+  // .txnpb.DecideRequest txn_decide_req = 61;
+  bool has_txn_decide_req() const;
+  void clear_txn_decide_req();
+  static const int kTxnDecideReqFieldNumber = 61;
+  const ::txnpb::DecideRequest& txn_decide_req() const;
+  ::txnpb::DecideRequest* mutable_txn_decide_req();
+  ::txnpb::DecideRequest* release_txn_decide_req();
+  void set_allocated_txn_decide_req(::txnpb::DecideRequest* txn_decide_req);
+
+  // .txnpb.ClearupRequest txn_clearup_req = 62;
+  bool has_txn_clearup_req() const;
+  void clear_txn_clearup_req();
+  static const int kTxnClearupReqFieldNumber = 62;
+  const ::txnpb::ClearupRequest& txn_clearup_req() const;
+  ::txnpb::ClearupRequest* mutable_txn_clearup_req();
+  ::txnpb::ClearupRequest* release_txn_clearup_req();
+  void set_allocated_txn_clearup_req(::txnpb::ClearupRequest* txn_clearup_req);
+
   // .raft_cmdpb.CmdType cmd_type = 2;
   void clear_cmd_type();
   static const int kCmdTypeFieldNumber = 2;
@@ -1210,6 +1262,9 @@ class Command : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::kvrpcpb::UnlockRequest* unlock_req_;
   ::kvrpcpb::UnlockForceRequest* unlock_force_req_;
   ::kvrpcpb::UpdateRequest* update_req_;
+  ::txnpb::PrepareRequest* txn_prepare_req_;
+  ::txnpb::DecideRequest* txn_decide_req_;
+  ::txnpb::ClearupRequest* txn_clearup_req_;
   int cmd_type_;
   mutable int _cached_size_;
   friend struct protobuf_raft_5fcmdpb_2eproto::TableStruct;
@@ -1435,12 +1490,19 @@ class SnapshotKVPair : public ::google::protobuf::Message /* @@protoc_insertion_
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
 
+  // .raft_cmdpb.CFType cf_type = 3;
+  void clear_cf_type();
+  static const int kCfTypeFieldNumber = 3;
+  ::raft_cmdpb::CFType cf_type() const;
+  void set_cf_type(::raft_cmdpb::CFType value);
+
   // @@protoc_insertion_point(class_scope:raft_cmdpb.SnapshotKVPair)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::google::protobuf::internal::ArenaStringPtr value_;
+  int cf_type_;
   mutable int _cached_size_;
   friend struct protobuf_raft_5fcmdpb_2eproto::TableStruct;
 };
@@ -2947,6 +3009,126 @@ inline void Command::set_allocated_update_req(::kvrpcpb::UpdateRequest* update_r
   // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.Command.update_req)
 }
 
+// .txnpb.PrepareRequest txn_prepare_req = 60;
+inline bool Command::has_txn_prepare_req() const {
+  return this != internal_default_instance() && txn_prepare_req_ != NULL;
+}
+inline void Command::clear_txn_prepare_req() {
+  if (GetArenaNoVirtual() == NULL && txn_prepare_req_ != NULL) delete txn_prepare_req_;
+  txn_prepare_req_ = NULL;
+}
+inline const ::txnpb::PrepareRequest& Command::txn_prepare_req() const {
+  const ::txnpb::PrepareRequest* p = txn_prepare_req_;
+  // @@protoc_insertion_point(field_get:raft_cmdpb.Command.txn_prepare_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::PrepareRequest*>(
+      &::txnpb::_PrepareRequest_default_instance_);
+}
+inline ::txnpb::PrepareRequest* Command::mutable_txn_prepare_req() {
+  
+  if (txn_prepare_req_ == NULL) {
+    txn_prepare_req_ = new ::txnpb::PrepareRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:raft_cmdpb.Command.txn_prepare_req)
+  return txn_prepare_req_;
+}
+inline ::txnpb::PrepareRequest* Command::release_txn_prepare_req() {
+  // @@protoc_insertion_point(field_release:raft_cmdpb.Command.txn_prepare_req)
+  
+  ::txnpb::PrepareRequest* temp = txn_prepare_req_;
+  txn_prepare_req_ = NULL;
+  return temp;
+}
+inline void Command::set_allocated_txn_prepare_req(::txnpb::PrepareRequest* txn_prepare_req) {
+  delete txn_prepare_req_;
+  txn_prepare_req_ = txn_prepare_req;
+  if (txn_prepare_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.Command.txn_prepare_req)
+}
+
+// .txnpb.DecideRequest txn_decide_req = 61;
+inline bool Command::has_txn_decide_req() const {
+  return this != internal_default_instance() && txn_decide_req_ != NULL;
+}
+inline void Command::clear_txn_decide_req() {
+  if (GetArenaNoVirtual() == NULL && txn_decide_req_ != NULL) delete txn_decide_req_;
+  txn_decide_req_ = NULL;
+}
+inline const ::txnpb::DecideRequest& Command::txn_decide_req() const {
+  const ::txnpb::DecideRequest* p = txn_decide_req_;
+  // @@protoc_insertion_point(field_get:raft_cmdpb.Command.txn_decide_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::DecideRequest*>(
+      &::txnpb::_DecideRequest_default_instance_);
+}
+inline ::txnpb::DecideRequest* Command::mutable_txn_decide_req() {
+  
+  if (txn_decide_req_ == NULL) {
+    txn_decide_req_ = new ::txnpb::DecideRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:raft_cmdpb.Command.txn_decide_req)
+  return txn_decide_req_;
+}
+inline ::txnpb::DecideRequest* Command::release_txn_decide_req() {
+  // @@protoc_insertion_point(field_release:raft_cmdpb.Command.txn_decide_req)
+  
+  ::txnpb::DecideRequest* temp = txn_decide_req_;
+  txn_decide_req_ = NULL;
+  return temp;
+}
+inline void Command::set_allocated_txn_decide_req(::txnpb::DecideRequest* txn_decide_req) {
+  delete txn_decide_req_;
+  txn_decide_req_ = txn_decide_req;
+  if (txn_decide_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.Command.txn_decide_req)
+}
+
+// .txnpb.ClearupRequest txn_clearup_req = 62;
+inline bool Command::has_txn_clearup_req() const {
+  return this != internal_default_instance() && txn_clearup_req_ != NULL;
+}
+inline void Command::clear_txn_clearup_req() {
+  if (GetArenaNoVirtual() == NULL && txn_clearup_req_ != NULL) delete txn_clearup_req_;
+  txn_clearup_req_ = NULL;
+}
+inline const ::txnpb::ClearupRequest& Command::txn_clearup_req() const {
+  const ::txnpb::ClearupRequest* p = txn_clearup_req_;
+  // @@protoc_insertion_point(field_get:raft_cmdpb.Command.txn_clearup_req)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::ClearupRequest*>(
+      &::txnpb::_ClearupRequest_default_instance_);
+}
+inline ::txnpb::ClearupRequest* Command::mutable_txn_clearup_req() {
+  
+  if (txn_clearup_req_ == NULL) {
+    txn_clearup_req_ = new ::txnpb::ClearupRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:raft_cmdpb.Command.txn_clearup_req)
+  return txn_clearup_req_;
+}
+inline ::txnpb::ClearupRequest* Command::release_txn_clearup_req() {
+  // @@protoc_insertion_point(field_release:raft_cmdpb.Command.txn_clearup_req)
+  
+  ::txnpb::ClearupRequest* temp = txn_clearup_req_;
+  txn_clearup_req_ = NULL;
+  return temp;
+}
+inline void Command::set_allocated_txn_clearup_req(::txnpb::ClearupRequest* txn_clearup_req) {
+  delete txn_clearup_req_;
+  txn_clearup_req_ = txn_clearup_req;
+  if (txn_clearup_req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.Command.txn_clearup_req)
+}
+
 // -------------------------------------------------------------------
 
 // PeerTask
@@ -3141,6 +3323,20 @@ inline void SnapshotKVPair::set_allocated_value(::std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:raft_cmdpb.SnapshotKVPair.value)
 }
 
+// .raft_cmdpb.CFType cf_type = 3;
+inline void SnapshotKVPair::clear_cf_type() {
+  cf_type_ = 0;
+}
+inline ::raft_cmdpb::CFType SnapshotKVPair::cf_type() const {
+  // @@protoc_insertion_point(field_get:raft_cmdpb.SnapshotKVPair.cf_type)
+  return static_cast< ::raft_cmdpb::CFType >(cf_type_);
+}
+inline void SnapshotKVPair::set_cf_type(::raft_cmdpb::CFType value) {
+  
+  cf_type_ = value;
+  // @@protoc_insertion_point(field_set:raft_cmdpb.SnapshotKVPair.cf_type)
+}
+
 // -------------------------------------------------------------------
 
 // SnapshotContext
@@ -3222,6 +3418,11 @@ template <> struct is_proto_enum< ::raft_cmdpb::CmdType> : ::google::protobuf::i
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::raft_cmdpb::CmdType>() {
   return ::raft_cmdpb::CmdType_descriptor();
+}
+template <> struct is_proto_enum< ::raft_cmdpb::CFType> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::raft_cmdpb::CFType>() {
+  return ::raft_cmdpb::CFType_descriptor();
 }
 
 }  // namespace protobuf

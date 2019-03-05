@@ -53,6 +53,12 @@ extern DsDeleteRequestDefaultTypeInternal _DsDeleteRequest_default_instance_;
 class DsDeleteResponse;
 class DsDeleteResponseDefaultTypeInternal;
 extern DsDeleteResponseDefaultTypeInternal _DsDeleteResponse_default_instance_;
+class DsIndexScanRequest;
+class DsIndexScanRequestDefaultTypeInternal;
+extern DsIndexScanRequestDefaultTypeInternal _DsIndexScanRequest_default_instance_;
+class DsIndexScanResponse;
+class DsIndexScanResponseDefaultTypeInternal;
+extern DsIndexScanResponseDefaultTypeInternal _DsIndexScanResponse_default_instance_;
 class DsInsertRequest;
 class DsInsertRequestDefaultTypeInternal;
 extern DsInsertRequestDefaultTypeInternal _DsInsertRequest_default_instance_;
@@ -182,6 +188,12 @@ extern DsUpdateResponseDefaultTypeInternal _DsUpdateResponse_default_instance_;
 class Field;
 class FieldDefaultTypeInternal;
 extern FieldDefaultTypeInternal _Field_default_instance_;
+class IndexScanRequest;
+class IndexScanRequestDefaultTypeInternal;
+extern IndexScanRequestDefaultTypeInternal _IndexScanRequest_default_instance_;
+class IndexScanResponse;
+class IndexScanResponseDefaultTypeInternal;
+extern IndexScanResponseDefaultTypeInternal _IndexScanResponse_default_instance_;
 class InsertRequest;
 class InsertRequestDefaultTypeInternal;
 extern InsertRequestDefaultTypeInternal _InsertRequest_default_instance_;
@@ -5728,6 +5740,464 @@ class DsUpdateResponse : public ::google::protobuf::Message /* @@protoc_insertio
 };
 // -------------------------------------------------------------------
 
+class IndexScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.IndexScanRequest) */ {
+ public:
+  IndexScanRequest();
+  virtual ~IndexScanRequest();
+
+  IndexScanRequest(const IndexScanRequest& from);
+
+  inline IndexScanRequest& operator=(const IndexScanRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  IndexScanRequest(IndexScanRequest&& from) noexcept
+    : IndexScanRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline IndexScanRequest& operator=(IndexScanRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const IndexScanRequest& default_instance();
+
+  static inline const IndexScanRequest* internal_default_instance() {
+    return reinterpret_cast<const IndexScanRequest*>(
+               &_IndexScanRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    45;
+
+  void Swap(IndexScanRequest* other);
+  friend void swap(IndexScanRequest& a, IndexScanRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline IndexScanRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  IndexScanRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const IndexScanRequest& from);
+  void MergeFrom(const IndexScanRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(IndexScanRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // bytes key = 1;
+  void clear_key();
+  static const int kKeyFieldNumber = 1;
+  const ::std::string& key() const;
+  void set_key(const ::std::string& value);
+  #if LANG_CXX11
+  void set_key(::std::string&& value);
+  #endif
+  void set_key(const char* value);
+  void set_key(const void* value, size_t size);
+  ::std::string* mutable_key();
+  ::std::string* release_key();
+  void set_allocated_key(::std::string* key);
+
+  // .kvrpcpb.Scope scope = 2;
+  bool has_scope() const;
+  void clear_scope();
+  static const int kScopeFieldNumber = 2;
+  const ::kvrpcpb::Scope& scope() const;
+  ::kvrpcpb::Scope* mutable_scope();
+  ::kvrpcpb::Scope* release_scope();
+  void set_allocated_scope(::kvrpcpb::Scope* scope);
+
+  // .kvrpcpb.Limit limit = 3;
+  bool has_limit() const;
+  void clear_limit();
+  static const int kLimitFieldNumber = 3;
+  const ::kvrpcpb::Limit& limit() const;
+  ::kvrpcpb::Limit* mutable_limit();
+  ::kvrpcpb::Limit* release_limit();
+  void set_allocated_limit(::kvrpcpb::Limit* limit);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.IndexScanRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr key_;
+  ::kvrpcpb::Scope* scope_;
+  ::kvrpcpb::Limit* limit_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class DsIndexScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.DsIndexScanRequest) */ {
+ public:
+  DsIndexScanRequest();
+  virtual ~DsIndexScanRequest();
+
+  DsIndexScanRequest(const DsIndexScanRequest& from);
+
+  inline DsIndexScanRequest& operator=(const DsIndexScanRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DsIndexScanRequest(DsIndexScanRequest&& from) noexcept
+    : DsIndexScanRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline DsIndexScanRequest& operator=(DsIndexScanRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DsIndexScanRequest& default_instance();
+
+  static inline const DsIndexScanRequest* internal_default_instance() {
+    return reinterpret_cast<const DsIndexScanRequest*>(
+               &_DsIndexScanRequest_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    46;
+
+  void Swap(DsIndexScanRequest* other);
+  friend void swap(DsIndexScanRequest& a, DsIndexScanRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DsIndexScanRequest* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  DsIndexScanRequest* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const DsIndexScanRequest& from);
+  void MergeFrom(const DsIndexScanRequest& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(DsIndexScanRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .kvrpcpb.RequestHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::kvrpcpb::RequestHeader& header() const;
+  ::kvrpcpb::RequestHeader* mutable_header();
+  ::kvrpcpb::RequestHeader* release_header();
+  void set_allocated_header(::kvrpcpb::RequestHeader* header);
+
+  // .kvrpcpb.IndexScanRequest req = 2;
+  bool has_req() const;
+  void clear_req();
+  static const int kReqFieldNumber = 2;
+  const ::kvrpcpb::IndexScanRequest& req() const;
+  ::kvrpcpb::IndexScanRequest* mutable_req();
+  ::kvrpcpb::IndexScanRequest* release_req();
+  void set_allocated_req(::kvrpcpb::IndexScanRequest* req);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.DsIndexScanRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::kvrpcpb::RequestHeader* header_;
+  ::kvrpcpb::IndexScanRequest* req_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class IndexScanResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.IndexScanResponse) */ {
+ public:
+  IndexScanResponse();
+  virtual ~IndexScanResponse();
+
+  IndexScanResponse(const IndexScanResponse& from);
+
+  inline IndexScanResponse& operator=(const IndexScanResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  IndexScanResponse(IndexScanResponse&& from) noexcept
+    : IndexScanResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline IndexScanResponse& operator=(IndexScanResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const IndexScanResponse& default_instance();
+
+  static inline const IndexScanResponse* internal_default_instance() {
+    return reinterpret_cast<const IndexScanResponse*>(
+               &_IndexScanResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    47;
+
+  void Swap(IndexScanResponse* other);
+  friend void swap(IndexScanResponse& a, IndexScanResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline IndexScanResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  IndexScanResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const IndexScanResponse& from);
+  void MergeFrom(const IndexScanResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(IndexScanResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated bytes pk_values = 1;
+  int pk_values_size() const;
+  void clear_pk_values();
+  static const int kPkValuesFieldNumber = 1;
+  const ::std::string& pk_values(int index) const;
+  ::std::string* mutable_pk_values(int index);
+  void set_pk_values(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_pk_values(int index, ::std::string&& value);
+  #endif
+  void set_pk_values(int index, const char* value);
+  void set_pk_values(int index, const void* value, size_t size);
+  ::std::string* add_pk_values();
+  void add_pk_values(const ::std::string& value);
+  #if LANG_CXX11
+  void add_pk_values(::std::string&& value);
+  #endif
+  void add_pk_values(const char* value);
+  void add_pk_values(const void* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& pk_values() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_pk_values();
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.IndexScanResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> pk_values_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class DsIndexScanResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.DsIndexScanResponse) */ {
+ public:
+  DsIndexScanResponse();
+  virtual ~DsIndexScanResponse();
+
+  DsIndexScanResponse(const DsIndexScanResponse& from);
+
+  inline DsIndexScanResponse& operator=(const DsIndexScanResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  DsIndexScanResponse(DsIndexScanResponse&& from) noexcept
+    : DsIndexScanResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline DsIndexScanResponse& operator=(DsIndexScanResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DsIndexScanResponse& default_instance();
+
+  static inline const DsIndexScanResponse* internal_default_instance() {
+    return reinterpret_cast<const DsIndexScanResponse*>(
+               &_DsIndexScanResponse_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    48;
+
+  void Swap(DsIndexScanResponse* other);
+  friend void swap(DsIndexScanResponse& a, DsIndexScanResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline DsIndexScanResponse* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  DsIndexScanResponse* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const DsIndexScanResponse& from);
+  void MergeFrom(const DsIndexScanResponse& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(DsIndexScanResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .kvrpcpb.ResponseHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::kvrpcpb::ResponseHeader& header() const;
+  ::kvrpcpb::ResponseHeader* mutable_header();
+  ::kvrpcpb::ResponseHeader* release_header();
+  void set_allocated_header(::kvrpcpb::ResponseHeader* header);
+
+  // .kvrpcpb.IndexScanResponse resp = 2;
+  bool has_resp() const;
+  void clear_resp();
+  static const int kRespFieldNumber = 2;
+  const ::kvrpcpb::IndexScanResponse& resp() const;
+  ::kvrpcpb::IndexScanResponse* mutable_resp();
+  ::kvrpcpb::IndexScanResponse* release_resp();
+  void set_allocated_resp(::kvrpcpb::IndexScanResponse* resp);
+
+  // @@protoc_insertion_point(class_scope:kvrpcpb.DsIndexScanResponse)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::kvrpcpb::ResponseHeader* header_;
+  ::kvrpcpb::IndexScanResponse* resp_;
+  mutable int _cached_size_;
+  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class RedisKeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.RedisKeyValue) */ {
  public:
   RedisKeyValue();
@@ -5762,7 +6232,7 @@ class RedisKeyValue : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_RedisKeyValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    45;
+    49;
 
   void Swap(RedisKeyValue* other);
   friend void swap(RedisKeyValue& a, RedisKeyValue& b) {
@@ -5882,7 +6352,7 @@ class RedisDo : public ::google::protobuf::Message /* @@protoc_insertion_point(c
                &_RedisDo_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    46;
+    50;
 
   void Swap(RedisDo* other);
   friend void swap(RedisDo& a, RedisDo& b) {
@@ -6016,7 +6486,7 @@ class KvSetRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_KvSetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    47;
+    51;
 
   void Swap(KvSetRequest* other);
   friend void swap(KvSetRequest& a, KvSetRequest& b) {
@@ -6123,7 +6593,7 @@ class KvSetResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_KvSetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    48;
+    52;
 
   void Swap(KvSetResponse* other);
   friend void swap(KvSetResponse& a, KvSetResponse& b) {
@@ -6227,7 +6697,7 @@ class DsKvSetRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_DsKvSetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    49;
+    53;
 
   void Swap(DsKvSetRequest* other);
   friend void swap(DsKvSetRequest& a, DsKvSetRequest& b) {
@@ -6337,7 +6807,7 @@ class DsKvSetResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsKvSetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    50;
+    54;
 
   void Swap(DsKvSetResponse* other);
   friend void swap(DsKvSetResponse& a, DsKvSetResponse& b) {
@@ -6447,7 +6917,7 @@ class KvGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_KvGetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    51;
+    55;
 
   void Swap(KvGetRequest* other);
   friend void swap(KvGetRequest& a, KvGetRequest& b) {
@@ -6552,7 +7022,7 @@ class KvGetResponse : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_KvGetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    52;
+    56;
 
   void Swap(KvGetResponse* other);
   friend void swap(KvGetResponse& a, KvGetResponse& b) {
@@ -6664,7 +7134,7 @@ class DsKvGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_DsKvGetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    53;
+    57;
 
   void Swap(DsKvGetRequest* other);
   friend void swap(DsKvGetRequest& a, DsKvGetRequest& b) {
@@ -6774,7 +7244,7 @@ class DsKvGetResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsKvGetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    54;
+    58;
 
   void Swap(DsKvGetResponse* other);
   friend void swap(DsKvGetResponse& a, DsKvGetResponse& b) {
@@ -6884,7 +7354,7 @@ class KvBatchSetRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_KvBatchSetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    55;
+    59;
 
   void Swap(KvBatchSetRequest* other);
   friend void swap(KvBatchSetRequest& a, KvBatchSetRequest& b) {
@@ -6994,7 +7464,7 @@ class KvBatchSetResponse : public ::google::protobuf::Message /* @@protoc_insert
                &_KvBatchSetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    56;
+    60;
 
   void Swap(KvBatchSetResponse* other);
   friend void swap(KvBatchSetResponse& a, KvBatchSetResponse& b) {
@@ -7098,7 +7568,7 @@ class DsKvBatchSetRequest : public ::google::protobuf::Message /* @@protoc_inser
                &_DsKvBatchSetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    57;
+    61;
 
   void Swap(DsKvBatchSetRequest* other);
   friend void swap(DsKvBatchSetRequest& a, DsKvBatchSetRequest& b) {
@@ -7208,7 +7678,7 @@ class DsKvBatchSetResponse : public ::google::protobuf::Message /* @@protoc_inse
                &_DsKvBatchSetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    58;
+    62;
 
   void Swap(DsKvBatchSetResponse* other);
   friend void swap(DsKvBatchSetResponse& a, DsKvBatchSetResponse& b) {
@@ -7318,7 +7788,7 @@ class KvBatchGetRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_KvBatchGetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    59;
+    63;
 
   void Swap(KvBatchGetRequest* other);
   friend void swap(KvBatchGetRequest& a, KvBatchGetRequest& b) {
@@ -7438,7 +7908,7 @@ class KvBatchGetResponse : public ::google::protobuf::Message /* @@protoc_insert
                &_KvBatchGetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    60;
+    64;
 
   void Swap(KvBatchGetResponse* other);
   friend void swap(KvBatchGetResponse& a, KvBatchGetResponse& b) {
@@ -7548,7 +8018,7 @@ class DsKvBatchGetRequest : public ::google::protobuf::Message /* @@protoc_inser
                &_DsKvBatchGetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    61;
+    65;
 
   void Swap(DsKvBatchGetRequest* other);
   friend void swap(DsKvBatchGetRequest& a, DsKvBatchGetRequest& b) {
@@ -7658,7 +8128,7 @@ class DsKvBatchGetResponse : public ::google::protobuf::Message /* @@protoc_inse
                &_DsKvBatchGetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    62;
+    66;
 
   void Swap(DsKvBatchGetResponse* other);
   friend void swap(DsKvBatchGetResponse& a, DsKvBatchGetResponse& b) {
@@ -7768,7 +8238,7 @@ class KvScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_KvScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    63;
+    67;
 
   void Swap(KvScanRequest* other);
   friend void swap(KvScanRequest& a, KvScanRequest& b) {
@@ -7909,7 +8379,7 @@ class KvScanResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_KvScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    64;
+    68;
 
   void Swap(KvScanResponse* other);
   friend void swap(KvScanResponse& a, KvScanResponse& b) {
@@ -8041,7 +8511,7 @@ class DsKvScanRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsKvScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    65;
+    69;
 
   void Swap(DsKvScanRequest* other);
   friend void swap(DsKvScanRequest& a, DsKvScanRequest& b) {
@@ -8151,7 +8621,7 @@ class DsKvScanResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsKvScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    66;
+    70;
 
   void Swap(DsKvScanResponse* other);
   friend void swap(DsKvScanResponse& a, DsKvScanResponse& b) {
@@ -8261,7 +8731,7 @@ class KvDeleteRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_KvDeleteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    67;
+    71;
 
   void Swap(KvDeleteRequest* other);
   friend void swap(KvDeleteRequest& a, KvDeleteRequest& b) {
@@ -8373,7 +8843,7 @@ class KvDeleteResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_KvDeleteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    68;
+    72;
 
   void Swap(KvDeleteResponse* other);
   friend void swap(KvDeleteResponse& a, KvDeleteResponse& b) {
@@ -8477,7 +8947,7 @@ class DsKvDeleteRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsKvDeleteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    69;
+    73;
 
   void Swap(DsKvDeleteRequest* other);
   friend void swap(DsKvDeleteRequest& a, DsKvDeleteRequest& b) {
@@ -8587,7 +9057,7 @@ class DsKvDeleteResponse : public ::google::protobuf::Message /* @@protoc_insert
                &_DsKvDeleteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    70;
+    74;
 
   void Swap(DsKvDeleteResponse* other);
   friend void swap(DsKvDeleteResponse& a, DsKvDeleteResponse& b) {
@@ -8697,7 +9167,7 @@ class KvBatchDeleteRequest : public ::google::protobuf::Message /* @@protoc_inse
                &_KvBatchDeleteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    71;
+    75;
 
   void Swap(KvBatchDeleteRequest* other);
   friend void swap(KvBatchDeleteRequest& a, KvBatchDeleteRequest& b) {
@@ -8817,7 +9287,7 @@ class KvBatchDeleteResponse : public ::google::protobuf::Message /* @@protoc_ins
                &_KvBatchDeleteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    72;
+    76;
 
   void Swap(KvBatchDeleteResponse* other);
   friend void swap(KvBatchDeleteResponse& a, KvBatchDeleteResponse& b) {
@@ -8921,7 +9391,7 @@ class DsKvBatchDeleteRequest : public ::google::protobuf::Message /* @@protoc_in
                &_DsKvBatchDeleteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    73;
+    77;
 
   void Swap(DsKvBatchDeleteRequest* other);
   friend void swap(DsKvBatchDeleteRequest& a, DsKvBatchDeleteRequest& b) {
@@ -9031,7 +9501,7 @@ class DsKvBatchDeleteResponse : public ::google::protobuf::Message /* @@protoc_i
                &_DsKvBatchDeleteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    74;
+    78;
 
   void Swap(DsKvBatchDeleteResponse* other);
   friend void swap(DsKvBatchDeleteResponse& a, DsKvBatchDeleteResponse& b) {
@@ -9141,7 +9611,7 @@ class KvRangeDeleteRequest : public ::google::protobuf::Message /* @@protoc_inse
                &_KvRangeDeleteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    75;
+    79;
 
   void Swap(KvRangeDeleteRequest* other);
   friend void swap(KvRangeDeleteRequest& a, KvRangeDeleteRequest& b) {
@@ -9275,7 +9745,7 @@ class KvRangeDeleteResponse : public ::google::protobuf::Message /* @@protoc_ins
                &_KvRangeDeleteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    76;
+    80;
 
   void Swap(KvRangeDeleteResponse* other);
   friend void swap(KvRangeDeleteResponse& a, KvRangeDeleteResponse& b) {
@@ -9394,7 +9864,7 @@ class DsKvRangeDeleteRequest : public ::google::protobuf::Message /* @@protoc_in
                &_DsKvRangeDeleteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    77;
+    81;
 
   void Swap(DsKvRangeDeleteRequest* other);
   friend void swap(DsKvRangeDeleteRequest& a, DsKvRangeDeleteRequest& b) {
@@ -9504,7 +9974,7 @@ class DsKvRangeDeleteResponse : public ::google::protobuf::Message /* @@protoc_i
                &_DsKvRangeDeleteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    78;
+    82;
 
   void Swap(DsKvRangeDeleteResponse* other);
   friend void swap(DsKvRangeDeleteResponse& a, DsKvRangeDeleteResponse& b) {
@@ -9614,7 +10084,7 @@ class LockValue : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_LockValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    79;
+    83;
 
   void Swap(LockValue* other);
   friend void swap(LockValue& a, LockValue& b) {
@@ -9763,7 +10233,7 @@ class LockRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_LockRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    80;
+    84;
 
   void Swap(LockRequest* other);
   friend void swap(LockRequest& a, LockRequest& b) {
@@ -9888,7 +10358,7 @@ class DsLockRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_DsLockRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    81;
+    85;
 
   void Swap(DsLockRequest* other);
   friend void swap(DsLockRequest& a, DsLockRequest& b) {
@@ -9998,7 +10468,7 @@ class LockResponse : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_LockResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    82;
+    86;
 
   void Swap(LockResponse* other);
   friend void swap(LockResponse& a, LockResponse& b) {
@@ -10132,7 +10602,7 @@ class LockInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_LockInfo_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    83;
+    87;
 
   void Swap(LockInfo* other);
   friend void swap(LockInfo& a, LockInfo& b) {
@@ -10247,7 +10717,7 @@ class LockScanResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_LockScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    84;
+    88;
 
   void Swap(LockScanResponse* other);
   friend void swap(LockScanResponse& a, LockScanResponse& b) {
@@ -10365,7 +10835,7 @@ class DsLockResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_DsLockResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    85;
+    89;
 
   void Swap(DsLockResponse* other);
   friend void swap(DsLockResponse& a, DsLockResponse& b) {
@@ -10475,7 +10945,7 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_LockUpdateRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    86;
+    90;
 
   void Swap(LockUpdateRequest* other);
   friend void swap(LockUpdateRequest& a, LockUpdateRequest& b) {
@@ -10642,7 +11112,7 @@ class DsLockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inser
                &_DsLockUpdateRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    87;
+    91;
 
   void Swap(DsLockUpdateRequest* other);
   friend void swap(DsLockUpdateRequest& a, DsLockUpdateRequest& b) {
@@ -10752,7 +11222,7 @@ class DsLockUpdateResponse : public ::google::protobuf::Message /* @@protoc_inse
                &_DsLockUpdateResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    88;
+    92;
 
   void Swap(DsLockUpdateResponse* other);
   friend void swap(DsLockUpdateResponse& a, DsLockUpdateResponse& b) {
@@ -10862,7 +11332,7 @@ class UnlockRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_UnlockRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    89;
+    93;
 
   void Swap(UnlockRequest* other);
   friend void swap(UnlockRequest& a, UnlockRequest& b) {
@@ -11007,7 +11477,7 @@ class DsUnlockRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsUnlockRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    90;
+    94;
 
   void Swap(DsUnlockRequest* other);
   friend void swap(DsUnlockRequest& a, DsUnlockRequest& b) {
@@ -11117,7 +11587,7 @@ class DsUnlockResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsUnlockResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    91;
+    95;
 
   void Swap(DsUnlockResponse* other);
   friend void swap(DsUnlockResponse& a, DsUnlockResponse& b) {
@@ -11227,7 +11697,7 @@ class UnlockForceRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_UnlockForceRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    92;
+    96;
 
   void Swap(UnlockForceRequest* other);
   friend void swap(UnlockForceRequest& a, UnlockForceRequest& b) {
@@ -11357,7 +11827,7 @@ class DsUnlockForceRequest : public ::google::protobuf::Message /* @@protoc_inse
                &_DsUnlockForceRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    93;
+    97;
 
   void Swap(DsUnlockForceRequest* other);
   friend void swap(DsUnlockForceRequest& a, DsUnlockForceRequest& b) {
@@ -11467,7 +11937,7 @@ class DsUnlockForceResponse : public ::google::protobuf::Message /* @@protoc_ins
                &_DsUnlockForceResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    94;
+    98;
 
   void Swap(DsUnlockForceResponse* other);
   friend void swap(DsUnlockForceResponse& a, DsUnlockForceResponse& b) {
@@ -11577,7 +12047,7 @@ class LockScanRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_LockScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    95;
+    99;
 
   void Swap(LockScanRequest* other);
   friend void swap(LockScanRequest& a, LockScanRequest& b) {
@@ -11704,7 +12174,7 @@ class DsLockScanRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsLockScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    96;
+    100;
 
   void Swap(DsLockScanRequest* other);
   friend void swap(DsLockScanRequest& a, DsLockScanRequest& b) {
@@ -11814,7 +12284,7 @@ class DsLockScanResponse : public ::google::protobuf::Message /* @@protoc_insert
                &_DsLockScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    97;
+    101;
 
   void Swap(DsLockScanResponse* other);
   friend void swap(DsLockScanResponse& a, DsLockScanResponse& b) {
@@ -11924,7 +12394,7 @@ class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_LockGetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    98;
+    102;
 
   void Swap(LockGetRequest* other);
   friend void swap(LockGetRequest& a, LockGetRequest& b) {
@@ -12029,7 +12499,7 @@ class LockGetResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_LockGetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    99;
+    103;
 
   void Swap(LockGetResponse* other);
   friend void swap(LockGetResponse& a, LockGetResponse& b) {
@@ -12151,7 +12621,7 @@ class DsLockGetRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsLockGetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    100;
+    104;
 
   void Swap(DsLockGetRequest* other);
   friend void swap(DsLockGetRequest& a, DsLockGetRequest& b) {
@@ -12261,7 +12731,7 @@ class DsLockGetResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsLockGetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    101;
+    105;
 
   void Swap(DsLockGetResponse* other);
   friend void swap(DsLockGetResponse& a, DsLockGetResponse& b) {
@@ -16309,6 +16779,384 @@ inline void DsUpdateResponse::set_allocated_resp(::kvrpcpb::UpdateResponse* resp
     
   }
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsUpdateResponse.resp)
+}
+
+// -------------------------------------------------------------------
+
+// IndexScanRequest
+
+// bytes key = 1;
+inline void IndexScanRequest::clear_key() {
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& IndexScanRequest::key() const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.IndexScanRequest.key)
+  return key_.GetNoArena();
+}
+inline void IndexScanRequest::set_key(const ::std::string& value) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:kvrpcpb.IndexScanRequest.key)
+}
+#if LANG_CXX11
+inline void IndexScanRequest::set_key(::std::string&& value) {
+  
+  key_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:kvrpcpb.IndexScanRequest.key)
+}
+#endif
+inline void IndexScanRequest::set_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:kvrpcpb.IndexScanRequest.key)
+}
+inline void IndexScanRequest::set_key(const void* value, size_t size) {
+  
+  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.IndexScanRequest.key)
+}
+inline ::std::string* IndexScanRequest::mutable_key() {
+  
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.IndexScanRequest.key)
+  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* IndexScanRequest::release_key() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.IndexScanRequest.key)
+  
+  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void IndexScanRequest::set_allocated_key(::std::string* key) {
+  if (key != NULL) {
+    
+  } else {
+    
+  }
+  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.IndexScanRequest.key)
+}
+
+// .kvrpcpb.Scope scope = 2;
+inline bool IndexScanRequest::has_scope() const {
+  return this != internal_default_instance() && scope_ != NULL;
+}
+inline void IndexScanRequest::clear_scope() {
+  if (GetArenaNoVirtual() == NULL && scope_ != NULL) delete scope_;
+  scope_ = NULL;
+}
+inline const ::kvrpcpb::Scope& IndexScanRequest::scope() const {
+  const ::kvrpcpb::Scope* p = scope_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.IndexScanRequest.scope)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Scope*>(
+      &::kvrpcpb::_Scope_default_instance_);
+}
+inline ::kvrpcpb::Scope* IndexScanRequest::mutable_scope() {
+  
+  if (scope_ == NULL) {
+    scope_ = new ::kvrpcpb::Scope;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.IndexScanRequest.scope)
+  return scope_;
+}
+inline ::kvrpcpb::Scope* IndexScanRequest::release_scope() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.IndexScanRequest.scope)
+  
+  ::kvrpcpb::Scope* temp = scope_;
+  scope_ = NULL;
+  return temp;
+}
+inline void IndexScanRequest::set_allocated_scope(::kvrpcpb::Scope* scope) {
+  delete scope_;
+  scope_ = scope;
+  if (scope) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.IndexScanRequest.scope)
+}
+
+// .kvrpcpb.Limit limit = 3;
+inline bool IndexScanRequest::has_limit() const {
+  return this != internal_default_instance() && limit_ != NULL;
+}
+inline void IndexScanRequest::clear_limit() {
+  if (GetArenaNoVirtual() == NULL && limit_ != NULL) delete limit_;
+  limit_ = NULL;
+}
+inline const ::kvrpcpb::Limit& IndexScanRequest::limit() const {
+  const ::kvrpcpb::Limit* p = limit_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.IndexScanRequest.limit)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Limit*>(
+      &::kvrpcpb::_Limit_default_instance_);
+}
+inline ::kvrpcpb::Limit* IndexScanRequest::mutable_limit() {
+  
+  if (limit_ == NULL) {
+    limit_ = new ::kvrpcpb::Limit;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.IndexScanRequest.limit)
+  return limit_;
+}
+inline ::kvrpcpb::Limit* IndexScanRequest::release_limit() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.IndexScanRequest.limit)
+  
+  ::kvrpcpb::Limit* temp = limit_;
+  limit_ = NULL;
+  return temp;
+}
+inline void IndexScanRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
+  delete limit_;
+  limit_ = limit;
+  if (limit) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.IndexScanRequest.limit)
+}
+
+// -------------------------------------------------------------------
+
+// DsIndexScanRequest
+
+// .kvrpcpb.RequestHeader header = 1;
+inline bool DsIndexScanRequest::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void DsIndexScanRequest::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::kvrpcpb::RequestHeader& DsIndexScanRequest::header() const {
+  const ::kvrpcpb::RequestHeader* p = header_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsIndexScanRequest.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::RequestHeader*>(
+      &::kvrpcpb::_RequestHeader_default_instance_);
+}
+inline ::kvrpcpb::RequestHeader* DsIndexScanRequest::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::kvrpcpb::RequestHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsIndexScanRequest.header)
+  return header_;
+}
+inline ::kvrpcpb::RequestHeader* DsIndexScanRequest::release_header() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsIndexScanRequest.header)
+  
+  ::kvrpcpb::RequestHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void DsIndexScanRequest::set_allocated_header(::kvrpcpb::RequestHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsIndexScanRequest.header)
+}
+
+// .kvrpcpb.IndexScanRequest req = 2;
+inline bool DsIndexScanRequest::has_req() const {
+  return this != internal_default_instance() && req_ != NULL;
+}
+inline void DsIndexScanRequest::clear_req() {
+  if (GetArenaNoVirtual() == NULL && req_ != NULL) delete req_;
+  req_ = NULL;
+}
+inline const ::kvrpcpb::IndexScanRequest& DsIndexScanRequest::req() const {
+  const ::kvrpcpb::IndexScanRequest* p = req_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsIndexScanRequest.req)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::IndexScanRequest*>(
+      &::kvrpcpb::_IndexScanRequest_default_instance_);
+}
+inline ::kvrpcpb::IndexScanRequest* DsIndexScanRequest::mutable_req() {
+  
+  if (req_ == NULL) {
+    req_ = new ::kvrpcpb::IndexScanRequest;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsIndexScanRequest.req)
+  return req_;
+}
+inline ::kvrpcpb::IndexScanRequest* DsIndexScanRequest::release_req() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsIndexScanRequest.req)
+  
+  ::kvrpcpb::IndexScanRequest* temp = req_;
+  req_ = NULL;
+  return temp;
+}
+inline void DsIndexScanRequest::set_allocated_req(::kvrpcpb::IndexScanRequest* req) {
+  delete req_;
+  req_ = req;
+  if (req) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsIndexScanRequest.req)
+}
+
+// -------------------------------------------------------------------
+
+// IndexScanResponse
+
+// repeated bytes pk_values = 1;
+inline int IndexScanResponse::pk_values_size() const {
+  return pk_values_.size();
+}
+inline void IndexScanResponse::clear_pk_values() {
+  pk_values_.Clear();
+}
+inline const ::std::string& IndexScanResponse::pk_values(int index) const {
+  // @@protoc_insertion_point(field_get:kvrpcpb.IndexScanResponse.pk_values)
+  return pk_values_.Get(index);
+}
+inline ::std::string* IndexScanResponse::mutable_pk_values(int index) {
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.IndexScanResponse.pk_values)
+  return pk_values_.Mutable(index);
+}
+inline void IndexScanResponse::set_pk_values(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:kvrpcpb.IndexScanResponse.pk_values)
+  pk_values_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void IndexScanResponse::set_pk_values(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:kvrpcpb.IndexScanResponse.pk_values)
+  pk_values_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void IndexScanResponse::set_pk_values(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  pk_values_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:kvrpcpb.IndexScanResponse.pk_values)
+}
+inline void IndexScanResponse::set_pk_values(int index, const void* value, size_t size) {
+  pk_values_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.IndexScanResponse.pk_values)
+}
+inline ::std::string* IndexScanResponse::add_pk_values() {
+  // @@protoc_insertion_point(field_add_mutable:kvrpcpb.IndexScanResponse.pk_values)
+  return pk_values_.Add();
+}
+inline void IndexScanResponse::add_pk_values(const ::std::string& value) {
+  pk_values_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:kvrpcpb.IndexScanResponse.pk_values)
+}
+#if LANG_CXX11
+inline void IndexScanResponse::add_pk_values(::std::string&& value) {
+  pk_values_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:kvrpcpb.IndexScanResponse.pk_values)
+}
+#endif
+inline void IndexScanResponse::add_pk_values(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  pk_values_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:kvrpcpb.IndexScanResponse.pk_values)
+}
+inline void IndexScanResponse::add_pk_values(const void* value, size_t size) {
+  pk_values_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:kvrpcpb.IndexScanResponse.pk_values)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+IndexScanResponse::pk_values() const {
+  // @@protoc_insertion_point(field_list:kvrpcpb.IndexScanResponse.pk_values)
+  return pk_values_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+IndexScanResponse::mutable_pk_values() {
+  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.IndexScanResponse.pk_values)
+  return &pk_values_;
+}
+
+// -------------------------------------------------------------------
+
+// DsIndexScanResponse
+
+// .kvrpcpb.ResponseHeader header = 1;
+inline bool DsIndexScanResponse::has_header() const {
+  return this != internal_default_instance() && header_ != NULL;
+}
+inline void DsIndexScanResponse::clear_header() {
+  if (GetArenaNoVirtual() == NULL && header_ != NULL) delete header_;
+  header_ = NULL;
+}
+inline const ::kvrpcpb::ResponseHeader& DsIndexScanResponse::header() const {
+  const ::kvrpcpb::ResponseHeader* p = header_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsIndexScanResponse.header)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::ResponseHeader*>(
+      &::kvrpcpb::_ResponseHeader_default_instance_);
+}
+inline ::kvrpcpb::ResponseHeader* DsIndexScanResponse::mutable_header() {
+  
+  if (header_ == NULL) {
+    header_ = new ::kvrpcpb::ResponseHeader;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsIndexScanResponse.header)
+  return header_;
+}
+inline ::kvrpcpb::ResponseHeader* DsIndexScanResponse::release_header() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsIndexScanResponse.header)
+  
+  ::kvrpcpb::ResponseHeader* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+inline void DsIndexScanResponse::set_allocated_header(::kvrpcpb::ResponseHeader* header) {
+  delete header_;
+  header_ = header;
+  if (header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsIndexScanResponse.header)
+}
+
+// .kvrpcpb.IndexScanResponse resp = 2;
+inline bool DsIndexScanResponse::has_resp() const {
+  return this != internal_default_instance() && resp_ != NULL;
+}
+inline void DsIndexScanResponse::clear_resp() {
+  if (GetArenaNoVirtual() == NULL && resp_ != NULL) delete resp_;
+  resp_ = NULL;
+}
+inline const ::kvrpcpb::IndexScanResponse& DsIndexScanResponse::resp() const {
+  const ::kvrpcpb::IndexScanResponse* p = resp_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.DsIndexScanResponse.resp)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::IndexScanResponse*>(
+      &::kvrpcpb::_IndexScanResponse_default_instance_);
+}
+inline ::kvrpcpb::IndexScanResponse* DsIndexScanResponse::mutable_resp() {
+  
+  if (resp_ == NULL) {
+    resp_ = new ::kvrpcpb::IndexScanResponse;
+  }
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.DsIndexScanResponse.resp)
+  return resp_;
+}
+inline ::kvrpcpb::IndexScanResponse* DsIndexScanResponse::release_resp() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.DsIndexScanResponse.resp)
+  
+  ::kvrpcpb::IndexScanResponse* temp = resp_;
+  resp_ = NULL;
+  return temp;
+}
+inline void DsIndexScanResponse::set_allocated_resp(::kvrpcpb::IndexScanResponse* resp) {
+  delete resp_;
+  resp_ = resp;
+  if (resp) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.DsIndexScanResponse.resp)
 }
 
 // -------------------------------------------------------------------
@@ -21625,6 +22473,14 @@ inline void DsLockGetResponse::set_allocated_resp(::kvrpcpb::LockGetResponse* re
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

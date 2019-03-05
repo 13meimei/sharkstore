@@ -1,0 +1,251 @@
+syntax = "proto3";
+package txnpb;
+
+import "gogoproto/gogo.proto";
+import "kvrpcpb.proto";
+import "metapb.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+enum OpType {
+    INSERT  = 0;
+    DELETE  = 1;
+}
+
+message TxnIntent {
+    OpType typ          = 1;
+    bytes key           = 2; // 编码后的主键
+    bytes value         = 3; // 编码后的列值（所有非主键列）
+    bool  check_unique  = 4; // for unique index or insert check pk duplicate
+    uint64 expected_ver = 5; // 为0表示不校验version
+    bool is_primary     = 6; // 是否是primary row
+}
+
+enum TxnStatus {
+    INIT = 0;
+    COMMITTED = 1;
+    ABORTED = 2;
+}
+
+// data-server端存储结构
+message TxnValue {
+    string txn_id               = 1;
+    TxnIntent intent            = 2; // 本行预写数据
+    bytes primary_key           = 3; // 指向primary row
+    uint64 expired_at           = 4; // 绝对时间
+    uint64 version              = 5; // version when prepare
+
+    // only exists in primary row, used as txn record
+    TxnStatus txn_status          = 10; 
+    repeated bytes secondary_keys = 11;
+}
+
+message LockInfo {
+    string txn_id = 1;
+    bool timeout = 2;
+
+    // 1) 如果当前key是primary，则is_primary为true且返回status和secondary_keys
+    // 2) 如果不是则primary, 则is_primary为false并返回primary key 
+    bool is_primary                 = 10;
+    bytes primary_key               = 11;
+    TxnStatus status                = 12;
+    repeated bytes secondary_keys   = 13;
+}
+
+message LockError {
+    bytes key       = 1;
+    LockInfo info   = 2;
+}
+
+// Intent中设置了expected_ver时，version校验不通过，一般是写冲突
+message UnexpectedVer {
+    bytes key           = 1;
+    uint64 expected_ver = 2;
+    uint64 actual_ver   = 3;
+}
+
+// 更新事务状态时，事务状态已经不是INIT，则更新失败，并返回当前的状态
+// 比如事务状态已经是ABORTED，则不能更新为COMMITTED
+message StatusConflict {
+    TxnStatus status = 1;
+}
+
+message ServerError {
+    int32 code = 1;
+    string msg = 2;
+}
+
+message NotFound {
+    bytes key = 1;
+}
+
+// 比如Insert时该行已存在或者唯一索引已存在
+message NotUnique {
+    bytes key = 1;
+}
+
+message TxnError {
+    enum ErrType {
+        UNKNOWN = 0;
+        SERVER_ERROR = 1;
+        LOCKED = 2;
+        UNEXPECTED_VER = 3;
+        STATUS_CONFLICT = 4;
+        NOT_FOUND = 5;
+        NOT_UNIQUE = 6;
+    }
+
+    ErrType err_type = 1;
+    ServerError server_err = 2;
+    LockError lock_err = 3;
+    UnexpectedVer unexpected_ver = 4;
+    StatusConflict status_conflict = 5;
+    NotFound not_found = 6;
+    NotUnique not_unique = 7;
+}
+
+
+// Prepare
+message PrepareRequest {
+    string txn_id                        = 1;
+    bool local                           = 2;   // 事务只涉及本地一个range，可优化为1PL
+    repeated TxnIntent intents           = 3;
+    bytes primary_key                    = 4;
+    uint64 lock_ttl                      = 5;  // 单位 ms，毫秒
+    repeated bytes secondary_keys        = 6;  // 只发往primary row
+    
+    bool strict_check                    = 16; // 前期做一些正确性检查
+}
+
+message PrepareResponse {
+    repeated TxnError errors  = 1;
+}
+
+message DsPrepareRequest {
+    kvrpcpb.RequestHeader header = 1;
+    PrepareRequest req           = 2;
+}
+
+message DsPrepareResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    PrepareResponse resp          = 2;
+}
+
+
+
+// Commit or Rollback
+message DecideRequest {
+    string txn_id       = 1;
+    TxnStatus status    = 2;
+    repeated bytes keys = 3;
+    bool recover        = 4; // 如果recover=true，发往primary的请求会反馈secondary keys
+}
+
+message DecideResponse {
+    TxnError err                  = 1;
+    repeated bytes secondary_keys = 2;
+}
+
+message DsDecideRequest {
+    kvrpcpb.RequestHeader header = 1;
+    DecideRequest req            = 2;
+}
+
+message DsDecideResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    DecideResponse resp           = 2;
+}
+
+
+// 删除最后的primary row
+message ClearupRequest {
+    string txn_id       = 1;
+    bytes primary_key   = 2;
+}
+
+message ClearupResponse {
+    TxnError err = 1;
+}
+
+message DsClearupRequest {
+    kvrpcpb.RequestHeader header = 1;
+    ClearupRequest req           = 2;
+}
+
+message DsClearupResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    ClearupResponse resp          = 2;
+}
+
+
+
+// 查询Lock信息
+message GetLockInfoRequest {
+    bytes key = 1;
+    string txn_id = 2; // 事务ID为空，则返回当前lock
+}
+
+message GetLockInfoResponse {
+    TxnError err = 1;
+    LockInfo info = 2;
+}
+
+message DsGetLockInfoRequest {
+    kvrpcpb.RequestHeader header = 1;
+    GetLockInfoRequest req       = 2;
+}
+
+message DsGetLockInfoResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    GetLockInfoResponse resp      = 2;
+}
+
+
+
+// Select
+message SelectRequest {
+    bytes key                                   = 1;       // 只查询单行
+    kvrpcpb.Scope scope                         = 2;       // 查询主键在某个范围的行
+    repeated kvrpcpb.SelectField field_list     = 3;      // select filed list
+    repeated kvrpcpb.Match where_filters        = 4;       // where matches
+    repeated metapb.Column group_bys            = 5;       // group by column ids
+    kvrpcpb.Limit limit                         = 6;       // max range query num, 0 means no limit
+}
+
+message RowValue {
+    bytes fields                 = 1;              //  encoded fields
+    repeated int64 aggred_counts = 2;              // aggregated row count(for avg)
+    uint64 version               = 3;              // version
+}
+
+message RowIntent {
+    OpType op_type          = 1;
+    string txn_id           = 2;
+    bytes primary_key       = 3;
+    bool timeout            = 4;
+    RowValue value          = 10;
+}
+
+message Row {
+    bytes key = 1;
+    RowValue value = 2;
+    RowIntent intent = 3;
+}
+
+message SelectResponse {
+    int32 code        = 1;
+    repeated Row rows = 2;
+    uint64 offset     = 3;
+}
+
+message DsSelectRequest {
+    kvrpcpb.RequestHeader header = 1;
+    SelectRequest req            = 2;
+}
+
+message DsSelectResponse {
+    kvrpcpb.ResponseHeader header = 1;
+    SelectResponse resp           = 2;
+}

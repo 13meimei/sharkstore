@@ -241,7 +241,7 @@ func testProxyInsert(t *testing.T, p *Proxy, expectedAffected uint64, sql string
 	if !ok {
 		t.Fatalf("not insert stamentent: %s", sql)
 	}
-	res, err := p.HandleInsert(testDBName, stmt, nil)
+	_, _, res, err := p.HandleInsert(testDBName, stmt, nil)
 	if err != nil {
 		if  err == dskv.ErrRouteChange{
 			t.Logf("insert failed, %v, sqlL%v", err, sql)
@@ -270,7 +270,7 @@ func testProxyDelete(t *testing.T, p *Proxy, expectAffected uint64, sql string) 
 	if !ok {
 		t.Fatalf("not delete stamentent: %s", sql)
 	}
-	res, err := p.HandleDelete(testDBName, stmt, nil)
+	_, _, res, err := p.HandleDelete(testDBName, stmt, nil)
 	if err != nil {
 		t.Fatalf("delete faile: %v, sql: %s", err, sql)
 	}
@@ -407,15 +407,15 @@ type Filter struct {
 func testGetFilter(t *testing.T, query *Query, table *Table, p *Proxy, stmt *sqlparser.Select) *Filter {
 
 	columns := query.parseColumnNames()
-	var matchs []Match = nil
+	var matches []Match = nil
 	var err error
 	if query.Command.Filter != nil {
-		matchs, err = query.parseMatchs(query.Command.Filter.And)
+		matches, err = query.parseMatches(query.Command.Filter.And)
 		if err != nil {
 			t.Fatal("filter: parse matchs error: ", err)
 		}
 	}
-	getFilter := &Filter{columns: columns, matchs: matchs}
+	getFilter := &Filter{columns: columns, matchs: matches}
 	selectFilter := getSelectFilter(t, p, testDBName, stmt)
 	t.Log("get filter: ", getFilter)
 	t.Log("select filter: ", selectFilter)
@@ -463,7 +463,7 @@ func testGetCommand(t *testing.T, table *Table, p *Proxy, filter *Filter, stmt *
 func testSetCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected *Reply) {
 	reply, err := query.setCommand(p, table)
 	if err != nil {
-		t.Fatal("set command error: ", err)
+		t.Fatalf("set command error: %v", err)
 	}
 	assert.DeepEqual(t, reply, expected)
 }
@@ -477,6 +477,14 @@ func testUpdCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected
 	assert.DeepEqual(t, reply, expected)
 }
 
+func testDelCommand(t *testing.T, query *Query, table *Table, p *Proxy, expected *Reply) {
+	reply, err := query.delCommand(p, table)
+	if err != nil {
+		t.Fatal("del command error: ", err)
+	}
+	assert.DeepEqual(t, reply, expected)
+}
+
 func getSelectFilter(tt *testing.T, p *Proxy, db string, stmt *sqlparser.Select) *Filter {
 	parser := &StmtParser{}
 
@@ -484,7 +492,7 @@ func getSelectFilter(tt *testing.T, p *Proxy, db string, stmt *sqlparser.Select)
 	tableName := parser.parseTable(stmt)
 	t := p.router.FindTable(db, tableName)
 	if t == nil {
-		tt.Fatal("[select] table %s.%s doesn.t exist", db, tableName)
+		tt.Fatalf("[select] table %s.%s doesn.t exist", db, tableName)
 	}
 
 	// 解析选择列
@@ -509,7 +517,7 @@ func getSelectFilter(tt *testing.T, p *Proxy, db string, stmt *sqlparser.Select)
 		// TODO: 支持OR表达式
 		matchs, err = parser.parseWhere(stmt.Where)
 		if err != nil {
-			tt.Fatal("handle select parse where error(%v)", err.Error())
+			tt.Fatalf("handle select parse where error(%v)", err.Error())
 		}
 	}
 
@@ -527,7 +535,7 @@ func testProxyUpdate(t *testing.T, p *Proxy, expectedAffected uint64, sql string
 	if !ok {
 		t.Fatalf("not update stamentent: %s", sql)
 	}
-	res, err := p.HandleUpdate(testDBName, stmt, nil)
+	_, _, res, err := p.HandleUpdate(testDBName, stmt, nil)
 	if err != nil {
 		if  err == dskv.ErrRouteChange{
 			t.Logf("update failed, %v, sqlL%v", err, sql)

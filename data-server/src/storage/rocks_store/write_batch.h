@@ -18,7 +18,9 @@ public:
     ~RocksWriteBatch() = default;
 
     Status Put(const std::string& key, const std::string& value);
+    Status Put(void* column_family, const std::string& key, const std::string& value);
     Status Delete(const std::string& key);
+    Status Delete(void* column_family, const std::string& key);
 
 public:
     rocksdb::WriteBatch* getBatch() { return &batch_; }

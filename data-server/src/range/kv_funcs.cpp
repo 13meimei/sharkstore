@@ -16,16 +16,14 @@ void Range::KVSet(common::ProtoMessage *msg, kvrpcpb::DsKvSetRequest &req) {
     context_->Statistics()->PushTime(HistogramType::kQWait,
             get_micro_second() - msg->begin_time);
 
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsKvSetResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
     auto &key = req.req().kv().key();
     errorpb::Error *err = nullptr;
 
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
+
         if (!VerifyLeader(err)) {
             RANGE_LOG_WARN("KVSet error: %s", err->message().c_str());
             break;
@@ -144,15 +142,13 @@ void Range::KVBatchSet(common::ProtoMessage *msg,
     context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsKvBatchSetResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
     errorpb::Error *err = nullptr;
 
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
+
         if (!VerifyLeader(err)) {
             break;
         }
@@ -281,20 +277,15 @@ void Range::KVBatchGet(common::ProtoMessage *msg,
     context_->SocketSession()->Send(msg, ds_resp);
 }
 
-void Range::KVDelete(common::ProtoMessage *msg,
-                     kvrpcpb::DsKvDeleteRequest &req) {
-    context_->Statistics()->PushTime(HistogramType::kQWait,
-                                   get_micro_second() - msg->begin_time);
-
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsKvDeleteResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
+void Range::KVDelete(common::ProtoMessage *msg, kvrpcpb::DsKvDeleteRequest &req) {
+    context_->Statistics()->PushTime(HistogramType::kQWait, get_micro_second() - msg->begin_time);
 
     auto &key = req.req().key();
     errorpb::Error *err = nullptr;
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
         if (!VerifyLeader(err)) {
             break;
         }
@@ -361,13 +352,7 @@ void Range::KVBatchDelete(common::ProtoMessage *msg,
                                    get_micro_second() - msg->begin_time);
     errorpb::Error *err = nullptr;
 
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
-    if (!VerifyLeader(err)) {
+    if (!VerifyLeader(err) || !VerifyWriteable(&err)) {
         RANGE_LOG_WARN("Insert error: %s", err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvBatchDeleteResponse;
@@ -461,15 +446,9 @@ void Range::KVRangeDelete(common::ProtoMessage *msg,
     context_->Statistics()->PushTime(HistogramType::kQWait,
                                    get_micro_second() - msg->begin_time);
 
-    if (!CheckWriteable()) {
-        auto resp = new kvrpcpb::DsKvRangeDeleteResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
     errorpb::Error *err = nullptr;
 
-    if (!VerifyLeader(err)) {
+    if (!VerifyLeader(err) || !VerifyWriteable(&err)) {
         RANGE_LOG_WARN("KVRangeDelet error: %s", err->message().c_str());
 
         auto resp = new kvrpcpb::DsKvRangeDeleteResponse;

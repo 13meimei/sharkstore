@@ -32,6 +32,11 @@ Status MemStore::Delete(const std::string &key) {
     return Status(static_cast<Status::Code>(s));
 }
 
+Status MemStore::Delete(void* column_family, const std::string& key) {
+    // todo
+    return Status(Status::kOk);
+}
+
 Status MemStore::DeleteRange(void *column_family,
                                const std::string &begin_key, const std::string &end_key) {
     auto s = db_.DeleteRange(begin_key, end_key);
@@ -42,9 +47,19 @@ void* MemStore::DefaultColumnFamily() {
     return nullptr;
 }
 
+void* MemStore::TxnCFHandle() {
+    return nullptr;
+}
+
 IteratorInterface* MemStore::NewIterator(const std::string& start, const std::string& limit) {
     auto it = db_.NewIterator(start, limit);
     return new MemIterator(it);
+}
+
+Status MemStore::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
+                    std::unique_ptr<IteratorInterface>& txn_iter,
+                    const std::string& start, const std::string& limit) {
+    return Status(Status::Code::kOk);
 }
 
 void MemStore::GetProperty(const std::string& k, std::string* v) {
@@ -104,6 +119,10 @@ Status MemStore::CompactRange(void* options,
 
 Status MemStore::Flush(void* fops) {
     return Status(Status::kOk);
+}
+
+void MemStore::PrintMetric() {
+
 }
 
 }}}

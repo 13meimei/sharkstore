@@ -2,17 +2,15 @@ package server
 
 import (
 	"fmt"
-
 	"bytes"
+	"errors"
+	"util/log"
 	"model/pkg/kvrpcpb"
-	"model/pkg/timestamp"
+	"model/pkg/txn"
 	"pkg-go/ds_client"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
-	//"util"
 	"proxy/store/dskv"
-	"util/log"
-	"master-server/engine/errors"
 )
 
 func (p *Proxy) HandleSelect(db string, stmt *sqlparser.Select, args []interface{}) (*mysql.Result, error) {
@@ -51,10 +49,10 @@ func (p *Proxy) HandleSelect(db string, stmt *sqlparser.Select, args []interface
 	}
 
 	// 解析where条件
-	var matchs []Match
+	var matches []Match
 	if stmt.Where != nil {
 		// TODO: 支持OR表达式
-		matchs, err = parser.parseWhere(stmt.Where)
+		matches, err = parser.parseWhere(stmt.Where)
 		if err != nil {
 			log.Error("handle select parse where error(%v)", err.Error())
 			return nil, err
@@ -79,12 +77,12 @@ func (p *Proxy) HandleSelect(db string, stmt *sqlparser.Select, args []interface
 		log.Debug("where %v", stmt.Where)
 		log.Debug("have %v", stmt.Having)
 		log.Debug("cols %v", cols)
-		log.Debug("matchs %v", matchs)
+		log.Debug("matches %v", matches)
 	}
 
 	//parseTime = time.Now()
 	// 向dataserver查询
-	rowss, err := p.doSelect(t, fieldList, matchs, limit, nil)
+	rowss, err := p.doSelect(t, fieldList, matches, limit, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -138,54 +136,53 @@ func (p *Proxy) doSelect(t *Table, fieldList []*kvrpcpb.SelectField, matches []M
 	}
 	*/
 	// TODO: pool
-	now := p.clock.Now()
-	sreq := &kvrpcpb.SelectRequest{
+	sreq := &txnpb.SelectRequest{
 		Key:          key,
 		Scope:        scope,
 		FieldList:    fieldList,
 		WhereFilters: pbMatches,
 		Limit:        pbLimit,
-		Timestamp:    &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical},
 	}
 	return p.selectRemote(t, sreq)
 }
 
-func (p *Proxy) selectRemote(t *Table, req *kvrpcpb.SelectRequest) ([][]*Row, error) {
-	proxy := dskv.GetKvProxy()
-	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+func (p *Proxy) selectRemote(t *Table, req *txnpb.SelectRequest) ([][]*Row, error) {
+	rows, err := p.selectRemoteNoDecode(t, req)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, nil
+	}
+	return decodeRows(t, req.FieldList, rows)
+}
 
-	var pbRows [][]*kvrpcpb.Row
-	var err error
+func (p *Proxy) selectRemoteNoDecode(t *Table, req *txnpb.SelectRequest) ([][]*txnpb.Row, error) {
+	var (
+		pbRows  [][]*txnpb.Row
+		err     error
+		context = dskv.NewPRConext(dskv.GetMaxBackoff)
+	)
 	// single get
 	if len(req.Key) != 0 {
-		pbRows, err = p.singleSelectRemote(proxy, req, req.GetKey())
+		pbRows, err = p.singleSelectRemote(context, t, req, req.GetKey())
 	} else {
 		// 聚合函数，并行执行, 并且没有limit、offset逻辑
 		if len(req.FieldList) > 0 && req.FieldList[0].Typ == kvrpcpb.SelectField_AggreFunction {
-			pbRows, err = p.selectAggre(t, proxy, req)
+			//todo support aggre func
+			//pbRows, err = p.selectAggre(t, proxy, req)
+			err = errors.New("no support aggre")
 		} else { // 普通的范围查询
-			pbRows, err = p.rangeSelectRemote(proxy, req)
+			pbRows, err = p.rangeSelectRemote(context, t, req)
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	return decodeRows(t, req.FieldList, pbRows)
+	return pbRows, err
 }
 
-func (p *Proxy) singleSelectRemote(kvproxy *dskv.KvProxy, req *kvrpcpb.SelectRequest, key []byte) ([][]*kvrpcpb.Row, error) {
-	resp, _, err := kvproxy.SqlQuery(req, key)
+func (p *Proxy) singleSelectRemote(ctx *dskv.ReqContext, t *Table, req *txnpb.SelectRequest, key []byte) ([][]*txnpb.Row, error) {
+	rows, err := p.selectSingleKey(ctx, t, req, key)
 	if err != nil {
 		return nil, err
-	}
-
-	var rows []*kvrpcpb.Row
-	if resp.GetCode() == 0 {
-		rows = resp.GetRows()
-	} else {
-		return nil, fmt.Errorf("remote server return error. Code=%d", resp.Code)
 	}
 	if log.GetFileLogger().IsEnableDebug() {
 		log.Debug("query rows[%v]", rows)
@@ -193,24 +190,131 @@ func (p *Proxy) singleSelectRemote(kvproxy *dskv.KvProxy, req *kvrpcpb.SelectReq
 	if len(rows) == 0 {
 		return nil, nil
 	}
-	return [][]*kvrpcpb.Row{rows}, nil
+	var resRows []*txnpb.Row
+	resRows, err = handleTxRows(p, ctx, t, req, rows)
+	if err != nil {
+		return nil, err
+	}
+	return [][]*txnpb.Row{resRows}, nil
 }
 
-func (p *Proxy) rangeSelectRemote(kvproxy *dskv.KvProxy, sreq *kvrpcpb.SelectRequest) ([][]*kvrpcpb.Row, error) {
-	var key, start, end []byte
-	var resp *kvrpcpb.SelectResponse
-	var route *dskv.KeyLocation
-	var err error
-	var allRows [][]*kvrpcpb.Row
-	var all, count uint64
-	var offset, rawCount uint64
-	scope := sreq.Scope
-	limit := sreq.Limit
-	var subLimit *kvrpcpb.Limit
+//select single key
+func (p *Proxy) selectSingleKey(ctx *dskv.ReqContext, t *Table, req *txnpb.SelectRequest, key []byte) ([]*txnpb.Row, error) {
+	var (
+		resp *txnpb.SelectResponse
+		err  error
+	)
+	proxy := dskv.GetKvProxy()
+	defer dskv.PutKvProxy(proxy)
+	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	resp, _, err = proxy.SqlQuery(ctx, req, key)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Code > 0 {
+		return nil, fmt.Errorf("remote server return error. Code=%d", resp.Code)
+	}
+	return resp.GetRows(), nil
+}
 
-	start = scope.Start
-	end = scope.Limit
-	var rangeCount int
+func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.SelectRequest, rows []*txnpb.Row) (resRows []*txnpb.Row, err error) {
+	resRows = make([]*txnpb.Row, 0)
+	for _, row := range rows {
+		var (
+			rowIntent = row.GetIntent()
+			rowValue  = row.GetValue()
+		)
+		if rowIntent != nil {
+			//must be secondary row
+			var (
+				txId       = rowIntent.GetTxnId()
+				primaryKey = rowIntent.GetPrimaryKey()
+				status     txnpb.TxnStatus
+			)
+			if rowIntent.GetTimeout() {
+				//try to aborted, async
+				status, err = p.recoverFromSecondary(ctx, txId, primaryKey, t, false)
+				if err != nil {
+					return
+				}
+			} else {
+				//GetLockInfo
+				var lockResp *txnpb.GetLockInfoResponse
+				lockResp, err = p.handleGetLockInfo(ctx, txId, primaryKey, t)
+				if err != nil {
+					return
+				}
+				if lockResp.GetErr() != nil {
+					if lockResp.GetErr().GetErrType() == txnpb.TxnError_NOT_FOUND {
+						//retry read single key
+						var (
+							req = &txnpb.SelectRequest{
+								Key:       row.GetKey(),
+								FieldList: sourceReq.GetFieldList(),
+							}
+							tempRows []*txnpb.Row
+						)
+						tempRows, err = p.selectSingleKey(ctx, t, req, req.GetKey())
+						if err != nil {
+							return
+						}
+						//ignore intent, use row value, consider time order
+						if len(tempRows) == 1 && tempRows[0].GetValue() != nil {
+							row.Value = tempRows[0].GetValue()
+							row.Intent = nil
+							resRows = append(resRows, row)
+							continue
+						}
+					}
+					err = convertTxnErr(lockResp.GetErr())
+					return
+				}
+				status = lockResp.GetInfo().GetStatus()
+			}
+			if status == txnpb.TxnStatus_COMMITTED {
+				//use row intent
+				switch rowIntent.GetOpType() {
+				case txnpb.OpType_INSERT:
+					row.Value = rowIntent.GetValue()
+					row.Intent = nil
+					resRows = append(resRows, row)
+				default:
+					continue
+				}
+			} else {
+				//ignore intent, use row value
+				if rowValue != nil {
+					row.Intent = nil
+					resRows = append(resRows, row)
+				}
+			}
+		} else if rowValue != nil {
+			row.Intent = nil
+			resRows = append(resRows, row)
+		}
+	}
+	return
+}
+
+func (p *Proxy) rangeSelectRemote(context *dskv.ReqContext, t *Table, sreq *txnpb.SelectRequest) ([][]*txnpb.Row, error) {
+	var (
+		allRows          [][]*txnpb.Row
+		err              error
+		scope            = sreq.Scope
+		limit            = sreq.Limit
+		start            = scope.Start
+		end              = scope.Limit
+		key              []byte
+		resp             *txnpb.SelectResponse
+		route            *dskv.KeyLocation
+		all, count       uint64
+		offset, rawCount uint64
+		subLimit         *kvrpcpb.Limit
+		rangeCount       int
+	)
+	kvProxy := dskv.GetKvProxy()
+	defer dskv.PutKvProxy(kvProxy)
+	kvProxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	for {
 		if key == nil {
 			key = start
@@ -237,21 +341,19 @@ func (p *Proxy) rangeSelectRemote(kvproxy *dskv.KvProxy, sreq *kvrpcpb.SelectReq
 			subLimit = &kvrpcpb.Limit{Offset: offset, Count: rawCount}
 			log.Debug("limit %v", subLimit)
 		}
-		now := p.clock.Now()
-		req := &kvrpcpb.SelectRequest{
+		req := &txnpb.SelectRequest{
 			Scope:        scope,
 			FieldList:    sreq.FieldList,
 			WhereFilters: sreq.WhereFilters,
 			Limit:        subLimit,
-			Timestamp:    &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical},
 		}
-		resp, route, err = kvproxy.SqlQuery(req, key)
+		resp, route, err = kvProxy.SqlQuery(context, req, key)
 		if err != nil {
 			return nil, err
 		}
 		if resp.GetCode() != 0 {
 			log.Error("remote server return code: %v", resp.GetCode())
-			return nil,errors.New(fmt.Sprintf("response code is err %v",resp.GetCode()))
+			return nil, errors.New(fmt.Sprintf("response code is err %v", resp.GetCode()))
 		}
 		rangeCount++
 
@@ -262,7 +364,11 @@ func (p *Proxy) rangeSelectRemote(kvproxy *dskv.KvProxy, sreq *kvrpcpb.SelectReq
 				log.Debug("===route %d offset %d rows(%d) %v", route.Region.Id, resp.GetOffset(), len(resp.GetRows()), resp.GetRows())
 			}
 		}
-		rows := resp.GetRows()
+		var rows []*txnpb.Row
+		rows, err = handleTxRows(p, context, t, req, resp.GetRows())
+		if err != nil {
+			return nil, err
+		}
 		all += resp.GetOffset()
 
 		if log.GetFileLogger().IsEnableDebug() {

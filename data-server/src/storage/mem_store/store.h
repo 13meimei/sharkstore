@@ -26,10 +26,15 @@ public:
     Status Put(const std::string& key, const std::string& value);
     Status Write(WriteBatchInterface* batch);
     Status Delete(const std::string& key);
+    Status Delete(void* column_family, const std::string& key);
     Status DeleteRange(void* column_family,
                        const std::string& begin_key, const std::string& end_key);
     void* DefaultColumnFamily();
+    void* TxnCFHandle();
     IteratorInterface* NewIterator(const std::string& start, const std::string& limit);
+    Status NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
+                        std::unique_ptr<IteratorInterface>& txn_iter,
+                        const std::string& start = "", const std::string& limit = "");
     void GetProperty(const std::string& k, std::string* v);
 
 public:
@@ -38,6 +43,7 @@ public:
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options);
     Status CompactRange(void* options, void* begin, void* end);
     Status Flush(void* fops);
+    void PrintMetric();
 
     Status Insert(storage::Store* store,
                   const kvrpcpb::InsertRequest& req, uint64_t* affected);

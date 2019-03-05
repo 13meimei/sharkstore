@@ -109,46 +109,8 @@ void RunStatus::printStatistics() {
 }
 
 void RunStatus::printDBMetric() {
-    if (strcasecmp(ds_config.engine_config.name, "rocksdb") != 0) {
-        return;
-    }
     assert(context_->db != nullptr);
-    assert(context_->block_cache != nullptr);
-    auto db = context_->db;
-    std::string tr_mem_usage;
-    db->GetProperty("rocksdb.estimate-table-readers-mem", &tr_mem_usage);
-    std::string mem_table_usage;
-    db->GetProperty("rocksdb.cur-size-all-mem-tables", &mem_table_usage);
-    FLOG_INFO("rocksdb memory usages: table-readers=%s, memtables=%s, "
-              "block-cache=%lu, pinned=%lu, row-cache=%lu",
-              tr_mem_usage.c_str(), mem_table_usage.c_str(),
-              context_->block_cache->GetUsage(),
-              context_->block_cache->GetPinnedUsage(),
-              (context_->row_cache ? context_->row_cache->GetUsage() : 0));
-
-    auto stat = context_->db_stats;
-    if (stat) {
-        FLOG_INFO("rocksdb row-cache stats: hit=%" PRIu64 ", miss=%" PRIu64,
-                  stat->getAndResetTickerCount(rocksdb::ROW_CACHE_HIT),
-                  stat->getAndResetTickerCount(rocksdb::ROW_CACHE_MISS));
-
-        FLOG_INFO("rocksdb block-cache stats: hit=%" PRIu64 ", miss=%" PRIu64,
-                  stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_HIT),
-                  stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_MISS));
-
-#ifdef BLOB_EXTEND_OPTIONS
-        if (ds_config.rocksdb_config.blob_cache_size > 0) {
-            FLOG_INFO("rocksdb blobdb-cache stats: hit=%" PRIu64 ", miss=%" PRIu64,
-                      stat->getAndResetTickerCount(rocksdb::BLOB_DB_CACHE_HIT),
-                      stat->getAndResetTickerCount(rocksdb::BLOB_DB_CACHE_MISS));
-        }
-#endif
-
-        FLOG_INFO("rockdb get histograms: %s", stat->getHistogramString(rocksdb::DB_GET).c_str());
-        FLOG_INFO("rockdb write histograms: %s", stat->getHistogramString(rocksdb::DB_WRITE).c_str());
-
-        stat->Reset();
-    }
+    context_->db->PrintMetric();
 }
 
 

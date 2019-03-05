@@ -1840,6 +1840,12 @@ class Column : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   ::google::protobuf::int32 ordinal() const;
   void set_ordinal(::google::protobuf::int32 value);
 
+  // bool unique = 14;
+  void clear_unique();
+  static const int kUniqueFieldNumber = 14;
+  bool unique() const;
+  void set_unique(bool value);
+
   // @@protoc_insertion_point(class_scope:metapb.Column)
  private:
 
@@ -1857,6 +1863,7 @@ class Column : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   bool index_;
   bool auto_increment_;
   ::google::protobuf::int32 ordinal_;
+  bool unique_;
   mutable int _cached_size_;
   friend struct protobuf_metapb_2eproto::TableStruct;
 };
@@ -3940,6 +3947,20 @@ inline void Column::set_auto_increment(bool value) {
   
   auto_increment_ = value;
   // @@protoc_insertion_point(field_set:metapb.Column.auto_increment)
+}
+
+// bool unique = 14;
+inline void Column::clear_unique() {
+  unique_ = false;
+}
+inline bool Column::unique() const {
+  // @@protoc_insertion_point(field_get:metapb.Column.unique)
+  return unique_;
+}
+inline void Column::set_unique(bool value) {
+  
+  unique_ = value;
+  // @@protoc_insertion_point(field_set:metapb.Column.unique)
 }
 
 // -------------------------------------------------------------------

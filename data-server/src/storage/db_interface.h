@@ -28,10 +28,15 @@ public:
     virtual Status Put(const std::string& key, const std::string& value) = 0;
     virtual Status Write(WriteBatchInterface* batch) = 0;
     virtual Status Delete(const std::string& key) = 0;
+    virtual Status Delete(void* column_family, const std::string& key) = 0;
     virtual Status DeleteRange(void* column_family,
                                const std::string& begin_key, const std::string& end_key) = 0;
     virtual void* DefaultColumnFamily() = 0;
+    virtual void* TxnCFHandle() = 0;
     virtual IteratorInterface* NewIterator(const std::string& start, const std::string& limit) = 0;
+    virtual Status NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
+                                std::unique_ptr<IteratorInterface>& txn_iter,
+                                const std::string& start = "", const std::string& limit = "") = 0;
     virtual void GetProperty(const std::string& k, std::string* v) = 0;
 
     virtual Status SetOptions(void* column_family,
@@ -39,6 +44,8 @@ public:
     virtual Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) = 0;
     virtual Status CompactRange(void* options, void* begin, void* end) = 0;
     virtual Status Flush(void* fops) = 0;
+
+    virtual void PrintMetric() = 0;
 
 public:
     virtual Status Insert(storage::Store* store,

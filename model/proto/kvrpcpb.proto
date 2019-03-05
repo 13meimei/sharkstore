@@ -304,6 +304,26 @@ message DsUpdateResponse {
     UpdateResponse resp = 2;
 }
 
+message IndexScanRequest {
+    bytes key             = 1;
+    Scope scope           = 2;
+    Limit limit           = 3;
+}
+
+message DsIndexScanRequest {
+    RequestHeader    header = 1;
+    IndexScanRequest req    = 2;
+}
+
+message IndexScanResponse {
+    repeated bytes pk_values = 1;
+}
+
+message DsIndexScanResponse {
+    ResponseHeader    header = 1;
+    IndexScanResponse resp   = 2;
+}
+
 //
 //++++++++++++++++++++++++for jimdb-proxy protocol begin+++++++++++++++++++++++++++++++++++++
 //

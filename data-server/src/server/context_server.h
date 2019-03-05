@@ -1,8 +1,6 @@
 #ifndef __CONTEXT_SERVER_H__
 #define __CONTEXT_SERVER_H__
 
-#include <rocksdb/db.h>
-
 #include "common/socket_session.h"
 #include "raft/server.h"
 #include "storage/db_interface.h"
@@ -21,7 +19,6 @@ class Worker;
 namespace server {
 
 class Worker;
-class Manager;
 class RunStatus;
 class RangeServer;
 class RunStatus;
@@ -37,9 +34,7 @@ struct ContextServer {
     master::Worker *master_worker = nullptr;
 
     storage::DbInterface* db = nullptr;
-    std::shared_ptr<rocksdb::Cache> block_cache;  // rocksdb block cache
-    std::shared_ptr<rocksdb::Cache> row_cache; // rocksdb row cache
-    std::shared_ptr<rocksdb::Statistics> db_stats; // rocksdb stats
+
     storage::MetaStore *meta_store = nullptr;
 
     raft::RaftServer *raft_server = nullptr;

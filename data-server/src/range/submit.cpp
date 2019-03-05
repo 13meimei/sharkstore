@@ -50,6 +50,15 @@ void SubmitContext::SendTimeout(common::SocketSession* session) {
         case raft_cmdpb::CmdType::UnlockForce:
             Reply(session, new kvrpcpb::DsUnlockForceResponse, err);
             break;
+        case raft_cmdpb::CmdType::TxnPrepare:
+            Reply(session, new txnpb::DsPrepareResponse, err);
+            break;
+        case raft_cmdpb::CmdType::TxnDecide:
+            Reply(session, new txnpb::DsDecideResponse, err);
+            break;
+        case raft_cmdpb::CmdType::TxnClearup:
+            Reply(session, new txnpb::DsClearupResponse, err);
+            break;
         default:
             FLOG_ERROR("SubmitContext::SendTimeout: unknown cmd type: %d", static_cast<int>(type_));
             delete err;

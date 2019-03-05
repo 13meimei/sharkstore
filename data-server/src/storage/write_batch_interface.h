@@ -17,7 +17,9 @@ public:
     virtual ~WriteBatchInterface() = default;
 
     virtual Status Put(const std::string& key, const std::string& value) = 0;
+    virtual Status Put(void* column_family, const std::string& key, const std::string& value) = 0;
     virtual Status Delete(const std::string& key) = 0;
+    virtual Status Delete(void* column_family, const std::string& key) = 0;
 };
 
 }

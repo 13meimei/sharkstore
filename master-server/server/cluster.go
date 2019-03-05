@@ -437,13 +437,28 @@ func (c *Cluster) CreateTable(dbName, tableName string, columns, regxs []*metapb
 		sharingKeys = append(sharingKeys, start)
 		sharingKeys = append(sharingKeys, end)
 	}
+
 	keysNum := len(sharingKeys)
+	if pkDupCheck {
+		keysNum = keysNum + 1
+	}
 	createTable := NewCreateTable(table, uint64(keysNum-1))
-	for i := 0; i < keysNum-1; i++ {
+	for i := 0; i < len(sharingKeys)-1; i++ {
 		createTable.rangesToCreateList <- &rangeToCreate{
 			startKey: sharingKeys[i],
 			endKey:   sharingKeys[i+1],
 		}
+	}
+	if pkDupCheck {
+		log.Debug("create table %v with index range", tableName)
+		var idxStart, idxEnd []byte
+		idxStart = util.EncodeStorePrefix(util.Store_Prefix_INDEX, tableId)
+		_, idxEnd = bytesPrefix(idxStart)
+		createTable.rangesToCreateList <- &rangeToCreate{
+			startKey: idxStart,
+			endKey:   idxEnd,
+		}
+		log.Debug("create table %v with index range, range size %v", tableName, len(createTable.rangesToCreateList))
 	}
 	// 准备完成后再加入创建队列
 	c.creatingTables.Add(createTable)

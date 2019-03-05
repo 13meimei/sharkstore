@@ -99,12 +99,12 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 		}
 		resp.InsertResp = _resp
 	case Type_Select:
-		_resp, _err := p.Cli.Select(ctx, addr, req.GetSelectReq())
+		_resp, _err := p.Cli.TxSelect(ctx, addr, req.GetTxSelectReq())
 		if _err != nil {
 			err = _err
 			goto Err
 		}
-		resp.SelectResp = _resp
+		resp.TxSelectResp = _resp
 	case Type_Delete:
 		_resp, _err := p.Cli.Delete(ctx, addr, req.GetDeleteReq())
 		if _err != nil {
@@ -175,6 +175,35 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 			goto Err
 		}
 		resp.KvRangeDelResp = _resp
+
+	case Type_TxPrepare:
+		_resp, _err := p.Cli.TxPrepare(ctx, addr, req.GetTxPrepareReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxPrepareResp = _resp
+	case Type_TxDecide:
+		_resp, _err := p.Cli.TxDecide(ctx, addr, req.GetTxDecideReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxDecideResp = _resp
+	case Type_TxCleanup:
+		_resp, _err := p.Cli.TxCleanup(ctx, addr, req.GetTxCleanupReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxCleanupResp = _resp
+	case Type_TxGetLock:
+		_resp, _err := p.Cli.TxGetLock(ctx, addr, req.GetTxLockInfo())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxGetLockResp = _resp
 	default:
 		return nil, false, ErrInternalError
 	}
@@ -211,7 +240,7 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 		header = req.InsertReq.GetHeader()
 		timeout = client.ReadTimeoutShort
 	case Type_Select:
-		header = req.SelectReq.GetHeader()
+		header = req.TxSelectReq.GetHeader()
 		timeout = client.ReadTimeoutMedium
 	case Type_Delete:
 		header = req.DeleteReq.GetHeader()
@@ -260,6 +289,19 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 	case Type_KvRangeDel:
 		header = req.KvRangeDelReq.GetHeader()
 		timeout = client.ReadTimeoutShort
+
+	case Type_TxPrepare:
+		header = req.TxPrepareReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
+	case Type_TxDecide:
+		header = req.TxDecideReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
+	case Type_TxCleanup:
+		header = req.TxCleanupReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
+	case Type_TxGetLock:
+		header = req.TxGetLockReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
 	default:
 		return timeout, header, fmt.Errorf("invalid request type %s", req.Type.String())
 	}
@@ -295,7 +337,6 @@ func (p *KvProxy) do(bo *Backoffer, req *Request, key []byte) (resp *Response, l
 	var addr string
 	var timeout time.Duration
 	var reqHeader *kvrpcpb.RequestHeader
-	//var pErr *errorpb.Error
 	l, err = p.RangeCache.LocateKey(bo, key)
 	if err != nil {
 		log.Error("locate key=%v failed, err=%v", key, err)
@@ -433,6 +474,10 @@ func (p *KvProxy) doRangeError(bo *Backoffer, rangeErr *errorpb.Error, ctx *Cont
 	}
 	if rangeErr.GetEntryTooLarge() != nil {
 		log.Warn("ds reports `RaftEntryTooLarge`, ctx: %s %s", ctx.RequestHeader.String(), ctx.NodeAddr)
+		return false, errors.New(rangeErr.String())
+	}
+	if rangeErr.GetNoLeftSpace() != nil {
+		log.Warn("ds reports `NoLeftSpace`, ctx: %s %s", ctx.RequestHeader.String(), ctx.NodeAddr)
 		return false, errors.New(rangeErr.String())
 	}
 	if rangeErr.GetRangeNotFound() != nil {

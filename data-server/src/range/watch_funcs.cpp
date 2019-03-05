@@ -159,15 +159,6 @@ void Range::WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req) {
 
     watch::WatchCode wcode;
     if(prefix) {
-        //to do load data from memory
-        //std::string dbKeyEnd("");
-        //dbKeyEnd.assign(dbKey);
-
-//        if( 0 != WatchEncodeAndDecode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
-//            //to do set error message
-//            FLOG_ERROR("NextComparableBytes error.");
-//            return;
-//        }
         auto hashKey = w_ptr->GetKeys();
         std::string encode_key("");
         w_ptr->EncodeKey(&encode_key, w_ptr->GetTableId(), w_ptr->GetKeys());
@@ -237,7 +228,6 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     std::string dbKey{""};
     std::string dbKeyEnd{""};
     std::string dbValue("");
-    //int64_t version{0};
     int64_t minVersion(0);
     int64_t maxVersion(0);
     auto prefix = req.prefix();
@@ -354,22 +344,17 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
 
 void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req) {
     errorpb::Error *err = nullptr;
-    std::string dbKey{""};
-    //auto dbValue{std::make_shared<std::string>("")};
-    //auto extPtr{std::make_shared<std::string>("")};
+    std::string dbKey;
 
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
-    if (!CheckWriteable()) {
-        auto resp = new watchpb::DsKvWatchPutResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
         if (!VerifyLeader(err)) {
             break;
         }
@@ -455,13 +440,11 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
 
     RANGE_LOG_DEBUG("WatchDel begin, msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
 
-    if (!CheckWriteable()) {
-        auto resp = new watchpb::DsKvWatchDeleteResponse;
-        resp->mutable_resp()->set_code(Status::kNoLeftSpace);
-        return SendError(msg, req.header(), resp, nullptr);
-    }
-
     do {
+        if (!VerifyWriteable(&err)) {
+            break;
+        }
+
         if (!VerifyLeader(err)) {
             break;
         }

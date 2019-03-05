@@ -551,31 +551,37 @@ func parseColumn(cols []*metapb.Column) error {
 	return nil
 }
 
-func ParseProperties(properties string) ([]*metapb.Column, []*metapb.Column, error) {
+func ParseProperties(properties string) ([]*metapb.Column, []*metapb.Column, bool, error) {
 	tp := new(TableProperty)
 	if err := json.Unmarshal([]byte(properties), tp); err != nil {
 		log.Error("deserialize table property failed, err:[%v]", err)
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	if tp.Columns == nil {
 		log.Error("column is nil")
-		return nil, nil, ErrInvalidColumn
+		return nil, nil, false, ErrInvalidColumn
 	}
 
 	err := parseColumn(tp.Columns)
 	if err != nil {
 		log.Error("parse table column failed, err:[%v]", err)
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 
 	for _, c := range tp.Regxs {
 		// TODO check regx compile if error or not, error return
 		if c.DataType == metapb.DataType_Invalid {
-			return nil, nil, ErrInvalidColumn
+			return nil, nil, false, ErrInvalidColumn
 		}
 	}
 
-	return tp.Columns, tp.Regxs, nil
+	for _, col := range tp.Columns {
+		if col.Index {
+			return tp.Columns, tp.Regxs, true, nil
+		}
+	}
+
+	return tp.Columns, tp.Regxs, false, nil
 }
 
 func GetTypeByName(name string) metapb.DataType {

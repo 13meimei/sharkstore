@@ -107,11 +107,6 @@ Status Store::WatchGet(const watchpb::DsKvWatchGetMultiRequest& req,
     return iter->status();
 }
 
-Status Store::WatchScan() {
-    return Status(Status::kNotSupported);
-}
-
-
 } /* namespace storage */
 } /* namespace dataserver */
 } /* namespace sharkstore */

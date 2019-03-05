@@ -73,6 +73,11 @@ public:
  ::google::protobuf::internal::ExplicitlyConstructed<EntryTooLarge>
      _instance;
 } _EntryTooLarge_default_instance_;
+class NoLeftSpaceDefaultTypeInternal {
+public:
+ ::google::protobuf::internal::ExplicitlyConstructed<NoLeftSpace>
+     _instance;
+} _NoLeftSpace_default_instance_;
 class ErrorDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<Error>
@@ -84,7 +89,7 @@ namespace protobuf_errorpb_2eproto {
 
 namespace {
 
-::google::protobuf::Metadata file_level_metadata[12];
+::google::protobuf::Metadata file_level_metadata[13];
 
 }  // namespace
 
@@ -99,6 +104,7 @@ PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::AuxillaryParseTableField
 };
 PROTOBUF_CONSTEXPR_VAR ::google::protobuf::internal::ParseTable const
     TableStruct::schema[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
   { NULL, NULL, 0, -1, -1, -1, -1, NULL, false },
@@ -186,6 +192,11 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EntryTooLarge, range_id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EntryTooLarge, entry_size_),
   ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NoLeftSpace, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -202,6 +213,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, raft_fail_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, stale_range_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, stale_read_index_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Error, no_left_space_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(NotLeader)},
@@ -215,7 +227,8 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 51, -1, sizeof(StaleReadIndex)},
   { 58, -1, sizeof(ServerIsBusy)},
   { 64, -1, sizeof(EntryTooLarge)},
-  { 71, -1, sizeof(Error)},
+  { 71, -1, sizeof(NoLeftSpace)},
+  { 76, -1, sizeof(Error)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -230,6 +243,7 @@ static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&_StaleReadIndex_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_ServerIsBusy_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_EntryTooLarge_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&_NoLeftSpace_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&_Error_default_instance_),
 };
 
@@ -251,7 +265,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 12);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 13);
 }
 
 }  // namespace
@@ -282,7 +296,9 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_ServerIsBusy_default_instance_);_EntryTooLarge_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_EntryTooLarge_default_instance_);_Error_default_instance_._instance.DefaultConstruct();
+      &_EntryTooLarge_default_instance_);_NoLeftSpace_default_instance_._instance.DefaultConstruct();
+  ::google::protobuf::internal::OnShutdownDestroyMessage(
+      &_NoLeftSpace_default_instance_);_Error_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_Error_default_instance_);_NotLeader_default_instance_._instance.get_mutable()->epoch_ = const_cast< ::metapb::RangeEpoch*>(
       ::metapb::RangeEpoch::internal_default_instance());
@@ -316,6 +332,8 @@ void TableStruct::InitDefaultsImpl() {
       ::errorpb::StaleRange::internal_default_instance());
   _Error_default_instance_._instance.get_mutable()->stale_read_index_ = const_cast< ::errorpb::StaleReadIndex*>(
       ::errorpb::StaleReadIndex::internal_default_instance());
+  _Error_default_instance_._instance.get_mutable()->no_left_space_ = const_cast< ::errorpb::NoLeftSpace*>(
+      ::errorpb::NoLeftSpace::internal_default_instance());
 }
 
 void InitDefaults() {
@@ -340,23 +358,24 @@ void AddDescriptorsImpl() {
       "read_index\030\001 \001(\004\022\025\n\rreplica_index\030\002 \001(\004\""
       "\036\n\014ServerIsBusy\022\016\n\006reason\030\001 \001(\t\"5\n\rEntry"
       "TooLarge\022\020\n\010range_id\030\001 \001(\004\022\022\n\nentry_size"
-      "\030\002 \001(\004\"\201\004\n\005Error\022\017\n\007message\030\001 \001(\t\022&\n\nnot"
-      "_leader\030\002 \001(\0132\022.errorpb.NotLeader\022,\n\rsta"
-      "le_command\030\003 \001(\0132\025.errorpb.StaleCommand\022"
-      "/\n\017range_not_found\030\004 \001(\0132\026.errorpb.Range"
-      "NotFound\0220\n\020key_not_in_range\030\005 \001(\0132\026.err"
-      "orpb.KeyNotInRange\022(\n\013stale_epoch\030\006 \001(\0132"
-      "\023.errorpb.StaleEpoch\022-\n\016server_is_busy\030\007"
-      " \001(\0132\025.errorpb.ServerIsBusy\022/\n\017entry_too"
-      "_large\030\010 \001(\0132\026.errorpb.EntryTooLarge\022!\n\007"
-      "timeout\030\t \001(\0132\020.errorpb.Timeout\022$\n\traft_"
-      "fail\030\n \001(\0132\021.errorpb.RaftFail\022(\n\013stale_r"
-      "ange\030\013 \001(\0132\023.errorpb.StaleRange\0221\n\020stale"
-      "_read_index\030\014 \001(\0132\027.errorpb.StaleReadInd"
-      "exb\006proto3"
+      "\030\002 \001(\004\"\r\n\013NoLeftSpace\"\256\004\n\005Error\022\017\n\007messa"
+      "ge\030\001 \001(\t\022&\n\nnot_leader\030\002 \001(\0132\022.errorpb.N"
+      "otLeader\022,\n\rstale_command\030\003 \001(\0132\025.errorp"
+      "b.StaleCommand\022/\n\017range_not_found\030\004 \001(\0132"
+      "\026.errorpb.RangeNotFound\0220\n\020key_not_in_ra"
+      "nge\030\005 \001(\0132\026.errorpb.KeyNotInRange\022(\n\013sta"
+      "le_epoch\030\006 \001(\0132\023.errorpb.StaleEpoch\022-\n\016s"
+      "erver_is_busy\030\007 \001(\0132\025.errorpb.ServerIsBu"
+      "sy\022/\n\017entry_too_large\030\010 \001(\0132\026.errorpb.En"
+      "tryTooLarge\022!\n\007timeout\030\t \001(\0132\020.errorpb.T"
+      "imeout\022$\n\traft_fail\030\n \001(\0132\021.errorpb.Raft"
+      "Fail\022(\n\013stale_range\030\013 \001(\0132\023.errorpb.Stal"
+      "eRange\0221\n\020stale_read_index\030\014 \001(\0132\027.error"
+      "pb.StaleReadIndex\022+\n\rno_left_space\030\r \001(\013"
+      "2\024.errorpb.NoLeftSpaceb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1090);
+      descriptor, 1150);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "errorpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -3798,6 +3817,202 @@ void EntryTooLarge::set_entry_size(::google::protobuf::uint64 value) {
 // ===================================================================
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+NoLeftSpace::NoLeftSpace()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    protobuf_errorpb_2eproto::InitDefaults();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:errorpb.NoLeftSpace)
+}
+NoLeftSpace::NoLeftSpace(const NoLeftSpace& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  // @@protoc_insertion_point(copy_constructor:errorpb.NoLeftSpace)
+}
+
+void NoLeftSpace::SharedCtor() {
+  _cached_size_ = 0;
+}
+
+NoLeftSpace::~NoLeftSpace() {
+  // @@protoc_insertion_point(destructor:errorpb.NoLeftSpace)
+  SharedDtor();
+}
+
+void NoLeftSpace::SharedDtor() {
+}
+
+void NoLeftSpace::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* NoLeftSpace::descriptor() {
+  protobuf_errorpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_errorpb_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const NoLeftSpace& NoLeftSpace::default_instance() {
+  protobuf_errorpb_2eproto::InitDefaults();
+  return *internal_default_instance();
+}
+
+NoLeftSpace* NoLeftSpace::New(::google::protobuf::Arena* arena) const {
+  NoLeftSpace* n = new NoLeftSpace;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void NoLeftSpace::Clear() {
+// @@protoc_insertion_point(message_clear_start:errorpb.NoLeftSpace)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _internal_metadata_.Clear();
+}
+
+bool NoLeftSpace::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:errorpb.NoLeftSpace)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+  handle_unusual:
+    if (tag == 0) {
+      goto success;
+    }
+    DO_(::google::protobuf::internal::WireFormat::SkipField(
+          input, tag, _internal_metadata_.mutable_unknown_fields()));
+  }
+success:
+  // @@protoc_insertion_point(parse_success:errorpb.NoLeftSpace)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:errorpb.NoLeftSpace)
+  return false;
+#undef DO_
+}
+
+void NoLeftSpace::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:errorpb.NoLeftSpace)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:errorpb.NoLeftSpace)
+}
+
+::google::protobuf::uint8* NoLeftSpace::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:errorpb.NoLeftSpace)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:errorpb.NoLeftSpace)
+  return target;
+}
+
+size_t NoLeftSpace::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:errorpb.NoLeftSpace)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void NoLeftSpace::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:errorpb.NoLeftSpace)
+  GOOGLE_DCHECK_NE(&from, this);
+  const NoLeftSpace* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const NoLeftSpace>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:errorpb.NoLeftSpace)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:errorpb.NoLeftSpace)
+    MergeFrom(*source);
+  }
+}
+
+void NoLeftSpace::MergeFrom(const NoLeftSpace& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:errorpb.NoLeftSpace)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+}
+
+void NoLeftSpace::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:errorpb.NoLeftSpace)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void NoLeftSpace::CopyFrom(const NoLeftSpace& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:errorpb.NoLeftSpace)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool NoLeftSpace::IsInitialized() const {
+  return true;
+}
+
+void NoLeftSpace::Swap(NoLeftSpace* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void NoLeftSpace::InternalSwap(NoLeftSpace* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata NoLeftSpace::GetMetadata() const {
+  protobuf_errorpb_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_errorpb_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+#if PROTOBUF_INLINE_NOT_IN_HEADERS
+// NoLeftSpace
+
+#endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
+
+// ===================================================================
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Error::kMessageFieldNumber;
 const int Error::kNotLeaderFieldNumber;
 const int Error::kStaleCommandFieldNumber;
@@ -3810,6 +4025,7 @@ const int Error::kTimeoutFieldNumber;
 const int Error::kRaftFailFieldNumber;
 const int Error::kStaleRangeFieldNumber;
 const int Error::kStaleReadIndexFieldNumber;
+const int Error::kNoLeftSpaceFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Error::Error()
@@ -3884,14 +4100,19 @@ Error::Error(const Error& from)
   } else {
     stale_read_index_ = NULL;
   }
+  if (from.has_no_left_space()) {
+    no_left_space_ = new ::errorpb::NoLeftSpace(*from.no_left_space_);
+  } else {
+    no_left_space_ = NULL;
+  }
   // @@protoc_insertion_point(copy_constructor:errorpb.Error)
 }
 
 void Error::SharedCtor() {
   message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&not_leader_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&stale_read_index_) -
-      reinterpret_cast<char*>(&not_leader_)) + sizeof(stale_read_index_));
+      reinterpret_cast<char*>(&no_left_space_) -
+      reinterpret_cast<char*>(&not_leader_)) + sizeof(no_left_space_));
   _cached_size_ = 0;
 }
 
@@ -3913,6 +4134,7 @@ void Error::SharedDtor() {
   if (this != internal_default_instance()) delete raft_fail_;
   if (this != internal_default_instance()) delete stale_range_;
   if (this != internal_default_instance()) delete stale_read_index_;
+  if (this != internal_default_instance()) delete no_left_space_;
 }
 
 void Error::SetCachedSize(int size) const {
@@ -3989,6 +4211,10 @@ void Error::Clear() {
     delete stale_read_index_;
   }
   stale_read_index_ = NULL;
+  if (GetArenaNoVirtual() == NULL && no_left_space_ != NULL) {
+    delete no_left_space_;
+  }
+  no_left_space_ = NULL;
   _internal_metadata_.Clear();
 }
 
@@ -4150,6 +4376,18 @@ bool Error::MergePartialFromCodedStream(
         break;
       }
 
+      // .errorpb.NoLeftSpace no_left_space = 13;
+      case 13: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(106u /* 106 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_no_left_space()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -4250,6 +4488,12 @@ void Error::SerializeWithCachedSizes(
   if (this->has_stale_read_index()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       12, *this->stale_read_index_, output);
+  }
+
+  // .errorpb.NoLeftSpace no_left_space = 13;
+  if (this->has_no_left_space()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      13, *this->no_left_space_, output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4354,6 +4598,13 @@ void Error::SerializeWithCachedSizes(
         12, *this->stale_read_index_, deterministic, target);
   }
 
+  // .errorpb.NoLeftSpace no_left_space = 13;
+  if (this->has_no_left_space()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        13, *this->no_left_space_, deterministic, target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -4455,6 +4706,13 @@ size_t Error::ByteSizeLong() const {
         *this->stale_read_index_);
   }
 
+  // .errorpb.NoLeftSpace no_left_space = 13;
+  if (this->has_no_left_space()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->no_left_space_);
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -4521,6 +4779,9 @@ void Error::MergeFrom(const Error& from) {
   if (from.has_stale_read_index()) {
     mutable_stale_read_index()->::errorpb::StaleReadIndex::MergeFrom(from.stale_read_index());
   }
+  if (from.has_no_left_space()) {
+    mutable_no_left_space()->::errorpb::NoLeftSpace::MergeFrom(from.no_left_space());
+  }
 }
 
 void Error::CopyFrom(const ::google::protobuf::Message& from) {
@@ -4559,6 +4820,7 @@ void Error::InternalSwap(Error* other) {
   swap(raft_fail_, other->raft_fail_);
   swap(stale_range_, other->stale_range_);
   swap(stale_read_index_, other->stale_read_index_);
+  swap(no_left_space_, other->no_left_space_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -5062,6 +5324,46 @@ void Error::set_allocated_stale_read_index(::errorpb::StaleReadIndex* stale_read
     
   }
   // @@protoc_insertion_point(field_set_allocated:errorpb.Error.stale_read_index)
+}
+
+// .errorpb.NoLeftSpace no_left_space = 13;
+bool Error::has_no_left_space() const {
+  return this != internal_default_instance() && no_left_space_ != NULL;
+}
+void Error::clear_no_left_space() {
+  if (GetArenaNoVirtual() == NULL && no_left_space_ != NULL) delete no_left_space_;
+  no_left_space_ = NULL;
+}
+const ::errorpb::NoLeftSpace& Error::no_left_space() const {
+  const ::errorpb::NoLeftSpace* p = no_left_space_;
+  // @@protoc_insertion_point(field_get:errorpb.Error.no_left_space)
+  return p != NULL ? *p : *reinterpret_cast<const ::errorpb::NoLeftSpace*>(
+      &::errorpb::_NoLeftSpace_default_instance_);
+}
+::errorpb::NoLeftSpace* Error::mutable_no_left_space() {
+  
+  if (no_left_space_ == NULL) {
+    no_left_space_ = new ::errorpb::NoLeftSpace;
+  }
+  // @@protoc_insertion_point(field_mutable:errorpb.Error.no_left_space)
+  return no_left_space_;
+}
+::errorpb::NoLeftSpace* Error::release_no_left_space() {
+  // @@protoc_insertion_point(field_release:errorpb.Error.no_left_space)
+  
+  ::errorpb::NoLeftSpace* temp = no_left_space_;
+  no_left_space_ = NULL;
+  return temp;
+}
+void Error::set_allocated_no_left_space(::errorpb::NoLeftSpace* no_left_space) {
+  delete no_left_space_;
+  no_left_space_ = no_left_space;
+  if (no_left_space) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:errorpb.Error.no_left_space)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

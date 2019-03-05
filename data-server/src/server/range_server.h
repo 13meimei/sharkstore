@@ -54,8 +54,6 @@ public:
     void OnAskSplitResp(const mspb::AskSplitResponse &) override;
     void CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) override;
 
-    void buildDBOptions(rocksdb::Options& ops);
-
 private:
     int OpenDB();
     void CloseDB();
@@ -95,6 +93,12 @@ private:
     void KVBatchDelete(common::ProtoMessage *msg);
     void KVRangeDelete(common::ProtoMessage *msg);
     void KVScan(common::ProtoMessage *msg);
+
+    void TxnPrepare(common::ProtoMessage *msg);
+    void TxnDecide(common::ProtoMessage *msg);
+    void TxnClearup(common::ProtoMessage *msg);
+    void TxnGetLockInfo(common::ProtoMessage *msg);
+    void TxnSelect(common::ProtoMessage* msg);
 
     void TimeOut(const kvrpcpb::RequestHeader &req,
                  kvrpcpb::ResponseHeader *resp);

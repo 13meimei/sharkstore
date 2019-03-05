@@ -115,16 +115,40 @@ func (t *Table) FindColumnById(columnId uint64) *metapb.Column {
 	return nil
 }
 
-func (t *Table) AllIndexs() []uint64 {
-	indexs := make([]uint64, 0)
+func (t *Table) AllIndexes() []*metapb.Column {
+	indexes := make([]*metapb.Column, 0)
 	t.cLock.RLock()
 	defer t.cLock.RUnlock()
 	for _, c := range t.columns {
 		if c.Index {
-			indexs = append(indexs, c.Id)
+			indexes = append(indexes, c)
 		}
 	}
-	return indexs
+	return indexes
+}
+
+func (t *Table) AllUniqueIndexes() []*metapb.Column {
+	indexes := make([]*metapb.Column, 0)
+	t.cLock.RLock()
+	defer t.cLock.RUnlock()
+	for _, c := range t.columns {
+		if c.Index && c.Unique {
+			indexes = append(indexes, c)
+		}
+	}
+	return indexes
+}
+
+func (t *Table) AllNonUniqueIndexes() []*metapb.Column {
+	indexes := make([]*metapb.Column, 0)
+	t.cLock.RLock()
+	defer t.cLock.RUnlock()
+	for _, c := range t.columns {
+		if c.Index && !c.Unique{
+			indexes = append(indexes, c)
+		}
+	}
+	return indexes
 }
 
 func (t *Table) AddColumn(c *metapb.Column) {

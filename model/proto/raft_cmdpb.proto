@@ -5,6 +5,7 @@ import "metapb.proto";
 import "kvrpcpb.proto";
 import "gogoproto/gogo.proto";
 import "watchpb.proto";
+import "txn.proto";
 
 option (gogoproto.marshaler_all) = true;
 option (gogoproto.sizer_all) = true;
@@ -76,6 +77,10 @@ enum CmdType {
     LockUpdate  = 41;
     Unlock      = 42;
     UnlockForce = 43;
+
+    TxnPrepare  = 50;
+    TxnDecide   = 51;
+    TxnClearup  = 52;
 }
 
 message Command {
@@ -115,6 +120,10 @@ message Command {
     kvrpcpb.UnlockForceRequest  unlock_force_req = 43;
 
     kvrpcpb.UpdateRequest           update_req               = 50;
+
+    txnpb.PrepareRequest txn_prepare_req = 60;
+    txnpb.DecideRequest txn_decide_req = 61;
+    txnpb.ClearupRequest txn_clearup_req = 62;
 }
 
 message PeerTask {
@@ -122,9 +131,15 @@ message PeerTask {
     metapb.Peer        peer           = 2;
 }
 
+enum CFType {
+    CF_DEFAULT = 0;
+    CF_TXN = 1;
+}
+
 message SnapshotKVPair {
     bytes key   = 1;
     bytes value = 2;
+    CFType cf_type = 3;
 }
 
 message SnapshotContext {

@@ -1342,7 +1342,7 @@ func TestProxyInsertOneRowWithRangeChange(t *testing.T) {
 			break
 		}
 	}
-	middle, _ := util.EncodePrimaryKey(start, pkCol, []byte(strconv.Itoa(5)));
+	middle, _ := util.EncodePrimaryKey(start, pkCol, []byte(strconv.Itoa(5)))
 	r := util.BytesPrefix(start)
 	rng := &metapb.Range{
 		Id:         1,

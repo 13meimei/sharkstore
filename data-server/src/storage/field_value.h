@@ -43,6 +43,9 @@ public:
     explicit FieldValue(const std::string& val) : type_(FieldType::kBytes) {
         value_.sval = new std::string(val);
     }
+    explicit FieldValue(std::string&& val) : type_(FieldType::kBytes) {
+        value_.sval = new std::string(std::move(val));
+    }
 
     ~FieldValue() {
         if (FieldType::kBytes == type_) delete value_.sval;

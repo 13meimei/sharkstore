@@ -41,6 +41,7 @@ metapb::Range MakeRangeMeta(Table *t, size_t peers_num) {
 }
 
 static const char kKeyPrefixByte = '\x01';
+static const char kIndexPrefixByte = '\x02';
 
 void EncodeKeyPrefix(std::string *buf, uint64_t table_id) {
     buf->push_back(kKeyPrefixByte);

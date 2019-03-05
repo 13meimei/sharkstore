@@ -82,18 +82,18 @@ func BytesPrefix(prefix []byte) *Range {
 }
 
 type KeyPair struct {
-	StartKey  []byte
-	EndKey  []byte
+	StartKey []byte
+	EndKey   []byte
 }
 
 type KeyPairSlice []KeyPair
 
-func (slice KeyPairSlice) Len() int           { return len(slice) }
+func (slice KeyPairSlice) Len() int { return len(slice) }
 func (slice KeyPairSlice) Less(i, j int) bool {
 	if bytes.Compare(slice[i].EndKey, slice[j].StartKey) < 0 {
 		return true
 	}
-	if bytes.Compare(slice[i].StartKey, slice[j].StartKey) < 0{
+	if bytes.Compare(slice[i].StartKey, slice[j].StartKey) < 0 {
 		return true
 	}
 	if bytes.Compare(slice[i].EndKey, slice[j].EndKey) < 0 {
@@ -101,7 +101,7 @@ func (slice KeyPairSlice) Less(i, j int) bool {
 	}
 	return false
 }
-func (slice KeyPairSlice) Swap(i, j int)      { slice[i], slice[j] = slice[j], slice[i] }
+func (slice KeyPairSlice) Swap(i, j int) { slice[i], slice[j] = slice[j], slice[i] }
 
 // Sort is a convenience method.
 func (slice KeyPairSlice) Sort() { sort.Sort(slice) }
@@ -109,4 +109,3 @@ func (slice KeyPairSlice) Sort() { sort.Sort(slice) }
 func (slice KeyPairSlice) Get(i int) KeyPair {
 	return slice[i]
 }
-

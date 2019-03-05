@@ -34,19 +34,28 @@ void StoreTestFixture::SetUp() {
     ASSERT_TRUE(tmp != NULL);
     tmp_dir_ = tmp;
 
+    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
+    column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
+    column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
+
     rocksdb::Options ops;
     ops.create_if_missing = true;
     ops.error_if_exists = true;
-    auto s = rocksdb::DB::Open(ops, tmp, &db_);
+    ops.create_missing_column_families = true;
+    auto s = rocksdb::DB::Open(ops, tmp, column_families, &cf_handles_, &db_);
     ASSERT_TRUE(s.ok());
+    ASSERT_EQ(cf_handles_.size(), 2);
 
     // make meta
     meta_ = MakeRangeMeta(table_.get());
 
-    store_ = new sharkstore::dataserver::storage::Store(meta_, db_);
+    store_ = new sharkstore::dataserver::storage::Store(meta_, db_, cf_handles_[1]);
 }
 
 void StoreTestFixture::TearDown() {
+    for (auto handle : cf_handles_) {
+        delete handle;
+    }
     delete store_;
     delete db_;
     if (!tmp_dir_.empty()) {

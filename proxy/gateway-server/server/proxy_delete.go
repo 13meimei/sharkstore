@@ -2,18 +2,20 @@ package server
 
 import (
 	"fmt"
-
+	"util"
+	"util/log"
 	"pkg-go/ds_client"
+	"proxy/store/dskv"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
 	"model/pkg/kvrpcpb"
-	"model/pkg/timestamp"
-	"util/log"
-	"proxy/store/dskv"
+	"model/pkg/metapb"
+	"model/pkg/txn"
 )
 
 // HandleDelete handle delete
-func (p *Proxy) HandleDelete(db string, stmt *sqlparser.Delete, args []interface{}) (*mysql.Result, error) {
+func (p *Proxy) HandleDelete(db string, stmt *sqlparser.Delete, args []interface{}) (
+	t *Table, intents []*txnpb.TxnIntent, res *mysql.Result, err error) {
 	//var parseTime time.Time
 	//start := time.Now()
 	//defer func() {
@@ -31,62 +33,161 @@ func (p *Proxy) HandleDelete(db string, stmt *sqlparser.Delete, args []interface
 
 	// 解析表明
 	tableName := parser.parseTable(stmt)
-	t := p.router.FindTable(db, tableName)
+	t = p.router.FindTable(db, tableName)
 	if t == nil {
-		log.Error("[delete] table %s.%s doesn.t exist", db, tableName)
-		return nil, fmt.Errorf("Table '%s.%s' doesn't exist", db, tableName)
+		err = fmt.Errorf("Table '%s.%s' doesn't exist ", db, tableName)
+		log.Error("[delete] find table err: %v", err)
+		return
 	}
 
-	var matchs []Match
+	var matches []Match
 	if stmt.Where != nil {
-		var err error
-		matchs, err = parser.parseWhere(stmt.Where)
+		matches, err = parser.parseWhere(stmt.Where)
 		if err != nil {
 			log.Error("handle delete parse where error(%v)", err)
-			return nil, err
+			return
 		}
-		log.Debug("matchs %v", matchs)
+		log.Debug("matches %v", matches)
 	}
 
 	//parseTime = time.Now()
-	affectedRows, err := p.doDelete(t, matchs)
+	var affected uint64
+	intents, affected, err = p.doDelete(t, matches)
 	if err != nil {
-		return nil, err
+		return
 	}
-	ret := new(mysql.Result)
-	ret.AffectedRows = affectedRows
-	ret.Status = 0
-	return ret, nil
+	res = new(mysql.Result)
+	res.AffectedRows = affected
+	res.Status = 0
+	return
 }
 
-func (p *Proxy) doDelete(t *Table, matches []Match) (affected uint64, err error) {
-	pbMatches, err := makePBMatches(t, matches)
+func (p *Proxy) doDelete(t *Table, matches []Match) (intents []*txnpb.TxnIntent, affected uint64, err error) {
+	var (
+		pbMatches []*kvrpcpb.Match
+		key       []byte
+		scope     *kvrpcpb.Scope
+	)
+	pbMatches, err = makePBMatches(t, matches)
 	if err != nil {
 		log.Error("[delete]covert where matches failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
-		return 0, err
+		return
 	}
-	key, scope, err := findPKScope(t, pbMatches)
+	key, scope, err = findPKScope(t, pbMatches)
 	if err != nil {
 		log.Error("[delete]get pk scope failed(%v), Table: %s.%s", err, t.DbName(), t.Name())
-		return 0, err
+		return
 	}
-	// TODO: sync pool
-	now := p.clock.Now()
-	dreq := &kvrpcpb.DeleteRequest{
+
+	//delete index data and row data
+	sreq := &txnpb.SelectRequest{
 		Key:          key,
 		Scope:        scope,
 		WhereFilters: pbMatches,
-		Timestamp:    &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical},
 	}
-	affected, err = p.deleteRemote(t.DbName(), t.Name(), dreq)
+	intents, affected, err = p.selectForDelete(t, sreq)
+	return
+}
+
+func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([]*txnpb.TxnIntent, uint64, error) {
+	var (
+		intents       []*txnpb.TxnIntent
+		affected      uint64
+		err           error
+		pksAndIdxData [][]*txnpb.Row
+	)
+	indexFields := t.AllIndexes()
+	indexCount := len(indexFields)
+	log.Debug("[delete]start to select data, indexCount: %v", indexCount)
+	selectFields, colMap := getSelectFields(t, indexFields)
+	//retrieve: pk value and index field old value
+	//pk1,...,pkn,index1(old),...,indexn(old), correspond to selectFields
+	sreq.FieldList = selectFields
+	pksAndIdxData, err = p.selectRemoteNoDecode(t, sreq)
 	if err != nil {
-		log.Error("[delete]delete failed. err: %v, key: %v, scope: %v", err, key, scope)
-	} else {
-		if log.GetFileLogger().IsEnableDebug() {
-			log.Debug("[delete]delete success. affected: %v, key: %v, scope: %v", affected, key, scope)
+		log.Error("[delete]select row error: %v", err)
+		return nil, 0, err
+	}
+	for _, partRData := range pksAndIdxData {
+		for _, rData := range partRData {
+			var (
+				rValue   *Row
+				rowKey   = util.EncodeStorePrefix(util.Store_Prefix_KV, t.GetId())
+				rVersion = rData.GetValue().GetVersion()
+			)
+			rValue, err = decodeRow(t, selectFields, rData)
+			if err != nil {
+				log.Error("[delete]decode row err: %v", err)
+				return nil, 0, err
+			}
+			log.Debug("[delete]select row data: %v", rValue)
+			for i, field := range selectFields {
+				var (
+					col        = field.GetColumn()
+					fieldValue []byte
+				)
+				if rValue.fields[i].value != nil {
+					fieldValue, err = formatValue(rValue.fields[i].value)
+					if err != nil {
+						log.Error("[delete]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
+						return nil, 0, err
+					}
+				}
+				if col.GetPrimaryKey() == 1 {
+					rowKey, err = util.EncodePrimaryKey(rowKey, col, fieldValue)
+					continue
+				}
+				if col.GetIndex() {
+					var indexKey []byte
+					log.Info("[delete]index data: field %v, value %v", col.GetName(), fieldValue)
+					indexKey, err = encodeIndexKey(t, col, colMap, fieldValue, rValue)
+					if err != nil {
+						log.Error("[delete]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
+						return nil, 0, err
+					}
+					log.Info("[delete]assemble old index key: %v, new index Key: %v, new index value: %v", indexKey)
+					intents = append(intents, &txnpb.TxnIntent{
+						Typ:         txnpb.OpType_DELETE,
+						Key:         indexKey,
+						CheckUnique: false,
+						ExpectedVer: rVersion,
+					})
+				}
+			}
+			intents = append(intents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_DELETE,
+				Key:         rowKey,
+				CheckUnique: false,
+				ExpectedVer: rVersion,
+			})
+			affected += 1
 		}
 	}
-	return
+	return intents, affected, nil
+}
+
+func getSelectFields(t *Table, indexCols []*metapb.Column) ([]*kvrpcpb.SelectField, map[string]int) {
+	var (
+		selectFields []*kvrpcpb.SelectField
+		pkColMap     = make(map[string]int, 0)
+	)
+	for i, pkColName := range t.PKS() {
+		pkCol := t.FindColumn(pkColName)
+		selectFields = append(selectFields, &kvrpcpb.SelectField{
+			Typ:    kvrpcpb.SelectField_Column,
+			Column: pkCol,
+		})
+		pkColMap[pkColName] = i
+	}
+	pkCount := len(t.PKS())
+	for j, col := range indexCols {
+		selectFields = append(selectFields, &kvrpcpb.SelectField{
+			Typ:    kvrpcpb.SelectField_Column,
+			Column: col,
+		})
+		pkColMap[col.GetName()] = pkCount + j
+	}
+	return selectFields, pkColMap
 }
 
 func (p *Proxy) deleteRemote(db, table string, req *kvrpcpb.DeleteRequest) (uint64, error) {

@@ -247,7 +247,7 @@ int sf_load_config_buffer(const char* content,const char* server_name) {
 
     memset(&ini_context, 0, sizeof(IniContext));
     ;
-    if ((result = iniLoadFromBuffer(content, &ini_context)) != 0) {
+    if ((result = iniLoadFromBuffer((char *)content, &ini_context)) != 0) {
         FLOG_ERROR("load conf file \"%s\" fail, code: %d", content, result);
         return result;
     }
