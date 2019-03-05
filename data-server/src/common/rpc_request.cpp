@@ -5,7 +5,6 @@
 #include "frame/sf_logger.h"
 
 namespace sharkstore {
-namespace dataserver {
 
 RPCRequest::RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_msg) :
     ctx(req_ctx),
@@ -61,5 +60,4 @@ void SetResponseHeader(kvrpcpb::ResponseHeader* resp,
     }
 }
 
-}  // namespace dataserver
 }  // namespace sharkstore

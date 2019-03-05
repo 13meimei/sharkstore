@@ -8,7 +8,6 @@ _Pragma("once");
 #include "net/message.h"
 
 namespace sharkstore {
-namespace dataserver {
 
 // RPC请求默认处理超时
 static const uint32_t kDefaultRPCRequestTimeoutMS = 10000;
@@ -21,12 +20,14 @@ struct RPCRequest {
     int64_t begin_time = 0;  // 请求开始时间，单位微秒
 
     RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_msg);
+    virtual ~RPCRequest() = default;
 
     // Parse to request proto msg
     bool ParseTo(google::protobuf::Message& proto_req, bool zero_copy = true);
 
     // Send response
-    void Reply(const google::protobuf::Message& proto_resp);
+    // 声明为virtual是为了方便mock
+    virtual void Reply(const google::protobuf::Message& proto_resp);
 };
 
 using RPCRequestPtr = std::unique_ptr<RPCRequest>;
@@ -41,5 +42,4 @@ void SetResponseHeader(kvrpcpb::ResponseHeader* resp,
                        uint64_t cluster_id, uint64_t trace_id,
                        errorpb::Error *err = nullptr);
 
-}  // namespace dataserver
 }  // namespace sharkstore
