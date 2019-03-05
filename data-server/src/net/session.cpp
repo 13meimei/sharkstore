@@ -30,7 +30,7 @@ Session::~Session() {
         opt_.statistics->AddSessionCount(-1);
     }
 
-    FLOG_DEBUG("%s destroyed.", id_.c_str());
+    FLOG_INFO("%s destroyed.", id_.c_str());
 }
 
 void Session::Start() {
@@ -45,6 +45,8 @@ void Session::Start() {
 
 void Session::Connect(const std::string& address, const std::string& port) {
     direction_ = Direction::kClient;
+    id_ = std::string("C[unknown<->") + address + ":" + port + "]";
+    remote_addr_ = address + ":" + port;
 
     asio::ip::tcp::resolver resolver(socket_.get_io_context());
     asio::error_code ec;
@@ -89,14 +91,12 @@ bool Session::init_establish() {
         return false;
     }
 
-    if (direction_ == Direction::kServer) {
-        id_ = std::string("S[") + remote_addr_ + "]";
-    } else {
-        id_ = std::string("C[") + local_addr_ + "]";
-    }
-    established_ = true;
+    id_.clear();
+    id_.push_back(direction_ == Direction::kServer ? 'S' : 'C');
+    id_ += "[" + local_addr_ + "<->" + remote_addr_ + "]";
 
-    FLOG_INFO("%s establised %s->%s", id_.c_str(), local_addr_.c_str(), remote_addr_.c_str());
+    established_ = true;
+    FLOG_INFO("%s establised.", id_.c_str());
 
     return true;
 }
@@ -149,6 +149,9 @@ void Session::read_head() {
 void Session::read_body() {
     if (head_.body_length == 0) {
         if (head_.func_id == kHeartbeatFuncID) { // response heartbeat
+            if (opt_.statistics) {
+                opt_.statistics->AddMessageRecv(sizeof(head_));
+            }
             auto msg = NewMessage();
             msg->head.SetResp(head_, 0);
             Write(msg);
@@ -160,17 +163,19 @@ void Session::read_body() {
     body_.resize(head_.body_length);
     auto self(shared_from_this());
     asio::async_read(socket_, asio::buffer(body_.data(), body_.size()),
-                     [this, self](std::error_code ec, std::size_t) {
+                     [this, self](std::error_code ec, std::size_t length) {
                          if (!ec) {
+                             if (opt_.statistics) {
+                                 opt_.statistics->AddMessageRecv(sizeof(head_) + length);
+                             }
+
                              Context ctx;
                              ctx.session = self;
                              ctx.local_addr = local_addr_;
                              ctx.remote_addr = remote_addr_;
-
                              auto msg = NewMessage();
                              msg->head = head_;
                              msg->body = std::move(body_);
-
                              handler_(ctx, msg);
 
                              read_head();
@@ -200,8 +205,11 @@ void Session::do_write() {
     };
 
     asio::async_write(socket_, buffers,
-                      [this, self](std::error_code ec, std::size_t /*length*/) {
+                      [this, self](std::error_code ec, std::size_t length) {
                           if (!ec) {
+                              if (opt_.statistics) {
+                                  opt_.statistics->AddMessageSent(length);
+                              }
                               write_msgs_.pop_front();
                               if (!write_msgs_.empty()) {
                                   do_write();

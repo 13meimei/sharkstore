@@ -54,7 +54,8 @@ int main(int argc, char *argv[]) {
     SetLogger(new impl::StdLogger(impl::StdLogger::Level::kInfo));
 
     log_init2();
-    set_log_level("info");
+    char level[] = "info";
+    set_log_level(level);
 
     auto addr_mgr = std::make_shared<bench::NodeAddress>(3);
 
@@ -73,7 +74,7 @@ int main(int argc, char *argv[]) {
             auto r = n->GetRange(i);
             r->WaitLeader();
             if (r->IsLeader()) {
-                context.leaders[i] = r;
+                context.leaders[i-1] = r;
             }
         }
     }
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::thread> threads;
     for (size_t i = 0; i < bench_config.thread_num; ++i) {
-        threads.push_back(std::thread(std::bind(&runBenchmark, &context)));
+        threads.emplace_back(std::thread(std::bind(&runBenchmark, &context)));
     }
     for (auto &t : threads) {
         t.join();

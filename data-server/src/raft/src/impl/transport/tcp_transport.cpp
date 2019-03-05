@@ -19,6 +19,7 @@ Status TcpConnection::Send(MessagePtr& raft_msg) {
     // 组装网络消息
     auto net_msg = net::NewMessage();
     net_msg->head.msg_id = msg_id_increaser.fetch_add(1);
+    net_msg->head.msg_type = net::kDataRequestType;
     auto& body = net_msg->body;
     body.resize(raft_msg->ByteSizeLong());
     if (!raft_msg->SerializeToArray(body.data(), static_cast<int>(body.size()))) {
@@ -65,11 +66,8 @@ TcpConnPtr TcpTransport::ConnectionPool::Get(uint64_t to) {
     TcpConnPtr conn;
     auto ret = create_func_(to, conn);
     if (!ret.ok()) {
-        RAFT_LOG_ERROR("[raft]connect failed to %" PRIu64 ": %s", to, ret.ToString().c_str());
         return nullptr;
     }
-
-    RAFT_LOG_ERROR("[raft]connect to %" PRIu64 ": success", to);
     connections_.emplace(to, conn);
     return conn;
 }
@@ -110,13 +108,13 @@ void TcpTransport::onMessage(const net::Context& ctx, const net::MessagePtr& msg
     auto data = msg->body.data();
     auto len = static_cast<int>(msg->body.size());
     if (raft_msg->ParseFromArray(data, len)) {
-        RAFT_LOG_DEBUG("recv %s message from %" PRIu64 ":%s to %" PRIu64 ,
+        RAFT_LOG_DEBUG("raft[Transport] recv %s message from %" PRIu64 ":%s to %" PRIu64 ,
                 pb::MessageType_Name(raft_msg->type()).c_str(), raft_msg->from(),
                 ctx.remote_addr.c_str(), raft_msg->to());
 
         handler_(raft_msg);
     } else {
-        RAFT_LOG_ERROR("parse raft message failed from %s", ctx.remote_addr.c_str());
+        RAFT_LOG_ERROR("raft[Transport] parse raft message failed from %s", ctx.remote_addr.c_str());
     }
 }
 
@@ -151,12 +149,12 @@ void TcpTransport::Shutdown() {
 void TcpTransport::SendMessage(MessagePtr& msg) {
     auto conn = conn_pool_->Get(msg->to());
     if (!conn) {
-        RAFT_LOG_ERROR("could not get a connection to %" PRIu64, msg->to());
+        RAFT_LOG_ERROR("raft[Transport] could not get a connection to %" PRIu64, msg->to());
         return;
     }
     auto ret = conn->Send(msg);
     if (!ret.ok()) {
-        RAFT_LOG_ERROR("send to %" PRIu64 " error: %s", msg->to(), ret.ToString().c_str());
+        RAFT_LOG_ERROR("raft[Transport] send to %" PRIu64 " error: %s", msg->to(), ret.ToString().c_str());
         conn_pool_->Remove(msg->to(), conn);
     }
 }
@@ -164,14 +162,19 @@ void TcpTransport::SendMessage(MessagePtr& msg) {
 Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
     auto addr = resolver_->GetNodeAddress(to);
     if (addr.empty()) {
+        RAFT_LOG_ERROR("raft[Transport] could not resolve address of %" PRIu64, to);
         return Status(Status::kInvalidArgument, "resolve node address", std::to_string(to));
+    } else {
+        RAFT_LOG_ERROR("raft[Transport] resolve address of %" PRIu64 " is %s", to, addr.c_str());
     }
+
     std::string ip, port;
     auto pos = addr.find(':');
     if (pos != std::string::npos) {
         ip = addr.substr(0, pos);
         port = addr.substr(pos + 1);
     } else {
+        RAFT_LOG_ERROR("raft[Transport] invalid address of %" PRIu64 ": %s", to, addr.c_str());
         return Status(Status::kInvalidArgument, "invalid node address", std::to_string(to) + ", addr=" + addr);
     }
 
@@ -179,6 +182,7 @@ Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
     auto session = std::make_shared<net::Session>(client_opt_, null_handler, client_->GetIOContext());
     session->Connect(ip, port);
     conn = std::make_shared<TcpConnection>(session);
+    RAFT_LOG_INFO("raft[Transport] new connection to %" PRIu64 "-%s", to, addr.c_str());
     return Status::OK();
 }
 
