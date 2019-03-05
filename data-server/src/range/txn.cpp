@@ -51,6 +51,8 @@ bool Range::KeyInRange(const DecideRequest& req, const metapb::RangeEpoch& epoch
 }
 
 void Range::TxnPrepare(RPCRequestPtr rpc, DsPrepareRequest& req) {
+    RANGE_LOG_DEBUG("TxnPrepare begin, req: %s", req.DebugString().c_str());
+
     errorpb::Error *err = nullptr;
     do {
         if (!VerifyWriteable(&err)) {
@@ -80,7 +82,7 @@ void Range::TxnPrepare(RPCRequestPtr rpc, DsPrepareRequest& req) {
 }
 
 Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_index) {
-    RANGE_LOG_DEBUG("ApplyTxnPrepare begin");
+    RANGE_LOG_DEBUG("ApplyTxnPrepare begin at %" PRId64 ", req: %s", raft_index, cmd.DebugString().c_str());
 
     Status ret;
     auto &req = cmd.txn_prepare_req();
@@ -105,7 +107,7 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
 }
 
 void Range::TxnDecide(RPCRequestPtr rpc, DsDecideRequest& req) {
-    RANGE_LOG_DEBUG("TxnDecide begin");
+    RANGE_LOG_DEBUG("TxnDecide begin, req: %s", req.DebugString().c_str());
 
     errorpb::Error *err = nullptr;
     do {
@@ -136,7 +138,7 @@ void Range::TxnDecide(RPCRequestPtr rpc, DsDecideRequest& req) {
 }
 
 Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index) {
-    RANGE_LOG_DEBUG("ApplyTxnDecide begin");
+    RANGE_LOG_DEBUG("ApplyTxnDecide begin, cmd: %s", cmd.DebugString().c_str());
 
     Status ret;
     auto &req = cmd.txn_decide_req();
@@ -166,7 +168,7 @@ Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index
 }
 
 void Range::TxnClearup(RPCRequestPtr rpc, txnpb::DsClearupRequest& req) {
-    RANGE_LOG_DEBUG("TxnClearup  begin");
+    RANGE_LOG_DEBUG("TxnClearup  begin, req: %s", req.DebugString().c_str());
 
     errorpb::Error *err = nullptr;
     do {
@@ -264,7 +266,7 @@ void Range::TxnGetLockInfo(RPCRequestPtr rpc, txnpb::DsGetLockInfoRequest& req) 
 }
 
 void Range::TxnSelect(RPCRequestPtr rpc, txnpb::DsSelectRequest& req) {
-    RANGE_LOG_DEBUG("Select begin");
+    RANGE_LOG_DEBUG("Select begin, req: %s", req.DebugString().c_str());
 
     auto btime = NowMicros();
     errorpb::Error *err = nullptr;
