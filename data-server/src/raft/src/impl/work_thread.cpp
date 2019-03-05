@@ -153,7 +153,7 @@ void WorkThread::run() {
                 work.Do();
             } catch (RaftException& e) {
                 assert(work.owner > 0);
-                LOG_ERROR("raft[%llu] throw an exception: %s. removed.",
+                RAFT_LOG_ERROR("raft[%llu] throw an exception: %s. removed.",
                           work.owner, e.what());
                 server_->RemoveRaft(work.owner);
             }

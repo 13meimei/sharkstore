@@ -7,6 +7,8 @@
 #include <vector>
 #include <functional>
 
+#include <fastcommon/logger.h>
+#include <fastcommon/shared_func.h>
 #include <gperftools/profiler.h>
 
 #include "address.h"
@@ -19,7 +21,7 @@ using namespace sharkstore::raft;
 using namespace sharkstore::raft::bench;
 
 struct BenchContext {
-    std::atomic<int64_t> counter;
+    std::atomic<int64_t> counter = {0};
     std::vector<std::shared_ptr<Range>> leaders;
 };
 
@@ -47,19 +49,12 @@ void runBenchmark(BenchContext *ctx) {
     }
 }
 
-namespace sharkstore {
-namespace raft {
-namespace bench {
-void start_fast_service(int argc, char *argv[]);
-}
-}  // namespace raft
-}  // namespace sharkstore
-
 int main(int argc, char *argv[]) {
     // 不打印debug日志
     SetLogger(new impl::StdLogger(impl::StdLogger::Level::kInfo));
 
-    start_fast_service(argc, argv);
+    log_init2();
+    set_log_level("info");
 
     auto addr_mgr = std::make_shared<bench::NodeAddress>(3);
 

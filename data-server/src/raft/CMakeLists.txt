@@ -43,15 +43,13 @@ endforeach()
 add_library(sharkstore-raft STATIC ${raft_SOURCES})
 
 set (raft_test_Deps
-        sharkstore-raft
-        sharkstore-common
-        sharkstore-frame
-        sharkstore-base
-        sharkstore-lkqueue
-        ${PROTOBUF_LIBRARY}
-        ${FASTCOMMON_LIB}
-        pthread
-        )
+     sharkstore-raft
+     sharkstore-net
+     sharkstore-base
+     ${FASTCOMMON_LIB}
+     ${PROTOBUF_LIBRARY}
+     pthread
+     )
 
 OPTION(BUILD_RAFT_TEST "build raft tests" OFF)
 MESSAGE(STATUS BUILD_RAFT_TEST=${BUILD_RAFT_TEST})

@@ -65,11 +65,11 @@ TcpConnPtr TcpTransport::ConnectionPool::Get(uint64_t to) {
     TcpConnPtr conn;
     auto ret = create_func_(to, conn);
     if (!ret.ok()) {
-        LOG_ERROR("[raft]connect failed to %" PRIu64 ": %s", to, ret.ToString().c_str());
+        RAFT_LOG_ERROR("[raft]connect failed to %" PRIu64 ": %s", to, ret.ToString().c_str());
         return nullptr;
     }
 
-    LOG_ERROR("[raft]connect to %" PRIu64 ": success", to);
+    RAFT_LOG_ERROR("[raft]connect to %" PRIu64 ": success", to);
     connections_.emplace(to, conn);
     return conn;
 }
@@ -110,13 +110,13 @@ void TcpTransport::onMessage(const net::Context& ctx, const net::MessagePtr& msg
     auto data = msg->body.data();
     auto len = static_cast<int>(msg->body.size());
     if (raft_msg->ParseFromArray(data, len)) {
-        LOG_DEBUG("recv %s message from %" PRIu64 ":%s to %" PRIu64 ,
+        RAFT_LOG_DEBUG("recv %s message from %" PRIu64 ":%s to %" PRIu64 ,
                 pb::MessageType_Name(raft_msg->type()).c_str(), raft_msg->from(),
                 ctx.remote_addr.c_str(), raft_msg->to());
 
         handler_(raft_msg);
     } else {
-        LOG_ERROR("parse raft message failed from %s", ctx.remote_addr.c_str());
+        RAFT_LOG_ERROR("parse raft message failed from %s", ctx.remote_addr.c_str());
     }
 }
 
@@ -151,12 +151,12 @@ void TcpTransport::Shutdown() {
 void TcpTransport::SendMessage(MessagePtr& msg) {
     auto conn = conn_pool_->Get(msg->to());
     if (!conn) {
-        LOG_ERROR("could not get a connection to %" PRIu64, msg->to());
+        RAFT_LOG_ERROR("could not get a connection to %" PRIu64, msg->to());
         return;
     }
     auto ret = conn->Send(msg);
     if (!ret.ok()) {
-        LOG_ERROR("send to %" PRIu64 " error: %s", msg->to(), ret.ToString().c_str());
+        RAFT_LOG_ERROR("send to %" PRIu64 " error: %s", msg->to(), ret.ToString().c_str());
         conn_pool_->Remove(msg->to(), conn);
     }
 }

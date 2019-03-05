@@ -330,7 +330,7 @@ Status LogFile::recover(bool allow_corrupt) {
                 return Status(Status::kIOError, "truncate log file", strErrno(errno));
             }
             file_size_ = offset;
-            LOG_WARN("[raft log] truncate(offset: %d) and backup corrupt log: %s", offset,
+            RAFT_LOG_WARN("[raft log] truncate(offset: %d) and backup corrupt log: %s", offset,
                      file_path_.c_str(), offset);
         }
     }

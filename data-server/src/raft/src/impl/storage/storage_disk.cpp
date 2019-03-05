@@ -528,7 +528,7 @@ Status DiskStorage::Truncate(uint64_t index) {
         return s;
     }
 
-    LOG_INFO("raftlog[%lu] truncate to %lu", id_, index);
+    RAFT_LOG_INFO("raftlog[%lu] truncate to %lu", id_, index);
 
     return Status::OK();
 }

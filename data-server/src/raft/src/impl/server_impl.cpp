@@ -41,7 +41,7 @@ Status RaftServerImpl::Start() {
                                 std::string("raft-worker:") + std::to_string(i));
         consensus_threads_.push_back(t);
     }
-    LOG_INFO("raft[server] %d consensus threads start. queue capacity=%d",
+    RAFT_LOG_INFO("raft[server] %d consensus threads start. queue capacity=%d",
              ops_.consensus_threads_num, ops_.consensus_queue_capacity);
 
     // 初始化apply工作线程池
@@ -50,7 +50,7 @@ Status RaftServerImpl::Start() {
                                 std::string("raft-apply:") + std::to_string(i));
         apply_threads_.push_back(t);
     }
-    LOG_INFO("raft[server] %d apply threads start. queue capacity=%d",
+    RAFT_LOG_INFO("raft[server] %d apply threads start. queue capacity=%d",
              ops_.apply_threads_num, ops_.apply_queue_capacity);
 
     // start transport
@@ -159,7 +159,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
 }
 
 Status RaftServerImpl::RemoveRaft(uint64_t id) {
-    LOG_WARN("remove raft[%lu]", id);
+    RAFT_LOG_WARN("remove raft[%lu]", id);
 
     std::shared_ptr<RaftImpl> r;
     {
@@ -183,7 +183,7 @@ Status RaftServerImpl::RemoveRaft(uint64_t id) {
 }
 
 Status RaftServerImpl::DestroyRaft(uint64_t id, bool backup) {
-    LOG_WARN("destory raft[%lu]. backup=%d", id, backup);
+    RAFT_LOG_WARN("destory raft[%lu]. backup=%d", id, backup);
 
     std::shared_ptr<RaftImpl> r;
     {
@@ -364,7 +364,7 @@ void RaftServerImpl::printMetrics() {
             }
         }
         consensus_metrics += "]";
-        LOG_INFO("raft[metric] consensus queue size: %s", consensus_metrics.c_str());
+        RAFT_LOG_INFO("raft[metric] consensus queue size: %s", consensus_metrics.c_str());
 
         // print apply queue size
         if (!ops_.apply_in_place) {
@@ -376,7 +376,7 @@ void RaftServerImpl::printMetrics() {
                 }
             }
             apply_metrics += "]";
-            LOG_INFO("raft[metric] apply queue size: %s", apply_metrics.c_str());
+            RAFT_LOG_INFO("raft[metric] apply queue size: %s", apply_metrics.c_str());
         }
     }
 }
