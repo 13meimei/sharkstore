@@ -20,7 +20,6 @@ class Worker;
 namespace server {
 
 class Worker;
-class Manager;
 class RunStatus;
 class RangeServer;
 class RunStatus;
@@ -35,10 +34,13 @@ struct ContextServer {
     common::SocketSession *socket_session = nullptr;
     master::Worker *master_worker = nullptr;
 
+    // rocksdb
     rocksdb::DB *rocks_db = nullptr;
     std::shared_ptr<rocksdb::Cache> block_cache;  // rocksdb block cache
     std::shared_ptr<rocksdb::Cache> row_cache; // rocksdb row cache
     std::shared_ptr<rocksdb::Statistics> db_stats; // rocksdb stats
+    rocksdb::ColumnFamilyHandle *txn_handle = nullptr;
+
     storage::MetaStore *meta_store = nullptr;
 
     raft::RaftServer *raft_server = nullptr;

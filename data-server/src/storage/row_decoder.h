@@ -24,7 +24,7 @@ public:
     RowResult(const RowResult&) = delete;
     RowResult& operator=(const RowResult&) = delete;
 
-    bool AddField(uint64_t col, FieldValue* fval);
+    bool AddField(uint64_t col, std::unique_ptr<FieldValue>& field);
     FieldValue* GetField(uint64_t col) const;
 
     void SetKey(const std::string& key) { key_ = key; }

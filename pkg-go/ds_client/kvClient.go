@@ -3,10 +3,10 @@ package client
 import (
 	"errors"
 
+	"util/log"
 	"model/pkg/kvrpcpb"
 	"model/pkg/watchpb"
-	"util/log"
-
+	"model/pkg/txn"
 	"golang.org/x/net/context"
 )
 
@@ -42,6 +42,12 @@ type KvClient interface {
 	WatchPut(ctx context.Context, addr string, req *watchpb.DsKvWatchPutRequest) (*watchpb.DsKvWatchPutResponse, error)
 	WatchDelete(ctx context.Context, addr string, req *watchpb.DsKvWatchDeleteRequest) (*watchpb.DsKvWatchDeleteResponse, error)
 	WatchGet(ctx context.Context, addr string, req *watchpb.DsKvWatchGetMultiRequest) (*watchpb.DsKvWatchGetMultiResponse, error)
+
+	TxPrepare(ctx context.Context, addr string, req *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error)
+	TxDecide(ctx context.Context, addr string, req *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error)
+	TxCleanup(ctx context.Context, addr string, req *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
+	TxSelect(ctx context.Context, addr string, req *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error)
+	TxGetLock(ctx context.Context, addr string, req *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error)
 }
 
 type KvRpcClient struct {
@@ -262,6 +268,50 @@ func (c *KvRpcClient) WatchGet(ctx context.Context, addr string, req *watchpb.Ds
 		return nil, err
 	}
 	resp, err := conn.WatchGet(ctx, req)
+	return resp, err
+}
+
+func (c *KvRpcClient) TxPrepare(ctx context.Context, addr string, req *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.TxPrepare(ctx, req)
+	return resp, err
+}
+func (c *KvRpcClient) TxDecide(ctx context.Context, addr string, req *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.TxDecide(ctx, req)
+	return resp, err
+}
+
+func (c *KvRpcClient) TxCleanup(ctx context.Context, addr string, req *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.TxCleanup(ctx, req)
+	return resp, err
+}
+
+func (c *KvRpcClient) TxSelect(ctx context.Context, addr string, req *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.TxSelect(ctx, req)
+	return resp, err
+}
+
+func (c *KvRpcClient) TxGetLock(ctx context.Context, addr string, req *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.TxGetLock(ctx, req)
 	return resp, err
 }
 

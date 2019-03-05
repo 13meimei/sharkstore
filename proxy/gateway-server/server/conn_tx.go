@@ -28,12 +28,13 @@ func (c *ClientConn) isAutoCommit() bool {
 }
 
 func (c *ClientConn) handleBegin() error {
-//	for _, co := range c.txConns {
-//		if err := co.Begin(); err != nil {
-//			return err
-//		}
-//	}
-//	c.status |= mysql.SERVER_STATUS_IN_TRANS
+	if c.isInTransaction() {
+		if err := c.commit(); err != nil {
+			return err
+		}
+	}
+	c.status |= mysql.SERVER_STATUS_IN_TRANS
+	c.tx = NewTx(false, c.server.proxy, 0)
 	return c.writeOK(nil)
 }
 
@@ -54,29 +55,27 @@ func (c *ClientConn) handleRollback() (err error) {
 }
 
 func (c *ClientConn) commit() (err error) {
-//	c.status &= ^mysql.SERVER_STATUS_IN_TRANS
-//
-//	for _, co := range c.txConns {
-//		if e := co.Commit(); e != nil {
-//			err = e
-//		}
-//		co.Close()
-//	}
-//
-//	c.txConns = make(map[*backend.Node]*backend.BackendConn)
+	c.status &= ^mysql.SERVER_STATUS_IN_TRANS
+
+	if c.tx == nil {
+		return
+	}
+	if err = c.tx.Commit(); err != nil {
+		c.tx.Rollback()
+	}
+	c.tx = nil
 	return
 }
 
 func (c *ClientConn) rollback() (err error) {
-//	c.status &= ^mysql.SERVER_STATUS_IN_TRANS
-//
-//	for _, co := range c.txConns {
-//		if e := co.Rollback(); e != nil {
-//			err = e
-//		}
-//		co.Close()
-//	}
-//
-//	c.txConns = make(map[*backend.Node]*backend.BackendConn)
+	c.status &= ^mysql.SERVER_STATUS_IN_TRANS
+
+	if c.tx == nil {
+		return
+	}
+
+	err = c.tx.Rollback()
+	c.tx = nil
+
 	return
 }

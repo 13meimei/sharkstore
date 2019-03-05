@@ -59,7 +59,7 @@ private:
 TEST(Timer, Basic) {
     TimerQueue queue;
     std::vector<std::shared_ptr<TestTimer>> timers;
-    for (auto i = 0; i < 100000; ++i) {
+    for (auto i = 0; i < 10000; ++i) {
         auto timeout = 50 + randomInt() % 500;
         auto timer = std::make_shared<TestTimer>(timeout);
         queue.Push(timer, timeout);

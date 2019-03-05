@@ -14,6 +14,7 @@ import (
 	"util"
 	"sync"
 
+	"model/pkg/txn"
 	"model/pkg/metapb"
 	"util/bufalloc"
 	"util/log"
@@ -247,24 +248,24 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	if len(query.Command.PKs) == 0 {
 		order := query.parseOrder()
 		log.Debug("getcommand order: %v", order)
-		var matchs []Match = nil
+		var matches []Match = nil
 		var err error
 		if query.Command.Filter != nil {
 			// 解析where条件
-			matchs, err = query.parseMatchs(query.Command.Filter.And)
+			matches, err = query.parseMatches(query.Command.Filter.And)
 			if err != nil {
 				log.Error("[get] handle parse where error: %v", err)
 				return nil, err
 			}
 		}
 		// 向dataserver查询
-		//filter := &Filter{columns: columns, matchs: matchs}
+		//filter := &Filter{columns: columns, matches: matches}
 
 		limit := query.parseLimit()
 		log.Debug("getcommand limit: %v", limit)
 
 		scope := query.parseScope()
-		rowss, err := proxy.doSelect(t, fieldList, matchs, limit, scope)
+		rowss, err := proxy.doSelect(t, fieldList, matches, limit, scope)
 
 		if err != nil {
 			log.Error("getcommand doselect error: %v", err)
@@ -277,14 +278,14 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 			var tasks []*SelectTask
 			// TODO
 			for _, pk := range query.Command.PKs {
-				matchs, err := query.parseMatchs(pk)
-				//filter := &Filter{columns: columns, matchs: matchs}
+				matches, err := query.parseMatches(pk)
+				//filter := &Filter{columns: columns, matches: matches}
 				if err != nil {
 					log.Error("[get] handle parse where error: %v", err)
 					return nil, err
 				}
 				task := GetSelectTask()
-				task.init(proxy, t, fieldList, matchs)
+				task.init(proxy, t, fieldList, matches)
 				err = proxy.Submit(task)
 				if err != nil {
 					log.Error("submit insert task failed, err[%v]", err)
@@ -306,12 +307,12 @@ func (query *Query) getCommand(proxy *Proxy, t *Table) (*Reply, error) {
 				PutSelectTask(task)
 			}
 		} else {
-			matchs, err := query.parseMatchs(query.Command.PKs[0])
+			matches, err := query.parseMatches(query.Command.PKs[0])
 			if err != nil {
 				log.Error("[get] handle parse where error: %v", err)
 				return nil, err
 			}
-			allRows, err = proxy.doSelect(t, fieldList, matchs, nil, nil)
+			allRows, err = proxy.doSelect(t, fieldList, matches, nil, nil)
 			if err != nil {
 				log.Error("select do failed, err[%v]", err)
 				return nil, err
@@ -332,7 +333,7 @@ func formatReply(columnMap map[string]*metapb.Column, rowss [][]*Row, order []*O
 					row_ = append(row_, nil)
 					continue
 				}
-				if _,find := columnMap[f.col]; !find {
+				if _, find := columnMap[f.col]; !find {
 					row_ = append(row_, f.value)
 					continue
 				}
@@ -485,12 +486,12 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	// TODO：支持默认值
 
 	// 检查是否缺少pk
-	pkName,  err := proxy.checkPKMissing(t, colMap)
+	pkName, err := proxy.checkPKMissing(t, colMap)
 	if err != nil {
 		log.Error("[insert] table %s.%s missing column(%v)", db, tableName, err)
 		return nil, err
 	}
-	//填充自增id值
+	//填充自增主键值
 	if len(pkName) > 0 {
 		colMap[pkName] = len(colMap)
 		ids, err := proxy.msCli.GetAutoIncId(t.GetDbId(), t.GetId(), uint32(len(rows)))
@@ -508,17 +509,23 @@ func (query *Query) setCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		}
 	}
 
-	affected, duplicateKey, err := proxy.insertRows(t, colMap, rows)
+	var (
+		intents []*txnpb.TxnIntent
+		tx      TX
+	)
+	intents, err = proxy.insertRows(t, colMap, rows)
 	if err != nil {
 		log.Error("insert error %s- %s:%s", db, tableName, err.Error())
 		return nil, err
 	}
-	if len(duplicateKey) > 0 {
-		return nil, fmt.Errorf("duplicate key: %v", duplicateKey)
-	} else if affected != uint64(len(rows)) {
-		log.Error("insert error table[%s:%s],request num:%d,inserted num:%d", db, tableName, len(rows), affected)
-		return nil, ErrAffectRows
+	tx = NewTx(true, proxy, 0)
+	tx.SetTable(t)
+	err = tx.Insert(intents)
+	if err != nil {
+		log.Error("insert error %s- %s:%s", db, tableName, err.Error())
+		return nil, err
 	}
+	affected := uint64(len(rows))
 	return &Reply{
 		Code:         0,
 		RowsAffected: affected,
@@ -530,7 +537,7 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	db := t.DbName()
 	tableName := t.Name()
 	// 解析列
-	columns, err:= query.parseUpdateFields()
+	columns, err := query.parseUpdateFields()
 	if err != nil {
 		log.Error("parse columns error: %v", err)
 		return nil, err
@@ -541,13 +548,16 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		return nil, err
 	}
 
-	var affected uint64
+	var (
+		intents  []*txnpb.TxnIntent
+		affected uint64
+	)
 	if len(query.Command.PKs) == 0 {
-		var matchs []Match = nil
+		var matches []Match = nil
 		var err error
 		if query.Command.Filter != nil {
 			// 解析where条件
-			matchs, err = query.parseMatchs(query.Command.Filter.And)
+			matches, err = query.parseMatches(query.Command.Filter.And)
 			if err != nil {
 				log.Error("[update] handle parse where error: %v", err)
 				return nil, err
@@ -558,7 +568,7 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		log.Debug("updcommand limit: %v", limit)
 
 		scope := query.parseScope()
-		affected, err = proxy.doUpdate(t, fieldList, matchs, limit, scope)
+		intents, affected, err = proxy.doUpdate(t, fieldList, matches, limit, scope)
 		if err != nil {
 			log.Error("updcommand doUpdate error: %v", err)
 			return nil, err
@@ -568,13 +578,13 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 		if len(query.Command.PKs) > 1 {
 			var tasks []*UpdateTask
 			for _, pk := range query.Command.PKs {
-				matchs, err := query.parseMatchs(pk)
+				matches, err := query.parseMatches(pk)
 				if err != nil {
 					log.Error("[update] handle parse where error: %v", err)
 					return nil, err
 				}
 				task := GetUpdateTask()
-				task.init(proxy, t, fieldList, matchs)
+				task.init(proxy, t, fieldList, matches)
 				err = proxy.Submit(task)
 				if err != nil {
 					log.Error("submit update task failed, err[%v]", err)
@@ -590,20 +600,29 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 					return nil, err
 				}
 				allAffected += task.rest.affected
+				intents = append(intents, task.rest.intents...)
 				PutUpdateTask(task)
 			}
 		} else {
-			matchs, err := query.parseMatchs(query.Command.PKs[0])
+			matches, err := query.parseMatches(query.Command.PKs[0])
 			if err != nil {
 				log.Error("[update] handle parse where error: %v", err)
 				return nil, err
 			}
-			affected, err = proxy.doUpdate(t, fieldList, matchs, nil, nil)
+			intents, affected, err = proxy.doUpdate(t, fieldList, matches, nil, nil)
 			if err != nil {
 				log.Error("update do failed, err[%v]", err)
 				return nil, err
 			}
 		}
+	}
+
+	tx := NewTx(true, proxy, 0)
+	tx.SetTable(t)
+	err = tx.Update(intents)
+	if err != nil {
+		log.Error("update error %s- %s:%s", db, tableName, err.Error())
+		return nil, err
 	}
 	return &Reply{
 		Code:         0,
@@ -614,11 +633,11 @@ func (query *Query) updCommand(proxy *Proxy, t *Table) (*Reply, error) {
 func (query *Query) delCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	// 解析选择列
 	//columns := query.parseColumnNames()
-	var matchs []Match = nil
+	var matches []Match = nil
 	var err error
 	if query.Command.Filter != nil {
 		// 解析where条件
-		matchs, err = query.parseMatchs(query.Command.Filter.And)
+		matches, err = query.parseMatches(query.Command.Filter.And)
 		if err != nil {
 			log.Error("[get] handle parse where error: %v", err)
 			return nil, err
@@ -626,13 +645,19 @@ func (query *Query) delCommand(proxy *Proxy, t *Table) (*Reply, error) {
 	}
 
 	// 向dataserver查询
-	affectedRows, err := proxy.doDelete(t, matchs)
+	intents, affected, err := proxy.doDelete(t, matches)
+	if err != nil {
+		return nil, err
+	}
+	tx := NewTx(true, proxy, 0)
+	tx.SetTable(t)
+	err = tx.Delete(intents)
 	if err != nil {
 		return nil, err
 	}
 	return &Reply{
 		Code:         0,
-		RowsAffected: affectedRows,
+		RowsAffected: affected,
 	}, nil
 }
 
@@ -778,7 +803,7 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		userName := r.FormValue("userName")
 		resp, err := s.proxy.Unlock(dbName, tableName, lockName, uuid, userName)
 		if err != nil {
-			w.Write([]byte("unlock: "+err.Error()))
+			w.Write([]byte("unlock: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
@@ -791,7 +816,7 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 		userName := r.FormValue("userName")
 		resp, err := s.proxy.UnlockForce(dbName, tableName, lockName, userName)
 		if err != nil {
-			w.Write([]byte("unlockforce: "+err.Error()))
+			w.Write([]byte("unlockforce: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
@@ -807,12 +832,12 @@ func (s *Server) handleLockDebug(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := s.proxy.LockScan(dbName, tableName, startKey, endKey, uint32(number))
 		if err != nil {
-			w.Write([]byte("lockscan: "+err.Error()))
+			w.Write([]byte("lockscan: " + err.Error()))
 			return
 		}
 		reply, err := json.Marshal(resp)
 		if err != nil {
-			w.Write([]byte("lockscan reply marshal: "+err.Error()))
+			w.Write([]byte("lockscan reply marshal: " + err.Error()))
 			return
 		}
 		w.Write(reply)
@@ -926,6 +951,7 @@ func (s *Server) handleMetricConfigGet(w http.ResponseWriter, r *http.Request) {
 }
 
 var metricConfigLock sync.Mutex
+
 func (s *Server) handleMetricConfigSet(w http.ResponseWriter, r *http.Request) {
 	reply := new(Response)
 	defer httpSendReply(w, reply)

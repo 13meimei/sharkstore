@@ -15,10 +15,17 @@ import (
 )
 
 const (
-	Store_Prefix_Invalid     uint8 = 0
-	Store_Prefix_KV          uint8 = 1
-	Store_Prefix_Range       uint8 = 2
-	Store_Prefix_RaftLog     uint8 = 3
+	Store_Prefix_Invalid       uint8 = 0
+
+	//record_data
+	Store_Prefix_KV            uint8 = 1
+	Store_Prefix_INDEX         uint8 = 2
+
+	//meta_data
+	Store_Prefix_Range         uint8 = 2
+	Store_Prefix_RaftLog       uint8 = 3
+	Store_Prefix_Node          uint8 = 4
+	Store_Prefix_Range_Version uint8 = 5
 )
 
 func Encode(v proto.Message) ([]byte, error) {
@@ -29,7 +36,7 @@ func Decode(buf []byte, v proto.Message) error {
 	return proto.Unmarshal(buf, v)
 }
 
-func EncodeStorePrefix(prefix uint8, table_id uint64) ([]byte){
+func EncodeStorePrefix(prefix uint8, table_id uint64) ([]byte) {
 	var buff []byte
 	buff = make([]byte, 9)
 	buff[0] = byte(prefix)
@@ -46,7 +53,6 @@ func DecodeStorePrefix(buff []byte) (prefix uint8, table_id uint64, err error) {
 	table_id = binary.BigEndian.Uint64(buff[1:])
 	return
 }
-
 
 // EncodeColumnValue 编码列 先列ID再列值
 // Note: 编码后不保持排序属性（即如果a > b, 那么编码后的字节数组 bytes.Compare(encA, encB) >0 不一定成立)
@@ -83,20 +89,19 @@ func EncodeColumnValue(buf []byte, col *metapb.Column, sval []byte) ([]byte, err
 	}
 }
 
-
-func EncodeValue2(buf []byte, colId uint32,typ encoding.Type, sval []byte) ([]byte, error) {
-	log.Debug("---column type:%v colId:%v: sval:%v", typ,colId, sval)
+func EncodeValue2(buf []byte, colId uint32, typ encoding.Type, sval []byte) ([]byte, error) {
+	log.Debug("---column type:%v colId:%v: sval:%v", typ, colId, sval)
 	if len(sval) == 0 {
 		return buf, nil
 	}
 	switch typ {
 	case encoding.Int:
 		// 有符号
-			ival, err := strconv.ParseInt(hack.String(sval), 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("parse integer failed(%s) when encoding column(%d) ", err.Error(), colId)
-			}
-			return encoding.EncodeIntValue(buf, colId, ival), nil
+		ival, err := strconv.ParseInt(hack.String(sval), 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse integer failed(%s) when encoding column(%d) ", err.Error(), colId)
+		}
+		return encoding.EncodeIntValue(buf, colId, ival), nil
 	case encoding.Float:
 		fval, err := strconv.ParseFloat(hack.String(sval), 64)
 		if err != nil {
@@ -147,19 +152,18 @@ func DecodeColumnValue(buf []byte, col *metapb.Column) ([]byte, interface{}, err
 	}
 }
 
-
-func DecodeValue2(buf []byte) ([]byte,uint32, []byte,encoding.Type, error) {
+func DecodeValue2(buf []byte) ([]byte, uint32, []byte, encoding.Type, error) {
 	// check Null
 	_, _, colId, typ, err := encoding.DecodeValueTag(buf)
 	if err != nil {
-		return nil, 0,nil,encoding.Unknown, fmt.Errorf("decode value tag failed(%v)", err)
+		return nil, 0, nil, encoding.Unknown, fmt.Errorf("decode value tag failed(%v)", err)
 	}
 	if typ == encoding.Null {
 		_, length, err := encoding.PeekValueLength(buf)
 		if err != nil {
-			return nil, colId,nil,typ, fmt.Errorf("decode null value length failed(%v)",  err)
+			return nil, colId, nil, typ, fmt.Errorf("decode null value length failed(%v)", err)
 		}
-		return buf[length:],colId, nil,typ, nil
+		return buf[length:], colId, nil, typ, nil
 	}
 
 	// // 列ID是否一致
@@ -170,15 +174,15 @@ func DecodeValue2(buf []byte) ([]byte,uint32, []byte,encoding.Type, error) {
 	switch typ {
 	case encoding.Int:
 		remainBuf, ival, err := encoding.DecodeIntValue(buf)
-		return remainBuf,colId,hack.Slice(strconv.FormatInt(ival,10)),typ,err
+		return remainBuf, colId, hack.Slice(strconv.FormatInt(ival, 10)), typ, err
 	case encoding.Float:
 		remainBuf, fval, err := encoding.DecodeFloatValue(buf)
-		return remainBuf,colId,hack.Slice(strconv.FormatFloat(fval, 'f', -4, 64)),typ,err
+		return remainBuf, colId, hack.Slice(strconv.FormatFloat(fval, 'f', -4, 64)), typ, err
 	case encoding.Bytes:
 		remainBuf, bval, err := encoding.DecodeBytesValue(buf)
-		return remainBuf,colId,bval,typ,err
+		return remainBuf, colId, bval, typ, err
 	default:
-		return nil, colId,nil,typ, fmt.Errorf("unsupported type(%d) when decoding column(%d)",typ,colId)
+		return nil, colId, nil, typ, fmt.Errorf("unsupported type(%d) when decoding column(%d)", typ, colId)
 	}
 }
 
@@ -212,51 +216,84 @@ func EncodePrimaryKey(buf []byte, col *metapb.Column, sval []byte) ([]byte, erro
 	}
 }
 
-
-// EncodePrimaryKey 编码主键列 不编码列ID 保持排序属性
-func DecodePrimaryKey(buf []byte, col *metapb.Column) ([]byte,[]byte, error) {
+// DecodePrimaryKey 解码主键列 不编码列ID 保持排序属性
+func DecodePrimaryKey(buf []byte, col *metapb.Column) ([]byte, []byte, error) {
 	switch col.DataType {
 	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
 
 		if col.Unsigned { // 无符号整型
-			buf,v,err:= encoding.DecodeUvarintAscending(buf)
-			return buf,hack.Slice(strconv.FormatUint(v,10)),err
+			buf, v, err := encoding.DecodeUvarintAscending(buf)
+			return buf, hack.Slice(strconv.FormatUint(v, 10)), err
 
 		} else { // 有符号整型
-			buf,v,err:=encoding.DecodeVarintAscending(buf)
-			return buf,hack.Slice(strconv.FormatInt(v,10)),err
+			buf, v, err := encoding.DecodeVarintAscending(buf)
+			return buf, hack.Slice(strconv.FormatInt(v, 10)), err
 		}
 	case metapb.DataType_Float, metapb.DataType_Double:
-		buf,v,err:= encoding.DecodeFloatAscending(buf)
-		return buf,hack.Slice(strconv.FormatFloat(v, 'f', -4, 64)),err
+		buf, v, err := encoding.DecodeFloatAscending(buf)
+		return buf, hack.Slice(strconv.FormatFloat(v, 'f', -4, 64)), err
 	case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
-		ret := make([]byte,0)
-		return encoding.DecodeBytesAscending(buf,ret)
+		ret := make([]byte, 0)
+		return encoding.DecodeBytesAscending(buf, ret)
 	default:
-		return buf,nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
+		return buf, nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
 	}
 }
 
-// EncodePrimaryKey 编码主键列 不编码列ID 保持排序属性
-func DecodePrimaryKey2(buf []byte, col *metapb.Column) ([]byte,interface{}, error) {
+// DecodePrimaryKey2 编码主键列 不编码列ID 保持排序属性
+func DecodePrimaryKey2(buf []byte, col *metapb.Column) ([]byte, interface{}, error) {
 	switch col.DataType {
 	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
 
 		if col.Unsigned { // 无符号整型
-			buf,v,err:= encoding.DecodeUvarintAscending(buf)
-			return buf,v,err
+			buf, v, err := encoding.DecodeUvarintAscending(buf)
+			return buf, v, err
 
 		} else { // 有符号整型
-			buf,v,err:=encoding.DecodeVarintAscending(buf)
-			return buf,v,err
+			buf, v, err := encoding.DecodeVarintAscending(buf)
+			return buf, v, err
 		}
 	case metapb.DataType_Float, metapb.DataType_Double:
-		buf,v,err:= encoding.DecodeFloatAscending(buf)
-		return buf,v,err
+		buf, v, err := encoding.DecodeFloatAscending(buf)
+		return buf, v, err
 	case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
-		ret := make([]byte,0)
-		return encoding.DecodeBytesAscending(buf,ret)
+		ret := make([]byte, 0)
+		return encoding.DecodeBytesAscending(buf, ret)
 	default:
-		return buf,nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
+		return buf, nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
+	}
+}
+
+// EncodeIndexKey 编码索引列ID 索引列 保持排序属性
+func EncodeIndexKey(buf []byte, col *metapb.Column, sval []byte) ([]byte, error) {
+	buf = encoding.EncodeUvarintAscending(buf, col.GetId())
+	if len(sval) == 0 {
+		return encoding.EncodeNullAscending(buf), nil
+	}
+	switch col.DataType {
+	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
+		if col.Unsigned { // 无符号整型
+			ival, err := strconv.ParseUint(hack.String(sval), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("parse unsigned integer failed(%s) when encoding pk(%s) ", err.Error(), col.Name)
+			}
+			return encoding.EncodeUvarintAscending(buf, ival), nil
+		} else { // 有符号整型
+			ival, err := strconv.ParseInt(hack.String(sval), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("parse integer failed(%s) when encoding pk(%s) ", err.Error(), col.Name)
+			}
+			return encoding.EncodeVarintAscending(buf, ival), nil
+		}
+	case metapb.DataType_Float, metapb.DataType_Double:
+		fval, err := strconv.ParseFloat(hack.String(sval), 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse float failed(%s) when encoding pk(%s)", err.Error(), col.Name)
+		}
+		return encoding.EncodeFloatAscending(buf, fval), nil
+	case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
+		return encoding.EncodeBytesAscending(buf, sval), nil
+	default:
+		return nil, fmt.Errorf("unsupported type(%s) when encoding pk(%s)", col.DataType.String(), col.Name)
 	}
 }

@@ -18,7 +18,7 @@ type Proxy struct {
 	clock *hlc.Clock
 
 	maxWorkNum  uint64
-	taskQueues []chan Task
+	taskQueues  []chan Task
 	workRecover chan int
 	wg          sync.WaitGroup
 	ctx         context.Context
@@ -49,8 +49,8 @@ func NewProxy(msAddrs []string, config *Config) *Proxy {
 		config:      config,
 		ctx:         ctx,
 		cancel:      cancel,
-		maxWorkNum: config.Performance.MaxWorkNum,
-		taskQueues: taskQueues,
+		maxWorkNum:  config.Performance.MaxWorkNum,
+		taskQueues:  taskQueues,
 		workRecover: make(chan int, config.Performance.MaxWorkNum),
 	}
 

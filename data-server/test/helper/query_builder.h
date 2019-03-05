@@ -31,6 +31,9 @@ public:
     void AppendMatchExt(const std::string& col, const std::string& val,
         ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix=::kvrpcpb::E_LogicAnd);
 
+    void ClearMatchExt() {
+        req_.mutable_ext_filter()->Clear();
+    }
     // select limit
     void AddLimit(uint64_t count, uint64_t offset = 0);
 

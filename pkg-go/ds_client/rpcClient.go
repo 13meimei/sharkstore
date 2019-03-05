@@ -15,6 +15,7 @@ import (
 	"model/pkg/kvrpcpb"
 	"model/pkg/schpb"
 	"model/pkg/watchpb"
+	"model/pkg/txn"
 	"pkg-go/util"
 	"util/log"
 
@@ -85,8 +86,13 @@ func init() {
 	msgType[uint16(funcpb.FunctionID_kFuncLockUpdate)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncUnlock)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncUnlockForce)] = &MsgTypeGroup{0x02, 0x12}
-
 	msgType[uint16(funcpb.FunctionID_kFuncKvSet)] = &MsgTypeGroup{0x02, 0x12}
+
+	msgType[uint16(funcpb.FunctionID_kFuncTxnPrepare)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnDecide)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnClearup)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnSelect)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnGetLockInfo)] = &MsgTypeGroup{0x02, 0x12}
 
 	msgType[uint16(funcpb.FunctionID_kFuncCreateRange)] = &MsgTypeGroup{0x01, 0x11}
 	msgType[uint16(funcpb.FunctionID_kFuncDeleteRange)] = &MsgTypeGroup{0x01, 0x11}
@@ -109,7 +115,7 @@ func getMsgType(funcId uint16) *MsgTypeGroup {
 
 // 链路状态
 const (
-	LINK_INIT = iota
+	LINK_INIT     = iota
 	LINK_CONN
 	LINK_CLOSED
 	LINK_BAN_CONN
@@ -160,6 +166,13 @@ type RpcClient interface {
 	WatchPut(ctx context.Context, in *watchpb.DsKvWatchPutRequest) (*watchpb.DsKvWatchPutResponse, error)
 	WatchDelete(ctx context.Context, in *watchpb.DsKvWatchDeleteRequest) (*watchpb.DsKvWatchDeleteResponse, error)
 	WatchGet(ctx context.Context, in *watchpb.DsKvWatchGetMultiRequest) (*watchpb.DsKvWatchGetMultiResponse, error)
+
+	//tx
+	TxPrepare(ctx context.Context, in *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error)
+	TxDecide(ctx context.Context, in *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error)
+	TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
+	TxSelect(ctx context.Context, in *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error)
+	TxGetLock(ctx context.Context, in *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error)
 
 	// admin
 	CreateRange(ctx context.Context, in *schpb.CreateRangeRequest) (*schpb.CreateRangeResponse, error)
@@ -704,6 +717,69 @@ func (c *DSRpcClient) WatchDelete(ctx context.Context, in *watchpb.DsKvWatchDele
 func (c *DSRpcClient) WatchGet(ctx context.Context, in *watchpb.DsKvWatchGetMultiRequest) (*watchpb.DsKvWatchGetMultiResponse, error) {
 	out := new(watchpb.DsKvWatchGetMultiResponse)
 	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncPureGet), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxPrepare(ctx context.Context, in *txnpb.DsPrepareRequest) (*txnpb.DsPrepareResponse, error) {
+	out := new(txnpb.DsPrepareResponse)
+	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncTxnPrepare), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxDecide(ctx context.Context, in *txnpb.DsDecideRequest) (*txnpb.DsDecideResponse, error) {
+	out := new(txnpb.DsDecideResponse)
+	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncTxnDecide), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error) {
+	out := new(txnpb.DsClearupResponse)
+	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncTxnClearup), ctx, in, out)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxSelect(ctx context.Context, in *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error) {
+	out := new(txnpb.DsSelectResponse)
+	var fastFlag uint8
+	if len(in.GetReq().GetKey()) > 0 {
+		fastFlag = 1
+	}
+	msgId, err := c.executeWithFlags(uint16(funcpb.FunctionID_kFuncTxnSelect), ctx, in, out, fastFlag)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxGetLock(ctx context.Context, in *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error) {
+	out := new(txnpb.DsGetLockInfoResponse)
+	var fastFlag uint8
+	if len(in.GetReq().GetKey()) > 0 {
+		fastFlag = 1
+	}
+	msgId, err := c.executeWithFlags(uint16(funcpb.FunctionID_kFuncTxnGetLockInfo), ctx, in, out, fastFlag)
 	in.GetHeader().TraceId = msgId
 	if err != nil {
 		return nil, err

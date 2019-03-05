@@ -114,7 +114,7 @@ void SelectRequestBuilder::AddMatch(const std::string& col, kvrpcpb::MatchType t
 
 static ::kvrpcpb::Expr *CreateExprCol(const metapb::Column &col, const std::string &name, ::kvrpcpb::Expr* e) {
 
-    printf(">>>>>>>>>leaf expr_type: %d\n", kvrpcpb::E_ExprCol);
+//    printf(">>>>>>>>>leaf expr_type: %d\n", kvrpcpb::E_ExprCol);
     e->mutable_column()->CopyFrom(col);
     e->set_expr_type(kvrpcpb::E_ExprCol);
     e->mutable_column()->set_name(name);
@@ -124,7 +124,7 @@ static ::kvrpcpb::Expr *CreateExprCol(const metapb::Column &col, const std::stri
 
 static ::kvrpcpb::Expr *CreateExprVal(const metapb::Column& col, const std::string &val, ::kvrpcpb::Expr* e) {
 
-    printf(">>>>>>>>>leaf expr_type: %d\n", kvrpcpb::E_ExprConst);
+//    printf(">>>>>>>>>leaf expr_type: %d\n", kvrpcpb::E_ExprConst);
     e->set_expr_type(kvrpcpb::E_ExprConst);
     e->set_value(val);
     e->mutable_column()->CopyFrom(col);
@@ -135,7 +135,7 @@ static ::kvrpcpb::Expr *CreateExprVal(const metapb::Column& col, const std::stri
 static ::kvrpcpb::Expr *CreateExpr(::kvrpcpb::Expr *e, const metapb::Column &col, const std::string& name,
         const std::string& val, ::kvrpcpb::ExprType et)
 {
-    printf(">>>>>>child expr_type: %d\n", et);
+    //printf(">>>>>>child expr_type: %d\n", et);
     e->set_expr_type(et);
 
     auto l = e->add_child();
@@ -155,6 +155,11 @@ void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::str
     //parent expr
     ::kvrpcpb::Expr *pe = nullptr;
     auto first = false;
+    
+    if (logic_suffix == 0 && (et < 11 || et > 16)) {
+        printf("%s:%d must be relation expr_type if last expr!\n",__FILE__, __LINE__);
+        return;
+    }
 
     pe = root;
     //child expr
@@ -163,11 +168,9 @@ void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::str
 
         if (pe->child_size() == 0)
         {
-            if (logic_suffix == ::kvrpcpb::E_Invalid) {
-                fprintf(stderr, "Invalid expr type: %d\n", logic_suffix);
-                return;
-            } else {
-                printf("root logic expr_type: %d\n", logic_suffix);
+            l = pe;
+            if (logic_suffix > 0) { 
+            //    printf("root logic expr_type: %d\n", logic_suffix);
                 pe->set_expr_type(logic_suffix);
                 l = pe->add_child();
                 first = true;
@@ -175,7 +178,7 @@ void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::str
         }
 
         if (pe->child_size() == 1 && !first) {
-            printf(">>>child logic expr_type: %d\n", logic_suffix);
+        //    printf(">>>child logic expr_type: %d\n", logic_suffix);
             l = pe->add_child();
             if (logic_suffix > 0) {
                 l->set_expr_type(logic_suffix);
@@ -196,34 +199,39 @@ void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::str
         idx = 0;
         if (ts == 1) {
             auto l = pe->add_child();
+            if (logic_suffix > 0) {
+                l->set_expr_type(logic_suffix);
+                l = l->add_child();
+            }
             CreateExpr(l, table_->GetColumn(col), col, val, et);
-            printf("in cycle,,, CreateExpr child expr_type: %d \n", l->expr_type());
+         //   printf("in cycle,,, CreateExpr child expr_type: %d \n", l->expr_type());
             return;
         }
+
         for (auto i=0; i<ts; i++) {
             tr = pe->mutable_child(i);
             if (tr->child_size() < 2) {
                 auto l = tr->add_child();
                 if (logic_suffix > 0) {
-                    printf(">>>in cycle child expr_type: %d\n", logic_suffix);
+            //        printf(">>>in cycle child expr_type: %d\n", logic_suffix);
                     l->set_expr_type(logic_suffix);
                     l = l->add_child();
                 }
                 CreateExpr(l, table_->GetColumn(col), col, val, et);
-                printf("in cycle, CreateExpr child expr_type: %d \n", l->expr_type());
+            //    printf("in cycle, CreateExpr child expr_type: %d \n", l->expr_type());
                 return;
             }
-            printf("%d)child_size: %d ts: %d logic suffix: %d\n", i, tr->child_size(), ts, logic_suffix);
+            //printf("%d)child_size: %d ts: %d logic suffix: %d\n", i, tr->child_size(), ts, logic_suffix);
 
             if (tr->expr_type() == kvrpcpb::E_LogicOr ||
                     tr->expr_type() == kvrpcpb::E_LogicAnd)
             {
-                printf("encourter logic child: %d ts: %d\n", i, ts);
+            //    printf("encourter logic child: %d ts: %d\n", i, ts);
                 idx = i;
                 break;
             }
         }
-        printf("in cycle, idx: %d pe->child_size: %d\n", idx, ts);
+        //printf("in cycle, idx: %d pe->child_size: %d\n", idx, ts);
         if (tr != nullptr) pe = tr->mutable_child(idx);
         else pe = pe->mutable_child(0);
     }

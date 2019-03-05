@@ -43,6 +43,7 @@ set(test_SRCS
     unittest/row_decoder_unittest.cpp
     unittest/status_unittest.cpp
     unittest/store_unittest.cpp
+    unittest/store_txn_unittest.cpp
     unittest/timer_unittest.cpp
     unittest/util_unittest.cpp
 )
@@ -65,8 +66,7 @@ foreach(testfile ${test_SRCS})
     endif()
 endforeach(testfile ${TESTS})
 
-#add_subdirectory(watch)
-add_subdirectory(range)
+add_subdirectory(watch)
 
 if (BUILD_NET)
     add_subdirectory(net)

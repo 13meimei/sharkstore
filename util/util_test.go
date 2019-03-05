@@ -3,7 +3,6 @@ package util
 import (
 	"testing"
 	"bytes"
-	"fmt"
 )
 
 func TestEncodeStorePrefix(t *testing.T) {
@@ -31,6 +30,6 @@ func TestKeyPairSore(t *testing.T)  {
 	kps.Sort()
 
 	for _, r := range kps {
-		t.Logf(fmt.Sprintln("%v", r))
+		t.Logf("%v", r)
 	}
 }

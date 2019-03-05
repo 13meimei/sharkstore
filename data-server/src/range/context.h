@@ -35,6 +35,7 @@ public:
     virtual SplitPolicy* GetSplitPolicy() = 0;
 
     virtual rocksdb::DB *DBInstance() = 0;
+    virtual rocksdb::ColumnFamilyHandle *TxnCFHandle() = 0;
     virtual master::Worker* MasterClient() = 0;
     virtual raft::RaftServer* RaftServer() = 0;
     virtual storage::MetaStore* MetaStore() = 0;

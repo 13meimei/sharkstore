@@ -1,17 +1,17 @@
 package server
 
 import (
-
-	"model/pkg/metapb"
-	"proxy/gateway-server/sqlparser"
-	"util/log"
+	"time"
 	"fmt"
-	"util"
-	"net/http"
 	"bytes"
 	"testing"
-	"encoding/json"
+	"util"
+	"util/log"
 	"util/assert"
+	"net/http"
+	"encoding/json"
+	"model/pkg/metapb"
+	"proxy/gateway-server/sqlparser"
 )
 
 func TestRestKVHttp(t *testing.T) {
@@ -21,6 +21,9 @@ func TestRestKVHttp(t *testing.T) {
 	}
 	go s.Run()
 
+	//id: auto increment, tinyint
+	//name: varchar
+	//balance: float
 	columnNames := []string{"id", "name", "balance"}
 
 	setQueryRep := &Query{
@@ -65,6 +68,20 @@ func TestRestKVHttp(t *testing.T) {
 		RowsAffected: 4,
 	})
 
+	getQueryRep := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			Field: columnNames,
+		},
+	}
+	expected := [][]interface{}{
+		[]interface{}{1, "myname1", 0.1},
+		[]interface{}{2, "myname2", 0.2},
+		[]interface{}{3, "myname3", 0.3},
+	}
+	assertGetCommand(t, getQueryRep, s.proxy, expected, table)
+
 	setQueryNoPkRep := &Query{
 		DatabaseName: testDBName,
 		TableName:    testTableName,
@@ -79,32 +96,32 @@ func TestRestKVHttp(t *testing.T) {
 		},
 	}
 
-	//自主id无法考虑业务自己赋值的主键
+	//自增id无法考虑业务自己赋值的主键
 	testSetCommand(t, setQueryNoPkRep, table, s.proxy, &Reply{
 		Code:         0,
 		RowsAffected: 4,
 	})
 
-	getAggreQueryRep := &Query{
-		DatabaseName: testDBName,
-		TableName:    testTableName,
-		Command: &Command{
-			Field: []string{},
-			AggreFunc: []*AggreFunc{
-				&AggreFunc{Function: "count", Field: "*"},
-				&AggreFunc{Function: "max", Field: "id"},
-				&AggreFunc{Function: "min", Field: "id"},
-				&AggreFunc{Function: "sum", Field: "balance"},
-			},
-		},
-	}
+	//getAggreQueryRep := &Query{
+	//	DatabaseName: testDBName,
+	//	TableName:    testTableName,
+	//	Command: &Command{
+	//		Field: []string{},
+	//		AggreFunc: []*AggreFunc{
+	//			&AggreFunc{Function: "count", Field: "*"},
+	//			&AggreFunc{Function: "max", Field: "id"},
+	//			&AggreFunc{Function: "min", Field: "id"},
+	//			&AggreFunc{Function: "sum", Field: "balance"},
+	//		},
+	//	},
+	//}
+	//
+	//expected := [][]interface{}{
+	//	[]interface{}{4, 4, 1, 1.0},
+	//}
+	//assertGetCommand(t, getAggreQueryRep, s.proxy, expected, table)
 
-	expected := [][]interface{}{
-		[]interface{}{4, 4, 1, 1.0},
-	}
-	assertGetCommand(t, getAggreQueryRep, s.proxy, expected, table )
-
-	getQueryRep := &Query{
+	getQueryRep = &Query{
 		DatabaseName: testDBName,
 		TableName:    testTableName,
 		Command: &Command{
@@ -178,8 +195,8 @@ func TestRestKVHttp(t *testing.T) {
 		TableName:    testTableName,
 		Command: &Command{
 			FieldValue: []*FieldValue{
-				{Column:"name", Value: "myname11"},
-				{Column:"balance", Value:  0.11},
+				{Column: "name", Value: "myname11"},
+				{Column: "balance", Value: 0.11},
 			},
 			Filter: &Filter_{
 				And: []*And{
@@ -201,8 +218,8 @@ func TestRestKVHttp(t *testing.T) {
 		TableName:    testTableName,
 		Command: &Command{
 			FieldValue: []*FieldValue{
-				{Column:"name", Value: "myname112"},
-				{Column:"balance", Value:  0.11, Relate: "+"},
+				{Column: "name", Value: "myname112"},
+				{Column: "balance", Value: 0.11, Relate: "+"},
 			},
 			Filter: &Filter_{
 				And: []*And{
@@ -329,7 +346,6 @@ func TestRestMset(t *testing.T) {
 		Code:         0,
 		RowsAffected: 3,
 	})
-
 
 	// test getll
 	sql := "select id, name, balance from " + testTableName
@@ -645,7 +661,6 @@ func TestRestInsert(t *testing.T) {
 		RowsAffected: 1,
 	})
 
-
 	// test getll
 	sql := "select k,v from " + testTableName
 	sqlstmt, err := sqlparser.Parse(sql)
@@ -672,7 +687,6 @@ func TestRestInsert(t *testing.T) {
 	testGetCommand(t, table, p, filter_, stmt, expected, nil, nil, columnNames)
 
 }
-
 
 func TestRestUpdate(t *testing.T) {
 	log.InitFileLog(logPath, "proxy", "debug")
@@ -706,7 +720,7 @@ func TestRestUpdate(t *testing.T) {
 	defer p.Close()
 
 	// this is sql insert
-	testProxyInsert(t, p, 1, "insert into " + testTableName + "(id,name,balance) values(1,'myname',0.0075)")
+	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(1,'myname',0.0075)")
 
 	table_ := p.router.FindTable(testDBName, testTableName)
 
@@ -716,8 +730,8 @@ func TestRestUpdate(t *testing.T) {
 		TableName:    testTableName,
 		Command: &Command{
 			FieldValue: []*FieldValue{
-				{Column:"name", Value: "myname11"},
-				{Column:"balance", Value:  0.11},
+				{Column: "name", Value: "myname11"},
+				{Column: "balance", Value: 0.11},
 			},
 			Filter: &Filter_{
 				And: []*And{
@@ -758,4 +772,185 @@ func TestRestUpdate(t *testing.T) {
 	//	[]interface{}{1,"mmyname11",0.075},
 	//}
 	//testGetCommand(t, table_, p, filter_, stmt, expected, nil, nil, columnNames)
+}
+
+//id: pk, autoincrement
+//name:unique-index
+//age:non-unique-index
+//columnNames := []string{"id", "name", "age", "sex"}
+func TestRestKVHttpForSecondIndex(t *testing.T) {
+	s, err := mockGwServer()
+	if err != nil {
+		t.Fatalf("init server failed, err[%v]", err)
+	}
+	go s.Run()
+
+	secondIndexDb := "secondindex"
+	secondIndexTable := "maggineindex"
+
+	//case: should error, test insert duplicate unique index
+	//setQueryRep := &Query{
+	//	DatabaseName: secondIndexDb,
+	//	TableName:    secondIndexTable,
+	//	Command: &Command{
+	//		Field: []string{"name", "age", "sex"},
+	//		Values: [][]interface{}{
+	//			[]interface{}{"a", 10, "女"},
+	//			[]interface{}{"a", 11, "男"},
+	//			[]interface{}{"c", 5, "女"},
+	//			[]interface{}{"d", 14, "男"},
+	//		},
+	//	},
+	//}
+
+	setQueryRep := &Query{
+		DatabaseName: secondIndexDb,
+		TableName:    secondIndexTable,
+		Command: &Command{
+			Field: []string{"name", "age", "sex"},
+			Values: [][]interface{}{
+				[]interface{}{"a", 10, "女"},
+				[]interface{}{"b", 11, "男"},
+				[]interface{}{"c", 5, "女"},
+				[]interface{}{"d", 14, "男"},
+			},
+		},
+	}
+	dataRep, err := json.Marshal(setQueryRep)
+	if err != nil {
+		t.Fatal("set query marshal error: ", err)
+	}
+	//fmt.Println(string(dataRep))
+	req, _ := http.NewRequest("POST", "http://127.0.0.1:8080/kvcommand", bytes.NewReader(dataRep))
+	req.Header.Set("Content-type", "application/json")
+
+	query, err := httpReadQuery(req)
+	if err != nil {
+		t.Fatal("http read query error: ", err)
+	}
+	table := s.proxy.router.FindTable(secondIndexDb, secondIndexTable)
+	if table == nil {
+		t.Fatalf("table %s.%s doesn't exist ", secondIndexDb, secondIndexTable)
+	}
+	//自主id无法考虑业务自己赋值的主键
+	testSetCommand(t, query, table, s.proxy, &Reply{
+		Code:         0,
+		RowsAffected: 4,
+	})
+
+	//select
+	getQueryRep := &Query{
+		DatabaseName: secondIndexDb,
+		TableName:    secondIndexTable,
+		Command: &Command{
+			Field: []string{"id", "name", "age", "sex"},
+		},
+	}
+	expected := [][]interface{}{
+		[]interface{}{1, "a", 10, "女"},
+		[]interface{}{2, "b", 11, "男"},
+		[]interface{}{3, "c", 5, "女"},
+		[]interface{}{4, "d", 14, "男"},
+	}
+	assertGetCommand(t, getQueryRep, s.proxy, expected, table)
+
+	// test upd
+	updQueryRep := &Query{
+		DatabaseName: secondIndexDb,
+		TableName:    secondIndexTable,
+		Command: &Command{
+			Type: "upd",
+			FieldValue: []*FieldValue{
+				{Column: "name", Value: "e"},
+				{Column: "age", Value: 24},
+			},
+			Filter: &Filter_{
+				And: []*And{
+					&And{
+						Field:  &Field_{Column: "id", Value: uint64(2)},
+						Relate: "=",
+					},
+				},
+			},
+		},
+	}
+	testUpdCommand(t, updQueryRep, table, s.proxy, &Reply{
+		Code:         0,
+		RowsAffected: 1,
+	})
+
+	// test del
+	delQueryRep := &Query{
+		DatabaseName: secondIndexDb,
+		TableName:    secondIndexTable,
+		Command: &Command{
+			Type: "del",
+			Filter: &Filter_{
+				And: []*And{
+					&And{
+						Field:  &Field_{Column: "id", Value: uint64(2)},
+						Relate: "<=",
+					},
+				},
+			},
+		},
+	}
+	testDelCommand(t, delQueryRep, table, s.proxy, &Reply{
+		Code:         0,
+		RowsAffected: 2,
+	})
+}
+
+
+func TestRestKVHttpForSecondIndex2(t *testing.T) {
+	s, err := mockGwServer()
+	if err != nil {
+		t.Fatalf("init server failed, err[%v]", err)
+	}
+	go s.Run()
+
+	secondIndexDb := "secondindex"
+	secondIndexTable := "maggineindex2"
+
+	//id: pk, autoincrement
+	//name:unique-index
+	//balance:non-unique-index
+	//columnNames := []string{"id", "name", "balance", "data", "createtime"}
+
+	setQueryRep := &Query{
+		DatabaseName: secondIndexDb,
+		TableName:    secondIndexTable,
+		Command: &Command{
+			Field: []string{"id", "name", "balance", "data", "createtime"},
+			Values: [][]interface{}{
+				[]interface{}{1, "a", 0.5, []byte{1}, time.Now()},
+				[]interface{}{2, "a", 0.5, []byte{1}, time.Now()},
+				//[]interface{}{"b", 10, "男"},
+				//[]interface{}{"c", 5, "女"},
+				//[]interface{}{"d", 14, "男"},
+			},
+		},
+	}
+
+	dataRep, err := json.Marshal(setQueryRep)
+	if err != nil {
+		t.Fatal("set query marshal error: ", err)
+	}
+	fmt.Println(string(dataRep))
+	req, _ := http.NewRequest("POST", "http://127.0.0.1:8080/kvcommand", bytes.NewReader(dataRep))
+	req.Header.Set("Content-type", "application/json")
+
+	query, err := httpReadQuery(req)
+	if err != nil {
+		t.Fatal("http read query error: ", err)
+	}
+	table := s.proxy.router.FindTable(secondIndexDb, secondIndexTable)
+	if table == nil {
+		t.Fatalf("table %s.%s doesn't exist ", secondIndexDb, secondIndexTable)
+	}
+	//自主id无法考虑业务自己赋值的主键
+	testSetCommand(t, query, table, s.proxy, &Reply{
+		Code:         0,
+		RowsAffected: 2,
+	})
 }

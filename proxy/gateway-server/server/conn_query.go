@@ -20,14 +20,14 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"proxy/gateway-server/errors"
-	"proxy/gateway-server/mysql"
-	"proxy/gateway-server/sqlparser"
-	"proxy/metric"
 	"util"
 	"util/hack"
 	golog "util/log"
+	"model/pkg/txn"
+	"proxy/metric"
+	"proxy/gateway-server/errors"
+	"proxy/gateway-server/mysql"
+	"proxy/gateway-server/sqlparser"
 )
 
 /*处理query语句*/
@@ -37,7 +37,6 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	start := time.Now()
 	defer func() {
 		if e := recover(); e != nil {
-			//golog.OutputSql("Error", "err:%v,sql:%s", e, sql)
 			golog.Info("err:%v,sql:%s", e, sql)
 
 			if err, ok := e.(error); ok {
@@ -69,18 +68,6 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	}()
 
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
-	//	hasHandled, err := c.preHandleShard(sql)
-	//	if err != nil {
-	//		golog.Error("server", "preHandleShard", err.Error(), 0,
-	//			"sql", sql,
-	//			"hasHandled", hasHandled,
-	//		)
-	//		return err
-	//	}
-	//	if hasHandled {
-	//		return nil
-	//	}
-
 	var stmt sqlparser.Statement
 	stmt, err = sqlparser.Parse(sql) //解析sql语句,得到的stmt是一个interface
 	if err != nil {
@@ -161,47 +148,103 @@ func (c *ClientConn) newEmptyResultset(stmt *sqlparser.Select) *mysql.Resultset 
 	return r
 }
 
-func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) error {
+func (c *ClientConn) handleInsert(stmt *sqlparser.Insert, args []interface{}) (err error) {
 	if len(c.db) == 0 {
 		return errors.ErrNoDatabase
 	}
 	if golog.GetFileLogger().IsEnableDebug() {
-		golog.Debug("table:%v,cols:%v,rows:%v, args:%v", stmt.Table, stmt.Columns, stmt.Rows, args)
+		golog.Debug("[insert]table:%v,cols:%v,rows:%v, args:%v", stmt.Table, stmt.Columns, stmt.Rows, args)
 	}
-	ret, err := c.server.proxy.HandleInsert(c.db, stmt, args)
+	var (
+		ret     *mysql.Result
+		t       *Table
+		intents []*txnpb.TxnIntent
+		tx      = c.tx
+	)
+	if !c.isInTransaction() {
+		tx = NewTx(true, c.server.proxy, 0)
+	}
+	//verify, encode
+	t, intents, ret, err = c.server.proxy.HandleInsert(c.db, stmt, args)
 	if err != nil {
-		golog.Error("insert failed, err[%v]", err)
+		golog.Error("[insert]HandleInsert failed, err[%v]", err)
 		return c.writeError(err)
 	}
-	golog.Debug("insert success")
+	tx.SetTable(t)
+	err = tx.Insert(intents)
+	if err != nil {
+		golog.Error("[insert]txnInsert failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	if golog.GetFileLogger().IsEnableDebug() {
+		golog.Debug("insert success")
+	}
 	return c.writeOK(ret)
 }
 
-func (c *ClientConn) handleDelete(stmt *sqlparser.Delete, args []interface{}) error {
+func (c *ClientConn) handleDelete(stmt *sqlparser.Delete, args []interface{}) (err error) {
 	if len(c.db) == 0 {
 		return errors.ErrNoDatabase
 	}
 	if golog.GetFileLogger().IsEnableDebug() {
 		golog.Debug("table:%v,where:%v, args:%v", stmt.Table, stmt.Where, args)
 	}
-	ret, err := c.server.proxy.HandleDelete(c.db, stmt, args)
-	if err != nil {
-		return err
+	var (
+		ret     *mysql.Result
+		t       *Table
+		intents []*txnpb.TxnIntent
+		tx      = c.tx
+	)
+	if !c.isInTransaction() {
+		tx = NewTx(true, c.server.proxy, 0)
 	}
-	//TODO:return execut nums
+
+	//verify, encode
+	t, intents, ret, err = c.server.proxy.HandleDelete(c.db, stmt, args)
+	if err != nil {
+		golog.Error("[delete]HandleDelete failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	tx.SetTable(t)
+	err = tx.Delete(intents)
+	if err != nil {
+		golog.Error("[delete]txnDelete failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	if golog.GetFileLogger().IsEnableDebug() {
+		golog.Debug("delete success")
+	}
 	return c.writeOK(ret)
 }
 
-func (c *ClientConn) handleUpdate(stmt *sqlparser.Update, args []interface{}) error {
+func (c *ClientConn) handleUpdate(stmt *sqlparser.Update, args []interface{}) (err error) {
 	if len(c.db) == 0 {
 		return errors.ErrNoDatabase
 	}
 	if golog.GetFileLogger().IsEnableDebug() {
 		golog.Debug("table:%v, expr:%v, where:%v", stmt.Table, stmt.Exprs, stmt.Where)
 	}
-	ret, err := c.server.proxy.HandleUpdate(c.db, stmt, args)
+
+	var (
+		ret     *mysql.Result
+		t       *Table
+		intents []*txnpb.TxnIntent
+		tx      = c.tx
+	)
+	if !c.isInTransaction() {
+		tx = NewTx(true, c.server.proxy, 0)
+	}
+
+	//verify, encode
+	t, intents, ret, err = c.server.proxy.HandleUpdate(c.db, stmt, args)
 	if err != nil {
-		golog.Error("update failed, err[%v]", err)
+		golog.Error("[update]HandleUpdate failed, err[%v]", err)
+		return c.writeError(err)
+	}
+	tx.SetTable(t)
+	err = tx.Update(intents)
+	if err != nil {
+		golog.Error("[update]txnUpdate failed, err[%v]", err)
 		return c.writeError(err)
 	}
 	if golog.GetFileLogger().IsEnableDebug() {

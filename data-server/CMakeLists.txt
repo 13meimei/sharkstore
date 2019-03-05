@@ -200,11 +200,11 @@ set(SOURCES
     src/range/split.cpp
     src/range/split_policy.cpp
     src/range/peer.cpp
-    src/range/snapshot.cpp
     src/range/kv_funcs.cpp
     src/range/watch.cpp
     src/range/watch_funcs.cpp
     src/range/submit.cpp
+    src/range/txn.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
     src/storage/iterator.cpp
@@ -212,9 +212,13 @@ set(SOURCES
     src/storage/metric.cpp
     src/storage/row_decoder.cpp
     src/storage/row_fetcher.cpp
+    src/storage/snapshot.cpp
     src/storage/store.cpp
     src/storage/store_watch.cpp
     src/storage/where_expr.cpp
+    src/storage/store_txn.cpp
+    src/storage/select_txn.cpp
+    src/storage/util.cpp
     src/master/client.cpp
     src/master/connection.cpp
     src/master/rpc_types.cpp
@@ -289,7 +293,7 @@ endif()
 
 message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 
-add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp test/range/test_public_funcs.h)
+add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(

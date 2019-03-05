@@ -9,22 +9,23 @@
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/redispb.pb.h"
 #include "row_fetcher.h"
+#include "snapshot.h"
 
 namespace sharkstore {
 
 namespace dataserver {
 namespace storage {
 
-static const size_t kDefaultMaxSelectLimit = 10000;
 
 static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r);
 
-Store::Store(const metapb::Range& meta, rocksdb::DB* db) :
+Store::Store(const metapb::Range& meta, rocksdb::DB* db, rocksdb::ColumnFamilyHandle* txn_cf) :
     table_id_(meta.table_id()) ,
     range_id_(meta.id()),
     start_key_(meta.start_key()),
     end_key_(meta.end_key()),
-    db_(db) {
+    db_(db),
+    txn_cf_(txn_cf) {
     assert(!start_key_.empty());
     assert(!end_key_.empty());
     assert(meta.primary_keys_size() > 0);
@@ -87,7 +88,7 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
         for (int i = 0; i < req.rows_size(); ++i) {
             const kvrpcpb::KeyValue& kv = req.rows(i);
             if (check_dup) {
-                s = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true), kv.key(), &value);
+                s = db_->Get(rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum, true), kv.key(), &value);
                 if (s.ok()) {
                     return Status(Status::kDuplicate);
                 } else if (!s.IsNotFound()) {
@@ -97,15 +98,12 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
             s = blobdb->PutWithTTL(write_options_,rocksdb::Slice(kv.key()),rocksdb::Slice(kv.value()),ds_config.rocksdb_config.ttl);
             if (!s.ok()) {
                 return Status(Status::kIOError, "blobdb put", s.ToString());
-            }else{
+            }else {
                 addMetricWrite(*affected, kv.key().size()+kv.value().size());
                 *affected = *affected + 1;
             }
-
         }
-
-       return Status::OK();
-
+        return Status::OK();
     }
 
     uint64_t bytes_written = 0;
@@ -429,9 +427,8 @@ Status Store::Select(const kvrpcpb::SelectRequest& req,
                 has_aggre = true;
                 break;
             default:
-                return Status(Status::kInvalidArgument, "select",
-                              std::string("unknown select field type: ") +
-                                  kvrpcpb::SelectField_Type_Name(type));
+                return Status(Status::kInvalidArgument, "unknown select field type",
+                              kvrpcpb::SelectField_Type_Name(type));
         }
     }
     // 既有聚合函数又有普通的列，暂时不支持
@@ -479,19 +476,23 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
 
 Status Store::Truncate() {
     rocksdb::WriteOptions op;
+    auto family = db_->DefaultColumnFamily();
+    assert(!start_key_.empty());
 
     std::unique_lock<std::mutex> lock(key_lock_);
-    auto family = db_->DefaultColumnFamily();
-
-    assert(!start_key_.empty());
     assert(!end_key_.empty());
     assert(start_key_ < end_key_);
 
+    // truncate default column family
     auto s = db_->DeleteRange(op, family, start_key_, end_key_);
     if (!s.ok()) {
         return Status(Status::kIOError, "delete range", s.ToString());
     }
-
+    // truncate txn column family
+    s = db_->DeleteRange(op, txn_cf_, start_key_, end_key_);
+    if (!s.ok()) {
+        return Status(Status::kIOError, "delete range", s.ToString());
+    }
     return Status::OK();
 };
 
@@ -595,15 +596,69 @@ Status Store::RangeDelete(const std::string& start, const std::string& limit) {
     return Status(ret.ok() ? Status::OK() : Status(Status::kUnknown));
 }
 
+
+Status Store::NewIterators(std::unique_ptr<Iterator>& data_iter, std::unique_ptr<Iterator>& txn_iter,
+                    const std::string& start, const std::string& limit) {
+    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
+    cf_handles.push_back(db_->DefaultColumnFamily());
+    cf_handles.push_back(txn_cf_);
+
+    std::vector<rocksdb::Iterator*> iterators;
+    rocksdb::ReadOptions rops;
+    rops.fill_cache = false;
+    auto s = db_->NewIterators(rops, cf_handles, &iterators);
+    if (!s.ok()) {
+        return Status(Status::kIOError, "create iterators", s.ToString());
+    }
+
+    std::string final_start = start, final_end = limit;
+    if (final_start.empty() || final_start < start_key_) {
+        final_start = start_key_;
+    }
+    auto end_key = GetEndKey();
+    if (final_end.empty() || final_end > end_key) {
+        final_end = end_key;
+    }
+    assert(final_start >= start_key_);
+    assert(final_end <= end_key);
+
+    assert(iterators.size() == 2);
+    data_iter.reset(new Iterator(iterators[0], final_start, final_end));
+    txn_iter.reset(new Iterator(iterators[1], final_start, final_end));
+
+    return Status::OK();
+}
+
+Status Store::GetSnapshot(uint64_t apply_index, std::string&& context,
+        std::shared_ptr<raft::Snapshot>* snapshot) {
+    assert(snapshot != nullptr);
+
+    std::unique_ptr<Iterator> data_iter, txn_iter;
+    auto s = this->NewIterators(data_iter, txn_iter);
+    if (!s.ok()) {
+        return s;
+    }
+    snapshot->reset(new Snapshot(apply_index, std::move(context), std::move(data_iter), std::move(txn_iter)));
+    return Status::OK();
+}
+
 Status Store::ApplySnapshot(const std::vector<std::string>& datas) {
     rocksdb::WriteBatch batch;
     for (const auto& data : datas) {
         raft_cmdpb::SnapshotKVPair p;
         if (!p.ParseFromString(data)) {
-            return Status(Status::kCorruption, "apply snapshot data",
-                          "deserilize return false");
-        } else {
+            return Status(Status::kCorruption, "apply snapshot data", "deserilize return false");
+        }
+        switch (p.cf_type()) {
+        case raft_cmdpb::CF_DEFAULT:
             batch.Put(p.key(), p.value());
+            break;
+        case raft_cmdpb::CF_TXN:
+            batch.Put(txn_cf_, p.key(), p.value());
+            break;
+        default:
+            return Status(Status::kInvalidArgument, "apply snapshot data: invalid cf type: ",
+                    std::to_string(p.cf_type()));
         }
     }
     auto ret = db_->Write(write_options_, &batch);

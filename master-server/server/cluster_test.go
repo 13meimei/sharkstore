@@ -379,7 +379,7 @@ func TestTableColumnEdit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal old property error: %v", err)
 	}
-	columns, _, err := ParseProperties(string(property))
+	columns, _, _, err := ParseProperties(string(property))
 	if err != nil {
 		t.Fatal("parse properties error: ", err)
 	}

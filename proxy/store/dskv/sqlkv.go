@@ -7,6 +7,7 @@ import (
 	"proxy/metric"
 	"util/log"
 	"model/pkg/kvrpcpb"
+	"model/pkg/txn"
 )
 
 //func (p *KvProxy) SqlInsert(req *kvrpcpb.InsertRequest, scope *kvrpcpb.Scope) ([]*kvrpcpb.InsertResponse, error) {
@@ -121,44 +122,46 @@ func (p *KvProxy) Update(rContext *ReqContext, req *kvrpcpb.UpdateRequest, key [
 	return response, nil
 }
 
-func (p *KvProxy) SqlQuery(req *kvrpcpb.SelectRequest, key []byte) (*kvrpcpb.SelectResponse, *KeyLocation, error) {
+func (p *KvProxy) SqlQuery(rContext *ReqContext, req *txnpb.SelectRequest, key []byte) (*txnpb.SelectResponse, *KeyLocation, error) {
 	log.Debug("select by route key: %v", key)
-	context := NewPRConext(GetMaxBackoff)
-	var retErr, errForRetry error
-	for metricLoop := 0; ; metricLoop++ {
+	var err, errForRetry error
+	for {
 		if errForRetry != nil {
-			errForRetry = context.GetBackOff().Backoff(BoMSRPC, errForRetry)
+			errForRetry = rContext.GetBackOff().Backoff(BoMSRPC, errForRetry)
 			if errForRetry != nil {
-				log.Error("%s execute timeout", context)
+				log.Error("[select]%s execute timeout", rContext)
 				break
 			}
 		}
 		startTime := time.Now()
 		in := GetRequest()
-		defer PutRequest(in)
 		in.Type = Type_Select
-		in.SelectReq = &kvrpcpb.DsSelectRequest{
+		in.TxSelectReq = &txnpb.DsSelectRequest{
 			Header: &kvrpcpb.RequestHeader{},
 			Req:    req,
 		}
-		resp, l, err := p.do(context.GetBackOff(), in, key)
+		var (
+			resp *Response
+			l    *KeyLocation
+		)
+		resp, l, err = p.do(rContext.GetBackOff(), in, key)
 		delay := time.Now().Sub(startTime)
 		if err != nil {
 			metric.GsMetric.StoreApiMetric("KvQuery", false, delay)
 		} else {
 			metric.GsMetric.StoreApiMetric("KvQuery", true, delay)
 		}
+		PutRequest(in)
 		if err != nil {
 			if err == ErrRouteChange {
-				retErr = err
 				errForRetry = err
 				continue
 			}
-			return nil, nil, err
+			break
 		}
-		return resp.GetSelectResp().GetResp(), l, nil
+		return resp.GetTxSelectResp().GetResp(), l, nil
 	}
-	return nil, nil, retErr
+	return nil, nil, err
 }
 
 func (p *KvProxy) SqlDelete(req *kvrpcpb.DeleteRequest, scope *kvrpcpb.Scope) ([]*kvrpcpb.DeleteResponse, error) {
@@ -199,7 +202,7 @@ func (p *KvProxy) SqlDelete(req *kvrpcpb.DeleteRequest, scope *kvrpcpb.Scope) ([
 func (p *KvProxy) Delete(req *kvrpcpb.DeleteRequest, key []byte) (*kvrpcpb.DeleteResponse, *KeyLocation, error) {
 	var retErr, errForRetry error
 	context := NewPRConext(ScannerNextMaxBackoff)
-	for metricLoop := 0; ; metricLoop++ {
+	for {
 		if errForRetry != nil {
 			errForRetry = context.GetBackOff().Backoff(BoMSRPC, errForRetry)
 			if errForRetry != nil {
@@ -234,7 +237,6 @@ func (p *KvProxy) Delete(req *kvrpcpb.DeleteRequest, key []byte) (*kvrpcpb.Delet
 		return resp.GetDeleteResp().GetResp(), l, nil
 	}
 	return nil, nil, retErr
-
 }
 
 type KvParisSlice []*kvrpcpb.KeyValue
@@ -249,4 +251,95 @@ func (p KvParisSlice) Swap(i int, j int) {
 
 func (p KvParisSlice) Less(i int, j int) bool {
 	return bytes.Compare(p[i].GetKey(), p[j].GetKey()) < 0
+}
+
+func (p *KvProxy) TxPrepare(rContext *ReqContext, req *txnpb.PrepareRequest, key []byte) (*txnpb.PrepareResponse, error) {
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_TxPrepare
+	in.TxPrepareReq = &txnpb.DsPrepareRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, _, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("TxPrepare", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("TxPrepare", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetTxPrepareResp().GetResp()
+	return response, nil
+}
+func (p *KvProxy) TxDecide(rContext *ReqContext, req *txnpb.DecideRequest, key []byte) (*txnpb.DecideResponse, error) {
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_TxDecide
+	in.TxDecideReq = &txnpb.DsDecideRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, _, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("TxDecide", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("TxDecide", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetTxDecideResp().GetResp()
+	return response, nil
+}
+
+func (p *KvProxy) TxCleanup(rContext *ReqContext, req *txnpb.ClearupRequest, key []byte) (*txnpb.ClearupResponse, error) {
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_TxCleanup
+	in.TxCleanupReq = &txnpb.DsClearupRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, _, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("TxCleanup", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("TxCleanup", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetTxCleanupResp().GetResp()
+	return response, nil
+}
+
+func (p *KvProxy) TxGetLock(rContext *ReqContext, req *txnpb.GetLockInfoRequest, key []byte) (*txnpb.GetLockInfoResponse, error) {
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_TxGetLock
+	in.TxGetLockReq = &txnpb.DsGetLockInfoRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, _, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("TxGetLock", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("TxGetLock", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetTxLockInfoResp().GetResp()
+	return response, nil
 }

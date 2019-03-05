@@ -94,6 +94,12 @@ private:
     void KVRangeDelete(common::ProtoMessage *msg);
     void KVScan(common::ProtoMessage *msg);
 
+    void TxnPrepare(common::ProtoMessage *msg);
+    void TxnDecide(common::ProtoMessage *msg);
+    void TxnClearup(common::ProtoMessage *msg);
+    void TxnGetLockInfo(common::ProtoMessage *msg);
+    void TxnSelect(common::ProtoMessage* msg);
+
     void TimeOut(const kvrpcpb::RequestHeader &req,
                  kvrpcpb::ResponseHeader *resp);
     void RangeNotFound(const kvrpcpb::RequestHeader &req,
@@ -147,6 +153,7 @@ private:
     std::thread range_heartbeat_;
 
     rocksdb::DB *db_ = nullptr;
+    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles_;
     storage::MetaStore *meta_store_ = nullptr;
 
     ContextServer *context_ = nullptr;

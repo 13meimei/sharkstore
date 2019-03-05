@@ -9,7 +9,9 @@ _Pragma("once");
 #include "range/split_policy.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
+#include "proto/gen/txn.pb.h"
 #include "field_value.h"
+#include "raft/snapshot.h"
 
 // test fixture forward declare for friend class
 namespace sharkstore { namespace test { namespace helper { class StoreTestFixture; }}}
@@ -18,17 +20,37 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+using TxnErrorPtr = std::unique_ptr<txnpb::TxnError>;
+
 // 行前缀长度: 1字节特殊标记+8字节table id
 static const size_t kRowPrefixLength = 9;
 static const unsigned char kStoreKVPrefixByte = '\x01';
 
+static const size_t kDefaultMaxSelectLimit = 10000;
+
+static const uint32_t kVersionColumnID = std::numeric_limits<uint32_t>::max();
+
 class Store {
 public:
-    Store(const metapb::Range& meta, rocksdb::DB* db);
+    Store(const metapb::Range& meta, rocksdb::DB* db, rocksdb::ColumnFamilyHandle* txn_cf);
     ~Store();
 
     Store(const Store&) = delete;
     Store& operator=(const Store&) = delete;
+
+    void SetEndKey(std::string end_key);
+    std::string GetEndKey() const;
+
+    const std::vector<metapb::Column>& GetPrimaryKeys() const { return primary_keys_; }
+
+    void ResetMetric() { metric_.Reset(); }
+    void CollectMetric(MetricStat* stat) { metric_.Collect(stat); }
+
+    // 统计存储实际大小，并且根据split_size返回中间key
+    Status StatSize(uint64_t split_size, range::SplitKeyMode mode,
+                    uint64_t *real_size, std::string *split_key);
+    // 从rocksdb中删除当前range的数据
+    Status Truncate();
 
     Status Get(const std::string& key, std::string* value);
     Status Put(const std::string& key, const std::string& value);
@@ -39,27 +61,20 @@ public:
     Status Select(const kvrpcpb::SelectRequest& req,
                   kvrpcpb::SelectResponse* resp);
     Status DeleteRows(const kvrpcpb::DeleteRequest& req, uint64_t* affected);
-    Status Truncate();
 
+    // watch funcs
     Status WatchPut(const watchpb::KvWatchPutRequest& req, int64_t version);
     Status WatchDelete(const watchpb::KvWatchDeleteRequest& req);
-    Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req,
-            watchpb::DsKvWatchGetMultiResponse *resp);
-    Status WatchScan();
+    Status WatchGet(const watchpb::DsKvWatchGetMultiRequest& req, watchpb::DsKvWatchGetMultiResponse *resp);
 
-    void SetEndKey(std::string end_key);
-    std::string GetEndKey() const;
+    Status GetTxnValue(const std::string& key, std::string& db_value);
+    Status GetTxnValue(const std::string& key, txnpb::TxnValue* value);
 
-    const std::vector<metapb::Column>& GetPrimaryKeys() const {
-        return primary_keys_;
-    }
-
-    void ResetMetric() { metric_.Reset(); }
-    void CollectMetric(MetricStat* stat) { metric_.Collect(stat); }
-
-    // 统计存储实际大小，并且根据split_size返回中间key
-    Status StatSize(uint64_t split_size, range::SplitKeyMode mode,
-            uint64_t *real_size, std::string *split_key);
+    void TxnPrepare(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);
+    uint64_t TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
+    void TxnClearup(const txnpb::ClearupRequest& req, txnpb::ClearupResponse* resp);
+    void TxnGetLockInfo(const txnpb::GetLockInfoRequest& req, txnpb::GetLockInfoResponse* resp);
+    Status TxnSelect(const txnpb::SelectRequest& req, txnpb::SelectResponse* resp);
 
 public:
     Iterator* NewIterator(const ::kvrpcpb::Scope& scope);
@@ -71,6 +86,11 @@ public:
         const std::vector<std::pair<std::string, std::string>>& keyValues);
     Status RangeDelete(const std::string& start, const std::string& limit);
 
+    Status NewIterators(std::unique_ptr<Iterator>& data_iter, std::unique_ptr<Iterator>& txn_iter,
+            const std::string& start = "", const std::string& limit = "");
+
+    Status GetSnapshot(uint64_t apply_index, std::string&& context,
+            std::shared_ptr<raft::Snapshot>* snapshot);
     Status ApplySnapshot(const std::vector<std::string>& datas);
 
 private:
@@ -90,6 +110,19 @@ private:
     bool decodeWatchKey(const std::string& key, watchpb::WatchKeyValue *kv) const;
     bool decodeWatchValue(const std::string& value, watchpb::WatchKeyValue *kv) const;
 
+    Status writeTxnValue(const txnpb::TxnValue& value, rocksdb::WriteBatch* batch);
+    TxnErrorPtr checkLockable(const std::string& key, const std::string& txn_id, bool *exist_flag);
+    Status getKeyVersion(const std::string& key, uint64_t *version);
+    TxnErrorPtr checkUniqueAndVersion(const txnpb::TxnIntent& intent);
+    TxnErrorPtr prepareIntent(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
+            uint64_t version, rocksdb::WriteBatch* batch);
+
+    Status commitIntent(const txnpb::TxnIntent& intent, uint64_t version, rocksdb::WriteBatch* batch);
+    TxnErrorPtr decidePrimary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch);
+    TxnErrorPtr decideSecondary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch);
+    TxnErrorPtr decide(const txnpb::DecideRequest& req, const std::string& key, uint64_t& bytes_written,
+            rocksdb::WriteBatch* batch, std::vector<std::string>* secondary_keys = nullptr);
+
     Status parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key);
 
 private:
@@ -101,6 +134,7 @@ private:
     mutable std::mutex key_lock_;
 
     rocksdb::DB* db_;
+    rocksdb::ColumnFamilyHandle* txn_cf_;
     rocksdb::WriteOptions write_options_;
 
     std::vector<metapb::Column> primary_keys_;

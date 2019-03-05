@@ -23,7 +23,7 @@ static bool check(const ::kvrpcpb::Expr &e) {
         case ::kvrpcpb::E_Mult:
         case ::kvrpcpb::E_Div:
             if (e.child_size() != 2) {
-                FLOG_DEBUG("check() expr_type: %d child_size: %d",
+                FLOG_WARN("check() expr_type: %d child_size: %d",
                            e.expr_type(), e.child_size());
                 return false;
             }
@@ -40,7 +40,7 @@ static bool check(const ::kvrpcpb::Expr &e) {
             }
             return true;
         default:
-            FLOG_WARN("check() error, INVALID expr_type");
+            FLOG_ERROR("check() error, INVALID expr_type");
             return false;
     }
 }
@@ -174,7 +174,7 @@ Status CWhereExpr::ComputeExpr(const ::kvrpcpb::Expr& expr, const FieldValue *l,
             }
             break;
         default:
-            return Status(Status::kUnknown, "unknown expr type", "");
+            return Status(Status::kUnknown, "Unknown expr type", "");
     }
 
     return Status::OK();
@@ -225,7 +225,7 @@ FieldValue* CWhereExpr::GetValFromExpr(
             return nullptr;
     }
 
-    FLOG_DEBUG("GetValFromExpr() fv: %s", fv->ToString().c_str());
+    //FLOG_DEBUG("GetValFromExpr() fv: %s", fv->ToString().c_str());
     return fv;
 }
 
@@ -323,10 +323,10 @@ bool CWhereExpr::FilterExpr(const RowResult &result,
                 return false;
             }
 
-            FLOG_DEBUG(">>>get left value expr_type: %d addr: %p  value: %s",
-                       et, &expr.child(0), l->ToString().c_str());
-            FLOG_DEBUG(">>>get right value expr_type: %d addr: %p value: %s",
-                       et, &expr.child(1), r->ToString().c_str());
+            FLOG_DEBUG(">>>parent expr_type: %d get left value expr_type: %d addr: %p  value: %s",
+                       et, expr.child(0).expr_type(), &expr.child(0), l->ToString().c_str());
+            FLOG_DEBUG(">>>parent expr_type: %d get right value expr_type: %d addr: %p value: %s",
+                       et, expr.child(1).expr_type(), &expr.child(1), r->ToString().c_str());
 
             bl = CWhereExpr::CmpExpr(l, r, et);
             if (expr.child(0).expr_type() != ::kvrpcpb::E_ExprCol) delete l;

@@ -2,12 +2,12 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"runtime"
 	"time"
 
-	"model/pkg/kvrpcpb"
 	"util/log"
+	"model/pkg/kvrpcpb"
+	"model/pkg/txn"
 	"proxy/store/dskv"
 )
 
@@ -209,53 +209,54 @@ func (it *SelectTask) Reset() {
 	*it = SelectTask{done: make(chan error, 1)}
 }
 
-func newAggreTask(p *Proxy, kvproxy *dskv.KvProxy, key []byte, req *kvrpcpb.SelectRequest) *aggreTask {
-	return &aggreTask{
-		p:       p,
-		kvproxy: kvproxy,
-		key:     key,
-		req:     req,
-		done:    make(chan error, 1),
-	}
-}
-
-type aggreTask struct {
-	p       *Proxy
-	kvproxy *dskv.KvProxy
-	key     []byte
-	req     *kvrpcpb.SelectRequest
-	done    chan error
-	result  []*kvrpcpb.Row
-}
-
-func (t *aggreTask) Do() {
-	resp, _, err := t.kvproxy.SqlQuery(t.req, t.key)
-	if err == nil && resp.GetCode() != 0 {
-		log.Error("select aggre: remote server return code: %v", resp.GetCode())
-		err = fmt.Errorf("remote server return code: %v", resp.GetCode())
-	}
-	if err != nil {
-		t.done <- err
-		return
-	}
-	t.result = resp.GetRows()
-	t.done <- nil
-}
-
-func (t *aggreTask) Wait() error {
-	select {
-	case <-t.p.ctx.Done():
-		return errors.New("proxy already closed")
-	case err := <-t.done:
-		return err
-	}
-}
-
-func (t *aggreTask) Reset() {
-}
+//func newAggreTask(p *Proxy, kvproxy *dskv.KvProxy, key []byte, req *kvrpcpb.SelectRequest) *aggreTask {
+//	return &aggreTask{
+//		p:       p,
+//		kvproxy: kvproxy,
+//		key:     key,
+//		req:     req,
+//		done:    make(chan error, 1),
+//	}
+//}
+//
+//type aggreTask struct {
+//	p       *Proxy
+//	kvproxy *dskv.KvProxy
+//	key     []byte
+//	req     *kvrpcpb.SelectRequest
+//	done    chan error
+//	result  []*kvrpcpb.Row
+//}
+//
+//func (t *aggreTask) Do() {
+//	resp, _, err := t.kvproxy.SqlQuery(t.req, t.key)
+//	if err == nil && resp.GetCode() != 0 {
+//		log.Error("select aggre: remote server return code: %v", resp.GetCode())
+//		err = fmt.Errorf("remote server return code: %v", resp.GetCode())
+//	}
+//	if err != nil {
+//		t.done <- err
+//		return
+//	}
+//	t.result = resp.GetRows()
+//	t.done <- nil
+//}
+//
+//func (t *aggreTask) Wait() error {
+//	select {
+//	case <-t.p.ctx.Done():
+//		return errors.New("proxy already closed")
+//	case err := <-t.done:
+//		return err
+//	}
+//}
+//
+//func (t *aggreTask) Reset() {
+//}
 
 type UpdateResult struct {
 	affected     uint64
+	intents 	 []*txnpb.TxnIntent
 }
 
 func (r *UpdateResult) GetAffected() uint64 {
@@ -286,13 +287,13 @@ func (it *UpdateTask) init(proxy *Proxy, table *Table, fieldList []*kvrpcpb.Fiel
 }
 
 func (it *UpdateTask) Do() {
-	affected, err := it.p.doUpdate(it.table, it.fieldList, it.matches, nil, nil)
+	intents, affected, err := it.p.doUpdate(it.table, it.fieldList, it.matches, nil, nil)
 	if err != nil {
 		it.done <- err
 		return
 	}
 
-	it.rest = &UpdateResult{affected}
+	it.rest = &UpdateResult{affected, intents}
 	it.done <- nil
 	return
 }

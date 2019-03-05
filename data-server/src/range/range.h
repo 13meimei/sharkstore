@@ -10,26 +10,22 @@ _Pragma("once");
 #include "base/shared_mutex.h"
 #include "base/util.h"
 
-#include "common/generater.h"
 #include "common/ds_encoding.h"
 #include "common/socket_session.h"
-
 #include "storage/store.h"
-
 #include "raft/raft.h"
 #include "raft/statemachine.h"
 #include "raft/types.h"
-
+#include "server/context_server.h"
+#include "server/run_status.h"
+#include "watch/watch_event_buffer.h"
+#include "watch/watcher.h"
 #include "proto/gen/funcpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
-
-#include "server/context_server.h"
-#include "server/run_status.h"
-#include "watch/watch_event_buffer.h"
-#include "watch/watcher.h"
+#include "proto/gen/txn.pb.h"
 
 #include "meta_keeper.h"
 #include "context.h"
@@ -115,20 +111,23 @@ public:
     void KVRangeDelete(common::ProtoMessage *msg, kvrpcpb::DsKvRangeDeleteRequest &req);
     void KVScan(common::ProtoMessage *msg, kvrpcpb::DsKvScanRequest &req);
 
+    // TXN
+    void TxnPrepare(common::ProtoMessage* msg, txnpb::DsPrepareRequest& req);
+    void TxnDecide(common::ProtoMessage* msg, txnpb::DsDecideRequest& req);
+    void TxnClearup(common::ProtoMessage* msg, txnpb::DsClearupRequest& req);
+    void TxnGetLockInfo(common::ProtoMessage* msg, txnpb::DsGetLockInfoRequest& req);
+    void TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req);
+
     //KV watch series
-    Status GetAndResp( watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey, const bool &prefix,
-                              int64_t &version, watchpb::DsWatchResponse *dsResp);
+    Status GetAndResp(watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey,
+            const bool &prefix, int64_t &version, watchpb::DsWatchResponse *dsResp);
     void WatchGet(common::ProtoMessage *msg, watchpb::DsWatchRequest &req);
     void PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req);
     void WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
     void WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
     bool WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req);
-    bool WatchDeleteSubmit(common::ProtoMessage *msg,
-                            watchpb::DsKvWatchDeleteRequest &req);
+    bool WatchDeleteSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req);
 
-    watch::CEventBuffer *getEventBuffer() {
-        return  eventBuffer;
-    }
 public:
     kvrpcpb::KvRawGetResponse *RawGetResp(const std::string &key);
     kvrpcpb::SelectResponse *SelectResp(const kvrpcpb::DsSelectRequest &req);
@@ -160,8 +159,8 @@ private:
     Status ApplyRawPut(const raft_cmdpb::Command &cmd);
     Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
 
-    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
-    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
+    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raft_index);
 
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
     Status ApplyUpdate(const raft_cmdpb::Command &cmd);
@@ -179,10 +178,14 @@ private:
     Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd);
     Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd);
 
-    Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx);
+    Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raft_index);
     Status ApplyLockUpdate(const raft_cmdpb::Command &cmd);
     Status ApplyUnlock(const raft_cmdpb::Command &cmd);
     Status ApplyUnlockForce(const raft_cmdpb::Command &cmd);
+
+    Status ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+    Status ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+    Status ApplyTxnClearup(const raft_cmdpb::Command &cmd, uint64_t raft_index);
 
     // split func
     void CheckSplit(uint64_t size);
@@ -253,10 +256,13 @@ public:
 private:
     bool VerifyLeader(errorpb::Error *&err);
     bool VerifyReadable(uint64_t read_index, errorpb::Error *&err);
-    bool CheckWriteable();
+    bool VerifyWriteable(errorpb::Error **err = nullptr); // 检查是否磁盘空间已满
     bool KeyInRange(const std::string &key);
     bool KeyInRange(const std::string &key, errorpb::Error *&err);
-
+    bool KeyInRange(const txnpb::PrepareRequest& req, const metapb::RangeEpoch& epoch,
+            errorpb::Error** err);
+    bool KeyInRange(const txnpb::DecideRequest& req, const metapb::RangeEpoch& epoch,
+            errorpb::Error** err);
     bool EpochIsEqual(const metapb::RangeEpoch &epoch);
     bool EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&);
 
@@ -274,12 +280,8 @@ private:
 private:
     friend class ::sharkstore::test::helper::RangeTestFixture;
 
-    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version, std::string &errMsg, bool prefix = false);
-    int32_t loadFromDb(const watchpb::EventType &evtType,
-                       const std::string &fromKey,
-                       const std::string &endKey,
-                       const int64_t &startVersion,
-                       watchpb::DsWatchResponse *dsResp);
+    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version,
+            std::string &errMsg, bool prefix = false);
     int32_t SendNotify( watch::WatcherPtr& w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
 
 private:

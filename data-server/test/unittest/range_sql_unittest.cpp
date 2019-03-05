@@ -167,45 +167,11 @@ TEST_F(RangeTestFixture, CURD) {
     }
     // test select
     {
-        printf("test select with match_ext\n");
 
         DsSelectRequest req;
         MakeHeader(req.mutable_header());
         SelectRequestBuilder builder(table_.get());
         builder.AddAllFields();
-        //复合条件 not support math operaton in relation express
-        //where id = 1 or id > 1 and id = 10 - 9
-        //or
-        //  =
-        //      id
-        //      1
-        //  and
-        //      >
-        //          id
-        //          1
-        //      =
-        //          id
-        //          -   
-        //               10
-        //               9
-        //      
-        //id + 19 = 20
-        //auto handler= builder.InitMatchExt(::kvrpcpb::E_LogicOr);
-        //builder.AppendMatchExt(handler, "id", "1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
-
-        builder.AppendMatchExt("id", "5", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
-        builder.AppendMatchExt("id", "4", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
-        builder.AppendMatchExt("id", "3", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
-        builder.AppendMatchExt("id", "2", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
-        builder.AppendMatchExt("id", "0", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
-        builder.AppendMatchExt("id", "1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
-        //id > 100 or id < 200
-        //builder.AppendMatchExt("id", "100", ::kvrpcpb::E_Larger, ::kvrpcpb::E_LogicOr);
-        //builder.AppendMatchExt("id", "200", ::kvrpcpb::E_Less, ::kvrpcpb::E_LogicOr);
-
-        //id = 100 or id = 200
-        //builder.AppendMatchExt("id", "100", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicAnd);
-        //builder.AppendMatchExt("id", "200", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
         *req.mutable_req() = builder.Build();
 
         DsSelectResponse resp;
@@ -272,6 +238,192 @@ TEST_F(RangeTestFixture, CURD) {
         SelectResultParser parser(req.req(), resp.resp());
         s = parser.Match({});
         ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+}
+
+TEST_F(RangeTestFixture, MatchExt) {
+    SetLeader(GetNodeID());
+
+    std::vector<std::vector<std::string>> rows = {
+            {"1", "user1", "111"},
+            {"2", "user2", "222"},
+            {"3", "user3", "333"},
+    };
+    std::vector<std::vector<std::string>> rows1 = {
+            {"1", "user1", "111"},
+    };
+    std::vector<std::vector<std::string>> rows2 = {
+            {"2", "user2", "222"},
+    };
+    std::vector<std::vector<std::string>> rows3 = {
+            {"3", "user3", "333"},
+    };
+    std::vector<std::vector<std::string>> rows12 = {
+            {"1", "user1", "111"},
+            {"2", "user2", "222"},
+    };
+    std::vector<std::vector<std::string>> rows13 = {
+            {"1", "user1", "111"},
+            {"3", "user3", "333"},
+    };
+    std::vector<std::vector<std::string>> rows23 = {
+            {"2", "user2", "222"},
+            {"3", "user3", "333"},
+    };
+    std::vector<std::vector<std::string>> rows0;
+    rows0.clear();
+
+    // insert some rows
+    {
+        DsInsertRequest req;
+        MakeHeader(req.mutable_header());
+        InsertRequestBuilder builder(table_.get());
+        builder.AddRows(rows);
+        req.mutable_req()->CopyFrom(builder.Build());
+        DsInsertResponse resp;
+        auto s = TestInsert(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().ShortDebugString();
+        ASSERT_EQ(resp.resp().code(), 0);
+        ASSERT_EQ(resp.resp().affected_keys(), rows.size());
+    }
+
+    // test select
+    {
+        //printf("test select with match_ext\n");
+
+        DsSelectRequest req;
+        MakeHeader(req.mutable_header());
+        SelectRequestBuilder builder(table_.get());
+        builder.AddAllFields();
+
+        //复合条件 not support math operaton in relation express
+        //where id = 1 or id > 1 and id = 10 - 9
+        //or
+        //  =
+        //      id
+        //      1
+        //  and
+        //      >
+        //          id
+        //          1
+        //      =
+        //          id
+        //          -
+        //               10
+        //               9
+        //
+        //id = 1
+        builder.AppendMatchExt("id", "1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+
+        DsSelectResponse resp;
+        auto s = TestSelect(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().ShortDebugString();
+        SelectResultParser parser(req.req(), resp.resp());
+        s = parser.Match(rows1);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        builder.AddAllFields();
+        builder.ClearMatchExt();
+        //id = 1 or id = 2
+        builder.AppendMatchExt("id", "1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "2", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+        s = TestSelect(req, &resp);
+        SelectResultParser parser12(req.req(), resp.resp());
+        s = parser12.Match(rows12);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        builder.AddAllFields();
+        builder.ClearMatchExt();
+        //id = 2 and balance = "222" and name = "user2"
+        builder.AppendMatchExt("id", "2", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicAnd);
+        builder.AppendMatchExt("balance", "222", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicAnd);
+        builder.AppendMatchExt("name", "user2", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+        s = TestSelect(req, &resp);
+        SelectResultParser parser2(req.req(), resp.resp());
+        s = parser2.Match(rows2);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        builder.AddAllFields();
+        builder.ClearMatchExt();
+        //name = user33 or name = "user3" => rows3
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user33", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("name", "user3", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+        s = TestSelect(req, &resp);
+        SelectResultParser parser3(req.req(), resp.resp());
+        s = parser3.Match(rows3);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        builder.AddAllFields();
+        builder.ClearMatchExt();
+        //id = 2 or (name = "user2" and balance = "100") => rows2
+        //builder.AppendMatchExt("id", "2", ::kvrpcpb::E_NotEqual, ::kvrpcpb::E_LogicOr);
+        //builder.AppendMatchExt("name", "user2", ::kvrpcpb::E_Larger, ::kvrpcpb::E_LogicAnd);
+        //builder.AppendMatchExt("balance", "100", ::kvrpcpb::E_Less, ::kvrpcpb::E_Invalid);
+
+        //id <> 1 or id > 1 and (id < 4 and id > 1) => rows23
+        builder.AppendMatchExt("id", "1", ::kvrpcpb::E_NotEqual, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "1", ::kvrpcpb::E_Larger, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("id", "4", ::kvrpcpb::E_Less, ::kvrpcpb::E_LogicAnd);
+        builder.AppendMatchExt("id", "1", ::kvrpcpb::E_Larger, ::kvrpcpb::E_Invalid);
+        //builder.AppendMatchExt("name", "user_1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicAnd);
+        //builder.AppendMatchExt("balance", "100", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+        s = TestSelect(req, &resp);
+        SelectResultParser parser33(req.req(), resp.resp());
+        s = parser33.Match(rows23);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        builder.AddAllFields();
+        builder.ClearMatchExt();
+        //id = 2 or name = "user2" and balance = "100" => rows0
+        builder.AppendMatchExt("id", "1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicAnd);
+        builder.AppendMatchExt("name", "user_1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
+        builder.AppendMatchExt("balance", "111", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+        s = TestSelect(req, &resp);
+        SelectResultParser parser1_1(req.req(), resp.resp());
+        s = parser1_1.Match(rows1);
     }
 }
 

@@ -10,6 +10,7 @@ namespace sharkstore {
 int randomInt();
 
 std::string randomString(size_t length);
+std::string randomString(size_t min_length, size_t max_length);
 
 std::string strErrno(int errno_copy);
 
