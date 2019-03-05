@@ -6,7 +6,6 @@ set(test_helper_SRCS
     helper/mock/raft_server_mock.cpp
     helper/mock/range_context_mock.cpp
     helper/mock/rpc_request_mock.cpp
-    helper/gen/test.pb.cc
     helper/helper_util.cpp
     helper/query_builder.cpp
     helper/query_parser.cpp
@@ -65,8 +64,3 @@ foreach(testfile ${test_SRCS})
 endforeach(testfile ${TESTS})
 
 #add_subdirectory(watch)
-
-if (BUILD_NET)
-    add_subdirectory(net)
-endif()
-

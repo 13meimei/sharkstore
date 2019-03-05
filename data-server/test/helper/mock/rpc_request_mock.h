@@ -32,6 +32,8 @@ private:
     RPCFuturePtr future_;
 };
 
+// 返回一个RPCRequest用于向下传递处理请求
+// 返回一个RPCFuture用于获取处理结果
 std::pair<RPCRequestPtr, RPCFuturePtr> NewMockRPCRequest(
         const google::protobuf::Message& proto_req,
         funcpb::FunctionID func_id = funcpb::kFuncHeartbeat);
