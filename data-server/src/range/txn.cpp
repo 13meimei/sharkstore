@@ -54,7 +54,7 @@ void Range::TxnPrepare(common::ProtoMessage* msg, DsPrepareRequest& req) {
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
-    RANGE_LOG_DEBUG("TxnPrepare begin");
+    RANGE_LOG_DEBUG("TxnPrepare begin, req: %s", req.DebugString().c_str());
 
     errorpb::Error *err = nullptr;
 
@@ -90,7 +90,7 @@ void Range::TxnPrepare(common::ProtoMessage* msg, DsPrepareRequest& req) {
 }
 
 Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_index) {
-    RANGE_LOG_DEBUG("ApplyTxnPrepare begin");
+    RANGE_LOG_DEBUG("ApplyTxnPrepare begin at %" PRId64 ", req: %s", raft_index, cmd.DebugString().c_str());
 
     Status ret;
     auto &req = cmd.txn_prepare_req();
@@ -116,7 +116,7 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
 }
 
 void Range::TxnDecide(common::ProtoMessage* msg, DsDecideRequest& req) {
-    RANGE_LOG_DEBUG("TxnDecide begin");
+    RANGE_LOG_DEBUG("TxnDecide begin, req: %s", req.DebugString().c_str());
 
     errorpb::Error *err = nullptr;
     auto btime = get_micro_second();
@@ -153,7 +153,7 @@ void Range::TxnDecide(common::ProtoMessage* msg, DsDecideRequest& req) {
 }
 
 Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index) {
-    RANGE_LOG_DEBUG("ApplyTxnDecide begin");
+    RANGE_LOG_DEBUG("ApplyTxnDecide begin, cmd: %s", cmd.DebugString().c_str());
 
     Status ret;
     auto &req = cmd.txn_decide_req();
@@ -183,7 +183,7 @@ Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index
 }
 
 void Range::TxnClearup(common::ProtoMessage* msg, txnpb::DsClearupRequest& req) {
-    RANGE_LOG_DEBUG("TxnClearup  begin");
+    RANGE_LOG_DEBUG("TxnClearup  begin, req: %s", req.DebugString().c_str());
 
     errorpb::Error *err = nullptr;
     auto btime = get_micro_second();
@@ -293,7 +293,7 @@ void Range::TxnSelect(common::ProtoMessage* msg, txnpb::DsSelectRequest& req) {
     auto btime = get_micro_second();
     context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
-    RANGE_LOG_DEBUG("Select begin");
+    RANGE_LOG_DEBUG("Select begin, req: %s", req.DebugString().c_str());
 
     errorpb::Error *err = nullptr;
     auto ds_resp = new txnpb::DsSelectResponse;
