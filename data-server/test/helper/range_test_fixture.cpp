@@ -20,8 +20,8 @@ using namespace google::protobuf;
 void RangeTestFixture::SetUp() {
     log_init2();
     //char level[] = "CRIT";
-    //char level[] = "debug";
-    char level[] = "warn";
+    //char level[] = "warn";
+    char level[] = "debug";
     set_log_level(level);
 
     table_ = CreateAccountTable();

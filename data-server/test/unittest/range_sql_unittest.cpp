@@ -427,5 +427,88 @@ TEST_F(RangeTestFixture, MatchExt) {
     }
 }
 
+TEST_F(RangeTestFixture, MatchMathExpr) {
+    SetLeader(GetNodeID());
+
+    std::vector<std::vector<std::string>> rows = {
+            {"1", "user1", "111"},
+            {"2", "user2", "222"},
+            {"3", "user3", "333"},
+    };
+    std::vector<std::vector<std::string>> rows2 = {
+            {"2", "user2", "222"},
+    };
+
+    std::vector<std::vector<std::string>> rows1 = {
+            {"1", "user1", "111"},
+    };
+
+    // insert some rows
+    {
+        DsInsertRequest req;
+        MakeHeader(req.mutable_header());
+        InsertRequestBuilder builder(table_.get());
+        builder.AddRows(rows);
+        req.mutable_req()->CopyFrom(builder.Build());
+        DsInsertResponse resp;
+        auto s = TestInsert(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().ShortDebugString();
+        ASSERT_EQ(resp.resp().code(), 0);
+        ASSERT_EQ(resp.resp().affected_keys(), rows.size());
+    }
+    // test select
+    {
+
+        DsSelectRequest req;
+        MakeHeader(req.mutable_header());
+        SelectRequestBuilder builder(table_.get());
+        builder.AddAllFields();
+
+        builder.ClearMatchExt();
+        //id = 1 + 1
+        builder.AppendCompCond("id", "1+1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+
+        DsSelectResponse resp;
+        auto s = TestSelect(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().ShortDebugString();
+        SelectResultParser parser(req.req(), resp.resp());
+        s = parser.Match(rows2);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        builder.AddAllFields();
+        builder.ClearMatchExt();
+        //where id = 10 - 9
+        builder.AppendCompCond("id", "10-9", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+        s = TestSelect(req, &resp);
+        SelectResultParser parser1_1(req.req(), resp.resp());
+        s = parser1_1.Match(rows1);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        builder.AddAllFields();
+        builder.ClearMatchExt();
+        //where id = 1*1
+        builder.AppendCompCond("id", "1*1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+        s = TestSelect(req, &resp);
+        SelectResultParser parser1(req.req(), resp.resp());
+        s = parser1.Match(rows1);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        builder.AddAllFields();
+        builder.ClearMatchExt();
+        //where id = 10/9
+        builder.AppendCompCond("id", "10\/10", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        *req.mutable_req() = builder.Build();
+        s = TestSelect(req, &resp);
+        SelectResultParser parser2(req.req(), resp.resp());
+        s = parser2.Match(rows1);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
 }
 
+}

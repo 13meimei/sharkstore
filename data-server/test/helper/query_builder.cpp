@@ -145,6 +145,135 @@ static ::kvrpcpb::Expr *CreateExpr(::kvrpcpb::Expr *e, const metapb::Column &col
     CreateExprVal(col, val, r);
     return e;
 }
+
+static int  buildMathExpr(const metapb::Column& col, const std::string &flag, kvrpcpb::Expr *e) {
+    kvrpcpb::Expr *l = nullptr;
+    kvrpcpb::Expr *r = nullptr;
+    std::string value;
+    std::string el;
+    std::string er;
+    size_t  pos;
+
+    printf("buildMathExpr.....flag:%s\n", flag.c_str());
+
+    //char ff = *(const_cast<char*>(flag.c_str()));
+    char ff = *(flag.data());
+    switch (ff) {
+        case '+':
+            e->set_expr_type(kvrpcpb::E_Plus);
+            break;
+        case '-':
+            e->set_expr_type(kvrpcpb::E_Minus);
+            break;
+        case '*':
+            e->set_expr_type(kvrpcpb::E_Mult);
+            break;
+        case '\/':
+            e->set_expr_type(kvrpcpb::E_Div);
+            break;
+        default:
+            return -1;
+    }
+
+    value.swap(*(e->mutable_value()));
+    pos = value.find(flag);
+
+    el = value.substr(0, pos);
+    er = value.substr(pos+1);
+    if (el == col.name()) {
+        l = e->add_child();
+        metapb::Column *tmp = new metapb::Column;
+        tmp->CopyFrom(col);
+        l->set_allocated_column(tmp);
+        l->set_expr_type(kvrpcpb::E_ExprCol);
+    } else {
+        l = e->add_child();
+        l->mutable_column()->CopyFrom(col);
+        l->set_value(el);
+        l->set_expr_type(kvrpcpb::E_ExprConst);
+    }
+
+    if (er == col.name()) {
+        r = e->add_child();
+        auto column = new metapb::Column(col);
+        r->set_allocated_column(column);
+        r->set_expr_type(kvrpcpb::E_ExprCol);
+    } else {
+        r = e->add_child();
+        r->mutable_column()->CopyFrom(col);
+        r->set_value(er);
+        r->set_expr_type(kvrpcpb::E_ExprConst);
+    }
+
+    return 0;
+}
+//where id = 1 + 1
+//col = id
+//val = 1 + 1
+//decode val into Expr
+void SelectRequestBuilder::AppendCompCond(const std::string& col, const std::string& val,
+        ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix)
+{
+    AppendMatchExt(col, val, et, logic_suffix);
+    printf("AppendCompCond...\n");
+
+    auto root = req_.mutable_ext_filter()->mutable_expr();
+    decltype(root) l = nullptr, r = nullptr;
+
+    const metapb::Column& column = table_->GetColumn(col);
+    auto tmp = root;
+
+    auto fn = [&](kvrpcpb::Expr *l) ->void {
+        printf("in lambda....%s\n", l->value().c_str());
+
+        if (l->expr_type() == kvrpcpb::E_ExprConst &&
+            l->column().data_type() >= metapb::Tinyint &&
+            l->column().data_type() <= metapb::Double)
+        {
+                if (l->value().find("+") != std::string::npos) {
+                    //to do decode +
+                    buildMathExpr(column, "+", l);
+                    return;
+                }
+                if (l->value().find("-") != std::string::npos) {
+                    //to do decode -
+                    buildMathExpr(column, "-", l);
+                    return;
+                }
+                if (l->value().find("*") != std::string::npos) {
+                    //to do decode *
+                    buildMathExpr(column, "*", l);
+                    return;
+                }
+                if (l->value().find("\/") != std::string::npos) {
+                    //to do decode /
+                    buildMathExpr(column, "\/", l);
+                    return;
+                }
+        } //end if
+    };
+
+    printf("AppendCompCond...while\n");
+    while (tmp->child_size() > 0) {
+        printf("in while\n");
+        //Not releation expr
+        if (tmp->expr_type() < 11 || tmp->expr_type() > 16) {
+            printf("AppendCompCond...continue\n");
+            tmp = tmp->mutable_child(0);
+            continue;
+        }
+
+        l = tmp->mutable_child(0);
+        fn(l);
+        l = tmp->mutable_child(1);
+        fn(l);
+        break;
+    } //end while
+}
+
+//
+//support append simple condition such as where id = 1 or id = 2
+//Not support where id = 1 + 1 and this series condition will support in other func
 //logic_suffix: logic relation with previous expression
 //              first append represent for root
 void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::string& val,
@@ -155,7 +284,7 @@ void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::str
     //parent expr
     ::kvrpcpb::Expr *pe = nullptr;
     auto first = false;
-    
+
     if (logic_suffix == 0 && (et < 11 || et > 16)) {
         printf("%s:%d must be relation expr_type if last expr!\n",__FILE__, __LINE__);
         return;
@@ -169,7 +298,7 @@ void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::str
         if (pe->child_size() == 0)
         {
             l = pe;
-            if (logic_suffix > 0) { 
+            if (logic_suffix > 0) {
             //    printf("root logic expr_type: %d\n", logic_suffix);
                 pe->set_expr_type(logic_suffix);
                 l = pe->add_child();

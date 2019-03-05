@@ -31,6 +31,9 @@ public:
     void AppendMatchExt(const std::string& col, const std::string& val,
         ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix=::kvrpcpb::E_LogicAnd);
 
+    void AppendCompCond(const std::string& col, const std::string& val,
+        ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix);
+
     void ClearMatchExt() {
         req_.mutable_ext_filter()->Clear();
     }
