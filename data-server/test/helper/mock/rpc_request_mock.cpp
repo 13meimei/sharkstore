@@ -7,6 +7,9 @@ namespace test {
 namespace mock {
 
 void RPCFuture::Set(const google::protobuf::Message& resp) {
+    if (replied_) {
+        throw std::logic_error("already replied");
+    }
     replied_ = true;
     resp.SerializeToString(&reply_data_);
 }
