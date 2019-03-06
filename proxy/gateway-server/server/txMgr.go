@@ -204,7 +204,7 @@ func (t *TxObj) Commit() (err error) {
 	}
 	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
 	var (
-		priIntents []*txnpb.TxnIntent
+		priIntents      []*txnpb.TxnIntent
 		secIntentsGroup [][]*txnpb.TxnIntent
 	)
 	sort.Sort(TxnIntentSlice(t.intents))
@@ -345,9 +345,9 @@ func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*tx
 			PrimaryKey: tx.GetPrimaryKey(),
 			LockTtl:    tx.Timeout,
 		}
-		err = tx.proxy.handlePrepare(subCtx, req, tx.GetTable())
-		if err != nil {
-			handleChannel <- &TxnDealHandle{intents: intents, err: err}
+		e := tx.proxy.handlePrepare(subCtx, req, tx.GetTable())
+		if e != nil {
+			handleChannel <- &TxnDealHandle{intents: intents, err: e}
 			return
 		}
 		handleChannel <- &TxnDealHandle{intents: intents, err: nil}
@@ -426,20 +426,23 @@ func (t *TxObj) decideSecondaryIntents(secIntents [][]*txnpb.TxnIntent, status t
 			for i, intent := range intents {
 				keys[i] = intent.GetKey()
 			}
-			req := &txnpb.DecideRequest{
-				TxnId:  tx.GetTxId(),
-				Status: status,
-				Keys:   keys,
-			}
-			var resp *txnpb.DecideResponse
-			resp, err = tx.proxy.handleDecide(subCtx, req, tx.GetTable())
-			if err != nil {
-				handleChannel <- &TxnDealHandle{intents: intents, err: err}
+			var (
+				req = &txnpb.DecideRequest{
+					TxnId:  tx.GetTxId(),
+					Status: status,
+					Keys:   keys,
+				}
+				resp *txnpb.DecideResponse
+				e    error
+			)
 
+			resp, e = tx.proxy.handleDecide(subCtx, req, tx.GetTable())
+			if e != nil {
+				handleChannel <- &TxnDealHandle{intents: intents, err: e}
 			}
 			if resp.Err != nil {
-				err = convertTxnErr(resp.Err)
-				handleChannel <- &TxnDealHandle{intents: intents, err: err}
+				e = convertTxnErr(resp.Err)
+				handleChannel <- &TxnDealHandle{intents: intents, err: e}
 				return
 			}
 			handleChannel <- &TxnDealHandle{intents: intents, err: nil}
@@ -476,8 +479,10 @@ func (t *TxObj) handleSecondary(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnI
 				return
 			}
 		}
-		handleGroup := len(handleIntents)
-		var handleChannel = make(chan *TxnDealHandle, handleGroup)
+		var (
+			handleGroup   = len(handleIntents)
+			handleChannel = make(chan *TxnDealHandle, handleGroup)
+		)
 		for _, group := range handleIntents {
 			cClone := ctx.Clone()
 			go handleFunc(t, cClone, group, handleChannel)

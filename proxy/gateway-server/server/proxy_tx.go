@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	TXN_INTENT_MAX_LENGTH        = 100
-	TXN_DEFAULT_TIMEOUT   uint64 = 50
+	TXN_INTENT_MAX_LENGTH = 100
+	TXN_DEFAULT_TIMEOUT uint64 = 50
 )
 
 func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t *Table) (err error) {
@@ -48,8 +48,11 @@ func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t
 					lockErr := txError.GetLockErr()
 					if lockErr.GetInfo() != nil && lockErr.GetInfo().GetTimeout() {
 						expiredTxs = append(expiredTxs, lockErr)
+					} else {
+						err = convertTxnErr(txError)
+						errForRetry = err
 					}
-					log.Info("handlePrepare: txn[%v] exist lock[%v], need wait to expire", req.GetTxnId(), lockErr.GetInfo())
+					log.Warn("handlePrepare: txn[%v] exist lock[%v]", req.GetTxnId(), lockErr.GetInfo())
 				default:
 					err = convertTxnErr(txError)
 					log.Error("handlePrepare txn[%v] error:%v ", req.GetTxnId(), err)
@@ -87,7 +90,7 @@ func (p *Proxy) handleRecoverTxs(expiredTxs []*txnpb.LockError, t *Table) (err e
 			_, e = p.recoverFromSecondary(subCtx, txId, primaryKey, table, true)
 		}
 		if e != nil {
-			log.Error("recover expired tx %v err %v", txId, err)
+			log.Error("recover expired tx %v err %v", txId, e)
 		}
 		errs <- e
 	}
@@ -127,7 +130,8 @@ func (p *Proxy) recoverFromPrimary(ctx *dskv.ReqContext, txId string, primaryKey
 	if status == txnpb.TxnStatus_COMMITTED {
 		log.Warn("rollback txn %v error, because ds let commit", txId)
 	}
-	log.Debug("[from primary key]start to recover tx: %v to status: %v", txId, status)
+	log.Debug("[from primary key]start to recover tx: %v to status: %v, secondary key size: %v, recover:%v",
+		txId, status, len(secondaryKeys), recover)
 	//todo opt
 	//decide all secondary keys
 	err = p.decideSecondaryKeys(ctx, txId, status, secondaryKeys, t)
@@ -143,16 +147,18 @@ func (p *Proxy) recoverFromSecondary(ctx *dskv.ReqContext, txId string, primaryK
 		status        = txnpb.TxnStatus_ABORTED
 		err           error
 		secondaryKeys [][]byte
+		recover       = true
 	)
 	//first try to decide expired tx to aborted status
-	status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, true, t)
+	status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, recover, t)
 	if err != nil {
 		return status, err
 	}
 	if status == txnpb.TxnStatus_COMMITTED {
 		log.Warn("rollback txn %v error, because ds let commit", txId)
 	}
-	log.Debug("[from secondary key]start to recover tx: %v  to status: %v", txId, status)
+	log.Debug("[from secondary key]start to recover tx: %v  to status: %v, secondary key size:%v, recover: %v",
+		txId, status, len(secondaryKeys), recover)
 	if sync {
 		//todo opt
 		//decide all secondary keys
@@ -187,19 +193,22 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 	)
 	doDecideFunc := func(proxy *Proxy, subCtx *dskv.ReqContext, txId string, subKeys [][]byte, table *Table, handleChannel chan *TxnDealHandle) {
 		log.Debug("[recover]doDecideFunc: decide tx %v secondary key %v", txId, subKeys)
-		req := &txnpb.DecideRequest{
-			TxnId:  txId,
-			Status: status,
-			Keys:   subKeys,
-		}
-		var resp *txnpb.DecideResponse
-		resp, err = proxy.handleDecide(subCtx, req, table)
-		if err != nil {
-			handleChannel <- &TxnDealHandle{keys: subKeys, err: err}
+		var (
+			req = &txnpb.DecideRequest{
+				TxnId:  txId,
+				Status: status,
+				Keys:   subKeys,
+			}
+			resp *txnpb.DecideResponse
+			e    error
+		)
+		resp, e = proxy.handleDecide(subCtx, req, table)
+		if e != nil {
+			handleChannel <- &TxnDealHandle{keys: subKeys, err: e}
 		}
 		if resp.Err != nil {
-			err = convertTxnErr(resp.Err)
-			handleChannel <- &TxnDealHandle{keys: subKeys, err: err}
+			e = convertTxnErr(resp.Err)
+			handleChannel <- &TxnDealHandle{keys: subKeys, err: e}
 			return
 		}
 		handleChannel <- &TxnDealHandle{keys: subKeys, err: nil}
@@ -250,9 +259,10 @@ func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, primaryKey []b
 	status = txnpb.TxnStatus_ABORTED
 	var (
 		req = &txnpb.DecideRequest{
-			TxnId:  txId,
-			Status: status,
-			Keys:   [][]byte{primaryKey},
+			TxnId:   txId,
+			Status:  status,
+			Keys:    [][]byte{primaryKey},
+			Recover: recover,
 		}
 		resp        *txnpb.DecideResponse
 		errForRetry error
@@ -284,6 +294,7 @@ func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, primaryKey []b
 				return
 			}
 		}
+		secondaryKeys = resp.GetSecondaryKeys()
 		return
 	}
 }
@@ -374,7 +385,7 @@ func convertTxnErr(txError *txnpb.TxnError) error {
 		err = fmt.Errorf("SERVER_ERROR, code:[%v], message:%v", serverErr.GetCode(), serverErr.GetMsg())
 	case txnpb.TxnError_LOCKED:
 		lockErr := txError.GetLockErr()
-		err = fmt.Errorf("TXN EXSIST LOCKED, lockTxId: %v, timeout:%v", lockErr.GetInfo().GetTxnId(), lockErr.GetInfo().GetTxnId())
+		err = fmt.Errorf("TXN EXSIST LOCKED, lockTxId: %v, timeout:%v", lockErr.GetInfo().GetTxnId(), lockErr.GetInfo().GetTimeout())
 	case txnpb.TxnError_UNEXPECTED_VER:
 		versionErr := txError.GetUnexpectedVer()
 		err = fmt.Errorf("UNEXPECTED VERSION, expectedVer: %v, actualVer:%v", versionErr.GetExpectedVer(), versionErr.GetActualVer())

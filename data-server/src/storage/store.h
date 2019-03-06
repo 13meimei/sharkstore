@@ -117,11 +117,12 @@ private:
     TxnErrorPtr prepareIntent(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
             uint64_t version, rocksdb::WriteBatch* batch);
 
-    Status commitIntent(const txnpb::TxnIntent& intent, uint64_t version, rocksdb::WriteBatch* batch);
-    TxnErrorPtr decidePrimary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch);
-    TxnErrorPtr decideSecondary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch);
-    TxnErrorPtr decide(const txnpb::DecideRequest& req, const std::string& key, uint64_t& bytes_written,
-            rocksdb::WriteBatch* batch, std::vector<std::string>* secondary_keys = nullptr);
+    Status commitIntent(const txnpb::TxnIntent& intent, uint64_t version,
+            uint64_t &bytes_written, rocksdb::WriteBatch* batch);
+    TxnErrorPtr decidePrimary(const txnpb::DecideRequest& req, uint64_t& bytes_written,
+            rocksdb::WriteBatch* batch, txnpb::DecideResponse* resp);
+    TxnErrorPtr decideSecondary(const txnpb::DecideRequest& req, const std::string& key,
+            uint64_t& bytes_written, rocksdb::WriteBatch* batch);
 
     Status parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key);
 

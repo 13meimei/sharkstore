@@ -121,6 +121,9 @@ extern ServerErrorDefaultTypeInternal _ServerError_default_instance_;
 class StatusConflict;
 class StatusConflictDefaultTypeInternal;
 extern StatusConflictDefaultTypeInternal _StatusConflict_default_instance_;
+class TxnConflict;
+class TxnConflictDefaultTypeInternal;
+extern TxnConflictDefaultTypeInternal _TxnConflict_default_instance_;
 class TxnError;
 class TxnErrorDefaultTypeInternal;
 extern TxnErrorDefaultTypeInternal _TxnError_default_instance_;
@@ -160,12 +163,13 @@ enum TxnError_ErrType {
   TxnError_ErrType_STATUS_CONFLICT = 4,
   TxnError_ErrType_NOT_FOUND = 5,
   TxnError_ErrType_NOT_UNIQUE = 6,
+  TxnError_ErrType_TXN_CONFLICT = 7,
   TxnError_ErrType_TxnError_ErrType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   TxnError_ErrType_TxnError_ErrType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool TxnError_ErrType_IsValid(int value);
 const TxnError_ErrType TxnError_ErrType_ErrType_MIN = TxnError_ErrType_UNKNOWN;
-const TxnError_ErrType TxnError_ErrType_ErrType_MAX = TxnError_ErrType_NOT_UNIQUE;
+const TxnError_ErrType TxnError_ErrType_ErrType_MAX = TxnError_ErrType_TXN_CONFLICT;
 const int TxnError_ErrType_ErrType_ARRAYSIZE = TxnError_ErrType_ErrType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* TxnError_ErrType_descriptor();
@@ -1362,6 +1366,126 @@ class NotUnique : public ::google::protobuf::Message /* @@protoc_insertion_point
 };
 // -------------------------------------------------------------------
 
+class TxnConflict : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.TxnConflict) */ {
+ public:
+  TxnConflict();
+  virtual ~TxnConflict();
+
+  TxnConflict(const TxnConflict& from);
+
+  inline TxnConflict& operator=(const TxnConflict& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  TxnConflict(TxnConflict&& from) noexcept
+    : TxnConflict() {
+    *this = ::std::move(from);
+  }
+
+  inline TxnConflict& operator=(TxnConflict&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TxnConflict& default_instance();
+
+  static inline const TxnConflict* internal_default_instance() {
+    return reinterpret_cast<const TxnConflict*>(
+               &_TxnConflict_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    9;
+
+  void Swap(TxnConflict* other);
+  friend void swap(TxnConflict& a, TxnConflict& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline TxnConflict* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  TxnConflict* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const TxnConflict& from);
+  void MergeFrom(const TxnConflict& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(TxnConflict* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string expected_txn_id = 1;
+  void clear_expected_txn_id();
+  static const int kExpectedTxnIdFieldNumber = 1;
+  const ::std::string& expected_txn_id() const;
+  void set_expected_txn_id(const ::std::string& value);
+  #if LANG_CXX11
+  void set_expected_txn_id(::std::string&& value);
+  #endif
+  void set_expected_txn_id(const char* value);
+  void set_expected_txn_id(const char* value, size_t size);
+  ::std::string* mutable_expected_txn_id();
+  ::std::string* release_expected_txn_id();
+  void set_allocated_expected_txn_id(::std::string* expected_txn_id);
+
+  // string actual_txn_id = 2;
+  void clear_actual_txn_id();
+  static const int kActualTxnIdFieldNumber = 2;
+  const ::std::string& actual_txn_id() const;
+  void set_actual_txn_id(const ::std::string& value);
+  #if LANG_CXX11
+  void set_actual_txn_id(::std::string&& value);
+  #endif
+  void set_actual_txn_id(const char* value);
+  void set_actual_txn_id(const char* value, size_t size);
+  ::std::string* mutable_actual_txn_id();
+  ::std::string* release_actual_txn_id();
+  void set_allocated_actual_txn_id(::std::string* actual_txn_id);
+
+  // @@protoc_insertion_point(class_scope:txnpb.TxnConflict)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr expected_txn_id_;
+  ::google::protobuf::internal::ArenaStringPtr actual_txn_id_;
+  mutable int _cached_size_;
+  friend struct protobuf_txn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.TxnError) */ {
  public:
   TxnError();
@@ -1396,7 +1520,7 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_TxnError_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    9;
+    10;
 
   void Swap(TxnError* other);
   friend void swap(TxnError& a, TxnError& b) {
@@ -1456,6 +1580,8 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
     TxnError_ErrType_NOT_FOUND;
   static const ErrType NOT_UNIQUE =
     TxnError_ErrType_NOT_UNIQUE;
+  static const ErrType TXN_CONFLICT =
+    TxnError_ErrType_TXN_CONFLICT;
   static inline bool ErrType_IsValid(int value) {
     return TxnError_ErrType_IsValid(value);
   }
@@ -1533,6 +1659,15 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::txnpb::NotUnique* release_not_unique();
   void set_allocated_not_unique(::txnpb::NotUnique* not_unique);
 
+  // .txnpb.TxnConflict txn_conflict = 8;
+  bool has_txn_conflict() const;
+  void clear_txn_conflict();
+  static const int kTxnConflictFieldNumber = 8;
+  const ::txnpb::TxnConflict& txn_conflict() const;
+  ::txnpb::TxnConflict* mutable_txn_conflict();
+  ::txnpb::TxnConflict* release_txn_conflict();
+  void set_allocated_txn_conflict(::txnpb::TxnConflict* txn_conflict);
+
   // .txnpb.TxnError.ErrType err_type = 1;
   void clear_err_type();
   static const int kErrTypeFieldNumber = 1;
@@ -1549,6 +1684,7 @@ class TxnError : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::txnpb::StatusConflict* status_conflict_;
   ::txnpb::NotFound* not_found_;
   ::txnpb::NotUnique* not_unique_;
+  ::txnpb::TxnConflict* txn_conflict_;
   int err_type_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
@@ -1589,7 +1725,7 @@ class PrepareRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_PrepareRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    10;
+    11;
 
   void Swap(PrepareRequest* other);
   friend void swap(PrepareRequest& a, PrepareRequest& b) {
@@ -1766,7 +1902,7 @@ class PrepareResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_PrepareResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    11;
+    12;
 
   void Swap(PrepareResponse* other);
   friend void swap(PrepareResponse& a, PrepareResponse& b) {
@@ -1869,7 +2005,7 @@ class DsPrepareRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsPrepareRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    12;
+    13;
 
   void Swap(DsPrepareRequest* other);
   friend void swap(DsPrepareRequest& a, DsPrepareRequest& b) {
@@ -1979,7 +2115,7 @@ class DsPrepareResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsPrepareResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    13;
+    14;
 
   void Swap(DsPrepareResponse* other);
   friend void swap(DsPrepareResponse& a, DsPrepareResponse& b) {
@@ -2089,7 +2225,7 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_DecideRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    14;
+    15;
 
   void Swap(DecideRequest* other);
   friend void swap(DecideRequest& a, DecideRequest& b) {
@@ -2184,6 +2320,12 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   bool recover() const;
   void set_recover(bool value);
 
+  // bool is_primary = 5;
+  void clear_is_primary();
+  static const int kIsPrimaryFieldNumber = 5;
+  bool is_primary() const;
+  void set_is_primary(bool value);
+
   // @@protoc_insertion_point(class_scope:txnpb.DecideRequest)
  private:
 
@@ -2192,6 +2334,7 @@ class DecideRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::ArenaStringPtr txn_id_;
   int status_;
   bool recover_;
+  bool is_primary_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -2231,7 +2374,7 @@ class DecideResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_DecideResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    15;
+    16;
 
   void Swap(DecideResponse* other);
   friend void swap(DecideResponse& a, DecideResponse& b) {
@@ -2354,7 +2497,7 @@ class DsDecideRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsDecideRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    16;
+    17;
 
   void Swap(DsDecideRequest* other);
   friend void swap(DsDecideRequest& a, DsDecideRequest& b) {
@@ -2464,7 +2607,7 @@ class DsDecideResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsDecideResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    17;
+    18;
 
   void Swap(DsDecideResponse* other);
   friend void swap(DsDecideResponse& a, DsDecideResponse& b) {
@@ -2574,7 +2717,7 @@ class ClearupRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_ClearupRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    18;
+    19;
 
   void Swap(ClearupRequest* other);
   friend void swap(ClearupRequest& a, ClearupRequest& b) {
@@ -2694,7 +2837,7 @@ class ClearupResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_ClearupResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    19;
+    20;
 
   void Swap(ClearupResponse* other);
   friend void swap(ClearupResponse& a, ClearupResponse& b) {
@@ -2794,7 +2937,7 @@ class DsClearupRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsClearupRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    20;
+    21;
 
   void Swap(DsClearupRequest* other);
   friend void swap(DsClearupRequest& a, DsClearupRequest& b) {
@@ -2904,7 +3047,7 @@ class DsClearupResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsClearupResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    21;
+    22;
 
   void Swap(DsClearupResponse* other);
   friend void swap(DsClearupResponse& a, DsClearupResponse& b) {
@@ -3014,7 +3157,7 @@ class GetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_GetLockInfoRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    22;
+    23;
 
   void Swap(GetLockInfoRequest* other);
   friend void swap(GetLockInfoRequest& a, GetLockInfoRequest& b) {
@@ -3134,7 +3277,7 @@ class GetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_inser
                &_GetLockInfoResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    23;
+    24;
 
   void Swap(GetLockInfoResponse* other);
   friend void swap(GetLockInfoResponse& a, GetLockInfoResponse& b) {
@@ -3244,7 +3387,7 @@ class DsGetLockInfoRequest : public ::google::protobuf::Message /* @@protoc_inse
                &_DsGetLockInfoRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    24;
+    25;
 
   void Swap(DsGetLockInfoRequest* other);
   friend void swap(DsGetLockInfoRequest& a, DsGetLockInfoRequest& b) {
@@ -3354,7 +3497,7 @@ class DsGetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_ins
                &_DsGetLockInfoResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    25;
+    26;
 
   void Swap(DsGetLockInfoResponse* other);
   friend void swap(DsGetLockInfoResponse& a, DsGetLockInfoResponse& b) {
@@ -3464,7 +3607,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_SelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    26;
+    27;
 
   void Swap(SelectRequest* other);
   friend void swap(SelectRequest& a, SelectRequest& b) {
@@ -3628,7 +3771,7 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_RowValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    27;
+    28;
 
   void Swap(RowValue* other);
   friend void swap(RowValue& a, RowValue& b) {
@@ -3754,7 +3897,7 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_RowIntent_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    28;
+    29;
 
   void Swap(RowIntent* other);
   friend void swap(RowIntent& a, RowIntent& b) {
@@ -3898,7 +4041,7 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
                &_Row_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    29;
+    30;
 
   void Swap(Row* other);
   friend void swap(Row& a, Row& b) {
@@ -4023,7 +4166,7 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_SelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    30;
+    31;
 
   void Swap(SelectResponse* other);
   friend void swap(SelectResponse& a, SelectResponse& b) {
@@ -4140,7 +4283,7 @@ class DsSelectRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsSelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    31;
+    32;
 
   void Swap(DsSelectRequest* other);
   friend void swap(DsSelectRequest& a, DsSelectRequest& b) {
@@ -4250,7 +4393,7 @@ class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsSelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    32;
+    33;
 
   void Swap(DsSelectResponse* other);
   friend void swap(DsSelectResponse& a, DsSelectResponse& b) {
@@ -5367,6 +5510,116 @@ inline void NotUnique::set_allocated_key(::std::string* key) {
 
 // -------------------------------------------------------------------
 
+// TxnConflict
+
+// string expected_txn_id = 1;
+inline void TxnConflict::clear_expected_txn_id() {
+  expected_txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& TxnConflict::expected_txn_id() const {
+  // @@protoc_insertion_point(field_get:txnpb.TxnConflict.expected_txn_id)
+  return expected_txn_id_.GetNoArena();
+}
+inline void TxnConflict::set_expected_txn_id(const ::std::string& value) {
+  
+  expected_txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:txnpb.TxnConflict.expected_txn_id)
+}
+#if LANG_CXX11
+inline void TxnConflict::set_expected_txn_id(::std::string&& value) {
+  
+  expected_txn_id_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.TxnConflict.expected_txn_id)
+}
+#endif
+inline void TxnConflict::set_expected_txn_id(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  expected_txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:txnpb.TxnConflict.expected_txn_id)
+}
+inline void TxnConflict::set_expected_txn_id(const char* value, size_t size) {
+  
+  expected_txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:txnpb.TxnConflict.expected_txn_id)
+}
+inline ::std::string* TxnConflict::mutable_expected_txn_id() {
+  
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnConflict.expected_txn_id)
+  return expected_txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* TxnConflict::release_expected_txn_id() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnConflict.expected_txn_id)
+  
+  return expected_txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void TxnConflict::set_allocated_expected_txn_id(::std::string* expected_txn_id) {
+  if (expected_txn_id != NULL) {
+    
+  } else {
+    
+  }
+  expected_txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), expected_txn_id);
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnConflict.expected_txn_id)
+}
+
+// string actual_txn_id = 2;
+inline void TxnConflict::clear_actual_txn_id() {
+  actual_txn_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& TxnConflict::actual_txn_id() const {
+  // @@protoc_insertion_point(field_get:txnpb.TxnConflict.actual_txn_id)
+  return actual_txn_id_.GetNoArena();
+}
+inline void TxnConflict::set_actual_txn_id(const ::std::string& value) {
+  
+  actual_txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:txnpb.TxnConflict.actual_txn_id)
+}
+#if LANG_CXX11
+inline void TxnConflict::set_actual_txn_id(::std::string&& value) {
+  
+  actual_txn_id_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.TxnConflict.actual_txn_id)
+}
+#endif
+inline void TxnConflict::set_actual_txn_id(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  actual_txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:txnpb.TxnConflict.actual_txn_id)
+}
+inline void TxnConflict::set_actual_txn_id(const char* value, size_t size) {
+  
+  actual_txn_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:txnpb.TxnConflict.actual_txn_id)
+}
+inline ::std::string* TxnConflict::mutable_actual_txn_id() {
+  
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnConflict.actual_txn_id)
+  return actual_txn_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* TxnConflict::release_actual_txn_id() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnConflict.actual_txn_id)
+  
+  return actual_txn_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void TxnConflict::set_allocated_actual_txn_id(::std::string* actual_txn_id) {
+  if (actual_txn_id != NULL) {
+    
+  } else {
+    
+  }
+  actual_txn_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), actual_txn_id);
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnConflict.actual_txn_id)
+}
+
+// -------------------------------------------------------------------
+
 // TxnError
 
 // .txnpb.TxnError.ErrType err_type = 1;
@@ -5621,6 +5874,46 @@ inline void TxnError::set_allocated_not_unique(::txnpb::NotUnique* not_unique) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.not_unique)
+}
+
+// .txnpb.TxnConflict txn_conflict = 8;
+inline bool TxnError::has_txn_conflict() const {
+  return this != internal_default_instance() && txn_conflict_ != NULL;
+}
+inline void TxnError::clear_txn_conflict() {
+  if (GetArenaNoVirtual() == NULL && txn_conflict_ != NULL) delete txn_conflict_;
+  txn_conflict_ = NULL;
+}
+inline const ::txnpb::TxnConflict& TxnError::txn_conflict() const {
+  const ::txnpb::TxnConflict* p = txn_conflict_;
+  // @@protoc_insertion_point(field_get:txnpb.TxnError.txn_conflict)
+  return p != NULL ? *p : *reinterpret_cast<const ::txnpb::TxnConflict*>(
+      &::txnpb::_TxnConflict_default_instance_);
+}
+inline ::txnpb::TxnConflict* TxnError::mutable_txn_conflict() {
+  
+  if (txn_conflict_ == NULL) {
+    txn_conflict_ = new ::txnpb::TxnConflict;
+  }
+  // @@protoc_insertion_point(field_mutable:txnpb.TxnError.txn_conflict)
+  return txn_conflict_;
+}
+inline ::txnpb::TxnConflict* TxnError::release_txn_conflict() {
+  // @@protoc_insertion_point(field_release:txnpb.TxnError.txn_conflict)
+  
+  ::txnpb::TxnConflict* temp = txn_conflict_;
+  txn_conflict_ = NULL;
+  return temp;
+}
+inline void TxnError::set_allocated_txn_conflict(::txnpb::TxnConflict* txn_conflict) {
+  delete txn_conflict_;
+  txn_conflict_ = txn_conflict;
+  if (txn_conflict) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txnpb.TxnError.txn_conflict)
 }
 
 // -------------------------------------------------------------------
@@ -6228,6 +6521,20 @@ inline void DecideRequest::set_recover(bool value) {
   
   recover_ = value;
   // @@protoc_insertion_point(field_set:txnpb.DecideRequest.recover)
+}
+
+// bool is_primary = 5;
+inline void DecideRequest::clear_is_primary() {
+  is_primary_ = false;
+}
+inline bool DecideRequest::is_primary() const {
+  // @@protoc_insertion_point(field_get:txnpb.DecideRequest.is_primary)
+  return is_primary_;
+}
+inline void DecideRequest::set_is_primary(bool value) {
+  
+  is_primary_ = value;
+  // @@protoc_insertion_point(field_set:txnpb.DecideRequest.is_primary)
 }
 
 // -------------------------------------------------------------------
@@ -8072,6 +8379,8 @@ inline void DsSelectResponse::set_allocated_resp(::txnpb::SelectResponse* resp) 
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
