@@ -71,6 +71,12 @@ static void setNotFoundErr(TxnError* err, const std::string& key) {
     err->mutable_not_found()->set_key(key);
 }
 
+static TxnErrorPtr newNotFoundErr(const std::string& key) {
+    TxnErrorPtr err(new TxnError);
+    setNotFoundErr(err.get(), key);
+    return err;
+}
+
 static TxnErrorPtr newUnexpectedVerErr(const std::string& key, uint64_t expected, uint64_t actual) {
     TxnErrorPtr err(new TxnError);
     err->set_err_type(TxnError_ErrType_UNEXPECTED_VER);
@@ -84,6 +90,14 @@ static TxnErrorPtr newNotUniqueErr(const std::string& key) {
     TxnErrorPtr err(new TxnError);
     err->set_err_type(TxnError_ErrType_NOT_UNIQUE);
     err->mutable_not_unique()->set_key(key);
+    return err;
+}
+
+static TxnErrorPtr newTxnConflictErr(const std::string& expected_txn_id, const std::string& actual_txn_id) {
+    TxnErrorPtr err(new TxnError);
+    err->set_err_type(TxnError_ErrType_TXN_CONFLICT);
+    err->mutable_txn_conflict()->set_expected_txn_id(expected_txn_id);
+    err->mutable_txn_conflict()->set_actual_txn_id(actual_txn_id);
     return err;
 }
 
@@ -334,7 +348,7 @@ TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& ke
     auto s = GetTxnValue(key, &value);
     if (!s.ok()) {
         if (s.code() == Status::kNotFound) {
-            return nullptr;
+            return newNotFoundErr(key);
         } else {
             return newTxnServerErr(s.code(), s.ToString());
         }
@@ -343,7 +357,11 @@ TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& ke
     // s is ok now
     assert(s.ok());
     if (value.txn_id() != req.txn_id()) {
-        return nullptr;
+        if (value.intent().is_primary()) {
+            return newTxnConflictErr(req.txn_id(), value.txn_id());
+        } else {
+            return nullptr;
+        }
     }
 
     TxnErrorPtr err;
