@@ -173,6 +173,8 @@ Status TxnRowFetcher::getRow(const std::string& key, const std::string& data_val
 
         const auto& intent = txn_value.intent();
         assert(key == intent.key());
+        FLOG_INFO("select txn intent: %s",
+                         intent.ShortDebugString().c_str());
         if (intent.is_primary()) { // primary可以直接确定当前事务的状态
             auto txn_status = txn_value.txn_status();
             switch (txn_status) {

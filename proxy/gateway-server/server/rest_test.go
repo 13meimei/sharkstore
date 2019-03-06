@@ -3,6 +3,7 @@ package server
 import (
 	"time"
 	"fmt"
+	"sort"
 	"bytes"
 	"testing"
 	"util"
@@ -11,7 +12,9 @@ import (
 	"net/http"
 	"encoding/json"
 	"model/pkg/metapb"
+	"model/pkg/txn"
 	"proxy/gateway-server/sqlparser"
+	"proxy/store/dskv"
 )
 
 func TestRestKVHttp(t *testing.T) {
@@ -901,7 +904,6 @@ func TestRestKVHttpForSecondIndex(t *testing.T) {
 	})
 }
 
-
 func TestRestKVHttpForSecondIndex2(t *testing.T) {
 	s, err := mockGwServer()
 	if err != nil {
@@ -953,4 +955,83 @@ func TestRestKVHttpForSecondIndex2(t *testing.T) {
 		Code:         0,
 		RowsAffected: 2,
 	})
+}
+
+//pre split range by id value: 1,2,3,4,5,6,7,8,9 when create table
+func TestTxnPrepare(t *testing.T) {
+	s, err := mockGwServer()
+	if err != nil {
+		t.Fatalf("init server failed, err[%v]", err)
+	}
+	go s.Run()
+
+	var (
+		sqls = []string{
+			"insert into " + testTableName + "(id,name,balance) values(1, 'a', 0.31),(11, 'aa', 0.87),(2, 'b', 0.14)",
+			"insert into " + testTableName + "(id,name,balance) values(2, 'b', 0.03),(3, 'c', 0.7),(1, 'a', 0.5)",
+		}
+		txArray = make([]*TxObj, 2)
+	)
+
+	for i := 0; i < 2; i++ {
+		tx := getTx(t, s.proxy, sqls[i], i)
+		txArray[i] = tx
+		var (
+			priIntents      []*txnpb.TxnIntent
+			secIntentsGroup [][]*txnpb.TxnIntent
+		)
+		ctx := dskv.NewPRConext(int(50 * 1000))
+		sort.Sort(TxnIntentSlice(tx.getTxIntents()))
+		priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, tx.GetTable(), tx.getTxIntents())
+		if err != nil {
+			t.Fatalf("regroup intent by range err %v", err)
+		}
+
+		err = tx.preparePrimaryIntents(ctx, priIntents, secIntentsGroup)
+		if err != nil {
+			t.Fatalf("[commit]prepare tx %v primary intents error %v", tx.GetTxId(), err)
+		}
+
+		err = tx.prepareSecondaryIntents(ctx, secIntentsGroup)
+		if err != nil {
+			t.Fatalf("[commit]txn %v prepare secondary intents err %v", tx.GetTxId(), err)
+		}
+		log.Debug("prepare tx %v secondary intents success", tx.GetTxId())
+		log.Debug("tx %v prepare success", tx.GetTxId())
+	}
+
+	for _, tx := range txArray {
+		var (
+			priIntents      []*txnpb.TxnIntent
+			secIntentsGroup [][]*txnpb.TxnIntent
+		)
+		ctx := dskv.NewPRConext(int(50 * 1000))
+		sort.Sort(TxnIntentSlice(tx.getTxIntents()))
+		priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, tx.GetTable(), tx.getTxIntents())
+		if err != nil {
+			t.Fatalf("regroup intent by range err %v", err)
+		}
+
+		err = tx.decidePrimaryIntents(ctx, priIntents, secIntentsGroup, txnpb.TxnStatus_COMMITTED)
+		if err != nil {
+			t.Fatalf("decide tx %v  err %v", tx.GetTxId(), err)
+		} else {
+			log.Info("decide tx %v  success", tx.GetTxId())
+		}
+	}
+}
+
+func getTx(t *testing.T, proxy *Proxy, sql string, index int) *TxObj {
+	table, intents := testProxyInsert(t, proxy, 3, sql)
+	intents[0].IsPrimary = true
+	tx := &TxObj{
+		txId:       fmt.Sprintf("%v", index+1),
+		primaryKey: intents[0].GetKey(),
+		implicit:   false,
+		intents:    intents,
+		table:      table,
+		proxy:      proxy,
+		Timeout:    50,
+	}
+	return tx
 }
