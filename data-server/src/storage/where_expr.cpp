@@ -185,8 +185,10 @@ FieldValue* CWhereExpr::GetValFromExpr(
         const ::kvrpcpb::Expr &expr)
 {
     FieldValue *fv = nullptr;
-    std::shared_ptr<FieldValue> l = nullptr;
-    std::shared_ptr<FieldValue> r = nullptr;
+    //std::shared_ptr<FieldValue> l = nullptr;
+    //std::shared_ptr<FieldValue> r = nullptr;
+    FieldValue *l = nullptr;
+    FieldValue *r = nullptr;
 
     switch (expr.expr_type()) {
         case ::kvrpcpb::E_ExprCol:
@@ -203,20 +205,24 @@ FieldValue* CWhereExpr::GetValFromExpr(
             //FLOG_ERROR("Don't support math operation.");
             FLOG_DEBUG("compute...get left value expr_type: %d %p",
                        expr.child(0).expr_type(), &expr.child(0));
-            if ((fv = GetValFromExpr(result, expr.child(0))) == nullptr) {
+            if ((l = GetValFromExpr(result, expr.child(0))) == nullptr) {
                 return nullptr;
             }
-            l.reset(fv);
-            fv = nullptr;
+
             FLOG_DEBUG("compute...get right value expr_type: %d %p",
                        expr.child(1).expr_type(), &expr.child(1));
-            if ((fv = GetValFromExpr(result, expr.child(1))) == nullptr) {
+            if ((r = GetValFromExpr(result, expr.child(1))) == nullptr) {
                 return nullptr;
             }
-            r.reset(fv);
-            fv = nullptr;
+
             //generate a Const Expr
-            if (!(ComputeExpr(expr, l.get(), r.get(), &fv)).ok()) {
+            if (!(ComputeExpr(expr, l, r, &fv)).ok()) {
+                if (expr.child(0).expr_type() != ::kvrpcpb::E_ExprCol) {
+                    free(l);
+                }
+                if (expr.child(1).expr_type() != ::kvrpcpb::E_ExprCol) {
+                    free(r);
+                }
                 return nullptr;
             }
             break;
@@ -225,6 +231,13 @@ FieldValue* CWhereExpr::GetValFromExpr(
             return nullptr;
     }
 
+
+    if (expr.child_size() > 0 && expr.child(0).expr_type() != ::kvrpcpb::E_ExprCol) {
+        free(l);
+    }
+    if (expr.child_size() == 2 && expr.child(1).expr_type() != ::kvrpcpb::E_ExprCol) {
+        free(r);
+    }
     //FLOG_DEBUG("GetValFromExpr() fv: %s", fv->ToString().c_str());
     return fv;
 }

@@ -154,7 +154,7 @@ static int  buildMathExpr(const metapb::Column& col, const std::string &flag, kv
     std::string er;
     size_t  pos;
 
-    printf("buildMathExpr.....flag:%s\n", flag.c_str());
+    //printf("buildMathExpr.....flag:%s\n", flag.c_str());
 
     //char ff = *(const_cast<char*>(flag.c_str()));
     char ff = *(flag.data());
@@ -177,13 +177,16 @@ static int  buildMathExpr(const metapb::Column& col, const std::string &flag, kv
 
     value.swap(*(e->mutable_value()));
     pos = value.find(flag);
+    if (pos == std::string::npos) {
+        fprintf(stderr, "%s:%d find flag: %s failure.\n", __FILE__, __LINE__, flag.c_str());
+        return -1;
+    }
 
     el = value.substr(0, pos);
     er = value.substr(pos+1);
     if (el == col.name()) {
         l = e->add_child();
-        metapb::Column *tmp = new metapb::Column;
-        tmp->CopyFrom(col);
+        auto tmp = new metapb::Column(col);
         l->set_allocated_column(tmp);
         l->set_expr_type(kvrpcpb::E_ExprCol);
     } else {
@@ -215,7 +218,7 @@ void SelectRequestBuilder::AppendCompCond(const std::string& col, const std::str
         ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix)
 {
     AppendMatchExt(col, val, et, logic_suffix);
-    printf("AppendCompCond...\n");
+    //printf("AppendCompCond...\n");
 
     auto root = req_.mutable_ext_filter()->mutable_expr();
     decltype(root) l = nullptr, r = nullptr;
@@ -223,8 +226,9 @@ void SelectRequestBuilder::AppendCompCond(const std::string& col, const std::str
     const metapb::Column& column = table_->GetColumn(col);
     auto tmp = root;
 
+    //change const Expr id+1 to 3 Expr,like + and id and 1
     auto fn = [&](kvrpcpb::Expr *l) ->void {
-        printf("in lambda....%s\n", l->value().c_str());
+        //printf("in lambda....%s\n", l->value().c_str());
 
         if (l->expr_type() == kvrpcpb::E_ExprConst &&
             l->column().data_type() >= metapb::Tinyint &&
@@ -253,21 +257,50 @@ void SelectRequestBuilder::AppendCompCond(const std::string& col, const std::str
         } //end if
     };
 
-    printf("AppendCompCond...while\n");
+    bool lend{false};
+    bool rend{false};
+    int idx{0};
+
+    auto set_flag = [&]() {
+        if (!lend) {
+            lend = true;
+            tmp = root;
+        } else {
+            rend = true;
+            tmp = root;
+        }
+    };
+
     while (tmp->child_size() > 0) {
-        printf("in while\n");
+        if (lend && rend) break;
+
+        if (!lend) {
+            idx = 0;
+        } else if (tmp->child_size() == 2){
+            idx = 1;
+        } else {
+            idx = 0;
+        }
         //Not releation expr
-        if (tmp->expr_type() < 11 || tmp->expr_type() > 16) {
-            printf("AppendCompCond...continue\n");
-            tmp = tmp->mutable_child(0);
+        if (tmp->expr_type() < ::kvrpcpb::E_Equal ||
+                tmp->expr_type() > ::kvrpcpb::E_LargerOrEqual)
+        {
+            //printf("AppendCompCond...continue\n");
+            if (tmp->child_size() == 0) {
+                set_flag();
+            } else {
+                tmp = tmp->mutable_child(idx);
+            }
             continue;
         }
 
         l = tmp->mutable_child(0);
         fn(l);
-        l = tmp->mutable_child(1);
-        fn(l);
-        break;
+        r = tmp->mutable_child(1);
+        fn(r);
+
+        //TO DO  next expr
+        set_flag();
     } //end while
 }
 
@@ -286,7 +319,7 @@ void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::str
     auto first = false;
 
     if (logic_suffix == 0 && (et < 11 || et > 16)) {
-        printf("%s:%d must be relation expr_type if last expr!\n",__FILE__, __LINE__);
+        fprintf(stderr, "%s:%d must be relation expr_type if last expr!\n",__FILE__, __LINE__);
         return;
     }
 
