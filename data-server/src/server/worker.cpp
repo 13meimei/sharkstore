@@ -126,8 +126,10 @@ Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* ra
 
     fast_workers_.reset(
             new WorkThreadGroup(range_server, fast_worker_size, kWorkThreadCapacity, "fast_worker"));
+    fast_workers_->Start();
     slow_workers_.reset(
             new WorkThreadGroup(range_server, fast_worker_size, kWorkThreadCapacity, "slow_worker"));
+    slow_workers_->Start();
 
     FLOG_INFO("Worker Start end ...");
 
