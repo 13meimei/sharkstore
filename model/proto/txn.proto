@@ -212,6 +212,7 @@ message SelectRequest {
     repeated kvrpcpb.Match where_filters        = 4;       // where matches
     repeated metapb.Column group_bys            = 5;       // group by column ids
     kvrpcpb.Limit limit                         = 6;       // max range query num, 0 means no limit
+    kvrpcpb.MatchExt ext_filter                = 10;      // extend where condition
 }
 
 message RowValue {

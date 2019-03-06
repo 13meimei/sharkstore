@@ -25,7 +25,7 @@ Status parseThreshold(const std::string& thres, const metapb::Column& col,
 Status matchField(FieldValue* field, const kvrpcpb::Match& filter, bool& matched);
 Status matchRow(const RowResult& row, const std::vector<kvrpcpb::Match>& filters, bool& matched);
 Status matchRow(const TxnRowValue& row, const std::vector<kvrpcpb::Match>& filters, bool& matched);
-
+Status matchRow(const TxnRowValue& row, const std::shared_ptr<CWhereExpr> filter, bool& matched);
 
 } /* namespace storage */
 } /* namespace dataserver */

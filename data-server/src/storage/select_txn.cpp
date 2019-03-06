@@ -57,6 +57,11 @@ TxnRowDecoder::TxnRowDecoder(const std::vector<metapb::Column>& primary_keys,
         cols_.emplace(match.column().id(), match.column());
         filters_.push_back(match);
     }
+    if (req.ext_filter().has_expr() &&
+        req.ext_filter().expr().child_size() > 0)
+    {
+        where_expr_ = std::make_shared<CWhereExpr>(req.ext_filter());
+    }
 }
 
 Status TxnRowDecoder::DecodeAndFilter(const std::string& key, const std::string& buf,
@@ -71,7 +76,9 @@ Status TxnRowDecoder::DecodeAndFilter(const std::string& key, const std::string&
     }
 
     matched = true;
-    if (filters_.empty()) {
+    if (where_expr_ != nullptr) {
+        return matchRow(row, where_expr_, matched);
+    } else if (filters_.empty()) {
         return Status::OK();
     } else {
         return matchRow(row, filters_, matched);

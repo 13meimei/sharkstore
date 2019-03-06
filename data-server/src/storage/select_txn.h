@@ -7,6 +7,8 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+class CWhereExpr;
+
 class TxnRowValue {
 public:
     TxnRowValue() = default;
@@ -47,6 +49,7 @@ private:
     const std::vector<metapb::Column>& primary_keys_;
     std::map<uint64_t, metapb::Column> cols_;
     std::vector<kvrpcpb::Match> filters_;
+    std::shared_ptr<CWhereExpr>  where_expr_{nullptr};
 };
 
 class TxnRowFetcher {

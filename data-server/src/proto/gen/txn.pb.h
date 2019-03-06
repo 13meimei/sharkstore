@@ -3579,6 +3579,15 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::kvrpcpb::Limit* release_limit();
   void set_allocated_limit(::kvrpcpb::Limit* limit);
 
+  // .kvrpcpb.MatchExt ext_filter = 10;
+  bool has_ext_filter() const;
+  void clear_ext_filter();
+  static const int kExtFilterFieldNumber = 10;
+  const ::kvrpcpb::MatchExt& ext_filter() const;
+  ::kvrpcpb::MatchExt* mutable_ext_filter();
+  ::kvrpcpb::MatchExt* release_ext_filter();
+  void set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter);
+
   // @@protoc_insertion_point(class_scope:txnpb.SelectRequest)
  private:
 
@@ -3589,6 +3598,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::kvrpcpb::Scope* scope_;
   ::kvrpcpb::Limit* limit_;
+  ::kvrpcpb::MatchExt* ext_filter_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -7420,6 +7430,46 @@ inline void SelectRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.limit)
+}
+
+// .kvrpcpb.MatchExt ext_filter = 10;
+inline bool SelectRequest::has_ext_filter() const {
+  return this != internal_default_instance() && ext_filter_ != NULL;
+}
+inline void SelectRequest::clear_ext_filter() {
+  if (GetArenaNoVirtual() == NULL && ext_filter_ != NULL) delete ext_filter_;
+  ext_filter_ = NULL;
+}
+inline const ::kvrpcpb::MatchExt& SelectRequest::ext_filter() const {
+  const ::kvrpcpb::MatchExt* p = ext_filter_;
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.ext_filter)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::MatchExt*>(
+      &::kvrpcpb::_MatchExt_default_instance_);
+}
+inline ::kvrpcpb::MatchExt* SelectRequest::mutable_ext_filter() {
+  
+  if (ext_filter_ == NULL) {
+    ext_filter_ = new ::kvrpcpb::MatchExt;
+  }
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.ext_filter)
+  return ext_filter_;
+}
+inline ::kvrpcpb::MatchExt* SelectRequest::release_ext_filter() {
+  // @@protoc_insertion_point(field_release:txnpb.SelectRequest.ext_filter)
+  
+  ::kvrpcpb::MatchExt* temp = ext_filter_;
+  ext_filter_ = NULL;
+  return temp;
+}
+inline void SelectRequest::set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter) {
+  delete ext_filter_;
+  ext_filter_ = ext_filter;
+  if (ext_filter) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.ext_filter)
 }
 
 // -------------------------------------------------------------------
