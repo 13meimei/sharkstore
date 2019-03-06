@@ -278,7 +278,8 @@ void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareRespo
     }
 }
 
-Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version, rocksdb::WriteBatch* batch) {
+Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version,
+                    uint64_t &bytes_written, rocksdb::WriteBatch* batch) {
     rocksdb::Status s ;
     switch (intent.typ()) {
     case DELETE:
@@ -289,6 +290,7 @@ Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version, roc
         std::string db_value = intent.value();
         EncodeIntValue(&db_value, kVersionColumnID, static_cast<int64_t>(version));
         s = batch->Put(intent.key(), db_value);
+        bytes_written += intent.key().size() + db_value.size();
         break;
     }
     default:
@@ -300,51 +302,17 @@ Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version, roc
     return Status::OK();
 }
 
-TxnErrorPtr Store::decidePrimary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch) {
-    if (value.txn_status() != txnpb::INIT) {
-        if (value.txn_status() != status) {
-            return newStatusConflictErr(value.txn_status());
-        } else { // already decided
-            return nullptr;
-        }
+TxnErrorPtr Store::decidePrimary(const txnpb::DecideRequest& req, uint64_t& bytes_written,
+                          rocksdb::WriteBatch* batch, txnpb::DecideResponse* resp) {
+    assert(req.is_primary());
+
+    if (req.keys_size() != 1) {
+        return newTxnServerErr(Status::kInvalidArgument,
+                std::string("invalid key size: ") + std::to_string(req.keys_size()));
     }
 
-    // txn status is INIT now
-    assert(value.txn_status() == txnpb::INIT);
-    // update to new status;
-    auto new_value = value;
-    new_value.set_txn_status(status);
-    auto s = writeTxnValue(value, batch);
-    if (!s.ok()) {
-        return newTxnServerErr(s.code(), s.ToString());
-    }
-    // commit intent
-    if (status == COMMITTED) {
-        s = commitIntent(value.intent(), value.version(), batch);
-        if (!s.ok()) {
-            return newTxnServerErr(s.code(), s.ToString());
-        }
-    }
-    return nullptr;
-}
-
-TxnErrorPtr Store::decideSecondary(const txnpb::TxnValue& value, txnpb::TxnStatus status, rocksdb::WriteBatch* batch) {
-    auto ret = batch->Delete(txn_cf_, value.intent().key());
-    if (!ret.ok()) {
-        return newTxnServerErr(Status::kIOError, ret.ToString());
-    }
-    if (status == COMMITTED) {
-        auto s = commitIntent(value.intent(), value.version(), batch);
-        if (!s.ok()) {
-            return newTxnServerErr(s.code(), s.ToString());
-        }
-    }
-    return nullptr;
-}
-
-TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& key, uint64_t& bytes_written,
-                   rocksdb::WriteBatch* batch, std::vector<std::string>* secondary_keys) {
     TxnValue value;
+    const auto& key = req.keys(0);
     auto s = GetTxnValue(key, &value);
     if (!s.ok()) {
         if (s.code() == Status::kNotFound) {
@@ -357,33 +325,70 @@ TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& ke
     // s is ok now
     assert(s.ok());
     if (value.txn_id() != req.txn_id()) {
-        if (value.intent().is_primary()) {
-            return newTxnConflictErr(req.txn_id(), value.txn_id());
-        } else {
+        return newTxnConflictErr(req.txn_id(), value.txn_id());
+    }
+
+    if (value.txn_status() != txnpb::INIT) {
+        if (value.txn_status() != req.status()) {
+            return newStatusConflictErr(value.txn_status());
+        } else { // already decided
             return nullptr;
         }
     }
 
-    TxnErrorPtr err;
-    // decide secondary key
-    if (!value.intent().is_primary()) {
-        err = decideSecondary(value, req.status(), batch);
-    } else {
-        err = decidePrimary(value, req.status(), batch);
+    // txn status is INIT now
+    assert(value.txn_status() == txnpb::INIT);
+    // update to new status;
+    auto new_value = value;
+    new_value.set_txn_status(req.status());
+    s = writeTxnValue(value, batch);
+    if (!s.ok()) {
+        return newTxnServerErr(s.code(), s.ToString());
     }
-    if (err != nullptr) {
-        return err;
+    // commit intent
+    if (req.status() == COMMITTED) {
+        s = commitIntent(value.intent(), value.version(), bytes_written, batch);
+        if (!s.ok()) {
+            return newTxnServerErr(s.code(), s.ToString());
+        }
     }
 
-    // add bytes_written
-    if (value.intent().typ() == INSERT) {
-        bytes_written += value.intent().key().size() + value.intent().value().size();
-    }
     // assign secondary_keys in recover mode
-    if (secondary_keys != nullptr) {
-        assert(value.intent().is_primary());
+    if (req.recover()) {
         for (const auto& skey: value.secondary_keys()) {
-            secondary_keys->push_back(skey);
+            resp->add_secondary_keys(skey);
+        }
+    }
+    return nullptr;
+}
+
+TxnErrorPtr Store::decideSecondary(const txnpb::DecideRequest& req, const std::string& key, uint64_t& bytes_written,
+                            rocksdb::WriteBatch* batch) {
+    assert(!req.is_primary());
+
+    TxnValue value;
+    auto s = GetTxnValue(key, &value);
+    if (!s.ok()) {
+        if (s.code() == Status::kNotFound) {
+            return nullptr;
+        } else {
+            return newTxnServerErr(s.code(), s.ToString());
+        }
+    }
+    // s is ok now
+    assert(s.ok());
+    if (value.txn_id() != req.txn_id()) {
+        return nullptr;
+    }
+
+    auto ret = batch->Delete(txn_cf_, value.intent().key());
+    if (!ret.ok()) {
+        return newTxnServerErr(Status::kIOError, ret.ToString());
+    }
+    if (req.status() == COMMITTED) {
+        s = commitIntent(value.intent(), value.version(), bytes_written, batch);
+        if (!s.ok()) {
+            return newTxnServerErr(s.code(), s.ToString());
         }
     }
     return nullptr;
@@ -397,24 +402,25 @@ uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
 
     uint64_t bytes_written = 0;
     rocksdb::WriteBatch batch;
-    for (const auto& key: req.keys()) {
-        TxnErrorPtr err;
-        if (req.recover()) { // recover will return secondary keys
-            std::vector<std::string> secondary_keys;
-            err = decide(req, key, bytes_written, &batch, &secondary_keys);
-            if (!secondary_keys.empty()) {
-                for (auto& skey: secondary_keys) {
-                    resp->add_secondary_keys(std::move(skey));
-                }
+
+    TxnErrorPtr err;
+    if (req.is_primary()) {
+        err = decidePrimary(req, bytes_written, &batch, resp);
+    } else {
+        for (const auto& key: req.keys()) {
+            err = decideSecondary(req, key, bytes_written, &batch);
+            if (err != nullptr) {
+                break;
             }
-        } else {
-            err = decide(req, key, bytes_written, &batch);
-        }
-        if (err != nullptr) {
-            resp->mutable_err()->Swap(err.get());
-            return 0;
         }
     }
+
+    // decide error
+    if (err != nullptr) {
+        resp->mutable_err()->Swap(err.get());
+        return 0;
+    }
+
     auto ret = db_->Write(rocksdb::WriteOptions(), &batch);
     if (!ret.ok()) {
         setTxnServerErr(resp->mutable_err(), Status::kIOError, ret.ToString());
