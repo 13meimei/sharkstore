@@ -231,27 +231,30 @@ func (t *TxObj) Commit() (err error) {
 		return
 	}
 
-	//decide:
-	err = t.decidePrimaryIntents(ctx, priIntents, secIntentsGroup, status)
+	//decide primary key:
+	err = t.decidePrimaryKey(ctx, status)
 	if err != nil {
-		log.Error("[commit]decide tx %v primary intents error %v", t.GetTxId(), err)
+		log.Error("[commit]decide tx %v primary intent error %v", t.GetTxId(), err)
 		return
 	}
 	//async call
 	//todo goroutine num control
-	go func(intents [][]*txnpb.TxnIntent) {
-		var e error
-		if e = t.decideSecondaryIntents(intents, status); e != nil {
-			log.Warn("async decide txn %v secondary intent error %v", t.GetTxId(), e)
+	go func(tx *TxObj, stat txnpb.TxnStatus) {
+		var (
+			context = dskv.NewPRConext(int(t.Timeout * 1000))
+			e   error
+		)
+		if e = tx.decideSecondaryKeys(context, stat); e != nil {
+			log.Warn("[commit]async decide txn %v secondary intents error %v", tx.GetTxId(), e)
 			return
 		}
-		if e = t.proxy.handleCleanup(ctx, t.GetTxId(), t.GetPrimaryKey(), t.GetTable()); e != nil {
-			log.Warn("async decide txn %v secondary intent error %v", t.GetTxId(), e)
+		if e = tx.proxy.handleCleanup(context, tx.GetTxId(), tx.GetPrimaryKey(), tx.GetTable()); e != nil {
+			log.Warn("[commit]async clear up txn %v primary intent error %v", tx.GetTxId(), e)
 		}
 		return
-	}(secIntentsGroup)
+	}(t, status)
 	//}
-	log.Info("txn %v commit success", t.GetTxId())
+	log.Info("[commit]txn %v commit success", t.GetTxId())
 	return
 }
 
@@ -270,10 +273,10 @@ func (t *TxObj) Rollback() (err error) {
 	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
 	err = t.proxy.recoverFromPrimary(ctx, t.GetTxId(), t.GetPrimaryKey(), nil, true, t.GetTable())
 	if err != nil {
-		log.Error("txn %v rollback err %v", t.GetTxId(), err)
+		log.Error("[rollback]txn %v rollback err %v", t.GetTxId(), err)
 		return
 	}
-	log.Info("txn %v rollback success", t.GetTxId())
+	log.Info("[rollback]txn %v rollback success", t.GetTxId())
 	return
 }
 
@@ -332,7 +335,7 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 }
 
 func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*txnpb.TxnIntent) (err error) {
-	log.Debug("start to prepare tx %v secondary intents, range group %v", t.GetTxId(), len(secIntents))
+	log.Debug("[commit]start to prepare tx %v secondary intents, range group size %v", t.GetTxId(), len(secIntents))
 	if len(secIntents) == 0 {
 		return
 	}
@@ -357,103 +360,52 @@ func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*tx
 		log.Error("[commit]txn %v prepare secondary intents err %v", t.GetTxId(), err)
 		return
 	}
-	log.Debug("prepare tx %v secondary intents success", t.GetTxId())
+	log.Debug("[commit]prepare tx %v secondary intents success", t.GetTxId())
 	return
 }
 
-func (t *TxObj) decidePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent,
-	secIntents [][]*txnpb.TxnIntent, status txnpb.TxnStatus) (err error) {
-
-	//todo refactor and abstract to func call about error: ErrRouteChange
-	var errForRetry error
-	/**
-		loop solve: occur ErrRouteChange when decide intents with primary row, regroup intents
-	 */
-	for {
-		if errForRetry != nil {
-			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
-			if errForRetry != nil {
-				log.Error("[commit]%s execute prepare primary intents timeout", ctx)
-				return
-			}
+func (t *TxObj) decidePrimaryKey(ctx *dskv.ReqContext, status txnpb.TxnStatus) (err error) {
+	var (
+		txId = t.GetTxId()
+		primaryKey = t.GetPrimaryKey()
+	)
+	log.Debug("[commit]decide tx %v primary intent %v", txId, primaryKey)
+	var (
+		req = &txnpb.DecideRequest{
+			TxnId:     txId,
+			Status:    status,
+			Keys:      [][]byte{primaryKey},
+			IsPrimary: true,
 		}
-
-		if err == dskv.ErrRouteChange {
-			var partSecIntents [][]*txnpb.TxnIntent
-			priIntents, partSecIntents, err = regroupIntentsByRange(ctx, t.GetTable(), priIntents)
-			if err != nil || len(priIntents) == 0 {
-				return
-			}
-			if len(partSecIntents) > 0 {
-				secIntents = append(secIntents, partSecIntents...)
-			}
-		}
-		log.Debug("decide tx %v primary intents, intents size: %v", t.GetTxId(), len(priIntents))
-		var keys = make([][]byte, len(priIntents))
-		for i, intent := range priIntents {
-			keys[i] = intent.GetKey()
-		}
-		req := &txnpb.DecideRequest{
-			TxnId:  t.GetTxId(),
-			Status: status,
-			Keys:   keys,
-		}
-		var resp *txnpb.DecideResponse
-		resp, err = t.proxy.handleDecide(ctx, req, t.GetTable())
-		if err != nil {
-			if err == dskv.ErrRouteChange {
-				continue
-			}
-			return
-		}
-		if resp.GetErr() != nil {
-			err = convertTxnErr(resp.Err)
-			log.Error("handleDecide txn[%v] error ", req.GetTxnId(), err)
-			return
-		}
-		log.Debug("decide txn[%v] primary intents success ", req.GetTxnId())
+		resp *txnpb.DecideResponse
+	)
+	resp, err = t.proxy.handleDecidePrimary(ctx, req, t.GetTable())
+	if err != nil {
 		return
 	}
-}
-
-func (t *TxObj) decideSecondaryIntents(secIntents [][]*txnpb.TxnIntent, status txnpb.TxnStatus) (err error) {
-	log.Debug("start to decide tx %v secondary intents, range group %v", t.GetTxId(), len(secIntents))
-	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
-	if len(secIntents) > 0 {
-		doDecideFunc := func(tx *TxObj, subCtx *dskv.ReqContext, intents []*txnpb.TxnIntent, handleChannel chan *TxnDealHandle) {
-			log.Debug("doDecideFunc: decide tx %v secondary intents %v", tx.GetTxId(), intents)
-			var keys = make([][]byte, len(intents))
-			for i, intent := range intents {
-				keys[i] = intent.GetKey()
-			}
-			var (
-				req = &txnpb.DecideRequest{
-					TxnId:  tx.GetTxId(),
-					Status: status,
-					Keys:   keys,
-				}
-				resp *txnpb.DecideResponse
-				e    error
-			)
-
-			resp, e = tx.proxy.handleDecide(subCtx, req, tx.GetTable())
-			if e != nil {
-				handleChannel <- &TxnDealHandle{intents: intents, err: e}
-			}
-			if resp.Err != nil {
-				e = convertTxnErr(resp.Err)
-				handleChannel <- &TxnDealHandle{intents: intents, err: e}
-				return
-			}
-			handleChannel <- &TxnDealHandle{intents: intents, err: nil}
-		}
-		err = t.handleSecondary(ctx, secIntents, doDecideFunc)
-		if err != nil {
-			log.Error("[commit]txn %v async decide secondary intents err %v", t.GetTxId(), err)
+	if resp.GetErr() != nil {
+		if resp.GetErr().GetErrType() == txnpb.TxnError_NOT_FOUND {
+			log.Warn("[commit]decide txn[%v]: ds return it not found, ignore", txId)
+		} else {
+			err = convertTxnErr(resp.Err)
+			log.Error("[commit]decide txn[%v] primary intent error ", txId, err)
 			return
 		}
-		log.Debug("decide txn[%v] secondary intents success ", t.GetTxId())
 	}
+	log.Debug("[commit]decide txn[%v] primary intent %v success ", txId, status)
+	return
+
+}
+
+func (t *TxObj) decideSecondaryKeys(ctx *dskv.ReqContext, status txnpb.TxnStatus) (err error) {
+	var secKeys = t.getSecondaryKeys()
+	log.Debug("start to decide tx %v secondary, keys size %v", t.GetTxId(), len(secKeys))
+	err = t.proxy.decideSecondaryKeys(ctx, t.GetTxId(), status, secKeys, t.GetTable())
+	if err != nil {
+		log.Error("[commit]txn %v async decide secondary intents err %v", t.GetTxId(), err)
+		return
+	}
+	log.Debug("decide txn[%v] secondary intents success ", t.GetTxId())
 	return
 }
 
