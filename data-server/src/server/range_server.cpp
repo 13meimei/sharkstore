@@ -88,6 +88,7 @@ int RangeServer::Init(ContextServer *context) {
         FLOG_ERROR("RangeServer Init error ...");
         return -1;
     }
+    context_->db = db_;
 
     // 打开meta db
     auto meta_path = JoinFilePath({ds_config.rocksdb_config.path, kMetaPathSuffix});
