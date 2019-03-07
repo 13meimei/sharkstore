@@ -60,8 +60,8 @@ func (c *ClientConn) commit() (err error) {
 	if c.tx == nil {
 		return
 	}
-	if e := c.tx.Commit(); e != nil {
-		err = e
+	if err = c.tx.Commit(); err != nil {
+		c.tx.Rollback()
 	}
 	c.tx = nil
 	return
@@ -74,9 +74,7 @@ func (c *ClientConn) rollback() (err error) {
 		return
 	}
 
-	if e := c.tx.Rollback(); e != nil {
-		err = e
-	}
+	err = c.tx.Rollback()
 	c.tx = nil
 
 	return

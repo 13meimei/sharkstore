@@ -1,7 +1,6 @@
 set(raft_bench_SOURCES
     address.cpp
     config.cpp
-    fast_service.cpp
     main.cpp
     node.cpp
     range.cpp

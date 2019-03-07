@@ -42,18 +42,12 @@ static int setup_schedule_tasks();
 
 static pthread_t schedule_tid;
 static char *conf_filename = NULL;
-static int sf_task_arg_size = sizeof(sf_task_arg_t);
 
 static pthread_mutex_t service_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t service_cond = PTHREAD_COND_INITIALIZER;
 
 static sf_user_init_callback_t sf_user_init_callback;
 static sf_user_destroy_callback_t sf_user_destroy_callback;
-static sf_print_version_callback_t sf_print_version_callback;
-
-void sf_regist_print_version_callback(sf_print_version_callback_t print_version_func) {
-    sf_print_version_callback = print_version_func;
-}
 
 void sf_regist_user_init_callback(sf_user_init_callback_t user_init_func) {
     sf_user_init_callback = user_init_func;
@@ -65,21 +59,8 @@ void sf_regist_user_destroy_callback(sf_user_destroy_callback_t user_destroy_fun
 
 int sf_service_init() {
     int result;
-    int init_count;
-
     if ((result = set_rand_seed()) != 0) {
         FLOG_ERROR("set_rand_seed fail, program exit!");
-        return result;
-    }
-    sf_socket_config_t *config = &sf_config.socket_config;
-
-    init_count = config->max_connections < ALLOC_CONNECTIONS_ONCE
-                     ? config->max_connections
-                     : ALLOC_CONNECTIONS_ONCE;
-
-    if ((result = free_queue_init_ex(config->max_connections, init_count,
-                                     ALLOC_CONNECTIONS_ONCE, config->min_buff_size,
-                                     config->max_buff_size, sf_task_arg_size)) != 0) {
         return result;
     }
 
@@ -126,11 +107,6 @@ int sf_service_run(int argc, char *argv[], const char *server_name) {
     if (argc < 2) {
         usage(argv[0]);
         return 1;
-    } else if (argc == 2) {
-        if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
-            sf_print_version_callback();
-            return 0;
-        }
     }
 
     g_current_time = time(NULL);

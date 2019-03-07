@@ -5,49 +5,57 @@ _Pragma("once");
 #include <asio/ip/tcp.hpp>
 #include <asio/streambuf.hpp>
 
-#include "handler.h"
+#include "message.h"
 #include "options.h"
 #include "protocol.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 class Session : public std::enable_shared_from_this<Session> {
 public:
-    Session(const SessionOptions& opt, const Handler& msg_handler,
-            asio::ip::tcp::socket socket);
-    ~Session();
+    enum class Direction {
+        kClient,
+        kServer,
+    };
 
-    void Start();
+public:
+    Session(const SessionOptions& opt, const Handler& handler, asio::ip::tcp::socket socket);
+    Session(const SessionOptions& opt, const Handler& handler, asio::io_context& io_context);
+
+    ~Session();
 
     Session(const Session&) = delete;
     Session& operator=(const Session&) = delete;
 
-    static uint64_t TotalCount() { return total_count_; }
+    // for server session
+    void Start();
+
+    // for client session
+    void Connect(const std::string& address, const std::string& port);
 
     void Write(const MessagePtr& msg);
+    void Close();
 
 private:
-    bool init();
-    void doClose();
-    void doWrite();
+    void do_close();
+    void do_write();
+    bool init_establish();
 
-    void readHead();
-    void readBody();
+    void read_head();
+    void read_body();
 
 private:
-
-    // all server's sessions count
-    static std::atomic<uint64_t> total_count_;
-
     const SessionOptions& opt_;
     const Handler& handler_;
 
     asio::ip::tcp::socket socket_;
-    Context session_ctx_;
+    Direction direction_;
+    std::string local_addr_;
+    std::string remote_addr_;
     std::string id_;
 
+    bool established_ = false;
     std::atomic<bool> closed_ = {false};
 
     Head head_;
@@ -57,5 +65,4 @@ private:
 };
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

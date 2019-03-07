@@ -43,9 +43,6 @@ protected:
     // for debug
     void SetLogLevel(char *level);
 
-private:
-    Status getResult(google::protobuf::Message *resp);
-
 protected:
     std::unique_ptr<mock::RangeContextMock> context_;
     std::unique_ptr<Table> table_;

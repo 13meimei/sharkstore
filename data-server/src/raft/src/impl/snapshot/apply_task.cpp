@@ -146,7 +146,7 @@ void ApplySnapTask::sendAck(int64_t seq, bool reject) {
     transport_->SendMessage(msg);
 
     // TODO: log
-    // LOG_DEBUG("raft[%lu] send snapshot[%lu] ack to %lu. seq=%ld, reject=%d", id_,
+    // RAFT_LOG_DEBUG("raft[%lu] send snapshot[%lu] ack to %lu. seq=%ld, reject=%d", id_,
     // ack->snapshot().uuid(), ack->to(),
     // ack->snapshot().seq(), ack->reject());
 }

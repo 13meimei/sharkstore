@@ -1,20 +1,27 @@
 #include "server.h"
 
+#include "base/util.h"
 #include "frame/sf_logger.h"
 
-#include "io_context_pool.h"
+#include "context_pool.h"
 #include "session.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
-Server::Server(const ServerOptions& opt)
-    : opt_(opt),
-      acceptor_(context_),
-      context_pool_(new IOContextPool(opt.io_threads_num)) {}
+Server::Server(const ServerOptions& opt, const std::string& name) :
+    name_(name),
+    opt_(opt),
+    acceptor_(context_),
+    context_pool_(new IOContextPool(opt.io_threads_num, name)) {
+    if (opt_.session_opt.statistics == nullptr) {
+        opt_.session_opt.statistics = std::make_shared<Statistics>();
+    }
+}
 
-Server::~Server() { Stop(); }
+Server::~Server() {
+    Stop();
+}
 
 Status Server::ListenAndServe(const std::string& listen_ip, uint16_t listen_port,
                               const Handler& handler) {
@@ -36,12 +43,18 @@ Status Server::ListenAndServe(const std::string& listen_ip, uint16_t listen_port
     context_pool_->Start();
 
     doAccept();
+
     thr_.reset(new std::thread([this]() {
         try {
             context_.run();
         } catch (...) {
         }
     }));
+
+    char thr_name[16] = {'\0'};
+    snprintf(thr_name, 16, "%s-acpt", name_.c_str());
+    AnnotateThread(thr_->native_handle(), thr_name);
+
     thr_->detach();
 
     return Status::OK();
@@ -62,12 +75,10 @@ void Server::doAccept() {
                                                 asio::ip::tcp::socket socket) {
         if (ec) {
             FLOG_ERROR("[Net] accept error: %s", ec.message().c_str());
-        } else if (Session::TotalCount() > opt_.max_connections) {
-            FLOG_WARN("[Net] accept max connection limit reached: %lu",
-                      opt_.max_connections);
+        } else if (opt_.session_opt.statistics->session_count > opt_.max_connections) {
+            FLOG_WARN("[Net] accept max connection limit reached: %" PRId64, opt_.max_connections);
         } else {
-            std::make_shared<Session>(opt_.session_opt, handler_, std::move(socket))
-                ->Start();
+            std::make_shared<Session>(opt_.session_opt, handler_, std::move(socket))->Start();
         }
 
         doAccept();
@@ -83,5 +94,4 @@ asio::io_context& Server::getContext() {
 }
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

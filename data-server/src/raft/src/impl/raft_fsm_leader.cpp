@@ -44,7 +44,7 @@ void RaftFsm::becomeLeader() {
     entry->set_index(raft_log_->lastIndex() + 1);
     appendEntry(std::vector<EntryPtr>{entry});
 
-    LOG_INFO("raft[%llu] become leader at term %llu", id_, term_);
+    RAFT_LOG_INFO("raft[%llu] become leader at term %llu", id_, term_);
 }
 
 void RaftFsm::stepLeader(MessagePtr& msg) {
@@ -75,7 +75,7 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
     // 其他类型的消息需要读取副本的进度
     auto replica = getReplica(msg->from());
     if (replica == nullptr) {
-        LOG_WARN("raft[%llu] stepLeader no progress available for %llu", id_,
+        RAFT_LOG_WARN("raft[%llu] stepLeader no progress available for %llu", id_,
                  msg->from());
         return;
     }
@@ -86,7 +86,7 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
     switch (msg->type()) {
         case pb::APPEND_ENTRIES_RESPONSE:
             if (msg->reject()) {
-                LOG_DEBUG("raft[%llu] received msgApp "
+                RAFT_LOG_DEBUG("raft[%llu] received msgApp "
                           "rejection(lastindex:%llu) from %llu for index %llu",
                           id_, msg->reject_hint(), msg->from(), msg->log_index());
 
@@ -108,7 +108,7 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
                             break;
                         case ReplicaState::kSnapshot:
                             if (pr.needSnapshotAbort()) {
-                                LOG_INFO("raft[%llu] snapshot aborted, resumed "
+                                RAFT_LOG_INFO("raft[%llu] snapshot aborted, resumed "
                                          "sending replication to %llu",
                                          id_, msg->from());
                                 // 取消快照发送
@@ -145,12 +145,12 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
         case pb::SNAPSHOT_ACK:
             if (sending_snap_ &&
                 sending_snap_->GetContext().uuid == msg->snapshot().uuid()) {
-                LOG_DEBUG("raft[%lu] recv snapshot[%lu] ack. seq=%ld, reject=%d", id_,
+                RAFT_LOG_DEBUG("raft[%lu] recv snapshot[%lu] ack. seq=%ld, reject=%d", id_,
                           msg->snapshot().uuid(), msg->snapshot().seq(), msg->reject());
 
                 auto s = sending_snap_->RecvAck(msg);
                 if (!s.ok()) {
-                    LOG_WARN("raft[%lu] ack[seq:%ld, reject:%d, from:%lu] snapshot[%lu] "
+                    RAFT_LOG_WARN("raft[%lu] ack[seq:%ld, reject:%d, from:%lu] snapshot[%lu] "
                              "failed: %s ",
                              id_, msg->snapshot().seq(), msg->reject(), msg->from(),
                              msg->snapshot().uuid(), s.ToString().c_str());
@@ -171,12 +171,12 @@ void RaftFsm::stepLeader(MessagePtr& msg) {
             }
 
             if (msg->reject()) {
-                LOG_WARN("raft[%llu] send snapshot to [%llu] failed.", id_, msg->from());
+                RAFT_LOG_WARN("raft[%llu] send snapshot to [%llu] failed.", id_, msg->from());
                 pr.snapshotFailure();
                 pr.becomeProbe();
             } else {
                 pr.becomeProbe();
-                LOG_WARN("raft[%llu] send snapshot to [%llu] succeed, resumed "
+                RAFT_LOG_WARN("raft[%llu] send snapshot to [%llu] succeed, resumed "
                          "replication [%s]",
                          id_, msg->from(), pr.ToString().c_str());
             }
@@ -262,12 +262,12 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
 
     // 需要发快照
     if (pr.next() < fi || !ts.ok() || !es.ok()) {
-        LOG_INFO("raft[%llu] need snapshot to %llu[next:%llu], fi:%llu, log "
+        RAFT_LOG_INFO("raft[%llu] need snapshot to %llu[next:%llu], fi:%llu, log "
                  "error:%s-%s",
                  id_, to, pr.next(), fi, ts.ToString().c_str(), es.ToString().c_str());
 
         if (sending_snap_) {
-            LOG_WARN("raft[%llu] sendAppend could not send snapshot to %llu(other "
+            RAFT_LOG_WARN("raft[%llu] sendAppend could not send snapshot to %llu(other "
                      "snapshot[%lu] is sending)",
                      id_, to, sending_snap_->GetContext().uuid);
         } else {
@@ -307,7 +307,7 @@ void RaftFsm::sendAppend(uint64_t to, Replica& pr) {
 }
 
 void RaftFsm::appendEntry(const std::vector<EntryPtr>& ents) {
-    LOG_DEBUG("raft[%llu] append log entry. index: %llu, size: %d", id_, ents[0]->index(),
+    RAFT_LOG_DEBUG("raft[%llu] append log entry. index: %llu, size: %d", id_, ents[0]->index(),
               ents.size());
 
     raft_log_->append(ents);
@@ -376,7 +376,7 @@ std::shared_ptr<SendSnapTask> RaftFsm::newSendSnapTask(uint64_t to,
 
     *snap_index = snap_data->ApplyIndex();
 
-    LOG_DEBUG("raft[%llu] sendAppend [firstindex: %llu, commit: %llu] sent "
+    RAFT_LOG_DEBUG("raft[%llu] sendAppend [firstindex: %llu, commit: %llu] sent "
               "snapshot[index: %llu, term: %llu] to [%llu]",
               id_, raft_log_->firstIndex(), raft_log_->committed(),
               snap_data->ApplyIndex(), snap_term, to);
@@ -401,7 +401,7 @@ void RaftFsm::checkCaughtUp() {
 
     assert(lasti >= max_match);
     if (lasti - max_match < final_threshold) {
-        LOG_INFO("raft[%lu] start promote learner %s [match:%lu, lasti:%lu] at term %lu.", id_,
+        RAFT_LOG_INFO("raft[%lu] start promote learner %s [match:%lu, lasti:%lu] at term %lu.", id_,
                  max_peer.ToString().c_str(), max_match, lasti, term_);
 
         max_peer.type = PeerType::kNormal;

@@ -3,6 +3,7 @@ package server
 import (
 	"time"
 	"fmt"
+	"sort"
 	"bytes"
 	"testing"
 	"util"
@@ -11,7 +12,9 @@ import (
 	"net/http"
 	"encoding/json"
 	"model/pkg/metapb"
+	"model/pkg/txn"
 	"proxy/gateway-server/sqlparser"
+	"proxy/store/dskv"
 )
 
 func TestRestKVHttp(t *testing.T) {
@@ -21,6 +24,9 @@ func TestRestKVHttp(t *testing.T) {
 	}
 	go s.Run()
 
+	//id: auto increment, tinyint
+	//name: varchar
+	//balance: float
 	columnNames := []string{"id", "name", "balance"}
 
 	setQueryRep := &Query{
@@ -65,6 +71,20 @@ func TestRestKVHttp(t *testing.T) {
 		RowsAffected: 4,
 	})
 
+	getQueryRep := &Query{
+		DatabaseName: testDBName,
+		TableName:    testTableName,
+		Command: &Command{
+			Field: columnNames,
+		},
+	}
+	expected := [][]interface{}{
+		[]interface{}{1, "myname1", 0.1},
+		[]interface{}{2, "myname2", 0.2},
+		[]interface{}{3, "myname3", 0.3},
+	}
+	assertGetCommand(t, getQueryRep, s.proxy, expected, table)
+
 	setQueryNoPkRep := &Query{
 		DatabaseName: testDBName,
 		TableName:    testTableName,
@@ -79,32 +99,32 @@ func TestRestKVHttp(t *testing.T) {
 		},
 	}
 
-	//自主id无法考虑业务自己赋值的主键
+	//自增id无法考虑业务自己赋值的主键
 	testSetCommand(t, setQueryNoPkRep, table, s.proxy, &Reply{
 		Code:         0,
 		RowsAffected: 4,
 	})
 
-	getAggreQueryRep := &Query{
-		DatabaseName: testDBName,
-		TableName:    testTableName,
-		Command: &Command{
-			Field: []string{},
-			AggreFunc: []*AggreFunc{
-				&AggreFunc{Function: "count", Field: "*"},
-				&AggreFunc{Function: "max", Field: "id"},
-				&AggreFunc{Function: "min", Field: "id"},
-				&AggreFunc{Function: "sum", Field: "balance"},
-			},
-		},
-	}
+	//getAggreQueryRep := &Query{
+	//	DatabaseName: testDBName,
+	//	TableName:    testTableName,
+	//	Command: &Command{
+	//		Field: []string{},
+	//		AggreFunc: []*AggreFunc{
+	//			&AggreFunc{Function: "count", Field: "*"},
+	//			&AggreFunc{Function: "max", Field: "id"},
+	//			&AggreFunc{Function: "min", Field: "id"},
+	//			&AggreFunc{Function: "sum", Field: "balance"},
+	//		},
+	//	},
+	//}
+	//
+	//expected := [][]interface{}{
+	//	[]interface{}{4, 4, 1, 1.0},
+	//}
+	//assertGetCommand(t, getAggreQueryRep, s.proxy, expected, table)
 
-	expected := [][]interface{}{
-		[]interface{}{4, 4, 1, 1.0},
-	}
-	assertGetCommand(t, getAggreQueryRep, s.proxy, expected, table)
-
-	getQueryRep := &Query{
+	getQueryRep = &Query{
 		DatabaseName: testDBName,
 		TableName:    testTableName,
 		Command: &Command{
@@ -821,6 +841,22 @@ func TestRestKVHttpForSecondIndex(t *testing.T) {
 		RowsAffected: 4,
 	})
 
+	//select
+	getQueryRep := &Query{
+		DatabaseName: secondIndexDb,
+		TableName:    secondIndexTable,
+		Command: &Command{
+			Field: []string{"id", "name", "age", "sex"},
+		},
+	}
+	expected := [][]interface{}{
+		[]interface{}{1, "a", 10, "女"},
+		[]interface{}{2, "b", 11, "男"},
+		[]interface{}{3, "c", 5, "女"},
+		[]interface{}{4, "d", 14, "男"},
+	}
+	assertGetCommand(t, getQueryRep, s.proxy, expected, table)
+
 	// test upd
 	updQueryRep := &Query{
 		DatabaseName: secondIndexDb,
@@ -867,7 +903,6 @@ func TestRestKVHttpForSecondIndex(t *testing.T) {
 		RowsAffected: 2,
 	})
 }
-
 
 func TestRestKVHttpForSecondIndex2(t *testing.T) {
 	s, err := mockGwServer()
@@ -920,4 +955,83 @@ func TestRestKVHttpForSecondIndex2(t *testing.T) {
 		Code:         0,
 		RowsAffected: 2,
 	})
+}
+
+//pre split range by id value: 1,2,3,4,5,6,7,8,9 when create table
+func TestTxnPrepare(t *testing.T) {
+	s, err := mockGwServer()
+	if err != nil {
+		t.Fatalf("init server failed, err[%v]", err)
+	}
+	go s.Run()
+
+	var (
+		sqls = []string{
+			"insert into " + testTableName + "(id,name,balance) values(1, 'a', 0.31),(11, 'aa', 0.87),(2, 'b', 0.14)",
+			"insert into " + testTableName + "(id,name,balance) values(2, 'b', 0.03),(3, 'c', 0.7),(1, 'a', 0.5)",
+		}
+		txArray = make([]*TxObj, 2)
+	)
+
+	for i := 0; i < 2; i++ {
+		tx := getTx(t, s.proxy, sqls[i], i)
+		txArray[i] = tx
+		var (
+			priIntents      []*txnpb.TxnIntent
+			secIntentsGroup [][]*txnpb.TxnIntent
+		)
+		ctx := dskv.NewPRConext(int(50 * 1000))
+		sort.Sort(TxnIntentSlice(tx.getTxIntents()))
+		priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, tx.GetTable(), tx.getTxIntents())
+		if err != nil {
+			t.Fatalf("regroup intent by range err %v", err)
+		}
+
+		err = tx.preparePrimaryIntents(ctx, priIntents, secIntentsGroup)
+		if err != nil {
+			t.Fatalf("[commit]prepare tx %v primary intents error %v", tx.GetTxId(), err)
+		}
+
+		err = tx.prepareSecondaryIntents(ctx, secIntentsGroup)
+		if err != nil {
+			t.Fatalf("[commit]txn %v prepare secondary intents err %v", tx.GetTxId(), err)
+		}
+		log.Debug("prepare tx %v secondary intents success", tx.GetTxId())
+		log.Debug("tx %v prepare success", tx.GetTxId())
+	}
+
+	for _, tx := range txArray {
+		var (
+			priIntents      []*txnpb.TxnIntent
+			secIntentsGroup [][]*txnpb.TxnIntent
+		)
+		ctx := dskv.NewPRConext(int(50 * 1000))
+		sort.Sort(TxnIntentSlice(tx.getTxIntents()))
+		priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, tx.GetTable(), tx.getTxIntents())
+		if err != nil {
+			t.Fatalf("regroup intent by range err %v", err)
+		}
+
+		err = tx.decidePrimaryIntents(ctx, priIntents, secIntentsGroup, txnpb.TxnStatus_COMMITTED)
+		if err != nil {
+			t.Fatalf("decide tx %v  err %v", tx.GetTxId(), err)
+		} else {
+			log.Info("decide tx %v  success", tx.GetTxId())
+		}
+	}
+}
+
+func getTx(t *testing.T, proxy *Proxy, sql string, index int) *TxObj {
+	table, intents := testProxyInsert(t, proxy, 3, sql)
+	intents[0].IsPrimary = true
+	tx := &TxObj{
+		txId:       fmt.Sprintf("%v", index+1),
+		primaryKey: intents[0].GetKey(),
+		implicit:   false,
+		intents:    intents,
+		table:      table,
+		proxy:      proxy,
+		Timeout:    50,
+	}
+	return tx
 }

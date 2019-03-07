@@ -21,7 +21,6 @@ public:
     master::Worker* MasterClient() override  { return server_->master_worker; }
     raft::RaftServer* RaftServer() override { return server_->raft_server; }
     storage::MetaStore* MetaStore() override { return server_->meta_store; }
-    common::SocketSession* SocketSession() override { return server_->socket_session; }
     range::RangeStats* Statistics() override { return server_->run_status; }
 	watch::WatchServer* WatchServer() override { return server_->range_server->watch_server_; }
 

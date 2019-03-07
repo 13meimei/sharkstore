@@ -7,6 +7,8 @@
 #include <vector>
 #include <functional>
 
+#include <fastcommon/logger.h>
+#include <fastcommon/shared_func.h>
 #include <gperftools/profiler.h>
 
 #include "address.h"
@@ -19,7 +21,7 @@ using namespace sharkstore::raft;
 using namespace sharkstore::raft::bench;
 
 struct BenchContext {
-    std::atomic<int64_t> counter;
+    std::atomic<int64_t> counter = {0};
     std::vector<std::shared_ptr<Range>> leaders;
 };
 
@@ -47,19 +49,13 @@ void runBenchmark(BenchContext *ctx) {
     }
 }
 
-namespace sharkstore {
-namespace raft {
-namespace bench {
-void start_fast_service(int argc, char *argv[]);
-}
-}  // namespace raft
-}  // namespace sharkstore
-
 int main(int argc, char *argv[]) {
     // 不打印debug日志
     SetLogger(new impl::StdLogger(impl::StdLogger::Level::kInfo));
 
-    start_fast_service(argc, argv);
+    log_init2();
+    char level[] = "info";
+    set_log_level(level);
 
     auto addr_mgr = std::make_shared<bench::NodeAddress>(3);
 
@@ -78,7 +74,7 @@ int main(int argc, char *argv[]) {
             auto r = n->GetRange(i);
             r->WaitLeader();
             if (r->IsLeader()) {
-                context.leaders[i] = r;
+                context.leaders[i-1] = r;
             }
         }
     }
@@ -90,7 +86,7 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::thread> threads;
     for (size_t i = 0; i < bench_config.thread_num; ++i) {
-        threads.push_back(std::thread(std::bind(&runBenchmark, &context)));
+        threads.emplace_back(std::thread(std::bind(&runBenchmark, &context)));
     }
     for (auto &t : threads) {
         t.join();

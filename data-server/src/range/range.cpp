@@ -1,8 +1,8 @@
 #include "range.h"
 #include <common/ds_config.h>
 
+#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include "common/ds_config.h"
-#include "frame/sf_util.h"
 #include "master/worker.h"
 #include "server/range_server.h"
 #include "server/run_status.h"
@@ -27,13 +27,13 @@ Range::Range(RangeContext* context, const metapb::Range &meta) :
 	start_key_(meta.start_key()),
 	meta_(meta) {
     store_ = std::unique_ptr<storage::Store>(new storage::Store(meta, context->DBInstance()));
-    eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
-                                          ds_config.watch_config.buffer_queue_size);
+//    eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
+//                                          ds_config.watch_config.buffer_queue_size);
 }
 
 
 Range::~Range() {
-    delete eventBuffer;
+//    delete eventBuffer;
 }
 
 Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
@@ -194,14 +194,18 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
     }
 
     switch (cmd.cmd_type()) {
-        case raft_cmdpb::CmdType::Lock:
-            return ApplyLock(cmd, index);
-        case raft_cmdpb::CmdType::LockUpdate:
-            return ApplyLockUpdate(cmd);
-        case raft_cmdpb::CmdType::Unlock:
-            return ApplyUnlock(cmd);
-        case raft_cmdpb::CmdType::UnlockForce:
-            return ApplyUnlockForce(cmd);
+//        case raft_cmdpb::CmdType::Lock:
+//            return ApplyLock(cmd, index);
+//        case raft_cmdpb::CmdType::LockUpdate:
+//            return ApplyLockUpdate(cmd);
+//        case raft_cmdpb::CmdType::Unlock:
+//            return ApplyUnlock(cmd);
+//        case raft_cmdpb::CmdType::UnlockForce:
+//            return ApplyUnlockForce(cmd);
+//        case raft_cmdpb::CmdType::KvWatchPut:
+//            return ApplyWatchPut(cmd, index);
+//        case raft_cmdpb::CmdType::KvWatchDel:
+//            return ApplyWatchDel(cmd, index);
 
         case raft_cmdpb::CmdType::RawPut:
             return ApplyRawPut(cmd);
@@ -223,10 +227,6 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
             return ApplyKVBatchDelete(cmd);
         case raft_cmdpb::CmdType::KvRangeDel:
             return ApplyKVRangeDelete(cmd);
-        case raft_cmdpb::CmdType::KvWatchPut:
-            return ApplyWatchPut(cmd, index);
-        case raft_cmdpb::CmdType::KvWatchDel:
-            return ApplyWatchDel(cmd, index);
         case raft_cmdpb::CmdType::TxnPrepare:
             return ApplyTxnPrepare(cmd, index);
         case raft_cmdpb::CmdType::TxnDecide:
@@ -248,7 +248,11 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     auto start = std::chrono::system_clock::now();
 
     raft_cmdpb::Command raft_cmd;
-    common::GetMessage(cmd.data(), cmd.size(), &raft_cmd);
+    google::protobuf::io::ArrayInputStream input(cmd.data(), static_cast<int>(cmd.size()));
+    if(!raft_cmd.ParseFromZeroCopyStream(&input)) {
+        RANGE_LOG_ERROR("parse raft command failed");
+        return Status(Status::kCorruption, "parse raft command", EncodeToHex(cmd.data()));
+    }
 
     Status ret;
     if (raft_cmd.cmd_type() == raft_cmdpb::CmdType::AdminSplit) {
@@ -293,31 +297,6 @@ Status Range::Submit(const raft_cmdpb::Command &cmd) {
     } else {
         return Status(Status::kNotLeader, "Not Leader", "");
     }
-}
-
-Status Range::SubmitCmd(common::ProtoMessage *msg, const kvrpcpb::RequestHeader& header,
-                 const std::function<void(raft_cmdpb::Command &cmd)> &init) {
-    raft_cmdpb::Command cmd;
-    init(cmd);
-
-    // set verify epoch
-    auto epoch = new metapb::RangeEpoch(header.range_epoch());
-    cmd.set_allocated_verify_epoch(epoch);
-
-    // add to queue
-    auto seq = submit_queue_.Add(header, cmd.cmd_type(), msg);
-    cmd.mutable_cmd_id()->set_node_id(node_id_);
-    cmd.mutable_cmd_id()->set_seq(seq);
-
-    auto ret = Submit(cmd);
-    if (!ret.ok()) {
-        auto ctx = submit_queue_.Remove(seq);
-        if (ctx) {
-            // submit失败，会发送错误，msg将由session释放
-            ctx->ClearMsg();
-        }
-    }
-    return ret;
 }
 
 void Range::OnLeaderChange(uint64_t leader, uint64_t term) {
@@ -568,12 +547,19 @@ bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&err) 
     return true;
 }
 
+static errorpb::Error *timeoutError() {
+    auto err = new errorpb::Error;
+    err->set_message("request timeout");
+    err->mutable_timeout();
+    return err;
+}
+
 void Range::ClearExpiredContext() {
     auto expired_seqs = submit_queue_.GetExpired();
     for (auto seq: expired_seqs) {
         auto ctx = submit_queue_.Remove(seq);
         if (ctx) {
-            ctx->SendTimeout(context_->SocketSession());
+            ctx->SendError(timeoutError());
         }
     }
 }

@@ -1,5 +1,4 @@
-#ifndef FBASE_DATASERVER_SERVER_DS_SERVER_H_
-#define FBASE_DATASERVER_SERVER_DS_SERVER_H_
+_Pragma("once");
 
 #include "context_server.h"
 
@@ -28,8 +27,6 @@ public:
 
     ContextServer *context_server() { return context_; }
 
-    void DealTask(common::ProtoMessage *task);
-
 private:
     DataServer();
 
@@ -43,5 +40,3 @@ private:
 } /* namespace server */
 } /* namespace dataserver  */
 } /* namespace sharkstore */
-
-#endif /* end of include guard: FBASE_DATASERVER_SERVER_DS_SERVER_H_ */

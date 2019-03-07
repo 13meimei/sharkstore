@@ -1,7 +1,6 @@
 #ifndef __CONTEXT_SERVER_H__
 #define __CONTEXT_SERVER_H__
 
-#include "common/socket_session.h"
 #include "raft/server.h"
 #include "storage/db_interface.h"
 
@@ -22,6 +21,7 @@ class Worker;
 class RunStatus;
 class RangeServer;
 class RunStatus;
+class RPCServer;
 
 struct ContextServer {
     uint64_t node_id = 0;
@@ -30,8 +30,8 @@ struct ContextServer {
 
     RunStatus *run_status = nullptr;
     RangeServer *range_server = nullptr;
-    common::SocketSession *socket_session = nullptr;
     master::Worker *master_worker = nullptr;
+    RPCServer *rpc_server = nullptr;
 
     storage::DbInterface* db = nullptr;
 

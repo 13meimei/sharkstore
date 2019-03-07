@@ -20,7 +20,7 @@ void RaftFsm::becomeCandidate() {
     vote_for_ = node_id_;
     state_ = FsmState::kCandidate;
 
-    LOG_INFO("raft[%llu] become candidate at term %llu", id_, term_);
+    RAFT_LOG_INFO("raft[%llu] become candidate at term %llu", id_, term_);
 }
 
 void RaftFsm::becomePreCandidate() {
@@ -33,13 +33,13 @@ void RaftFsm::becomePreCandidate() {
     state_ = FsmState::kPreCandidate;
     votes_.clear();
 
-    LOG_INFO("raft[%llu] become pre-candidate at term %llu", id_, term_);
+    RAFT_LOG_INFO("raft[%llu] become pre-candidate at term %llu", id_, term_);
 }
 
 void RaftFsm::stepCandidate(MessagePtr& msg) {
     switch (msg->type()) {
         case pb::LOCAL_MSG_PROP:
-            LOG_DEBUG("raft[%llu] no leader at term %llu; dropping proposal.", id_,
+            RAFT_LOG_DEBUG("raft[%llu] no leader at term %llu; dropping proposal.", id_,
                       term_);
             return;
 
@@ -65,7 +65,7 @@ void RaftFsm::stepCandidate(MessagePtr& msg) {
             int grants = poll(pre, msg->from(), !msg->reject());
             int rejects = votes_.size() - grants;
 
-            LOG_INFO("raft[%llu] %s [q:%d] has received %d votes and %d vote "
+            RAFT_LOG_INFO("raft[%llu] %s [q:%d] has received %d votes and %d vote "
                      "rejections",
                      id_, (pre ? "pre-campaign" : "campaign"), quorum(), grants, rejects);
 
@@ -110,7 +110,7 @@ void RaftFsm::campaign(bool pre) {
     for (const auto& r : replicas_) {
         if (r.first == node_id_) continue;
 
-        LOG_INFO("raft[%llu] %s: [logterm: %llu, index: %llu] sent vote "
+        RAFT_LOG_INFO("raft[%llu] %s: [logterm: %llu, index: %llu] sent vote "
                  "request to %llu at term %llu.",
                  id_, (pre ? "pre-campaign" : "campaign"), lt, li, r.first, term_);
 
@@ -126,7 +126,7 @@ void RaftFsm::campaign(bool pre) {
 }
 
 int RaftFsm::poll(bool pre, uint64_t node_id, bool vote) {
-    LOG_INFO("raft[%llu] received %s %s from %llu at term %llu", id_,
+    RAFT_LOG_INFO("raft[%llu] received %s %s from %llu at term %llu", id_,
              (pre ? "pre-vote" : "vote"), (vote ? "granted" : "rejected"), node_id,
              term_);
 

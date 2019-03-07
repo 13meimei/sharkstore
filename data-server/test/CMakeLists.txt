@@ -4,9 +4,8 @@ set(test_helper_SRCS
     helper/mock/master_worker_mock.cpp
     helper/mock/raft_mock.cpp
     helper/mock/raft_server_mock.cpp
-    helper/mock/socket_session_mock.cpp
     helper/mock/range_context_mock.cpp
-    helper/gen/test.pb.cc
+    helper/mock/rpc_request_mock.cpp
     helper/helper_util.cpp
     helper/query_builder.cpp
     helper/query_parser.cpp
@@ -30,8 +29,6 @@ set (test_DEPEND_LIBS
 )
 
 set(test_SRCS
-    fast_net_client.cpp
-    fast_net_server.cpp
     unittest/encoding_unittest.cpp
     unittest/field_value_unittest.cpp
     unittest/meta_store_unittest.cpp
@@ -66,9 +63,4 @@ foreach(testfile ${test_SRCS})
     endif()
 endforeach(testfile ${TESTS})
 
-add_subdirectory(watch)
-
-if (BUILD_NET)
-    add_subdirectory(net)
-endif()
-
+#add_subdirectory(watch)

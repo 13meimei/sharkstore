@@ -1,7 +1,8 @@
 _Pragma("once");
 
+#include "statistics.h"
+
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
 struct SessionOptions {
@@ -18,6 +19,8 @@ struct SessionOptions {
 
     // allowed max packet length when read
     size_t max_packet_length = 10 << 20;
+
+    std::shared_ptr<Statistics> statistics;
 };
 
 struct ServerOptions {
@@ -26,12 +29,11 @@ struct ServerOptions {
     size_t io_threads_num = 4;
 
     // exceeded connections will be rejected
-    size_t max_connections = 50000;
+    int64_t max_connections = 50000;
 
     // options about session
     SessionOptions session_opt;
 };
 
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

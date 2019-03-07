@@ -122,7 +122,7 @@ uint64_t RaftLog::findConfilct(const std::vector<EntryPtr>& ents) const {
             if (e->index() <= this->lastIndex()) {
                 uint64_t eterm = 0;
                 auto s = this->term(e->index(), &eterm);
-                LOG_INFO("raft[%lu] found conflict at index %lu [existing term: %lu, "
+                RAFT_LOG_INFO("raft[%lu] found conflict at index %lu [existing term: %lu, "
                          "conflicting term: %lu]",
                          id_, e->index(), this->zeroTermOnErrCompacted(eterm, s),
                          e->term());

@@ -9,7 +9,6 @@
 
 #include "master_worker_mock.h"
 #include "raft_server_mock.h"
-#include "socket_session_mock.h"
 
 namespace sharkstore {
 namespace test {
@@ -50,9 +49,6 @@ Status RangeContextMock::Init() {
     // raft_server
     raft_server_.reset(new RaftServerMock);
 
-    // socket session
-    socket_session_.reset(new SocketSessionMock);
-
     // range stats
     range_stats_.reset(new RangeStats);
 
@@ -60,7 +56,7 @@ Status RangeContextMock::Init() {
     split_policy_ = NewDisableSplitPolicy();
 
     // watch server
-    watch_server_.reset(new watch::WatchServer);
+//    watch_server_.reset(new watch::WatchServer);
 
     return Status::OK();
 }

@@ -9,37 +9,10 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-bool Range::RawPutSubmit(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
-    auto &key = req.req().key();
-
-    if (is_leader_ && KeyInRange(key)) {
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::RawPut);
-            cmd.set_allocated_kv_raw_put_req(req.release_req());
-        });
-        return ret.ok();
-    }
-
-    return false;
-}
-
-bool Range::RawPutTry(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
-    auto rng = context_->FindRange(split_range_id_);
-    if (rng == nullptr) {
-        return false;
-    }
-
-    return rng->RawPutSubmit(msg, req);
-}
-
-void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
-    errorpb::Error *err = nullptr;
-
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
-
+void Range::RawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redirect) {
     RANGE_LOG_DEBUG("RawPut begin");
 
+    errorpb::Error *err = nullptr;
     do {
         if (!VerifyWriteable(&err)) {
             break;
@@ -67,24 +40,30 @@ void Range::RawPut(common::ProtoMessage *msg, kvrpcpb::DsKvRawPutRequest &req) {
                 break;
             }
 
-            //! is_equal then retry raw put
-            if (!RawPutTry(msg, req)) {
+            // 单key: 不在范围内, 尝试转发给分裂出去的range, 减少网络交互
+            auto rng = context_->FindRange(split_range_id_);
+            if (rng == nullptr || !redirect) {
                 err = StaleEpochError(epoch);
+                break;
+            } else {
+                // 重定向, 只重定向一次
+                rng->RawPut(std::move(rpc), req, false);
+                return;
             }
-
-            break;
         }
 
-        if (!RawPutSubmit(msg, req)) {
-            err = RaftFailError();
-        }
+        SubmitCmd<kvrpcpb::DsKvRawPutResponse>(std::move(rpc), req.header(),
+            [&req](raft_cmdpb::Command &cmd) {
+                cmd.set_cmd_type(raft_cmdpb::CmdType::RawPut);
+                cmd.set_allocated_kv_raw_put_req(req.release_req());
+        });
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("RawPut error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsKvRawPutResponse;
-        return SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsKvRawPutResponse resp;
+        SendResponse(rpc, resp, req.header(), err);
     }
 }
 
@@ -93,20 +72,20 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
 
     RANGE_LOG_DEBUG("ApplyRawPut begin");
     auto &req = cmd.kv_raw_put_req();
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
 
     errorpb::Error *err = nullptr;
 
     do {
         if (!KeyInRange(req.key(), err)) {
             RANGE_LOG_WARN("Apply RawPut failed, epoch is changed");
-            ret = std::move(Status(Status::kInvalidArgument, "key not int range", ""));
+            ret = Status(Status::kInvalidArgument, "key not int range", "");
             break;
         }
 
         ret = store_->Put(req.key(), req.value());
         context_->Statistics()->PushTime(HistogramType::kStore,
-                                       get_micro_second() - btime);
+                                       NowMicros() - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyRawPut failed, code:%d, msg:%s", ret.code(),
@@ -121,9 +100,9 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new kvrpcpb::DsKvRawPutResponse;
+        kvrpcpb::DsKvRawPutResponse resp;
         if (!ret.ok()) {
-            resp->mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
+            resp.mutable_resp()->set_code(static_cast<int32_t>(ret.code()));
         }
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {

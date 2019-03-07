@@ -1,14 +1,8 @@
 set(common_SOURCES
     ds_config.c
-    ds_proto.c
-    ds_version.c
-    ds_encoding.cpp
-    socket_session_impl.cpp
-    socket_base.cpp
-    socket_message.cpp
-    socket_server.cpp
-    socket_client.cpp
-    )
+        ds_encoding.cpp
+    rpc_request.cpp
+)
 
 foreach(f IN LISTS common_SOURCES) 
     set_source_files_properties(${f} PROPERTIES 

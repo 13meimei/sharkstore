@@ -6,7 +6,6 @@
 #include "base/status.h"
 #include "base/util.h"
 #include "common/ds_config.h"
-#include "frame/sf_util.h"
 #include "range/range.h"
 #include "server/range_server.h"
 #include "server/run_status.h"
@@ -15,7 +14,7 @@
 
 #include "helper/table.h"
 #include "helper/mock/raft_server_mock.h"
-#include "helper/mock/socket_session_mock.h"
+#include "helper/mock/rpc_request_mock.h"
 
 int main(int argc, char *argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -25,6 +24,7 @@ int main(int argc, char *argv[]) {
 char level[8] = "debug";
 
 using namespace sharkstore::test::helper;
+using namespace sharkstore::test::mock;
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::storage;
 
@@ -35,7 +35,7 @@ protected:
         set_log_level(level);
 
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
-        strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
+        strcat(ds_config.rocksdb_config.path, std::to_string(NowMilliSeconds()).c_str());
         ds_config.range_config.recover_concurrency = 1;
 
         range_server_ = new server::RangeServer;
@@ -44,7 +44,6 @@ protected:
 
         context_->node_id = 1;
         context_->range_server = range_server_;
-        context_->socket_session = new SocketSessionMock;
         context_->raft_server = new RaftServerMock;
         context_->run_status = new server::RunStatus;
 
@@ -53,7 +52,6 @@ protected:
 
     void TearDown() override {
         delete context_->range_server;
-        delete context_->socket_session;
         delete context_->raft_server;
         delete context_;
     }
@@ -90,15 +88,11 @@ metapb::Range *genRange() {
 TEST_F(DdlTest, Ddl) {
     {
         // begin test create range
-        auto msg = new common::ProtoMessage;
         schpb::CreateRangeRequest req;
         req.set_allocated_range(genRange());
+        auto rpc = NewMockRPCRequest(req);
 
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
+        range_server_->CreateRange(*rpc.first);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
         ASSERT_TRUE(range_server_->Find(1) != nullptr);
@@ -112,22 +106,18 @@ TEST_F(DdlTest, Ddl) {
 
     {
         // begin test create range (repeat)
-        auto msg = new common::ProtoMessage;
         schpb::CreateRangeRequest req;
         req.set_allocated_range(genRange());
+        auto rpc = NewMockRPCRequest(req);
 
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->CreateRange(msg);
+        range_server_->CreateRange(*rpc.first);
         ASSERT_FALSE(range_server_->ranges_.empty());
 
         ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         schpb::CreateRangeResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
+        auto s = rpc.second->Get(resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
         ASSERT_FALSE(resp.header().has_error());
 
@@ -142,24 +132,20 @@ TEST_F(DdlTest, Ddl) {
 
     {
         // begin test create range (repeat but epoch stale)
-        auto msg = new common::ProtoMessage;
         schpb::CreateRangeRequest req;
         auto meta = genRange();
         meta->mutable_range_epoch()->set_version(2);
         req.set_allocated_range(meta);
 
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+        auto rpc = NewMockRPCRequest(req);
+        range_server_->CreateRange(*rpc.first);
 
-        range_server_->CreateRange(msg);
         ASSERT_FALSE(range_server_->ranges_.empty());
-
         ASSERT_TRUE(range_server_->Find(1) != nullptr);
 
         schpb::CreateRangeResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
+        auto s = rpc.second->Get(resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
         ASSERT_TRUE(resp.header().has_error());
         ASSERT_TRUE(resp.header().error().has_stale_range());
@@ -174,23 +160,18 @@ TEST_F(DdlTest, Ddl) {
 
     {
         // begin test delete range
-        auto msg = new common::ProtoMessage;
         schpb::DeleteRangeRequest req;
         req.set_range_id(1);
 
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->DeleteRange(msg);
+        auto rpc = NewMockRPCRequest(req);
+        range_server_->DeleteRange(*rpc.first);
 
         ASSERT_TRUE(range_server_->ranges_.empty());
-
         ASSERT_TRUE(range_server_->Find(1) == nullptr);
 
         schpb::DeleteRangeResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
+        auto s = rpc.second->Get(resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
         ASSERT_FALSE(resp.header().has_error());
 
@@ -204,19 +185,15 @@ TEST_F(DdlTest, Ddl) {
 
     {
         // begin test delete range (not exist)
-        auto msg = new common::ProtoMessage;
         schpb::DeleteRangeRequest req;
         req.set_range_id(1);
 
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->DeleteRange(msg);
+        auto rpc = NewMockRPCRequest(req);
+        range_server_->DeleteRange(*rpc.first);
 
         schpb::DeleteRangeResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
+        auto s = rpc.second->Get(resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
 
         ASSERT_FALSE(resp.header().has_error());
         // end test delete range

@@ -9,6 +9,11 @@ import (
 	"util/log"
 )
 
+const (
+	TXN_INTENT_MAX_LENGTH        = 100
+	TXN_DEFAULT_TIMEOUT   uint64 = 50
+)
+
 func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t *Table) (err error) {
 	if len(req.GetIntents()) == 0 {
 		return
@@ -43,8 +48,11 @@ func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t
 					lockErr := txError.GetLockErr()
 					if lockErr.GetInfo() != nil && lockErr.GetInfo().GetTimeout() {
 						expiredTxs = append(expiredTxs, lockErr)
+					} else {
+						err = convertTxnErr(txError)
+						errForRetry = err
 					}
-					log.Info("handlePrepare: txn[%v] exist lock[%v], need wait to expire", req.GetTxnId(), lockErr.GetInfo())
+					log.Warn("handlePrepare: txn[%v] exist lock[%v]", req.GetTxnId(), lockErr.GetInfo())
 				default:
 					err = convertTxnErr(txError)
 					log.Error("handlePrepare txn[%v] error:%v ", req.GetTxnId(), err)
@@ -68,6 +76,7 @@ func (p *Proxy) handleRecoverTxs(expiredTxs []*txnpb.LockError, t *Table) (err e
 	if len(expiredTxs) == 0 {
 		return
 	}
+	log.Debug("start to recover expired txs size: %v", len(expiredTxs))
 	recoverFunc := func(subCtx *dskv.ReqContext, lock *txnpb.LockError, table *Table, errs chan error) {
 		var (
 			lockInfo   = lock.GetInfo()
@@ -81,7 +90,7 @@ func (p *Proxy) handleRecoverTxs(expiredTxs []*txnpb.LockError, t *Table) (err e
 			_, e = p.recoverFromSecondary(subCtx, txId, primaryKey, table, true)
 		}
 		if e != nil {
-			log.Error("recover expired tx %v err %v", txId, err)
+			log.Error("recover expired tx %v err %v", txId, e)
 		}
 		errs <- e
 	}
@@ -119,8 +128,10 @@ func (p *Proxy) recoverFromPrimary(ctx *dskv.ReqContext, txId string, primaryKey
 		return
 	}
 	if status == txnpb.TxnStatus_COMMITTED {
-		log.Error("rollback txn error, because ds let commit")
+		log.Warn("rollback txn %v error, because ds let commit", txId)
 	}
+	log.Debug("[from primary key]start to recover tx: %v to status: %v, secondary key size: %v, recover:%v",
+		txId, status, len(secondaryKeys), recover)
 	//todo opt
 	//decide all secondary keys
 	err = p.decideSecondaryKeys(ctx, txId, status, secondaryKeys, t)
@@ -143,8 +154,10 @@ func (p *Proxy) recoverFromSecondary(ctx *dskv.ReqContext, txId string, primaryK
 		return status, err
 	}
 	if status == txnpb.TxnStatus_COMMITTED {
-		log.Error("rollback txn error, because ds let commit")
+		log.Warn("rollback txn %v error, because ds let commit", txId)
 	}
+	log.Debug("[from secondary key]start to recover tx: %v  to status: %v, secondary key size:%v, recover: true",
+		txId, status, len(secondaryKeys))
 	if sync {
 		//todo opt
 		//decide all secondary keys
@@ -178,20 +191,24 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 		errForRetry    error
 	)
 	doDecideFunc := func(proxy *Proxy, subCtx *dskv.ReqContext, txId string, subKeys [][]byte, table *Table, handleChannel chan *TxnDealHandle) {
-		log.Debug("[recover]doDecideFunc: decide tx %v secondary key %v", txId, subKeys)
-		req := &txnpb.DecideRequest{
-			TxnId:  txId,
-			Status: status,
-			Keys:   subKeys,
-		}
-		var resp *txnpb.DecideResponse
-		resp, err = proxy.handleDecide(subCtx, req, table)
-		if err != nil {
-			handleChannel <- &TxnDealHandle{keys: subKeys, err: err}
+		log.Debug("doDecideFunc: decide tx %v secondary intents %v to status %v", txId, subKeys, status)
+		var (
+			req = &txnpb.DecideRequest{
+				TxnId:  txId,
+				Status: status,
+				Keys:   subKeys,
+			}
+			resp *txnpb.DecideResponse
+			e    error
+		)
+		resp, e = proxy.handleDecide(subCtx, req, table)
+		if e != nil {
+			handleChannel <- &TxnDealHandle{keys: subKeys, err: e}
+			return
 		}
 		if resp.Err != nil {
-			err = convertTxnErr(resp.Err)
-			handleChannel <- &TxnDealHandle{keys: subKeys, err: err}
+			e = convertTxnErr(resp.Err)
+			handleChannel <- &TxnDealHandle{keys: subKeys, err: e}
 			return
 		}
 		handleChannel <- &TxnDealHandle{keys: subKeys, err: nil}
@@ -200,7 +217,7 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
 			if errForRetry != nil {
-				log.Error("[recover]%s execute secondary intents timeout", ctx)
+				log.Error("%s decide secondary intents timeout", ctx)
 				return
 			}
 		}
@@ -238,45 +255,38 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, primaryKey []byte, recover bool, t *Table) (
 	status txnpb.TxnStatus, secondaryKeys [][]byte, err error) {
 
+	log.Debug("try to rollback tx[%v]to aborted", txId)
 	status = txnpb.TxnStatus_ABORTED
 	var (
 		req = &txnpb.DecideRequest{
-			TxnId:  txId,
-			Status: status,
-			Keys:   [][]byte{primaryKey},
+			TxnId:     txId,
+			Status:    status,
+			Keys:      [][]byte{primaryKey},
+			Recover:   recover,
+			IsPrimary: true,
 		}
-		resp        *txnpb.DecideResponse
-		errForRetry error
+		resp *txnpb.DecideResponse
 	)
-	for {
-		if errForRetry != nil {
-			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
-			if errForRetry != nil {
-				log.Error("[recover]%s execute timeout", ctx)
-				return
-			}
-		}
-		resp, err = p.handleDecide(ctx, req, t)
-		if err != nil {
-			if err == dskv.ErrRouteChange {
-				errForRetry = err
-				continue
-			}
-			return
-		}
-		if resp.GetErr() != nil {
-			switch resp.Err.GetErrType() {
-			case txnpb.TxnError_STATUS_CONFLICT:
-				//failure, commit
-				status = txnpb.TxnStatus_COMMITTED
-				log.Info("handleRecover: txn[%v] retry to aborted and return status conflict", txId)
-			default:
-				err = convertTxnErr(resp.Err)
-				return
-			}
-		}
+	resp, err = p.handleDecidePrimary(ctx, req, t)
+	if err != nil {
 		return
 	}
+	if resp.GetErr() != nil {
+		switch resp.Err.GetErrType() {
+		case txnpb.TxnError_STATUS_CONFLICT:
+			//failure, commit
+			status = txnpb.TxnStatus_COMMITTED
+			log.Info("recover: retry to aborted txn[%v] primary intent and return status conflict, so router will commit", txId)
+		case txnpb.TxnError_NOT_FOUND, txnpb.TxnError_TXN_CONFLICT:
+			log.Warn("recover: retry to aborted txn[%v] primary intent and return err %v, ignore err", txId, convertTxnErr(resp.GetErr()))
+			return
+		default:
+			err = convertTxnErr(resp.Err)
+			return
+		}
+	}
+	secondaryKeys = resp.GetSecondaryKeys()
+	return
 }
 
 func (p *Proxy) handleDecide(ctx *dskv.ReqContext, req *txnpb.DecideRequest, t *Table) (*txnpb.DecideResponse, error) {
@@ -290,7 +300,42 @@ func (p *Proxy) handleDecide(ctx *dskv.ReqContext, req *txnpb.DecideRequest, t *
 	return resp, nil
 }
 
+func (p *Proxy) handleDecidePrimary(ctx *dskv.ReqContext, req *txnpb.DecideRequest, t *Table) (*txnpb.DecideResponse, error) {
+	var (
+		resp        *txnpb.DecideResponse
+		err         error
+		errForRetry error
+	)
+
+	proxy := dskv.GetKvProxy()
+	defer dskv.PutKvProxy(proxy)
+	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+
+	//todo refactor and abstract to func call about error: ErrRouteChange
+
+	/**
+		loop solve: occur ErrRouteChange when decide primary row
+	 */
+	for {
+		if errForRetry != nil {
+			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
+			if errForRetry != nil {
+				log.Error("%s decide primary intent timeout", ctx)
+				break
+			}
+		}
+		resp, err = proxy.TxDecide(ctx, req, req.GetKeys()[0])
+		if err != nil && err == dskv.ErrRouteChange {
+			errForRetry = err
+			continue
+		}
+		break
+	}
+	return resp, err
+}
+
 func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (err error) {
+	log.Debug("start to clean up primary key intent for tx:[%v]", txId)
 	req := &txnpb.ClearupRequest{
 		TxnId:      txId,
 		PrimaryKey: primaryKey,
@@ -329,6 +374,7 @@ func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []by
 }
 
 func (p *Proxy) handleGetLockInfo(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (resp *txnpb.GetLockInfoResponse, err error) {
+	log.Debug("start to getLockInfo for tx %v", txId)
 	req := &txnpb.GetLockInfoRequest{
 		TxnId: txId,
 		Key:   primaryKey,
@@ -363,7 +409,7 @@ func convertTxnErr(txError *txnpb.TxnError) error {
 		err = fmt.Errorf("SERVER_ERROR, code:[%v], message:%v", serverErr.GetCode(), serverErr.GetMsg())
 	case txnpb.TxnError_LOCKED:
 		lockErr := txError.GetLockErr()
-		err = fmt.Errorf("TXN EXSIST LOCKED, lockTxId: %v, timeout:%v", lockErr.GetInfo().GetTxnId(), lockErr.GetInfo().GetTxnId())
+		err = fmt.Errorf("TXN EXSIST LOCKED, lockTxId: %v, timeout:%v", lockErr.GetInfo().GetTxnId(), lockErr.GetInfo().GetTimeout())
 	case txnpb.TxnError_UNEXPECTED_VER:
 		versionErr := txError.GetUnexpectedVer()
 		err = fmt.Errorf("UNEXPECTED VERSION, expectedVer: %v, actualVer:%v", versionErr.GetExpectedVer(), versionErr.GetActualVer())
@@ -374,6 +420,9 @@ func convertTxnErr(txError *txnpb.TxnError) error {
 		err = fmt.Errorf("NOT FOUND")
 	case txnpb.TxnError_NOT_UNIQUE:
 		err = fmt.Errorf("NOT UNIQUE")
+	case txnpb.TxnError_TXN_CONFLICT:
+		conflictErr := txError.GetTxnConflict()
+		err = fmt.Errorf("TXN CONFLICT, expectedTxn: %v, actualTxn:%v", conflictErr.GetExpectedTxnId(), conflictErr.GetActualTxnId())
 	default:
 		err = fmt.Errorf("UNKNOWN TXN Err")
 	}
@@ -403,7 +452,7 @@ func (t TxnIntentSlice) Less(i int, j int) bool {
 // 按照route的范围划分intents
 func regroupIntentsByRange(context *dskv.ReqContext, t *Table, intents []*txnpb.TxnIntent) ([]*txnpb.TxnIntent, [][]*txnpb.TxnIntent, error) {
 	var (
-		priIntentsGroup []*txnpb.TxnIntent
+		priIntents      []*txnpb.TxnIntent
 		secIntentsGroup [][]*txnpb.TxnIntent
 		err             error
 		pkRangeId       uint64
@@ -429,18 +478,27 @@ func regroupIntentsByRange(context *dskv.ReqContext, t *Table, intents []*txnpb.
 		}
 		group = append(group, intent)
 		ggroup[l.Region.Id] = group
+		// 每100个kv切割一下
+		if len(group) >= TXN_INTENT_MAX_LENGTH {
+			if l.Region.Id == pkRangeId && len(priIntents) == 0 {
+				priIntents = group
+			} else {
+				secIntentsGroup = append(secIntentsGroup, group)
+			}
+			delete(ggroup, l.Region.Id)
+		}
 	}
 	for rangeId, group := range ggroup {
 		if len(group) == 0 {
 			continue
 		}
-		if rangeId == pkRangeId && len(priIntentsGroup) == 0 {
-			priIntentsGroup = group
+		if rangeId == pkRangeId && len(priIntents) == 0 {
+			priIntents = group
 		} else {
 			secIntentsGroup = append(secIntentsGroup, group)
 		}
 	}
-	return priIntentsGroup, secIntentsGroup, nil
+	return priIntents, secIntentsGroup, nil
 }
 
 // 按照route的范围划分keys
@@ -467,6 +525,11 @@ func regroupKeysByRange(context *dskv.ReqContext, t *Table, keys [][]byte) ([][]
 		}
 		group = append(group, key)
 		ggroup[l.Region.Id] = group
+		// 每100个kv切割一下
+		if len(group) >= TXN_INTENT_MAX_LENGTH {
+			keysGroup = append(keysGroup, group)
+			delete(ggroup, l.Region.Id)
+		}
 	}
 	for _, group := range ggroup {
 		if len(group) == 0 {

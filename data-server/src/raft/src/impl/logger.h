@@ -33,16 +33,16 @@ private:
 
 extern Logger* g_logger;
 
-#define LOG_DEBUG(x...) \
+#define RAFT_LOG_DEBUG(x...) \
     if (g_logger->IsEnableDebug()) g_logger->Debug(__FNAME__, __LINE__, ##x)
 
-#define LOG_INFO(x...) \
+#define RAFT_LOG_INFO(x...) \
     if (g_logger->IsEnableInfo()) g_logger->Info(__FNAME__, __LINE__, ##x)
 
-#define LOG_WARN(x...) \
+#define RAFT_LOG_WARN(x...) \
     if (g_logger->IsEnableWarn()) g_logger->Warn(__FNAME__, __LINE__, ##x)
 
-#define LOG_ERROR(x...) g_logger->Error(__FNAME__, __LINE__, ##x)
+#define RAFT_LOG_ERROR(x...) g_logger->Error(__FNAME__, __LINE__, ##x)
 
 }  // namespace impl
 }  // namespace raft

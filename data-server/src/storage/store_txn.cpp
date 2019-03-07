@@ -71,6 +71,12 @@ static void setNotFoundErr(TxnError* err, const std::string& key) {
     err->mutable_not_found()->set_key(key);
 }
 
+static TxnErrorPtr newNotFoundErr(const std::string& key) {
+    TxnErrorPtr err(new TxnError);
+    setNotFoundErr(err.get(), key);
+    return err;
+}
+
 static TxnErrorPtr newUnexpectedVerErr(const std::string& key, uint64_t expected, uint64_t actual) {
     TxnErrorPtr err(new TxnError);
     err->set_err_type(TxnError_ErrType_UNEXPECTED_VER);
@@ -84,6 +90,14 @@ static TxnErrorPtr newNotUniqueErr(const std::string& key) {
     TxnErrorPtr err(new TxnError);
     err->set_err_type(TxnError_ErrType_NOT_UNIQUE);
     err->mutable_not_unique()->set_key(key);
+    return err;
+}
+
+static TxnErrorPtr newTxnConflictErr(const std::string& expected_txn_id, const std::string& actual_txn_id) {
+    TxnErrorPtr err(new TxnError);
+    err->set_err_type(TxnError_ErrType_TXN_CONFLICT);
+    err->mutable_txn_conflict()->set_expected_txn_id(expected_txn_id);
+    err->mutable_txn_conflict()->set_actual_txn_id(actual_txn_id);
     return err;
 }
 
@@ -210,7 +224,7 @@ TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& int
     }
 
     // check unique and version
-    if (intent.check_unique() || intent.expected_ver()) {
+    if (intent.check_unique() || intent.expected_ver() != 0) {
         err = checkUniqueAndVersion(intent);
         if (err != nullptr) {
             return err;
@@ -258,7 +272,8 @@ void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareRespo
     delete batch;
 }
 
-Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version, WriteBatchInterface* batch) {
+Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version,
+                    uint64_t &bytes_written, WriteBatchInterface* batch) {
     Status s ;
     switch (intent.typ()) {
     case DELETE:
@@ -269,6 +284,7 @@ Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version, Wri
         std::string db_value = intent.value();
         EncodeIntValue(&db_value, kVersionColumnID, static_cast<int64_t>(version));
         s = batch->Put(intent.key(), db_value);
+        bytes_written += intent.key().size() + db_value.size();
         break;
     }
     default:
@@ -280,9 +296,34 @@ Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version, Wri
     return Status::OK();
 }
 
-TxnErrorPtr Store::decidePrimary(const txnpb::TxnValue& value, txnpb::TxnStatus status, WriteBatchInterface* batch) {
+TxnErrorPtr Store::decidePrimary(const txnpb::DecideRequest& req, uint64_t& bytes_written,
+                          WriteBatchInterface* batch, txnpb::DecideResponse* resp) {
+    assert(req.is_primary());
+
+    if (req.keys_size() != 1) {
+        return newTxnServerErr(Status::kInvalidArgument,
+                std::string("invalid key size: ") + std::to_string(req.keys_size()));
+    }
+
+    TxnValue value;
+    const auto& key = req.keys(0);
+    auto s = GetTxnValue(key, &value);
+    if (!s.ok()) {
+        if (s.code() == Status::kNotFound) {
+            return newNotFoundErr(key);
+        } else {
+            return newTxnServerErr(s.code(), s.ToString());
+        }
+    }
+
+    // s is ok now
+    assert(s.ok());
+    if (value.txn_id() != req.txn_id()) {
+        return newTxnConflictErr(req.txn_id(), value.txn_id());
+    }
+
     if (value.txn_status() != txnpb::INIT) {
-        if (value.txn_status() != status) {
+        if (value.txn_status() != req.status()) {
             return newStatusConflictErr(value.txn_status());
         } else { // already decided
             return nullptr;
@@ -293,37 +334,32 @@ TxnErrorPtr Store::decidePrimary(const txnpb::TxnValue& value, txnpb::TxnStatus 
     assert(value.txn_status() == txnpb::INIT);
     // update to new status;
     auto new_value = value;
-    new_value.set_txn_status(status);
-    auto s = writeTxnValue(value, batch);
+    new_value.set_txn_status(req.status());
+    s = writeTxnValue(value, batch);
     if (!s.ok()) {
         return newTxnServerErr(s.code(), s.ToString());
     }
     // commit intent
-    if (status == COMMITTED) {
-        s = commitIntent(value.intent(), value.version(), batch);
+    if (req.status() == COMMITTED) {
+        s = commitIntent(value.intent(), value.version(), bytes_written, batch);
         if (!s.ok()) {
             return newTxnServerErr(s.code(), s.ToString());
+        }
+    }
+
+    // assign secondary_keys in recover mode
+    if (req.recover()) {
+        for (const auto& skey: value.secondary_keys()) {
+            resp->add_secondary_keys(skey);
         }
     }
     return nullptr;
 }
 
-TxnErrorPtr Store::decideSecondary(const txnpb::TxnValue& value, txnpb::TxnStatus status, WriteBatchInterface* batch) {
-    auto ret = batch->Delete(db_->TxnCFHandle(), value.intent().key());
-    if (!ret.ok()) {
-        return newTxnServerErr(Status::kIOError, ret.ToString());
-    }
-    if (status == COMMITTED) {
-        auto s = commitIntent(value.intent(), value.version(), batch);
-        if (!s.ok()) {
-            return newTxnServerErr(s.code(), s.ToString());
-        }
-    }
-    return nullptr;
-}
+TxnErrorPtr Store::decideSecondary(const txnpb::DecideRequest& req, const std::string& key, uint64_t& bytes_written,
+                            WriteBatchInterface* batch) {
+    assert(!req.is_primary());
 
-TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& key, uint64_t& bytes_written,
-                   WriteBatchInterface* batch, std::vector<std::string>* secondary_keys) {
     TxnValue value;
     auto s = GetTxnValue(key, &value);
     if (!s.ok()) {
@@ -333,33 +369,20 @@ TxnErrorPtr Store::decide(const txnpb::DecideRequest& req, const std::string& ke
             return newTxnServerErr(s.code(), s.ToString());
         }
     }
-
     // s is ok now
     assert(s.ok());
     if (value.txn_id() != req.txn_id()) {
         return nullptr;
     }
 
-    TxnErrorPtr err;
-    // decide secondary key
-    if (!value.intent().is_primary()) {
-        err = decideSecondary(value, req.status(), batch);
-    } else {
-        err = decidePrimary(value, req.status(), batch);
+    auto ret = batch->Delete(db_->TxnCFHandle(), value.intent().key());
+    if (!ret.ok()) {
+        return newTxnServerErr(Status::kIOError, ret.ToString());
     }
-    if (err != nullptr) {
-        return err;
-    }
-
-    // add bytes_written
-    if (value.intent().typ() == INSERT) {
-        bytes_written += value.intent().key().size() + value.intent().value().size();
-    }
-    // assign secondary_keys in recover mode
-    if (secondary_keys != nullptr) {
-        assert(value.intent().is_primary());
-        for (const auto& skey: value.secondary_keys()) {
-            secondary_keys->push_back(skey);
+    if (req.status() == COMMITTED) {
+        s = commitIntent(value.intent(), value.version(), bytes_written, batch);
+        if (!s.ok()) {
+            return newTxnServerErr(s.code(), s.ToString());
         }
     }
     return nullptr;
@@ -373,24 +396,26 @@ uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
 
     uint64_t bytes_written = 0;
     auto batch = db_->NewBatch();
-    for (const auto& key: req.keys()) {
-        TxnErrorPtr err;
-        if (req.recover()) { // recover will return secondary keys
-            std::vector<std::string> secondary_keys;
-            err = decide(req, key, bytes_written, batch, &secondary_keys);
-            if (!secondary_keys.empty()) {
-                for (auto& skey: secondary_keys) {
-                    resp->add_secondary_keys(std::move(skey));
-                }
+
+    TxnErrorPtr err;
+    if (req.is_primary()) {
+        err = decidePrimary(req, bytes_written, batch, resp);
+    } else {
+        for (const auto& key: req.keys()) {
+            err = decideSecondary(req, key, bytes_written, batch);
+            if (err != nullptr) {
+                break;
             }
-        } else {
-            err = decide(req, key, bytes_written, batch);
-        }
-        if (err != nullptr) {
-            resp->mutable_err()->Swap(err.get());
-            return 0;
         }
     }
+
+    // decide error
+    if (err != nullptr) {
+        resp->mutable_err()->Swap(err.get());
+        delete batch;
+        return 0;
+    }
+
     auto ret = db_->Write(batch);
     if (!ret.ok()) {
         setTxnServerErr(resp->mutable_err(), Status::kIOError, ret.ToString());

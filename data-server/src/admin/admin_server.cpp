@@ -23,7 +23,7 @@ Status AdminServer::Start(uint16_t port) {
     net::ServerOptions sops;
     sops.io_threads_num = 0;
     sops.max_connections = 200;
-    net_server_.reset(new net::Server(sops));
+    net_server_.reset(new net::Server(sops, "admin"));
 
     auto ret = net_server_->ListenAndServe("0.0.0.0", port,
             [this](const net::Context& ctx, const net::MessagePtr& msg) {
@@ -90,13 +90,10 @@ void AdminServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg)
         resp.set_error_msg(ret.ToString());
     }
 
-    auto resp_msg = net::NewMessage();
-    resp_msg->head.SetResp(msg->head);
-    resp_msg->body.resize(resp.ByteSizeLong());
-    resp.SerializeToArray(resp_msg->body.data(), static_cast<int>(resp_msg->body.size()));
-    auto conn = ctx.session.lock();
-    if (conn) {
-        conn->Write(resp_msg);
+    std::vector<uint8_t> resp_body;
+    resp_body.resize(resp.ByteSizeLong());
+    if (resp.SerializeToArray(resp_body.data(), static_cast<int>(resp_body.size()))) {
+        ctx.Write(msg->head, std::move(resp_body));
     }
 }
 

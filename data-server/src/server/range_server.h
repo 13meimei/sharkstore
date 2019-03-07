@@ -1,5 +1,4 @@
-#ifndef __RANGE_MANAGER_H__
-#define __RANGE_MANAGER_H__
+_Pragma("once");
 
 #include <atomic>
 #include <condition_variable>
@@ -10,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/rpc_request.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 
@@ -41,7 +41,7 @@ public:
     void Stop();
     void Clear();
 
-    void DealTask(common::ProtoMessage *msg);
+    void DealTask(RPCRequestPtr rpc);
     void StatisPush(uint64_t range_id);
 
     storage::MetaStore *meta_store() { return meta_store_; }
@@ -61,54 +61,14 @@ private:
     Status recover(const metapb::Range& meta);
     int recover(const std::vector<metapb::Range> &metas);
 
-    void RawGet(common::ProtoMessage *msg);
-    void RawPut(common::ProtoMessage *msg);
-    void RawDelete(common::ProtoMessage *msg);
-    void Insert(common::ProtoMessage *msg);
-    void Update(common::ProtoMessage *msg);
-    void Select(common::ProtoMessage *msg);
-    void Delete(common::ProtoMessage *msg);
-
-    //get and watch
-    void WatchGet(common::ProtoMessage *msg);
-    //just get single key or key with prefix  
-    void PureGet(common::ProtoMessage *msg);
-    //put and trigger watch response  
-    void WatchPut(common::ProtoMessage *msg);
-    //delete and trigger watch response
-    void WatchDel(common::ProtoMessage *msg);
-
-    void Lock(common::ProtoMessage *msg);
-    void LockUpdate(common::ProtoMessage *msg);
-    void Unlock(common::ProtoMessage *msg);
-    void UnlockForce(common::ProtoMessage *msg);
-    void LockWatch(common::ProtoMessage *msg);
-    void LockGet(common::ProtoMessage *msg);
-
-    void KVSet(common::ProtoMessage *msg);
-    void KVGet(common::ProtoMessage *msg);
-    void KVBatchSet(common::ProtoMessage *msg);
-    void KVBatchGet(common::ProtoMessage *msg);
-    void KVDelete(common::ProtoMessage *msg);
-    void KVBatchDelete(common::ProtoMessage *msg);
-    void KVRangeDelete(common::ProtoMessage *msg);
-    void KVScan(common::ProtoMessage *msg);
-
-    void TxnPrepare(common::ProtoMessage *msg);
-    void TxnDecide(common::ProtoMessage *msg);
-    void TxnClearup(common::ProtoMessage *msg);
-    void TxnGetLockInfo(common::ProtoMessage *msg);
-    void TxnSelect(common::ProtoMessage* msg);
-
     void TimeOut(const kvrpcpb::RequestHeader &req,
                  kvrpcpb::ResponseHeader *resp);
     void RangeNotFound(const kvrpcpb::RequestHeader &req,
                        kvrpcpb::ResponseHeader *resp);
 
     template <class RequestT, class ResponseT>
-    std::shared_ptr<range::Range> CheckAndDecodeRequest(
-        const char *ReqName, RequestT &request, ResponseT *&respone,
-        common::ProtoMessage *msg);
+    std::shared_ptr<range::Range> DecodeAndFind(const RPCRequestPtr& rpc_request,
+            RequestT& proto_request, const char* func_name);
 
 public:
     Status SplitRange(uint64_t old_range_id, const raft_cmdpb::SplitRequest &req,
@@ -117,21 +77,18 @@ public:
     void LeaderQueuePush(uint64_t leader, time_t expire);
 
 private:  // admin
-    void CreateRange(common::ProtoMessage *msg);
-    void DeleteRange(common::ProtoMessage *msg);
-    void OfflineRange(common::ProtoMessage *msg);
-    void ReplaceRange(common::ProtoMessage *msg);
-
-    void TransferLeader(common::ProtoMessage *msg);
-    void GetPeerInfo(common::ProtoMessage *msg);
-    void SetLogLevel(common::ProtoMessage *msg);
+    void CreateRange(RPCRequest& req);
+    void DeleteRange(RPCRequest& req);
+    void OfflineRange(RPCRequest& req);
+    void ReplaceRange(RPCRequest& req);
+    void TransferLeader(RPCRequest& req);
+    void GetPeerInfo(RPCRequest& req);
+    void SetLogLevel(RPCRequest& req);
 
     Status CreateRange(const metapb::Range &range, uint64_t leader = 0, uint64_t log_start_index = 0);
-
     Status DeleteRange(uint64_t range_id, uint64_t peer_id = 0);
     int CloseRange(uint64_t range_id);
     int OfflineRange(uint64_t range_id);
-
     void Heartbeat();
 
 private:
@@ -165,5 +122,3 @@ public:
 }  // namespace server
 }  // namespace dataserver
 }  // namespace sharkstore
-
-#endif  //__RANGE_MANAGER_H__

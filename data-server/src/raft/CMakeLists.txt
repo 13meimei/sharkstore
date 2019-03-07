@@ -23,11 +23,8 @@ set(raft_SOURCES
     src/impl/storage/meta_file.cpp
     src/impl/storage/storage_disk.cpp
     src/impl/storage/storage_memory.cpp
-    src/impl/transport/fast_client.cpp
-    src/impl/transport/fast_connection.cpp
-    src/impl/transport/fast_server.cpp
-    src/impl/transport/fast_transport.cpp
     src/impl/transport/inprocess_transport.cpp
+    src/impl/transport/tcp_transport.cpp
     src/impl/work_thread.cpp
     src/logger.cpp
     src/options.cpp
@@ -46,15 +43,13 @@ endforeach()
 add_library(sharkstore-raft STATIC ${raft_SOURCES})
 
 set (raft_test_Deps
-        sharkstore-raft
-        sharkstore-common
-        sharkstore-frame
-        sharkstore-base
-        sharkstore-lkqueue
-        ${PROTOBUF_LIBRARY}
-        ${FASTCOMMON_LIB}
-        pthread
-        )
+     sharkstore-raft
+     sharkstore-net
+     sharkstore-base
+     ${FASTCOMMON_LIB}
+     ${PROTOBUF_LIBRARY}
+     pthread
+     )
 
 OPTION(BUILD_RAFT_TEST "build raft tests" OFF)
 MESSAGE(STATUS BUILD_RAFT_TEST=${BUILD_RAFT_TEST})

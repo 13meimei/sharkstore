@@ -3,10 +3,7 @@ add_library(sharkstore-raft-testutil STATIC test_util.cpp)
 set(raft_unit_DEPS
     sharkstore-raft-testutil
     sharkstore-raft
-    sharkstore-common
-    sharkstore-frame
     sharkstore-base
-    sharkstore-lkqueue
     sharkstore-proto
     fastcommon
     gtest

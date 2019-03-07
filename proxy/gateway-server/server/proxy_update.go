@@ -202,7 +202,9 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 							Typ:         txnpb.OpType_DELETE,
 							Key:         oldKey,
 							CheckUnique: false,
-							ExpectedVer: rData.GetValue().GetVersion(),
+							//todo need ds to support: query index version
+							//ExpectedVer: rData.GetValue().GetVersion(),
+							ExpectedVer: 0,
 						})
 					}
 				} else {

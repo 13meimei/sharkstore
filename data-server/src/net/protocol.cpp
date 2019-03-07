@@ -5,13 +5,13 @@
 #include "base/byte_order.h"
 
 namespace sharkstore {
-namespace dataserver {
 namespace net {
 
-void Head::SetResp(const Head& req) {
+void Head::SetResp(const Head& req, uint32_t body_len) {
     func_id = req.func_id;
     msg_id = req.msg_id;
     proto_type = req.proto_type;
+    body_length = body_len;
     if (req.msg_type == kAdminRequestType) {
         msg_type = kAdminResponseType;
     } else if (req.msg_type == kDataRequestType) {
@@ -67,6 +67,9 @@ std::string Head::DebugString() const {
     return ss.str();
 }
 
+bool Head::ForceFastFlag() const {
+    return (flags & static_cast<uint8_t>(net::Flag::kForceFastWorker)) != 0;
+}
+
 }  // namespace net
-}  // namespace dataserver
 }  // namespace sharkstore

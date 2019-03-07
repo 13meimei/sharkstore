@@ -15,15 +15,14 @@ void RaftFsm::becomeFollower(uint64_t term, uint64_t leader) {
     leader_ = leader;
     state_ = FsmState::kFollower;
 
-    LOG_INFO("raft[%llu] become follwer at term %llu", id_, term_);
+    RAFT_LOG_INFO("raft[%llu] become follwer at term %llu", id_, term_);
 }
 
 void RaftFsm::stepFollower(MessagePtr& msg) {
     switch (msg->type()) {
         case pb::LOCAL_MSG_PROP:
             if (leader_ == 0) {
-                LOG_DEBUG("raft[%llu] no leader at term %llu; dropping proposal.", id_,
-                          term_);
+                RAFT_LOG_DEBUG("raft[%llu] no leader at term %llu; dropping proposal.", id_, term_);
             } else {
                 // 转发给leader
                 msg->set_to(leader_);
@@ -56,7 +55,7 @@ void RaftFsm::stepFollower(MessagePtr& msg) {
             if (!msg->reject()) {
                 auto s = restore(applying_meta_);
                 if (!s.ok()) {
-                    LOG_ERROR("raft[%lu] restore snapshot[%lu] failed(%s) at term %lu.",
+                    RAFT_LOG_ERROR("raft[%lu] restore snapshot[%lu] failed(%s) at term %lu.",
                               id_, applying_snap_->GetContext().uuid, s.ToString().c_str(), term_);
                 } else {
                     // 通知leader应用快照成功
@@ -118,7 +117,7 @@ void RaftFsm::handleAppendEntries(MessagePtr& msg) {
         resp_msg->set_commit(raft_log_->committed());
         send(resp_msg);
     } else {
-        LOG_DEBUG("raft[%llu] [logterm:%llu, index:%llu] rejected msgApp from "
+        RAFT_LOG_DEBUG("raft[%llu] [logterm:%llu, index:%llu] rejected msgApp from "
                   "%llu[logterm:%llu, index:%llu]",
                   id_, raft_log_->lastTerm(), raft_log_->lastIndex(), msg->from(),
                   msg->log_term(), msg->log_index());
@@ -134,7 +133,7 @@ void RaftFsm::handleAppendEntries(MessagePtr& msg) {
 void RaftFsm::handleSnapshot(MessagePtr& msg) {
     auto s = applySnapshot(msg);
     if (!s.ok()) {
-        LOG_ERROR("raft[%lu] apply snapshot[%lu:%lu] from %lu at term %lu failed: %s", id_, msg->snapshot().uuid(),
+        RAFT_LOG_ERROR("raft[%lu] apply snapshot[%lu:%lu] from %lu at term %lu failed: %s", id_, msg->snapshot().uuid(),
                   msg->snapshot().seq(), msg->from(), term_, s.ToString().c_str());
 
         MessagePtr resp(new pb::Message);
@@ -175,7 +174,7 @@ Status RaftFsm::applySnapshot(MessagePtr& msg) {
 
     // 过时的快照
     if (!checkSnapshot(snapshot.meta())) {
-        LOG_WARN("raft[%llu] [commit: %llu] ignored snapshot [index: %llu, "
+        RAFT_LOG_WARN("raft[%llu] [commit: %llu] ignored snapshot [index: %llu, "
                  "term: %llu].",
                  id_, raft_log_->committed(), snapshot.meta().index(), snapshot.meta().term());
 
@@ -215,7 +214,7 @@ bool RaftFsm::checkSnapshot(const pb::SnapshotMeta& meta) {
 }
 
 Status RaftFsm::restore(const pb::SnapshotMeta& meta) {
-    LOG_WARN("raft[%llu] [commit:%llu, lastindex:%llu, lastterm:%llu] starts "
+    RAFT_LOG_WARN("raft[%llu] [commit:%llu, lastindex:%llu, lastterm:%llu] starts "
              "to restore snapshot [index:%llu, term:%llu], peers: %d",
              id_, raft_log_->committed(), raft_log_->lastIndex(), raft_log_->lastTerm(),
              meta.index(), meta.term(), meta.peers_size());
@@ -242,7 +241,7 @@ Status RaftFsm::restore(const pb::SnapshotMeta& meta) {
             }
             // promote self from snapshot
             if (is_learner_ && peer.type != PeerType::kLearner) {
-                LOG_INFO("raft[%lu] promote self from snapshot", id_);
+                RAFT_LOG_INFO("raft[%lu] promote self from snapshot", id_);
                 is_learner_ = false;
             }
         }

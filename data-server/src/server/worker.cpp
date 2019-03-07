@@ -2,216 +2,168 @@
 
 #include <assert.h>
 #include <chrono>
+#include <stdio.h>
 
 #include "base/util.h"
 #include "common/ds_config.h"
-#include "common/ds_proto.h"
 #include "frame/sf_config.h"
 #include "frame/sf_logger.h"
-#include "frame/sf_util.h"
 #include "proto/gen/funcpb.pb.h"
 
-#include "callback.h"
 #include "run_status.h"
-#include "server.h"
+#include "range_server.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-int Worker::Init(ContextServer *context) {
-    FLOG_INFO("Worker Init begin ...");
+static const size_t kWorkThreadCapacity = 100000;
 
-    strcpy(ds_config.worker_config.thread_name_prefix, "work");
-
-    if (socket_server_.Init(&ds_config.worker_config, &worker_status_) != 0) {
-        FLOG_ERROR("Worker Init error ...");
-        return -1;
-    }
-
-    socket_server_.set_recv_done(ds_worker_deal_callback);
-    socket_server_.set_send_done(ds_send_done_callback);
-
-    context_ = context;
-
-    FLOG_INFO("Worker Init end ...");
-    return 0;
+Worker::WorkThread::WorkThread(WorkThreadGroup* group, const std::string& name, size_t max_capacity) :
+    parent_group_(group),
+    capacity_(max_capacity) {
+    thr_ = std::thread([this] { this->runLoop(); });
+    AnnotateThread(thr_.native_handle(), name.c_str());
 }
 
-void Worker::StartWorker(std::vector<std::thread> &worker,
-                         HashQueue &hash_queue, int num) {
-    hash_queue.msg_queue.resize(num);
-
-    for (int i = 0; i < num; i++) {
-        auto mq = new_lk_queue();
-        hash_queue.msg_queue[i] = mq;
-
-        worker.emplace_back([&, mq] {
-            common::ProtoMessage *task = nullptr;
-            while (g_continue_flag) {
-                task = (common::ProtoMessage*)lk_queue_pop(mq); //block mode
-                if (task != nullptr) {
-                    if (!g_continue_flag) {
-                        delete task;
-                        break;
-                    }
-                    --hash_queue.all_msg_size;
-                    DealTask(task);
-                } else {
-                    std::this_thread::sleep_for(std::chrono::microseconds(100));
-                }
-            }
-            FLOG_INFO("Worker thread exit...");
-            __sync_fetch_and_sub(&worker_status_.actual_worker_threads, 1);
-        });
-        __sync_fetch_and_add(&worker_status_.actual_worker_threads, 1);
+Worker::WorkThread::~WorkThread() {
+    if (thr_.joinable()) {
+        thr_.join();
     }
 }
 
-int Worker::Start() {
-    FLOG_INFO("Worker Start begin ...");
+bool Worker::WorkThread::Push(RPCRequest* msg) {
+    que_.push(msg);
+    return true;
+}
 
-    // start fast worker
-    StartWorker(fast_worker_, fast_queue_, ds_config.fast_worker_num);
+uint64_t Worker::WorkThread::PendingSize() const {
+    return que_.unsafe_size();
+}
 
-    int i = 0;
-    char fast_name[32] = {'\0'};
-    for (auto &work : fast_worker_) {
-        auto handle = work.native_handle();
-        snprintf(fast_name, 32, "fast_worker:%d", i++);
-        AnnotateThread(handle, fast_name);
+uint64_t Worker::WorkThread::Clear() {
+    uint64_t count = 0;
+    RPCRequest* task = nullptr;
+    while (g_continue_flag) {
+        if (que_.try_pop(task)) {
+            delete task;
+            ++count;
+        } else {
+            break;
+        }
     }
-    // start slow worker
-    StartWorker(slow_worker_, slow_queue_, ds_config.slow_worker_num);
+    return count;
+}
 
-    char slow_name[32] = {'\0'};
-    i = 0;
-    for (auto &work : slow_worker_) {
-        auto handle = work.native_handle();
-        snprintf(slow_name, 32, "slow_worker:%d", i++);
-        AnnotateThread(handle, slow_name);
+void Worker::WorkThread::runLoop() {
+    RPCRequest *task = nullptr;
+    while (g_continue_flag) {
+        if (que_.try_pop(task)) {
+            parent_group_->DealTask(task);
+        } else {
+            if (!g_continue_flag) return;
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
+        }
     }
+}
 
-    if (socket_server_.Start() != 0) {
-        FLOG_ERROR("Worker Start error ...");
-        return -1;
+
+Worker::WorkThreadGroup::WorkThreadGroup(RangeServer* rs, int num,
+        size_t capacity_per_thread, const std::string& name) :
+    rs_(rs),
+    thread_num_(num),
+    capacity_(capacity_per_thread),
+    name_(name) {
+}
+
+Worker::WorkThreadGroup::~WorkThreadGroup() {
+    for (const auto& thr: threads_) {
+        delete thr;
     }
+    threads_.clear();
+}
+
+void Worker::WorkThreadGroup::Start() {
+    for (int i = 0; i < thread_num_; ++i) {
+        char buf[16] = {'\0'};
+        snprintf(buf, 16, "%s:%d", name_.c_str(), i);
+        auto thr = new WorkThread(this, buf, capacity_);
+        threads_.push_back(thr);
+    }
+}
+
+bool Worker::WorkThreadGroup::Push(RPCRequest* msg) {
+    auto idx = ++round_robin_counter_ % threads_.size();
+    return threads_[idx]->Push(msg);
+}
+
+void Worker::WorkThreadGroup::DealTask(RPCRequest* req_ptr) {
+    // transfer request ownership to range server
+    std::unique_ptr<RPCRequest> req(req_ptr);
+    rs_->DealTask(std::move(req));
+}
+
+uint64_t Worker::WorkThreadGroup::PendingSize() const {
+    uint64_t size = 0;
+    for (auto thr: threads_) {
+        size += thr->PendingSize();
+    }
+    return size;
+}
+
+uint64_t Worker::WorkThreadGroup::Clear() {
+    uint64_t size = 0;
+    for (auto thr: threads_) {
+        size += thr->Clear();
+    }
+    return size;
+}
+
+
+Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* range_server) {
+    FLOG_INFO("Worker Start begin, fast_worker_size: %d, slow_worker_size: %d",
+            fast_worker_size, slow_worker_size);
+
+    fast_workers_.reset(
+            new WorkThreadGroup(range_server, fast_worker_size, kWorkThreadCapacity, "fast_worker"));
+    fast_workers_->Start();
+    slow_workers_.reset(
+            new WorkThreadGroup(range_server, fast_worker_size, kWorkThreadCapacity, "slow_worker"));
+    slow_workers_->Start();
 
     FLOG_INFO("Worker Start end ...");
-    return 0;
+
+    return Status::OK();
 }
 
 void Worker::Stop() {
-    FLOG_INFO("Worker Stop begin ...");
-
-    socket_server_.Stop();
-
-    auto size = fast_worker_.size();
-    for (decltype(size) i = 0; i < size; i++) {
-        if (fast_worker_[i].joinable()) {
-            fast_worker_[i].join();
-        }
-    }
-
-    size = slow_worker_.size();
-    for (decltype(size) i = 0; i < size; i++) {
-        if (slow_worker_[i].joinable()) {
-            slow_worker_[i].join();
-        }
-    }
-
-    Clean(fast_queue_);
-    Clean(slow_queue_);
-
-    FLOG_INFO("Worker Stop end ...");
 }
 
-void Worker::Push(common::ProtoMessage *task) {
-    sf_session_entry_t *entry;
-    task->socket = &socket_server_;
-
-    if (task->header.func_id == 0) {  // funcpb::FunctionID::kFuncHeartbeat = 0
-        entry = task->socket->lookup_session_entry(task->session_id);
-        if (entry == nullptr) {
-            FLOG_DEBUG("Heartbeat ip: %s, session_id %" PRIu64,
-                       entry->rtask->client_ip, task->session_id);
-        } else {
-            FLOG_DEBUG("session: %" PRId64 " is alive", task->session_id);
-        }
-        context_->socket_session->Send(task, nullptr);
-        return;
-    }
-
-    if (isSlow(task)) {
-        auto slot = ++slot_seed_ % ds_config.slow_worker_num;
-        auto mq = slow_queue_.msg_queue[slot];
-        lk_queue_push(mq, task);
-        ++slow_queue_.all_msg_size;
+void Worker::Push(RPCRequest* task) {
+    if (!isSlowTask(task)) {
+        fast_workers_->Push(task);
     } else {
-        auto slot = ++slot_seed_ % ds_config.fast_worker_num;
-        auto mq = fast_queue_.msg_queue[slot];
-        lk_queue_push(mq, task);
-        ++fast_queue_.all_msg_size;
-    }
-}
-
-void Worker::DealTask(common::ProtoMessage *task) {
-    if (task->expire_time < getticks()) {
-        FLOG_ERROR("msg_id %" PRIu64 " is expired ", task->header.msg_id);
-        delete task;
-        return;
-    }
-
-    DataServer::Instance().DealTask(task);
-}
-
-void Worker::Clean(HashQueue &hash_queue) {
-    for (auto mq : hash_queue.msg_queue) {
-        while (true) {
-            auto task = (common::ProtoMessage *)lk_queue_pop(mq);
-            if (task == nullptr) {
-                break;
-            }
-            delete task;
-        }
-        delete_lk_queue(mq);
+        slow_workers_->Push(task);
     }
 }
 
 size_t Worker::ClearQueue(bool fast, bool slow) {
     size_t count = 0;
     if (fast) {
-        for (auto& q : fast_queue_.msg_queue) {
-            while (true) {
-                auto task = (common::ProtoMessage *)lk_queue_pop(q);
-                if (task == nullptr) {
-                    break;
-                }
-                delete task;
-                ++count;
-            }
-        }
+        count += fast_workers_->Clear();
     }
     if (slow) {
-        for (auto& q : slow_queue_.msg_queue) {
-            while (true) {
-                auto task = (common::ProtoMessage *)lk_queue_pop(q);
-                if (task == nullptr) {
-                    break;
-                }
-                delete task;
-                ++count;
-            }
-        }
+        count += slow_workers_->Clear();
     }
     return count;
 }
 
-bool Worker::isSlow(sharkstore::dataserver::common::ProtoMessage *msg) {
-    if ((msg->header.flags & FAST_WORKER_FLAG) != 0) {
+bool Worker::isSlowTask(RPCRequest *task) {
+    const auto& head = task->msg->head;
+    if (head.ForceFastFlag()) {
         return false;
     }
-    switch (msg->header.func_id) {
+    switch (head.func_id) {
         case funcpb::FunctionID::kFuncSelect:
         case funcpb::FunctionID::kFuncUpdate:
         case funcpb::FunctionID::kFuncWatchGet:
@@ -224,10 +176,8 @@ bool Worker::isSlow(sharkstore::dataserver::common::ProtoMessage *msg) {
 }
 
 void Worker::PrintQueueSize() {
-    FLOG_INFO("worker fast queue size:%" PRIu64,
-              fast_queue_.all_msg_size.load());
-    FLOG_INFO("worker slow queue size:%" PRIu64,
-              slow_queue_.all_msg_size.load());
+    FLOG_INFO("worker fast queue size:%" PRIu64, fast_workers_->PendingSize());
+    FLOG_INFO("worker slow queue size:%" PRIu64, slow_workers_->PendingSize());
 }
 
 } /* namespace server */

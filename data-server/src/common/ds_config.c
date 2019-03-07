@@ -5,10 +5,6 @@
 #include <fastcommon/shared_func.h>
 
 #include "frame/sf_logger.h"
-#include "frame/sf_util.h"
-
-#include "ds_define.h"
-#include "ds_version.h"
 
 ds_config_t ds_config;
 

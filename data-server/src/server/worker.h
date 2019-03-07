@@ -1,90 +1,95 @@
-#ifndef __WORKER_H__
-#define __WORKER_H__
+_Pragma("once");
 
-#include <condition_variable>
-#include <mutex>
-#include <queue>
 #include <thread>
 #include <vector>
-#include <semaphore.h>
+#include <atomic>
+#include <tbb/concurrent_queue.h>
 
-#include "common/ds_config.h"
-#include "common/socket_server.h"
-#include "frame/sf_status.h"
-//#include "lk_queue/blockingconcurrentqueue.h"
-#include "lk_queue/lk_queue.h"
-
-#include "context_server.h"
+#include "common/rpc_request.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace server {
 
+class RangeServer;
+
+using RPCHandler = std::function<void(RPCRequest*)>;
+
 class Worker final {
 public:
-    Worker() : slot_seed_(0) {};
+    Worker() = default;
     ~Worker() = default;
 
     Worker(const Worker &) = delete;
     Worker &operator=(const Worker &) = delete;
-    Worker &operator=(const Worker &) volatile = delete;
 
-    int Init(ContextServer *context);
-    int Start();
+    Status Start(int fast_worker_size, int slow_worker_size, RangeServer* range_server);
     void Stop();
 
-    // 0: fast queue; 1: slow queue; 2: thread queue
-    void Push(common::ProtoMessage *task);
+    void Push(RPCRequest* req);
 
     void PrintQueueSize();
-
     size_t ClearQueue(bool fast, bool slow);
-
-    uint64_t FastQueueSize() const { return fast_queue_.all_msg_size; }
-    uint64_t SlowQueueSize() const { return slow_queue_.all_msg_size; }
-
-    // TODO:
-    void GetPending() const {}
+    uint64_t FastQueueSize() const { return fast_workers_->PendingSize(); }
+    uint64_t SlowQueueSize() const { return slow_workers_->PendingSize(); }
 
 private:
+    class WorkThreadGroup;
 
+    class WorkThread {
+    public:
+        WorkThread(WorkThreadGroup* group, const std::string& name, size_t max_capacity);
+        ~WorkThread();
 
-//    struct MsgQueue {
-//        moodycamel::BlockingConcurrentQueue<common::ProtoMessage *> msg_queue;
-//    };
+        WorkThread(const WorkThread&) = delete;
+        WorkThread& operator=(const WorkThread&) = delete;
 
-    struct HashQueue {
-        //std::vector<MsgQueue *> msg_queue;
-        std::vector<lock_free_queue_t *> msg_queue;
-        std::atomic<uint64_t> all_msg_size;
+        bool Push(RPCRequest* req);
+        uint64_t PendingSize() const;
+        uint64_t Clear();
 
-        HashQueue() : all_msg_size(0) {}
+    private:
+        void runLoop();
+
+    private:
+        WorkThreadGroup* parent_group_ = nullptr;
+        const size_t capacity_ = 0;
+        tbb::concurrent_queue<RPCRequest*> que_;
+        std::thread thr_;
     };
 
-    bool isSlow(common::ProtoMessage *msg);
+    class WorkThreadGroup {
+    public:
+        WorkThreadGroup(RangeServer* rs, int num, size_t capacity_per_thread, const std::string& name);
+        ~WorkThreadGroup();
 
-    void DealTask(common::ProtoMessage *task);
-    void Clean(HashQueue &hash_queue);
+        WorkThreadGroup(const WorkThreadGroup&) = delete;
+        WorkThreadGroup& operator=(const WorkThreadGroup&) = delete;
 
-    void StartWorker(std::vector<std::thread> &worker, HashQueue & hash_queue, int num);
+        void Start();
+        bool Push(RPCRequest* msg);
+        void DealTask(RPCRequest* req_ptr);
+        uint64_t PendingSize() const;
+        uint64_t Clear();
+
+    private:
+        RangeServer* const rs_;
+        const int thread_num_ = 0;
+        const size_t capacity_ = 0;
+        const std::string name_;
+
+        std::atomic<uint64_t> round_robin_counter_ = {0};
+        std::vector<WorkThread*> threads_;
+    };
 
 private:
-    std::atomic<uint64_t> slot_seed_;
-    std::vector<std::thread> fast_worker_;
-    std::vector<std::thread> slow_worker_;
+    static bool isSlowTask(RPCRequest *task);
 
-    HashQueue fast_queue_;
-    HashQueue slow_queue_;
-
-    common::SocketServer socket_server_;
-
-    sf_socket_status_t worker_status_ = {0};
-
-    ContextServer *context_ = nullptr;
+private:
+    std::unique_ptr<WorkThreadGroup> fast_workers_;
+    std::unique_ptr<WorkThreadGroup> slow_workers_;
 };
 
 } /* namespace server */
 } /* namespace dataserver  */
 } /* namespace sharkstore */
-
-#endif  //__WORKER_H__

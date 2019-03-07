@@ -35,4 +35,8 @@ int ParseBytesValue(const char* str, int64_t* value);
 // left should less than right
 std::string FindMiddle(const std::string& left, const std::string& right);
 
+int64_t NowMicros();
+int64_t NowMilliSeconds();
+int64_t NowSeconds();
+
 } /* namespace sharkstore */

@@ -134,8 +134,7 @@ Status Range::ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) {
 
 Status Range::ApplyAddPeer(const raft::ConfChange &cc, bool *updated) {
     raft_cmdpb::PeerTask pt;
-    auto res = common::GetMessage(cc.context.c_str(), cc.context.size(), &pt);
-    if (!res) {
+    if (!pt.ParseFromArray(cc.context.data(), static_cast<int>(cc.context.size()))) {
         return Status(Status::kInvalidArgument, "deserialize add peer context",
                       EncodeToHex(cc.context));
     }
@@ -153,10 +152,9 @@ Status Range::ApplyAddPeer(const raft::ConfChange &cc, bool *updated) {
 
 Status Range::ApplyDelPeer(const raft::ConfChange &cc, bool *updated) {
     raft_cmdpb::PeerTask pt;
-    auto res = common::GetMessage(cc.context.c_str(), cc.context.size(), &pt);
-    if (!res) {
-        return Status(Status::kInvalidArgument, "deserialize delete peer context",
-                EncodeToHex(cc.context));
+    if (!pt.ParseFromArray(cc.context.data(), static_cast<int>(cc.context.size()))) {
+        return Status(Status::kInvalidArgument, "deserialize del peer context",
+                      EncodeToHex(cc.context));
     }
 
     auto ret = meta_.DelPeer(pt.peer(), pt.verify_epoch().conf_ver());

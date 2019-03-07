@@ -6,15 +6,14 @@
 
 #include "helper_util.h"
 #include "helper/table.h"
-#include "helper/mock/socket_session_mock.h"
 #include "helper/mock/raft_mock.h"
+#include "mock/rpc_request_mock.h"
 
 namespace sharkstore {
 namespace test {
 namespace helper {
 
 using namespace sharkstore::dataserver;
-using namespace sharkstore::dataserver::common;
 using namespace google::protobuf;
 
 void RangeTestFixture::SetUp() {
@@ -37,21 +36,6 @@ void RangeTestFixture::TearDown() {
     if (context_) {
         context_->Destroy();
     }
-}
-
-ProtoMessage* NewMsg(const Message& req) {
-    auto msg = new common::ProtoMessage;
-    msg->begin_time = getticks();
-    msg->expire_time = getticks() + 1000;
-    msg->session_id = randomInt();
-    msg->header.msg_id = randomInt();
-    msg->msg_id = msg->header.msg_id;
-
-    auto len = req.ByteSizeLong();
-    msg->body.resize(len);
-    req.SerializeToArray(msg->body.data(), len);
-
-    return msg;
 }
 
 void RangeTestFixture::MakeHeader(RequestHeader *header, uint64_t version) {
@@ -176,31 +160,22 @@ Status RangeTestFixture::Split() {
     return Status::OK();
 }
 
-Status RangeTestFixture::getResult(google::protobuf::Message *resp) {
-    auto session_mock = dynamic_cast<SocketSessionMock*>(context_->SocketSession());
-    if (!session_mock->GetResult(resp)) {
-        return Status(Status::kUnexpected, "could not get result", "");
-    } else {
-        return Status::OK();
-    }
-}
-
 Status RangeTestFixture::TestInsert(DsInsertRequest &req, DsInsertResponse *resp) {
-    auto msg = NewMsg(req);
-    range_->Insert(msg, req);
-    return getResult(resp);
+    auto rpc = mock::NewMockRPCRequest(req);
+    range_->Insert(std::move(rpc.first), req);
+    return rpc.second->Get(*resp);
 }
 
 Status RangeTestFixture::TestSelect(DsSelectRequest& req, DsSelectResponse* resp) {
-    auto msg = NewMsg(req);
-    range_->Select(msg, req);
-    return getResult(resp);
+    auto rpc = mock::NewMockRPCRequest(req);
+    range_->Select(std::move(rpc.first), req);
+    return rpc.second->Get(*resp);
 }
 
 Status RangeTestFixture::TestDelete(DsDeleteRequest& req, DsDeleteResponse* resp) {
-    auto msg = NewMsg(req);
-    range_->Delete(msg, req);
-    return getResult(resp);
+    auto rpc = mock::NewMockRPCRequest(req);
+    range_->Delete(std::move(rpc.first), req);
+    return rpc.second->Get(*resp);
 }
 
 void RangeTestFixture::SetLogLevel(char *level) {

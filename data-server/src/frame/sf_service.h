@@ -9,9 +9,6 @@
 #include <fastcommon/ioevent.h>
 
 #include "sf_config.h"
-#include "sf_socket.h"
-#include "sf_socket_buff.h"
-#include "sf_socket_session.h"
 
 typedef int (*sf_user_init_callback_t)();
 typedef void (*sf_user_destroy_callback_t)();
@@ -31,13 +28,6 @@ static inline void sf_regist_load_config_callback(
     sf_load_config_callback_t load_config_func) {
     sf_set_load_config_callback(load_config_func);
 }
-
-static inline void sf_regist_body_length_callback(
-    sf_body_length_callback_t body_length_func) {
-    sf_set_body_length_callback(body_length_func);
-}
-
-static inline void sf_set_proto_header_size(int size) { sf_set_header_size(size); }
 
 int sf_service_run(int argc, char *argv[], const char *server_name);
 int sf_service_run_test(const char* confStr);

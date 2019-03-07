@@ -8,38 +8,31 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-void Range::Update(common::ProtoMessage *msg, kvrpcpb::DsUpdateRequest &req) {
+void Range::Update(RPCRequestPtr rpc, kvrpcpb::DsUpdateRequest &req) {
     errorpb::Error *err = nullptr;
-
-    auto btime = get_micro_second();
-    context_->Statistics()->PushTime(HistogramType::kQWait, btime - msg->begin_time);
 
     RANGE_LOG_DEBUG("Update begin");
 
     if (!VerifyLeader(err) || !VerifyWriteable(&err)) {
         RANGE_LOG_WARN("Update error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsUpdateResponse;
-        return SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsUpdateResponse resp;
+        return SendResponse(rpc, resp, req.header(), err);
     }
 
     auto epoch = req.header().range_epoch();
     if (!EpochIsEqual(epoch, err)) {
         RANGE_LOG_WARN("Update error: %s", err->message().c_str());
 
-        auto resp = new kvrpcpb::DsUpdateResponse;
-        return SendError(msg, req.header(), resp, err);
+        kvrpcpb::DsUpdateResponse resp;
+        return SendResponse(rpc, resp, req.header(), err);
     }
-    auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
-        cmd.set_cmd_type(raft_cmdpb::CmdType::Update);
-        cmd.set_allocated_update_req(req.release_req());
-    });
-    if (!ret.ok()) {
-        RANGE_LOG_ERROR("Update raft submit error: %s", ret.ToString().c_str());
 
-        auto resp = new kvrpcpb::DsUpdateResponse;
-        SendError(msg, req.header(), resp, RaftFailError());
-    }
+    SubmitCmd<kvrpcpb::DsUpdateResponse>(std::move(rpc), req.header(),
+        [&req](raft_cmdpb::Command &cmd) {
+            cmd.set_cmd_type(raft_cmdpb::CmdType::Update);
+            cmd.set_allocated_update_req(req.release_req());
+    });
 }
 
 Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
@@ -51,7 +44,7 @@ Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
     RANGE_LOG_DEBUG("ApplyUpdate begin");
 
     auto &req = cmd.update_req();
-    auto btime = get_micro_second();
+    auto btime = NowMicros();
     do {
         auto &epoch = cmd.verify_epoch();
 
@@ -63,7 +56,7 @@ Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
         uint64_t update_bytes = 0;
 
         ret = store_->Update(req, &affected_keys, &update_bytes);
-        auto etime = get_micro_second();
+        auto etime = NowMicros();
         context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
 
         if (!ret.ok()) {
@@ -78,9 +71,9 @@ Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        auto resp = new kvrpcpb::DsUpdateResponse;
-        resp->mutable_resp()->set_affected_keys(affected_keys);
-        resp->mutable_resp()->set_code(ret.code());
+        kvrpcpb::DsUpdateResponse resp;
+        resp.mutable_resp()->set_affected_keys(affected_keys);
+        resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;

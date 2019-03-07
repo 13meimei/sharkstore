@@ -107,18 +107,18 @@ void RaftImpl::Truncate(uint64_t index) {
 void RaftImpl::RecvMsg(MessagePtr msg) {
 #ifdef FBASE_RAFT_TRACE_MSG
     if (msg->type() != pb::LOCAL_TICK) {
-        LOG_DEBUG("recv msg type: %s from %llu, term: %llu at term: %llu",
+        RAFT_LOG_DEBUG("recv msg type: %s from %llu, term: %llu at term: %llu",
                   pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term(),
                   fsm_->term_);
     } else {
-        LOG_DEBUG("recv msg type: LOCAL_TICK messages term: %llu at term: %llu",
+        RAFT_LOG_DEBUG("recv msg type: LOCAL_TICK messages term: %llu at term: %llu",
                   msg->term(), fsm_->term_);
     }
 #endif
     if (stopped_) return;
 
     if (!tryPost(std::bind(&RaftImpl::Step, shared_from_this(), msg))) {
-        LOG_DEBUG("raft[%llu] discard a msg. type: %s from %llu, term: %llu", ops_.id,
+        RAFT_LOG_DEBUG("raft[%llu] discard a msg. type: %s from %llu, term: %llu", ops_.id,
                   pb::MessageType_Name(msg->type()).c_str(), msg->from(), msg->term());
     }
 }
@@ -130,7 +130,7 @@ void RaftImpl::Tick(MessagePtr msg) {
 
 void RaftImpl::Step(MessagePtr msg) {
     if (!fsm_->Validate(msg)) {
-        LOG_DEBUG("raft[%lu] ignore invalidate msg type: %s from %llu, term: %llu",
+        RAFT_LOG_DEBUG("raft[%lu] ignore invalidate msg type: %s from %llu, term: %llu",
                   ops_.id, pb::MessageType_Name(msg->type()).c_str(), msg->from(),
                   msg->term());
         return;
@@ -279,11 +279,11 @@ void RaftImpl::publish() {
 
 void RaftImpl::ReportSnapSendResult(const SnapContext& ctx, const SnapResult& result) {
     if (result.status.ok()) {
-        LOG_INFO("raft[%llu] send snapshot[uuid: %lu] to %lu finished. total "
+        RAFT_LOG_INFO("raft[%llu] send snapshot[uuid: %lu] to %lu finished. total "
                  "blocks: %d, bytes: %d",
                  ops_.id, ctx.uuid, ctx.to, result.blocks_count, result.bytes_count);
     } else {
-        LOG_ERROR("raft[%llu] send snapshot[uuid: %llu] to %lu failed(%s). "
+        RAFT_LOG_ERROR("raft[%llu] send snapshot[uuid: %llu] to %lu failed(%s). "
                   "sent blocks: %d, bytes: %d",
                   ops_.id, ctx.uuid, ctx.to, result.status.ToString().c_str(),
                   result.blocks_count, result.bytes_count);
@@ -303,11 +303,11 @@ void RaftImpl::ReportSnapSendResult(const SnapContext& ctx, const SnapResult& re
 
 void RaftImpl::ReportSnapApplyResult(const SnapContext& ctx, const SnapResult& result) {
     if (result.status.ok()) {
-        LOG_INFO("raft[%llu] apply snapshot[uuid: %lu] from %lu finished. total "
+        RAFT_LOG_INFO("raft[%llu] apply snapshot[uuid: %lu] from %lu finished. total "
                  "blocks: %d, bytes: %d",
                  ops_.id, ctx.uuid, ctx.from, result.blocks_count, result.bytes_count);
     } else {
-        LOG_ERROR("raft[%llu] apply snapshot[uuid: %llu] from %lu failed(%s). "
+        RAFT_LOG_ERROR("raft[%llu] apply snapshot[uuid: %llu] from %lu failed(%s). "
                   "sent blocks: %d, bytes: %d",
                   ops_.id, ctx.uuid, ctx.from, result.status.ToString().c_str(),
                   result.blocks_count, result.bytes_count);
@@ -336,12 +336,12 @@ void RaftImpl::smApply(const EntryPtr& e) {
 void RaftImpl::Stop() { stopped_ = true; }
 
 void RaftImpl::truncate(uint64_t index) {
-    LOG_DEBUG("raft[%llu] truncate %llu", ops_.id, index);
+    RAFT_LOG_DEBUG("raft[%llu] truncate %llu", ops_.id, index);
     fsm_->TruncateLog(index);
 }
 
 Status RaftImpl::Destroy(bool backup) {
-    LOG_WARN("raft[%llu] destroy log storage", ops_.id);
+    RAFT_LOG_WARN("raft[%llu] destroy log storage", ops_.id);
 
     return fsm_->DestroyLog(backup);
 }

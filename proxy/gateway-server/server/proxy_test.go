@@ -1181,14 +1181,29 @@ func TestProxyInsert(t *testing.T) {
 
 	defer CloseMock(p)
 	defer p.Close()
-	// testProxySelect(t, p, [][]string{}, "select * from "+testTableName+" where id > 1 and id < 100")
+	testProxySelect(t, p, [][]string{}, "select * from "+testTableName+" where id > 1 and id < 100")
 
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075)")
-	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(2, 'myname', 0.0075),(3, 'myname', 0.0075)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(4, 'myname', 0.0075)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(5, 'myname2', 1)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(iD,nAMe,bAlaNce) values(6, 'myname3', 3.1)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(iD,nAMe,bAlaNce) values(7, 'myname4', 2)")
+	insertSql := []string{
+		"insert into " + testTableName + "(id,name,balance) values(1, 'myname', 0.0075)",
+		"insert into " + testTableName + "(id,name,balance) values(2, 'myname', 0.0075),(3, 'myname', 0.0075)",
+		"insert into " + testTableName + "(id,name,balance) values(4, 'myname', 0.0075)",
+		"insert into " + testTableName + "(id,name,balance) values(5, 'myname2', 1)",
+		"insert into " + testTableName + "(iD,nAMe,bAlaNce) values(6, 'myname3', 3.1)",
+		"insert into " + testTableName + "(iD,nAMe,bAlaNce) values(7, 'myname4', 2)",
+	}
+	expectedRowNum := []uint64{1, 2, 1, 1, 1, 1}
+	tx := NewTx(false, p, 0)
+	for i, sql := range insertSql {
+		ttable, intent := testProxyInsert(t, p, expectedRowNum[i], sql)
+		tx.Insert(intent)
+		tx.SetTable(ttable)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Errorf("tx commit err %v", err)
+		if err = tx.Rollback(); err != nil {
+			t.Errorf("rollback err %v", err)
+		}
+	}
 
 	expected := [][]string{
 		[]string{"1", "myname", "0.0075"},
@@ -1203,7 +1218,7 @@ func TestProxyInsert(t *testing.T) {
 }
 
 func TestProxyInsert_AutoIncrement(t *testing.T) {
-	//log.InitFileLog(logPath, "proxy", "debug")
+	log.InitFileLog(logPath, "proxy", "debug")
 	//autoIncrement only is tinyint,
 	columns := []*columnInfo{
 		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true, autoInc: true},
@@ -1236,13 +1251,27 @@ func TestProxyInsert_AutoIncrement(t *testing.T) {
 	defer p.Close()
 	testProxySelect(t, p, [][]string{}, "select * from "+testTableName+" where id > 1 and id < 100")
 
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(name,balance) values('myname', 0.0075)")
-	testProxyInsert(t, p, 3, "insert into "+testTableName+"(name,balance) values('myname', 0.0075),('myname', 0.0075), ('myname', 0.0075)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(name,balance) values('myname', 0.0075)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(name,balance) values('myname2', 1)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(nAMe,bAlaNce) values('myname3', 3.1)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(nAMe,bAlaNce) values('myname4', 2)")
-	//
+	insertSql := []string{
+		"insert into " + testTableName + "(name,balance) values('myname', 0.0075)",
+		"insert into " + testTableName + "(name,balance) values('myname', 0.0075),('myname', 0.0075), ('myname', 0.0075)",
+		"insert into " + testTableName + "(name,balance) values('myname', 0.0075)",
+		"insert into " + testTableName + "(name,balance) values('myname2', 1)",
+		"insert into " + testTableName + "(nAMe,bAlaNce) values('myname3', 3.1)",
+		"insert into " + testTableName + "(nAMe,bAlaNce) values('myname4', 2)",
+	}
+	expectedRowNum := []uint64{1, 3, 1, 1, 1, 1}
+	tx := NewTx(false, p, 0)
+	for i, sql := range insertSql {
+		ttable, intent := testProxyInsert(t, p, expectedRowNum[i], sql)
+		tx.Insert(intent)
+		tx.SetTable(ttable)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Errorf("tx commit err %v", err)
+		if err = tx.Rollback(); err != nil {
+			t.Errorf("rollback err %v", err)
+		}
+	}
 	// select and check
 	expected := [][]string{
 		[]string{"1", "myname", "0.0075"},
@@ -1292,9 +1321,14 @@ func TestProxyInsert_Binary(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read zip file err %v", err)
 	}
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(k,v) values('key1', " + content+ ")")
 
-	//
+	tx := NewTx(true, p, 0)
+	ttable, intent := testProxyInsert(t, p, 1, "insert into "+testTableName+"(k,v) values('key1', "+content+")")
+	tx.SetTable(ttable)
+	if err = tx.Insert(intent); err != nil {
+		t.Errorf("insert error %v", err)
+	}
+
 	// select and check
 	expected := [][]string{
 		[]string{"key1", content},
@@ -1366,8 +1400,19 @@ func TestProxyInsertOneRowWithRangeChange(t *testing.T) {
 
 	MockDs.RangeSplit(oldRng, newRng)
 
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
-	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
+	tx := NewTx(true, p, 0)
+	ttable, intent := testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
+	tx.SetTable(ttable)
+	if err := tx.Insert(intent); err != nil {
+		t.Fatalf("rollback err %v", err)
+	}
+
+	tx = NewTx(true, p, 0)
+	ttable, intent = testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
+	tx.SetTable(ttable)
+	if err := tx.Insert(intent); err != nil {
+		t.Fatalf("rollback err %v", err)
+	}
 
 	//time.Sleep(time.Second*5)
 }
@@ -1395,8 +1440,19 @@ func TestProxyInsertOneRowWithErrorNode(t *testing.T) {
 	defer CloseMock(p)
 	defer p.Close()
 
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
-	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
+	tx := NewTx(true, p, 0)
+	ttable, intent := testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
+	tx.SetTable(ttable)
+	if err := tx.Insert(intent); err != nil {
+		t.Fatalf("rollback err %v", err)
+	}
+
+	tx = NewTx(true, p, 0)
+	ttable, intent = testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
+	tx.SetTable(ttable)
+	if err := tx.Insert(intent); err != nil {
+		t.Fatalf("rollback err %v", err)
+	}
 
 	oldRng := deepcopy.Iface(rng).(*metapb.Range)
 	newRng := deepcopy.Iface(rng).(*metapb.Range)
@@ -1407,9 +1463,19 @@ func TestProxyInsertOneRowWithErrorNode(t *testing.T) {
 	MockDs1.SetRange(newRng)
 	MockMs.SetRange(newRng)
 
-	testProxyInsert(t, p, 0, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
-	testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
-	testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
+	tx = NewTx(true, p, 0)
+	ttable, intent = testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
+	tx.SetTable(ttable)
+	if err := tx.Insert(intent); err != nil {
+		t.Fatalf("rollback err %v", err)
+	}
+
+	tx = NewTx(true, p, 0)
+	ttable, intent = testProxyInsert(t, p, 2, "insert into "+testTableName+"(id,name,balance) values(1, 'myname', 0.0075),(2, 'myname', 0.0075)")
+	tx.SetTable(ttable)
+	if err := tx.Insert(intent); err != nil {
+		t.Fatalf("rollback err %v", err)
+	}
 }
 
 func TestProxyInsertWithRangeChange(t *testing.T) {
@@ -1453,7 +1519,12 @@ func TestProxyInsertWithRangeChange(t *testing.T) {
 	defer CloseMock(p)
 	defer p.Close()
 
-	testProxyInsert(t, p, 4, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1),(6, 'myname6', 1),(7, 'myname7', 1),(9, 'myname9', 1)")
+	tx := NewTx(true, p, 0)
+	ttable, intent := testProxyInsert(t, p, 4, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1),(6, 'myname6', 1),(7, 'myname7', 1),(9, 'myname9', 1)")
+	tx.SetTable(ttable)
+	if err := tx.Insert(intent); err != nil {
+		t.Fatalf("rollback err %v", err)
+	}
 
 	oldRng := deepcopy.Iface(rng).(*metapb.Range)
 
@@ -1470,7 +1541,12 @@ func TestProxyInsertWithRangeChange(t *testing.T) {
 	MockMs.SetRange(newRng)
 	log.Info("**********change range route***********8")
 
-	testProxyInsert(t, p, 4, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1),(6, 'myname6', 1),(7, 'myname7', 1),(9, 'myname9', 1)")
+	tx = NewTx(true, p, 0)
+	ttable, intent = testProxyInsert(t, p, 4, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1),(6, 'myname6', 1),(7, 'myname7', 1),(9, 'myname9', 1)")
+	tx.SetTable(ttable)
+	if err := tx.Insert(intent); err != nil {
+		t.Fatalf("rollback err %v", err)
+	}
 
 	//time.Sleep(time.Second*5)
 }
