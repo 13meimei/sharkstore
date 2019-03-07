@@ -214,7 +214,6 @@ int sf_load_config(const char *server_name, const char *filename) {
     char full_filename[MAX_PATH_SIZE];
 
     snprintf(full_filename, sizeof(full_filename), "%s/%s", g_base_path, filename);
-    FLOG_DEBUG("%s", full_filename);
 
     memset(&ini_context, 0, sizeof(IniContext));
     if ((result = iniLoadFromFile(full_filename, &ini_context)) != 0) {
