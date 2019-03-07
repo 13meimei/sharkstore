@@ -178,7 +178,6 @@ message(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
 set(SOURCES
     src/server/main.cpp
-    src/server/callback.cpp
     src/server/server.cpp
     src/server/worker.cpp
     src/server/node_address.cpp
@@ -186,9 +185,10 @@ set(SOURCES
     src/server/run_status.cpp
     src/server/range_context_impl.cpp
     src/server/range_server.cpp
+    src/server/rpc_server.cpp
     src/server/version.cpp
     src/range/range.cpp
-    src/range/lock.cpp
+    #src/range/lock.cpp
     src/range/meta_keeper.cpp
     src/range/raw_get.cpp
     src/range/raw_put.cpp
@@ -207,6 +207,7 @@ set(SOURCES
     src/range/txn.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
+    #src/storage/iterator.cpp
     src/storage/meta_store.cpp
     src/storage/metric.cpp
     src/storage/row_decoder.cpp
@@ -260,7 +261,7 @@ foreach(f IN LISTS SOURCES)
 endforeach()
 
 add_subdirectory(src/base)
-add_subdirectory(src/lk_queue)
+#add_subdirectory(src/lk_queue)
 add_subdirectory(src/common)
 add_subdirectory(src/frame)
 add_subdirectory(src/proto)
@@ -273,7 +274,7 @@ set (depend_LIBRARYS
     sharkstore-net
     sharkstore-common
     sharkstore-frame
-    sharkstore-lkqueue
+    #sharkstore-lkqueue
     sharkstore-base
     ${PROTOBUF_LIBRARY}
     ${GRPC_LIB}
@@ -283,6 +284,7 @@ set (depend_LIBRARYS
     pthread
     dl
     z
+    skiplist
 )
 if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)
@@ -298,7 +300,7 @@ endif()
 
 message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 
-add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
+add_executable(data-server ${SOURCES})
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(
