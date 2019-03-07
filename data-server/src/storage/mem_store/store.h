@@ -14,6 +14,8 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+using ColumnFamily = memstore::Store<std::string>;
+
 class MemStore: public DbInterface {
 public:
     MemStore() = default;
@@ -51,6 +53,7 @@ public:
 
 private:
     memstore::Store<std::string> db_;
+    ColumnFamily txn_cf_;
 };
 
 

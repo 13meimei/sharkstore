@@ -13,8 +13,9 @@ Status MemStore::Get(const std::string &key, std::string *value) {
 
 Status MemStore::Get(void* column_family,
                        const std::string& key, void* value) {
-    // todo column family
-    return Status(Status::kInvalid);
+    auto cf = static_cast<ColumnFamily *>(column_family);
+    auto s = cf->Get(key, static_cast<std::string*>(value));
+    return Status(static_cast<Status::Code>(s));
 }
 
 Status MemStore::Put(const std::string &key, const std::string &value) {
@@ -33,22 +34,24 @@ Status MemStore::Delete(const std::string &key) {
 }
 
 Status MemStore::Delete(void* column_family, const std::string& key) {
-    // todo
-    return Status(Status::kOk);
+    auto cf = static_cast<ColumnFamily *>(column_family);
+    auto s = cf->Delete(key);
+    return Status(static_cast<Status::Code>(s));
 }
 
 Status MemStore::DeleteRange(void *column_family,
                                const std::string &begin_key, const std::string &end_key) {
-    auto s = db_.DeleteRange(begin_key, end_key);
+    auto cf = static_cast<ColumnFamily *>(column_family);
+    auto s = cf->DeleteRange(begin_key, end_key);
     return Status(static_cast<Status::Code>(s));
 }
 
 void* MemStore::DefaultColumnFamily() {
-    return nullptr;
+    return &db_;
 }
 
 void* MemStore::TxnCFHandle() {
-    return nullptr;
+    return &txn_cf_;
 }
 
 IteratorInterface* MemStore::NewIterator(const std::string& start, const std::string& limit) {
