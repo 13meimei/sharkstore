@@ -187,13 +187,13 @@ func (p *Proxy) singleSelectRemote(ctx *dskv.ReqContext, t *Table, req *txnpb.Se
 	if log.GetFileLogger().IsEnableDebug() {
 		log.Debug("query rows[%v]", rows)
 	}
-	if len(rows) == 0 {
-		return nil, nil
-	}
 	var resRows []*txnpb.Row
 	resRows, err = handleTxRows(p, ctx, t, req, rows)
 	if err != nil {
 		return nil, err
+	}
+	if len(resRows) == 0 {
+		return nil, nil
 	}
 	return [][]*txnpb.Row{resRows}, nil
 }
@@ -218,6 +218,9 @@ func (p *Proxy) selectSingleKey(ctx *dskv.ReqContext, t *Table, req *txnpb.Selec
 }
 
 func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.SelectRequest, rows []*txnpb.Row) (resRows []*txnpb.Row, err error) {
+	if len(rows) == 0 {
+		return
+	}
 	resRows = make([]*txnpb.Row, 0)
 	for _, row := range rows {
 		var (
@@ -364,6 +367,7 @@ func (p *Proxy) rangeSelectRemote(context *dskv.ReqContext, t *Table, sreq *txnp
 				log.Debug("===route %d offset %d rows(%d) %v", route.Region.Id, resp.GetOffset(), len(resp.GetRows()), resp.GetRows())
 			}
 		}
+
 		var rows []*txnpb.Row
 		rows, err = handleTxRows(p, context, t, req, resp.GetRows())
 		if err != nil {

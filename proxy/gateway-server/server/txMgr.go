@@ -388,7 +388,7 @@ func (t *TxObj) decidePrimaryKey(ctx *dskv.ReqContext, status txnpb.TxnStatus) (
 			log.Warn("[commit]decide txn[%v]: ds return it not found, ignore", txId)
 		} else {
 			err = convertTxnErr(resp.Err)
-			log.Error("[commit]decide txn[%v] primary intent error ", txId, err)
+			log.Error("[commit]decide txn[%v] primary intent error: %v ", txId, err)
 			return
 		}
 	}
