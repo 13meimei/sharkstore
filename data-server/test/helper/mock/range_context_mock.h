@@ -7,6 +7,7 @@ _Pragma("once");
 #include "raft/server.h"
 #include "master/worker.h"
 #include "watch/watch_server.h"
+#include "storage/db_interface.h"
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -25,8 +26,7 @@ public:
     // 分裂策略
     SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
 
-    rocksdb::DB *DBInstance() override { return db_; }
-    rocksdb::ColumnFamilyHandle *TxnCFHandle() override { return cf_handles_[1]; }
+    storage::DbInterface* DBInstance() override { return db_; }
     master::Worker* MasterClient() override { return master_worker_.get(); }
     raft::RaftServer* RaftServer() override { return raft_server_.get(); }
     storage::MetaStore* MetaStore() override { return meta_store_.get(); }
@@ -47,7 +47,7 @@ public:
 
 private:
     std::string path_;
-    rocksdb::DB *db_ = nullptr;
+    dataserver::storage::DbInterface* db_ = nullptr;
     std::vector<rocksdb::ColumnFamilyHandle*> cf_handles_;
     std::unique_ptr<storage::MetaStore> meta_store_;
     std::unique_ptr<master::Worker> master_worker_;

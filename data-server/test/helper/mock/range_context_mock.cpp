@@ -9,6 +9,7 @@
 
 #include "master_worker_mock.h"
 #include "raft_server_mock.h"
+#include "storage/rocks_store/store.h"
 
 namespace sharkstore {
 namespace test {
@@ -26,18 +27,20 @@ Status RangeContextMock::Init() {
         return Status(Status::kIOError, "mkdtemp", "");
     }
     // open rocksdb
-    path_ = path;
-    rocksdb::Options ops;
-    ops.create_if_missing = true;
-    ops.create_missing_column_families = true;
-    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
-    column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
-    column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
-    auto s = rocksdb::DB::Open(ops, JoinFilePath({path_, "data"}), column_families, &cf_handles_, &db_);
-    if (!s.ok()) {
-        return Status(Status::kIOError, "open rocksdb", s.ToString());
-    }
-    assert(cf_handles_.size() == 2);
+    db_ = new storage::RocksStore();
+//    path_ = path;
+//    rocksdb::Options ops;
+//    ops.create_if_missing = true;
+//    ops.create_missing_column_families = true;
+//    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
+//    column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
+//    column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
+//    auto s = rocksdb::DB::Open(ops, JoinFilePath({path_, "data"}), column_families, &cf_handles_, &db_);
+//    if (!s.ok()) {
+//        return Status(Status::kIOError, "open rocksdb", s.ToString());
+//    }
+//    assert(cf_handles_.size() == 2);
+
     // open meta db
     meta_store_.reset(new storage::MetaStore(JoinFilePath({path_, "meta"})));
     auto ret = meta_store_->Open();

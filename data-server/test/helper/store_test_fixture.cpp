@@ -7,6 +7,7 @@
 
 #include "fastcommon/logger.h"
 #include <fastcommon/shared_func.h>
+#include "storage/rocks_store/store.h"
 
 namespace sharkstore {
 namespace test {
@@ -38,18 +39,20 @@ void StoreTestFixture::SetUp() {
     column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
     column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
 
-    rocksdb::Options ops;
-    ops.create_if_missing = true;
-    ops.error_if_exists = true;
-    ops.create_missing_column_families = true;
-    auto s = rocksdb::DB::Open(ops, tmp, column_families, &cf_handles_, &db_);
-    ASSERT_TRUE(s.ok());
-    ASSERT_EQ(cf_handles_.size(), 2);
+    db_ = new dataserver::storage::RocksStore();
+//    rocksdb::Options ops;
+//    ops.create_if_missing = true;
+//    ops.error_if_exists = true;
+//    ops.create_missing_column_families = true;
+//    auto s = rocksdb::DB::Open(ops, tmp, column_families, &cf_handles_, &db_);
+//    ASSERT_TRUE(s.ok());
+//    ASSERT_EQ(cf_handles_.size(), 2);
 
     // make meta
     meta_ = MakeRangeMeta(table_.get());
 
-    store_ = new sharkstore::dataserver::storage::Store(meta_, db_, cf_handles_[1]);
+//    store_ = new sharkstore::dataserver::storage::Store(meta_, db_, cf_handles_[1]);
+    store_ = new sharkstore::dataserver::storage::Store(meta_, db_);
 }
 
 void StoreTestFixture::TearDown() {
@@ -187,7 +190,7 @@ Status StoreTestFixture::testParseWatchSplitKey(const std::vector<std::string>& 
 
 uint64_t StoreTestFixture::statSizeUntil(const std::string& end) {
     uint64_t size = 0;
-    std::unique_ptr<Iterator> it(store_->NewIterator("", end));
+    std::unique_ptr<dataserver::storage::IteratorInterface> it(store_->NewIterator("", end));
     while (it->Valid()) {
         size += it->key_size();
         size += it->value_size();
