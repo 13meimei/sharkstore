@@ -5,6 +5,8 @@
 #include "query_parser.h"
 #include "helper_util.h"
 
+#include "frame/sf_config.h"
+
 #include "fastcommon/logger.h"
 #include <fastcommon/shared_func.h>
 #include "storage/rocks_store/store.h"
@@ -22,7 +24,7 @@ StoreTestFixture::StoreTestFixture(std::unique_ptr<Table> t) :
 
 void StoreTestFixture::SetUp() {
     log_init2();
-    char level[] = "INFO";
+    char level[] = "debug";
     set_log_level(level);
 
     if (!table_) {
@@ -34,6 +36,8 @@ void StoreTestFixture::SetUp() {
     char* tmp = mkdtemp(path);
     ASSERT_TRUE(tmp != NULL);
     tmp_dir_ = tmp;
+
+    sf_load_config("data-server", "ds_test.conf");
 
     std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
     column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());

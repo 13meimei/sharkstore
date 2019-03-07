@@ -7,7 +7,7 @@ set(test_helper_SRCS
     helper/mock/range_context_mock.cpp
     helper/mock/rpc_request_mock.cpp
     helper/helper_util.cpp
-    helper/query_builder.cpp
+    helper/request_builder.cpp
     helper/query_parser.cpp
     helper/range_test_fixture.cpp
     helper/store_test_fixture.cpp

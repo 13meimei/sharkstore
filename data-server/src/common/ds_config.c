@@ -55,6 +55,7 @@ static int load_rocksdb_config(IniContext *ini_context) {
     // db路径
     char *temp_str = iniGetStrValue(section, "path", ini_context);
     if (temp_str != NULL) {
+        fprintf(stderr, "[ds config] rockdb path: %s section: %s\n", temp_str, section);
         snprintf(ds_config.rocksdb_config.path, sizeof(ds_config.rocksdb_config.path), "%s", temp_str);
     } else {
         fprintf(stderr, "[ds config] rockdb path is missing");

@@ -70,16 +70,33 @@ void Table::AddColumn(const std::string& name, metapb::DataType type, bool is_pk
     col->set_primary_key(is_pk ? 1 : 0);
 }
 
-std::unique_ptr<Table> CreateAccountTable() {
-    std::unique_ptr<Table> t(new Table("account", 1));
+std::unique_ptr<Table> CreateAccountTable(uint32_t tid) {
+    std::unique_ptr<Table> t(new Table("account", tid));
     t->AddColumn("id", metapb::BigInt, true);
     t->AddColumn("name", metapb::Varchar);
     t->AddColumn("balance", metapb::BigInt);
     return t;
 }
 
+std::unique_ptr<Table> CreateAccountTable() {
+    return CreateAccountTable(1);
+}
+
+std::unique_ptr<Table> CreateUserTable(uint32_t tid) {
+    std::unique_ptr<Table> t(new Table("user", tid));
+    t->AddColumn("user_name", metapb::Varchar, true);
+    t->AddColumn("pass_word", metapb::Varchar);
+    t->AddColumn("real_name", metapb::Varchar);
+    return t;
+}
+
 std::unique_ptr<Table> CreateUserTable() {
-    std::unique_ptr<Table> t(new Table("user", 2));
+    return CreateUserTable(2);
+}
+
+std::unique_ptr<Table> CreateHashUserTable(uint32_t tid) {
+    std::unique_ptr<Table> t(new Table("user", tid));
+    t->AddColumn("h", metapb::Int, true);
     t->AddColumn("user_name", metapb::Varchar, true);
     t->AddColumn("pass_word", metapb::Varchar);
     t->AddColumn("real_name", metapb::Varchar);
@@ -87,13 +104,9 @@ std::unique_ptr<Table> CreateUserTable() {
 }
 
 std::unique_ptr<Table> CreateHashUserTable() {
-    std::unique_ptr<Table> t(new Table("user", 3));
-    t->AddColumn("h", metapb::Int, true);
-    t->AddColumn("user_name", metapb::Varchar, true);
-    t->AddColumn("pass_word", metapb::Varchar);
-    t->AddColumn("real_name", metapb::Varchar);
-    return t;
+    return CreateHashUserTable(3);
 }
+
 
 } /* namespace helper */
 } /* namespace test */

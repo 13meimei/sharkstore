@@ -36,6 +36,10 @@ std::unique_ptr<Table> CreateAccountTable();
 std::unique_ptr<Table> CreateUserTable();
 std::unique_ptr<Table> CreateHashUserTable();
 
+std::unique_ptr<Table> CreateAccountTable(uint32_t tid);
+std::unique_ptr<Table> CreateUserTable(uint32_t tid);
+std::unique_ptr<Table> CreateHashUserTable(uint32_t tid);
+
 } /* namespace helper */
 } /* namespace test */
 } /* namespace sharkstore */

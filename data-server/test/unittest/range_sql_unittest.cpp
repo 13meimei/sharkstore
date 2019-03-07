@@ -2,7 +2,7 @@
 
 #include "helper/range_test_fixture.h"
 #include "helper/helper_util.h"
-#include "helper/query_builder.h"
+#include "helper/request_builder.h"
 #include "helper/query_parser.h"
 
 int main(int argc, char* argv[]) {

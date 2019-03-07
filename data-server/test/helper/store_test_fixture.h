@@ -5,7 +5,7 @@ _Pragma("once");
 
 #include "base/status.h"
 #include "storage/store.h"
-#include "query_builder.h"
+#include "request_builder.h"
 #include "range/split_policy.h"
 
 namespace sharkstore {

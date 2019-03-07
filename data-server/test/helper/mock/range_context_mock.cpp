@@ -28,7 +28,7 @@ Status RangeContextMock::Init() {
     }
     // open rocksdb
     db_ = new storage::RocksStore();
-//    path_ = path;
+    path_ = path;
 //    rocksdb::Options ops;
 //    ops.create_if_missing = true;
 //    ops.create_missing_column_families = true;

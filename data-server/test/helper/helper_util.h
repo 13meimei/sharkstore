@@ -11,7 +11,7 @@ namespace helper {
 uint64_t GetPeerID(uint64_t node_id);
 
 metapb::Range MakeRangeMeta(Table *t, size_t peers_num = 1);
-
+metapb::Range MakeRangeMeta(Table *t, size_t peers_num, uint32_t rid);
 
 // append '\x01' + table_id to buf
 void EncodeKeyPrefix(std::string* buf, uint64_t table_id);

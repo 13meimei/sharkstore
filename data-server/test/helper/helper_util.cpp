@@ -13,8 +13,13 @@ uint64_t GetPeerID(uint64_t node_id) {
 }
 
 metapb::Range MakeRangeMeta(Table *t, size_t peers_num) {
+    const uint32_t RID = 1;
+    return MakeRangeMeta(t, peers_num, RID);
+}
+
+metapb::Range MakeRangeMeta(Table *t, size_t peers_num, uint32_t rid) {
     metapb::Range meta;
-    meta.set_id(1);
+    meta.set_id(rid);
     EncodeKeyPrefix(meta.mutable_start_key(), t->GetID());
     EncodeKeyPrefix(meta.mutable_end_key(), t->GetID() + 1);
 
