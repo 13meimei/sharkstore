@@ -24,7 +24,7 @@ public:
 
     virtual Status Get(const std::string& key, std::string* value) = 0;
     virtual Status Get(void* column_family,
-                       const std::string& key, void* value) = 0;
+                       const std::string& key, std::string* value) = 0;
     virtual Status Put(const std::string& key, const std::string& value) = 0;
     virtual Status Write(WriteBatchInterface* batch) = 0;
     virtual Status Delete(const std::string& key) = 0;

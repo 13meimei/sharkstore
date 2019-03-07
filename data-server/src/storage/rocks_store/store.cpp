@@ -220,9 +220,9 @@ Status RocksStore::Get(const std::string &key, std::string *value) {
 }
 
 Status RocksStore::Get(void* column_family,
-           const std::string& key, void* value) {
+           const std::string& key, std::string* value) {
     auto s = db_->Get(read_options_, static_cast<rocksdb::ColumnFamilyHandle*>(column_family),
-                      key, static_cast<rocksdb::PinnableSlice*>(value));
+                      key, value);
     return Status(static_cast<Status::Code>(s.code()));
 }
 

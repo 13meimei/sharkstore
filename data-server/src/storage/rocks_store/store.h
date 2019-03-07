@@ -26,7 +26,7 @@ public:
 public:
     Status Get(const std::string& key, std::string* value);
     Status Get(void* column_family,
-               const std::string& key, void* value);
+               const std::string& key, std::string* value);
     Status Put(const std::string& key, const std::string& value);
     Status Write(WriteBatchInterface* batch);
     Status Delete(const std::string& key);

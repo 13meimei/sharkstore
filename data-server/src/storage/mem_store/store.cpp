@@ -12,9 +12,9 @@ Status MemStore::Get(const std::string &key, std::string *value) {
 }
 
 Status MemStore::Get(void* column_family,
-                       const std::string& key, void* value) {
+                       const std::string& key, std::string* value) {
     auto cf = static_cast<ColumnFamily *>(column_family);
-    auto s = cf->Get(key, static_cast<std::string*>(value));
+    auto s = cf->Get(key, value);
     return Status(static_cast<Status::Code>(s));
 }
 
