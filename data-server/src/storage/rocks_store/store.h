@@ -20,8 +20,7 @@ namespace storage {
 class RocksStore: public DbInterface {
 public:
     RocksStore();
-//    RocksStore(const rocksdb::ReadOptions& read_options,
-//               const rocksdb::WriteOptions& write_options);
+    RocksStore(rocksdb::DB* db, rocksdb::ColumnFamilyHandle* cf_handle);
     ~RocksStore();
 
 public:
@@ -55,7 +54,7 @@ public:
     void PrintMetric();
 
 private:
-    int openDB();
+    int openDB(rocksdb::Options& ops);
     void buildDBOptions(rocksdb::Options& ops);
     void buildBlobOptions(rocksdb::blob_db::BlobDBOptions& bops);
 
