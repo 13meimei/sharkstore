@@ -34,6 +34,7 @@ protected:
         log_init2();
         set_log_level(level);
 
+        strcpy(ds_config.engine_config.name, "rocksdb");
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(NowMilliSeconds()).c_str());
         ds_config.range_config.recover_concurrency = 1;

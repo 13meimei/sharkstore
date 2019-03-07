@@ -139,10 +139,10 @@ void RocksStore::buildBlobOptions(rocksdb::blob_db::BlobDBOptions& bops) {
 #endif
 }
 
-int RocksStore::openDB() {
-    auto write_options = rocksdb::WriteOptions();
-    write_options.disableWAL = ds_config.rocksdb_config.disable_wal;
-    auto read_options = rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true);
+int RocksStore::openDB(rocksdb::Options& ops) {
+//    auto write_options = rocksdb::WriteOptions();
+//    write_options.disableWAL = ds_config.rocksdb_config.disable_wal;
+//    auto read_options = rocksdb::ReadOptions(ds_config.rocksdb_config.read_checksum,true);
 
     // 创建db的父目录
     auto db_path = JoinFilePath({ds_config.rocksdb_config.path, kDataPathSuffix});
@@ -151,7 +151,6 @@ int RocksStore::openDB() {
         return -1;
     }
 
-    rocksdb::Options ops;
     buildDBOptions(ops);
     ops.create_missing_column_families = true;
     std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
@@ -200,12 +199,19 @@ int RocksStore::openDB() {
 }
 
 RocksStore::RocksStore() {
-    openDB();
+    rocksdb::Options ops;
+    openDB(ops);
+}
+
+RocksStore::RocksStore(rocksdb::DB* db, rocksdb::ColumnFamilyHandle* cf_handle):
+        db_(db), txn_cf_(cf_handle) {
+
 }
 
 RocksStore::~RocksStore() {
-    delete db_;
+    delete static_cast<rocksdb::ColumnFamilyHandle*>(DefaultColumnFamily());
     delete txn_cf_;
+// todo delete db_;
 }
 
 Status RocksStore::Get(const std::string &key, std::string *value) {
@@ -214,9 +220,9 @@ Status RocksStore::Get(const std::string &key, std::string *value) {
 }
 
 Status RocksStore::Get(void* column_family,
-           const std::string& key, void* value) {
+           const std::string& key, std::string* value) {
     auto s = db_->Get(read_options_, static_cast<rocksdb::ColumnFamilyHandle*>(column_family),
-                      key, static_cast<rocksdb::PinnableSlice*>(value));
+                      key, value);
     return Status(static_cast<Status::Code>(s.code()));
 }
 
@@ -388,6 +394,12 @@ Status RocksStore::Flush(void* fops) {
 }
 
 void RocksStore::PrintMetric() {
+    if (block_cache_ == nullptr ||
+        row_cache_ == nullptr ||
+        db_stats_ == nullptr) {
+        return;
+    }
+
     std::string tr_mem_usage;
     db_->GetProperty("rocksdb.estimate-table-readers-mem", &tr_mem_usage);
     std::string mem_table_usage;

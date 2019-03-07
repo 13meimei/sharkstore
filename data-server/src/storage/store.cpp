@@ -499,8 +499,7 @@ Status Store::BatchDelete(const std::vector<std::string>& keys) {
 }
 
 bool Store::KeyExists(const std::string& key) {
-//    std::string value;
-    rocksdb::PinnableSlice value;
+    std::string value;
     auto ret = db_->Get(db_->DefaultColumnFamily(), key, &value);
     addMetricRead(1, key.size() + value.size());
     return ret.ok();

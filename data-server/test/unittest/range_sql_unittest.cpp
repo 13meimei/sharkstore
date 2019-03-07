@@ -526,7 +526,7 @@ TEST_F(RangeTestFixture, MatchMathExpr) {
 
 }
 
-TEST_F(RangeTestFixture, MatchMathExprDaemon) {
+TEST_F(RangeTestFixture, DISABLED_MatchMathExprDaemon) {
     SetLeader(GetNodeID());
 
     std::vector<std::vector<std::string>> rows = {

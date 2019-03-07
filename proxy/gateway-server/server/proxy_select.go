@@ -187,13 +187,13 @@ func (p *Proxy) singleSelectRemote(ctx *dskv.ReqContext, t *Table, req *txnpb.Se
 	if log.GetFileLogger().IsEnableDebug() {
 		log.Debug("query rows[%v]", rows)
 	}
-	if len(rows) == 0 {
-		return nil, nil
-	}
 	var resRows []*txnpb.Row
 	resRows, err = handleTxRows(p, ctx, t, req, rows)
 	if err != nil {
 		return nil, err
+	}
+	if len(resRows) == 0 {
+		return nil, nil
 	}
 	return [][]*txnpb.Row{resRows}, nil
 }
@@ -218,6 +218,9 @@ func (p *Proxy) selectSingleKey(ctx *dskv.ReqContext, t *Table, req *txnpb.Selec
 }
 
 func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.SelectRequest, rows []*txnpb.Row) (resRows []*txnpb.Row, err error) {
+	if len(rows) == 0 {
+		return
+	}
 	resRows = make([]*txnpb.Row, 0)
 	for _, row := range rows {
 		var (
@@ -230,46 +233,39 @@ func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.Sel
 				txId       = rowIntent.GetTxnId()
 				primaryKey = rowIntent.GetPrimaryKey()
 				status     txnpb.TxnStatus
+				txErr      *txnpb.TxnError
 			)
 			if rowIntent.GetTimeout() {
 				//try to aborted, async
-				status, err = p.recoverFromSecondary(ctx, txId, primaryKey, t, false)
-				if err != nil {
-					return
-				}
+				status, err, txErr = p.recoverFromSecondary(ctx, txId, primaryKey, t, false)
 			} else {
 				//GetLockInfo
-				var lockResp *txnpb.GetLockInfoResponse
-				lockResp, err = p.handleGetLockInfo(ctx, txId, primaryKey, t)
+				status, err, txErr = p.handleGetLockInfo(ctx, txId, primaryKey, t)
+			}
+			if err != nil {
+				return
+			}
+			//for TxnError_NOT_FOUND
+			if txErr != nil {
+				//retry read single key
+				var (
+					req = &txnpb.SelectRequest{
+						Key:       row.GetKey(),
+						FieldList: sourceReq.GetFieldList(),
+					}
+					tempRows []*txnpb.Row
+				)
+				tempRows, err = p.selectSingleKey(ctx, t, req, req.GetKey())
 				if err != nil {
 					return
 				}
-				if lockResp.GetErr() != nil {
-					if lockResp.GetErr().GetErrType() == txnpb.TxnError_NOT_FOUND {
-						//retry read single key
-						var (
-							req = &txnpb.SelectRequest{
-								Key:       row.GetKey(),
-								FieldList: sourceReq.GetFieldList(),
-							}
-							tempRows []*txnpb.Row
-						)
-						tempRows, err = p.selectSingleKey(ctx, t, req, req.GetKey())
-						if err != nil {
-							return
-						}
-						//ignore intent, use row value, consider time order
-						if len(tempRows) == 1 && tempRows[0].GetValue() != nil {
-							row.Value = tempRows[0].GetValue()
-							row.Intent = nil
-							resRows = append(resRows, row)
-							continue
-						}
-					}
-					err = convertTxnErr(lockResp.GetErr())
-					return
+				//ignore intent, use row value, consider time order
+				if len(tempRows) == 1 && tempRows[0].GetValue() != nil {
+					row.Value = tempRows[0].GetValue()
+					row.Intent = nil
+					resRows = append(resRows, row)
+					continue
 				}
-				status = lockResp.GetInfo().GetStatus()
 			}
 			if status == txnpb.TxnStatus_COMMITTED {
 				//use row intent
@@ -364,6 +360,7 @@ func (p *Proxy) rangeSelectRemote(context *dskv.ReqContext, t *Table, sreq *txnp
 				log.Debug("===route %d offset %d rows(%d) %v", route.Region.Id, resp.GetOffset(), len(resp.GetRows()), resp.GetRows())
 			}
 		}
+
 		var rows []*txnpb.Row
 		rows, err = handleTxRows(p, context, t, req, resp.GetRows())
 		if err != nil {

@@ -1000,23 +1000,22 @@ func TestTxnPrepare(t *testing.T) {
 		log.Debug("tx %v prepare success", tx.GetTxId())
 	}
 
-	for _, tx := range txArray {
-		var (
-			priIntents      []*txnpb.TxnIntent
-			secIntentsGroup [][]*txnpb.TxnIntent
-		)
+	for i, tx := range txArray {
 		ctx := dskv.NewPRConext(int(50 * 1000))
-		sort.Sort(TxnIntentSlice(tx.getTxIntents()))
-		priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, tx.GetTable(), tx.getTxIntents())
-		if err != nil {
-			t.Fatalf("regroup intent by range err %v", err)
-		}
+		err = tx.decidePrimaryKey(ctx, txnpb.TxnStatus_COMMITTED)
+		if i == 0 {
+			if err == nil {
+				t.Fatalf("decide tx %v  should conflict", tx.GetTxId())
+			} else {
+				log.Info("decide tx %v  err: %v", tx.GetTxId(), err)
+			}
 
-		err = tx.decidePrimaryIntents(ctx, priIntents, secIntentsGroup, txnpb.TxnStatus_COMMITTED)
-		if err != nil {
-			t.Fatalf("decide tx %v  err %v", tx.GetTxId(), err)
 		} else {
-			log.Info("decide tx %v  success", tx.GetTxId())
+			if err != nil {
+				t.Fatalf("decide tx %v  err: %v", tx.GetTxId(), err)
+			} else {
+				log.Info("decide tx %v  success", tx.GetTxId())
+			}
 		}
 	}
 }

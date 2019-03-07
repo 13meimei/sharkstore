@@ -168,7 +168,7 @@ static int  buildMathExpr(const metapb::Column& col, const std::string &flag, kv
         case '*':
             e->set_expr_type(kvrpcpb::E_Mult);
             break;
-        case '\/':
+        case '/':
             e->set_expr_type(kvrpcpb::E_Div);
             break;
         default:
@@ -249,9 +249,9 @@ void SelectRequestBuilder::AppendCompCond(const std::string& col, const std::str
                     buildMathExpr(column, "*", l);
                     return;
                 }
-                if (l->value().find("\/") != std::string::npos) {
+                if (l->value().find("/") != std::string::npos) {
                     //to do decode /
-                    buildMathExpr(column, "\/", l);
+                    buildMathExpr(column, "/", l);
                     return;
                 }
         } //end if

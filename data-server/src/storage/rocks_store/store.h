@@ -20,14 +20,13 @@ namespace storage {
 class RocksStore: public DbInterface {
 public:
     RocksStore();
-//    RocksStore(const rocksdb::ReadOptions& read_options,
-//               const rocksdb::WriteOptions& write_options);
+    RocksStore(rocksdb::DB* db, rocksdb::ColumnFamilyHandle* cf_handle);
     ~RocksStore();
 
 public:
     Status Get(const std::string& key, std::string* value);
     Status Get(void* column_family,
-               const std::string& key, void* value);
+               const std::string& key, std::string* value);
     Status Put(const std::string& key, const std::string& value);
     Status Write(WriteBatchInterface* batch);
     Status Delete(const std::string& key);
@@ -55,7 +54,7 @@ public:
     void PrintMetric();
 
 private:
-    int openDB();
+    int openDB(rocksdb::Options& ops);
     void buildDBOptions(rocksdb::Options& ops);
     void buildBlobOptions(rocksdb::blob_db::BlobDBOptions& bops);
 

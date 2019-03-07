@@ -43,26 +43,26 @@ void StoreTestFixture::SetUp() {
     column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
     column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
 
-    db_ = new dataserver::storage::RocksStore();
-//    rocksdb::Options ops;
-//    ops.create_if_missing = true;
-//    ops.error_if_exists = true;
-//    ops.create_missing_column_families = true;
-//    auto s = rocksdb::DB::Open(ops, tmp, column_families, &cf_handles_, &db_);
-//    ASSERT_TRUE(s.ok());
-//    ASSERT_EQ(cf_handles_.size(), 2);
+    rocksdb::Options ops;
+    ops.create_if_missing = true;
+    ops.error_if_exists = true;
+    ops.create_missing_column_families = true;
+
+    rocksdb::DB* db = nullptr;
+    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
+    auto s = rocksdb::DB::Open(ops, tmp, column_families, &cf_handles, &db);
+    ASSERT_TRUE(s.ok());
+    ASSERT_EQ(cf_handles.size(), 2);
+
+    db_ = new dataserver::storage::RocksStore(db, cf_handles[1]);
 
     // make meta
     meta_ = MakeRangeMeta(table_.get());
 
-//    store_ = new sharkstore::dataserver::storage::Store(meta_, db_, cf_handles_[1]);
     store_ = new sharkstore::dataserver::storage::Store(meta_, db_);
 }
 
 void StoreTestFixture::TearDown() {
-    for (auto handle : cf_handles_) {
-        delete handle;
-    }
     delete store_;
     delete db_;
     if (!tmp_dir_.empty()) {

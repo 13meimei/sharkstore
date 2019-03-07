@@ -4,6 +4,7 @@
 #include "common/ds_encoding.h"
 #include "select_txn.h"
 #include "util.h"
+#include "frame/sf_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -316,6 +317,8 @@ TxnErrorPtr Store::decidePrimary(const txnpb::DecideRequest& req, uint64_t& byte
         }
     }
 
+    FLOG_INFO("decide txn primary: get old lock info: %s, req: %s",
+                             value.ShortDebugString().c_str(), req.ShortDebugString().c_str());
     // s is ok now
     assert(s.ok());
     if (value.txn_id() != req.txn_id()) {
@@ -335,7 +338,7 @@ TxnErrorPtr Store::decidePrimary(const txnpb::DecideRequest& req, uint64_t& byte
     // update to new status;
     auto new_value = value;
     new_value.set_txn_status(req.status());
-    s = writeTxnValue(value, batch);
+    s = writeTxnValue(new_value, batch);
     if (!s.ok()) {
         return newTxnServerErr(s.code(), s.ToString());
     }

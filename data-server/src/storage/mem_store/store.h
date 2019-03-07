@@ -14,6 +14,8 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+using ColumnFamily = memstore::Store<std::string>;
+
 class MemStore: public DbInterface {
 public:
     MemStore() = default;
@@ -22,7 +24,7 @@ public:
 public:
     Status Get(const std::string& key, std::string* value);
     Status Get(void* column_family,
-               const std::string& key, void* value);
+               const std::string& key, std::string* value);
     Status Put(const std::string& key, const std::string& value);
     Status Write(WriteBatchInterface* batch);
     Status Delete(const std::string& key);
@@ -51,6 +53,7 @@ public:
 
 private:
     memstore::Store<std::string> db_;
+    ColumnFamily txn_cf_;
 };
 
 
