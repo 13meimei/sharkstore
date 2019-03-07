@@ -233,46 +233,39 @@ func handleTxRows(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.Sel
 				txId       = rowIntent.GetTxnId()
 				primaryKey = rowIntent.GetPrimaryKey()
 				status     txnpb.TxnStatus
+				txErr      *txnpb.TxnError
 			)
 			if rowIntent.GetTimeout() {
 				//try to aborted, async
-				status, err = p.recoverFromSecondary(ctx, txId, primaryKey, t, false)
-				if err != nil {
-					return
-				}
+				status, err, txErr = p.recoverFromSecondary(ctx, txId, primaryKey, t, false)
 			} else {
 				//GetLockInfo
-				var lockResp *txnpb.GetLockInfoResponse
-				lockResp, err = p.handleGetLockInfo(ctx, txId, primaryKey, t)
+				status, err, txErr = p.handleGetLockInfo(ctx, txId, primaryKey, t)
+			}
+			if err != nil {
+				return
+			}
+			//for TxnError_NOT_FOUND
+			if txErr != nil {
+				//retry read single key
+				var (
+					req = &txnpb.SelectRequest{
+						Key:       row.GetKey(),
+						FieldList: sourceReq.GetFieldList(),
+					}
+					tempRows []*txnpb.Row
+				)
+				tempRows, err = p.selectSingleKey(ctx, t, req, req.GetKey())
 				if err != nil {
 					return
 				}
-				if lockResp.GetErr() != nil {
-					if lockResp.GetErr().GetErrType() == txnpb.TxnError_NOT_FOUND {
-						//retry read single key
-						var (
-							req = &txnpb.SelectRequest{
-								Key:       row.GetKey(),
-								FieldList: sourceReq.GetFieldList(),
-							}
-							tempRows []*txnpb.Row
-						)
-						tempRows, err = p.selectSingleKey(ctx, t, req, req.GetKey())
-						if err != nil {
-							return
-						}
-						//ignore intent, use row value, consider time order
-						if len(tempRows) == 1 && tempRows[0].GetValue() != nil {
-							row.Value = tempRows[0].GetValue()
-							row.Intent = nil
-							resRows = append(resRows, row)
-							continue
-						}
-					}
-					err = convertTxnErr(lockResp.GetErr())
-					return
+				//ignore intent, use row value, consider time order
+				if len(tempRows) == 1 && tempRows[0].GetValue() != nil {
+					row.Value = tempRows[0].GetValue()
+					row.Intent = nil
+					resRows = append(resRows, row)
+					continue
 				}
-				status = lockResp.GetInfo().GetStatus()
 			}
 			if status == txnpb.TxnStatus_COMMITTED {
 				//use row intent
