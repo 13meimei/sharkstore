@@ -89,6 +89,21 @@ RowDecoder::RowDecoder(
     }
 }
 
+RowDecoder::RowDecoder(
+    const std::vector<metapb::Column>& primary_keys,
+    const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField>& field_list,
+    const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches,
+    const ::kvrpcpb::MatchExt& match_ext)
+        :RowDecoder(primary_keys, field_list, matches)
+{
+    where_expr_ = nullptr;
+    if (match_ext.expr().child_size() > 0) {
+        where_expr_ = std::make_shared<CWhereExpr>(match_ext);
+    } else {
+        FLOG_ERROR("simple Match filter.");
+    }
+}
+
 RowDecoder::~RowDecoder() {}
 
 
@@ -271,6 +286,10 @@ Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowRes
 }
 
 
+static bool filter_ext(const RowResult& result, const std::shared_ptr<CWhereExpr> where) {
+    return where->Filter(result);
+}
+
 Status RowDecoder::DecodeAndFilter(const std::string& key, const std::string& buf,
                                    RowResult* result, bool* matched) {
     assert(result != nullptr);
@@ -281,7 +300,10 @@ Status RowDecoder::DecodeAndFilter(const std::string& key, const std::string& bu
     }
 
     *matched = true;
-    if (!filters_.empty()) {
+    if (isExprValid()) {
+        *matched = filter_ext(*result, where_expr_);
+        return Status::OK();
+    } else if (!filters_.empty()) {
         return matchRow(*result, filters_, *matched);
     } else {
         return Status::OK();

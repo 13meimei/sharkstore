@@ -46,20 +46,25 @@ include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
 
 # use intel tbb
-find_library(TBB_LIB tbb)
-if(NOT TBB_LIB)
-    message(FATAL_ERROR "TBB library not found")
-else()
-    message(STATUS "Found TBB C++ library: " ${TBB_LIB})
-endif()
+OPTION (ENABLE_TBB "Use Intel TBB" ON)
+MESSAGE(STATUS ENABLE_TBB=${ENABLE_TBB})
+if(ENABLE_TBB)
+    find_library(TBB_LIB tbb)
+    if(NOT TBB_LIB)
+        message(FATAL_ERROR "TBB library not found")
+    else()
+        message(STATUS "Found TBB C++ library: " ${TBB_LIB})
+    endif()
 
-# find tbb headers
-find_path(TBB_HEADER_PATH tbb/concurrent_queue.h)
-if(NOT TBB_HEADER_PATH )
-    message(FATAL_ERROR "TBB headers not found")
-else()
-    message(STATUS "Found TBB headers path: " ${TBB_HEADER_PATH})
-    include_directories(${TBB_HEADER_PATH})
+    # find grpc header
+    find_path(TBB_HEADER_PATH tbb/concurrent_queue.h)
+    if(NOT TBB_HEADER_PATH )
+        message(FATAL_ERROR "TBB headers not found")
+    else()
+        message(STATUS "Found TBB headers path: " ${TBB_HEADER_PATH})
+        include_directories(${TBB_HEADER_PATH})
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTBB")
 endif()
 
 OPTION (ENABLE_TCMALLOC "Use TCMalloc" OFF)
@@ -173,6 +178,7 @@ message(STATUS "CMAKE_CXX_FLAGS: " ${CMAKE_CXX_FLAGS})
 
 set(SOURCES
     src/server/main.cpp
+    src/server/callback.cpp
     src/server/server.cpp
     src/server/worker.cpp
     src/server/node_address.cpp
@@ -180,10 +186,9 @@ set(SOURCES
     src/server/run_status.cpp
     src/server/range_context_impl.cpp
     src/server/range_server.cpp
-    src/server/rpc_server.cpp
     src/server/version.cpp
     src/range/range.cpp
-#    src/range/lock.cpp
+    src/range/lock.cpp
     src/range/meta_keeper.cpp
     src/range/raw_get.cpp
     src/range/raw_put.cpp
@@ -215,6 +220,7 @@ set(SOURCES
     src/storage/mem_store/iterator.cpp
     src/storage/mem_store/write_batch.cpp
     src/storage/store_watch.cpp
+    src/storage/where_expr.cpp
     src/storage/store_txn.cpp
     src/storage/select_txn.cpp
     src/storage/util.cpp
@@ -254,6 +260,7 @@ foreach(f IN LISTS SOURCES)
 endforeach()
 
 add_subdirectory(src/base)
+add_subdirectory(src/lk_queue)
 add_subdirectory(src/common)
 add_subdirectory(src/frame)
 add_subdirectory(src/proto)
@@ -266,20 +273,23 @@ set (depend_LIBRARYS
     sharkstore-net
     sharkstore-common
     sharkstore-frame
+    sharkstore-lkqueue
     sharkstore-base
     ${PROTOBUF_LIBRARY}
     ${GRPC_LIB}
     ${GRPC_CPP_LIB}
     ${ROCKSDB_LIB}
     ${FASTCOMMON_LIB}
-    ${TBB_LIB}
     pthread
     dl
     z
-        skiplist
 )
 if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)
+endif()
+
+if(ENABLE_TBB)
+    list(APPEND depend_LIBRARYS ${TBB_LIB})
 endif()
 
 if (ENABLE_TCMALLOC)
@@ -288,7 +298,7 @@ endif()
 
 message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 
-add_executable(data-server ${SOURCES})
+add_executable(data-server ${SOURCES} src/watch/watch_event_buffer.cpp)
 target_link_libraries(data-server ${depend_LIBRARYS})
 
 add_custom_target(

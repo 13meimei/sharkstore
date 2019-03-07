@@ -11,9 +11,17 @@ namespace storage {
 
 static const size_t kIteratorTooManyKeys = 1000;
 
-RowFetcher::RowFetcher(Store& s, const kvrpcpb::SelectRequest& req)
+/*RowFetcher::RowFetcher(Store& s, const kvrpcpb::SelectRequest& req)
     : store_(s),
       decoder_(s.GetPrimaryKeys(), req.field_list(), req.where_filters()) {
+    init(req.key(), req.scope());
+}*/
+
+RowFetcher::RowFetcher(Store& s, const kvrpcpb::SelectRequest& req)
+        : store_(s),
+          decoder_(s.GetPrimaryKeys(), req.field_list(), req.where_filters(),
+                   req.ext_filter())
+{
     init(req.key(), req.scope());
 }
 

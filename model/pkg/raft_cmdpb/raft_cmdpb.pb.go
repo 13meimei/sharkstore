@@ -2,23 +2,23 @@
 // source: raft_cmdpb.proto
 
 /*
-	Package raft_cmdpb is a generated protocol buffer package.
+   Package raft_cmdpb is a generated protocol buffer package.
 
-	It is generated from these files:
-		raft_cmdpb.proto
+   It is generated from these files:
+       raft_cmdpb.proto
 
-	It has these top-level messages:
-		SplitRequest
-		SplitResponse
-		MergeRequest
-		MergeResponse
-		LeaderChangeRequest
-		LeaderChangeResponse
-		CmdID
-		Command
-		PeerTask
-		SnapshotKVPair
-		SnapshotContext
+   It has these top-level messages:
+       SplitRequest
+       SplitResponse
+       MergeRequest
+       MergeResponse
+       LeaderChangeRequest
+       LeaderChangeResponse
+       CmdID
+       Command
+       PeerTask
+       SnapshotKVPair
+       SnapshotContext
 */
 package raft_cmdpb
 

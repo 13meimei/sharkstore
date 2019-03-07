@@ -147,21 +147,50 @@ message SelectField {
 }
 
 enum MatchType {
+    //proto restrict
     Invalid       = 0;
-    Equal         = 1;
-    NotEqual      = 2;
-    Less          = 3;
-    LessOrEqual   = 4;
-    Larger        = 5;
-    LargerOrEqual = 6;
+    /*1~5 logic*/
+    LogicAnd      = 1;
+    LogicOr       = 2;
+    LogicNot      = 3;
+    /*11~20 comparison*/
+    Equal         = 11;
+    NotEqual      = 12;
+    Less          = 13;
+    LessOrEqual   = 14;
+    Larger        = 15;
+    LargerOrEqual = 16;
+}
+
+enum ExprType {
+    E_Invalid    = 0;
+
+    E_LogicAnd    = 1;
+    E_LogicOr     = 2;
+    E_LogicNot    = 3;
+
+    E_Equal       = 11; 
+    E_NotEqual    = 12;
+    E_Less        = 13;
+    E_LessOrEqual      = 14;
+    E_Larger           = 15;
+    E_LargerOrEqual    = 16;
+
+    E_Plus             = 21;
+    E_Minus            = 22;
+    E_Mult             = 23;
+    E_Div              = 24;
+
+    E_ExprCol     = 31;
+    E_ExprConst   = 32;
 }
 
 enum FieldType {
-	Assign			   = 0;
-    Plus               = 1;
-   	Minus              = 2;
-   	Mult               = 3;
-   	Div                = 4;
+    Assign           = 0;
+    Plus             = 1;
+    Minus            = 2;
+    Mult             = 3;
+    Div              = 4;
 }
 
 message Match {
@@ -171,13 +200,25 @@ message Match {
     MatchType match_type   = 3;
 }
 
+message MatchExt {
+    Expr expr      = 1;
+}
+
+message Expr {
+    ExprType expr_type      = 1;    // uint32
+    uint32 expr_func        = 2;    // reserve
+    metapb.Column column    = 3;    // left in optimization
+    bytes value             = 4;    // maybe left or right, but right in optimization
+    repeated Expr  child    = 5;    // alwayse 2 expr left and right, but LogicNot
+}
+
 message Limit {
     uint64   offset     = 1;
     uint64   count      = 2;
 }
 
 message DsSelectRequest {
-    RequestHeader header                = 1;
+    RequestHeader header              = 1;
     SelectRequest req                 = 2;
 }
 
@@ -189,11 +230,12 @@ message SelectRequest {
     repeated metapb.Column group_bys    = 5;       // group by column ids
     Limit limit                         = 6;       // max range query num, 0 means no limit
 
-    timestamp.Timestamp timestamp       =  7;    // // timestamp
+    timestamp.Timestamp timestamp       = 7;       // timestamp
+    MatchExt ext_filter                 = 10;      // extend where condition
 }
 
 message Row {
-    bytes key                    = 1;              // encoded group by columns(pk if group-by not exist) value 
+    bytes key                    = 1;              // encoded group by columns(pk if group-by not exist) value
     bytes fields                 = 2;              //  encoded fields
     repeated int64 aggred_counts = 3;              // aggregated row count(for avg)
 }
@@ -291,7 +333,7 @@ message UpdateRequest {
 
 message DsUpdateRequest {
     RequestHeader header = 1;
-    UpdateRequest req  = 2;
+    UpdateRequest req    = 2;
 }
 
 message UpdateResponse {

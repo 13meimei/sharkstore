@@ -246,6 +246,11 @@ Status matchRow(const TxnRowValue& row, const std::vector<kvrpcpb::Match>& filte
     return Status::OK();
 }
 
+Status matchRow(const TxnRowValue& row, const std::shared_ptr<CWhereExpr> filter, bool& matched) {
+    matched = filter->Filter(row);
+    return Status::OK();
+}
+
 
 } /* namespace storage */
 } /* namespace dataserver */

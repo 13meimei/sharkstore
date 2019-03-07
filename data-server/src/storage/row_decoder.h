@@ -6,6 +6,7 @@ _Pragma("once");
 #include "base/status.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/metapb.pb.h"
+#include "where_expr.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -13,6 +14,7 @@ namespace storage {
 
 struct FieldValue;
 struct FieldUpdate;
+class CWhereExpr;
 
 class RowResult {
 public:
@@ -69,9 +71,14 @@ public:
 
     RowDecoder(
         const std::vector<metapb::Column>& primary_keys,
-        const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField>&
-            field_list,
+        const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField>& field_list,
         const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches);
+
+    RowDecoder(
+            const std::vector<metapb::Column>& primary_keys,
+            const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField>& field_list,
+            const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches,
+            const ::kvrpcpb::MatchExt& match_ext);
 
     ~RowDecoder();
 
@@ -88,6 +95,9 @@ public:
 
     std::string DebugString() const;
 
+    bool isExprValid() const {
+        return (where_expr_ != nullptr);
+    }
 private:
     Status decodePrimaryKeys(const std::string& key, RowResult* result);
 
@@ -95,6 +105,7 @@ private:
     const std::vector<metapb::Column>& primary_keys_;
     std::map<uint64_t, metapb::Column> cols_;
     std::vector<kvrpcpb::Match> filters_;
+    std::shared_ptr<CWhereExpr>  where_expr_{nullptr};
 
     std::map<uint64_t, kvrpcpb::Field> update_fields_;
 };
