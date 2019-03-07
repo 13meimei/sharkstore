@@ -325,6 +325,13 @@ TxnErrorPtr Store::decidePrimary(const txnpb::DecideRequest& req, uint64_t& byte
         return newTxnConflictErr(req.txn_id(), value.txn_id());
     }
 
+    // assign secondary_keys in recover mode
+    if (req.recover()) {
+        for (const auto& skey: value.secondary_keys()) {
+            resp->add_secondary_keys(skey);
+        }
+    }
+
     if (value.txn_status() != txnpb::INIT) {
         if (value.txn_status() != req.status()) {
             return newStatusConflictErr(value.txn_status());
@@ -350,12 +357,6 @@ TxnErrorPtr Store::decidePrimary(const txnpb::DecideRequest& req, uint64_t& byte
         }
     }
 
-    // assign secondary_keys in recover mode
-    if (req.recover()) {
-        for (const auto& skey: value.secondary_keys()) {
-            resp->add_secondary_keys(skey);
-        }
-    }
     return nullptr;
 }
 
