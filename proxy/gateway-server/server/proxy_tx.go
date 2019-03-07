@@ -87,7 +87,7 @@ func (p *Proxy) handleRecoverTxs(expiredTxs []*txnpb.LockError, t *Table) (err e
 		if lockInfo.GetIsPrimary() {
 			e = p.recoverFromPrimary(subCtx, txId, primaryKey, lockInfo.GetSecondaryKeys(), false, t)
 		} else {
-			_, e = p.recoverFromSecondary(subCtx, txId, primaryKey, table, true)
+			_, e, _ = p.recoverFromSecondary(subCtx, txId, primaryKey, table, true)
 		}
 		if e != nil {
 			log.Error("recover expired tx %v err %v", txId, e)
@@ -117,12 +117,12 @@ func (p *Proxy) handleRecoverTxs(expiredTxs []*txnpb.LockError, t *Table) (err e
 func (p *Proxy) recoverFromPrimary(ctx *dskv.ReqContext, txId string, primaryKey []byte,
 	secondaryKeys [][]byte, recover bool, t *Table) (err error) {
 
-	var status = txnpb.TxnStatus_ABORTED
+	var status txnpb.TxnStatus
 	//first try to decide expired tx to aborted status
 	if recover {
-		status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, recover, t)
+		status, secondaryKeys, err = p.tryRollbackTxnForPrimary(ctx, txId, primaryKey, recover, t)
 	} else {
-		status, _, err = p.tryRollbackTxn(ctx, txId, primaryKey, recover, t)
+		status, _, err = p.tryRollbackTxnForPrimary(ctx, txId, primaryKey, recover, t)
 	}
 	if err != nil {
 		return
@@ -142,16 +142,14 @@ func (p *Proxy) recoverFromPrimary(ctx *dskv.ReqContext, txId string, primaryKey
 	return p.handleCleanup(ctx, txId, primaryKey, t)
 }
 
-func (p *Proxy) recoverFromSecondary(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table, sync bool) (txnpb.TxnStatus, error) {
-	var (
-		status        = txnpb.TxnStatus_ABORTED
-		err           error
-		secondaryKeys [][]byte
-	)
+func (p *Proxy) recoverFromSecondary(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table, sync bool) (
+	status txnpb.TxnStatus, err error, txErr *txnpb.TxnError) {
+
+	var secondaryKeys [][]byte
 	//first try to decide expired tx to aborted status
-	status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, true, t)
-	if err != nil {
-		return status, err
+	status, secondaryKeys, err, txErr = p.tryRollbackTxnForSecondary(ctx, txId, primaryKey, true, t)
+	if err != nil || txErr != nil {
+		return
 	}
 	if status == txnpb.TxnStatus_COMMITTED {
 		log.Warn("rollback txn %v error, because ds let commit", txId)
@@ -163,10 +161,11 @@ func (p *Proxy) recoverFromSecondary(ctx *dskv.ReqContext, txId string, primaryK
 		//decide all secondary keys
 		err = p.decideSecondaryKeys(ctx, txId, status, secondaryKeys, t)
 		if err != nil {
-			return status, err
+			return
 		}
 		//clear up
-		return status, p.handleCleanup(ctx, txId, primaryKey, t)
+		err = p.handleCleanup(ctx, txId, primaryKey, t)
+		return
 	}
 	//todo opt
 	go func(p *Proxy, txId string, primaryKey []byte, sta txnpb.TxnStatus) {
@@ -177,7 +176,7 @@ func (p *Proxy) recoverFromSecondary(ctx *dskv.ReqContext, txId string, primaryK
 		//clear up
 		p.handleCleanup(ctx, txId, primaryKey, t)
 	}(p, txId, primaryKey, status)
-	return status, err
+	return
 }
 
 func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status txnpb.TxnStatus, secondaryKeys [][]byte, t *Table) (err error) {
@@ -252,7 +251,7 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 	}
 }
 
-func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, primaryKey []byte, recover bool, t *Table) (
+func (p *Proxy) tryRollbackTxnForPrimary(ctx *dskv.ReqContext, txId string, primaryKey []byte, recover bool, t *Table) (
 	status txnpb.TxnStatus, secondaryKeys [][]byte, err error) {
 
 	log.Debug("try to rollback tx[%v]to aborted", txId)
@@ -279,6 +278,47 @@ func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, primaryKey []b
 			log.Info("recover: retry to aborted txn[%v] primary intent and return status conflict, so router will commit", txId)
 		case txnpb.TxnError_NOT_FOUND, txnpb.TxnError_TXN_CONFLICT:
 			log.Warn("recover: retry to aborted txn[%v] primary intent and return err %v, ignore err", txId, convertTxnErr(resp.GetErr()))
+			return
+		default:
+			err = convertTxnErr(resp.Err)
+			return
+		}
+	}
+	secondaryKeys = resp.GetSecondaryKeys()
+	return
+}
+
+func (p *Proxy) tryRollbackTxnForSecondary(ctx *dskv.ReqContext, txId string, primaryKey []byte, recover bool, t *Table) (
+	status txnpb.TxnStatus, secondaryKeys [][]byte, err error, txErr *txnpb.TxnError) {
+
+	log.Debug("try to rollback tx[%v]to aborted", txId)
+	status = txnpb.TxnStatus_ABORTED
+	var (
+		req = &txnpb.DecideRequest{
+			TxnId:     txId,
+			Status:    status,
+			Keys:      [][]byte{primaryKey},
+			Recover:   true,
+			IsPrimary: true,
+		}
+		resp *txnpb.DecideResponse
+	)
+	resp, err = p.handleDecidePrimary(ctx, req, t)
+	if err != nil {
+		return
+	}
+	log.Info("try to rollback txn %v for secondary resp: %v", txId, resp)
+	if resp.GetErr() != nil {
+		switch resp.GetErr().GetErrType() {
+		case txnpb.TxnError_STATUS_CONFLICT:
+			//failure, commit
+			status = txnpb.TxnStatus_COMMITTED
+			log.Info("recover: retry to aborted txn[%v] primary intent and return status conflict, so router will commit", txId)
+		case txnpb.TxnError_TXN_CONFLICT:
+			log.Warn("recover: retry to aborted txn[%v] primary intent and return txn conflict, ignore err", txId)
+			return
+		case txnpb.TxnError_NOT_FOUND:
+			txErr = resp.GetErr()
 			return
 		default:
 			err = convertTxnErr(resp.Err)
@@ -331,6 +371,7 @@ func (p *Proxy) handleDecidePrimary(ctx *dskv.ReqContext, req *txnpb.DecideReque
 		}
 		break
 	}
+	log.Info("decide primary response: %v, err: %v", resp, err)
 	return resp, err
 }
 
@@ -373,17 +414,22 @@ func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []by
 	}
 }
 
-func (p *Proxy) handleGetLockInfo(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (resp *txnpb.GetLockInfoResponse, err error) {
+func (p *Proxy) handleGetLockInfo(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (status txnpb.TxnStatus, err error, txErr *txnpb.TxnError) {
 	log.Debug("start to getLockInfo for tx %v", txId)
-	req := &txnpb.GetLockInfoRequest{
-		TxnId: txId,
-		Key:   primaryKey,
-	}
+
+	var (
+		req = &txnpb.GetLockInfoRequest{
+			TxnId: txId,
+			Key:   primaryKey,
+		}
+		resp        *txnpb.GetLockInfoResponse
+		errForRetry error
+	)
+
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
 	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 
-	var errForRetry error
 	for {
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
@@ -397,6 +443,15 @@ func (p *Proxy) handleGetLockInfo(ctx *dskv.ReqContext, txId string, primaryKey 
 			errForRetry = err
 			continue
 		}
+		if resp.GetErr() != nil {
+			if resp.GetErr().GetErrType() == txnpb.TxnError_NOT_FOUND {
+				txErr = resp.GetErr()
+			} else {
+				err = convertTxnErr(resp.GetErr())
+			}
+			return
+		}
+		status = resp.GetInfo().GetStatus()
 		return
 	}
 }
