@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	TXN_INTENT_MAX_LENGTH = 100
-	TXN_DEFAULT_TIMEOUT uint64 = 50
+	TXN_INTENT_MAX_LENGTH        = 100
+	TXN_DEFAULT_TIMEOUT   uint64 = 50
 )
 
 func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t *Table) (err error) {
@@ -147,18 +147,17 @@ func (p *Proxy) recoverFromSecondary(ctx *dskv.ReqContext, txId string, primaryK
 		status        = txnpb.TxnStatus_ABORTED
 		err           error
 		secondaryKeys [][]byte
-		recover       = true
 	)
 	//first try to decide expired tx to aborted status
-	status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, recover, t)
+	status, secondaryKeys, err = p.tryRollbackTxn(ctx, txId, primaryKey, true, t)
 	if err != nil {
 		return status, err
 	}
 	if status == txnpb.TxnStatus_COMMITTED {
 		log.Warn("rollback txn %v error, because ds let commit", txId)
 	}
-	log.Debug("[from secondary key]start to recover tx: %v  to status: %v, secondary key size:%v, recover: %v",
-		txId, status, len(secondaryKeys), recover)
+	log.Debug("[from secondary key]start to recover tx: %v  to status: %v, secondary key size:%v, recover: true",
+		txId, status, len(secondaryKeys))
 	if sync {
 		//todo opt
 		//decide all secondary keys
@@ -192,7 +191,7 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 		errForRetry    error
 	)
 	doDecideFunc := func(proxy *Proxy, subCtx *dskv.ReqContext, txId string, subKeys [][]byte, table *Table, handleChannel chan *TxnDealHandle) {
-		log.Debug("[recover]doDecideFunc: decide tx %v secondary key %v", txId, subKeys)
+		log.Debug("doDecideFunc: decide tx %v secondary intents %v to status %v", txId, subKeys, status)
 		var (
 			req = &txnpb.DecideRequest{
 				TxnId:  txId,
@@ -205,6 +204,7 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 		resp, e = proxy.handleDecide(subCtx, req, table)
 		if e != nil {
 			handleChannel <- &TxnDealHandle{keys: subKeys, err: e}
+			return
 		}
 		if resp.Err != nil {
 			e = convertTxnErr(resp.Err)
@@ -217,7 +217,7 @@ func (p *Proxy) decideSecondaryKeys(ctx *dskv.ReqContext, txId string, status tx
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
 			if errForRetry != nil {
-				log.Error("[recover]%s execute secondary intents timeout", ctx)
+				log.Error("%s decide secondary intents timeout", ctx)
 				return
 			}
 		}
@@ -259,44 +259,34 @@ func (p *Proxy) tryRollbackTxn(ctx *dskv.ReqContext, txId string, primaryKey []b
 	status = txnpb.TxnStatus_ABORTED
 	var (
 		req = &txnpb.DecideRequest{
-			TxnId:   txId,
-			Status:  status,
-			Keys:    [][]byte{primaryKey},
-			Recover: recover,
+			TxnId:     txId,
+			Status:    status,
+			Keys:      [][]byte{primaryKey},
+			Recover:   recover,
+			IsPrimary: true,
 		}
-		resp        *txnpb.DecideResponse
-		errForRetry error
+		resp *txnpb.DecideResponse
 	)
-	for {
-		if errForRetry != nil {
-			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
-			if errForRetry != nil {
-				log.Error("[recover]%s execute timeout", ctx)
-				return
-			}
-		}
-		resp, err = p.handleDecide(ctx, req, t)
-		if err != nil {
-			if err == dskv.ErrRouteChange {
-				errForRetry = err
-				continue
-			}
-			return
-		}
-		if resp.GetErr() != nil {
-			switch resp.Err.GetErrType() {
-			case txnpb.TxnError_STATUS_CONFLICT:
-				//failure, commit
-				status = txnpb.TxnStatus_COMMITTED
-				log.Info("handleRecover: txn[%v] retry to aborted and return status conflict", txId)
-			default:
-				err = convertTxnErr(resp.Err)
-				return
-			}
-		}
-		secondaryKeys = resp.GetSecondaryKeys()
+	resp, err = p.handleDecidePrimary(ctx, req, t)
+	if err != nil {
 		return
 	}
+	if resp.GetErr() != nil {
+		switch resp.Err.GetErrType() {
+		case txnpb.TxnError_STATUS_CONFLICT:
+			//failure, commit
+			status = txnpb.TxnStatus_COMMITTED
+			log.Info("recover: retry to aborted txn[%v] primary intent and return status conflict, so router will commit", txId)
+		case txnpb.TxnError_NOT_FOUND, txnpb.TxnError_TXN_CONFLICT:
+			log.Warn("recover: retry to aborted txn[%v] primary intent and return err %v, ignore err", txId, convertTxnErr(resp.GetErr()))
+			return
+		default:
+			err = convertTxnErr(resp.Err)
+			return
+		}
+	}
+	secondaryKeys = resp.GetSecondaryKeys()
+	return
 }
 
 func (p *Proxy) handleDecide(ctx *dskv.ReqContext, req *txnpb.DecideRequest, t *Table) (*txnpb.DecideResponse, error) {
@@ -308,6 +298,40 @@ func (p *Proxy) handleDecide(ctx *dskv.ReqContext, req *txnpb.DecideRequest, t *
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (p *Proxy) handleDecidePrimary(ctx *dskv.ReqContext, req *txnpb.DecideRequest, t *Table) (*txnpb.DecideResponse, error) {
+	var (
+		resp        *txnpb.DecideResponse
+		err         error
+		errForRetry error
+	)
+
+	proxy := dskv.GetKvProxy()
+	defer dskv.PutKvProxy(proxy)
+	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+
+	//todo refactor and abstract to func call about error: ErrRouteChange
+
+	/**
+		loop solve: occur ErrRouteChange when decide primary row
+	 */
+	for {
+		if errForRetry != nil {
+			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
+			if errForRetry != nil {
+				log.Error("%s decide primary intent timeout", ctx)
+				break
+			}
+		}
+		resp, err = proxy.TxDecide(ctx, req, req.GetKeys()[0])
+		if err != nil && err == dskv.ErrRouteChange {
+			errForRetry = err
+			continue
+		}
+		break
+	}
+	return resp, err
 }
 
 func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []byte, t *Table) (err error) {
@@ -396,6 +420,9 @@ func convertTxnErr(txError *txnpb.TxnError) error {
 		err = fmt.Errorf("NOT FOUND")
 	case txnpb.TxnError_NOT_UNIQUE:
 		err = fmt.Errorf("NOT UNIQUE")
+	case txnpb.TxnError_TXN_CONFLICT:
+		conflictErr := txError.GetTxnConflict()
+		err = fmt.Errorf("TXN CONFLICT, expectedTxn: %v, actualTxn:%v", conflictErr.GetExpectedTxnId(), conflictErr.GetActualTxnId())
 	default:
 		err = fmt.Errorf("UNKNOWN TXN Err")
 	}
