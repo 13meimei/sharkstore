@@ -44,9 +44,12 @@ MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
+
+# third-party
 include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/rapidjson-1.1.0/include)
-
+add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/mem_store)
+include_directories(${PROJECT_SOURCE_DIR}/third-party/mem_store/include)
 
 # use intel tbb
 OPTION (ENABLE_TBB "Use Intel TBB" ON)
@@ -284,10 +287,10 @@ set (depend_LIBRARYS
     ${GRPC_CPP_LIB}
     ${ROCKSDB_LIB}
     ${FASTCOMMON_LIB}
+    skiplist
     pthread
     dl
     z
-    skiplist
 )
 if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)

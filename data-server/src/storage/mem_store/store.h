@@ -1,6 +1,6 @@
 _Pragma("once");
 
-#include <mem_store/mem_store.h>
+#include "mem_store/mem_store.h"
 
 #include "iterator.h"
 #include "storage/db_interface.h"
