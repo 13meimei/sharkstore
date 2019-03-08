@@ -53,7 +53,11 @@ Status SkipListDBImpl::DeleteRange(void *column_family,
                                const std::string &begin_key, const std::string &end_key) {
     auto cf = static_cast<ColumnFamily *>(column_family);
     auto s = cf->DeleteRange(begin_key, end_key);
-    return Status(static_cast<Status::Code>(s));
+    if (s >= 0) {
+        return Status::OK();
+    } else {
+        return Status(Status::kIOError, "DeleteRange", std::to_string(s));
+    }
 }
 
 void* SkipListDBImpl::DefaultColumnFamily() {
