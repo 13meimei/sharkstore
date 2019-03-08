@@ -1,0 +1,8 @@
+add_executable(cpp_set_example cpp_set_example.cc)
+target_link_libraries(cpp_set_example skiplist)
+
+add_executable(cpp_map_example cpp_map_example.cc)
+target_link_libraries(cpp_map_example skiplist)
+
+add_executable(pure_c_example pure_c_example.c)
+target_link_libraries(pure_c_example skiplist)

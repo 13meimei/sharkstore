@@ -71,6 +71,14 @@ func hash(s string) uint32 {
 	return h.Sum32()
 }
 
+func makeString(length int) string {
+	var result []byte
+	for i := 0; i < length; i++ {
+		result = append(result, byte('a'))
+	}
+	return string(result)
+}
+
 func randomString(length int) string {
 	str := "!@#$^&*()_+<>?:{}|;.,/][-=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	bytes := []byte(str)
@@ -171,6 +179,35 @@ func benchmark(s *server.Server) {
 	//check the elapsed time and correctness after deleting at blob_db level
 	if s.GetCfg().BenchConfig.Type == 6 {
 		go correct4BatchDelete(s)
+	}
+
+	// order insert
+	if s.GetCfg().BenchConfig.Type == 10 {
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			go insertOrder(s, concur, 0, ip)
+		}
+	}
+
+	// order insert and select
+	if s.GetCfg().BenchConfig.Type == 11 {
+		var wg sync.WaitGroup
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			wg.Add(1)
+			func(wg *sync.WaitGroup) {
+				defer wg.Done()
+				insertOrder(s, concur, 0, ip)
+			}(&wg)
+		}
+		wg.Wait()
+
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			wg.Add(1)
+			func(wg *sync.WaitGroup) {
+				defer wg.Done()
+				selectOrder(s, concur, 0, ip)
+			}(&wg)
+		}
+		wg.Wait()
 	}
 }
 
@@ -695,6 +732,46 @@ func createRowNoPk(userName, passWord, realName string) []interface{} {
 
 func getUserName(no int, ip string, threadNo int) string {
 	return fmt.Sprintf("%d-%s-%d", no, ip, threadNo)
+}
+
+func insertOrder(s *server.Server, threadNo, total int, ip string) {
+	real_name := makeString(s.GetCfg().BenchConfig.DataLen)
+	pass_word := "pw"
+	for no := 0; no < s.GetCfg().BenchConfig.SendNum; no++ {
+		user_name := getUserName(no, ip, threadNo)
+		h := hash(user_name) % 16384
+		rows := createRows(h, user_name, pass_word, real_name)
+		reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+		log.Debug("%v", reply)
+		if reply.Code == 0 {
+			atomic.AddInt64(&stat.lastCount, 1)
+		} else {
+			atomic.AddInt64(&stat.errCount, 1)
+			log.Warn("%v", reply)
+		}
+	}
+}
+
+func selectOrder(s *server.Server, threadNo, total int, ip string) {
+	pks := make(map[string]interface{})
+	for no := 0; no < s.GetCfg().BenchConfig.SendNum; no++ {
+		user_name := getUserName(no, ip, threadNo)
+		h := hash(user_name) % 16384
+		pks["user_name"] = user_name
+		pks["h"] = h
+		reply := api.Select(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, pks, nil)
+		log.Debug("userName %s, h %v, select result:%v", user_name, h, reply)
+		if reply.Code == 0 && len(reply.Values) > 0 {
+			atomic.AddInt64(&stat.lastSelCount, 1)
+		} else {
+			atomic.AddInt64(&stat.errSelCount, 1)
+			if reply.Code == 0 {
+				log.Debug("%v", reply)
+			} else {
+				log.Warn("execute failed, %v", reply)
+			}
+		}
+	}
 }
 
 func insertTestData(s *server.Server, threadNo, total int, ip string) {

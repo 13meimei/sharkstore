@@ -45,6 +45,12 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
 
+# third-party
+include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
+include_directories(${PROJECT_SOURCE_DIR}/third-party/rapidjson-1.1.0/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/mem_store)
+include_directories(${PROJECT_SOURCE_DIR}/third-party/mem_store/include)
+
 # use intel tbb
 OPTION (ENABLE_TBB "Use Intel TBB" ON)
 MESSAGE(STATUS ENABLE_TBB=${ENABLE_TBB})
@@ -214,12 +220,12 @@ set(SOURCES
     src/storage/row_fetcher.cpp
     src/storage/snapshot.cpp
     src/storage/store.cpp
-    src/storage/rocks_store/store.cpp
-    src/storage/rocks_store/iterator.cpp
-    src/storage/rocks_store/write_batch.cpp
-    src/storage/mem_store/store.cpp
-    src/storage/mem_store/iterator.cpp
-    src/storage/mem_store/write_batch.cpp
+    src/storage/db/rocksdb_impl/iterator.cpp
+    src/storage/db/rocksdb_impl/write_batch.cpp
+    src/storage/db/rocksdb_impl/rocksdb_impl.cpp
+    src/storage/db/skiplist_impl/iterator.cpp
+    src/storage/db/skiplist_impl/write_batch.cpp
+    src/storage/db/skiplist_impl/skiplist_impl.cpp
     src/storage/store_watch.cpp
     src/storage/where_expr.cpp
     src/storage/store_txn.cpp
@@ -281,10 +287,10 @@ set (depend_LIBRARYS
     ${GRPC_CPP_LIB}
     ${ROCKSDB_LIB}
     ${FASTCOMMON_LIB}
+    skiplist
     pthread
     dl
     z
-    skiplist
 )
 if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)

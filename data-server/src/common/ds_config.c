@@ -225,6 +225,13 @@ void print_rocksdb_config() {
               ds_config.rocksdb_config.enable_stats,
               ds_config.rocksdb_config.enable_debug_log
               );
+
+    if (ds_config.rocksdb_config.ttl > 0) {
+        FLOG_WARN("rocksdb ttl enabled. ttl=%d", ds_config.rocksdb_config.ttl);
+    }
+    if (ds_config.rocksdb_config.disable_auto_compactions) {
+        FLOG_WARN("rocksdb auto compactions is disabled.");
+    }
 }
 
 static int load_range_config(IniContext *ini_context) {

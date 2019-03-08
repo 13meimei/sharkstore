@@ -8,8 +8,8 @@
 #include "field_value.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/redispb.pb.h"
+#include "db/db_interface.h"
 #include "row_fetcher.h"
-#include "db_interface.h"
 #include "snapshot.h"
 
 namespace sharkstore {
@@ -72,7 +72,37 @@ Status Store::Delete(const std::string& key) {
 }
 
 Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
-    return db_->Insert(this, req, affected);
+    auto batch = db_->NewBatch();
+    std::string value;
+    *affected = 0;
+    uint64_t bytes_written = 0;
+    Status s;
+    bool check_dup = req.check_duplicate();
+    for (int i = 0; i < req.rows_size(); ++i) {
+        const kvrpcpb::KeyValue &kv = req.rows(i);
+        if (check_dup) {
+            s = db_->Get(kv.key(), &value);
+            if (s.ok()) {
+                return Status(Status::kDuplicate);
+            } else if (s.code() != Status::kNotFound) {
+                return Status(Status::kIOError, "get", s.ToString());
+            }
+        }
+        s = batch->Put(kv.key(), kv.value());
+        if (!s.ok()) {
+            return s;
+        }
+        *affected = *affected + 1;
+        bytes_written += (kv.key().size(), kv.value().size());
+    }
+
+    s = db_->Write(batch.get());
+    if (!s.ok()) {
+        return s;
+    } else {
+        addMetricWrite(*affected, bytes_written);
+        return Status::OK();
+    }
 }
 
 Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint64_t* update_bytes) {
@@ -99,7 +129,6 @@ Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint
 
                 s = updateRow(&kv, *r);
                 if (!s.ok()) {
-                    delete batch;
                     return s;
                 }
 
@@ -113,14 +142,13 @@ Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint
     }
 
     if (s.ok()) {
-        auto rs = db_->Write(batch);
+        auto rs = db_->Write(batch.get());
         if (!rs.ok()) {
             s = Status(Status::kIOError, "update batch write", rs.ToString());
         }
     }
 
     *update_bytes = bytes_written;
-    delete batch;
     return s;
 }
 
@@ -402,7 +430,7 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
     }
 
     if (s.ok()) {
-        auto rs = db_->Write(batch);
+        auto rs = db_->Write(batch.get());
         if (!rs.ok()) {
             s = Status(Status::kIOError, "delete batch write", rs.ToString());
         } else {
@@ -410,7 +438,6 @@ Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
         }
     }
 
-    delete batch;
     return s;
 }
 
@@ -487,13 +514,11 @@ Status Store::BatchDelete(const std::vector<std::string>& keys) {
         ++keys_written;
         bytes_written += key.size();
     }
-    auto ret = db_->Write(batch);
+    auto ret = db_->Write(batch.get());
     if (ret.ok()) {
         addMetricWrite(keys_written, bytes_written);
-        delete batch;
         return Status::OK();
     } else {
-        delete batch;
         return Status(Status::kIOError, "BatchDelete", ret.ToString());
     }
 }
@@ -518,13 +543,11 @@ Status Store::BatchSet(
         ++keys_written;
         bytes_written += (kv.first.size() + kv.second.size());
     }
-    auto ret = db_->Write(batch);
+    auto ret = db_->Write(batch.get());
     if (ret.ok()) {
         addMetricWrite(keys_written, bytes_written);
-        delete batch;
         return Status::OK();
     } else {
-        delete batch;
         return Status(Status::kIOError, "BatchSet", ret.ToString());
     }
 }
@@ -583,12 +606,10 @@ Status Store::ApplySnapshot(const std::vector<std::string>& datas) {
                     std::to_string(p.cf_type()));
         }
     }
-    auto ret = db_->Write(batch);
+    auto ret = db_->Write(batch.get());
     if (!ret.ok()) {
-        delete batch;
         return Status(Status::kIOError, "snap batch write", ret.ToString());
     } else {
-        delete batch;
         return Status::OK();
     }
 }

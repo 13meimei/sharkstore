@@ -8,7 +8,7 @@ _Pragma("once");
 #include "stats.h"
 #include "split_policy.h"
 #include "server/context_server.h"
-#include "storage/db_interface.h"
+#include "storage/db/db_interface.h"
 
 namespace sharkstore {
 

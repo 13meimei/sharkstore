@@ -2,14 +2,14 @@ _Pragma("once");
 
 #include <mutex>
 
-#include "iterator_interface.h"
 #include "metric.h"
 #include "range/split_policy.h"
 #include "proto/gen/kvrpcpb.pb.h"
 #include "proto/gen/watchpb.pb.h"
 #include "proto/gen/txn.pb.h"
 #include "field_value.h"
-#include "db_interface.h"
+#include "db/db_interface.h"
+#include "db/iterator_interface.h"
 #include "raft/snapshot.h"
 
 // test fixture forward declare for friend class

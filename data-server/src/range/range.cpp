@@ -1,5 +1,4 @@
 #include "range.h"
-#include <common/ds_config.h>
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include "common/ds_config.h"
@@ -9,8 +8,6 @@
 #include "storage/meta_store.h"
 
 #include "range_logger.h"
-#include "storage/mem_store/store.h"
-#include <mem_store/mem_store.h>
 
 namespace sharkstore {
 namespace dataserver {

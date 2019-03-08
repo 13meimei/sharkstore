@@ -4,6 +4,45 @@
 #include <limits.h>
 #include "frame/sf_config.h"
 
+struct rocksdb_config_t {
+    char path[PATH_MAX];
+    size_t block_cache_size; // default: 1024MB
+    size_t row_cache_size;
+    size_t block_size; // default: 16K
+    int max_open_files;
+    size_t bytes_per_sync;
+    size_t write_buffer_size;
+    int max_write_buffer_number;
+    int min_write_buffer_number_to_merge;
+    size_t max_bytes_for_level_base;
+    int max_bytes_for_level_multiplier;
+    size_t target_file_size_base;
+    int target_file_size_multiplier;
+    int max_background_flushes;
+    int max_background_compactions;
+    size_t background_rate_limit;
+    bool disable_auto_compactions;
+    bool read_checksum;
+    int level0_file_num_compaction_trigger;
+    int level0_slowdown_writes_trigger;
+    int level0_stop_writes_trigger;
+    bool disable_wal;
+    bool cache_index_and_filter_blocks;
+    int compression;
+    int storage_type;
+    int min_blob_size;
+    size_t blob_file_size;
+    bool enable_garbage_collection;
+    int blob_gc_percent;
+    int blob_compression;
+    size_t blob_cache_size;
+    uint64_t blob_ttl_range; // in seconds
+    int ttl;
+    bool enable_stats;
+    bool enable_debug_log;
+};
+
+
 typedef struct ds_config_s {
     int fast_worker_num;  // fast worker thread num; eg. put/get command
     int slow_worker_num;  // fast worker thread num; eg. put/get command
@@ -11,49 +50,13 @@ typedef struct ds_config_s {
     int task_timeout;  // defualt 3,000ms
 
     struct {
-        char path[PATH_MAX];
-        size_t block_cache_size; // default: 1024MB
-        size_t row_cache_size;
-        size_t block_size; // default: 16K
-        int max_open_files;
-        size_t bytes_per_sync;
-        size_t write_buffer_size;
-        int max_write_buffer_number;
-        int min_write_buffer_number_to_merge;
-        size_t max_bytes_for_level_base;
-        int max_bytes_for_level_multiplier;
-        size_t target_file_size_base;
-        int target_file_size_multiplier;
-        int max_background_flushes;
-        int max_background_compactions;
-        size_t background_rate_limit;
-        bool disable_auto_compactions;
-        bool read_checksum;
-        int level0_file_num_compaction_trigger;
-        int level0_slowdown_writes_trigger;
-        int level0_stop_writes_trigger;
-        bool disable_wal;
-        bool cache_index_and_filter_blocks;
-        int compression;
-        int storage_type;
-        int min_blob_size;
-        size_t blob_file_size;
-        bool enable_garbage_collection;
-        int blob_gc_percent;
-        int blob_compression;
-        size_t blob_cache_size;
-        uint64_t blob_ttl_range; // in seconds
-        int ttl;
-        bool enable_stats;
-        bool enable_debug_log;
-    } rocksdb_config;
-
-    struct {
         int node_interval;   // node heartbeat interval
         int range_interval;  // range heartbeat interval
         int master_num;      // master server num
         char **master_host;  // master server host:port
     } hb_config;
+
+    struct rocksdb_config_t rocksdb_config;
 
     struct {
         bool recover_skip_fail;

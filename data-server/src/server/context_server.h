@@ -2,7 +2,7 @@
 #define __CONTEXT_SERVER_H__
 
 #include "raft/server.h"
-#include "storage/db_interface.h"
+#include "storage/db/db_interface.h"
 
 namespace sharkstore {
 namespace dataserver {
