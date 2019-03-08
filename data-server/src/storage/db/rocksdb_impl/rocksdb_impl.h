@@ -25,6 +25,7 @@ public:
     Status Get(const std::string& key, std::string* value) override;
     Status Get(void* column_family, const std::string& key, std::string* value) override;
     Status Put(const std::string& key, const std::string& value) override;
+    Status Put(void* column_family, const std::string& key, const std::string& value) override;
     Status Delete(const std::string& key) override;
     Status Delete(void* column_family, const std::string& key) override;
     Status DeleteRange(void* column_family, const std::string& begin_key, const std::string& end_key) override;

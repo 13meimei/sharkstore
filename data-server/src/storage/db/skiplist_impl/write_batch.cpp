@@ -8,24 +8,54 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-MemWriteBatch::MemWriteBatch(SkipListDBImpl* db): db_(db) {
-
+Status SkipListWriteBatch::Put(const std::string &key, const std::string &value) {
+    return Put(nullptr, key, value);
 }
 
-Status MemWriteBatch::Put(const std::string &key, const std::string &value) {
-    return Status(Status::kOk);
+Status SkipListWriteBatch::Put(void* column_family, const std::string& key, const std::string& value) {
+    auto ent = std::unique_ptr<BatchEntry>(new BatchEntry);
+    ent->cf = column_family;
+    ent->type = EntryType::kPut;
+    ent->key = key;
+    ent->value = value;
+    entries_.push_back(std::move(ent));
+    return Status::OK();
 }
 
-Status MemWriteBatch::Put(void* column_family, const std::string& key, const std::string& value) {
-    return Status(Status::kOk);
+Status SkipListWriteBatch::Delete(const std::string &key) {
+    return Delete(nullptr, key);
 }
 
-Status MemWriteBatch::Delete(const std::string &key) {
-    return Status(Status::kOk);
+Status SkipListWriteBatch::Delete(void* column_family, const std::string& key) {
+    auto ent = std::unique_ptr<BatchEntry>(new BatchEntry);
+    ent->cf = column_family;
+    ent->type = EntryType::kDelete;
+    ent->key = key;
+    entries_.push_back(std::move(ent));
+    return Status::OK();
 }
 
-Status MemWriteBatch::Delete(void* column_family, const std::string& key) {
-    return Status(Status::kOk);
+Status SkipListWriteBatch::WriteTo(SkipListDBImpl* db) {
+    Status s;
+    for (const auto& ent: entries_) {
+        if (ent->type == EntryType::kPut) {
+            if (ent->cf == nullptr) {
+                s = db->Put(ent->key, ent->value);
+            } else {
+                s = db->Put(ent->cf, ent->key, ent->value);
+            }
+        } else {
+            if (ent->cf == nullptr) {
+                s = db->Delete(ent->key);
+            } else {
+                s = db->Delete(ent->cf, ent->key);
+            }
+        }
+        if (!s.ok()) {
+            return s;
+        }
+    }
+    return s;
 }
 
 }

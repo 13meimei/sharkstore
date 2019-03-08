@@ -28,6 +28,9 @@ public:
     virtual Status Get(const std::string& key, std::string* value) = 0;
     virtual Status Get(void* column_family,
                        const std::string& key, std::string* value) = 0;
+
+    virtual Status Put(void* column_family,
+                       const std::string& key, const std::string& value) = 0;
     virtual Status Put(const std::string& key, const std::string& value) = 0;
 
     virtual std::unique_ptr<WriteBatchInterface> NewBatch() = 0;
@@ -35,8 +38,10 @@ public:
 
     virtual Status Delete(const std::string& key) = 0;
     virtual Status Delete(void* column_family, const std::string& key) = 0;
+
     virtual Status DeleteRange(void* column_family,
                                const std::string& begin_key, const std::string& end_key) = 0;
+
     virtual void* DefaultColumnFamily() = 0;
     virtual void* TxnCFHandle() = 0;
 

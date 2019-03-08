@@ -235,6 +235,15 @@ Status RocksDBImpl::Put(const std::string &key, const std::string &value) {
     }
 }
 
+Status RocksDBImpl::Put(void* column_family, const std::string& key, const std::string& value) {
+    auto s = db_->Put(write_options_, static_cast<rocksdb::ColumnFamilyHandle*>(column_family), key, value);
+    if (s.ok()) {
+        return Status::OK();
+    } else {
+        return Status(Status::kIOError, "PUT", s.ToString());
+    }
+}
+
 std::unique_ptr<WriteBatchInterface> RocksDBImpl::NewBatch() {
     return std::unique_ptr<WriteBatchInterface>(new RocksWriteBatch);
 }

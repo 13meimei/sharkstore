@@ -12,34 +12,40 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-class WriteBatch;
-class MemWriteBatch : public WriteBatchInterface {
-public:
-    MemWriteBatch() = delete;
-    MemWriteBatch(SkipListDBImpl* db);
-    ~MemWriteBatch() = default;
+class SkipListDBImpl;
 
-    Status Put(const std::string &key, const std::string &value);
-    Status Put(void* column_family, const std::string& key, const std::string& value);
-    Status Delete(const std::string &key);
-    Status Delete(void* column_family, const std::string& key);
+// TODO: limit max batch size
+class SkipListWriteBatch : public WriteBatchInterface {
+public:
+    SkipListWriteBatch() = default;
+    ~SkipListWriteBatch() = default;
+
+    Status Put(const std::string &key, const std::string &value) override;
+    Status Put(void* column_family, const std::string& key, const std::string& value) override;
+    Status Delete(const std::string &key) override;
+    Status Delete(void* column_family, const std::string& key) override;
+
+    Status WriteTo(SkipListDBImpl* db);
 
 private:
-//    WriteBatch batch_;
-    SkipListDBImpl* db_;
-};
+    enum class EntryType {
+        kPut,
+        kDelete,
+    };
 
-class WriteBatch {
-public:
-    WriteBatch() = default;
-    WriteBatch(const WriteBatch& batch) = delete;
-    WriteBatch& operator=(const WriteBatch& batch) = delete;
-    ~WriteBatch() = default;
+    struct BatchEntry {
+        void *cf = nullptr;
+        EntryType type = EntryType::kPut;
+        std::string key;
+        std::string value;
+    };
 
 private:
-    std::vector<std::string, std::string> batch_;
+    std::vector<std::unique_ptr<BatchEntry>> entries_;
 };
 
-}}}
+}
+}
+}
 
 #endif //SHARKSTORE_DS_WRITE_BATCH_H

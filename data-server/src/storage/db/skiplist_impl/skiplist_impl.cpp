@@ -23,9 +23,19 @@ Status SkipListDBImpl::Put(const std::string &key, const std::string &value) {
     return Status(static_cast<Status::Code>(s));
 }
 
+Status SkipListDBImpl::Put(void* column_family, const std::string& key, const std::string& value) {
+    auto cf = static_cast<ColumnFamily *>(column_family);
+    auto s = cf->Put(key, value);
+    return Status(static_cast<Status::Code>(s));
+}
+
 Status SkipListDBImpl::Write(WriteBatchInterface* batch) {
-    // todo write batch
-    return Status(Status::kOk);
+    auto batch_impl = dynamic_cast<SkipListWriteBatch*>(batch);
+    if (batch_impl != nullptr) {
+        return batch_impl->WriteTo(this);
+    } else {
+        return Status(Status::kInvalidArgument, "Write", "invalid batch");
+    }
 }
 
 Status SkipListDBImpl::Delete(const std::string &key) {
@@ -70,7 +80,7 @@ void SkipListDBImpl::GetProperty(const std::string& k, std::string* v) {
 }
 
 std::unique_ptr<WriteBatchInterface> SkipListDBImpl::NewBatch() {
-    return std::unique_ptr<WriteBatchInterface>(new MemWriteBatch(this));
+    return std::unique_ptr<WriteBatchInterface>(new SkipListWriteBatch());
 }
 
 Status SkipListDBImpl::SetOptions(void* column_family,
