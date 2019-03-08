@@ -4,6 +4,7 @@
 #include "frame/sf_logger.h"
 #include "server/range_server.h"
 #include "server/worker.h"
+#include "storage/db/rocksdb_impl/rocksdb_impl.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -107,11 +108,15 @@ Status AdminServer::forceSplit(const ForceSplitRequest& req, ForceSplitResponse*
 }
 
 Status AdminServer::compaction(const CompactionRequest& req, CompactionResponse* resp) {
-    auto db = context_->db;
+    auto db = dynamic_cast<storage::RocksDBImpl*>(context_->db);
+    if (db == nullptr) {
+        return Status(Status::kUnknown, "get rocksdb instance", "");
+    }
+
     Status s;
     rocksdb::CompactRangeOptions options;
     if (req.range_id() == 0) {
-        s = db->CompactRange(&options, nullptr, nullptr);
+        s = db->CompactRange(options, nullptr, nullptr);
     } else {
         auto rng = context_->range_server->Find(req.range_id());
         if (rng == nullptr) {
@@ -122,7 +127,7 @@ Status AdminServer::compaction(const CompactionRequest& req, CompactionResponse*
         resp->set_end_key(meta.end_key());
         rocksdb::Slice begin = meta.start_key();
         rocksdb::Slice end = meta.end_key();
-        s = db->CompactRange(&options, &begin, &end);
+        s = db->CompactRange(options, &begin, &end);
     }
 
     if (!s.ok()) {
@@ -158,9 +163,14 @@ Status AdminServer::getPending(const GetPendingsRequest& req, GetPendingsRespons
 }
 
 Status AdminServer::flushDB(const FlushDBRequest& req, FlushDBResponse* resp) {
+    auto db = dynamic_cast<storage::RocksDBImpl*>(context_->db);
+    if (db == nullptr) {
+        return Status(Status::kUnknown, "get rocksdb instance", "");
+    }
+
     rocksdb::FlushOptions fops;
     fops.wait = req.wait();
-    auto s = context_->db->Flush(&fops);
+    auto s = db->Flush(fops);
     if (!s.ok()) {
         return Status(Status::kIOError, "flush", s.ToString());
     }

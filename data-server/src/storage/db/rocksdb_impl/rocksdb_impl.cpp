@@ -2,7 +2,7 @@
 // Created by young on 19-2-14.
 //
 
-#include "store.h"
+#include "rocksdb_impl.h"
 
 #include <rocksdb/utilities/blob_db/blob_db.h>
 #include <rocksdb/db.h>
@@ -21,7 +21,7 @@ namespace storage {
 static const std::string kDataPathSuffix = "data";
 static const std::string kTxnCFName = "txn";
 
-RocksStore::RocksStore(const rocksdb_config_t& config) :
+RocksDBImpl::RocksDBImpl(const rocksdb_config_t& config) :
     db_path_(JoinFilePath({config.path, kDataPathSuffix})),
     is_blob_(config.storage_type != 0),
     ttl_(config.ttl) {
@@ -35,12 +35,12 @@ RocksStore::RocksStore(const rocksdb_config_t& config) :
     read_options_ = rocksdb::ReadOptions(config.read_checksum, true);
 }
 
-RocksStore::RocksStore(const rocksdb::Options&ops, const std::string& path) :
+RocksDBImpl::RocksDBImpl(const rocksdb::Options&ops, const std::string& path) :
     db_path_(path),
     ops_(ops) {
 }
 
-void RocksStore::buildDBOptions(const rocksdb_config_t& config) {
+void RocksDBImpl::buildDBOptions(const rocksdb_config_t& config) {
     // db log level
     if (config.enable_debug_log) {
         ops_.info_log_level = rocksdb::DEBUG_LEVEL;
@@ -119,7 +119,7 @@ void RocksStore::buildDBOptions(const rocksdb_config_t& config) {
     }
 }
 
-void RocksStore::buildBlobOptions(const rocksdb_config_t& config) {
+void RocksDBImpl::buildBlobOptions(const rocksdb_config_t& config) {
     assert(config.min_blob_size >= 0);
     bops_.min_blob_size = static_cast<uint64_t>(config.min_blob_size);
     bops_.enable_garbage_collection = config.enable_garbage_collection;
@@ -149,7 +149,7 @@ void RocksStore::buildBlobOptions(const rocksdb_config_t& config) {
 #endif
 }
 
-Status RocksStore::Open() {
+Status RocksDBImpl::Open() {
     // 创建db的父目录
     if (MakeDirAll(db_path_, 0755) != 0) {
         return Status(Status::kIOError, "MakeDirAll", strErrno(errno));
@@ -195,14 +195,14 @@ Status RocksStore::Open() {
     return Status::OK();
 }
 
-RocksStore::~RocksStore() {
+RocksDBImpl::~RocksDBImpl() {
     for (auto handle: cf_handles_) {
         delete handle;
     }
     delete db_;
 }
 
-Status RocksStore::Get(const std::string &key, std::string *value) {
+Status RocksDBImpl::Get(const std::string &key, std::string *value) {
     auto s = db_->Get(read_options_, key, value);
     if (s.ok()) {
         return Status::OK();
@@ -213,7 +213,7 @@ Status RocksStore::Get(const std::string &key, std::string *value) {
     }
 }
 
-Status RocksStore::Get(void* column_family,
+Status RocksDBImpl::Get(void* column_family,
            const std::string& key, std::string* value) {
     auto s = db_->Get(read_options_, static_cast<rocksdb::ColumnFamilyHandle*>(column_family),
                       key, value);
@@ -226,7 +226,7 @@ Status RocksStore::Get(void* column_family,
     }
 }
 
-Status RocksStore::Put(const std::string &key, const std::string &value) {
+Status RocksDBImpl::Put(const std::string &key, const std::string &value) {
     auto s = db_->Put(write_options_, key, value);
     if (s.ok()) {
         return Status::OK();
@@ -235,11 +235,11 @@ Status RocksStore::Put(const std::string &key, const std::string &value) {
     }
 }
 
-std::unique_ptr<WriteBatchInterface> RocksStore::NewBatch() {
+std::unique_ptr<WriteBatchInterface> RocksDBImpl::NewBatch() {
     return std::unique_ptr<WriteBatchInterface>(new RocksWriteBatch);
 }
 
-Status RocksStore::Write(WriteBatchInterface* batch) {
+Status RocksDBImpl::Write(WriteBatchInterface* batch) {
     auto s = db_->Write(write_options_, dynamic_cast<RocksWriteBatch*>(batch)->getBatch());
     if (s.ok()) {
         return Status::OK();
@@ -248,7 +248,7 @@ Status RocksStore::Write(WriteBatchInterface* batch) {
     }
 }
 
-Status RocksStore::Delete(const std::string &key) {
+Status RocksDBImpl::Delete(const std::string &key) {
     auto s = db_->Delete(write_options_, key);
     if (s.ok()) {
         return Status::OK();
@@ -257,7 +257,7 @@ Status RocksStore::Delete(const std::string &key) {
     }
 }
 
-Status RocksStore::Delete(void* column_family, const std::string& key) {
+Status RocksDBImpl::Delete(void* column_family, const std::string& key) {
     auto s = db_->Delete(write_options_, static_cast<rocksdb::ColumnFamilyHandle*>(column_family), key);
     if (s.ok()) {
         return Status::OK();
@@ -266,7 +266,7 @@ Status RocksStore::Delete(void* column_family, const std::string& key) {
     }
 }
 
-Status RocksStore::DeleteRange(void *column_family,
+Status RocksDBImpl::DeleteRange(void *column_family,
                                const std::string &begin_key, const std::string &end_key) {
     auto s = db_->DeleteRange(write_options_,
                               static_cast<rocksdb::ColumnFamilyHandle*>(column_family),
@@ -278,20 +278,20 @@ Status RocksStore::DeleteRange(void *column_family,
     }
 }
 
-void* RocksStore::DefaultColumnFamily() {
+void* RocksDBImpl::DefaultColumnFamily() {
     return db_->DefaultColumnFamily();
 }
 
-void* RocksStore::TxnCFHandle() {
+void* RocksDBImpl::TxnCFHandle() {
     return txn_cf_;
 }
 
-IteratorInterface* RocksStore::NewIterator(const std::string& start, const std::string& limit) {
+IteratorInterface* RocksDBImpl::NewIterator(const std::string& start, const std::string& limit) {
     auto it = db_->NewIterator(read_options_);
     return new RocksIterator(it, start, limit);
 }
 
-Status RocksStore::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
+Status RocksDBImpl::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
                     std::unique_ptr<IteratorInterface>& txn_iter,
                     const std::string& start, const std::string& limit) {
     std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
@@ -313,12 +313,12 @@ Status RocksStore::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
     return Status::OK();
 }
 
-void RocksStore::GetProperty(const std::string& k, std::string* v) {
+void RocksDBImpl::GetProperty(const std::string& k, std::string* v) {
     db_->GetProperty(k, v);
 }
 
 
-Status RocksStore::SetOptions(void* column_family,
+Status RocksDBImpl::SetOptions(void* column_family,
                               const std::unordered_map<std::string, std::string>& new_options) {
     auto s = db_->SetOptions(static_cast<rocksdb::ColumnFamilyHandle*>(column_family), new_options);
     if (s.ok()) {
@@ -328,25 +328,31 @@ Status RocksStore::SetOptions(void* column_family,
     }
 }
 
-Status RocksStore::SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) {
+Status RocksDBImpl::SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) {
     auto s = db_->SetDBOptions(new_options);
     return Status(static_cast<Status::Code>(s.code()));
 }
 
-Status RocksStore::CompactRange(void* options,
-                         void* begin, void* end) {
-    auto s= db_->CompactRange(*static_cast<rocksdb::CompactRangeOptions*>(options),
-                              static_cast<rocksdb::Slice*>(begin),
-                              static_cast<rocksdb::Slice*>(end));
-    return Status(static_cast<Status::Code>(s.code()));
+Status RocksDBImpl::CompactRange(const rocksdb::CompactRangeOptions& ops,
+        rocksdb::Slice* start, rocksdb::Slice* end) {
+    auto s = db_->CompactRange(ops, start, end);
+    if (!s.ok()) {
+        return Status(Status::kIOError, "CompactRange", s.ToString());
+    } else {
+        return Status::OK();
+    }
 }
 
-Status RocksStore::Flush(void* fops) {
-    auto s = db_->Flush(*static_cast<rocksdb::FlushOptions*>(fops));
-    return Status(static_cast<Status::Code>(s.code()));
+Status RocksDBImpl::Flush(const rocksdb::FlushOptions& ops) {
+    auto s = db_->Flush(ops);
+    if (!s.ok()) {
+        return Status(Status::kIOError, "Flush", s.ToString());
+    } else {
+        return Status::OK();
+    }
 }
 
-void RocksStore::PrintMetric() {
+void RocksDBImpl::PrintMetric() {
     std::string tr_mem_usage;
     db_->GetProperty("rocksdb.estimate-table-readers-mem", &tr_mem_usage);
     std::string mem_table_usage;

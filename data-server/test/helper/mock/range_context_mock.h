@@ -7,7 +7,7 @@ _Pragma("once");
 #include "raft/server.h"
 #include "master/worker.h"
 #include "watch/watch_server.h"
-#include "storage/db_interface.h"
+#include "storage/db/db_interface.h"
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;

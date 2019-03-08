@@ -8,8 +8,8 @@
 #include "field_value.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/redispb.pb.h"
+#include "db/db_interface.h"
 #include "row_fetcher.h"
-#include "db_interface.h"
 #include "snapshot.h"
 
 namespace sharkstore {

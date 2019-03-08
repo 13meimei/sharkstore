@@ -9,7 +9,7 @@
 
 #include "master_worker_mock.h"
 #include "raft_server_mock.h"
-#include "storage/rocks_store/store.h"
+#include "storage/db/rocksdb_impl/rocksdb_impl.h"
 
 namespace sharkstore {
 namespace test {
@@ -29,7 +29,7 @@ Status RangeContextMock::Init() {
     // open rocksdb
     path_ = path;
     rocksdb::Options ops;
-    db_ = new storage::RocksStore(ops, JoinFilePath({path_, "data"}));
+    db_ = new storage::RocksDBImpl(ops, JoinFilePath({path_, "data"}));
     auto s = db_->Open();
     if (!s.ok()) {
         return s;

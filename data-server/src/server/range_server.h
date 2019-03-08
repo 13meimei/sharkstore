@@ -21,7 +21,7 @@ _Pragma("once");
 
 #include "server/context_server.h"
 #include "watch/watch_server.h"
-#include "storage/db_interface.h"
+#include "storage/db/db_interface.h"
 
 namespace sharkstore {
 namespace dataserver {

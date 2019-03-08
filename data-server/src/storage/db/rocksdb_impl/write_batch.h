@@ -5,8 +5,8 @@
 #ifndef SHARKSTORE_DS_WRITE_BATCH_H
 #define SHARKSTORE_DS_WRITE_BATCH_H
 
-#include "storage/write_batch_interface.h"
 #include <rocksdb/write_batch.h>
+#include "storage/db/write_batch_interface.h"
 
 namespace sharkstore {
 namespace dataserver {

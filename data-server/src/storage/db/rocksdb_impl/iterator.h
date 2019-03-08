@@ -1,8 +1,8 @@
 _Pragma("once");
 
+#include <rocksdb/db.h>
 #include "base/status.h"
-#include "storage/iterator_interface.h"
-#include <mem_store/iterator.h>
+#include "storage/db/iterator_interface.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -10,10 +10,11 @@ namespace storage {
 
 class Metric;
 
-class MemIterator: public IteratorInterface{
+class RocksIterator: public IteratorInterface{
 public:
-    MemIterator(memstore::Iterator<std::string, std::string>* it);
-    ~MemIterator();
+    RocksIterator(rocksdb::Iterator* it, const std::string& start,
+             const std::string& limit);
+    ~RocksIterator();
 
     bool Valid();
     void Next();
@@ -26,7 +27,8 @@ public:
     uint64_t value_size();
 
 private:
-    memstore::Iterator<std::string, std::string>* rit_ = nullptr;
+    rocksdb::Iterator* rit_ = nullptr;
+    const std::string limit_;
 };
 
 } /* namespace storage */

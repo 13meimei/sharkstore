@@ -2,13 +2,13 @@
 // Created by young on 19-2-14.
 //
 
-#include "storage/mem_store/write_batch.h"
+#include "storage/db/skiplist_impl/write_batch.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-MemWriteBatch::MemWriteBatch(MemStore* db): db_(db) {
+MemWriteBatch::MemWriteBatch(SkipListDBImpl* db): db_(db) {
 
 }
 

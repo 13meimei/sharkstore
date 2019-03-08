@@ -2,7 +2,7 @@ _Pragma("once");
 
 #include "raft/snapshot.h"
 #include "proto/gen/raft_cmdpb.pb.h"
-#include "iterator_interface.h"
+#include "db/iterator_interface.h"
 
 namespace sharkstore {
 namespace dataserver {

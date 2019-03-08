@@ -1,10 +1,9 @@
 _Pragma("once");
 
-#include "storage/db_interface.h"
 #include <rocksdb/db.h>
 #include <rocksdb/utilities/blob_db/blob_db.h>
 
-#include "proto/gen/kvrpcpb.pb.h"
+#include "storage/db/db_interface.h"
 #include "iterator.h"
 #include "write_batch.h"
 #include "common/ds_config.h"
@@ -13,12 +12,12 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-class RocksStore: public DbInterface {
+class RocksDBImpl: public DbInterface {
 public:
-    explicit RocksStore(const rocksdb_config_t& config);
-    RocksStore(const rocksdb::Options&ops, const std::string& path);
+    explicit RocksDBImpl(const rocksdb_config_t& config);
+    RocksDBImpl(const rocksdb::Options&ops, const std::string& path);
 
-    ~RocksStore();
+    ~RocksDBImpl();
 
 public:
     Status Open() override;
@@ -44,10 +43,14 @@ public:
     void GetProperty(const std::string& k, std::string* v) override;
     Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
-    Status CompactRange(void* options, void* begin, void* end) override;
-    Status Flush(void* fops) override;
 
     void PrintMetric() override;
+
+public:
+    Status CompactRange(const rocksdb::CompactRangeOptions& ops,
+            rocksdb::Slice* start, rocksdb::Slice* end);
+
+    Status Flush(const rocksdb::FlushOptions& ops);
 
 private:
     void buildDBOptions(const rocksdb_config_t& config);

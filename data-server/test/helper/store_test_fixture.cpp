@@ -9,7 +9,7 @@
 
 #include "fastcommon/logger.h"
 #include <fastcommon/shared_func.h>
-#include "storage/rocks_store/store.h"
+#include "storage/db/rocksdb_impl/rocksdb_impl.h"
 
 namespace sharkstore {
 namespace test {
@@ -40,7 +40,7 @@ void StoreTestFixture::SetUp() {
     rocksdb::Options ops;
     ops.create_if_missing = true;
     ops.error_if_exists = true;
-    db_ = new dataserver::storage::RocksStore(ops, tmp_dir_);
+    db_ = new dataserver::storage::RocksDBImpl(ops, tmp_dir_);
     auto s = db_->Open();
     ASSERT_TRUE(s.ok()) << s.ToString();
 

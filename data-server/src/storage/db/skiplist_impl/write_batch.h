@@ -5,8 +5,8 @@
 #ifndef SHARKSTORE_DS_WRITE_BATCH_H
 #define SHARKSTORE_DS_WRITE_BATCH_H
 
-#include "storage/write_batch_interface.h"
-#include "storage/mem_store/store.h"
+#include "storage/db/write_batch_interface.h"
+#include "skiplist_impl.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -16,7 +16,7 @@ class WriteBatch;
 class MemWriteBatch : public WriteBatchInterface {
 public:
     MemWriteBatch() = delete;
-    MemWriteBatch(MemStore* db);
+    MemWriteBatch(SkipListDBImpl* db);
     ~MemWriteBatch() = default;
 
     Status Put(const std::string &key, const std::string &value);
@@ -26,7 +26,7 @@ public:
 
 private:
 //    WriteBatch batch_;
-    MemStore* db_;
+    SkipListDBImpl* db_;
 };
 
 class WriteBatch {

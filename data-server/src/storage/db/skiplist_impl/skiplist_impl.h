@@ -1,9 +1,9 @@
 _Pragma("once");
 
-#include "mem_store/mem_store.h"
-
 #include "iterator.h"
-#include "storage/db_interface.h"
+#include "storage/db/db_interface.h"
+
+#include "mem_store/mem_store.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -11,10 +11,10 @@ namespace storage {
 
 using ColumnFamily = memstore::Store<std::string>;
 
-class MemStore: public DbInterface {
+class SkipListDBImpl: public DbInterface {
 public:
-    MemStore() = default;
-    ~MemStore() = default;
+    SkipListDBImpl() = default;
+    ~SkipListDBImpl() = default;
 
 public:
     Status Open() override { return Status::OK(); }
@@ -39,19 +39,15 @@ public:
                         const std::string& start, const std::string& limit) override;
     void GetProperty(const std::string& k, std::string* v) override;
 
-public:
-    Status SetOptions(void* column_family,
-                      const std::unordered_map<std::string, std::string>& new_options) override;
+    Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
-    Status CompactRange(void* options, void* begin, void* end) override;
-    Status Flush(void* fops) override;
     void PrintMetric() override;
-
 
 private:
     memstore::Store<std::string> db_;
     ColumnFamily txn_cf_;
 };
 
-
-}}}
+}
+}
+}
