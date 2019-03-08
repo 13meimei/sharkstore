@@ -187,9 +187,14 @@ func benchmark(s *server.Server) {
 			go insertOrder(s, concur, 0, ip)
 		}
 	}
-
-	// order insert and select
+	// order select
 	if s.GetCfg().BenchConfig.Type == 11 {
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			go selectOrder(s, concur, 0, ip)
+		}
+	}
+	// order insert and select
+	if s.GetCfg().BenchConfig.Type == 12 {
 		var wg sync.WaitGroup
 		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
 			wg.Add(1)
