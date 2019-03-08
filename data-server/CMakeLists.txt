@@ -44,6 +44,9 @@ MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
+include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
+include_directories(${PROJECT_SOURCE_DIR}/third-party/rapidjson-1.1.0/include)
+
 
 # use intel tbb
 OPTION (ENABLE_TBB "Use Intel TBB" ON)

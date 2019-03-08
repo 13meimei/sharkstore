@@ -321,7 +321,11 @@ void RocksStore::GetProperty(const std::string& k, std::string* v) {
 Status RocksStore::SetOptions(void* column_family,
                               const std::unordered_map<std::string, std::string>& new_options) {
     auto s = db_->SetOptions(static_cast<rocksdb::ColumnFamilyHandle*>(column_family), new_options);
-    return Status(static_cast<Status::Code>(s.code()));
+    if (s.ok()) {
+        return Status::OK();
+    } else {
+        return Status(Status::kIOError, "SetOptions", s.ToString());
+    }
 }
 
 Status RocksStore::SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) {

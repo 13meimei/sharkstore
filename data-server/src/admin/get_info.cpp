@@ -2,8 +2,8 @@
 
 #include <sstream>
 #include <functional>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
 
 #include "server/version.h"
 #include "server/range_server.h"
