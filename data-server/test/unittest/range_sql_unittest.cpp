@@ -502,7 +502,7 @@ TEST_F(RangeTestFixture, MatchMathExpr) {
         builder.AddAllFields();
         builder.ClearMatchExt();
         //where id = 10/9
-        builder.AppendCompCond("id", "10\/10", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        builder.AppendCompCond("id", "10/10", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
         *req.mutable_req() = builder.Build();
         s = TestSelect(req, &resp);
         SelectResultParser parser2(req.req(), resp.resp());
@@ -516,7 +516,7 @@ TEST_F(RangeTestFixture, MatchMathExpr) {
         builder.AppendCompCond("id", "id+2", ::kvrpcpb::E_Equal, ::kvrpcpb::E_LogicOr);
         builder.AppendCompCond("id", "id-1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
         //builder.AppendCompCond("id", "id*2", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
-        //builder.AppendCompCond("id", "id\/1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+        //builder.AppendCompCond("id", "id/1", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
         *req.mutable_req() = builder.Build();
         s = TestSelect(req, &resp);
         SelectResultParser parser3(req.req(), resp.resp());
@@ -604,7 +604,7 @@ TEST_F(RangeTestFixture, DISABLED_MatchMathExprDaemon) {
             builder.AddAllFields();
             builder.ClearMatchExt();
             //where id = 10/9
-            builder.AppendCompCond("id", "10\/10", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
+            builder.AppendCompCond("id", "10/10", ::kvrpcpb::E_Equal, ::kvrpcpb::E_Invalid);
             *req.mutable_req() = builder.Build();
             s = TestSelect(req, &resp);
             SelectResultParser parser2(req.req(), resp.resp());
