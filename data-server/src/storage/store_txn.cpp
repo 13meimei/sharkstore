@@ -248,7 +248,7 @@ void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareRespo
     auto batch = db_->NewBatch();
     for (const auto& intent: req.intents()) {
         bool stop_flag = false;
-        auto err = prepareIntent(req, intent, version, batch);
+        auto err = prepareIntent(req, intent, version, batch.get());
         if (err != nullptr) {
             if (err->err_type() == TxnError_ErrType_LOCKED) {
                 if (intent.is_primary()) {
@@ -264,13 +264,12 @@ void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareRespo
     }
 
     if (primary_lockable) {
-        auto ret = db_->Write(batch);
+        auto ret = db_->Write(batch.get());
         if (!ret.ok()) {
             resp->clear_errors();
             setTxnServerErr(resp->add_errors(), ret.code(), ret.ToString());
         }
     }
-    delete batch;
 }
 
 Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version,
@@ -403,10 +402,10 @@ uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
 
     TxnErrorPtr err;
     if (req.is_primary()) {
-        err = decidePrimary(req, bytes_written, batch, resp);
+        err = decidePrimary(req, bytes_written, batch.get(), resp);
     } else {
         for (const auto& key: req.keys()) {
-            err = decideSecondary(req, key, bytes_written, batch);
+            err = decideSecondary(req, key, bytes_written, batch.get());
             if (err != nullptr) {
                 break;
             }
@@ -416,17 +415,14 @@ uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
     // decide error
     if (err != nullptr) {
         resp->mutable_err()->Swap(err.get());
-        delete batch;
         return 0;
     }
 
-    auto ret = db_->Write(batch);
+    auto ret = db_->Write(batch.get());
     if (!ret.ok()) {
         setTxnServerErr(resp->mutable_err(), Status::kIOError, ret.ToString());
-        delete batch;
         return 0;
     } else {
-        delete batch;
         return bytes_written;
     }
 }

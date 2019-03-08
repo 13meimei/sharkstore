@@ -28,4 +28,6 @@ Status MemWriteBatch::Delete(void* column_family, const std::string& key) {
     return Status(Status::kOk);
 }
 
-}}}
+}
+}
+}

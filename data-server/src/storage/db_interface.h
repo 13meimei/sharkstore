@@ -22,11 +22,19 @@ public:
     DbInterface() = default;
     virtual ~DbInterface() = default;
 
+    DbInterface(const DbInterface&) = delete;
+    DbInterface& operator=(const DbInterface&) = delete;
+
+    virtual Status Open() = 0;
+
     virtual Status Get(const std::string& key, std::string* value) = 0;
     virtual Status Get(void* column_family,
                        const std::string& key, std::string* value) = 0;
     virtual Status Put(const std::string& key, const std::string& value) = 0;
+
+    virtual std::unique_ptr<WriteBatchInterface> NewBatch() = 0;
     virtual Status Write(WriteBatchInterface* batch) = 0;
+
     virtual Status Delete(const std::string& key) = 0;
     virtual Status Delete(void* column_family, const std::string& key) = 0;
     virtual Status DeleteRange(void* column_family,
@@ -36,7 +44,7 @@ public:
     virtual IteratorInterface* NewIterator(const std::string& start, const std::string& limit) = 0;
     virtual Status NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
                                 std::unique_ptr<IteratorInterface>& txn_iter,
-                                const std::string& start = "", const std::string& limit = "") = 0;
+                                const std::string& start, const std::string& limit) = 0;
     virtual void GetProperty(const std::string& k, std::string* v) = 0;
 
     virtual Status SetOptions(void* column_family,
@@ -46,11 +54,6 @@ public:
     virtual Status Flush(void* fops) = 0;
 
     virtual void PrintMetric() = 0;
-
-public:
-    virtual Status Insert(storage::Store* store,
-                          const kvrpcpb::InsertRequest& req, uint64_t* affected) = 0;
-    virtual WriteBatchInterface* NewBatch() = 0;
 };
 
 }

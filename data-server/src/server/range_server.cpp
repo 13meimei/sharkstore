@@ -213,15 +213,23 @@ void RangeServer::Stop() {
 int RangeServer::OpenDB() {
     std::string engine_name(ds_config.engine_config.name);
     if (strcasecmp(engine_name.c_str(), "rocksdb") == 0) {
-        db_ = new storage::RocksStore();
-        return 0;
+        print_rocksdb_config();
+        db_ = new storage::RocksStore(ds_config.rocksdb_config);
     } else if (strcasecmp(engine_name.c_str(), "memory") == 0) {
         db_ = new storage::MemStore();
-        return 0;
     } else {
-        FLOG_ERROR("unknown engine name");
+        FLOG_ERROR("unknown engine name: %s", engine_name.c_str());
         return -1;
     }
+
+    auto s = db_->Open();
+    if (!s.ok()) {
+        FLOG_ERROR("open %s db failed: %s", engine_name.c_str(), s.ToString().c_str());
+        return -1;
+    } else {
+        FLOG_INFO("open %s db successfully", engine_name.c_str());
+    }
+    return 0;
 }
 
 void RangeServer::CloseDB() {

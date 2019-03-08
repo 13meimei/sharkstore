@@ -1,9 +1,4 @@
-//
-// Created by young on 19-2-14.
-//
-
-#ifndef SHARKSTORE_DS_STORE_H
-#define SHARKSTORE_DS_STORE_H
+_Pragma("once");
 
 #include "storage/db_interface.h"
 #include <rocksdb/db.h>
@@ -12,6 +7,7 @@
 #include "proto/gen/kvrpcpb.pb.h"
 #include "iterator.h"
 #include "write_batch.h"
+#include "common/ds_config.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -19,56 +15,62 @@ namespace storage {
 
 class RocksStore: public DbInterface {
 public:
-    RocksStore();
-    RocksStore(rocksdb::DB* db, rocksdb::ColumnFamilyHandle* cf_handle);
+    explicit RocksStore(const rocksdb_config_t& config);
+    RocksStore(const rocksdb::Options&ops, const std::string& path);
+
     ~RocksStore();
 
 public:
-    Status Get(const std::string& key, std::string* value);
-    Status Get(void* column_family,
-               const std::string& key, std::string* value);
-    Status Put(const std::string& key, const std::string& value);
-    Status Write(WriteBatchInterface* batch);
-    Status Delete(const std::string& key);
-    Status Delete(void* column_family, const std::string& key);
-    Status DeleteRange(void* column_family,
-                       const std::string& begin_key, const std::string& end_key);
-    void* DefaultColumnFamily();
-    void* TxnCFHandle();
-    IteratorInterface* NewIterator(const std::string& start, const std::string& limit);
+    Status Open() override;
+
+    Status Get(const std::string& key, std::string* value) override;
+    Status Get(void* column_family, const std::string& key, std::string* value) override;
+    Status Put(const std::string& key, const std::string& value) override;
+    Status Delete(const std::string& key) override;
+    Status Delete(void* column_family, const std::string& key) override;
+    Status DeleteRange(void* column_family, const std::string& begin_key, const std::string& end_key) override;
+
+    std::unique_ptr<WriteBatchInterface> NewBatch() override;
+    Status Write(WriteBatchInterface* batch) override;
+
+    void* DefaultColumnFamily() override;
+    void* TxnCFHandle() override;
+
+    IteratorInterface* NewIterator(const std::string& start, const std::string& limit) override;
     Status NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
                         std::unique_ptr<IteratorInterface>& txn_iter,
-                        const std::string& start = "", const std::string& limit = "");
-    void GetProperty(const std::string& k, std::string* v);
+                        const std::string& start, const std::string& limit) override;
 
-public:
-    Status SetOptions(void* column_family,
-                      const std::unordered_map<std::string, std::string>& new_options);
-    Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options);
-    Status CompactRange(void* options, void* begin, void* end);
-    Status Flush(void* fops);
+    void GetProperty(const std::string& k, std::string* v) override;
+    Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
+    Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
+    Status CompactRange(void* options, void* begin, void* end) override;
+    Status Flush(void* fops) override;
 
-    Status Insert(storage::Store* store,
-                  const kvrpcpb::InsertRequest& req, uint64_t* affected);
-    WriteBatchInterface* NewBatch();
-    void PrintMetric();
+    void PrintMetric() override;
 
 private:
-    int openDB(rocksdb::Options& ops);
-    void buildDBOptions(rocksdb::Options& ops);
-    void buildBlobOptions(rocksdb::blob_db::BlobDBOptions& bops);
+    void buildDBOptions(const rocksdb_config_t& config);
+    void buildBlobOptions(const rocksdb_config_t& config);
 
 private:
+    const std::string db_path_;
+    const bool is_blob_ = false;
+    const int ttl_ = 0;
+    rocksdb::Options ops_;
+    rocksdb::blob_db::BlobDBOptions bops_;
+
     rocksdb::DB* db_;
     rocksdb::ReadOptions read_options_;
     rocksdb::WriteOptions write_options_;
-    rocksdb::ColumnFamilyHandle* txn_cf_;
+    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles_;
+    rocksdb::ColumnFamilyHandle* txn_cf_ = nullptr;
 
     std::shared_ptr<rocksdb::Cache> block_cache_;  // rocksdb block cache
     std::shared_ptr<rocksdb::Cache> row_cache_; // rocksdb row cache
     std::shared_ptr<rocksdb::Statistics> db_stats_; // rocksdb stats
 };
 
-}}}
-
-#endif //SHARKSTORE_DS_STORE_H
+} // namespace storage
+} // namespace dataserver
+} // namespace sharkstore

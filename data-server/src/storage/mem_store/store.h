@@ -3,11 +3,6 @@ _Pragma("once");
 #include <mem_store/mem_store.h>
 
 #include "iterator.h"
-#include "storage/metric.h"
-#include "range/split_policy.h"
-#include "proto/gen/kvrpcpb.pb.h"
-#include "proto/gen/watchpb.pb.h"
-#include "storage/field_value.h"
 #include "storage/db_interface.h"
 
 namespace sharkstore {
@@ -22,34 +17,36 @@ public:
     ~MemStore() = default;
 
 public:
-    Status Get(const std::string& key, std::string* value);
-    Status Get(void* column_family,
-               const std::string& key, std::string* value);
-    Status Put(const std::string& key, const std::string& value);
-    Status Write(WriteBatchInterface* batch);
-    Status Delete(const std::string& key);
-    Status Delete(void* column_family, const std::string& key);
-    Status DeleteRange(void* column_family,
-                       const std::string& begin_key, const std::string& end_key);
-    void* DefaultColumnFamily();
-    void* TxnCFHandle();
-    IteratorInterface* NewIterator(const std::string& start, const std::string& limit);
+    Status Open() override { return Status::OK(); }
+
+    Status Get(const std::string& key, std::string* value) override;
+    Status Get(void* column_family, const std::string& key, std::string* value) override;
+    Status Put(const std::string& key, const std::string& value) override;
+
+    std::unique_ptr<WriteBatchInterface> NewBatch() override;
+    Status Write(WriteBatchInterface* batch) override;
+
+    Status Delete(const std::string& key) override;
+    Status Delete(void* column_family, const std::string& key) override;
+    Status DeleteRange(void* column_family, const std::string& begin_key, const std::string& end_key) override;
+
+    void* DefaultColumnFamily() override;
+    void* TxnCFHandle() override;
+
+    IteratorInterface* NewIterator(const std::string& start, const std::string& limit) override;
     Status NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
                         std::unique_ptr<IteratorInterface>& txn_iter,
-                        const std::string& start = "", const std::string& limit = "");
-    void GetProperty(const std::string& k, std::string* v);
+                        const std::string& start, const std::string& limit) override;
+    void GetProperty(const std::string& k, std::string* v) override;
 
 public:
     Status SetOptions(void* column_family,
-                      const std::unordered_map<std::string, std::string>& new_options);
-    Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options);
-    Status CompactRange(void* options, void* begin, void* end);
-    Status Flush(void* fops);
-    void PrintMetric();
+                      const std::unordered_map<std::string, std::string>& new_options) override;
+    Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
+    Status CompactRange(void* options, void* begin, void* end) override;
+    Status Flush(void* fops) override;
+    void PrintMetric() override;
 
-    Status Insert(storage::Store* store,
-                  const kvrpcpb::InsertRequest& req, uint64_t* affected);
-    WriteBatchInterface* NewBatch();
 
 private:
     memstore::Store<std::string> db_;

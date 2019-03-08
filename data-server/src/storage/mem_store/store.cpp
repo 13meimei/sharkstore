@@ -69,41 +69,8 @@ void MemStore::GetProperty(const std::string& k, std::string* v) {
     return;
 }
 
-Status MemStore::Insert(storage::Store* store,
-                          const kvrpcpb::InsertRequest& req, uint64_t* affected) {
-    // todo batch
-    uint64_t bytes_written = 0;
-//    MemWriteBatch batch(this);
-    std::string value;
-    bool check_dup = req.check_duplicate();
-    *affected = 0;
-    for (int i = 0; i < req.rows_size(); ++i) {
-        const kvrpcpb::KeyValue &kv = req.rows(i);
-        if (check_dup) {
-            auto s = db_.Get(kv.key(), &value);
-            if (s == 0) {
-                return Status(Status::kDuplicate);
-            }
-        }
-//        auto s = batch.Put(kv.key(), kv.value());
-        auto s = db_.Put(kv.key(), kv.value());
-        if (s != 0) {
-            return Status(Status::kIOError);
-        }
-        *affected = *affected + 1;
-        bytes_written += (kv.key().size(), kv.value().size());
-    }
-//    auto s = db_->Write(&batch);
-//    if (s != 0) {
-//        return Status(Status::kIOError, "batch write", s.ToString());
-//    } else {
-        store->addMetricWrite(*affected, bytes_written);
-        return Status::OK();
-//    }
-}
-
-WriteBatchInterface* MemStore::NewBatch() {
-    return new MemWriteBatch(this);
+std::unique_ptr<WriteBatchInterface> MemStore::NewBatch() {
+    return std::unique_ptr<WriteBatchInterface>(new MemWriteBatch(this));
 }
 
 Status MemStore::SetOptions(void* column_family,

@@ -37,24 +37,12 @@ void StoreTestFixture::SetUp() {
     ASSERT_TRUE(tmp != NULL);
     tmp_dir_ = tmp;
 
-    sf_load_config("data-server", "ds_test.conf");
-
-    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
-    column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
-    column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
-
     rocksdb::Options ops;
     ops.create_if_missing = true;
     ops.error_if_exists = true;
-    ops.create_missing_column_families = true;
-
-    rocksdb::DB* db = nullptr;
-    std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
-    auto s = rocksdb::DB::Open(ops, tmp, column_families, &cf_handles, &db);
-    ASSERT_TRUE(s.ok());
-    ASSERT_EQ(cf_handles.size(), 2);
-
-    db_ = new dataserver::storage::RocksStore(db, cf_handles[1]);
+    db_ = new dataserver::storage::RocksStore(ops, tmp_dir_);
+    auto s = db_->Open();
+    ASSERT_TRUE(s.ok()) << s.ToString();
 
     // make meta
     meta_ = MakeRangeMeta(table_.get());
@@ -66,7 +54,7 @@ void StoreTestFixture::TearDown() {
     delete store_;
     delete db_;
     if (!tmp_dir_.empty()) {
-        DestroyDB(tmp_dir_, rocksdb::Options());
+        RemoveDirAll(tmp_dir_.c_str());
     }
 }
 
