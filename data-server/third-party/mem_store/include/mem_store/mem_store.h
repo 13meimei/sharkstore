@@ -27,10 +27,9 @@ public:
     }
 
     int Put(const std::string &key, const V& value) {
-        auto ret = slist_.insert(std::make_pair(key, value));
+        auto ret = slist_.upsert(std::make_pair(key, value));
         if (ret.second == false) {
-            ret.first->first = key;
-            ret.first->second = value;
+            return -1;
         }
 
         return 0;

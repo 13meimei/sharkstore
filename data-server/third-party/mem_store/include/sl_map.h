@@ -222,6 +222,21 @@ public:
         return std::pair<iterator, bool>(iterator(), false);
     }
 
+    std::pair<iterator, bool> upsert(const std::pair<K, V>& kv) {
+        Node *node = new Node();
+        node->kv = kv;
+
+        int rc = skiplist_insert(&slist, &node->snode);
+        if (rc == 0) {
+            skiplist_grab_node(&node->snode);
+            return std::pair<iterator, bool>
+                    (iterator(&slist, &node->snode), true);
+        }
+        delete node;
+
+        return std::pair<iterator, bool>(iterator(), false);
+    }
+
     iterator find(K key) {
         Node query;
         query.kv.first = key;
