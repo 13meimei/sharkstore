@@ -470,6 +470,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SelectRequest, where_filters_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SelectRequest, group_bys_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SelectRequest, limit_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(SelectRequest, ext_filter_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(RowValue, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -548,12 +549,12 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 198, -1, sizeof(DsGetLockInfoRequest)},
   { 205, -1, sizeof(DsGetLockInfoResponse)},
   { 212, -1, sizeof(SelectRequest)},
-  { 223, -1, sizeof(RowValue)},
-  { 231, -1, sizeof(RowIntent)},
-  { 241, -1, sizeof(Row)},
-  { 249, -1, sizeof(SelectResponse)},
-  { 257, -1, sizeof(DsSelectRequest)},
-  { 264, -1, sizeof(DsSelectResponse)},
+  { 224, -1, sizeof(RowValue)},
+  { 232, -1, sizeof(RowIntent)},
+  { 242, -1, sizeof(Row)},
+  { 250, -1, sizeof(SelectResponse)},
+  { 258, -1, sizeof(DsSelectRequest)},
+  { 265, -1, sizeof(DsSelectResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -751,6 +752,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::Scope::internal_default_instance());
   _SelectRequest_default_instance_._instance.get_mutable()->limit_ = const_cast< ::kvrpcpb::Limit*>(
       ::kvrpcpb::Limit::internal_default_instance());
+  _SelectRequest_default_instance_._instance.get_mutable()->ext_filter_ = const_cast< ::kvrpcpb::MatchExt*>(
+      ::kvrpcpb::MatchExt::internal_default_instance());
   _RowIntent_default_instance_._instance.get_mutable()->value_ = const_cast< ::txnpb::RowValue*>(
       ::txnpb::RowValue::internal_default_instance());
   _Row_default_instance_._instance.get_mutable()->value_ = const_cast< ::txnpb::RowValue*>(
@@ -844,31 +847,32 @@ void AddDescriptorsImpl() {
       "\002 \001(\0132\031.txnpb.GetLockInfoRequest\"j\n\025DsGe"
       "tLockInfoResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
       "cpb.ResponseHeader\022(\n\004resp\030\002 \001(\0132\032.txnpb"
-      ".GetLockInfoResponse\"\316\001\n\rSelectRequest\022\013"
+      ".GetLockInfoResponse\"\365\001\n\rSelectRequest\022\013"
       "\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb.Sco"
       "pe\022(\n\nfield_list\030\003 \003(\0132\024.kvrpcpb.SelectF"
       "ield\022%\n\rwhere_filters\030\004 \003(\0132\016.kvrpcpb.Ma"
       "tch\022!\n\tgroup_bys\030\005 \003(\0132\016.metapb.Column\022\035"
-      "\n\005limit\030\006 \001(\0132\016.kvrpcpb.Limit\"B\n\010RowValu"
-      "e\022\016\n\006fields\030\001 \001(\014\022\025\n\raggred_counts\030\002 \003(\003"
-      "\022\017\n\007version\030\003 \001(\004\"\201\001\n\tRowIntent\022\036\n\007op_ty"
-      "pe\030\001 \001(\0162\r.txnpb.OpType\022\016\n\006txn_id\030\002 \001(\t\022"
-      "\023\n\013primary_key\030\003 \001(\014\022\017\n\007timeout\030\004 \001(\010\022\036\n"
-      "\005value\030\n \001(\0132\017.txnpb.RowValue\"T\n\003Row\022\013\n\003"
-      "key\030\001 \001(\014\022\036\n\005value\030\002 \001(\0132\017.txnpb.RowValu"
-      "e\022 \n\006intent\030\003 \001(\0132\020.txnpb.RowIntent\"H\n\016S"
-      "electResponse\022\014\n\004code\030\001 \001(\005\022\030\n\004rows\030\002 \003("
-      "\0132\n.txnpb.Row\022\016\n\006offset\030\003 \001(\004\"\\\n\017DsSelec"
-      "tRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reque"
-      "stHeader\022!\n\003req\030\002 \001(\0132\024.txnpb.SelectRequ"
-      "est\"`\n\020DsSelectResponse\022\'\n\006header\030\001 \001(\0132"
-      "\027.kvrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025"
-      ".txnpb.SelectResponse* \n\006OpType\022\n\n\006INSER"
-      "T\020\000\022\n\n\006DELETE\020\001*1\n\tTxnStatus\022\010\n\004INIT\020\000\022\r"
-      "\n\tCOMMITTED\020\001\022\013\n\007ABORTED\020\002b\006proto3"
+      "\n\005limit\030\006 \001(\0132\016.kvrpcpb.Limit\022%\n\next_fil"
+      "ter\030\n \001(\0132\021.kvrpcpb.MatchExt\"B\n\010RowValue"
+      "\022\016\n\006fields\030\001 \001(\014\022\025\n\raggred_counts\030\002 \003(\003\022"
+      "\017\n\007version\030\003 \001(\004\"\201\001\n\tRowIntent\022\036\n\007op_typ"
+      "e\030\001 \001(\0162\r.txnpb.OpType\022\016\n\006txn_id\030\002 \001(\t\022\023"
+      "\n\013primary_key\030\003 \001(\014\022\017\n\007timeout\030\004 \001(\010\022\036\n\005"
+      "value\030\n \001(\0132\017.txnpb.RowValue\"T\n\003Row\022\013\n\003k"
+      "ey\030\001 \001(\014\022\036\n\005value\030\002 \001(\0132\017.txnpb.RowValue"
+      "\022 \n\006intent\030\003 \001(\0132\020.txnpb.RowIntent\"H\n\016Se"
+      "lectResponse\022\014\n\004code\030\001 \001(\005\022\030\n\004rows\030\002 \003(\013"
+      "2\n.txnpb.Row\022\016\n\006offset\030\003 \001(\004\"\\\n\017DsSelect"
+      "Request\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reques"
+      "tHeader\022!\n\003req\030\002 \001(\0132\024.txnpb.SelectReque"
+      "st\"`\n\020DsSelectResponse\022\'\n\006header\030\001 \001(\0132\027"
+      ".kvrpcpb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025."
+      "txnpb.SelectResponse* \n\006OpType\022\n\n\006INSERT"
+      "\020\000\022\n\n\006DELETE\020\001*1\n\tTxnStatus\022\010\n\004INIT\020\000\022\r\n"
+      "\tCOMMITTED\020\001\022\013\n\007ABORTED\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 3634);
+      descriptor, 3673);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "txn.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -12796,6 +12800,7 @@ const int SelectRequest::kFieldListFieldNumber;
 const int SelectRequest::kWhereFiltersFieldNumber;
 const int SelectRequest::kGroupBysFieldNumber;
 const int SelectRequest::kLimitFieldNumber;
+const int SelectRequest::kExtFilterFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 SelectRequest::SelectRequest()
@@ -12828,14 +12833,19 @@ SelectRequest::SelectRequest(const SelectRequest& from)
   } else {
     limit_ = NULL;
   }
+  if (from.has_ext_filter()) {
+    ext_filter_ = new ::kvrpcpb::MatchExt(*from.ext_filter_);
+  } else {
+    ext_filter_ = NULL;
+  }
   // @@protoc_insertion_point(copy_constructor:txnpb.SelectRequest)
 }
 
 void SelectRequest::SharedCtor() {
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&scope_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&limit_) -
-      reinterpret_cast<char*>(&scope_)) + sizeof(limit_));
+      reinterpret_cast<char*>(&ext_filter_) -
+      reinterpret_cast<char*>(&scope_)) + sizeof(ext_filter_));
   _cached_size_ = 0;
 }
 
@@ -12848,6 +12858,7 @@ void SelectRequest::SharedDtor() {
   key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete scope_;
   if (this != internal_default_instance()) delete limit_;
+  if (this != internal_default_instance()) delete ext_filter_;
 }
 
 void SelectRequest::SetCachedSize(int size) const {
@@ -12891,6 +12902,10 @@ void SelectRequest::Clear() {
     delete limit_;
   }
   limit_ = NULL;
+  if (GetArenaNoVirtual() == NULL && ext_filter_ != NULL) {
+    delete ext_filter_;
+  }
+  ext_filter_ = NULL;
   _internal_metadata_.Clear();
 }
 
@@ -12976,6 +12991,18 @@ bool SelectRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // .kvrpcpb.MatchExt ext_filter = 10;
+      case 10: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_ext_filter()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -13041,6 +13068,12 @@ void SelectRequest::SerializeWithCachedSizes(
       6, *this->limit_, output);
   }
 
+  // .kvrpcpb.MatchExt ext_filter = 10;
+  if (this->has_ext_filter()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      10, *this->ext_filter_, output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -13098,6 +13131,13 @@ void SelectRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         6, *this->limit_, deterministic, target);
+  }
+
+  // .kvrpcpb.MatchExt ext_filter = 10;
+  if (this->has_ext_filter()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageNoVirtualToArray(
+        10, *this->ext_filter_, deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -13171,6 +13211,13 @@ size_t SelectRequest::ByteSizeLong() const {
         *this->limit_);
   }
 
+  // .kvrpcpb.MatchExt ext_filter = 10;
+  if (this->has_ext_filter()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        *this->ext_filter_);
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = cached_size;
@@ -13213,6 +13260,9 @@ void SelectRequest::MergeFrom(const SelectRequest& from) {
   if (from.has_limit()) {
     mutable_limit()->::kvrpcpb::Limit::MergeFrom(from.limit());
   }
+  if (from.has_ext_filter()) {
+    mutable_ext_filter()->::kvrpcpb::MatchExt::MergeFrom(from.ext_filter());
+  }
 }
 
 void SelectRequest::CopyFrom(const ::google::protobuf::Message& from) {
@@ -13245,6 +13295,7 @@ void SelectRequest::InternalSwap(SelectRequest* other) {
   key_.Swap(&other->key_);
   swap(scope_, other->scope_);
   swap(limit_, other->limit_);
+  swap(ext_filter_, other->ext_filter_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -13478,6 +13529,46 @@ void SelectRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
     
   }
   // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.limit)
+}
+
+// .kvrpcpb.MatchExt ext_filter = 10;
+bool SelectRequest::has_ext_filter() const {
+  return this != internal_default_instance() && ext_filter_ != NULL;
+}
+void SelectRequest::clear_ext_filter() {
+  if (GetArenaNoVirtual() == NULL && ext_filter_ != NULL) delete ext_filter_;
+  ext_filter_ = NULL;
+}
+const ::kvrpcpb::MatchExt& SelectRequest::ext_filter() const {
+  const ::kvrpcpb::MatchExt* p = ext_filter_;
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.ext_filter)
+  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::MatchExt*>(
+      &::kvrpcpb::_MatchExt_default_instance_);
+}
+::kvrpcpb::MatchExt* SelectRequest::mutable_ext_filter() {
+  
+  if (ext_filter_ == NULL) {
+    ext_filter_ = new ::kvrpcpb::MatchExt;
+  }
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.ext_filter)
+  return ext_filter_;
+}
+::kvrpcpb::MatchExt* SelectRequest::release_ext_filter() {
+  // @@protoc_insertion_point(field_release:txnpb.SelectRequest.ext_filter)
+  
+  ::kvrpcpb::MatchExt* temp = ext_filter_;
+  ext_filter_ = NULL;
+  return temp;
+}
+void SelectRequest::set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter) {
+  delete ext_filter_;
+  ext_filter_ = ext_filter;
+  if (ext_filter) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.ext_filter)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

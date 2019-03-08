@@ -3,6 +3,8 @@
 #include "base/util.h"
 #include "storage/util.h"
 #include "helper/store_test_fixture.h"
+#include "helper/request_builder.h"
+#include "../helper/txn_request_builder.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -45,7 +47,46 @@ static void randomTxnValue(TxnValue& value) {
 TEST_F(StoreTxnTest, TxnValue) {
 }
 
+//insert
+//select and get version
+//prepare taking version
 TEST_F(StoreTxnTest, Prepare) {
+    ASSERT_TRUE(!table_->GetColumn("id").name().empty());
+
+    rows_ = {{"44","user4","444"},
+            {"22","user2","222"},
+            {"112222","user13333","133311"},
+             {"33","user3","333"}};
+    uint64_t len = rows_.size();
+    auto s = testInsert(rows_, &len);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    std::vector<uint64_t> vers;
+    // select all rows
+    {
+        decltype(rows_) row0;
+        auto s = testTxnSelect(
+                [](TxnSelectRequestBuilder& b) {
+                    b.AddAllFields();
+                },
+                rows_, vers
+        );
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+    txnpb::TxnIntent tnt;
+    randomIntent(tnt);
+    PrepareRequestBuilder builder;
+    auto prepare_req = builder.Build();
+    prepare_req.set_txn_id("1");
+    std::string pkey("1");
+    prepare_req.set_primary_key(pkey);
+
+    PrepareResponse resp;
+    uint64_t  version{1};
+    store_->TxnPrepare(prepare_req, version, &resp);
+    ASSERT_TRUE(resp.errors_size() == 0);
+
 }
 
 TEST_F(StoreTxnTest, Decide) {

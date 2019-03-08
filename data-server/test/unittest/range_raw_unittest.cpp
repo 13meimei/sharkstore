@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     return RUN_ALL_TESTS();
 }
 
-char level[8] = "debug";
+char level[8] = "warn";
 
 using namespace sharkstore::test::helper;
 using namespace sharkstore::test::mock;

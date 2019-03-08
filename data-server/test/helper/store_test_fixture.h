@@ -6,6 +6,7 @@ _Pragma("once");
 #include "base/status.h"
 #include "storage/store.h"
 #include "request_builder.h"
+#include "txn_request_builder.h"
 #include "range/split_policy.h"
 
 namespace sharkstore {
@@ -27,6 +28,10 @@ protected:
     // sql test methods:
     Status testSelect(const std::function<void(SelectRequestBuilder&)>& build_func,
                       const std::vector<std::vector<std::string>>& expected_rows);
+
+    Status testTxnSelect(const std::function<void(TxnSelectRequestBuilder&)>& build_func,
+                         const std::vector<std::vector<std::string>>& expected_rows,
+                         std::vector<uint64_t>& versions);
 
     Status testInsert(const std::vector<std::vector<std::string>> &rows, uint64_t *insert_bytes= 0);
 

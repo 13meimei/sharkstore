@@ -1,4 +1,5 @@
 #include "request_builder.h"
+#include "txn_request_builder.h"
 
 #include "base/util.h"
 #include "helper_util.h"
@@ -513,6 +514,49 @@ void UpdateRequestBuilder::SetField(const std::string& col, kvrpcpb::FieldType t
     f->set_field_type(type);
 }
 
+/*
+message TxnIntent {
+    OpType typ          = 1;  //INSERT  DELETE
+    bytes key           = 2; // 编码后的主键
+    bytes value         = 3; // 编码后的列值（所有非主键列）
+    bool  check_unique  = 4; // for unique index or insert check pk duplicate
+    uint64 expected_ver = 5; // 为0表示不校验version
+    bool is_primary     = 6; // 是否是primary row
+}*/
+txnpb::TxnIntent* PrepareRequestBuilder::CreateTxnIntent(
+        txnpb::OpType op, const std::string& key,
+        const std::string& value, bool check_unique,
+        uint64_t exp_ver, bool is_primary)
+{
+    txnpb::TxnIntent* tnt = new txnpb::TxnIntent;
+    if (tnt == nullptr) {
+        return nullptr;
+    }
+    tnt->set_typ(op);
+    tnt->set_key(std::move(key));
+    tnt->set_value(std::move(value));
+    tnt->set_check_unique(check_unique);
+    tnt->set_expected_ver(exp_ver);
+    tnt->set_is_primary(is_primary);
+    return tnt;
+}
+
+void PrepareRequestBuilder::AppendIntents(const txnpb::TxnIntent* tnt) {
+    auto i = req_.mutable_intents();
+    i->AddAllocated(const_cast<txnpb::TxnIntent*>(tnt));
+}
+
+void TxnSelectRequestBuilder::AddAllFields() {
+    auto cols = table_->GetAllColumns();
+    for (const auto& col: cols) {
+        auto f = req_.add_field_list();
+        f->set_typ(kvrpcpb::SelectField_Type_Column);
+        f->mutable_column()->CopyFrom(col);
+    }
+}
+
+
 } /* namespace helper */
 } /* namespace test */
 } /* namespace sharkstore */
+

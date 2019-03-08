@@ -2,6 +2,7 @@ _Pragma("once");
 
 #include "base/status.h"
 #include "proto/gen/kvrpcpb.pb.h"
+#include "proto/gen/txn.pb.h"
 #include "table.h"
 
 namespace sharkstore {
@@ -12,6 +13,9 @@ class SelectResultParser {
 public:
     SelectResultParser(const kvrpcpb::SelectRequest& req,
                        const kvrpcpb::SelectResponse& resp);
+
+    SelectResultParser(const txnpb::SelectRequest& req,
+                       const txnpb::SelectResponse& resp);
 
     const std::vector<std::vector<std::string>>& GetRows() const {
         return rows_;

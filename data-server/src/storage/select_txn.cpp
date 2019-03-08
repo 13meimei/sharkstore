@@ -57,7 +57,8 @@ TxnRowDecoder::TxnRowDecoder(const std::vector<metapb::Column>& primary_keys,
         cols_.emplace(match.column().id(), match.column());
         filters_.push_back(match);
     }
-    if (req.ext_filter().has_expr() &&
+    if (req.has_ext_filter() &&
+        req.ext_filter().has_expr() &&
         req.ext_filter().expr().child_size() > 0)
     {
         where_expr_ = std::make_shared<CWhereExpr>(req.ext_filter());

@@ -1,7 +1,6 @@
 #include "store_test_fixture.h"
 
 #include "base/util.h"
-
 #include "query_parser.h"
 #include "helper_util.h"
 
@@ -37,7 +36,7 @@ void StoreTestFixture::SetUp() {
     ASSERT_TRUE(tmp != NULL);
     tmp_dir_ = tmp;
 
-    sf_load_config("data-server", "ds_test.conf");
+    //sf_load_config("data-server", "ds_test.conf");
 
     std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
     column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
@@ -91,6 +90,36 @@ Status StoreTestFixture::testSelect(
     if (!s.ok()) {
         return Status(Status::kUnexpected, "select rows", s.ToString());
     }
+    return Status::OK();
+}
+
+Status StoreTestFixture::testTxnSelect(
+        const std::function<void(TxnSelectRequestBuilder&)>& build_func,
+        const std::vector<std::vector<std::string>>& expected_rows,
+        std::vector<uint64_t>& versions) {
+    TxnSelectRequestBuilder builder(table_.get());
+    build_func(builder);
+    auto req = builder.Build();
+
+    txnpb::SelectResponse resp;
+    auto s = store_->TxnSelect(req, &resp);
+    if (!s.ok()) {
+        return Status(Status::kUnexpected, "select", s.ToString());
+    }
+    if (resp.code() != 0) {
+        return Status(Status::kUnexpected, "select code", std::to_string(resp.code()));
+    }
+
+    for (const auto& r: resp.rows()) {
+        versions.emplace_back(r.value().version());
+    }
+
+    SelectResultParser parser(req, resp);
+    s = parser.Match(expected_rows);
+    if (!s.ok()) {
+        return Status(Status::kUnexpected, "select rows", s.ToString());
+    }
+
     return Status::OK();
 }
 
