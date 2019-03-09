@@ -2,6 +2,7 @@
 
 #include "frame/sf_logger.h"
 #include "common/rpc_request.h"
+#include "proto/gen/funcpb.pb.h"
 #include "worker.h"
 
 namespace sharkstore {
@@ -41,7 +42,12 @@ Status RPCServer::Stop() {
 
 void RPCServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg) {
     auto task = new RPCRequest(ctx, msg);
-    worker_->Push(task);
+    // TODO: check this
+    if (task->msg->head.func_id == funcpb::kFuncSelect) {
+        worker_->Deal(task);
+    } else {
+        worker_->Push(task);
+    }
 }
 
 } /* namespace server */
