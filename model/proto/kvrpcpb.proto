@@ -149,17 +149,16 @@ message SelectField {
 enum MatchType {
     //proto restrict
     Invalid       = 0;
-    /*1~5 logic*/
-    LogicAnd      = 1;
-    LogicOr       = 2;
-    LogicNot      = 3;
-    /*11~20 comparison*/
-    Equal         = 11;
-    NotEqual      = 12;
-    Less          = 13;
-    LessOrEqual   = 14;
-    Larger        = 15;
-    LargerOrEqual = 16;
+    Equal         = 1;
+    NotEqual      = 2;
+    Less          = 3;
+    LessOrEqual   = 4;
+    Larger        = 5;
+    LargerOrEqual = 6;
+
+    LogicAnd      = 11;
+    LogicOr       = 12;
+    LogicNot      = 13;
 }
 
 enum ExprType {

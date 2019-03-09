@@ -2460,10 +2460,10 @@ void AddDescriptorsImpl() {
       "resp\030\002 \001(\0132\030.kvrpcpb.LockGetResponse*;\n\013"
       "ExecuteType\022\017\n\013ExecInvalid\020\000\022\013\n\007ExecPut\020"
       "\001\022\016\n\nExecDelete\020\002*\224\001\n\tMatchType\022\013\n\007Inval"
-      "id\020\000\022\014\n\010LogicAnd\020\001\022\013\n\007LogicOr\020\002\022\014\n\010Logic"
-      "Not\020\003\022\t\n\005Equal\020\013\022\014\n\010NotEqual\020\014\022\010\n\004Less\020\r"
-      "\022\017\n\013LessOrEqual\020\016\022\n\n\006Larger\020\017\022\021\n\rLargerO"
-      "rEqual\020\020*\367\001\n\010ExprType\022\r\n\tE_Invalid\020\000\022\016\n\n"
+      "id\020\000\022\t\n\005Equal\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022"
+      "\017\n\013LessOrEqual\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOr"
+      "Equal\020\006\022\014\n\010LogicAnd\020\013\022\013\n\007LogicOr\020\014\022\014\n\010Lo"
+      "gicNot\020\r*\367\001\n\010ExprType\022\r\n\tE_Invalid\020\000\022\016\n\n"
       "E_LogicAnd\020\001\022\r\n\tE_LogicOr\020\002\022\016\n\nE_LogicNo"
       "t\020\003\022\013\n\007E_Equal\020\013\022\016\n\nE_NotEqual\020\014\022\n\n\006E_Le"
       "ss\020\r\022\021\n\rE_LessOrEqual\020\016\022\014\n\010E_Larger\020\017\022\023\n"
@@ -2546,12 +2546,12 @@ bool MatchType_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+    case 4:
+    case 5:
+    case 6:
     case 11:
     case 12:
     case 13:
-    case 14:
-    case 15:
-    case 16:
       return true;
     default:
       return false;
