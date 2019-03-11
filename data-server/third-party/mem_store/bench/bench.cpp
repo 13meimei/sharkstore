@@ -28,6 +28,7 @@ public:
         count_.store(0, std::memory_order_relaxed);
         time_.store(0, std::memory_order_relaxed);
         printer_ = std::move(std::thread ([this]() {
+            return; // comment below
             while (true) {
                 auto lk = std::unique_lock<std::mutex>(lock_);
                 auto status = cond_.wait_for(lk, std::chrono::milliseconds(300));
@@ -101,13 +102,13 @@ private:
             auto res = store_.Put(std::string(buf), std::string(buf));
             assert(res == 0);
 
-            count_.fetch_add(1, std::memory_order_relaxed);
+//            count_.fetch_add(1, std::memory_order_relaxed);
         }
 
         auto t1 = std::chrono::system_clock::now();
         auto time = std::chrono::duration_cast<std::chrono::seconds>(t1-t0).count();
 
-//        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
+        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
         time_.fetch_add(time, std::memory_order_relaxed);
     }
 
@@ -132,13 +133,13 @@ private:
 //            assert(res == 0);
 //            assert(val == std::string(buf));
 
-            count_.fetch_add(1, std::memory_order_relaxed);
+//            count_.fetch_add(1, std::memory_order_relaxed);
         }
 
         auto t1 = std::chrono::system_clock::now();
         auto time = std::chrono::duration_cast<std::chrono::seconds>(t1-t0).count();
 
-//        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
+        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
         time_.fetch_add(time, std::memory_order_relaxed);
     }
 
@@ -164,13 +165,13 @@ private:
 //            auto res = store_.Get(std::string(buf), &val);
 //            assert(res != 0);
 
-            count_.fetch_add(1, std::memory_order_relaxed);
+//            count_.fetch_add(1, std::memory_order_relaxed);
         }
 
         auto t1 = std::chrono::system_clock::now();
         auto time = std::chrono::duration_cast<std::chrono::seconds>(t1-t0).count();
 
-//        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
+        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
         time_.fetch_add(time, std::memory_order_relaxed);
     }
 
