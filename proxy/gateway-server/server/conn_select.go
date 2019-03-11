@@ -107,7 +107,7 @@ func (c *ClientConn) handleSelect(stmt *sqlparser.Select, args []interface{}) er
 	}
 	ret, err := c.server.proxy.HandleSelect(c.db, stmt, args)
 	if err != nil {
-		golog.Debug("select failed, err[%v]", err)
+		golog.Error("select failed, err[%v]", err)
 		return err
 	}
 
