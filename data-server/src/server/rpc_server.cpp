@@ -2,6 +2,7 @@
 
 #include "frame/sf_logger.h"
 #include "common/rpc_request.h"
+#include "common/ds_config.h"
 #include "worker.h"
 
 namespace sharkstore {
@@ -41,7 +42,11 @@ Status RPCServer::Stop() {
 
 void RPCServer::onMessage(const net::Context& ctx, const net::MessagePtr& msg) {
     auto task = new RPCRequest(ctx, msg);
-    worker_->Push(task);
+    if (ds_config.task_in_place) {
+        worker_->Deal(task);
+    } else {
+        worker_->Push(task);
+    }
 }
 
 } /* namespace server */

@@ -490,6 +490,10 @@ static int load_woker_num_config(IniContext *ini_context) {
         ds_config.slow_worker_num = 8;
     }
 
+    ds_config.task_in_place = (bool)iniGetIntValue(section, "task_in_place", ini_context, 0);
+    if (ds_config.task_in_place) {
+        FLOG_WARN("task execution enter in place mode!");
+    }
     return 0;
 }
 

@@ -27,6 +27,7 @@ public:
     void Stop();
 
     void Push(RPCRequest* req);
+    void Deal(RPCRequest* req); // 不入队列，直接处理
 
     void PrintQueueSize();
     size_t ClearQueue(bool fast, bool slow);
@@ -86,6 +87,7 @@ private:
     static bool isSlowTask(RPCRequest *task);
 
 private:
+    RangeServer *range_server_ = nullptr;
     std::unique_ptr<WorkThreadGroup> fast_workers_;
     std::unique_ptr<WorkThreadGroup> slow_workers_;
 };

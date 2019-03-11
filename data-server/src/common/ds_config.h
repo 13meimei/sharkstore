@@ -46,6 +46,7 @@ struct rocksdb_config_t {
 typedef struct ds_config_s {
     int fast_worker_num;  // fast worker thread num; eg. put/get command
     int slow_worker_num;  // fast worker thread num; eg. put/get command
+    bool task_in_place; // 任务不走worker，在IO线程中就地执行
 
     int task_timeout;  // defualt 3,000ms
 

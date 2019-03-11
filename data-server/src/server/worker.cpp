@@ -124,6 +124,8 @@ Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* ra
     FLOG_INFO("Worker Start begin, fast_worker_size: %d, slow_worker_size: %d",
             fast_worker_size, slow_worker_size);
 
+    range_server_ = range_server;
+
     fast_workers_.reset(
             new WorkThreadGroup(range_server, fast_worker_size, kWorkThreadCapacity, "fast_worker"));
     fast_workers_->Start();
@@ -145,6 +147,11 @@ void Worker::Push(RPCRequest* task) {
     } else {
         slow_workers_->Push(task);
     }
+}
+
+void Worker::Deal(RPCRequest* req) {
+    std::unique_ptr<RPCRequest> req_ptr(req);
+    range_server_->DealTask(std::move(req_ptr));
 }
 
 size_t Worker::ClearQueue(bool fast, bool slow) {
