@@ -31,7 +31,7 @@ else()
 endif()
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -DNDEBUG -DBWTREE_NODEBUG")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2 -DNDEBUG" )
     set(CMAKE_C_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_RELEASE "")
@@ -50,6 +50,7 @@ include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/rapidjson-1.1.0/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/mem_store)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/mem_store/include)
+include_directories(${PROJECT_SOURCE_DIR}/third-party/BwTree/src)
 
 # use intel tbb
 OPTION (ENABLE_TBB "Use Intel TBB" ON)
@@ -220,6 +221,7 @@ set(SOURCES
     src/storage/row_fetcher.cpp
     src/storage/snapshot.cpp
     src/storage/store.cpp
+    src/storage/db/bwtree_impl/bwtree_db_impl.cpp
     src/storage/db/rocksdb_impl/iterator.cpp
     src/storage/db/rocksdb_impl/write_batch.cpp
     src/storage/db/rocksdb_impl/rocksdb_impl.cpp
