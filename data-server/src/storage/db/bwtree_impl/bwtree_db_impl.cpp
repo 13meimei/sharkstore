@@ -38,16 +38,17 @@ Status BwTreeDBImpl::Get(void* column_family, const std::string& key, std::strin
 
 Status BwTreeDBImpl::put(BwTreeType* tree, const std::string& key, const std::string& value) {
     while (!tree->Insert(key, value)) {
-        tree->Delete(key);
+        tree->Delete(key, "");
     }
+    return Status(Status::OK());
 }
 
 Status BwTreeDBImpl::Put(const std::string& key, const std::string& value) {
-    return Status(Status::kNotSupported);
+    return put(default_tree_, key, value);
 }
 
 Status BwTreeDBImpl::Put(void* column_family, const std::string& key, const std::string& value) {
-    return Status(Status::kNotSupported);
+    return put(static_cast<BwTreeType *>(column_family), key, value);
 }
 
 std::unique_ptr<WriteBatchInterface> BwTreeDBImpl::NewBatch() {
@@ -58,12 +59,18 @@ Status BwTreeDBImpl::Write(WriteBatchInterface* batch) {
     return Status(Status::kNotSupported);
 }
 
+
+Status BwTreeDBImpl::del(BwTreeType* tree, const std::string& key) {
+    tree->Delete(key, "");
+    return Status::OK();
+}
+
 Status BwTreeDBImpl::Delete(const std::string& key) {
-    return Status(Status::kNotSupported);
+    return del(default_tree_, key);
 }
 
 Status BwTreeDBImpl::Delete(void* column_family, const std::string& key) {
-    return Status(Status::kNotSupported);
+    return del(static_cast<BwTreeType *>(column_family), key);
 }
 
 Status BwTreeDBImpl::DeleteRange(void* column_family, const std::string& begin_key, const std::string& end_key) {
@@ -71,11 +78,11 @@ Status BwTreeDBImpl::DeleteRange(void* column_family, const std::string& begin_k
 }
 
 void* BwTreeDBImpl::DefaultColumnFamily() {
-    return nullptr;
+    return default_tree_;
 }
 
 void* BwTreeDBImpl::TxnCFHandle() {
-    return nullptr;
+    return txn_tree_;
 }
 
 IteratorInterface* BwTreeDBImpl::NewIterator(const std::string& start, const std::string& limit) {

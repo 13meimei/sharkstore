@@ -40,10 +40,23 @@ public:
     void PrintMetric() override;
 
 private:
-    using BwTreeType = wangziqi2013::bwtree::BwTree<std::string, std::string>;
+    struct ValueEqualityChecker {
+        bool operator()(const std::string& __x, const std::string& __y) const
+        { return true; }
+    };
 
+    struct ValueHasher {
+        size_t operator()(const std::string& __s) const noexcept
+        { return 0; }
+    };
+
+    using BwTreeType = BwTree<std::string, std::string, std::less<std::string>,
+            std::equal_to<std::string>, std::hash<std::string>, ValueEqualityChecker, ValueHasher>;
+
+private:
     static Status get(BwTreeType* tree, const std::string& key, std::string* value);
     static Status put(BwTreeType* tree, const std::string& key, const std::string& value);
+    static Status del(BwTreeType* tree, const std::string& key);
 
 private:
 

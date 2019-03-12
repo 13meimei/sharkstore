@@ -27,6 +27,7 @@
 #include "monitor/statistics.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "storage/db/skiplist_impl/skiplist_impl.h"
+#include "storage/db/bwtree_impl/bwtree_db_impl.h"
 
 #include "server.h"
 #include "range_context_impl.h"
@@ -217,9 +218,10 @@ int RangeServer::OpenDB() {
         db_ = new storage::RocksDBImpl(ds_config.rocksdb_config);
     } else if (strcasecmp(engine_name.c_str(), "memory") == 0) {
         db_ = new storage::SkipListDBImpl();
+    } else if (strcasecmp(engine_name.c_str(), "bwtree")) {
+        db_ = new storage::BwTreeDBImpl();
     } else {
         FLOG_ERROR("unknown engine name: %s", engine_name.c_str());
-        return -1;
     }
 
     auto s = db_->Open();

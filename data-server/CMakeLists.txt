@@ -17,6 +17,8 @@ set(CXX_FLAGS
     -Wno-missing-field-initializers
     -D__STDC_FORMAT_MACROS
     -DASIO_STANDALONE
+    -mcx16  # bwtree flag
+    -Wno-invalid-offsetof # bwtree flag
 )
 
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CXX_FLAGS}")
@@ -32,7 +34,7 @@ endif()
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -DNDEBUG -DBWTREE_NODEBUG")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2 -DNDEBUG" )
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2 -DNDEBUG -DBWTREE_NODEBUG" )
     set(CMAKE_C_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_RELEASE "")
 else()
@@ -44,13 +46,13 @@ MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
-
 # third-party
 include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/rapidjson-1.1.0/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/mem_store)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/mem_store/include)
-include_directories(${PROJECT_SOURCE_DIR}/third-party/BwTree/src)
+add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/BwTree-baseline)
+include_directories(${PROJECT_SOURCE_DIR}/third-party/BwTree-baseline/src)
 
 # use intel tbb
 OPTION (ENABLE_TBB "Use Intel TBB" ON)
@@ -290,6 +292,8 @@ set (depend_LIBRARYS
     ${ROCKSDB_LIB}
     ${FASTCOMMON_LIB}
     skiplist
+    bwtree
+    atomic
     pthread
     dl
     z
