@@ -99,8 +99,6 @@ RowDecoder::RowDecoder(
     where_expr_ = nullptr;
     if (match_ext.expr().child_size() > 0) {
         where_expr_ = std::make_shared<CWhereExpr>(match_ext);
-    } else {
-        FLOG_ERROR("simple Match filter.");
     }
 }
 
