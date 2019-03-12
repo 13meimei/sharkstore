@@ -13,8 +13,70 @@
 
 #include <gperftools/profiler.h>
 #include "mem_store/mem_store.h"
+#include "tbb/concurrent_hash_map.h"
+#include "tbb/blocked_range.h"
+#include "tbb/parallel_for.h"
 
 using namespace memstore;
+
+// Structure that defines hashing and comparison operations for user's type.
+struct MyHashCompare {
+    static size_t hash( const std::string& x ) {
+        size_t h = 0;
+        for( const char* s = x.c_str(); *s; ++s )
+            h = (h*17)^*s;
+        return h;
+    }
+    //! True if strings are equal
+    static bool equal( const std::string& x, const std::string& y ) {
+        return x==y;
+    }
+};
+
+// A concurrent hash table that maps strings to ints.
+typedef tbb::concurrent_hash_map<std::string, std::string, MyHashCompare> StringTable;
+class Table: public StringTable {
+public:
+    Table(size_t buckets) {
+        std::cout << "reserve buckets: " << buckets << std::endl;
+        reserve(buckets);
+
+        std::cout <<
+                  "max_size: " << max_size() << std::endl <<
+                  "construct size: " << size() << std::endl <<
+                  "construct bucket_count: " << bucket_count() << std::endl;
+    }
+    ~Table() {
+        std::cout <<
+                  "deconstruct size: " << size() << std::endl <<
+                  "deconstruct bucket_count: " << bucket_count() << std::endl;
+    }
+
+    Table() = delete;
+    Table(const Table& ) = delete;
+    Table& operator=(const Table& ) = delete;
+
+    int Put(const std::string& key, const std::string& value) {
+        StringTable::accessor a;
+        insert(a, key);
+        a->second = value;
+//        std::cout << "put key: " << key << " value: " << value << std::endl;
+        return 0;
+    }
+
+    int Get(const std::string& key, std::string* value) {
+        StringTable::const_accessor a;
+        find(a, key);
+        *value = a->second;
+//        std::cout << "get key:" << key << " value: " << *value << std::endl;
+        return 0;
+    }
+
+    void Delete(const std::string& key) {
+        erase(key);
+//        std::cout << "del key: " << key << std::endl;
+    }
+};
 
 class StoreBench {
 public:
@@ -24,7 +86,8 @@ public:
                         uint64_t thread_number = 1):
             op_type_((static_cast<OpType>(op_type))),
             thread_number_(thread_number),
-            data_number_per_thread_(data_number_per_thread) {
+            data_number_per_thread_(data_number_per_thread),
+            store_(data_number_per_thread*thread_number) {
         count_.store(0, std::memory_order_relaxed);
         time_.store(0, std::memory_order_relaxed);
         printer_ = std::move(std::thread ([this]() {
@@ -183,7 +246,7 @@ private:
     uint64_t thread_number_ = 1;
     uint64_t data_number_per_thread_ = 1;
 
-    Store<std::string> store_;
+    Table store_;
     std::vector<std::thread> thread_vec_;
 
     std::atomic<uint64_t >count_;
