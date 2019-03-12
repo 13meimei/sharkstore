@@ -11,10 +11,10 @@ build:
   # before_script: 
   #   - apt update && apt -y install make autoconf 
   script: 
-    - g++ helloworld.cpp -o mybinary
+    - g++ helloworld.cpp -o helloworld
   artifacts:
     paths:
-      - mybinary
+      - helloworld
   # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
   # cache:
   #   paths:
@@ -24,4 +24,4 @@ build:
 test:
   stage: test
   script:
-    - ./runmytests.sh
+    - ./helloworld
