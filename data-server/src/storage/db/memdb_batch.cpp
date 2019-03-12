@@ -1,18 +1,14 @@
-//
-// Created by young on 19-2-14.
-//
-
-#include "storage/db/skiplist_impl/write_batch.h"
+#include "memdb_batch.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-Status SkipListWriteBatch::Put(const std::string &key, const std::string &value) {
+Status MemDBWriteBatch::Put(const std::string &key, const std::string &value) {
     return Put(nullptr, key, value);
 }
 
-Status SkipListWriteBatch::Put(void* column_family, const std::string& key, const std::string& value) {
+Status MemDBWriteBatch::Put(void* column_family, const std::string& key, const std::string& value) {
     auto ent = std::unique_ptr<BatchEntry>(new BatchEntry);
     ent->cf = column_family;
     ent->type = EntryType::kPut;
@@ -22,11 +18,11 @@ Status SkipListWriteBatch::Put(void* column_family, const std::string& key, cons
     return Status::OK();
 }
 
-Status SkipListWriteBatch::Delete(const std::string &key) {
+Status MemDBWriteBatch::Delete(const std::string &key) {
     return Delete(nullptr, key);
 }
 
-Status SkipListWriteBatch::Delete(void* column_family, const std::string& key) {
+Status MemDBWriteBatch::Delete(void* column_family, const std::string& key) {
     auto ent = std::unique_ptr<BatchEntry>(new BatchEntry);
     ent->cf = column_family;
     ent->type = EntryType::kDelete;
@@ -35,7 +31,7 @@ Status SkipListWriteBatch::Delete(void* column_family, const std::string& key) {
     return Status::OK();
 }
 
-Status SkipListWriteBatch::WriteTo(SkipListDBImpl* db) {
+Status MemDBWriteBatch::WriteTo(DbInterface* db) {
     Status s;
     for (const auto& ent: entries_) {
         if (ent->type == EntryType::kPut) {
@@ -58,6 +54,7 @@ Status SkipListWriteBatch::WriteTo(SkipListDBImpl* db) {
     return s;
 }
 
-}
-}
-}
+
+} // namespace storage
+} // namespace dataserver
+} // namespace sharkstore

@@ -1,5 +1,7 @@
 #include "bwtree_db_impl.h"
 
+#include "storage/db/memdb_batch.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
@@ -52,11 +54,17 @@ Status BwTreeDBImpl::Put(void* column_family, const std::string& key, const std:
 }
 
 std::unique_ptr<WriteBatchInterface> BwTreeDBImpl::NewBatch() {
-    return nullptr;
+    return std::unique_ptr<WriteBatchInterface>(new MemDBWriteBatch);
 }
 
 Status BwTreeDBImpl::Write(WriteBatchInterface* batch) {
-    return Status(Status::kNotSupported);
+    auto mem_batch = dynamic_cast<MemDBWriteBatch*>(batch);
+    if (mem_batch != nullptr) {
+        return mem_batch->WriteTo(this);
+    } else {
+        // TODO: type info
+        return Status(Status::kInvalidArgument, "batch class", "");
+    }
 }
 
 

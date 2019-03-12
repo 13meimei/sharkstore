@@ -223,12 +223,12 @@ set(SOURCES
     src/storage/row_fetcher.cpp
     src/storage/snapshot.cpp
     src/storage/store.cpp
+    src/storage/db/memdb_batch.cpp
     src/storage/db/bwtree_impl/bwtree_db_impl.cpp
     src/storage/db/rocksdb_impl/iterator.cpp
     src/storage/db/rocksdb_impl/write_batch.cpp
     src/storage/db/rocksdb_impl/rocksdb_impl.cpp
     src/storage/db/skiplist_impl/iterator.cpp
-    src/storage/db/skiplist_impl/write_batch.cpp
     src/storage/db/skiplist_impl/skiplist_impl.cpp
     src/storage/store_watch.cpp
     src/storage/where_expr.cpp
