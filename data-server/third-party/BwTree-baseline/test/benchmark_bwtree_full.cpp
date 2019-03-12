@@ -1,27 +1,18 @@
 
 /*
- * benchmark_art_full.cpp - Benchmarks adaptive radix tree
- *
- * Please note that the ART we use for benchmark only supports single threaded 
- * execution, so therefore it refuses to execute if the number of thread
- * is more than 1
- */ 
+ * benchmark_bwtree_full.cpp - This file contains test suites for command
+ *                             benchmark-bwtree-full
+ */
 
 #include "test_suite.h"
 
 /*
- * BenchmarkARTSeqInsert() - As name suggests
+ * BenchmarkBwTreeSeqInsert() - As name suggests
  */
-void BenchmarkARTSeqInsert(ARTType *t, 
-                           int key_num, 
-                           int num_thread,
-                           long int *array) {
-
-  // Enforce this with explicit assertion that is still valid under 
-  // release mode
-  if(num_thread != 1) {
-    throw "ART must be run under single threaded environment!"; 
-  }
+void BenchmarkBwTreeSeqInsert(TreeType *t, 
+                              int key_num, 
+                              int thread_num) {
+  const int num_thread = thread_num;
 
   // This is used to record time taken for each individual thread
   double thread_time[num_thread];
@@ -31,20 +22,15 @@ void BenchmarkARTSeqInsert(ARTType *t,
 
   auto func = [key_num, 
                &thread_time, 
-               num_thread,
-               array](uint64_t thread_id, ARTType *t) {
+               num_thread](uint64_t thread_id, TreeType *t) {
     long int start_key = key_num / num_thread * (long)thread_id;
     long int end_key = start_key + key_num / num_thread;
 
     // Declare timer and start it immediately
     Timer timer{true};
 
-    for(long int i = start_key;i < end_key;i++) {
-      // 8 byte key, 8 byte payload (i.e. int *)
-      // Since ART itself does not store data, we must allocate an external
-      // array which occupies extra space, and also this adds one extra
-      // pointer dereference
-      art_insert(t, (unsigned char *)&i, sizeof(i), array + i);
+    for(int i = start_key;i < end_key;i++) {
+      t->Insert(i, i);
     }
 
     double duration = timer.Stop();
@@ -58,27 +44,27 @@ void BenchmarkARTSeqInsert(ARTType *t,
     return;
   };
 
-  LaunchParallelTestID(nullptr, num_thread, func, t);
+  LaunchParallelTestID(num_thread, func, t);
 
   double elapsed_seconds = 0.0;
   for(int i = 0;i < num_thread;i++) {
     elapsed_seconds += thread_time[i];
   }
 
-  std::cout << num_thread << " Threads ART: overall "
+  std::cout << num_thread << " Threads BwTree: overall "
             << (key_num / (1024.0 * 1024.0) * num_thread) / elapsed_seconds
             << " million insert/sec" << "\n";
             
   return;
 }
 
-
 /*
- * BenchmarkARTSeqRead() - As name suggests
+ * BenchmarkBwTreeSeqRead() - As name suggests
  */
-void BenchmarkARTSeqRead(ARTType *t, 
-                         int key_num,
-                         int num_thread) {
+void BenchmarkBwTreeSeqRead(TreeType *t, 
+                            int key_num,
+                            int thread_num) {
+  const int num_thread = thread_num;
   int iter = 1;
   
   // This is used to record time taken for each individual thread
@@ -90,7 +76,7 @@ void BenchmarkARTSeqRead(ARTType *t,
   auto func = [key_num, 
                iter, 
                &thread_time, 
-               num_thread](uint64_t thread_id, ARTType *t) {
+               num_thread](uint64_t thread_id, TreeType *t) {
     std::vector<long> v{};
 
     v.reserve(1);
@@ -98,9 +84,9 @@ void BenchmarkARTSeqRead(ARTType *t,
     Timer timer{true};
 
     for(int j = 0;j < iter;j++) {
-      for(long int i = 0;i < key_num;i++) {
-        long int temp = *(long int *)art_search(t, (unsigned char *)&i, sizeof(i));
-        v.push_back(temp);
+      for(int i = 0;i < key_num;i++) {
+        t->GetValue(i, v);
+
         v.clear();
       }
     }
@@ -116,27 +102,27 @@ void BenchmarkARTSeqRead(ARTType *t,
     return;
   };
 
-  LaunchParallelTestID(nullptr, num_thread, func, t);
+  LaunchParallelTestID(num_thread, func, t);
   
   double elapsed_seconds = 0.0;
   for(int i = 0;i < num_thread;i++) {
     elapsed_seconds += thread_time[i];
   }
 
-  std::cout << num_thread << " Threads ART: overall "
+  std::cout << num_thread << " Threads BwTree: overall "
             << (iter * key_num / (1024.0 * 1024.0) * num_thread * num_thread) / elapsed_seconds
             << " million read/sec" << "\n";
 
   return;
 }
 
-
 /*
- * BenchmarkARTRandRead() - As name suggests
+ * BenchmarkBwTreeRandRead() - As name suggests
  */
-void BenchmarkARTRandRead(ARTType *t, 
-                          int key_num,
-                          int num_thread) {
+void BenchmarkBwTreeRandRead(TreeType *t, 
+                             int key_num,
+                             int thread_num) {
+  const int num_thread = thread_num;
   int iter = 1;
   
   // This is used to record time taken for each individual thread
@@ -148,7 +134,7 @@ void BenchmarkARTRandRead(ARTType *t,
   auto func2 = [key_num, 
                 iter, 
                 &thread_time,
-                num_thread](uint64_t thread_id, ARTType *t) {
+                num_thread](uint64_t thread_id, TreeType *t) {
     std::vector<long> v{};
 
     v.reserve(1);
@@ -159,13 +145,12 @@ void BenchmarkARTRandRead(ARTType *t,
     Timer timer{true};
 
     for(int j = 0;j < iter;j++) {
-      for(long int i = 0;i < key_num;i++) {
+      for(int i = 0;i < key_num;i++) {
         //int key = uniform_dist(e1);
         long int key = (long int)h((uint64_t)i, thread_id);
 
-        long int temp = \
-          *(long int *)art_search(t, (unsigned char *)&key, sizeof(key));
-        v.push_back(temp);
+        t->GetValue(key, v);
+
         v.clear();
       }
     }
@@ -181,26 +166,28 @@ void BenchmarkARTRandRead(ARTType *t,
     return;
   };
 
-  LaunchParallelTestID(nullptr, num_thread, func2, t);
+  LaunchParallelTestID(num_thread, func2, t);
 
   double elapsed_seconds = 0.0;
   for(int i = 0;i < num_thread;i++) {
     elapsed_seconds += thread_time[i];
   }
 
-  std::cout << num_thread << " Threads ART: overall "
+  std::cout << num_thread << " Threads BwTree: overall "
             << (iter * key_num / (1024.0 * 1024.0) * num_thread * num_thread) / elapsed_seconds
             << " million read (random)/sec" << "\n";
 
   return;
 }
 
+
 /*
- * BenchmarkARTZipfRead() - As name suggests
+ * BenchmarkBwTreeZipfRead() - As name suggests
  */
-void BenchmarkARTZipfRead(ARTType *t, 
-                          int key_num,
-                          int num_thread) {
+void BenchmarkBwTreeZipfRead(TreeType *t, 
+                             int key_num,
+                             int thread_num) {
+  const int num_thread = thread_num;
   int iter = 1;
   
   // This is used to record time taken for each individual thread
@@ -209,10 +196,14 @@ void BenchmarkARTZipfRead(ARTType *t,
     thread_time[i] = 0.0;
   }
   
-  // Declear and initialize Zipfian dist
+  // Generate zipfian distribution into this list
   std::vector<long> zipfian_key_list{};
   zipfian_key_list.reserve(key_num);
+  
+  // Initialize it with time() as the random seed
   Zipfian zipf{(uint64_t)key_num, 0.99, (uint64_t)time(NULL)};
+  
+  // Populate the array with random numbers 
   for(int i = 0;i < key_num;i++) {
     zipfian_key_list.push_back(zipf.Get()); 
   }
@@ -221,7 +212,11 @@ void BenchmarkARTZipfRead(ARTType *t,
                 iter, 
                 &thread_time,
                 &zipfian_key_list,
-                num_thread](uint64_t thread_id, ARTType *t) {
+                num_thread](uint64_t thread_id, TreeType *t) {
+    // This is the start and end index we read into the zipfian array
+    long int start_index = key_num / num_thread * (long)thread_id;
+    long int end_index = start_index + key_num / num_thread;
+    
     std::vector<long> v{};
 
     v.reserve(1);
@@ -229,11 +224,11 @@ void BenchmarkARTZipfRead(ARTType *t,
     Timer timer{true};
 
     for(int j = 0;j < iter;j++) {
-      for(long int i = 0;i < key_num;i++) {
+      for(long i = start_index;i < end_index;i++) {
         long int key = zipfian_key_list[i];
-        long int temp = \
-          *(long int *)art_search(t, (unsigned char *)&key, sizeof(key));
-        v.push_back(temp);
+
+        t->GetValue(key, v);
+
         v.clear();
       }
     }
@@ -241,7 +236,7 @@ void BenchmarkARTZipfRead(ARTType *t,
     double duration = timer.Stop();
 
     std::cout << "[Thread " << thread_id << " Done] @ " \
-              << (iter * key_num / (1024.0 * 1024.0)) / duration \
+              << (iter * (end_index - start_index) / (1024.0 * 1024.0)) / duration \
               << " million read (zipfian)/sec" << "\n";
               
     thread_time[thread_id] = duration;
@@ -249,15 +244,15 @@ void BenchmarkARTZipfRead(ARTType *t,
     return;
   };
 
-  LaunchParallelTestID(nullptr, num_thread, func2, t);
+  LaunchParallelTestID(num_thread, func2, t);
 
   double elapsed_seconds = 0.0;
   for(int i = 0;i < num_thread;i++) {
     elapsed_seconds += thread_time[i];
   }
 
-  std::cout << num_thread << " Threads ART: overall "
-            << (iter * key_num / (1024.0 * 1024.0) * num_thread * num_thread) / elapsed_seconds
+  std::cout << num_thread << " Threads BwTree: overall "
+            << (iter * key_num / (1024.0 * 1024.0)) / (elapsed_seconds / num_thread)
             << " million read (zipfian)/sec" << "\n";
 
   return;

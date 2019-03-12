@@ -18,14 +18,12 @@
 #include <pthread.h>
 
 #include "../src/bwtree.h"
+#include "../benchmark/stx_btree/btree.h"
 #include "../benchmark/stx_btree/btree_multimap.h"
 #include "../benchmark/libcuckoo/cuckoohash_map.hh"
-#include "../benchmark/art/art.h"
 
 #ifdef BWTREE_PELOTON
 using namespace peloton::index;
-#else
-using namespace wangziqi2013::bwtree;
 #endif
 
 using namespace stx;
@@ -85,10 +83,6 @@ using TreeType = BwTree<long int,
                         long int,
                         KeyComparator,
                         KeyEqualityChecker>;
-                        
-using BTreeType = btree_multimap<long, long, KeyComparator>;
-using ARTType = art_tree;
-                        
 using LeafRemoveNode = typename TreeType::LeafRemoveNode;
 using LeafInsertNode = typename TreeType::LeafInsertNode;
 using LeafDeleteNode = typename TreeType::LeafDeleteNode;
@@ -122,105 +116,28 @@ using Context = typename TreeType::Context;
                 \
                 return 0; \
                }while(0);
-
+ 
 /*
  * LaunchParallelTestID() - Starts threads on a common procedure
  *
  * This function is coded to be accepting variable arguments
  *
  * NOTE: Template function could only be defined in the header
- *
- * tree_p is used to allocate thread local array for doing GC. In the meanwhile
- * if it is nullptr then we know we are not using BwTree, so just ignore this
- * argument
  */
 template <typename Fn, typename... Args>
-void LaunchParallelTestID(TreeType *tree_p, 
-                          uint64_t num_threads, 
-                          Fn &&fn, 
-                          Args &&...args) {
+void LaunchParallelTestID(uint64_t num_threads, Fn&& fn, Args &&... args) {
   std::vector<std::thread> thread_group;
-
-  if(tree_p != nullptr) {
-    // Update the GC array
-    tree_p->UpdateThreadLocal(num_threads);
-  }
-  
-  auto fn2 = [tree_p, &fn](uint64_t thread_id, Args ...args) {
-    if(tree_p != nullptr) {
-      tree_p->AssignGCID(thread_id);
-    }
-    
-    fn(thread_id, args...);
-    
-    if(tree_p != nullptr) {
-      // Make sure it does not stand on the way of other threads
-      tree_p->UnregisterThread(thread_id);
-    }
-    
-    return;
-  };
 
   // Launch a group of threads
   for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group.push_back(std::thread{fn2, thread_itr, std::ref(args...)});
+    thread_group.push_back(std::thread(fn, thread_itr, args...));
   }
 
   // Join the threads with the main thread
   for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group[thread_itr].join();
   }
-  
-  // Restore to single thread mode after all threads have finished
-  if(tree_p != nullptr) {
-    tree_p->UpdateThreadLocal(1);
-  }
-  
-  return;
 }
-
-/*
- * class Random - A random number generator
- *
- * This generator is a template class letting users to choose the number
- *
- * Note that this object uses C++11 library generator which is slow, and super
- * non-scalable.
- *
- * NOTE 2: lower and upper are closed interval!!!!
- */
-template <typename IntType>
-class Random {
- private:
-  std::random_device device;
-  std::default_random_engine engine;
-  std::uniform_int_distribution<IntType> dist;
-
- public:
-  
-  /*
-   * Constructor - Initialize random seed and distribution object
-   */
-  Random(IntType lower, IntType upper) :
-    device{},
-    engine{device()},
-    dist{lower, upper}
-  {}
-  
-  /*
-   * Get() - Get a random number of specified type
-   */
-  inline IntType Get() {
-    return dist(engine);
-  }
-  
-  /*
-   * operator() - Grammar sugar
-   */
-  inline IntType operator()() {
-    return Get(); 
-  }
-};
 
 /*
  * class SimpleInt64Random - Simple paeudo-random number generator 
@@ -593,327 +510,8 @@ class Zipfian {
    
 };
 
-#ifdef NO_USE_PAPI
-
-/*
- * class CacheMeter - Placeholder for systems without PAPI
- */
-class CacheMeter {
- public: 
-  CacheMeter() {};
-  CacheMeter(bool) {};
-  ~CacheMeter() {}
-  void Start() {};
-  void Stop() {};
-  void PrintL3CacheUtilization() {};
-  void PrintL1CacheUtilization() {};
-  void GetL3CacheUtilization() {};
-  void GetL1CacheUtilization() {};
-};
-
-#else
-
-// This requires adding PAPI library during compilation
-// The linking flag of PAPI is:
-//   -lpapi 
-// To install PAPI under ubuntu please use the following command:
-//   sudo apt-get install libpapi-dev
-#include <papi.h>
-
-/*
- * class CacheMeter - Measures cache usage using PAPI library
- *
- * This class is a high level encapsulation of the PAPI library designed for
- * more comprehensive profiling purposes, only using a small feaction of its
- * functionalities available. Also, the applicability of this library is highly
- * platform dependent, so please check whether the platform is supported before
- * using  
- */
-class CacheMeter {
- private:
-  // This is a list of events that we care about
-  int event_list[6] = {
-    PAPI_LD_INS,       // Load instructions
-    PAPI_L1_LDM,       // L1 load misses
-    
-    PAPI_SR_INS,       // Store instructions
-    PAPI_L1_STM,       // L1 store misses
-    
-    PAPI_L3_TCA,       // L3 total cache access
-    PAPI_L3_TCM,       // L3 total cache misses
-  };
-  
-  // Use the length of the event_list to compute number of events we 
-  // are counting
-  static constexpr int EVENT_COUNT = sizeof(event_list) / sizeof(int);
-  
-  // A list of results collected from the hardware performance counter
-  long long counter_list[EVENT_COUNT];
-  
-  // Use this to print out event names
-  const char *event_name_list[EVENT_COUNT] = {
-    "PAPI_LD_INS",
-    "PAPI_L1_LDM",
-    "PAPI_SR_INS",
-    "PAPI_L1_STM",
-    "PAPI_L3_TCA",
-    "PAPI_L3_TCM",
-  };
-  
-  // The level of information we need to collect
-  int level;
-  
-  /*
-   * CheckEvent() - Checks whether the event exists in this platform
-   *
-   * This function wraps PAPI function in C++. Note that PAPI events are 
-   * declared using anonymous enum which is directly translated into int type
-   */
-  inline bool CheckEvent(int event) {
-    int ret = PAPI_query_event(event);
-    return ret == PAPI_OK;
-  }
-  
-  /*
-   * CheckAllEvents() - Checks all events that this object is going to use
-   *
-   * If the checking fails we just exit with error message indicating which one 
-   * failed
-   */
-  void CheckAllEvents() {
-    // If any of the required events do not exist we just exit 
-    for(int i = 0;i < level;i++) {
-      if(CheckEvent(event_list[i]) == false) {
-        fprintf(stderr, 
-                "ERROR: PAPI event %s is not supported\n", 
-                event_name_list[i]); 
-        exit(1);
-      }
-    }
-    
-    return;
-  }
-  
- public:
-   
-  /*
-   * CacheMeter() - Initialize PAPI and events
-   *
-   * This function starts counting if the argument passed is true. By default
-   * it is false
-   */
-  CacheMeter(bool start=false, int p_level=2) :
-    level{p_level} {
-    int ret = PAPI_library_init(PAPI_VER_CURRENT);
-    
-    if (ret != PAPI_VER_CURRENT) {
-      fprintf(stderr, "ERROR: PAPI library failed to initialize\n");
-      exit(1);
-    }
-    
-    // Initialize pthread support
-    ret = PAPI_thread_init(pthread_self);
-    if(ret != PAPI_OK) {
-      fprintf(stderr, "ERROR: PAPI library failed to initialize for pthread\n");
-      exit(1);
-    }
-    
-    // If this does not pass just exit
-    CheckAllEvents(); 
-    
-    // If we want to start the counter immediately just test this flag
-    if(start == true) {
-      Start();
-    }
-    
-    return;
-  }
-  
-  /*
-   * Destructor
-   */
-  ~CacheMeter() {
-    PAPI_shutdown();
-    
-    return; 
-  }
-  
-  /*
-   * Start() - Starts the counter until Stop() is called
-   *
-   * If counter could not be started we just fail
-   */
-  void Start() {
-    int ret = PAPI_start_counters(event_list, level);
-    // Start counters
-    if (ret != PAPI_OK) {
-      fprintf(stderr, 
-              "ERROR: Failed to start counters using"
-              " PAPI_start_counters() (%d)\n",
-              ret);  
-      exit(1);
-    }
-    
-    return;
-  }
-  
-  /*
-   * Stop() - Stops all counters, and dump their values inside the local array
-   *
-   * This function will clear all counters after dumping them into the internal
-   * array of this object
-   */
-  void Stop() {
-    // Use counter list to hold counters
-    if (PAPI_stop_counters(counter_list, level) != PAPI_OK) {
-      fprintf(stderr, 
-              "ERROR: Failed to start counters using PAPI_stop_counters()\n");  
-      exit(1);
-    }
-    
-    // Store zero to all unused counters
-    for(int i = level;i < EVENT_COUNT;i++) {
-      counter_list[i] = 0LL;
-    }
-    
-    return;
-  }
-  
-  /*
-   * GetL3CacheUtilization() - Returns L3 total cache accesses and misses
-   *
-   * These two values are returned in a tuple, the first element of which being 
-   * total cache accesses and the second element being L3 cache misses
-   */
-  std::pair<long long, long long> GetL3CacheUtilization() {
-    return std::make_pair(counter_list[4], counter_list[5]);
-  }
-  
-  /*
-   * GetL1CacheUtilization() - Returns L1 cache utilizations
-   */
-  std::pair<long long, long long> GetL1CacheUtilization() {
-    return std::make_pair(counter_list[0] + counter_list[2],
-                          counter_list[1] + counter_list[3]);
-  }
-  
-  /*
-   * PrintL3CacheUtilization() - Prints L3 cache utilization
-   */
-  void PrintL3CacheUtilization() {
-    // Return L3 total accesses and cache misses
-    auto l3_util = GetL3CacheUtilization();
-    
-    std::cout << "    L3 total = " << l3_util.first << "; miss = " \
-              << l3_util.second << "; hit ratio = " \
-              << static_cast<double>(l3_util.first - l3_util.second) / \
-                 static_cast<double>(l3_util.first) \
-              << std::endl;
-              
-    return;
-  }
-  
-  /*
-   * PrintL1CacheUtilization() - Prints L1 cache utilization
-   */
-  void PrintL1CacheUtilization() {
-    // Return L3 total accesses and cache misses
-    auto l1_util = GetL1CacheUtilization();
-    
-    std::cout << "    LOAD/STORE total = " << l1_util.first << "; miss = " \
-              << l1_util.second << "; hit ratio = " \
-              << static_cast<double>(l1_util.first - l1_util.second) / \
-                 static_cast<double>(l1_util.first) \
-              << std::endl;
-              
-    return;
-  }
-};
-
-#endif
-
-/*
- * class Permutation - Generates permutation of k numbers, ranging from 
- *                     0 to k - 1
- *
- * This is usually used to randomize insert() to a data structure such that
- *   (1) Each Insert() call could hit the data structure
- *   (2) There is no extra overhead for failed insertion because all keys are
- *       unique
- */
-template <typename IntType> 
-class Permutation {
- private:
-  std::vector<IntType> data;
-  
- public:
-  
-  /*
-   * Generate() - Generates a permutation and store them inside data
-   */
-  void Generate(size_t count, IntType start=IntType{0}) {
-    // Extend data vector to fill it with elements
-    data.resize(count);  
-
-    // This function fills the vector with IntType ranging from
-    // start to start + count - 1
-    std::iota(data.begin(), data.end(), start);
-    
-    // The two arguments define a closed interval, NOT open interval
-    Random<IntType> rand{0, static_cast<IntType>(count) - 1};
-    
-    // Then swap all elements with a random position
-    for(size_t i = 0;i < count;i++) {
-      IntType random_key = rand();
-      
-      // Swap two numbers
-      std::swap(data[i], data[random_key]);
-    }
-    
-    return;
-  }
-   
-  /*
-   * Constructor
-   */
-  Permutation() {}
-  
-  /*
-   * Constructor - Starts the generation process
-   */
-  Permutation(size_t count, IntType start=IntType{0}) {
-    Generate(count, start);
-    
-    return;
-  }
-  
-  /*
-   * operator[] - Accesses random elements
-   *
-   * Note that return type is reference type, so element could be
-   * modified using this method 
-   */
-  inline IntType &operator[](size_t index) {
-    return data[index];
-  }
-  
-  inline const IntType &operator[](size_t index) const {
-    return data[index];
-  }
-};
-
-/*
- * Initialize and destroy btree
- */
 TreeType *GetEmptyTree(bool no_print = false);
 void DestroyTree(TreeType *t, bool no_print = false);
-
-/*
- * Btree
- */
-BTreeType *GetEmptyBTree();
-void DestroyBTree(BTreeType *t);
-
 void PrintStat(TreeType *t);
 void PinToCore(size_t core_id);
 
@@ -956,46 +554,10 @@ void TestBwTreeInsertReadDeletePerformance(TreeType *t, int key_num);
 void TestBwTreeInsertReadPerformance(TreeType *t, int key_num);
 
 // Multithreaded benchmark
-void BenchmarkBwTreeRandInsert(int key_num, int thread_num);
 void BenchmarkBwTreeSeqInsert(TreeType *t, int key_num, int thread_num);
 void BenchmarkBwTreeSeqRead(TreeType *t, int key_num, int thread_num);
 void BenchmarkBwTreeRandRead(TreeType *t, int key_num, int thread_num);
 void BenchmarkBwTreeZipfRead(TreeType *t, int key_num, int thread_num);
-
-// Benchmark for stx::btree
-void BenchmarkBTreeSeqInsert(BTreeType *t, 
-                             int key_num, 
-                             int num_thread);
-void BenchmarkBTreeSeqRead(BTreeType *t, 
-                           int key_num,
-                           int num_thread);
-void BenchmarkBTreeRandRead(BTreeType *t, 
-                            int key_num,
-                            int num_thread);
-void BenchmarkBTreeRandLocklessRead(BTreeType *t, 
-                                    int key_num,
-                                    int num_thread);
-void BenchmarkBTreeZipfRead(BTreeType *t, 
-                            int key_num,
-                            int num_thread);
-void BenchmarkBTreeZipfLockLessRead(BTreeType *t, 
-                                    int key_num,
-                                    int num_thread);
-
-// Benchmark for ART              
-void BenchmarkARTSeqInsert(ARTType *t, 
-                           int key_num, 
-                           int num_thread,
-                           long int *array);
-void BenchmarkARTSeqRead(ARTType *t, 
-                         int key_num,
-                         int num_thread);
-void BenchmarkARTRandRead(ARTType *t, 
-                          int key_num,
-                          int num_thread);
-void BenchmarkARTZipfRead(ARTType *t, 
-                          int key_num,
-                          int num_thread);
 
 void TestBwTreeEmailInsertPerformance(BwTree<std::string, long int> *t, std::string filename);
 
@@ -1007,8 +569,7 @@ void StressTest(uint64_t thread_id, TreeType *t);
 /*
  * Iterator test suite
  */
-void ForwardIteratorTest(TreeType *t, int key_num);
-void BackwardIteratorTest(TreeType *t, int key_num);
+void IteratorTest(TreeType *t);
 
 /*
  * Random test suite

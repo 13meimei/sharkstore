@@ -1,30 +1,12 @@
 
 #include "test_suite.h"
 
-/*
- * GetThreadNum() - Returns the number of threads used for multithreaded testing
- *
- * By default 40 threads are used
- */
-uint64_t GetThreadNum() {    
-    uint64_t thread_num = 40;
-    bool ret = Envp::GetValueAsUL("THREAD_NUM", &thread_num);
-    if(ret == false) {
-      throw "THREAD_NUM must be an unsigned ineteger!"; 
-    } else {
-      printf("Using thread_num = %lu\n", thread_num); 
-    }
-    
-    return thread_num;
-}
 
 int main(int argc, char **argv) {
   bool run_benchmark_all = false;
   bool run_test = false;
   bool run_benchmark_bwtree = false;
   bool run_benchmark_bwtree_full = false;
-  bool run_benchmark_btree_full = false;
-  bool run_benchmark_art_full = false;
   bool run_stress = false;
   bool run_epoch_test = false;
   bool run_infinite_insert_test = false;
@@ -43,10 +25,6 @@ int main(int argc, char **argv) {
       run_benchmark_bwtree = true;
     } else if(strcmp(opt_p, "--benchmark-bwtree-full") == 0) {
       run_benchmark_bwtree_full = true;
-    } else if(strcmp(opt_p, "--benchmark-btree-full") == 0) {
-      run_benchmark_btree_full = true;
-    } else if(strcmp(opt_p, "--benchmark-art-full") == 0) {
-      run_benchmark_art_full = true;
     } else if(strcmp(opt_p, "--stress-test") == 0) {
       run_stress = true;
     } else if(strcmp(opt_p, "--epoch-test") == 0) {
@@ -67,9 +45,8 @@ int main(int argc, char **argv) {
   }
 
   bwt_printf("RUN_BENCHMARK_ALL = %d\n", run_benchmark_all);
-  bwt_printf("RUN_BENCHMARK_BWTREE_FULL = %d\n", run_benchmark_bwtree_full);
   bwt_printf("RUN_BENCHMARK_BWTREE = %d\n", run_benchmark_bwtree);
-  bwt_printf("RUN_BENCHMARK_ART_FULL = %d\n", run_benchmark_art_full);
+  bwt_printf("RUN_BENCHMARK_BWTREE_FULL = %d\n", run_benchmark_bwtree_full);
   bwt_printf("RUN_TEST = %d\n", run_test);
   bwt_printf("RUN_STRESS = %d\n", run_stress);
   bwt_printf("RUN_EPOCH_TEST = %d\n", run_epoch_test);
@@ -88,7 +65,7 @@ int main(int argc, char **argv) {
     t1 = GetEmptyTree();
 
     printf("Starting mixed testing...\n");
-    LaunchParallelTestID(t1, mixed_thread_num, MixedTest1, t1);
+    LaunchParallelTestID(mixed_thread_num, MixedTest1, t1);
     printf("Finished mixed testing\n");
 
     PrintStat(t1);
@@ -113,54 +90,6 @@ int main(int argc, char **argv) {
 
     DestroyTree(t1);
   }
-  
-  if(run_benchmark_art_full == true) {
-    ARTType t;
-    art_tree_init(&t);
-    
-    int key_num = 30 * 1024 * 1024;  
-    uint64_t thread_num = 1;
-    
-    printf("Initializing ART's external data array of size = %f MB\n", 
-           sizeof(long int) * key_num / 1024.0 / 1024.0);
-    
-    // This is the array for storing ART's data
-    // Sequential access of the array is fast through ART
-    long int *array = new long int[key_num];
-    for(int i = 0;i < key_num;i++) {
-      array[i] = i; 
-    }
-    
-    BenchmarkARTSeqInsert(&t, key_num, (int)thread_num, array);
-    BenchmarkARTSeqRead(&t, key_num, (int)thread_num);
-    BenchmarkARTRandRead(&t, key_num, (int)thread_num);    
-    BenchmarkARTZipfRead(&t, key_num, (int)thread_num);
-    
-    delete[] array;
-  }
-
-  if(run_benchmark_btree_full == true) {
-    BTreeType *t = GetEmptyBTree();
-    int key_num = 30 * 1024 * 1024;
-    
-    printf("Using key size = %d (%f million)\n",
-           key_num,
-           key_num / (1024.0 * 1024.0));
-    
-    uint64_t thread_num = GetThreadNum();
-    
-    BenchmarkBTreeSeqInsert(t, key_num, (int)thread_num);
-    
-    // Let this go before any of the other
-    BenchmarkBTreeRandLocklessRead(t, key_num, (int)thread_num);
-    BenchmarkBTreeZipfLockLessRead(t, key_num, (int)thread_num);
-    
-    BenchmarkBTreeSeqRead(t, key_num, (int)thread_num);
-    BenchmarkBTreeRandRead(t, key_num, (int)thread_num);    
-    BenchmarkBTreeZipfRead(t, key_num, (int)thread_num);
-    
-    DestroyBTree(t);
-  }
 
   if(run_benchmark_bwtree == true ||
      run_benchmark_bwtree_full == true) {
@@ -176,12 +105,17 @@ int main(int argc, char **argv) {
            key_num,
            key_num / (1024.0 * 1024.0));
     
-    uint64_t thread_num = GetThreadNum();
+    // By default use 40 threads
+    uint64_t thread_num = 40;
+    bool ret = Envp::GetValueAsUL("THREAD_NUM", &thread_num);
+    if(ret == false) {
+      throw "THREAD_NUM must be an unsigned ineteger!"; 
+    } else {
+      printf("Using thread_num = %lu\n", thread_num); 
+    }
 
     if(run_benchmark_bwtree_full == true) {
-      // Benchmark random insert performance
-      BenchmarkBwTreeRandInsert(key_num, (int)thread_num);
-      // Then we rely on this test to fill bwtree with 30 million keys
+      // First we rely on this test to fill bwtree with 30 million keys
       BenchmarkBwTreeSeqInsert(t1, key_num, (int)thread_num);
       // And then do a multithreaded sequential read
       BenchmarkBwTreeSeqRead(t1, key_num, (int)thread_num);
@@ -249,16 +183,9 @@ int main(int argc, char **argv) {
     // This could print
     t1 = GetEmptyTree();
 
-    const int key_num = 1024 * 1024;
+    printf("Testing iterator...\n");
 
-    // First insert from 0 to 1 million
-    for(int i = 0;i < key_num;i++) {
-      t1->Insert(i, i);
-    }
-
-    ForwardIteratorTest(t1, key_num);
-    BackwardIteratorTest(t1, key_num);
-    
+    IteratorTest(t1);
     PrintStat(t1);
 
     printf("Finised testing iterator\n");
@@ -275,7 +202,7 @@ int main(int argc, char **argv) {
     // Do not print here otherwise we could not see result
     t1 = GetEmptyTree(true);
 
-    LaunchParallelTestID(t1, 8, RandomInsertTest, t1);
+    LaunchParallelTestID(8, RandomInsertTest, t1);
     RandomInsertVerify(t1);
     
     printf("Finished random insert testing. Delete the tree.\n");
@@ -290,7 +217,7 @@ int main(int argc, char **argv) {
     // no print
     t1 = GetEmptyTree(true);
 
-    LaunchParallelTestID(t1, basic_test_thread_num, MixedTest1, t1);
+    LaunchParallelTestID(basic_test_thread_num, MixedTest1, t1);
     printf("Finished mixed testing\n");
 
     PrintStat(t1);
@@ -302,7 +229,7 @@ int main(int argc, char **argv) {
     //   with different patterns and multi thread
     /////////////////////////////////////////////////////////////////
 
-    LaunchParallelTestID(t1, basic_test_thread_num, InsertTest2, t1);
+    LaunchParallelTestID(basic_test_thread_num, InsertTest2, t1);
     printf("Finished inserting all keys\n");
 
     PrintStat(t1);
@@ -310,7 +237,7 @@ int main(int argc, char **argv) {
     InsertGetValueTest(t1);
     printf("Finished verifying all inserted values\n");
 
-    LaunchParallelTestID(t1, basic_test_thread_num, DeleteTest1, t1);
+    LaunchParallelTestID(basic_test_thread_num, DeleteTest1, t1);
     printf("Finished deleting all keys\n");
 
     PrintStat(t1);
@@ -318,7 +245,7 @@ int main(int argc, char **argv) {
     DeleteGetValueTest(t1);
     printf("Finished verifying all deleted values\n");
 
-    LaunchParallelTestID(t1, basic_test_thread_num, InsertTest1, t1);
+    LaunchParallelTestID(basic_test_thread_num, InsertTest1, t1);
     printf("Finished inserting all keys\n");
 
     PrintStat(t1);
@@ -326,7 +253,7 @@ int main(int argc, char **argv) {
     InsertGetValueTest(t1);
     printf("Finished verifying all inserted values\n");
 
-    LaunchParallelTestID(t1, basic_test_thread_num, DeleteTest2, t1);
+    LaunchParallelTestID(basic_test_thread_num, DeleteTest2, t1);
     printf("Finished deleting all keys\n");
 
     PrintStat(t1);
@@ -334,7 +261,7 @@ int main(int argc, char **argv) {
     DeleteGetValueTest(t1);
     printf("Finished verifying all deleted values\n");
 
-    LaunchParallelTestID(t1, basic_test_thread_num, InsertTest1, t1);
+    LaunchParallelTestID(basic_test_thread_num, InsertTest1, t1);
     printf("Finished inserting all keys\n");
 
     PrintStat(t1);
@@ -342,7 +269,7 @@ int main(int argc, char **argv) {
     InsertGetValueTest(t1);
     printf("Finished verifying all inserted values\n");
 
-    LaunchParallelTestID(t1, basic_test_thread_num, DeleteTest1, t1);
+    LaunchParallelTestID(basic_test_thread_num, DeleteTest1, t1);
     printf("Finished deleting all keys\n");
 
     PrintStat(t1);
@@ -350,7 +277,7 @@ int main(int argc, char **argv) {
     DeleteGetValueTest(t1);
     printf("Finished verifying all deleted values\n");
 
-    LaunchParallelTestID(t1, basic_test_thread_num, InsertTest2, t1);
+    LaunchParallelTestID(basic_test_thread_num, InsertTest2, t1);
     printf("Finished inserting all keys\n");
 
     PrintStat(t1);
@@ -358,7 +285,7 @@ int main(int argc, char **argv) {
     InsertGetValueTest(t1);
     printf("Finished verifying all inserted values\n");
 
-    LaunchParallelTestID(t1, basic_test_thread_num, DeleteTest2, t1);
+    LaunchParallelTestID(basic_test_thread_num, DeleteTest2, t1);
     printf("Finished deleting all keys\n");
 
     PrintStat(t1);
@@ -380,7 +307,7 @@ int main(int argc, char **argv) {
   if(run_stress == true) {
     t1 = GetEmptyTree();
 
-    LaunchParallelTestID(t1, 8, StressTest, t1);
+    LaunchParallelTestID(8, StressTest, t1);
 
     DestroyTree(t1);
   }

@@ -24,24 +24,10 @@ TreeType *GetEmptyTree(bool no_print) {
   TreeType *t1 = new TreeType{true,
                               KeyComparator{1},
                               KeyEqualityChecker{1}};
-
-  // By default let is serve single thread (i.e. current one)
-  // and assign gc_id = 0 to the current thread
-  t1->UpdateThreadLocal(1);
-  t1->AssignGCID(0);
-
+                      
   print_flag = false;
   
   return t1;
-}
-
-/*
- * GetEmptyBTree() - Returns an empty Btree multimap object created on the heap
- */ 
-BTreeType *GetEmptyBTree() {
-  BTreeType *t = new BTreeType{KeyComparator{1}};
-  
-  return t; 
 }
 
 /*
@@ -61,13 +47,6 @@ void DestroyTree(TreeType *t, bool no_print) {
   print_flag = false;
   
   return;
-}
-
-/*
- * DestroyBTree() - Destroies the btree multimap instance created on the heap
- */
-void DestroyBTree(BTreeType *t) {
-  delete t; 
 }
 
 /*
