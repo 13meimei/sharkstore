@@ -218,7 +218,7 @@ int RangeServer::OpenDB() {
         db_ = new storage::RocksDBImpl(ds_config.rocksdb_config);
     } else if (strcasecmp(engine_name.c_str(), "memory") == 0) {
         db_ = new storage::SkipListDBImpl();
-    } else if (strcasecmp(engine_name.c_str(), "bwtree")) {
+    } else if (strcasecmp(engine_name.c_str(), "bwtree") == 0) {
         db_ = new storage::BwTreeDBImpl();
     } else {
         FLOG_ERROR("unknown engine name: %s", engine_name.c_str());
