@@ -793,8 +793,7 @@ func selectOrder(s *server.Server, threadNo, total int, ip string) {
 
 func rawSet(s *server.Server, threadNo int, ip string)  {
 	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
-		var key string
-		fmt.Sprintf(key, "%v_%v_%v", ip, threadNo, i) // ip_tid_no
+		key := fmt.Sprintf("%v_%v_%v", ip, threadNo, i) // ip_tid_no
 
 		if err := api.RawSet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key), []byte(key)); err == nil {
 			atomic.AddInt64(&stat.lastCount, 1)
@@ -808,8 +807,7 @@ func rawSet(s *server.Server, threadNo int, ip string)  {
 }
 func rawGet(s *server.Server, threadNo int, ip string) {
 	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
-		var key string
-		fmt.Sprintf(key, "%v_%v_%v", ip, threadNo, i) // ip_tid_no
+		key := fmt.Sprintf("%v_%v_%v", ip, threadNo, i) // ip_tid_no
 
 		_, err := api.RawGet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key))
 		if err == nil {
