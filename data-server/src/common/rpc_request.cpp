@@ -3,6 +3,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include "base/util.h"
 #include "frame/sf_logger.h"
+#include "proto/gen/funcpb.pb.h"
 
 namespace sharkstore {
 
@@ -16,6 +17,10 @@ RPCRequest::RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_m
     } else {
         expire_time += kDefaultRPCRequestTimeoutMS;
     };
+}
+
+std::string RPCRequest::FuncName() const {
+    return funcpb::FunctionID_Name(static_cast<funcpb::FunctionID>(msg->head.func_id));
 }
 
 bool RPCRequest::ParseTo(google::protobuf::Message& proto_req, bool zero_copy) {
@@ -42,6 +47,7 @@ void RPCRequest::Reply(const google::protobuf::Message& proto_resp) {
         FLOG_ERROR("serialize response failed, msg: %s", proto_resp.ShortDebugString().c_str());
     }
 }
+
 
 
 void SetResponseHeader(kvrpcpb::ResponseHeader* resp,

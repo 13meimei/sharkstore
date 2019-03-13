@@ -10,7 +10,11 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-void Range::Delete(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redirect) {
+void Range::Delete(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req) {
+    deleteRow(std::move(rpc), req, true);
+}
+
+void Range::deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redirect) {
     errorpb::Error *err = nullptr;
 
     RANGE_LOG_DEBUG("Delete begin");
@@ -50,7 +54,7 @@ void Range::Delete(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redire
                     break;
                 } else {
                     // 重定向, 只重定向一次
-                    rng->Delete(std::move(rpc), req, false);
+                    rng->deleteRow(std::move(rpc), req, false);
                     return;
                 }
             }

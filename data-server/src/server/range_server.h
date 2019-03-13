@@ -66,9 +66,8 @@ private:
     void RangeNotFound(const kvrpcpb::RequestHeader &req,
                        kvrpcpb::ResponseHeader *resp);
 
-    template <class RequestT, class ResponseT>
-    std::shared_ptr<range::Range> DecodeAndFind(const RPCRequestPtr& rpc_request,
-            RequestT& proto_request, const char* func_name);
+    template <class RequestT, class ResponseT, class RangeFuncPointer>
+    void ForwardToRange(RPCRequestPtr& rpc, RangeFuncPointer func_ptr);
 
 public:
     Status SplitRange(uint64_t old_range_id, const raft_cmdpb::SplitRequest &req,

@@ -10,7 +10,11 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-void Range::RawGet(RPCRequestPtr rpc, kvrpcpb::DsKvRawGetRequest &req, bool redirect) {
+void Range::RawGet(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawGetRequest &req) {
+    rawGet(std::move(rpc_request), req, true);
+}
+
+void Range::rawGet(RPCRequestPtr rpc, kvrpcpb::DsKvRawGetRequest &req, bool redirect) {
     RANGE_LOG_DEBUG("RawGet begin");
 
     errorpb::Error *err = nullptr;
@@ -43,7 +47,7 @@ void Range::RawGet(RPCRequestPtr rpc, kvrpcpb::DsKvRawGetRequest &req, bool redi
                 break;
             } else {
                 // 重定向, 只重定向一次
-                rng->RawGet(std::move(rpc), req, false);
+                rng->rawGet(std::move(rpc), req, false);
                 return;
             }
         }

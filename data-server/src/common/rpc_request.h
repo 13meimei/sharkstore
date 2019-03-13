@@ -22,6 +22,9 @@ struct RPCRequest {
     RPCRequest(const net::Context& req_ctx, const net::MessagePtr& req_msg);
     virtual ~RPCRequest() = default;
 
+    uint64_t MsgID() const { return msg->head.msg_id; }
+    std::string FuncName() const;
+
     // Parse to request proto msg
     bool ParseTo(google::protobuf::Message& proto_req, bool zero_copy = true);
 

@@ -40,46 +40,42 @@ namespace dataserver {
 namespace server {
 
 static const std::string kMetaPathSuffix = "meta";
-static const std::string kDataPathSuffix = "data";
-static const std::string kTxnCFName = "txn";
 
-#define FORWARD_TO_RANGE(rpc_request, RequestT, ResponseT, RangeFunc) \
-    do { \
-        RequestT proto_request; \
-        auto rng = this->DecodeAndFind<RequestT, ResponseT>(rpc_request, proto_request, #RangeFunc); \
-        if (rng != nullptr) { \
-            rng->RangeFunc(std::move(rpc_request), proto_request); \
-        } \
-    } while (false)
+using namespace sharkstore::dataserver::range;
 
-template <class RequestT, class ResponseT>
-std::shared_ptr<range::Range> RangeServer::DecodeAndFind(
-        const RPCRequestPtr& rpc_request, RequestT& proto_request, const char* func_name) {
-    if (!rpc_request->ParseTo(proto_request)) {
-        FLOG_ERROR("deserialize %s request failed", func_name);
-        return nullptr;
+template <class RequestT, class ResponseT, class RangeFuncPointer>
+void RangeServer::ForwardToRange(RPCRequestPtr& rpc, RangeFuncPointer func_ptr) {
+    RequestT request;
+    if (!rpc->ParseTo(request)) {
+        FLOG_ERROR("deserialize %s request failed, from %s, msg id=%" PRIu64,
+                rpc->FuncName().c_str(), rpc->ctx.remote_addr.c_str(), rpc->MsgID());
+        return;
     }
 
-    FLOG_DEBUG("%s called. req: %s", func_name, proto_request.DebugString().c_str());
+    FLOG_DEBUG("%s from %s called. req: %s", rpc->FuncName().c_str(),
+            rpc->ctx.remote_addr.c_str(), request.DebugString().c_str());
 
     // check timeout
-    if (rpc_request->expire_time != 0 && rpc_request->expire_time < NowMilliSeconds()) {
-        FLOG_WARN("%s request timeout from %s", func_name, rpc_request->ctx.remote_addr.c_str());
-        ResponseT proto_resp;
-        TimeOut(proto_request.header(), proto_resp.mutable_header());
-        rpc_request->Reply(proto_resp);
-        return nullptr;
+    if (rpc->expire_time != 0 && rpc->expire_time < NowMilliSeconds()) {
+        FLOG_WARN("%s request timeout from %s", rpc->FuncName().c_str(), rpc->ctx.remote_addr.c_str());
+        ResponseT response;
+        TimeOut(request.header(), response.mutable_header());
+        rpc->Reply(response);
+        return;
     }
 
-    auto range = Find(proto_request.header().range_id());
-    if (range == nullptr) {
-        FLOG_ERROR("%s request not found range_id %" PRIu64 " failed", func_name, proto_request.header().range_id());
-        ResponseT proto_resp;
-        RangeNotFound(proto_request.header(), proto_resp.mutable_header());
-        rpc_request->Reply(proto_resp);
-        return nullptr;
+    auto range = Find(request.header().range_id());
+    if (range != nullptr) {
+        ((*range).*func_ptr)(std::move(rpc), request);
+        return;
+    } else {
+        FLOG_ERROR("%s request not found range_id %" PRIu64 " failed", rpc->FuncName().c_str(),
+                   request.header().range_id());
+        ResponseT response;
+        RangeNotFound(request.header(), response.mutable_header());
+        rpc->Reply(response);
+        return;
     }
-    return range;
 }
 
 int RangeServer::Init(ContextServer *context) {
@@ -292,27 +288,27 @@ void RangeServer::DealTask(RPCRequestPtr rpc) {
 
         // Raw KV methods
         case funcpb::kFuncRawGet:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvRawGetRequest, kvrpcpb::DsKvRawGetResponse, RawGet);
+            ForwardToRange<kvrpcpb::DsKvRawGetRequest, kvrpcpb::DsKvRawGetResponse>(rpc, &Range::RawGet);
             break;
         case funcpb::kFuncRawPut:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse, RawPut);
+            ForwardToRange<kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse>(rpc, &Range::RawPut);
             break;
         case funcpb::kFuncRawDelete:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvRawPutRequest, kvrpcpb::DsKvRawPutResponse, RawPut);
+            ForwardToRange<kvrpcpb::DsKvRawDeleteRequest, kvrpcpb::DsKvRawDeleteResponse>(rpc, &Range::RawDelete);
             break;
 
         // SQL methods
         case funcpb::kFuncInsert:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsInsertRequest, kvrpcpb::DsInsertResponse, Insert);
+            ForwardToRange<kvrpcpb::DsInsertRequest, kvrpcpb::DsInsertResponse>(rpc, &Range::Insert);
             break;
         case funcpb::kFuncUpdate:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsUpdateRequest, kvrpcpb::DsUpdateResponse, Update);
+            ForwardToRange<kvrpcpb::DsUpdateRequest, kvrpcpb::DsUpdateResponse>(rpc, &Range::Update);
             break;
         case funcpb::kFuncSelect:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsSelectRequest, kvrpcpb::DsSelectResponse, Select);
+            ForwardToRange<kvrpcpb::DsSelectRequest, kvrpcpb::DsSelectResponse>(rpc, &Range::Select);
             break;
         case funcpb::kFuncDelete:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsDeleteRequest, kvrpcpb::DsDeleteResponse, Delete);
+            ForwardToRange<kvrpcpb::DsDeleteRequest, kvrpcpb::DsDeleteResponse>(rpc, &Range::Delete);
             break;
 
 //        // Watch methods
@@ -351,45 +347,45 @@ void RangeServer::DealTask(RPCRequestPtr rpc) {
 
         // redis method
         case funcpb::kFuncKvSet:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvSetRequest, kvrpcpb::DsKvSetResponse, KVSet);
+            ForwardToRange<kvrpcpb::DsKvSetRequest, kvrpcpb::DsKvSetResponse>(rpc, &Range::KVSet);
             break;
         case funcpb::kFuncKvGet:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvGetRequest, kvrpcpb::DsKvGetResponse, KVGet);
+            ForwardToRange<kvrpcpb::DsKvGetRequest, kvrpcpb::DsKvGetResponse>(rpc, &Range::KVGet);
             break;
         case funcpb::kFuncKvBatchSet:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvBatchSetRequest, kvrpcpb::DsKvBatchSetResponse, KVBatchSet);
+            ForwardToRange<kvrpcpb::DsKvBatchSetRequest, kvrpcpb::DsKvBatchSetResponse>(rpc, &Range::KVBatchSet);
             break;
         case funcpb::kFuncKvBatchGet:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvBatchGetRequest, kvrpcpb::DsKvBatchGetResponse, KVBatchGet);
+            ForwardToRange<kvrpcpb::DsKvBatchGetRequest, kvrpcpb::DsKvBatchGetResponse>(rpc, &Range::KVBatchGet);
             break;
         case funcpb::kFuncKvDel:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvDeleteRequest, kvrpcpb::DsKvDeleteResponse, KVDelete);
+            ForwardToRange<kvrpcpb::DsKvDeleteRequest, kvrpcpb::DsKvDeleteResponse>(rpc, &Range::KVDelete);
             break;
         case funcpb::kFuncKvBatchDel:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvBatchDeleteRequest, kvrpcpb::DsKvBatchDeleteResponse, KVBatchDelete);
+            ForwardToRange<kvrpcpb::DsKvBatchDeleteRequest, kvrpcpb::DsKvBatchDeleteResponse>(rpc, &Range::KVBatchDelete);
             break;
         case funcpb::kFuncKvRangeDel:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvRangeDeleteRequest, kvrpcpb::DsKvRangeDeleteResponse, KVRangeDelete);
+            ForwardToRange<kvrpcpb::DsKvRangeDeleteRequest, kvrpcpb::DsKvRangeDeleteResponse>(rpc, &Range::KVRangeDelete);
             break;
         case funcpb::kFuncKvScan:
-            FORWARD_TO_RANGE(rpc, kvrpcpb::DsKvScanRequest, kvrpcpb::DsKvScanResponse, KVScan);
+            ForwardToRange<kvrpcpb::DsKvScanRequest, kvrpcpb::DsKvScanResponse>(rpc, &Range::KVScan);
             break;
 
         // TXN methods
         case funcpb::kFuncTxnPrepare:
-            FORWARD_TO_RANGE(rpc, txnpb::DsPrepareRequest, txnpb::DsPrepareResponse, TxnPrepare);
+            ForwardToRange<txnpb::DsPrepareRequest, txnpb::DsPrepareResponse>(rpc, &Range::TxnPrepare);
             break;
         case funcpb::kFuncTxnDecide:
-            FORWARD_TO_RANGE(rpc, txnpb::DsDecideRequest, txnpb::DsDecideResponse, TxnDecide);
+            ForwardToRange<txnpb::DsDecideRequest, txnpb::DsDecideResponse>(rpc, &Range::TxnDecide);
             break;
         case funcpb::kFuncTxnClearup:
-            FORWARD_TO_RANGE(rpc, txnpb::DsClearupRequest, txnpb::DsClearupResponse, TxnClearup);
+            ForwardToRange<txnpb::DsClearupRequest, txnpb::DsClearupResponse>(rpc, &Range::TxnClearup);
             break;
         case funcpb::kFuncTxnGetLockInfo:
-            FORWARD_TO_RANGE(rpc, txnpb::DsGetLockInfoRequest, txnpb::DsGetLockInfoResponse, TxnGetLockInfo);
+            ForwardToRange<txnpb::DsGetLockInfoRequest, txnpb::DsGetLockInfoResponse>(rpc, &Range::TxnGetLockInfo);
             break;
         case funcpb::kFuncTxnSelect:
-            FORWARD_TO_RANGE(rpc, txnpb::DsSelectRequest, txnpb::DsSelectResponse, TxnSelect);
+            ForwardToRange<txnpb::DsSelectRequest, txnpb::DsSelectResponse>(rpc, &Range::TxnSelect);
             break;
         default:
             FLOG_ERROR("func id is Invalid %d", header.func_id);

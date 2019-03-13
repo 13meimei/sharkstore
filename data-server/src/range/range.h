@@ -92,14 +92,14 @@ public:
 //    void LockGet(RPCRequestPtr rpc, kvrpcpb::DsLockGetRequest &req);
 
     // KV
-    void RawGet(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawGetRequest &req, bool redirect = true);
-    void RawPut(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawPutRequest &req, bool redirect = true);
-    void RawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, bool redirect = true);
+    void RawGet(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawGetRequest &req);
+    void RawPut(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawPutRequest &req);
+    void RawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req);
 
     void Insert(RPCRequestPtr rpc, kvrpcpb::DsInsertRequest &req);
     void Update(RPCRequestPtr rpc, kvrpcpb::DsUpdateRequest &req);
-    void Select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redirect = true);
-    void Delete(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redirect = true);
+    void Select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req);
+    void Delete(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req);
 
     void KVSet(RPCRequestPtr rpc, kvrpcpb::DsKvSetRequest &req);
     void KVGet(RPCRequestPtr rpc, kvrpcpb::DsKvGetRequest &req);
@@ -131,15 +131,19 @@ private:
     Status Submit(const raft_cmdpb::Command &cmd);
     void ClearExpiredContext();
 
-
     Status Apply(const raft_cmdpb::Command &cmd, uint64_t index);
 
+    void rawGet(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawGetRequest &req, bool redirect);
+    void rawPut(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawPutRequest &req, bool redirect);
+    void rawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, bool redirect);
     Status ApplyRawPut(const raft_cmdpb::Command &cmd);
     Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
 
 //    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raft_index);
 //    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raft_index);
 
+    void select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redirect);
+    void deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redirect);
     Status ApplyInsert(const raft_cmdpb::Command &cmd);
     Status ApplyUpdate(const raft_cmdpb::Command &cmd);
     Status ApplyDelete(const raft_cmdpb::Command &cmd);

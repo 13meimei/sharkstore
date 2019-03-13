@@ -9,7 +9,11 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-void Range::RawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redirect) {
+void Range::RawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req) {
+    rawPut(std::move(rpc), req, true);
+}
+
+void Range::rawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redirect) {
     RANGE_LOG_DEBUG("RawPut begin");
 
     errorpb::Error *err = nullptr;
@@ -47,7 +51,7 @@ void Range::RawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redi
                 break;
             } else {
                 // 重定向, 只重定向一次
-                rng->RawPut(std::move(rpc), req, false);
+                rng->rawPut(std::move(rpc), req, false);
                 return;
             }
         }

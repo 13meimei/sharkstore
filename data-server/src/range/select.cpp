@@ -10,7 +10,11 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-void Range::Select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redirect) {
+void Range::Select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req) {
+    select(std::move(rpc), req, true);
+}
+
+void Range::select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redirect) {
     RANGE_LOG_DEBUG("Select begin");
 
     kvrpcpb::DsSelectResponse ds_resp;
@@ -44,7 +48,7 @@ void Range::Select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redire
                     break;
                 } else {
                     // 重定向, 只重定向一次
-                    rng->Select(std::move(rpc), req, false);
+                    rng->select(std::move(rpc), req, false);
                     return;
                 }
             }

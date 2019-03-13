@@ -10,7 +10,11 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-void Range::RawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, bool redirect) {
+void Range::RawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req) {
+    rawDelete(std::move(rpc), req, true);
+}
+
+void Range::rawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, bool redirect) {
     RANGE_LOG_DEBUG("RawDelete begin");
 
     errorpb::Error *err = nullptr;
@@ -48,7 +52,7 @@ void Range::RawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, boo
                 break;
             } else {
                 // 重定向, 只重定向一次
-                rng->RawDelete(std::move(rpc), req, false);
+                rng->rawDelete(std::move(rpc), req, false);
                 return;
             }
         }
