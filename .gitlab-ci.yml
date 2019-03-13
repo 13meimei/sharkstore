@@ -3,24 +3,24 @@ stages:
 - test
 - deploy
 
-build_maven:
+build_sharkstore:
   stage: build
   script:
-  - echo "build maven....."
+  - echo "build sharkstore....."
   - echo "mvn clean"
   - echo "done"
 
-test_springboot:
+test_sharkstore:
   stage: test
   script:
-  - echo "run java test....."
+  - echo "run sharkstore test....."
   - echo "java -test"
   - echo "done"
 
-deploy_springboot:
+deploy_sharkstore:
   stage: deploy
   script:
-  - echo "deploy springboot...."
+  - echo "deploy sharkstore...."
   - echo "run mvn install"
   - echo "done"
 
