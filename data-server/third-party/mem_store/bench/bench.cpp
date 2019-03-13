@@ -10,6 +10,7 @@
 #include <condition_variable>
 #include <strings.h>
 #include <csignal>
+#include <inttypes.h>
 
 #include <gperftools/profiler.h>
 #include "mem_store/mem_store.h"
@@ -92,11 +93,11 @@ private:
         std::vector<std::thread> vec;
 
         auto t0 = std::chrono::system_clock::now();
-        for (auto n = 0; n < thread_number_; n++) {
+        for (uint64_t n = 0; n < thread_number_; n++) {
             std::thread t([=] {
                 char buf[32] = {0};
-                for (auto i = 0; i < data_number_per_thread_; i++) {
-                    sprintf(buf, "%lu-%lu", n, i);
+                for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                    sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
                     auto res = store_.Put(std::string(buf), std::string(buf));
                     assert(res == 0);
                 }
@@ -119,11 +120,11 @@ private:
         //////// put /////////
         {
             auto t0 = std::chrono::system_clock::now();
-            for (auto n = 0; n < thread_number_; n++) {
+            for (uint64_t n = 0; n < thread_number_; n++) {
                 std::thread t([=] {
                     char buf[32] = {0};
-                    for (auto i = 0; i < data_number_per_thread_; i++) {
-                        sprintf(buf, "%lu-%lu", n, i);
+                    for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                        sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
                         auto res = store_.Put(std::string(buf), std::string(buf));
                         assert(res == 0);
                     }
@@ -144,11 +145,11 @@ private:
         //////// get /////////
         {
             auto t0 = std::chrono::system_clock::now();
-            for (auto n = 0; n < thread_number_; n++) {
+            for (uint64_t n = 0; n < thread_number_; n++) {
                 std::thread t([=] {
                     char buf[32] = {0};
-                    for (auto i = 0; i < data_number_per_thread_; i++) {
-                        sprintf(buf, "%lu-%lu", n, i);
+                    for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                        sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
                         std::string val;
                         auto res = store_.Get(std::string(buf), &val);
                     }
@@ -171,11 +172,11 @@ private:
         //////// put /////////
         {
             auto t0 = std::chrono::system_clock::now();
-            for (auto n = 0; n < thread_number_; n++) {
+            for (uint64_t n = 0; n < thread_number_; n++) {
                 std::thread t([=] {
                     char buf[32] = {0};
-                    for (auto i = 0; i < data_number_per_thread_; i++) {
-                        sprintf(buf, "%lu-%lu", n, i);
+                    for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                        sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
                         auto res = store_.Put(std::string(buf), std::string(buf));
                         assert(res == 0);
                     }
@@ -196,11 +197,11 @@ private:
         //////// del /////////
         {
             auto t0 = std::chrono::system_clock::now();
-            for (auto n = 0; n < thread_number_; n++) {
+            for (uint64_t n = 0; n < thread_number_; n++) {
                 std::thread t([=] {
                     char buf[32] = {0};
-                    for (auto i = 0; i < data_number_per_thread_; i++) {
-                        sprintf(buf, "%lu-%lu", n, i);
+                    for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                        sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
                         store_.Delete(std::string(buf));
                     }
                     get_count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
