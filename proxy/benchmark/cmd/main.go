@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -812,12 +811,14 @@ func rawGet(s *server.Server, threadNo int, ip string) {
 		var key string
 		fmt.Sprintf(key, "%v_%v_%v", ip, threadNo, i) // ip_tid_no
 
-		value, err := api.RawGet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key))
+		_, err := api.RawGet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key))
 		if err == nil {
 			atomic.AddInt64(&stat.lastSelCount, 1)
-		} else if bytes.Compare([]byte(key), value) != 0 {
-			log.Warn("raw get error: value not equal")
-			atomic.AddInt64(&stat.errSelCount, 1)
+
+			//if bytes.Compare([]byte(key), value) != 0 {
+			//	log.Warn("raw get error: value not equal")
+			//	atomic.AddInt64(&stat.errSelCount, 1)
+			//}
 		} else {
 			log.Warn("raw get error: %v", err)
 			atomic.AddInt64(&stat.errSelCount, 1)
