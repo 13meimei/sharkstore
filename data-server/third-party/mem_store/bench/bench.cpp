@@ -10,6 +10,7 @@
 #include <condition_variable>
 #include <strings.h>
 #include <csignal>
+#include <inttypes.h>
 
 #include <gperftools/profiler.h>
 #include "mem_store/mem_store.h"
@@ -25,8 +26,12 @@ public:
             op_type_((static_cast<OpType>(op_type))),
             thread_number_(thread_number),
             data_number_per_thread_(data_number_per_thread) {
-        count_.store(0, std::memory_order_relaxed);
-        time_.store(0, std::memory_order_relaxed);
+        put_count_.store(0, std::memory_order_relaxed);
+        put_time_.store(1, std::memory_order_relaxed);
+        get_count_.store(0, std::memory_order_relaxed);
+        get_time_.store(1, std::memory_order_relaxed);
+        del_count_.store(0, std::memory_order_relaxed);
+        del_time_.store(1, std::memory_order_relaxed);
         printer_ = std::move(std::thread ([this]() {
             return; // comment below
             while (true) {
@@ -34,7 +39,7 @@ public:
                 auto status = cond_.wait_for(lk, std::chrono::milliseconds(300));
                 if (status == std::cv_status::timeout) {
                     std::this_thread::sleep_for(std::chrono::seconds(3));
-                    std::cout << count_ << std::endl;
+                    // todo print
                 } else {
                     lk.unlock();
                     return;
@@ -56,122 +61,161 @@ public:
                   " numbers: " << data_number_per_thread_ << std::endl;
 
         ProfilerStart("./auto.prof");
-        for (auto i = uint(0); i < thread_number_; i++) {
-            auto t = std::move(std::thread([this]() {
-                switch (op_type_) {
-                    case put:
-                        putBench();
-                        break;
-                    case get:
-                        getBench();
-                        break;
-                    case del:
-                        delBench();
-                        break;
-                }
-            }));
-
-            thread_vec_.push_back(std::move(t));
-        }
-
-        for (auto it = thread_vec_.begin(); it != thread_vec_.end(); it++) {
-            it->join();
+        switch (op_type_) {
+            case put:
+                putBench();
+                break;
+            case get:
+                getBench();
+                break;
+            case del:
+                delBench();
+                break;
         }
         ProfilerStop();
 
-        std::cout << "count: " << count_ << std::endl;
-        std::cout << "chrono clock(s): " << time_ << std::endl;
+        std::cout << "put count: " << put_count_ << std::endl;
+        std::cout << "put time(ms): " << put_time_ << std::endl;
+        std::cout << "put ops: " << (put_count_*1000)/put_time_ << std::endl;
 
-        if (time_ < 1) {
-            std::cout << "ops: " << count_ << std::endl;
-        } else {
-            std::cout << "ops: " << count_/time_ << std::endl;
-        }
+        std::cout << "get count: " << get_count_ << std::endl;
+        std::cout << "get time(ms): " << get_time_ << std::endl;
+        std::cout << "get ops: " << (get_count_*1000)/get_time_ << std::endl;
+
+        std::cout << "del count: " << del_count_ << std::endl;
+        std::cout << "del time(ms): " << del_time_ << std::endl;
+        std::cout << "del ops: " << (del_count_*1000)/del_time_ << std::endl;
+
     }
 
 private:
     void putBench() {
-        auto tid = std::this_thread::get_id();
+        std::vector<std::thread> vec;
 
         auto t0 = std::chrono::system_clock::now();
-
-        char buf[32] = {0};
-        for (auto i = uint64_t(0); i < data_number_per_thread_; i++) {
-            sprintf(buf, "%lu-%lu", tid, i);
-            auto res = store_.Put(std::string(buf), std::string(buf));
-            assert(res == 0);
-
-//            count_.fetch_add(1, std::memory_order_relaxed);
+        for (uint64_t n = 0; n < thread_number_; n++) {
+            std::thread t([=] {
+                char buf[32] = {0};
+                for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                    sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
+                    auto res = store_.Put(std::string(buf), std::string(buf));
+                    assert(res == 0);
+                }
+                put_count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
+            });
+            vec.push_back(std::move(t));
         }
-
+        for (auto& t: vec) {
+            t.join();
+        }
         auto t1 = std::chrono::system_clock::now();
-        auto time = std::chrono::duration_cast<std::chrono::seconds>(t1-t0).count();
 
-        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
-        time_.fetch_add(time, std::memory_order_relaxed);
+        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+        put_time_.fetch_add(time, std::memory_order_relaxed);
     }
 
     void getBench() {
-        auto tid = std::this_thread::get_id();
+        std::vector<std::thread> vec;
 
-        // put
-        char buf[32] = {0};
-        for (auto i = uint64_t(0); i < data_number_per_thread_; i++) {
-            sprintf(buf, "%lu-%lu", tid, i);
-            auto res = store_.Put(std::string(buf), std::string(buf));
-            assert(res == 0);
+        //////// put /////////
+        {
+            auto t0 = std::chrono::system_clock::now();
+            for (uint64_t n = 0; n < thread_number_; n++) {
+                std::thread t([=] {
+                    char buf[32] = {0};
+                    for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                        sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
+                        auto res = store_.Put(std::string(buf), std::string(buf));
+                        assert(res == 0);
+                    }
+                    put_count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
+                });
+                vec.push_back(std::move(t));
+            }
+            for (auto &t: vec) {
+                t.join();
+            }
+            auto t1 = std::chrono::system_clock::now();
+
+            auto time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+            put_time_.fetch_add(time, std::memory_order_relaxed);
         }
 
-        // get
-        auto t0 = std::chrono::system_clock::now();
-
-        for (auto i = uint64_t(0); i < data_number_per_thread_; i++) {
-            sprintf(buf, "%lu-%lu", tid, i);
-            std::string val;
-            auto res = store_.Get(std::string(buf), &val);
-//            assert(res == 0);
-//            assert(val == std::string(buf));
-
-//            count_.fetch_add(1, std::memory_order_relaxed);
+        vec.clear();
+        //////// get /////////
+        {
+            auto t0 = std::chrono::system_clock::now();
+            for (uint64_t n = 0; n < thread_number_; n++) {
+                std::thread t([=] {
+                    char buf[32] = {0};
+                    for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                        sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
+                        std::string val;
+                        auto res = store_.Get(std::string(buf), &val);
+                    }
+                    get_count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
+                });
+                vec.push_back(std::move(t));
+            }
+            for (auto &t: vec) {
+                t.join();
+            }
+            auto t1 = std::chrono::system_clock::now();
+            auto time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+            get_time_.fetch_add(time, std::memory_order_relaxed);
         }
-
-        auto t1 = std::chrono::system_clock::now();
-        auto time = std::chrono::duration_cast<std::chrono::seconds>(t1-t0).count();
-
-        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
-        time_.fetch_add(time, std::memory_order_relaxed);
     }
 
     void delBench() {
-        auto tid = std::this_thread::get_id();
+        std::vector<std::thread> vec;
 
-        // put
-        char buf[32] = {0};
-        for (auto i = uint64_t(0); i < data_number_per_thread_; i++) {
-            sprintf(buf, "%lu-%lu", tid, i);
-            auto res = store_.Put(std::string(buf), std::string(buf));
-            assert(res == 0);
+        //////// put /////////
+        {
+            auto t0 = std::chrono::system_clock::now();
+            for (uint64_t n = 0; n < thread_number_; n++) {
+                std::thread t([=] {
+                    char buf[32] = {0};
+                    for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                        sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
+                        auto res = store_.Put(std::string(buf), std::string(buf));
+                        assert(res == 0);
+                    }
+                    put_count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
+                });
+                vec.push_back(std::move(t));
+            }
+            for (auto &t: vec) {
+                t.join();
+            }
+            auto t1 = std::chrono::system_clock::now();
+
+            auto time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+            put_time_.fetch_add(time, std::memory_order_relaxed);
         }
 
-        // del
-        auto t0 = std::chrono::system_clock::now();
+        vec.clear();
+        //////// del /////////
+        {
+            auto t0 = std::chrono::system_clock::now();
+            for (uint64_t n = 0; n < thread_number_; n++) {
+                std::thread t([=] {
+                    char buf[32] = {0};
+                    for (uint64_t i = 0; i < data_number_per_thread_; i++) {
+                        sprintf(buf, "%" PRIu64 "-%" PRIu64, n, i);
+                        store_.Delete(std::string(buf));
+                    }
+                    get_count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
+                });
+                vec.push_back(std::move(t));
+            }
+            for (auto &t: vec) {
+                t.join();
+            }
+            auto t1 = std::chrono::system_clock::now();
 
-        for (auto i = uint64_t(0); i < data_number_per_thread_; i++) {
-            sprintf(buf, "%lu-%lu", tid, i);
-            store_.Delete(std::string(buf));
-
-//            std::string val;
-//            auto res = store_.Get(std::string(buf), &val);
-//            assert(res != 0);
-
-//            count_.fetch_add(1, std::memory_order_relaxed);
+            auto time = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+            get_time_.fetch_add(time, std::memory_order_relaxed);
         }
-
-        auto t1 = std::chrono::system_clock::now();
-        auto time = std::chrono::duration_cast<std::chrono::seconds>(t1-t0).count();
-
-        count_.fetch_add(data_number_per_thread_, std::memory_order_relaxed);
-        time_.fetch_add(time, std::memory_order_relaxed);
     }
 
 private:
@@ -184,10 +228,13 @@ private:
     uint64_t data_number_per_thread_ = 1;
 
     Store<std::string> store_;
-    std::vector<std::thread> thread_vec_;
 
-    std::atomic<uint64_t >count_;
-    std::atomic<uint64_t > time_;
+    std::atomic<uint64_t > put_count_;
+    std::atomic<uint64_t > put_time_;
+    std::atomic<uint64_t > get_count_;
+    std::atomic<uint64_t > get_time_;
+    std::atomic<uint64_t > del_count_;
+    std::atomic<uint64_t > del_time_;
 
     std::thread printer_;
 

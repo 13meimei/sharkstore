@@ -25,8 +25,12 @@
 #include "storage/metric.h"
 #include "run_status.h"
 #include "monitor/statistics.h"
+
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "storage/db/skiplist_impl/skiplist_impl.h"
+#ifdef SHARK_USE_BWTREE
+#include "storage/db/bwtree_impl/bwtree_db_impl.h"
+#endif
 
 #include "server.h"
 #include "range_context_impl.h"
@@ -217,9 +221,15 @@ int RangeServer::OpenDB() {
         db_ = new storage::RocksDBImpl(ds_config.rocksdb_config);
     } else if (strcasecmp(engine_name.c_str(), "memory") == 0) {
         db_ = new storage::SkipListDBImpl();
+    } else if (strcasecmp(engine_name.c_str(), "bwtree") == 0) {
+#ifdef SHARK_USE_BWTREE
+        db_ = new storage::BwTreeDBImpl();
+#else
+        FLOG_ERROR("bwtree is not enabled. confirm build opition ENABLE_BWTREE is on");
+        return -1;
+#endif
     } else {
         FLOG_ERROR("unknown engine name: %s", engine_name.c_str());
-        return -1;
     }
 
     auto s = db_->Open();

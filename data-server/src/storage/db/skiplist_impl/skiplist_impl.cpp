@@ -1,6 +1,6 @@
 #include "skiplist_impl.h"
 
-#include "write_batch.h"
+#include "storage/db/memdb_batch.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -30,7 +30,7 @@ Status SkipListDBImpl::Put(void* column_family, const std::string& key, const st
 }
 
 Status SkipListDBImpl::Write(WriteBatchInterface* batch) {
-    auto batch_impl = dynamic_cast<SkipListWriteBatch*>(batch);
+    auto batch_impl = dynamic_cast<MemDBWriteBatch*>(batch);
     if (batch_impl != nullptr) {
         return batch_impl->WriteTo(this);
     } else {
@@ -84,7 +84,7 @@ void SkipListDBImpl::GetProperty(const std::string& k, std::string* v) {
 }
 
 std::unique_ptr<WriteBatchInterface> SkipListDBImpl::NewBatch() {
-    return std::unique_ptr<WriteBatchInterface>(new SkipListWriteBatch());
+    return std::unique_ptr<WriteBatchInterface>(new MemDBWriteBatch());
 }
 
 Status SkipListDBImpl::SetOptions(void* column_family,

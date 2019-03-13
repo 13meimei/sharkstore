@@ -5,6 +5,7 @@
 #ifndef SHARKSTORE_DS_DB_INTERFACE_H
 #define SHARKSTORE_DS_DB_INTERFACE_H
 
+#include <memory>
 #include <unordered_map>
 #include "base/status.h"
 #include "iterator_interface.h"

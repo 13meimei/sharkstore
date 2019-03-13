@@ -1,31 +1,27 @@
-//
-// Created by young on 19-2-14.
-//
+_Pragma("once");
 
-#ifndef SHARKSTORE_DS_WRITE_BATCH_H
-#define SHARKSTORE_DS_WRITE_BATCH_H
+#include <memory>
+#include <vector>
 
-#include "storage/db/write_batch_interface.h"
-#include "skiplist_impl.h"
+#include "db_interface.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-class SkipListDBImpl;
-
+// 内存中DB的WriteBatch实现，缓存每个操作，Write时整体写入
 // TODO: limit max batch size
-class SkipListWriteBatch : public WriteBatchInterface {
+class MemDBWriteBatch : public WriteBatchInterface {
 public:
-    SkipListWriteBatch() = default;
-    ~SkipListWriteBatch() = default;
+    MemDBWriteBatch() = default;
+    ~MemDBWriteBatch() = default;
 
     Status Put(const std::string &key, const std::string &value) override;
     Status Put(void* column_family, const std::string& key, const std::string& value) override;
     Status Delete(const std::string &key) override;
     Status Delete(void* column_family, const std::string& key) override;
 
-    Status WriteTo(SkipListDBImpl* db);
+    Status WriteTo(DbInterface* db);
 
 private:
     enum class EntryType {
@@ -44,8 +40,7 @@ private:
     std::vector<std::unique_ptr<BatchEntry>> entries_;
 };
 
-}
-}
-}
 
-#endif //SHARKSTORE_DS_WRITE_BATCH_H
+} // namespace storage
+} // namespace dataserver
+} // namespace sharkstore

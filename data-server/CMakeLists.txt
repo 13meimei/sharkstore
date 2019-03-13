@@ -17,6 +17,8 @@ set(CXX_FLAGS
     -Wno-missing-field-initializers
     -D__STDC_FORMAT_MACROS
     -DASIO_STANDALONE
+    -mcx16  # bwtree flag
+    -Wno-invalid-offsetof # bwtree flag
 )
 
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CXX_FLAGS}")
@@ -31,8 +33,8 @@ else()
 endif()
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -DNDEBUG")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2 -DNDEBUG" )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -DNDEBUG -DBWTREE_NODEBUG")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2 -DNDEBUG -DBWTREE_NODEBUG" )
     set(CMAKE_C_FLAGS_RELEASE "")
     set(CMAKE_CXX_FLAGS_RELEASE "")
 else()
@@ -44,12 +46,20 @@ MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
-
 # third-party
 include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/rapidjson-1.1.0/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/mem_store)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/mem_store/include)
+
+OPTION (ENABLE_BWTREE "Use BwTree" OFF)
+MESSAGE(STATUS ENABLE_BWTREE=${ENABLE_BWTREE})
+if (ENABLE_BWTREE)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/BwTree-baseline)
+    include_directories(${PROJECT_SOURCE_DIR}/third-party/BwTree-baseline/src)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSHARK_USE_BWTREE")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSHARK_USE_BWTREE" )
+endif()
 
 # use intel tbb
 OPTION (ENABLE_TBB "Use Intel TBB" ON)
@@ -220,11 +230,11 @@ set(SOURCES
     src/storage/row_fetcher.cpp
     src/storage/snapshot.cpp
     src/storage/store.cpp
+    src/storage/db/memdb_batch.cpp
     src/storage/db/rocksdb_impl/iterator.cpp
     src/storage/db/rocksdb_impl/write_batch.cpp
     src/storage/db/rocksdb_impl/rocksdb_impl.cpp
     src/storage/db/skiplist_impl/iterator.cpp
-    src/storage/db/skiplist_impl/write_batch.cpp
     src/storage/db/skiplist_impl/skiplist_impl.cpp
     src/storage/store_watch.cpp
     src/storage/where_expr.cpp
@@ -251,6 +261,10 @@ set(SOURCES
     src/admin/set_config.cpp
 )
 
+if (ENABLE_BWTREE)
+    list(APPEND SOURCES src/storage/db/bwtree_impl/bwtree_db_impl.cpp)
+endif()
+
 if (APPLE)
     list(APPEND SOURCES src/monitor/mac_status.cpp)
 elseif(UNIX)
@@ -267,7 +281,6 @@ foreach(f IN LISTS SOURCES)
 endforeach()
 
 add_subdirectory(src/base)
-#add_subdirectory(src/lk_queue)
 add_subdirectory(src/common)
 add_subdirectory(src/frame)
 add_subdirectory(src/proto)
@@ -280,7 +293,6 @@ set (depend_LIBRARYS
     sharkstore-net
     sharkstore-common
     sharkstore-frame
-    #sharkstore-lkqueue
     sharkstore-base
     ${PROTOBUF_LIBRARY}
     ${GRPC_LIB}
@@ -294,6 +306,10 @@ set (depend_LIBRARYS
 )
 if(ENABLE_GPERF)
     list(APPEND depend_LIBRARYS profiler)
+endif()
+
+if (ENABLE_BWTREE)
+    list(APPEND depend_LIBRARYS bwtree atomic)
 endif()
 
 if(ENABLE_TBB)
