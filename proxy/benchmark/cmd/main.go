@@ -1,24 +1,25 @@
 package main
 
 import (
-	"net"
-	"strings"
+	"bytes"
+	"errors"
 	"flag"
-	"runtime"
-	"math/rand"
+	"fmt"
 	"hash/fnv"
+	"math/rand"
+	"net"
+	"runtime"
+	"strings"
 	"sync/atomic"
 	"time"
-	"fmt"
-	"errors"
 
-	"util/log"
-	"util/gogc"
-	"proxy/gateway-server/server"
 	"model/pkg/metapb"
-	"util"
 	"proxy/benchmark/blob_store"
+	"proxy/gateway-server/server"
 	"sync"
+	"util"
+	"util/gogc"
+	"util/log"
 )
 
 var (
@@ -213,6 +214,18 @@ func benchmark(s *server.Server) {
 			}(&wg)
 		}
 		wg.Wait()
+	}
+	// raw set
+	if s.GetCfg().BenchConfig.Type == 13 {
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			go rawSet(s, concur, ip)
+		}
+	}
+	// raw get
+	if s.GetCfg().BenchConfig.Type == 14 {
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			go rawGet(s, concur, ip)
+		}
 	}
 }
 
@@ -775,6 +788,39 @@ func selectOrder(s *server.Server, threadNo, total int, ip string) {
 			} else {
 				log.Warn("execute failed, %v", reply)
 			}
+		}
+	}
+}
+
+func rawSet(s *server.Server, threadNo int, ip string)  {
+	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+		var key string
+		fmt.Sprintf(key, "%v_%v_%v", ip, threadNo, i) // ip_tid_no
+
+		if err := api.RawSet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key), []byte(key)); err == nil {
+			atomic.AddInt64(&stat.lastCount, 1)
+		} else {
+			log.Warn("raw set error: %v", err)
+
+			atomic.AddInt64(&stat.errCount, 1)
+			i = i - 1
+		}
+	}
+}
+func rawGet(s *server.Server, threadNo int, ip string) {
+	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+		var key string
+		fmt.Sprintf(key, "%v_%v_%v", ip, threadNo, i) // ip_tid_no
+
+		value, err := api.RawGet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key))
+		if err == nil {
+			atomic.AddInt64(&stat.lastSelCount, 1)
+		} else if bytes.Compare([]byte(key), value) != 0 {
+			log.Warn("raw get error: value not equal")
+			atomic.AddInt64(&stat.errSelCount, 1)
+		} else {
+			log.Warn("raw get error: %v", err)
+			atomic.AddInt64(&stat.errSelCount, 1)
 		}
 	}
 }

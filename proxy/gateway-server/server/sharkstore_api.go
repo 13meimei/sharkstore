@@ -11,6 +11,32 @@ import (
 type SharkStoreApi struct {
 }
 
+func (api *SharkStoreApi) RawSet(s *Server, dbName, tableName string, key, value []byte) error {
+	table := s.proxy.router.FindTable(dbName, tableName)
+	if table == nil {
+		err := fmt.Errorf("table(%s) of db(%s) not exist", tableName, dbName)
+		return err
+	}
+
+	keyPrefix := util.EncodeStorePrefix(util.Store_Prefix_KV, table.ID())
+	keyEncoded := append(keyPrefix, key...)
+
+	return s.proxy.RawPut(dbName, tableName, keyEncoded, value)
+}
+
+func (api *SharkStoreApi) RawGet(s *Server, dbName, tableName string, key []byte) ([]byte, error) {
+	table := s.proxy.router.FindTable(dbName, tableName)
+	if table == nil {
+		err := fmt.Errorf("table(%s) of db(%s) not exist", tableName, dbName)
+		return nil, err
+	}
+
+	keyPrefix := util.EncodeStorePrefix(util.Store_Prefix_KV, table.ID())
+	keyEncoded := append(keyPrefix, key...)
+
+	return s.proxy.RawGet(dbName, tableName, keyEncoded)
+}
+
 func (api *SharkStoreApi) Insert(s *Server, dbName string, tableName string, fields []string, values [][]interface{}) *Reply {
 
 	cmd := &Command{
