@@ -100,7 +100,7 @@ typedef struct ds_config_s {
     sf_socket_thread_config_t worker_config;   // worker thread config
 
     struct {
-        char name[8];
+        char name[32];
     } engine_config;
 } ds_config_t;
 
