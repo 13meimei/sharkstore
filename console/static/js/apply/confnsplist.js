@@ -272,8 +272,7 @@ function applyNsp() {
     $("#dbName").val("");
     $("#tableName").val("");
     getCluster();
-    $("#saveButton").attr("style", "");
-    $("#saveButton").attr("disabled", "");
+    $('#saveButton').removeAttr("disabled");
     $('#nspApplyModal').modal('show');
 }
 
