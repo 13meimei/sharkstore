@@ -47,10 +47,12 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
 # third-party
+include_directories(${PROJECT_SOURCE_DIR}/third-party)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/rapidjson-1.1.0/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/mem_store)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/mem_store/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/masstree-beta)
 
 OPTION (ENABLE_BWTREE "Use BwTree" OFF)
 MESSAGE(STATUS ENABLE_BWTREE=${ENABLE_BWTREE})
@@ -231,11 +233,13 @@ set(SOURCES
     src/storage/snapshot.cpp
     src/storage/store.cpp
     src/storage/db/memdb_batch.cpp
+    src/storage/db/db_factory.cpp
     src/storage/db/rocksdb_impl/iterator.cpp
     src/storage/db/rocksdb_impl/write_batch.cpp
     src/storage/db/rocksdb_impl/rocksdb_impl.cpp
     src/storage/db/skiplist_impl/iterator.cpp
     src/storage/db/skiplist_impl/skiplist_impl.cpp
+    src/storage/db/mass_tree_impl/mass_tree_impl.cpp
     src/storage/store_watch.cpp
     src/storage/where_expr.cpp
     src/storage/store_txn.cpp
@@ -300,6 +304,7 @@ set (depend_LIBRARYS
     ${ROCKSDB_LIB}
     ${FASTCOMMON_LIB}
     skiplist
+    mass-tree
     pthread
     dl
     z
