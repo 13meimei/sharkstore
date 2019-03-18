@@ -83,7 +83,11 @@ Status MassTreeDBImpl::Write(WriteBatchInterface* batch) {
 
 
 Status MassTreeDBImpl::del(TreeType* tree, const std::string& key) {
-    return Status(Status::kNotSupported);
+    Masstree::Str tree_key(key);
+    TreeType::cursor_type lp(*tree, tree_key);
+    lp.find_locked(*thread_info_);
+    lp.finish(-1, *thread_info_);
+    return Status(Status::OK());
 }
 
 Status MassTreeDBImpl::Delete(const std::string& key) {
@@ -95,6 +99,7 @@ Status MassTreeDBImpl::Delete(void* column_family, const std::string& key) {
 }
 
 Status MassTreeDBImpl::DeleteRange(void* column_family, const std::string& begin_key, const std::string& end_key) {
+    // TODO:
     return Status(Status::kNotSupported);
 }
 
@@ -107,12 +112,14 @@ void* MassTreeDBImpl::TxnCFHandle() {
 }
 
 IteratorInterface* MassTreeDBImpl::NewIterator(const std::string& start, const std::string& limit) {
+    // TODO:
     return nullptr;
 }
 
 Status MassTreeDBImpl::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
                                   std::unique_ptr<IteratorInterface>& txn_iter,
                                   const std::string& start, const std::string& limit) {
+    // TODO:
     return Status(Status::kNotSupported);
 }
 
