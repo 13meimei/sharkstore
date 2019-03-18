@@ -86,6 +86,9 @@ Status MassTreeDBImpl::del(TreeType* tree, const std::string& key) {
     Masstree::Str tree_key(key);
     TreeType::cursor_type lp(*tree, tree_key);
     lp.find_locked(*thread_info_);
+    if (lp.has_value()) {
+        delete lp.value();
+    }
     lp.finish(-1, *thread_info_);
     return Status(Status::OK());
 }
@@ -99,7 +102,7 @@ Status MassTreeDBImpl::Delete(void* column_family, const std::string& key) {
 }
 
 Status MassTreeDBImpl::DeleteRange(void* column_family, const std::string& begin_key, const std::string& end_key) {
-    // TODO:
+    // TODO: delete string*
     return Status(Status::kNotSupported);
 }
 
