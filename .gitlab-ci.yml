@@ -1,3 +1,13 @@
+varibles:
+    PROJECT_DIR: $PWD
+
+before_script:
+    - echo ${PROJECT_DIR}
+    - gcc --version && go version
+    - if [ ! -d "${PROJECT_DIR}/data-server/build/"  ];then
+    -     mkdir ${PROJECT_DIR}/data-server/build/
+    - fi
+
 stages:
 - build
 - test
@@ -7,53 +17,10 @@ build_sharkstore:
   stage: build
   script:
   - echo "build sharkstore data-server....."
-  - pwd
-  - cd data-server
-  - if [ ! -d "./build/"  ];then
-  - mkdir build
-  - else
-  - echo "build dir alread exists..."
-  - fi
 
-  - cd build
-  - cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TEST=ON -DBUILD_TOOL=ON
-  - if (test $? -ne 0)
-  - then
-  -     echo "cmake error."
-  -     exit 1
-  - fi
-
-  - echo "check Makefile exists"
-  - if [ ! -f "./Makefile"  ];then
-  -     echo "cmake error, Makefile is not exists."
-  -     exit 1
-  - fi
-
-  - make
-  - if (test $? -ne 0)
-  - then
-  -     echo "make error."
-  -     exit 1
-  - fi
-
-  - echo "check data-server exists"
-  - if [ ! -f "./data-server"  ];then
-  -     echo "make error, data-server is not exists."
-  -     exit 1
-  - fi
-
-  - echo "check test dir exists"
-  - if [ ! -d "./test/"  ];then
-  - echo "maybe compile fail, test dir is not exists..."
-  - exit 1
-  - fi
-
-  - echo "check tools dir exists"
-  - if [ ! -d "./tools/"  ];then
-  - echo "maybe compile fail, tools dir is not exists..."
-  - exit 1
-  - fi
-  - echo "build data-server done"
+  - cd ${PROJECT_DIR}/data-server/build/ &&
+    cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TEST=ON -DBUILD_TOOL=ON &&
+    make
 
   - echo "build sharkstore gateway"
   - echo "done"
@@ -62,14 +29,15 @@ test_sharkstore_ds:
   stage: test
   script:
   - echo "run sharkstore test....."
-  - pwd
-  - cd data-server/test
-  - pwd
+
+  - cd ${PROJECT_DIR}/data-server/build/test
+  - echo $PWD
   - ./range_ddl_unittest
   - ./range_meta_unittest
   - ./range_raw_unittest
   - ./range_sql_unittest
   - ./store_unittest
+
   - echo "done"
 
 test_sharkstore_gs:
