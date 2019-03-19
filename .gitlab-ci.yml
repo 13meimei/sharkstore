@@ -1,4 +1,4 @@
-varibles:
+variables:
     PROJECT_DIR: $PWD
 
 before_script:
