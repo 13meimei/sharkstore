@@ -20,7 +20,7 @@ build_sharkstore:
     make
 
   - echo "build sharkstore master-server"
-  - cd ${CI_PROJECT_DIR}/master/cmd && go build -o master-server
+  - cd ${CI_PROJECT_DIR}/master-server/cmd && go build -o master-server
 
   - echo "build sharkstore gateway-server"
   - cd ${CI_PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
