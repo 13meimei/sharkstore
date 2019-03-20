@@ -54,6 +54,7 @@ Status MassTreeDBImpl::put(TreeType* tree, const std::string& key, const std::st
     Masstree::Str tree_key(key);
     TreeType::cursor_type lp(*tree, tree_key);
     lp.find_insert(*thread_info_);
+    // TODO: free old value
     lp.value() = new std::string(value);
     lp.finish(1, *thread_info_);
     return Status(Status::OK());
@@ -87,6 +88,7 @@ Status MassTreeDBImpl::del(TreeType* tree, const std::string& key) {
     TreeType::cursor_type lp(*tree, tree_key);
     lp.find_locked(*thread_info_);
     if (lp.has_value()) {
+        // TODO: fix delete
         delete lp.value();
     }
     lp.finish(-1, *thread_info_);
