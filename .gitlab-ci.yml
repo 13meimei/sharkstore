@@ -1,11 +1,8 @@
-variables:
-    PROJECT_DIR: /export/sharkstore/src
-
 before_script:
-    - echo ${PROJECT_DIR}
+    - echo ${CI_PROJECT_DIR}
     - gcc --version && go version
-    - if [ ! -d "${PROJECT_DIR}/data-server/build/"  ];then
-    -     mkdir ${PROJECT_DIR}/data-server/build/
+    - if [ ! -d "${CI_PROJECT_DIR}/data-server/build/"  ];then
+    -     mkdir ${CI_PROJECT_DIR}/data-server/build/
     - fi
 
 stages:
@@ -18,15 +15,15 @@ build_sharkstore:
   script:
   - echo "build sharkstore data-server....."
 
-  - cd ${PROJECT_DIR}/data-server/build/ &&
+  - cd ${CI_PROJECT_DIR}/data-server/build/ &&
     cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TEST=ON -DBUILD_TOOL=ON &&
     make
 
   - echo "build sharkstore master-server"
-  - cd ${PROJECT_DIR}/master/cmd && go build -o master-server
+  - cd ${CI_PROJECT_DIR}/master/cmd && go build -o master-server
 
   - echo "build sharkstore gateway-server"
-  - cd ${PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
+  - cd ${CI_PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
 
   - echo "done"
 
@@ -35,7 +32,7 @@ test_sharkstore_ds:
   script:
   - echo "run sharkstore test....."
 
-  - cd ${PROJECT_DIR}/data-server/build/test
+  - cd ${CI_PROJECT_DIR}/data-server/build/test
   - echo $PWD
   - ./range_ddl_unittest
   - ./range_meta_unittest
@@ -50,7 +47,7 @@ test_sharkstore_gs:
   script:
   - echo "run sharkstore test....."
 
-  - cd ${PROJECT_DIR}/proxy/gateway-server/
+  - cd ${CI_PROJECT_DIR}/proxy/gateway-server/
   - go test -short $(go list ./...)
 
   - echo "done"
