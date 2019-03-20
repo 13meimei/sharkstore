@@ -17,7 +17,6 @@
 #define MASSTREE_INSERT_HH
 #include "masstree_get.hh"
 #include "masstree_split.hh"
-#include "masstree_remove.hh"
 namespace Masstree {
 
 template <typename P>

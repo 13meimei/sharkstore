@@ -15,6 +15,24 @@ struct ThreadInfoDeleter {
     void operator()(threadinfo*) const {}
 };
 
+class StringValuePrinter {
+public:
+    static void print(std::string *value, FILE* f, const char* prefix,
+                      int indent, Masstree::Str key, kvtimestamp_t,
+                      char* suffix) {
+        fprintf(f, "%s%*s%.*s = %s%s\n",
+                prefix, indent, "", key.len, key.s, (value ? value->c_str() : ""), suffix);
+    }
+};
+
+struct default_query_table_params : public Masstree::nodeparams<15, 15> {
+    typedef std::string* value_type;
+    typedef StringValuePrinter value_print_type;
+    typedef ::threadinfo threadinfo_type;
+};
+
+using TreeType = Masstree::basic_table<default_query_table_params>;
+
 class MassTreeDBImpl : public DbInterface {
 public:
     MassTreeDBImpl();
@@ -47,25 +65,12 @@ public:
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
     void PrintMetric() override;
 
+public:
+    TreeType* GetDefaultTree() { return default_tree_; }
+    TreeType* GetTxnTree() { return txn_tree_; }
+    std::unique_ptr<threadinfo, ThreadInfoDeleter>& GetThreadInfo() { return thread_info_; }
+
 private:
-    class StringValuePrinter {
-    public:
-        static void print(std::string *value, FILE* f, const char* prefix,
-                          int indent, Masstree::Str key, kvtimestamp_t,
-                          char* suffix) {
-            fprintf(f, "%s%*s%.*s = %s%s\n",
-                    prefix, indent, "", key.len, key.s, (value ? value->c_str() : ""), suffix);
-        }
-    };
-
-    struct default_query_table_params : public Masstree::nodeparams<15, 15> {
-        typedef std::string* value_type;
-        typedef StringValuePrinter value_print_type;
-        typedef ::threadinfo threadinfo_type;
-    };
-
-    using TreeType = Masstree::basic_table<default_query_table_params>;
-
     thread_local static std::unique_ptr<threadinfo, ThreadInfoDeleter> thread_info_;
 
 private:
@@ -74,8 +79,6 @@ private:
     static Status del(TreeType* tree, const std::string& key);
 
 private:
-
-
     TreeType* default_tree_ = nullptr;
     TreeType* txn_tree_ = nullptr;
 };
