@@ -22,7 +22,12 @@ build_sharkstore:
     cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TEST=ON -DBUILD_TOOL=ON &&
     make
 
-  - echo "build sharkstore gateway"
+  - echo "build sharkstore master-server"
+  - cd ${PROJECT_DIR}/master/cmd && go build -o master-server
+
+  - echo "build sharkstore gateway-server"
+  - cd ${PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
+
   - echo "done"
 
 test_sharkstore_ds:
@@ -44,7 +49,10 @@ test_sharkstore_gs:
   stage: test
   script:
   - echo "run sharkstore test....."
-  - echo "java -test"
+
+  - cd ${PROJECT_DIR}/proxy/gateway-server/
+  - go test -short $(go list ./...)
+
   - echo "done"
 
 deploy_sharkstore:
