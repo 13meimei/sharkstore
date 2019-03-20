@@ -53,8 +53,9 @@ Status MassTreeDBImpl::Get(void* column_family, const std::string& key, std::str
 Status MassTreeDBImpl::put(TreeType* tree, const std::string& key, const std::string& value) {
     Masstree::Str tree_key(key);
     TreeType::cursor_type lp(*tree, tree_key);
-    lp.find_insert(*thread_info_);
-    // TODO: free old value
+    if (lp.find_insert(*thread_info_)) {
+        // TODO: free old value
+    }
     lp.value() = new std::string(value);
     lp.finish(1, *thread_info_);
     return Status(Status::OK());
@@ -86,8 +87,7 @@ Status MassTreeDBImpl::Write(WriteBatchInterface* batch) {
 Status MassTreeDBImpl::del(TreeType* tree, const std::string& key) {
     Masstree::Str tree_key(key);
     TreeType::cursor_type lp(*tree, tree_key);
-    lp.find_locked(*thread_info_);
-    if (lp.has_value()) {
+    if (lp.find_locked(*thread_info_)) {
         // TODO: fix delete
         delete lp.value();
     }
