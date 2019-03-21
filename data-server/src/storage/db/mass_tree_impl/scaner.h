@@ -6,6 +6,7 @@ _Pragma("once");
 #include "masstree-beta/str.hh"
 #include "masstree-beta/kvrow.hh"
 #include "mass_tree_impl.h"
+#include "masstree-beta/masstree_scan.hh"
 
 namespace sharkstore {
 namespace dataserver {
@@ -43,21 +44,21 @@ public:
             return false;
         }
 
-        auto kv = std::make_pair<std::string, std::string>(k, *value);
+        auto kv = std::make_pair(k, *value);
         kvs_.push_back(kv);
         rows_++;
         return true;
     }
 
     bool Valid() {
-        auto scan_valid = (last_key_ < vend_);
-        auto iter_valid = (kvs_it_ != kvs_.cend());
+        auto scan_valid = (last_key_ < vend_ && rows_ > 0);
+        auto iter_valid = (kvs_it_ != kvs_.end());
 
         if (scan_valid) {
             if (iter_valid) {
                 return true;
             } else {
-                scan();
+                do_scan();
             }
         }
 
@@ -76,22 +77,22 @@ public:
     }
 
 private:
-    void scan() {
+    void do_scan() {
         kvs_.clear();
-        while (scan(tree_, thread_info_)) {
+        while (scan<TreeType>(*tree_, *thread_info_.get())) {
         }
-        kvs_it_ = kvs_.cbegin();
+        kvs_it_ = kvs_.begin();
     }
 
 private:
     template<typename T>
-    int scan(T &table, threadinfo &ti) {
-        return table->scan(Str(last_key_.c_str(), last_key_.length()), true, *this, ti);
+    int scan(T& table, threadinfo &ti) {
+        return table.scan(Str(last_key_.c_str(), last_key_.length()), true, *this, ti);
     }
 
     template<typename T>
-    int rscan(T &table, threadinfo &ti) {
-        return table->rscan(Str(last_key_.c_str(), last_key_.length()), true, *this, ti);
+    int rscan(T& table, threadinfo &ti) {
+        return table.rscan(Str(last_key_.c_str(), last_key_.length()), true, *this, ti);
     }
 
 private:
@@ -105,7 +106,7 @@ private:
     KVPairVector::iterator kvs_it_;
 
     TreeType* tree_;
-    std::unique_ptr<threadinfo, ThreadInfoDeleter> thread_info_;
+    std::unique_ptr<threadinfo, ThreadInfoDeleter>& thread_info_;
 };
 
 }

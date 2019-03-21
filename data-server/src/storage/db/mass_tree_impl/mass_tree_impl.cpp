@@ -3,6 +3,7 @@
 #include "storage/db/memdb_batch.h"
 
 #include "masstree-beta/masstree_insert.hh"
+#include "masstree-beta/masstree_remove.hh"
 
 volatile mrcu_epoch_type globalepoch = 1;     // global epoch, updated by main thread regularly
 volatile mrcu_epoch_type active_epoch = 1;
