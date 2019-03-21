@@ -1,5 +1,4 @@
 #include "iterator.h"
-#include "scaner.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -10,25 +9,27 @@ bool MassTreeIterator::Valid() {
 }
 
 void MassTreeIterator::Next() {
-    const auto& kv = scaner_.Next();
-    it_key_ = kv.first;
-    it_value_ = kv.second;
+    scaner_.Next();
+}
+
+Status MassTreeIterator::status() {
+    return Status::OK();
 }
 
 std::string MassTreeIterator::key() {
-    return it_key_;
+    return scaner_.Key();
 }
 
 std::string MassTreeIterator::value() {
-    return it_value_;
+    return scaner_.Value();
 }
 
 uint64_t MassTreeIterator::key_size() {
-    return it_key_.length();
+    return scaner_.Key().length();
 }
 
 uint64_t MassTreeIterator::value_size() {
-    return it_value_.length();
+    return scaner_.Value().length();
 };
 
 }

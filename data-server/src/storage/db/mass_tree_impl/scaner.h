@@ -21,15 +21,13 @@ public:
     Scaner() = delete;
     ~Scaner() = default;
 
-    Scaner(TreeType* tree, std::unique_ptr<threadinfo, ThreadInfoDeleter>& thread_info,
-           const std::string vbegin, const std::string vend):
-            tree_(tree), thread_info_(thread_info),
-           vbegin_(vbegin), last_key_(vbegin), vend_(vend) {
+    Scaner(TreeType* tree, const std::string vbegin, const std::string vend):
+            tree_(tree), vbegin_(vbegin), last_key_(vbegin), vend_(vend) {
+        do_scan();
     }
-    Scaner(TreeType* tree, std::unique_ptr<threadinfo, ThreadInfoDeleter>& thread_info,
-           const std::string vbegin, const std::string vend, size_t rows):
-            tree_(tree), thread_info_(thread_info),
-            vbegin_(vbegin), last_key_(vbegin), vend_(vend), rows_(rows) {
+    Scaner(TreeType* tree, const std::string vbegin, const std::string vend, size_t rows):
+            tree_(tree), vbegin_(vbegin), last_key_(vbegin), vend_(vend), rows_(rows) {
+        do_scan();
     }
 
     template<typename SS, typename K>
@@ -37,9 +35,15 @@ public:
     }
 
     bool visit_value(Str key, std::string* value, threadinfo &) {
-        std::cout << "visit value: key " << std::string(key.s, key.len) << " value: " << value << std::endl;
+//        std::cout << "visit value: key " << std::string(key.s, key.len) << " value: " << *value << std::endl;
         auto k = std::string(key.data(), key.length());
-        if (k >= vend_ || rows_ > max_rows_) {
+
+        if (rows_ > max_rows_) {
+            last_key_ = k;
+            return false;
+        }
+
+        if (!vend_.empty() && k >= vend_) {
             last_key_ = k;
             return false;
         }
@@ -51,37 +55,55 @@ public:
     }
 
     bool Valid() {
-        auto scan_valid = (last_key_ < vend_ && rows_ > 0);
-        auto iter_valid = (kvs_it_ != kvs_.end());
-
-        if (scan_valid) {
-            if (iter_valid) {
-                return true;
+        if (scan_valid()) {
+            if (iter_valid()) {
+                goto ITER;
             } else {
                 do_scan();
             }
         }
 
-        if (iter_valid) {
+        ITER:
+        if (iter_valid()) {
+            it_kv_ = std::make_pair(kvs_it_->first, kvs_it_->second);
             return true;
         } else {
             return false;
         }
     }
 
-    const KVPair&& Next() {
-        auto k = kvs_it_->first;
-        auto v = kvs_it_->second;
+    void Next() {
         kvs_it_++;
-        return std::move(KVPair(k, v));
     }
 
+    std::string Key() { return it_kv_.first; }
+    std::string Value() { return it_kv_.second; }
+
 private:
-    void do_scan() {
-        kvs_.clear();
-        while (scan<TreeType>(*tree_, *thread_info_.get())) {
+    bool scan_valid() {
+        if (vend_.empty()) {
+            return rows_ > 0 && rows_ > max_rows_;
+        } else {
+            return (last_key_ < vend_) && (rows_ > 0);
         }
+    }
+
+    bool iter_valid() {
+        return kvs_it_ != kvs_.end();
+    }
+
+    void do_scan() {
+        reset();
+
+        thread_local std::unique_ptr<threadinfo, ThreadInfoDeleter> ti(threadinfo::make(threadinfo::TI_PROCESS, -1));
+        scan<TreeType>(*tree_, *ti.get());
+
         kvs_it_ = kvs_.begin();
+    }
+
+    void reset() {
+        rows_ = 0;
+        kvs_.clear();
     }
 
 private:
@@ -104,9 +126,9 @@ private:
     std::string last_key_;
     KVPairVector kvs_;
     KVPairVector::iterator kvs_it_;
+    KVPair it_kv_;
 
     TreeType* tree_;
-    std::unique_ptr<threadinfo, ThreadInfoDeleter>& thread_info_;
 };
 
 }

@@ -4,6 +4,7 @@
 
 #include "masstree-beta/masstree_insert.hh"
 #include "masstree-beta/masstree_remove.hh"
+#include "iterator.h"
 
 volatile mrcu_epoch_type globalepoch = 1;     // global epoch, updated by main thread regularly
 volatile mrcu_epoch_type active_epoch = 1;
@@ -118,8 +119,7 @@ void* MassTreeDBImpl::TxnCFHandle() {
 }
 
 IteratorInterface* MassTreeDBImpl::NewIterator(const std::string& start, const std::string& limit) {
-    // TODO:
-    return nullptr;
+    return new MassTreeIterator(default_tree_, start, limit);
 }
 
 Status MassTreeDBImpl::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
