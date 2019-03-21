@@ -76,7 +76,7 @@ bool Range::LockQuery(const std::string &key, kvrpcpb::LockValue* lock_value) {
         return false;
     }
 
-    if (lock_value->delete_time() > 0 && lock_value->delete_time() <= getticks()) {
+    if (lock_value->delete_time() > 0 && lock_value->delete_time() <= NowMilliSeconds()) {
         RANGE_LOG_WARN("key[%s] deleted at time %" PRId64, EncodeToHexString(key).c_str(), lock_value->delete_time());
         return false;
     }
@@ -115,7 +115,7 @@ void Range::Lock(RPCRequestPtr rpc, kvrpcpb::DsLockRequest &req) {
             break;
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd<kvrpcpb::DsLockResponse>(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::Lock);
             cmd.set_allocated_lock_req(req.release_req());
         });
@@ -160,9 +160,9 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         }
 
         auto btime = NowMicros();
-        req.mutable_value()->set_update_time(getticks());
+        req.mutable_value()->set_update_time(NowMilliSeconds());
         if (req.value().delete_time() != 0) {
-            req.mutable_value()->set_delete_time(req.value().delete_time() + getticks());
+            req.mutable_value()->set_delete_time(req.value().delete_time() + NowMilliSeconds());
         }
 
         std::string value_buf;
@@ -219,7 +219,7 @@ void Range::LockUpdate(RPCRequestPtr rpc, kvrpcpb::DsLockUpdateRequest &req) {
             break;
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd<kvrpcpb::DsLockUpdateResponse>(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::LockUpdate);
             cmd.set_allocated_lock_update_req(req.release_req());
         });
@@ -272,12 +272,12 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
 
         // update lock value
         if(req.delete_time() != 0) {
-            val.set_delete_time(getticks() + req.delete_time());
+            val.set_delete_time(NowMilliSeconds() + req.delete_time());
         }
         if (!req.update_value().empty()) {
             val.set_value(req.update_value());
         }
-        val.set_update_time(getticks());
+        val.set_update_time(NowMilliSeconds());
         val.set_by(req.by());
 
         std::string value_buf;
@@ -305,7 +305,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err, atime);
+        ReplySubmit(cmd, *resp, err, atime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -330,7 +330,7 @@ void Range::Unlock(RPCRequestPtr rpc, kvrpcpb::DsUnlockRequest &req) {
             break;
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd<kvrpcpb::DsUnlockResponse>(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::Unlock);
             cmd.set_allocated_unlock_req(req.release_req());
         });
@@ -432,7 +432,7 @@ void Range::UnlockForce(RPCRequestPtr rpc, kvrpcpb::DsUnlockForceRequest &req) {
             break;
         }
 
-        SubmitCmd(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
+        SubmitCmd<kvrpcpb::DsUnlockForceResponse>(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
             cmd.set_cmd_type(raft_cmdpb::CmdType::UnlockForce);
             cmd.set_allocated_unlock_force_req(req.release_req());
         });
@@ -547,7 +547,7 @@ void Range::LockWatch(RPCRequestPtr rpc, watchpb::DsWatchRequest& req) {
         std::vector<watch::Key*> keys;
         keys.push_back(new watch::Key(req.req().kv().key(0)));
         int64_t expireTime = (req.req().longpull() > 0)?NowMicros() + req.req().longpull()*1000:rpc->expire_time*1000;
-        auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, rpc);
+        auto w_ptr = std::make_shared<watch::Watcher>(meta_.GetTableID(), keys, 0, expireTime, std::move(rpc));
         // free keys
         for (auto k: keys) {
             delete k;
@@ -561,13 +561,15 @@ void Range::LockWatch(RPCRequestPtr rpc, watchpb::DsWatchRequest& req) {
             err->set_message("add key watcher failed");
             break;
         }
+
     } while (false);
 
     if (err != nullptr) {
         FLOG_WARN("range[%" PRIu64 "] LockWatch error: %s", id_, err->message().c_str());
         watchpb::DsWatchResponse resp;
-        SendResponse(rpc, resp, req.header(), err);
+        SendResponse(rpc, resp, req.header(), err); 
     }
+
 }
 
 void Range::LockScan(RPCRequestPtr rpc, kvrpcpb::DsLockScanRequest &req) {
@@ -603,7 +605,7 @@ void Range::LockScan(RPCRequestPtr rpc, kvrpcpb::DsLockScanRequest &req) {
         FLOG_DEBUG("last key: %s", lastInfo.key().c_str());
     }
 
-    SendResponse(rpc, resp, req.header(), err);
+    SendResponse(rpc, ds_resp, req.header(), err);
 }
 
 void Range::LockGet(RPCRequestPtr rpc, kvrpcpb::DsLockGetRequest &req) {

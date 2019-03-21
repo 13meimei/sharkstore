@@ -16,8 +16,8 @@ namespace watch {
 class Watcher {
 public:
     Watcher() = delete;
-//    Watcher(uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, common::ProtoMessage*);
-//    Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, common::ProtoMessage*);
+    Watcher(uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, RPCRequestPtr);
+    Watcher(WatchType, uint64_t, const std::vector<WatcherKey*>&, const uint64_t &, const int64_t &, RPCRequestPtr);
     Watcher(uint64_t, const std::vector<WatcherKey*>&);
     virtual ~Watcher();
     bool operator>(const Watcher* other) const;
@@ -55,9 +55,10 @@ public:
     }
 //    common::ProtoMessage* GetMessage() { return message_; }
     int GetType() { return type_; }
-    void SetWatcherId(WatcherId id) { watcher_id_ = id; }
+    void SetWatcherId(WatcherId id) { session_id_ = watcher_id_ = id; }
     WatcherId GetWatcherId() { return watcher_id_; }
     int64_t GetExpireTime() { return expire_time_; }
+    int64_t GetBeginTtime() {return message_->begin_time;}
     bool IsSentResponse() {
         std::lock_guard<std::mutex> lock(send_lock_);
         return sent_response_flag;

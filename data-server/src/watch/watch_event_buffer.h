@@ -7,7 +7,7 @@ _Pragma("once");
 #include "proto/gen/watchpb.pb.h"
 #include "frame/sf_logger.h"
 #include "common/ds_encoding.h"
-#include "frame/sf_util.h"
+#include "base/util.h"
 
 #include <list>
 #include <mutex>
@@ -81,7 +81,7 @@ public:
     }
 
     void setUpdateTime() {
-        used_time_ = getticks();
+        used_time_ = NowMilliSeconds();
     }
 
 private:
@@ -107,7 +107,7 @@ using GroupKey = struct SGroupKey {
 
     SGroupKey(const std::string &key) {
         key_ = key;
-        create_time_ = getticks();
+        create_time_ = NowMilliSeconds();
     }
 
     SGroupKey(const std::string &key, const int64_t &time) {

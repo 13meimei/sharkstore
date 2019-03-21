@@ -1,12 +1,23 @@
 #include <gtest/gtest.h>
+#include "helper/cpp_permission.h" 
+#include "helper/mock/rpc_request_mock.h"
 
-#define private public
+#include "base/util.h"
+#include "base/status.h"
+#include "fastcommon/logger.h"
+
+#include "watch/watch.h"
 #include "watch/watcher.h"
 #include "watch/watcher_set.h"
-#include "watch/watch_server.h"
-#include "frame/sf_util.h"
-#include "fastcommon/logger.h"
-#include "storage/store.h"
+#include "watch/watch_server.h" 
+
+#include "proto/gen/watchpb.pb.h"
+#include "proto/gen/schpb.pb.h"
+
+#include "common/rpc_request.h"
+#include "storage/store.h" 
+
+#include "test_public_funcs.h"
 
 int main(int argc, char* argv[]) {
     log_init2();
@@ -16,164 +27,39 @@ int main(int argc, char* argv[]) {
 }
 
 namespace {
+using namespace sharkstore;
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::watch;
+using namespace sharkstore::test::mock; 
 
 enum TestCode {
     TEST_OK = 0,
     TEST_ERR,
     TEST_TIMEOUT,
     TEST_UNEXPECTED,
-};
-
-class TestWatchConnection: public common::ProtoMessage {
-public:
-    TestWatchConnection() = delete;
-    explicit TestWatchConnection(int timeout): timeout_(timeout+1000), ProtoMessage_(timeout) { // request timeout > server timeout 1s
-        auto ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sock_);
-
-        /*
-        char *write_buf = "A";
-        char read_buf[2] = {0};
-
-        write(sock_[1], write_buf, 1);
-        read(sock_[0], read_buf, 1);
-        printf("test buf: %s\n", read_buf);
-        */
-    }
-    TestWatchConnection(int timeout, const char* send_string, const char* expect_string):
-            timeout_(timeout+1000), ProtoMessage_(timeout) {
-        memcpy(send_string_, send_string, strlen(send_string) > sizeof(send_string_)-1 ? sizeof(send_string_)-1 : strlen(send_string));
-        memcpy(expect_string_, expect_string, strlen(expect_string) > sizeof(expect_string_)-1 ? sizeof(expect_string_)-1 : strlen(expect_string));
-        auto ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sock_);
-    }
-
-public:
-    TestCode ClientRead() {
-        std::cout << "client read ... " << std::endl;
-        return Read(0);
-    }
-    TestCode ServerRead() {
-        std::cout << "server read ... " << std::endl;
-        return Read(1);
-    }
-    void ClientWrite() {
-        std::cout << "client write ... " << std::endl;
-        Write(0, send_string_);
-        return;
-    }
-    void ServerWrite() {
-        std::cout << "server write ... " << std::endl;
-
-        auto expire = expire_time/1000;
-        auto now = getticks()/1000;
-        if (expire <= now) {
-            std::cout << "expire time(sec): " << expire << " <= now: " << now << std::endl;
-            Write(1, "timeout");
-            return;
-        }
-        std::cout << "expire time(sec): " << expire << " > now: " << now << std::endl;
-        Write(1, send_string_);
-        return;
-    }
-
-private:
-    TestCode Read(int role) {
-//        assert(role == 0 || role == 1); // 0 = client; 1 = server;
-
-        std::unique_lock<std::mutex> mutex(mutex_);
-
-        std::cv_status wait_status;
-        wait_status = cond_.wait_for(mutex, std::chrono::milliseconds(timeout_)) ;
-        if (wait_status == std::cv_status::timeout) {
-            return TEST_ERR;
-        }
-
-        /*
-        auto ep_fd = epoll_create(1);
-
-        struct epoll_event ev;
-        ev.data.fd = sock_[role];
-        ev.events = EPOLLIN;
-        assert(epoll_ctl(ep_fd, EPOLL_CTL_ADD, sock_[role], &ev) == 0);
-
-        auto max_events = 1;
-        struct epoll_event events[max_events];
-        std::cout << "epoll <" << std::endl;
-        auto n = epoll_wait(ep_fd, events, max_events, timeout_);
-        std::cout << ">" << std::endl;
-
-        if (n == 0) {
-            return TEST_TIMEOUT;
-        }
-
-        assert(events[0].data.fd == sock_[role]);
-         */
-        auto readn = read(sock_[role], recv_string_, strlen(expect_string_));
-        std::cout << "read sock: " << role << " recv string: " << recv_string_ << " readn: " << readn <<
-                  " expected string: " << expect_string_  << std::endl;
-        if (readn == strlen(expect_string_) && strcmp(recv_string_, expect_string_) == 0) {
-            if (strcmp(recv_string_, "timeout") == 0) {
-                return TEST_TIMEOUT;
-            } else {
-                return TEST_OK;
-            }
-        } else {
-            std::cout << "read unexpected string"<< std::endl;
-            return TEST_UNEXPECTED;
-        }
-
-        /*
-        close(ep_fd);
-         */
-    }
-
-    void Write(int role, const char* buf) {
-        std::unique_lock<std::mutex> mutex(mutex_);
-
-        auto writen = write(sock_[role], buf, strlen(buf));
-        std::cout << "write sock: " << role << " send string: " << buf << " nwrite: " << writen << std::endl;
-        ASSERT_TRUE(writen == strlen(buf));
-
-        cond_.notify_one();
-    }
-
-private:
-    int timeout_;
-    int sock_[2];
-    char recv_string_[8] = {0};// max used 7 bytes XXX
-    char send_string_[8] = "abc";
-    char expect_string_[8] = {0};
-    std::mutex mutex_;
-    std::condition_variable cond_;
-};
-
+}; 
 
 const uint64_t g_table_id = 123;
 
 class TestWatcher: public Watcher {
 public:
     TestWatcher() = delete;
-    TestWatcher(const std::vector<Key*>& keys, TestWatchConnection* message): Watcher(g_table_id, keys, 0, message) {
+    TestWatcher(const std::vector<WatcherKey*>& keys, RPCRequestPtr message): Watcher( g_table_id, keys, 0, NowMicros()+1000000, std::move(message)) {
     }
     ~TestWatcher() = default;
 
     void Send(google::protobuf::Message* resp) override;
 };
 typedef std::shared_ptr<TestWatcher> TestWatcherPtr;
-typedef std::string Key;
 
 void TestWatcher::Send(google::protobuf::Message* resp) {
     (void) resp; // not used
     std::lock_guard<std::mutex> lock(send_lock_);
     if (sent_response_flag) {
-        return;
+        return; 
     }
 
-    auto conn = dynamic_cast<TestWatchConnection*>(message_);
-    if (conn) {
-        conn->ServerWrite();
-    }
+    message_->Reply(*resp);
 
     sent_response_flag = true;
 }
@@ -182,7 +68,7 @@ class TestWatcherSet: public WatcherSet {
 public:
     void CheckAddKeyWatcher(TestWatcherPtr& w_ptr) {
         WatcherKey encode_key;
-        w_ptr->EncodeKey(&encode_key, g_table_id, w_ptr->GetKeys());
+        w_ptr->EncodeKey(&encode_key, g_table_id, w_ptr->GetKeys(false));
         auto watcher_id = w_ptr->GetWatcherId();
 
         // check key map
@@ -213,7 +99,7 @@ public:
             auto w_p = it->get();
             WatcherId tmp_id = w_p->GetWatcherId();
 
-            w_p->EncodeKey(&tmp_key, g_table_id, w_p->GetKeys());
+            w_p->EncodeKey(&tmp_key, g_table_id, w_p->GetKeys(false));
             if (tmp_key == encode_key && tmp_id == watcher_id) {
                 std::cout << "check add watcher queue ok: session id: [" <<
                           tmp_id << "] key: [" << tmp_key << "]" << std::endl;
@@ -225,7 +111,7 @@ public:
 
     void CheckDelKeywatcher(TestWatcherPtr& w_ptr, bool is_sent_response) {
         WatcherKey encode_key;
-        w_ptr->EncodeKey(&encode_key, g_table_id, w_ptr->GetKeys());
+        w_ptr->EncodeKey(&encode_key, g_table_id, w_ptr->GetKeys(false));
         auto watcher_id = w_ptr->GetWatcherId();
 
         // check key map
@@ -256,7 +142,7 @@ public:
             auto w_p = it->get();
             WatcherId tmp_id = w_p->GetWatcherId();
 
-            w_p->EncodeKey(&tmp_key, g_table_id, w_p->GetKeys());
+            w_p->EncodeKey(&tmp_key, g_table_id, w_p->GetKeys(false));
             if (tmp_key == encode_key && tmp_id == watcher_id) {
                 ASSERT_TRUE(w_p->IsSentResponse() == is_sent_response);
                 std::cout << "check del watcher in queue: session id: [" <<
@@ -275,59 +161,71 @@ public:
 };
 
 TEST(TestWatcher, EncodeAndDecode) {
-    std::vector<Key*> keys;
-    keys.push_back(new Key("k1"));
-    keys.push_back(new Key("k2"));
-    keys.push_back(new Key("k10"));
+    std::vector<WatcherKey*> keys;
+    keys.push_back(new WatcherKey("k1"));
+    keys.push_back(new WatcherKey("k2"));
+    keys.push_back(new WatcherKey("k10"));
 
-    auto* message = new TestWatchConnection(2000);
+    schpb::CreateRangeRequest req;
+    req.set_allocated_range(genRange1());
 
-    TestWatcher w(keys, message);
-
+    auto rpc = NewMockRPCRequest(req); 
+    TestWatcher w(keys, std::move(rpc.first));
+    
     // test encode and decode key
     WatcherKey encode_key;
-    w.EncodeKey(&encode_key, g_table_id, w.GetKeys());
+    w.EncodeKey(&encode_key, g_table_id, w.GetKeys(false));
 
-    std::vector<Key*> decode_keys;
+    std::vector<WatcherKey*> decode_keys;
     w.DecodeKey(decode_keys, encode_key);
     std::cout << "0: " << *decode_keys[0] <<  std::endl;
-    ASSERT_EQ(*decode_keys[0], Key("k1"));
+    ASSERT_EQ(*decode_keys[0], WatcherKey("k1"));
     std::cout << "1: " << *decode_keys[1] <<  std::endl;
-    ASSERT_EQ(*decode_keys[1], Key("k2"));
+    ASSERT_EQ(*decode_keys[1], WatcherKey("k2"));
     std::cout << "2: " << *decode_keys[2] <<  std::endl;
-    ASSERT_EQ(*decode_keys[2], Key("k10"));
+    ASSERT_EQ(*decode_keys[2], WatcherKey("k10"));
 }
 
 
 TEST(TestWatcherSet, AddAndDelKeyWatcher) {
-    std::vector<Key*> keys0;
-    keys0.push_back(new Key("k0.1"));
-    keys0.push_back(new Key("k0.2"));
-    keys0.push_back(new Key("k0.10"));
+    std::vector<WatcherKey*> keys0;
+    keys0.push_back(new WatcherKey("k0.1"));
+    keys0.push_back(new WatcherKey("k0.2"));
+    keys0.push_back(new WatcherKey("k0.10"));
 
-    std::vector<Key*> keys1;
-    keys1.push_back(new Key("k1.1"));
-    keys1.push_back(new Key("k1.2"));
-    keys1.push_back(new Key("k1.10"));
+    std::vector<WatcherKey*> keys1;
+    keys1.push_back(new WatcherKey("k1.1"));
+    keys1.push_back(new WatcherKey("k1.2"));
+    keys1.push_back(new WatcherKey("k1.10"));
 
-    auto* msg0 = new TestWatchConnection(2000);
-//    msg0->session_id = 1;
-//    msg0->expire_time = getticks()+3000;
+    //rpc1
+    schpb::CreateRangeRequest req1;
+    req1.set_allocated_range(genRange1());
 
-    auto* msg1 = new TestWatchConnection(2000);
-//    msg1->session_id = 2;
-//    msg1->expire_time = getticks()+3000;
+    auto rpc1 = NewMockRPCRequest(req1); 
+    
+    // rpc2
+    schpb::CreateRangeRequest req2;
+    req2.set_allocated_range(genRange2());
 
-    TestWatcherPtr w_ptr0 = std::make_shared<TestWatcher>(keys0, msg0);
-    TestWatcherPtr w_ptr1 = std::make_shared<TestWatcher>(keys0, msg1);
-    TestWatcherPtr w_ptr2 = std::make_shared<TestWatcher>(keys1, msg1);
+    auto rpc2 = NewMockRPCRequest(req2); 
+
+    // rpc3
+    schpb::CreateRangeRequest req3;
+    req3.set_allocated_range(genRange2());
+
+    auto rpc3 = NewMockRPCRequest(req3); 
+
+    TestWatcherPtr w_ptr0 = std::make_shared<TestWatcher>(keys0, std::move(rpc1.first));
+    TestWatcherPtr w_ptr1 = std::make_shared<TestWatcher>(keys0, std::move(rpc2.first));
+    TestWatcherPtr w_ptr2 = std::make_shared<TestWatcher>(keys1, std::move(rpc3.first));
 
     std::string encode_key0;
-    w_ptr0->EncodeKey(&encode_key0, g_table_id, w_ptr0->GetKeys());
+    w_ptr0->EncodeKey(&encode_key0, g_table_id, w_ptr0->GetKeys(false));
     std::string encode_key1;
-    w_ptr1->EncodeKey(&encode_key1, g_table_id, w_ptr1->GetKeys());
+    w_ptr1->EncodeKey(&encode_key1, g_table_id, w_ptr1->GetKeys(false));
     std::string encode_key2;
-    w_ptr2->EncodeKey(&encode_key2, g_table_id, w_ptr2->GetKeys());
+    w_ptr2->EncodeKey(&encode_key2, g_table_id, w_ptr2->GetKeys(false));
 
     TestWatcherSet ws;
     WatcherPtr w_p0 = std::static_pointer_cast<Watcher>(w_ptr0);
@@ -361,57 +259,74 @@ TEST(TestWatcherSet, AddAndDelKeyWatcher) {
 TEST(TestWatchServer, SimulateInteractive) {
     TestWatchServer server;
 
-    std::vector<Key *> keys0;
-    keys0.push_back(new Key("k0.1"));
-    keys0.push_back(new Key("k0.2"));
-    keys0.push_back(new Key("k0.10"));
+    std::vector<WatcherKey *> keys0;
+    keys0.push_back(new WatcherKey("k0.1"));
+    keys0.push_back(new WatcherKey("k0.2"));
+    keys0.push_back(new WatcherKey("k0.10"));
 
-    {
-        auto conn0 = new TestWatchConnection(5000); // read timeout 5s
+    { 
+        watchpb::DsWatchRequest req; 
+        req.mutable_header()->set_range_id(g_table_id);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1); 
+        req.mutable_req()->set_longpull(5000);
+        req.mutable_req()->set_startversion(0);
 
-        /*
-        // test timeout
-    //    conn0->ServerWrite();
-        ASSERT_TRUE(conn0->ClientRead() == TEST_TIMEOUT); // no server write, timeout
-         */
+        auto rpc = NewMockRPCRequest(req, funcpb::kFuncLockWatch);
+        rpc.first->expire_time = NowMilliSeconds() + 3000;
+        rpc.first->begin_time = NowMicros();
+        rpc.first->msg->head.msg_id = 20180813; 
 
-        auto w_ptr0 = std::make_shared<TestWatcher>(keys0, conn0);
+        auto w_ptr0 = std::make_shared<TestWatcher>(keys0, std::move(rpc.first));
         WatcherPtr w_p0 = std::static_pointer_cast<Watcher>(w_ptr0);
-        server.AddKeyWatcher(w_p0, nullptr);
-        ASSERT_TRUE(conn0->ClientRead() != TEST_TIMEOUT);
+        server.AddKeyWatcher(w_p0, nullptr); 
     }
 
     {
-        auto conn = new TestWatchConnection(5000, "hello", "timeout");
-        auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto rpc = NewMockRPCRequest(req);
+
+        //auto conn = new TestWatchConnection(5000, "hello", "timeout");
+
+        auto w_ptr = std::make_shared<TestWatcher>(keys0, std::move(rpc.first));
         WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
-        server.AddKeyWatcher(w_p, nullptr);
+        server.AddKeyWatcher(w_p, nullptr); 
 
-        ASSERT_TRUE(conn->ClientRead() == TEST_TIMEOUT);
     }
 
     {
-        auto conn = new TestWatchConnection(5000, "hello", "hello");
-        auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
-        WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
-        server.AddKeyWatcher(w_p, nullptr);
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
 
-        sleep(1);
-        conn->ServerWrite(); // simulate server response
+        auto rpc = NewMockRPCRequest(req); 
 
-        ASSERT_TRUE(conn->ClientRead() == TEST_OK);
-    }
-
-    {
-        auto conn = new TestWatchConnection(5000, "hello", "world");
-        auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
+        auto w_ptr = std::make_shared<TestWatcher>(keys0, std::move(rpc.first));
         WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
         server.AddKeyWatcher(w_p, nullptr);
 
         sleep(1);
-        conn->ServerWrite(); // simulate server response
+    }
 
-        ASSERT_TRUE(conn->ClientRead() == TEST_UNEXPECTED);
+    {
+
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto rpc = NewMockRPCRequest(req); 
+
+        // auto conn = new TestWatchConnection(5000, "hello", "world");
+        auto w_ptr = std::make_shared<TestWatcher>(keys0, std::move(rpc.first));
+        WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
+        server.AddKeyWatcher(w_p, nullptr);
+
+        sleep(1);
+
+//        rpc.send.get();
+
+//        conn->ServerWrite(); // simulate server response
+//        ASSERT_TRUE(conn->ClientRead() == TEST_UNEXPECTED);
     }
 
     {
@@ -423,11 +338,25 @@ TEST(TestWatchServer, SimulateInteractive) {
         for (auto j = 0; j < TEST_TIMES; j++) {
             for (i = 0; i < N; i++) {
                 th[i] = std::thread([&]() {
-                    auto conn = new TestWatchConnection(5000, "hello", "timeout"); // read timeout 5s
-                    auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
+                    // auto conn = new TestWatchConnection(5000, "hello", "timeout"); // read timeout 5s
+                
+                    watchpb::DsWatchRequest req; 
+                    req.mutable_header()->set_range_id(g_table_id);
+                    req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+                    req.mutable_header()->mutable_range_epoch()->set_version(1); 
+                    req.mutable_req()->mutable_kv()->add_key("hello");
+                    req.mutable_req()->set_longpull(5000);
+                    //传入大版本号，用于让watcher添加成功
+                    req.mutable_req()->set_startversion(0);
+
+                    auto rpc = NewMockRPCRequest(req, funcpb::kFuncLockWatch);
+                    rpc.first->expire_time = NowMilliSeconds() + 3000;
+                    rpc.first->begin_time = NowMicros();
+                    rpc.first->msg->head.msg_id = 20180813; 
+
+                    auto w_ptr = std::make_shared<TestWatcher>(keys0, std::move(rpc.first));
                     WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
                     server.AddKeyWatcher(w_p, nullptr);
-                    ASSERT_TRUE(conn->ClientRead() == TEST_TIMEOUT);
                 });
             }
             for (i = 0; i < N; i++) {
@@ -438,15 +367,21 @@ TEST(TestWatchServer, SimulateInteractive) {
         for (auto j = 0; j < TEST_TIMES; j++) {
             for (i = 0; i < N; i++) {
                 th[i] = std::thread([&]() {
-                    auto conn = new TestWatchConnection(5000); // read timeout 5s
-                    auto w_ptr = std::make_shared<TestWatcher>(keys0, conn);
+
+                    // auto conn = new TestWatchConnection(5000); // read timeout 5s
+                    schpb::CreateRangeRequest req;
+                    req.set_allocated_range(genRange1());
+
+                    auto rpc = NewMockRPCRequest(req);
+
+                    auto w_ptr = std::make_shared<TestWatcher>(keys0, std::move(rpc.first));
                     WatcherPtr w_p = std::static_pointer_cast<Watcher>(w_ptr);
                     server.AddKeyWatcher(w_p, nullptr);
 
                     sleep(1);
-                    conn->ServerWrite(); // simulate server response
 
-                    ASSERT_TRUE(conn->ClientRead() == TEST_OK);
+//                     conn->ServerWrite(); // simulate server response 
+//                    ASSERT_TRUE(conn->ClientRead() == TEST_OK);
                 });
             }
             for (i = 0; i < N; i++) {

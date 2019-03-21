@@ -115,7 +115,7 @@ int RangeServer::Init(ContextServer *context) {
 
     // 初始化WatchServer
     // TODO: enable
-   // watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
+    watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
 
     std::vector<metapb::Range> range_metas;
     ret = meta_store_->GetAllRange(&range_metas);
@@ -311,39 +311,39 @@ void RangeServer::DealTask(RPCRequestPtr rpc) {
             ForwardToRange<kvrpcpb::DsDeleteRequest, kvrpcpb::DsDeleteResponse>(rpc, &Range::Delete);
             break;
 
-//        // Watch methods
-//        case funcpb::kFuncWatchGet:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsWatchRequest, watchpb::DsWatchResponse, WatchGet);
-//            break;
-//        case funcpb::kFuncPureGet:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchGetMultiRequest, watchpb::DsKvWatchGetMultiResponse, PureGet);
-//            break;
-//        case funcpb::kFuncWatchPut:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchPutRequest, watchpb::DsKvWatchPutResponse, WatchPut);
-//            break;
-//        case funcpb::kFuncWatchDel:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchDeleteRequest, watchpb::DsKvWatchDeleteResponse, WatchDel);
-//            break;
+        // Watch methods
+        case funcpb::kFuncWatchGet:
+            ForwardToRange<watchpb::DsWatchRequest, watchpb::DsWatchResponse>(rpc, &Range::WatchGet);
+            break;
+        case funcpb::kFuncPureGet:
+            ForwardToRange<watchpb::DsKvWatchGetMultiRequest, watchpb::DsKvWatchGetMultiResponse>(rpc, &Range::PureGet);
+            break;
+        case funcpb::kFuncWatchPut:
+            ForwardToRange<watchpb::DsKvWatchPutRequest, watchpb::DsKvWatchPutResponse>(rpc, &Range::WatchPut);
+            break;
+        case funcpb::kFuncWatchDel:
+            ForwardToRange<watchpb::DsKvWatchDeleteRequest, watchpb::DsKvWatchDeleteResponse>(rpc, &Range::WatchDel);
+            break;
 
         // lock methods
-//        case funcpb::kFuncLock:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockRequest, kvrpcpb::DsLockResponse, Lock);
-//            break;
-//        case funcpb::kFuncLockUpdate:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockUpdateRequest, kvrpcpb::DsLockUpdateResponse, LockUpdate);
-//            break;
-//        case funcpb::kFuncUnlock:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsUnlockRequest, kvrpcpb::DsUnlockResponse, Unlock);
-//            break;
-//        case funcpb::kFuncUnlockForce:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsUnlockForceRequest, kvrpcpb::DsUnlockForceResponse, UnlockForce);
-//            break;
-//        case funcpb::kFuncLockWatch:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsWatchRequest, watchpb::DsWatchResponse, LockWatch);
-//            break;
-//        case funcpb::kFuncLockGet:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockGetRequest, kvrpcpb::DsLockGetResponse, LockGet);
-//            break;
+        case funcpb::kFuncLock:
+            ForwardToRange<kvrpcpb::DsLockRequest, kvrpcpb::DsLockResponse>(rpc, &Range::Lock);
+            break;
+        case funcpb::kFuncLockUpdate:
+            ForwardToRange<kvrpcpb::DsLockUpdateRequest, kvrpcpb::DsLockUpdateResponse>(rpc, &Range::LockUpdate);
+            break;
+        case funcpb::kFuncUnlock:
+            ForwardToRange<kvrpcpb::DsUnlockRequest, kvrpcpb::DsUnlockResponse>(rpc, &Range::Unlock);
+            break;
+        case funcpb::kFuncUnlockForce:
+            ForwardToRange<kvrpcpb::DsUnlockForceRequest, kvrpcpb::DsUnlockForceResponse>(rpc, &Range::UnlockForce);
+            break;
+        case funcpb::kFuncLockWatch:
+            ForwardToRange<watchpb::DsWatchRequest, watchpb::DsWatchResponse>(rpc, &Range::LockWatch);
+            break;
+        case funcpb::kFuncLockGet:
+            ForwardToRange<kvrpcpb::DsLockGetRequest, kvrpcpb::DsLockGetResponse>(rpc, &Range::LockGet);
+            break;
 
         // redis method
         case funcpb::kFuncKvSet:

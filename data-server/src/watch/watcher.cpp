@@ -1,6 +1,6 @@
 #include "watcher.h"
-#include "common/socket_session_impl.h"
 #include "common/ds_encoding.h"
+#include "base/util.h"
 
 #include "frame/sf_logger.h"
 
@@ -10,8 +10,8 @@ namespace watch {
 
 ////////////////////////////////////// watcher //////////////////////////////////////
 
-Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, common::ProtoMessage* msg):
-        table_id_(table_id), key_version_(version), message_(msg), watcher_id_(msg->session_id), session_id_(msg->session_id), msg_id_(msg->header.msg_id), expire_time_(expire_time) {
+Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, RPCRequestPtr rpc):
+        table_id_(table_id), key_version_(version), message_(std::move(rpc)), watcher_id_(0), session_id_(0), msg_id_(message_->msg->head.msg_id), expire_time_(expire_time) {
     for (auto k: keys) {
         keys_.push_back(new WatcherKey(*k));
     }
@@ -20,8 +20,8 @@ Watcher::Watcher(uint64_t table_id, const std::vector<WatcherKey*>& keys, const 
     }
 }
 
-Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, common::ProtoMessage* msg):
-        table_id_(table_id), key_version_(version), message_(msg), type_(type), watcher_id_(msg->session_id),  session_id_(msg->session_id), msg_id_(msg->header.msg_id), expire_time_(expire_time) {
+Watcher::Watcher(WatchType type, uint64_t table_id, const std::vector<WatcherKey*>& keys, const uint64_t &version, const int64_t &expire_time, RPCRequestPtr rpc):
+        table_id_(table_id), key_version_(version), message_(std::move(rpc)), type_(type), watcher_id_(0),  session_id_(0), msg_id_(message_->msg->head.msg_id), expire_time_(expire_time) {
     for (auto k: keys) {
         keys_.push_back(new WatcherKey(*k));
     }
@@ -57,17 +57,15 @@ void Watcher::Send(google::protobuf::Message* resp) {
         return;
     }
 
-    uint32_t take_time = get_micro_second() - message_->begin_time;
+    uint32_t take_time = NowMicros() - message_->begin_time;
 
     FLOG_DEBUG("before send, session_id: %" PRId64 ",task msgid: %" PRId64
                " execute take time: %d us",
-               message_->session_id, message_->header.msg_id, take_time);
+               session_id_, msg_id_, take_time);
 
 
-    common::SocketSessionImpl session;
-    session.Send(message_, resp);
+   message_->Reply(*resp); 
 
-    message_ = nullptr;
     sent_response_flag = true;
 }
 

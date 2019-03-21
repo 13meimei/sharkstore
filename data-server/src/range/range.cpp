@@ -24,13 +24,13 @@ Range::Range(RangeContext* context, const metapb::Range &meta) :
 	start_key_(meta.start_key()),
 	meta_(meta) {
     store_ = std::unique_ptr<storage::Store>(new storage::Store(meta, context->DBInstance()));
-//    eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
-//                                          ds_config.watch_config.buffer_queue_size);
+    eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
+                                          ds_config.watch_config.buffer_queue_size);
 }
 
 
 Range::~Range() {
-//    delete eventBuffer;
+    delete eventBuffer;
 }
 
 Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
@@ -191,18 +191,18 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
     }
 
     switch (cmd.cmd_type()) {
-//        case raft_cmdpb::CmdType::Lock:
-//            return ApplyLock(cmd, index);
-//        case raft_cmdpb::CmdType::LockUpdate:
-//            return ApplyLockUpdate(cmd);
-//        case raft_cmdpb::CmdType::Unlock:
-//            return ApplyUnlock(cmd);
-//        case raft_cmdpb::CmdType::UnlockForce:
-//            return ApplyUnlockForce(cmd);
-//        case raft_cmdpb::CmdType::KvWatchPut:
-//            return ApplyWatchPut(cmd, index);
-//        case raft_cmdpb::CmdType::KvWatchDel:
-//            return ApplyWatchDel(cmd, index);
+        case raft_cmdpb::CmdType::Lock:
+            return ApplyLock(cmd, index);
+        case raft_cmdpb::CmdType::LockUpdate:
+            return ApplyLockUpdate(cmd);
+        case raft_cmdpb::CmdType::Unlock:
+            return ApplyUnlock(cmd);
+        case raft_cmdpb::CmdType::UnlockForce:
+            return ApplyUnlockForce(cmd);
+        case raft_cmdpb::CmdType::KvWatchPut:
+            return ApplyWatchPut(cmd, index);
+        case raft_cmdpb::CmdType::KvWatchDel:
+            return ApplyWatchDel(cmd, index);
 
         case raft_cmdpb::CmdType::RawPut:
             return ApplyRawPut(cmd);
