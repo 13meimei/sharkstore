@@ -385,6 +385,10 @@ void EncodeUvarintAscending(std::string *buf, uint64_t value) {
     }
 }
 
+void EncodeUvarintDescending(std::string* buf, uint64_t value) {
+    // TODO:
+}
+
 void EncodeVarintAscending(std::string *buf, int64_t value) {
     if (value >= 0) {
         return EncodeUvarintAscending(buf, static_cast<uint64_t>(value));
@@ -502,6 +506,11 @@ bool DecodeUvarintAscending(const std::string& buf, size_t& pos, uint64_t* out) 
         if (out) *out = value;
     }
     return true;
+}
+
+bool DecodeUvarintDescending(const std::string& buf, size_t& pos, uint64_t* out) {
+    // TODO:
+    return false;
 }
 
 bool DecodeVarintAscending(const std::string& buf, size_t& pos, int64_t* out) {
