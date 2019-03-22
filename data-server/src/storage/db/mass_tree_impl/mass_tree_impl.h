@@ -37,6 +37,7 @@ using TreeType = Masstree::basic_table<default_query_table_params>;
 
 class MassTreeDBImpl : public DbInterface {
 public:
+    friend class MassTreeIterator;
     MassTreeDBImpl();
     ~MassTreeDBImpl();
 

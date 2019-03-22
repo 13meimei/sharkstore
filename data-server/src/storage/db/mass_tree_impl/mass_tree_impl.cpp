@@ -105,15 +105,6 @@ Status MassTreeDBImpl::del(TreeType* tree, const std::string& key) {
 
     mvcc_.erase(ver);
     return Status(Status::OK());
-
-    //Masstree::Str tree_key(key);
-    //TreeType::cursor_type lp(*tree, tree_key);
-    //if (lp.find_locked(*thread_info_)) {
-    //    // TODO: fix delete
-    //    delete lp.value();
-    //}
-    //lp.finish(-1, *thread_info_);
-    //return Status(Status::OK());
 }
 
 Status MassTreeDBImpl::Delete(const std::string& key) {
@@ -138,7 +129,7 @@ void* MassTreeDBImpl::TxnCFHandle() {
 }
 
 IteratorInterface* MassTreeDBImpl::NewIterator(const std::string& start, const std::string& limit) {
-    return new MassTreeIterator(default_tree_, start, limit);
+    return new MassTreeIterator(default_tree_, start, limit, this);
 }
 
 Status MassTreeDBImpl::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,

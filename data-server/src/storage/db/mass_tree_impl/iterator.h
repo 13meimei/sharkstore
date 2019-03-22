@@ -1,7 +1,7 @@
 _Pragma("once");
 
 #include "storage/db/iterator_interface.h"
-#include "mass_tree_impl.h"
+#include "storage/db/multi_v_key.h"
 #include "scaner.h"
 #include "base/status.h"
 
@@ -9,15 +9,14 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+class MassTreeDBImpl;
 class MassTreeIterator: public IteratorInterface {
 public:
     MassTreeIterator() = delete;
-    ~MassTreeIterator() = default;
+    ~MassTreeIterator();
 
-    MassTreeIterator(TreeType* tree, const std::string start, const std::string limit):
-            scaner_(tree, start, limit) {
-
-    }
+    MassTreeIterator(TreeType* tree, const std::string start, const std::string limit,
+        MassTreeDBImpl *db);
 
     bool Valid();
     void Next();
@@ -29,6 +28,9 @@ public:
 
 private:
     Scaner scaner_;
+    MassTreeDBImpl *db_;
+    MultiVersionKey cur_key_;
+    uint64_t ver_;
 };
 
 }

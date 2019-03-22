@@ -38,6 +38,7 @@ public:
     Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
     void PrintMetric() override;
+    void Scrub() override {}
 
 private:
     struct ValueEqualityChecker {
