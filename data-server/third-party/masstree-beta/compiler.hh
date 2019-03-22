@@ -16,7 +16,9 @@
 #ifndef MASSTREE_COMPILER_HH
 #define MASSTREE_COMPILER_HH 1
 #include <stdint.h>
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
 #include <inttypes.h>
 #include <arpa/inet.h>
 #if HAVE_TYPE_TRAITS
