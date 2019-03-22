@@ -22,11 +22,11 @@ public:
     ~Scaner() = default;
 
     Scaner(TreeType* tree, const std::string vbegin, const std::string vend):
-            tree_(tree), vbegin_(vbegin), last_key_(vbegin), vend_(vend) {
+            tree_(tree), vbegin_(vbegin), vend_(vend), last_key_(vbegin) {
         do_scan();
     }
-    Scaner(TreeType* tree, const std::string vbegin, const std::string vend, size_t rows):
-            tree_(tree), vbegin_(vbegin), last_key_(vbegin), vend_(vend), rows_(rows) {
+    Scaner(TreeType* tree, const std::string vbegin, const std::string vend, size_t max_rows):
+            tree_(tree), vbegin_(vbegin), vend_(vend), max_rows_(max_rows), last_key_(vbegin) {
         do_scan();
     }
 
@@ -113,6 +113,8 @@ private:
     }
 
 private:
+    TreeType* tree_;
+
     const std::string vbegin_;
     const std::string vend_;
     const size_t max_rows_ = 100;
@@ -122,8 +124,6 @@ private:
     KVPairVector kvs_;
     KVPairVector::iterator kvs_it_;
     KVPair it_kv_;
-
-    TreeType* tree_;
 };
 
 }
