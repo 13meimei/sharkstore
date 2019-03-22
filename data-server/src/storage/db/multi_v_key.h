@@ -30,7 +30,7 @@ public:
         return buf;
     }
 
-    bool from_string(std::string &key) {
+    bool from_string(const std::string &key) {
         size_t pos = 0;
         if (!DecodeBytesAscending(key, pos, &key_)) {
             return false;

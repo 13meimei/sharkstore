@@ -77,9 +77,9 @@ private:
     thread_local static std::unique_ptr<threadinfo, ThreadInfoDeleter> thread_info_;
 
 private:
-    static Status get(TreeType* tree, const std::string& key, std::string* value);
-    static Status put(TreeType* tree, const std::string& key, const std::string& value);
-    static Status del(TreeType* tree, const std::string& key);
+    Status get(TreeType* tree, const std::string& key, std::string* value);
+    Status put(TreeType* tree, const std::string& key, const std::string& value);
+    Status del(TreeType* tree, const std::string& key);
 
 private:
     TreeType* default_tree_ = nullptr;
