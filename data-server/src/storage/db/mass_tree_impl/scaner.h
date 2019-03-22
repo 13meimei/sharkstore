@@ -112,11 +112,6 @@ private:
         return table.scan(Str(last_key_.c_str(), last_key_.length()), true, *this, ti);
     }
 
-    template<typename T>
-    int rscan(T& table, threadinfo &ti) {
-        return table.rscan(Str(last_key_.c_str(), last_key_.length()), true, *this, ti);
-    }
-
 private:
     const std::string vbegin_;
     const std::string vend_;
