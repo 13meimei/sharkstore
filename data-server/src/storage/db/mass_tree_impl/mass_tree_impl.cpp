@@ -1,6 +1,7 @@
 #include "mass_tree_impl.h"
 
 #include "storage/db/memdb_batch.h"
+#include "storage/db/multi_v_key.h"
 
 #include "masstree-beta/masstree_insert.hh"
 #include "masstree-beta/masstree_remove.hh"
@@ -53,13 +54,18 @@ Status MassTreeDBImpl::Get(void* column_family, const std::string& key, std::str
 
 
 Status MassTreeDBImpl::put(TreeType* tree, const std::string& key, const std::string& value) {
-    Masstree::Str tree_key(key);
+    auto ver = mvcc_.insert();
+    MultiVersionKey multi_key(key, ver, true);
+
+    Masstree::Str tree_key(multi_key.to_string());
     TreeType::cursor_type lp(*tree, tree_key);
     if (lp.find_insert(*thread_info_)) {
         // TODO: free old value
     }
     lp.value() = new std::string(value);
     lp.finish(1, *thread_info_);
+
+    mvcc_.erase(ver);
     return Status(Status::OK());
 }
 
@@ -85,16 +91,29 @@ Status MassTreeDBImpl::Write(WriteBatchInterface* batch) {
     }
 }
 
-
 Status MassTreeDBImpl::del(TreeType* tree, const std::string& key) {
-    Masstree::Str tree_key(key);
+    auto ver = mvcc_.insert();
+    MultiVersionKey multi_key(key, ver, true);
+
+    Masstree::Str tree_key(multi_key.to_string());
     TreeType::cursor_type lp(*tree, tree_key);
-    if (lp.find_locked(*thread_info_)) {
-        // TODO: fix delete
-        delete lp.value();
+    if (lp.find_insert(*thread_info_)) {
+        // TODO: free old value
     }
-    lp.finish(-1, *thread_info_);
+    lp.value() = new std::string("");
+    lp.finish(1, *thread_info_);
+
+    mvcc_.erase(ver);
     return Status(Status::OK());
+
+    //Masstree::Str tree_key(key);
+    //TreeType::cursor_type lp(*tree, tree_key);
+    //if (lp.find_locked(*thread_info_)) {
+    //    // TODO: fix delete
+    //    delete lp.value();
+    //}
+    //lp.finish(-1, *thread_info_);
+    //return Status(Status::OK());
 }
 
 Status MassTreeDBImpl::Delete(const std::string& key) {
@@ -144,6 +163,34 @@ Status MassTreeDBImpl::SetDBOptions(const std::unordered_map<std::string, std::s
 
 void MassTreeDBImpl::PrintMetric() {}
 
+void MassTreeDBImpl::Scrub() {
+    uint64_t ver = mvcc_.min_ver();
+
+    Scaner iter(default_tree_, "", "");
+    if (!iter.Valid()) {
+        return;
+    }
+
+    auto cmp_base_str = iter.Key();
+    MultiVersionKey cmp_base;
+    cmp_base.from_string(cmp_base_str);
+
+    MultiVersionKey cur_key;
+    for (iter.Next(); iter.Valid(); iter.Next()) {
+        cur_key.from_string(iter.Key());
+        if (cur_key.key() == cmp_base.key()) {
+            if (cur_key.ver() < ver) {
+                del(default_tree_, iter.Key());
+            }
+        } else {
+            if (cmp_base.is_del() && cmp_base.ver() < ver) {
+                del(default_tree_, cmp_base_str);
+            }
+            cmp_base_str = iter.Key();
+            cmp_base.from_string(cmp_base_str);
+        }
+    }
+}
 
 } /* namespace storage */
 } /* namespace dataserver */

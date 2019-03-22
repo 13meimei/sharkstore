@@ -1,11 +1,13 @@
 _Pragma("once");
 
 #include "storage/db/db_interface.h"
+#include "storage/db/mvcc.h"
 
 #include "masstree-beta/config.h"
 #include "masstree-beta/masstree.hh"
 #include "masstree-beta/timestamp.hh"
 #include "masstree-beta/kvthread.hh"
+
 
 namespace sharkstore {
 namespace dataserver {
@@ -64,7 +66,7 @@ public:
     Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
     void PrintMetric() override;
-
+    void Scrub() override;
 public:
     TreeType* GetDefaultTree() { return default_tree_; }
     TreeType* GetTxnTree() { return txn_tree_; }
@@ -81,6 +83,7 @@ private:
 private:
     TreeType* default_tree_ = nullptr;
     TreeType* txn_tree_ = nullptr;
+    Mvcc mvcc_;
 };
 
 } /* namespace storage */

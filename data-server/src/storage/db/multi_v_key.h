@@ -17,6 +17,14 @@ public:
     ~MultiVersionKey() = default;
 
 public:
+    std::string to_string() {
+        return "";
+    }
+
+    bool from_string(std::string &key) {
+        return true;
+    }
+
     void set_key(const std::string& key) {
         key_ = key;
     }

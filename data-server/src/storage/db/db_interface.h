@@ -57,6 +57,7 @@ public:
             const std::unordered_map<std::string, std::string>& new_options) = 0;
 
     virtual void PrintMetric() = 0;
+    virtual void Scrub() = 0;
 };
 
 }
