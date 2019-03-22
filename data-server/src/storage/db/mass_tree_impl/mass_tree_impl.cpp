@@ -30,18 +30,20 @@ MassTreeDBImpl::~MassTreeDBImpl() {
 }
 
 Status MassTreeDBImpl::get(TreeType* tree, const std::string& key, std::string* value) {
-    Masstree::Str tree_key(key);
-    TreeType::value_type tree_value = nullptr;
-    if (tree->get(tree_key, tree_value, *thread_info_)) {
-        if (tree_value != nullptr) {
-            *value = *tree_value;
+    auto ver = mvcc_.load();
+    MultiVersionKey multi_key(key, ver, true);
+
+    Scaner iter(tree, multi_key.to_string(), "");
+    if (iter.Valid()) {
+        multi_key.from_string(iter.Key());
+        if (multi_key.Key() == key) {
+            *value = iter.Value();
+            mvcc_.erase(ver);
             return Status::OK();
-        } else {
-            return Status(Status::kIOError, "mass tree get", "tree value is nullptr");
         }
-    } else {
-        return Status(Status::kNotFound);
     }
+    mvcc_.erase(ver);
+    return Status(Status::kNotFound);
 }
 
 Status MassTreeDBImpl::Get(const std::string& key, std::string* value) {
