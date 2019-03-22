@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdint>
 
+#include "common/ds_encoding.h"
+
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
@@ -17,11 +19,30 @@ public:
     ~MultiVersionKey() = default;
 
 public:
-    std::string to_string() {
-        return "";
+    std::string to_string() const {
+        std::string buf;
+        EncodeBytesAscending(&buf, key_.c_str(), key_.size());
+        auto version_tag = (version_ << 8); // 高7位是version，低1位是标记
+        if (!del_flag_) { //
+            version_tag |= 1; // put的标记为1（默认是put即del_flag_为false，保持默认情况下的key在前面)
+        }
+        EncodeUvarintDescending(&buf, version_tag);
+        return buf;
     }
 
     bool from_string(std::string &key) {
+        size_t pos = 0;
+        if (!DecodeBytesAscending(key, pos, &key_)) {
+            return false;
+        }
+        uint64_t version_tag = 0;
+        if (!DecodeUvarintDescending(key, pos, &version_tag)) {
+            return false;
+        }
+        version_ = version_tag >> 8;
+        if (static_cast<uint8_t>(version_tag & 0xff) == 0) {
+            del_flag_ = true;
+        }
         return true;
     }
 
