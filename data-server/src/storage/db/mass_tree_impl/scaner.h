@@ -36,16 +36,17 @@ public:
         auto k = std::string(key.data(), key.length());
 
         if (rows_ == max_rows_) {
+            last_key_ = k;
             return false;
         }
 
         if ((!vend_.empty()) && (k >= vend_)) {
+            last_key_ = k;
             return false;
         }
 
         auto kv = std::make_pair(k, *value);
         kvs_.push_back(kv);
-        last_key_ = k;
         rows_++;
         return true;
     }
@@ -77,10 +78,14 @@ public:
 
 private:
     bool scan_valid() {
-        if (vend_.empty()) {
-            return (rows_ == max_rows_);
+        if (kvs_.size() != max_rows_) {
+            return false;
         } else {
-            return (last_key_ < vend_) && (rows_ == max_rows_);
+            if (vend_.empty()) {
+                return true;
+            } else {
+                return last_key_ < vend_;
+            }
         }
     }
 
