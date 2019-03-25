@@ -36,7 +36,7 @@ Status MassTreeDBImpl::get(TreeType* tree, const std::string& key, std::string* 
     Scaner iter(tree, multi_key.to_string(), "");
     if (iter.Valid()) {
         multi_key.from_string(iter.Key());
-        if (multi_key.Key() == key) {
+        if (multi_key.key() == key) {
             *value = iter.Value();
             mvcc_.erase(ver);
             return Status::OK();
@@ -62,7 +62,7 @@ Status MassTreeDBImpl::put(TreeType* tree, const std::string& key, const std::st
     Masstree::Str tree_key(multi_key.to_string());
     TreeType::cursor_type lp(*tree, tree_key);
     if (lp.find_insert(*thread_info_)) {
-        // TODO: free old value
+        delete lp.value();
     }
     lp.value() = new std::string(value);
     lp.finish(1, *thread_info_);
@@ -100,9 +100,9 @@ Status MassTreeDBImpl::del(TreeType* tree, const std::string& key) {
     Masstree::Str tree_key(multi_key.to_string());
     TreeType::cursor_type lp(*tree, tree_key);
     if (lp.find_insert(*thread_info_)) {
-        // TODO: free old value
+        delete lp.value();
     }
-    lp.value() = new std::string("");
+    lp.value() = nullptr;
     lp.finish(1, *thread_info_);
 
     mvcc_.erase(ver);
@@ -137,10 +137,10 @@ IteratorInterface* MassTreeDBImpl::NewIterator(const std::string& start, const s
 Status MassTreeDBImpl::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
                                   std::unique_ptr<IteratorInterface>& txn_iter,
                                   const std::string& start, const std::string& limit) {
-    // TODO:
-    return Status(Status::kNotSupported);
+    data_iter.reset(new MassTreeIterator(default_tree_, start, limit, this));
+    txn_iter.reset(new MassTreeIterator(txn_tree_, start, limit, this));
+    return Status::OK();
 }
-
 
 void MassTreeDBImpl::GetProperty(const std::string& k, std::string* v) {
 }
