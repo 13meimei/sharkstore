@@ -1,3 +1,16 @@
+variables:
+    PROJECT_DIR: /export/sharkstore/src
+
+before_script:
+    - echo ${CI_PROJECT_DIR}
+    - gcc --version && go version
+    - cd ${PROJECT_DIR}
+    - \rm -rf `ls | grep -v vendor | xargs`
+    - ln -s ${CI_PROJECT_DIR}/* ${PROJECT_DIR}/
+    - if [ ! -d "${PROJECT_DIR}/data-server/build/"  ];then
+    -     mkdir ${PROJECT_DIR}/data-server/build/
+    - fi
+
 stages:
 - build
 - test
@@ -6,15 +19,43 @@ stages:
 build_sharkstore:
   stage: build
   script:
-  - echo "build sharkstore....."
-  - echo "mvn clean"
+  - echo "build sharkstore data-server....."
+
+  - cd ${PROJECT_DIR}/data-server/build/ &&
+    cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TEST=ON -DBUILD_TOOL=ON &&
+    make
+
+  - echo "build sharkstore master-server"
+  - cd ${PROJECT_DIR}/master-server/cmd && go build -o master-server
+
+  - echo "build sharkstore gateway-server"
+  - cd ${PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
+
   - echo "done"
 
-test_sharkstore:
+test_sharkstore_ds:
   stage: test
   script:
   - echo "run sharkstore test....."
-  - echo "java -test"
+
+  - cd ${PROJECT_DIR}/data-server/build/test
+  - echo $PWD
+  - ./range_ddl_unittest
+  - ./range_meta_unittest
+  - ./range_raw_unittest
+  - ./range_sql_unittest
+  - ./store_unittest
+
+  - echo "done"
+
+test_sharkstore_gs:
+  stage: test
+  script:
+  - echo "run sharkstore test....."
+
+  - cd ${PROJECT_DIR}/proxy/gateway-server/
+  - go test -short $(go list ./...)
+
   - echo "done"
 
 deploy_sharkstore:
@@ -23,5 +64,4 @@ deploy_sharkstore:
   - echo "deploy sharkstore...."
   - echo "run mvn install"
   - echo "done"
-
 
