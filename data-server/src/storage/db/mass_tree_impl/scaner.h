@@ -1,10 +1,8 @@
 _Pragma("once");
 
 #include <vector>
-#include "mass_tree_impl.h"
-#include "masstree-beta/masstree_tcursor.hh"
-#include "masstree-beta/masstree_struct.hh"
-#include "masstree-beta/str.hh"
+
+#include "mass_types.h"
 #include "masstree-beta/masstree_scan.hh"
 
 namespace sharkstore {

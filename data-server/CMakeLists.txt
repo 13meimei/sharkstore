@@ -239,7 +239,8 @@ set(SOURCES
     src/storage/db/rocksdb_impl/rocksdb_impl.cpp
     src/storage/db/skiplist_impl/iterator.cpp
     src/storage/db/skiplist_impl/skiplist_impl.cpp
-    src/storage/db/mass_tree_impl/mass_tree_impl.cpp
+    src/storage/db/mass_tree_impl/mass_tree_db.cpp
+    src/storage/db/mass_tree_impl/mass_tree_mvcc.cpp
     src/storage/db/mass_tree_impl/iterator.cpp
     src/storage/store_watch.cpp
     src/storage/where_expr.cpp

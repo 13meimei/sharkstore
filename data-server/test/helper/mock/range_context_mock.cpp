@@ -11,7 +11,7 @@
 #include "raft_server_mock.h"
 #include "storage/db/skiplist_impl/skiplist_impl.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
-#include "storage/db/mass_tree_impl/mass_tree_impl.h"
+#include "storage/db/mass_tree_impl/mass_tree_mvcc.h"
 
 namespace sharkstore {
 namespace test {
@@ -33,7 +33,7 @@ Status RangeContextMock::Init() {
     rocksdb::Options ops;
 //    db_ = new storage::RocksDBImpl(ops, JoinFilePath({path_, "data"}));
 //    db_ = new storage::SkipListDBImpl();
-    db_ = new dataserver::storage::MassTreeDBImpl();
+    db_ = new dataserver::storage::MvccMassTree();
     auto s = db_->Open();
     if (!s.ok()) {
         return s;
