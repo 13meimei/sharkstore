@@ -35,18 +35,17 @@ public:
 //        std::cout << "visit value: key " << std::string(key.s, key.len) << " value: " << *value << std::endl;
         auto k = std::string(key.data(), key.length());
 
-        if (rows_ > max_rows_) {
-            last_key_ = k;
+        if (rows_ == max_rows_) {
             return false;
         }
 
-        if (!vend_.empty() && k >= vend_) {
-            last_key_ = k;
+        if ((!vend_.empty()) && (k >= vend_)) {
             return false;
         }
 
         auto kv = std::make_pair(k, *value);
         kvs_.push_back(kv);
+        last_key_ = k;
         rows_++;
         return true;
     }
@@ -79,9 +78,9 @@ public:
 private:
     bool scan_valid() {
         if (vend_.empty()) {
-            return rows_ > 0 && rows_ > max_rows_;
+            return (rows_ == max_rows_);
         } else {
-            return (last_key_ < vend_) && (rows_ > 0);
+            return (last_key_ < vend_) && (rows_ == max_rows_);
         }
     }
 
