@@ -44,7 +44,6 @@ TEST(MassTree, PutGet) {
 
 TEST(MvccMassTree, PutGet) {
     MvccMassTree tree;
-
     for (int i = 0; i < 100; ++i) {
         std::string key = sharkstore::randomString(32);
         std::string value = sharkstore::randomString(64);
@@ -57,6 +56,17 @@ TEST(MvccMassTree, PutGet) {
     }
 }
 
+TEST(MvccMassTree, Iter) {
+    MvccMassTree tree;
+    tree.Put("a", "b");
+    tree.Put("aa", "b");
+    tree.Put("b", "b");
+    auto iter = tree.NewIterator(std::string("\0", 1), "\xff");
+    while (iter->Valid()) {
+        std::cout << "############ key: " << iter->key() <<  std::endl;
+        iter->Next();
+    }
+}
 
 
 

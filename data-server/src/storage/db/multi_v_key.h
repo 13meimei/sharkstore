@@ -143,7 +143,7 @@ public:
 private:
     std::string key_;
     uint64_t version_;
-    bool     del_flag_;
+    bool     del_flag_ = false;
 }; // end MultiVersionKey
 
 }

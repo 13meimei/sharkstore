@@ -8,17 +8,19 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-MassTreeIterator::MassTreeIterator(MvccMassTree *db, std::unique_ptr<Scaner> scaner) :
-    db_(db),
-    scaner_(std::move(scaner)) {
-    ver_ = db_->mvcc_.insert();
+MassTreeIterator::MassTreeIterator(std::unique_ptr<Scaner> scaner, uint64_t version, const Releaser& release_func) :
+    scaner_(std::move(scaner)),
+    ver_(version),
+    releaser_(release_func) {
     if (scaner_->Valid()) {
         cur_key_.from_string(scaner_->Key());
     }
 }
 
 MassTreeIterator::~MassTreeIterator() {
-    db_->mvcc_.erase(ver_);
+    if (releaser_) {
+        releaser_();
+    }
 }
 
 bool MassTreeIterator::Valid() {
@@ -47,7 +49,7 @@ Status MassTreeIterator::status() {
 }
 
 std::string MassTreeIterator::key() {
-    return scaner_->Key();
+    return cur_key_.key();
 }
 
 std::string MassTreeIterator::value() {
@@ -55,7 +57,7 @@ std::string MassTreeIterator::value() {
 }
 
 uint64_t MassTreeIterator::key_size() {
-    return scaner_->Key().length();
+    return cur_key_.key().length();
 }
 
 uint64_t MassTreeIterator::value_size() {

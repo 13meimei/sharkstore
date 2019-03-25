@@ -39,7 +39,6 @@ set(test_SRCS
     unittest/range_raw_unittest.cpp
     unittest/range_sql_unittest.cpp
     unittest/row_decoder_unittest.cpp
-    unittest/scaner_unittest.cpp
     unittest/status_unittest.cpp
     unittest/store_unittest.cpp
     unittest/store_txn_unittest.cpp
