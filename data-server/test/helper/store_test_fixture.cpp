@@ -25,7 +25,7 @@ StoreTestFixture::StoreTestFixture(std::unique_ptr<Table> t) :
 
 void StoreTestFixture::SetUp() {
     log_init2();
-    char level[] = "debug";
+    char level[] = "info";
     set_log_level(level);
 
     if (!table_) {

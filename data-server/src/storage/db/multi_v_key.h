@@ -11,6 +11,10 @@ namespace storage {
 
 class MultiVersionKey {
 public:
+    static const uint8_t kTypeValue = 0;
+    static const uint8_t kTypeDelete = 1;
+    static const uint8_t kTypeSeek = 1;
+
     MultiVersionKey() = default;
     MultiVersionKey(std::string key, uint64_t version, bool flag = false)
         :key_(key),version_(version), del_flag_(flag) {};
@@ -23,8 +27,10 @@ public:
         std::string buf;
         EncodeBytesAscending(&buf, key_.c_str(), key_.size());
         auto version_tag = (version_ << 8); // 高7位是version，低1位是标记
-        if (!del_flag_) { //
-            version_tag |= 1; // put的标记为1（默认是put即del_flag_为false，保持默认情况下的key在前面)
+        if (del_flag_) {
+            version_tag |= kTypeDelete;
+        } else {
+            version_tag |= kTypeValue;
         }
         EncodeUvarintDescending(&buf, version_tag);
         return buf;
@@ -40,8 +46,11 @@ public:
             return false;
         }
         version_ = version_tag >> 8;
-        if (static_cast<uint8_t>(version_tag & 0xff) == 0) {
+        auto type = static_cast<uint8_t>(version_tag);
+        if (type == kTypeDelete) {
             del_flag_ = true;
+        } else if (type != kTypeValue) {
+            return false;
         }
         return true;
     }

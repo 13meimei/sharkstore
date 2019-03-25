@@ -9,6 +9,8 @@ _Pragma("once");
 #include "masstree-beta/kvthread.hh"
 
 
+class MassTreeTest;
+
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
@@ -38,6 +40,8 @@ using TreeType = Masstree::basic_table<default_query_table_params>;
 class MassTreeDBImpl : public DbInterface {
 public:
     friend class MassTreeIterator;
+    friend class ::MassTreeTest;
+
     MassTreeDBImpl();
     ~MassTreeDBImpl();
 

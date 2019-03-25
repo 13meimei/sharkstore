@@ -57,7 +57,7 @@ Status MassTreeDBImpl::Get(void* column_family, const std::string& key, std::str
 
 Status MassTreeDBImpl::put(TreeType* tree, const std::string& key, const std::string& value) {
     auto ver = mvcc_.insert();
-    MultiVersionKey multi_key(key, ver, true);
+    MultiVersionKey multi_key(key, ver, false);
 
     Masstree::Str tree_key(multi_key.to_string());
     TreeType::cursor_type lp(*tree, tree_key);

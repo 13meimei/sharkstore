@@ -47,11 +47,11 @@ TEST_F(StoreTest, KeyValue) {
     std::string key = sharkstore::randomString(32);
     std::string value = sharkstore::randomString(64);
     auto s = store_->Put(key, value);
-    ASSERT_TRUE(s.ok());
+    ASSERT_TRUE(s.ok()) << s.ToString();
 
     std::string actual_value;
     s = store_->Get(key, &actual_value);
-    ASSERT_TRUE(s.ok());
+    ASSERT_TRUE(s.ok()) << s.ToString();
     ASSERT_EQ(actual_value, value);
 
     // test delete and get
