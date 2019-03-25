@@ -30,13 +30,13 @@
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
 #include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
-namespace timestamp {
+namespace tspb {
 class Timestamp;
 class TimestampDefaultTypeInternal;
 extern TimestampDefaultTypeInternal _Timestamp_default_instance_;
-}  // namespace timestamp
+}  // namespace tspb
 
-namespace timestamp {
+namespace tspb {
 
 namespace protobuf_timestamp_2eproto {
 // Internal implementation detail -- do not call these.
@@ -55,7 +55,7 @@ void InitDefaults();
 
 // ===================================================================
 
-class Timestamp : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:timestamp.Timestamp) */ {
+class Timestamp : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tspb.Timestamp) */ {
  public:
   Timestamp();
   virtual ~Timestamp();
@@ -148,7 +148,7 @@ class Timestamp : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::google::protobuf::int32 logical() const;
   void set_logical(::google::protobuf::int32 value);
 
-  // @@protoc_insertion_point(class_scope:timestamp.Timestamp)
+  // @@protoc_insertion_point(class_scope:tspb.Timestamp)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -174,13 +174,13 @@ inline void Timestamp::clear_wall_time() {
   wall_time_ = GOOGLE_LONGLONG(0);
 }
 inline ::google::protobuf::int64 Timestamp::wall_time() const {
-  // @@protoc_insertion_point(field_get:timestamp.Timestamp.wall_time)
+  // @@protoc_insertion_point(field_get:tspb.Timestamp.wall_time)
   return wall_time_;
 }
 inline void Timestamp::set_wall_time(::google::protobuf::int64 value) {
   
   wall_time_ = value;
-  // @@protoc_insertion_point(field_set:timestamp.Timestamp.wall_time)
+  // @@protoc_insertion_point(field_set:tspb.Timestamp.wall_time)
 }
 
 // int32 logical = 2;
@@ -188,13 +188,13 @@ inline void Timestamp::clear_logical() {
   logical_ = 0;
 }
 inline ::google::protobuf::int32 Timestamp::logical() const {
-  // @@protoc_insertion_point(field_get:timestamp.Timestamp.logical)
+  // @@protoc_insertion_point(field_get:tspb.Timestamp.logical)
   return logical_;
 }
 inline void Timestamp::set_logical(::google::protobuf::int32 value) {
   
   logical_ = value;
-  // @@protoc_insertion_point(field_set:timestamp.Timestamp.logical)
+  // @@protoc_insertion_point(field_set:tspb.Timestamp.logical)
 }
 
 #ifdef __GNUC__
@@ -205,7 +205,7 @@ inline void Timestamp::set_logical(::google::protobuf::int32 value) {
 // @@protoc_insertion_point(namespace_scope)
 
 
-}  // namespace timestamp
+}  // namespace tspb
 
 // @@protoc_insertion_point(global_scope)
 

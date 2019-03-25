@@ -1,5 +1,5 @@
 syntax = "proto3";
-package timestamp;
+package tspb;
 
 import "gogoproto/gogo.proto";
 
