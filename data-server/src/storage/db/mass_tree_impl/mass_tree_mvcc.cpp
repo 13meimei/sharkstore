@@ -23,17 +23,17 @@ Status MvccMassTree::get(MassTreeDB* tree, const std::string& key, std::string* 
     auto ver = mvcc_.load();
     MultiVersionKey multi_key(key, ver, true);
 
+    Status ret(Status::kNotFound);
     auto iter = tree->NewScaner(multi_key.to_string(), "");
     if (iter->Valid()) {
         multi_key.from_string(iter->Key());
-        if (multi_key.key() == key) {
+        if (multi_key.key() == key && !multi_key.is_del()) {
             *value = iter->Value();
-            mvcc_.erase(ver);
-            return Status::OK();
+            ret = Status::OK();
         }
     }
     mvcc_.erase(ver);
-    return Status(Status::kNotFound);
+    return ret;
 }
 
 Status MvccMassTree::Get(const std::string& key, std::string* value) {

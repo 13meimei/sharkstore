@@ -16,10 +16,14 @@ public:
     static const uint8_t kTypeSeek = 1;
 
     MultiVersionKey() = default;
-    MultiVersionKey(std::string key, uint64_t version, bool flag = false)
+
+    MultiVersionKey(const std::string& key, uint64_t version, bool flag = false)
         :key_(key),version_(version), del_flag_(flag) {};
+
     MultiVersionKey(const MultiVersionKey& key)
-        :key_(key.key_),version_(key.version_) {};
+        :key_(key.key_),version_(key.version_), del_flag_(key.del_flag_) {
+    };
+
     ~MultiVersionKey() = default;
 
 public:
@@ -49,7 +53,9 @@ public:
         auto type = static_cast<uint8_t>(version_tag);
         if (type == kTypeDelete) {
             del_flag_ = true;
-        } else if (type != kTypeValue) {
+        } else if (type == kTypeValue) {
+            del_flag_ = false;
+        }  else {
             return false;
         }
         return true;
