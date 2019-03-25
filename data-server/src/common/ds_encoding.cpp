@@ -610,8 +610,8 @@ bool DecodeFloatAscending(const std::string& buf, size_t& pos, double* out) {
 }
 
 bool DecodeBytesAscending(const std::string& buf, size_t& pos, std::string* out) {
-    if (pos >= buf.size() || buf[pos] != kBytesMarker)
-        return false;
+    if (pos >= buf.size() || buf[pos] != kBytesMarker) return false;
+    if (out) out->clear();
     for (++pos; pos < buf.size();) {
         auto escapePos = buf.find((char) kEscape, pos);
         if (escapePos == std::string::npos || escapePos + 1 >= buf.size()) return false;

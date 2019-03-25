@@ -43,6 +43,11 @@ TEST(MassTree, MVCCKey) {
         ASSERT_TRUE(key2.from_string(s));
         ASSERT_EQ(key2, key);
     }
+
+    std::string s("\022a\000\001\206\376\377", 7);
+    MultiVersionKey key;
+    ASSERT_TRUE(key.from_string(s));
+    std::cout << "key: " << key.key() << ", ver: " << key.ver() << std::endl;
 }
 
 //TEST_F(MassTreeTest, Scan) {
