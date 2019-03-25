@@ -34,7 +34,7 @@ void MassTreeIterator::Next() {
     while (scaner_->Valid()) {
         iter.from_string(scaner_->Key());
         if (cur_key_.key() != iter.key()
-            && iter.ver() <= cur_key_.ver()
+            && iter.ver() <= ver_
             && !iter.is_del())
         {
             cur_key_.set_key(iter.key());
