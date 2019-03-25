@@ -105,8 +105,11 @@ void* MvccMassTree::TxnCFHandle() {
 }
 
 IteratorInterface* MvccMassTree::newIter(MassTreeDB* tree, const std::string& start, const std::string& limit) {
-    auto scaner = tree->NewScaner(start, limit);
-    return new MassTreeIterator(this, std::move(scaner));
+    auto version = mvcc_.insert();
+    MultiVersionKey start_key(start, version, true);
+    MultiVersionKey end_key(limit, std::numeric_limits<uint64_t>::max(), true);
+    auto scaner = tree->NewScaner(start_key.to_string(), end_key.to_string());
+    return new MassTreeIterator(std::move(scaner), version, [this, version]{ mvcc_.erase(version); });
 }
 
 IteratorInterface* MvccMassTree::NewIterator(const std::string& start, const std::string& limit) {
