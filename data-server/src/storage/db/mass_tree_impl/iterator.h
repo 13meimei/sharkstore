@@ -30,10 +30,14 @@ public:
     uint64_t value_size();
 
 private:
+    void seek();
+
+private:
     std::unique_ptr<Scaner> scaner_;
     uint64_t ver_;
     Releaser releaser_;
     MultiVersionKey cur_key_;
+    bool cur_assigned_ = false;
 };
 
 }
