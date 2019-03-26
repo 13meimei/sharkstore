@@ -52,7 +52,7 @@ Status MassTreeDB::Delete(const std::string& key) {
 }
 
 std::unique_ptr<Scaner> MassTreeDB::NewScaner(const std::string& start, const std::string& limit) {
-    std::unique_ptr<Scaner>  ptr(new Scaner(tree_, start, limit));
+    std::unique_ptr<Scaner> ptr(new Scaner(tree_, start, limit));
     return ptr;
 }
 

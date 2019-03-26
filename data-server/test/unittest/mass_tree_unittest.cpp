@@ -64,12 +64,12 @@ TEST(MassTree, Iter) {
     int count = 0;
     auto set_iter = key_values.begin();
     while (tree_iter->Valid()) {
-        std::cout << tree_iter->Key() << std::endl;
-//        ASSERT_LT(count, key_values.size());
-//        ASSERT_EQ(tree_iter->Key(), set_iter->key) << " at index " << count;
-//        ASSERT_EQ(tree_iter->Value(), set_iter->value) << " at index " << count;
-//        ++count;
-//        ++set_iter;
+//        std::cout << tree_iter->Key() << std::endl;
+        ASSERT_LT(count, key_values.size());
+        ASSERT_EQ(tree_iter->Key(), set_iter->key) << " at index " << count;
+        ASSERT_EQ(tree_iter->Value(), set_iter->value) << " at index " << count;
+        ++count;
+        ++set_iter;
         tree_iter->Next();
     }
     ASSERT_EQ(count, key_values.size());
@@ -86,6 +86,20 @@ TEST(MvccMassTree, PutGet) {
         auto s = tree.Get(key, &actual_value);
         ASSERT_TRUE(s.ok()) << s.ToString();
         ASSERT_EQ(actual_value, value);
+    }
+}
+
+TEST(MvccMassTree, Iter) {
+    MvccMassTree tree;
+    tree.Put("a", "value");
+    tree.Put("aa", "value");
+    tree.Put("bb", "value");
+    tree.Delete("aa");
+    tree.Delete("bb");
+    auto iter = tree.NewIterator("", "");
+    while (iter->Valid()) {
+        std::cout << iter->key() << std::endl;
+        iter->Next();
     }
 }
 
