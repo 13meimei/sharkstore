@@ -962,7 +962,7 @@ TEST_F(StoreTest, Split) {
         uint64_t real_size = 0;
         std::string split_key;
         s = store_->StatSize(20, range::SplitKeyMode::kLockWatch, &real_size, &split_key);
-        ASSERT_EQ(s.code(), Status::kNotFound);
+        ASSERT_EQ(s.code(), Status::kNotFound) << s.ToString();
     }
     // test watch split
     {

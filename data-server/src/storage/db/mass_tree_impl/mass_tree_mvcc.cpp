@@ -91,9 +91,28 @@ Status MvccMassTree::Delete(void* column_family, const std::string& key) {
     return del(static_cast<MassTreeDB*>(column_family), key);
 }
 
+IteratorInterface* MvccMassTree::newIter(MassTreeDB* tree, const std::string& start, const std::string& limit) {
+    auto version = mvcc_.insert();
+    MultiVersionKey start_key(start, version, true);
+    MultiVersionKey end_key(limit, std::numeric_limits<uint64_t>::max(), true);
+    auto scaner = tree->NewScaner(start_key.to_string(), limit.empty() ? "" : end_key.to_string());
+    return new MassTreeIterator(std::move(scaner), version, [this, version]{ mvcc_.erase(version); });
+}
+
+Status MvccMassTree::deleteRange(MassTreeDB *tree, const std::string& begin_key, const std::string& end_key) {
+    std::unique_ptr<IteratorInterface> iter(newIter(tree, begin_key, end_key));
+    auto version = mvcc_.insert();
+    while (iter->Valid()) {
+        MultiVersionKey multi_key(iter->key(), version, true);
+        tree->Put(multi_key.to_string(), "");
+        iter->Next();
+    }
+    mvcc_.erase(version);
+    return Status(Status::OK());
+}
+
 Status MvccMassTree::DeleteRange(void* column_family, const std::string& begin_key, const std::string& end_key) {
-    // TODO: delete string*
-    return Status(Status::kNotSupported);
+    return deleteRange(static_cast<MassTreeDB*>(column_family), begin_key, end_key);
 }
 
 void* MvccMassTree::DefaultColumnFamily() {
@@ -102,14 +121,6 @@ void* MvccMassTree::DefaultColumnFamily() {
 
 void* MvccMassTree::TxnCFHandle() {
     return txn_tree_;
-}
-
-IteratorInterface* MvccMassTree::newIter(MassTreeDB* tree, const std::string& start, const std::string& limit) {
-    auto version = mvcc_.insert();
-    MultiVersionKey start_key(start, version, true);
-    MultiVersionKey end_key(limit, std::numeric_limits<uint64_t>::max(), true);
-    auto scaner = tree->NewScaner(start_key.to_string(), limit.empty() ? "" : end_key.to_string());
-    return new MassTreeIterator(std::move(scaner), version, [this, version]{ mvcc_.erase(version); });
 }
 
 IteratorInterface* MvccMassTree::NewIterator(const std::string& start, const std::string& limit) {

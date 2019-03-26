@@ -61,6 +61,7 @@ private:
     Status get(MassTreeDB *tree, const std::string &key, std::string *value);
     Status put(MassTreeDB *tree, const std::string &key, const std::string &value);
     Status del(MassTreeDB *tree, const std::string &key);
+    Status deleteRange(MassTreeDB *tree, const std::string& begin_key, const std::string& end_key);
     IteratorInterface *newIter(MassTreeDB *tree, const std::string &start, const std::string &limit);
 
 private:
