@@ -128,12 +128,13 @@ protected:
     }
 
     void TearDown() override {
-        DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
-
         delete context_->range_server;
         delete context_->raft_server;
         delete context_->run_status;
         delete context_;
+        if (strlen(ds_config.rocksdb_config.path) > 0) {
+            RemoveDirAll(ds_config.rocksdb_config.path);
+        }
     }
 
     void justPut(const int16_t &rangeId, const std::string &key1, const std::string &key2,const std::string &value)

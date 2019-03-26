@@ -125,12 +125,13 @@ protected:
     }
 
     void TearDown() override {
-        DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
-
         delete context_->range_server;
         delete context_->raft_server;
         delete context_->run_status;
         delete context_;
+        if (strlen(ds_config.rocksdb_config.path) > 0) {
+            RemoveDirAll(ds_config.rocksdb_config.path);
+        }
     }
 
     void justGet(const int16_t &rangeId, const std::string key1, const std::string &key2, const std::string& val, const int32_t& cnt, bool prefix = false)
@@ -416,7 +417,7 @@ metapb::Range *genRange2() {
 }
 */
 
-TEST_F(LockTest, watch_lock_get) {
+TEST_F(LockTest, DISABLED_watch_lock_get) {
     //not exist
     LockGet(1, "01003001", "", 0);
 
@@ -452,7 +453,7 @@ TEST_F(LockTest, watch_lock_get) {
 
 }
 
-TEST_F(LockTest, watch_lock_expire) {
+TEST_F(LockTest, DISABLED_watch_lock_expire) {
     //not exist
     LockGet(1, "01003001", "", 0);
 

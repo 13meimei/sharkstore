@@ -138,12 +138,13 @@ protected:
     }
 
     void TearDown() override {
-        DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
-
         delete context_->range_server;
         delete context_->raft_server;
         delete context_->run_status;
         delete context_;
+        if (strlen(ds_config.rocksdb_config.path) > 0) {
+            RemoveDirAll(ds_config.rocksdb_config.path);
+        }
     }
 
     void justPut(const int16_t &rangeId, const std::string &key1, const std::string &key2,const std::string &value)
@@ -445,7 +446,7 @@ TEST_F(WatchTest, watch_del_single_watch) {
 
 #define watch_timeout_test
 #ifdef watch_timeout_test
-TEST_F(WatchTest, watch_timeout_test) {
+TEST_F(WatchTest, DISABLED_watch_timeout_test) {
 
     std::string strKeyPrefix("01003001");
     str_vec_.clear();
@@ -540,7 +541,7 @@ TEST_F(WatchTest, watch_timeout_test) {
 #endif
 
 
-TEST_F(WatchTest, watch_del_benchmark) {
+TEST_F(WatchTest, DISABLED_watch_del_benchmark) {
 
     int64_t bTime(NowMilliSeconds());
     int64_t  count(1000000);

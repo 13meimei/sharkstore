@@ -129,12 +129,13 @@ protected:
     }
 
     void TearDown() override {
-        DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
-
         delete context_->range_server;
         delete context_->raft_server;
         delete context_->run_status;
         delete context_;
+        if (strlen(ds_config.rocksdb_config.path) > 0) {
+            RemoveDirAll(ds_config.rocksdb_config.path);
+        }
     }
 
     void justPut(const int16_t &rangeId, const std::string &key1, const std::string &key2,const std::string &value)
@@ -300,7 +301,7 @@ protected:
     server::RangeServer *range_server_;
 }; 
 
-TEST_F(WatchTest, watch_exist_singlekey_test) {
+TEST_F(WatchTest, DISABLED_watch_exist_singlekey_test) {
     justPut(1, "01003001", "", "01003001:value");
     justWatch(1, "01003001", "", 5000, 0, false);
     //wait timeout
@@ -311,7 +312,7 @@ TEST_F(WatchTest, watch_exist_singlekey_test) {
 
 }
 
-TEST_F(WatchTest, watch_notexist_singlekey_test) {
+TEST_F(WatchTest, DISABLED_watch_notexist_singlekey_test) {
     //justPut(1, "01003001", "", "01003001:value");
     //del exists key
     justDel(1, "01003001", "", "", 0, true);
@@ -370,7 +371,7 @@ TEST_F(WatchTest, watch_notexist_groupkey_test) {
 
 #define watch_put_del_watch_group
 #ifdef watch_put_del_watch_group
-TEST_F(WatchTest, watch_put_del_watch_group) {
+TEST_F(WatchTest, DISABLED_watch_put_del_watch_group) {
 
     trd1 = std::thread([this]() {
         static bool brkFlag(false);
