@@ -29,16 +29,15 @@ bool MassTreeIterator::Valid() {
 
 void MassTreeIterator::Next() {
     //a3,a2,a1,b4,b2,c5,c4,c3;if v=3;find a3,b2,c3
-    MultiVersionKey iter;
+    MultiVersionKey iter_key;
     scaner_->Next();
     while (scaner_->Valid()) {
-        iter.from_string(scaner_->Key());
-        if (cur_key_.key() != iter.key()
-            && iter.ver() <= ver_
-            && !iter.is_del())
-        {
-            cur_key_.set_key(iter.key());
-            break;
+        iter_key.from_string(scaner_->Key());
+        if (iter_key.key() != cur_key_.key() && iter_key.ver() <= ver_) {
+            cur_key_.set_key(iter_key.key()); // 选择了该key，但还需要判断是否是delete，不是的话就算拿到
+            if (!iter_key.is_del()) {
+                break;
+            }
         }
         scaner_->Next();
     }

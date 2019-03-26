@@ -42,6 +42,39 @@ TEST(MassTree, PutGet) {
     }
 }
 
+TEST(MassTree, Iter) {
+    struct KeyValue {
+        std::string key;
+        std::string value;
+
+        bool operator<(const KeyValue &rh) const {
+            return key < rh.key;
+        }
+    };
+
+    std::set<KeyValue> key_values;
+    MassTreeDB tree;
+    for (int i = 0; i < 500; ++i) {
+        std::string key = sharkstore::randomString(32);
+        std::string value = sharkstore::randomString(64);
+        tree.Put(key, value);
+        key_values.insert(KeyValue{key, value});
+    }
+    auto tree_iter = tree.NewScaner("", "");
+    int count = 0;
+    auto set_iter = key_values.begin();
+    while (tree_iter->Valid()) {
+        std::cout << tree_iter->Key() << std::endl;
+//        ASSERT_LT(count, key_values.size());
+//        ASSERT_EQ(tree_iter->Key(), set_iter->key) << " at index " << count;
+//        ASSERT_EQ(tree_iter->Value(), set_iter->value) << " at index " << count;
+//        ++count;
+//        ++set_iter;
+        tree_iter->Next();
+    }
+    ASSERT_EQ(count, key_values.size());
+}
+
 TEST(MvccMassTree, PutGet) {
     MvccMassTree tree;
     for (int i = 0; i < 100; ++i) {
@@ -55,20 +88,6 @@ TEST(MvccMassTree, PutGet) {
         ASSERT_EQ(actual_value, value);
     }
 }
-
-TEST(MvccMassTree, Iter) {
-    MvccMassTree tree;
-    tree.Put("a", "b");
-    tree.Put("aa", "b");
-    tree.Put("b", "b");
-    auto iter = tree.NewIterator(std::string("\0", 1), "\xff");
-    while (iter->Valid()) {
-        std::cout << "############ key: " << iter->key() <<  std::endl;
-        iter->Next();
-    }
-}
-
-
 
 
 
