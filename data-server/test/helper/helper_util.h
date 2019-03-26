@@ -25,6 +25,11 @@ void EncodeColumnValue(std::string *buf, const metapb::Column& col, const std::s
 
 void DecodeColumnValue(const std::string& buf, size_t& offset, const metapb::Column& col, std::string *val);
 
+
+// init log, set to different level by env {LOG_LEVEL}
+void InitLog();
+
+// open different db env {DB}
 Status OpenDB(const std::string& path, dataserver::storage::DbInterface **db_ptr);
 
 } /* namespace helper */

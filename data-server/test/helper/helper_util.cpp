@@ -1,5 +1,8 @@
 #include "helper_util.h"
 
+#include <fastcommon/logger.h>
+#include <fastcommon/shared_func.h>
+
 #include "common/ds_encoding.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "storage/db/skiplist_impl/skiplist_impl.h"
@@ -167,6 +170,16 @@ void DecodeColumnValue(const std::string& buf, size_t& offset, const metapb::Col
             throw std::runtime_error(std::string("EncodeColumnValue: invalid column data type: ") +
                                      std::to_string(static_cast<int>(col.data_type())));
     }
+}
+
+void InitLog() {
+    auto str = ::getenv("LOG_LEVEL");
+    std::string log_level = "info";
+    if (str != nullptr) {
+        log_level = str;
+    }
+    log_init2();
+    set_log_level(const_cast<char *>(log_level.c_str()));
 }
 
 Status OpenDB(const std::string& path, dataserver::storage::DbInterface **db_ptr) {

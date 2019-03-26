@@ -15,13 +15,12 @@
 #include "helper/table.h"
 #include "helper/mock/raft_server_mock.h"
 #include "helper/mock/rpc_request_mock.h"
+#include "helper/helper_util.h"
 
 int main(int argc, char *argv[]) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-
-char level[8] = "warn";
 
 using namespace sharkstore::test::helper;
 using namespace sharkstore::test::mock;
@@ -31,8 +30,7 @@ using namespace sharkstore::dataserver::storage;
 class RawTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        log_init2();
-        set_log_level(level);
+        InitLog();
 
         strcpy(ds_config.engine_config.name, "rocksdb");
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");

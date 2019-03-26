@@ -6,8 +6,6 @@
 
 #include "frame/sf_config.h"
 
-#include "fastcommon/logger.h"
-#include <fastcommon/shared_func.h>
 
 namespace sharkstore {
 namespace test {
@@ -21,9 +19,7 @@ StoreTestFixture::StoreTestFixture(std::unique_ptr<Table> t) :
 }
 
 void StoreTestFixture::SetUp() {
-    log_init2();
-    char level[] = "info";
-    set_log_level(level);
+    InitLog();
 
     if (!table_) {
         throw std::runtime_error("invalid table");

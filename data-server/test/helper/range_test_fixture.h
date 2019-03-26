@@ -40,9 +40,6 @@ protected:
     Status TestSelect(DsSelectRequest& req, DsSelectResponse* resp);
     Status TestDelete(DsDeleteRequest& req, DsDeleteResponse* resp);
 
-    // for debug
-    void SetLogLevel(char *level);
-
 protected:
     std::unique_ptr<mock::RangeContextMock> context_;
     std::unique_ptr<Table> table_;

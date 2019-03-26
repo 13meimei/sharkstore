@@ -17,11 +17,7 @@ using namespace sharkstore::dataserver;
 using namespace google::protobuf;
 
 void RangeTestFixture::SetUp() {
-    log_init2();
-    //char level[] = "CRIT";
-    //char level[] = "warn";
-    char level[] = "debug";
-    set_log_level(level);
+    InitLog();
 
     table_ = CreateAccountTable();
 
@@ -179,11 +175,6 @@ Status RangeTestFixture::TestDelete(DsDeleteRequest& req, DsDeleteResponse* resp
     range_->Delete(std::move(rpc.first), req);
     return rpc.second->Get(*resp);
 }
-
-void RangeTestFixture::SetLogLevel(char *level) {
-    set_log_level(level);
-}
-
 
 } /* namespace helper */
 } /* namespace test */
