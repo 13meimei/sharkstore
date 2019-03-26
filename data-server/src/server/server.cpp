@@ -15,6 +15,7 @@
 #include "version.h"
 #include "worker.h"
 #include "rpc_server.h"
+#include "persist_server.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -37,6 +38,11 @@ DataServer::DataServer() {
     buildRPCOptions(sopt);
     context_->rpc_server = new RPCServer(sopt);
 
+    PersistServer::Options pops;
+    pops.thread_num = 4;
+    pops.delay_count = 10000;
+    context_->persist_server = new PersistServer(pops);
+
     // create master worker
     std::vector<std::string> ms_addrs;
     for (int i = 0; i < ds_config.hb_config.master_num; i++) {
@@ -55,6 +61,7 @@ DataServer::~DataServer() {
     delete context_->run_status;
     delete context_->range_server;
     delete context_->raft_server;
+    delete context_->persist_server;
     delete context_;
 }
 
@@ -128,6 +135,10 @@ int DataServer::Init() {
         return -1;
     }
 
+    if (context_->persist_server->Init(context_) != 0) {
+        return -1;
+    }
+
     admin_server_.reset(new admin::AdminServer(context_));
 
     return 0;
@@ -165,6 +176,10 @@ int DataServer::Start() {
     auto s = context_->master_worker->Start(context_->range_server);
     if (!s.ok()) {
         FLOG_ERROR("start master worker failed. %s", s.ToString().c_str());
+        return -1;
+    }
+
+    if (context_->persist_server->Start() != 0) {
         return -1;
     }
 

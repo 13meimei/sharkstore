@@ -35,6 +35,16 @@ public:
               dataserver::storage::DbInterface* db);
     ~ StorageReader();
 
+    Status Init() {
+        return GetCommitFiles();
+    }
+    Status Run() {
+        do {
+            if (!running_flag_) break;
+            ProcessFiles();
+        } while (true);
+        return Status::OK();
+    }
     StorageReader(const StorageReader&) = delete;
     StorageReader& operator=(const StorageReader&) = delete;
 
@@ -64,8 +74,11 @@ private:
     std::shared_ptr<impl::storage::Storage> storage_ = nullptr;
 
     std::vector<std::shared_ptr<LogFile>> log_files_;
+    //<seq, applied_index>
+    std::unordered_map<uint64_t, uint64_t> done_files_;
     //rocksdb
     dataserver::storage::DbInterface* db_ == nullptr;
+    std::atomic<bool> running_flag_ = false;
 };
 
 } /* namespace storage */

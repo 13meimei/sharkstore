@@ -30,13 +30,21 @@ StorageReader::StorageReader(const uint64_t id, raft::impl::RaftServerImpl *serv
 StorageReader::~StorageReader() { Close(); }
 
 Status StorageReader::GetCommitFiles() {
-    const auto raft = server_->FindRaft(id_);
+    auto raft = server_->FindRaft(id_);
     storage_ = raft->GetStorage();
     if (storage->CommitFileCount() == 0) {
-        return Status(Status::kNotFound, "GetCommitFiles not exists.", "commit file not exists.");
+        return Status(Status::kNotFound, "GetCommitFiles() get nothing.", "commited file not exists.");
     }
     log_files_ = storage->GetLogFiles();
 
+    for (auto f = log_files_.begin(); f != log_files_.end(); ) {
+        if (done_files_.find(((*f)->Seq()) != done_files_.end())) {
+            log_files_.erase(f);
+        } else {
+            f++;
+        }
+    }
+    done_files_
 #ifndef NDEBUG
     listLogs();
 #endif
@@ -45,17 +53,43 @@ Status StorageReader::GetCommitFiles() {
 
 //TO DO iterator files and decode
 Status StorageReader::ProcessFiles() {
+    Status ret;
+    EntryPtr ent = nullptr;
+
+    uint64_t i = 0;
+    for (auto f = log_files_.begin(); f != log_files_.end(); ) {
+        for (i = (*f)->Index(); i<(*f)->LastIndex(); i++) {
+            ret = (*f)->Get(i, ent);
+            if (!ret.ok()) {
+                RAFT_LOG_ERROR("LogFile::Get() error, path: %s index: %llu", (*f)->Path(), i);
+                break;
+            }
+
+            auto cmd = decodeEntry(ent);
+            if (cmd) {
+                auto ret = ApplyRaftCmd(*cmd);
+                if (!ret.ok()) {
+                    RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path(), i);
+                    break;
+                }
+                ret = ApplyIndex(i);
+                if (!ret.ok()) {
+                    RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path(), i);
+                    break;
+                }
+            }
+        } //end one file
+
+        if (i == (*f)->LastIndex()) {
+            done_files_.emplace(std::pair<uint64_t, uint64_t>((*f)->Seq(), (*f)->LastIndex()));
+            log_files_.erase(f);
+        } else {
+            RAFT_LOG_WARN("StorageReader::ApplyIndex() error, path: %s index: %llu", (*f)->Path(), i);
+            f++;
+        }
+    } //end all file
     return Status::OK();
 }
-/*
-Status StorageReader::openDb() {
-    print_rocksdb_config();
-    if ((db_ = new dataserver::storage::RocksDBImpl(ds_config.rocksdb_config)) == nullptr) {
-        return Status(Status::kInvalid, "memory emergency.", "");
-    }
-    return Status::OK();
-}
-*/
 
 Status StorageReader::listLogs() {
     for (auto f : log_files_) {
@@ -74,7 +108,8 @@ Status StorageReader::StoreAppliedIndex(const uint64_t& seq, const uint64_t& ind
     if (!ret.ok()) {
         return Status(Status::kIOError, "put", ret.ToString());
     }
-    AppliedTo(index);
+
+    ApplyIndex(index);
     return Status::OK();
 }
 
@@ -82,7 +117,7 @@ Status StorageReader::ApplySnapshot(const pb::SnapshotMeta& meta) {
     return Status::OK();
 }
 
-Status StorageReader::AppliedTo(uint64_t applied) {
+Status StorageReader::ApplyIndex(uint64_t applied) {
     auto s = saveApplyIndex(id_, applied);
     if (!s.ok()) {
         return s;
@@ -109,7 +144,7 @@ Status StorageReader::saveApplyIndex(uint64_t range_id, uint64_t apply_index) {
     }
 }
 
-std::unique_ptr<raft_cmdpb::Command> StorageReader::DecodeEntry(EntryPtr entry) {
+std::unique_ptr<raft_cmdpb::Command> StorageReader::decodeEntry(EntryPtr entry) {
     std::unique_ptr<raft_cmdpb::Command> raft_cmd = std::make_unique<raft_cmdpb::Command>();
     google::protobuf::io::ArrayInputStream input(entry->data(), static_cast<int>(entry->ByteSizeLong()));
     if(!raft_cmd->ParseFromZeroCopyStream(&input)) {

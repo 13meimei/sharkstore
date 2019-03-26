@@ -42,6 +42,7 @@ public:
     Status TruncateLog(uint64_t index);
     Status DestroyLog(bool backup);
 
+    std::shared_ptr<storage::Storage> GetStorage() const;
 private:
     static int numOfPendingConf(const std::vector<EntryPtr>& ents);
     static void takeEntries(MessagePtr& msg, std::vector<EntryPtr>& ents);

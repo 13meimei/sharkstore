@@ -27,6 +27,9 @@ RaftServerImpl::~RaftServerImpl() {
     for (auto t : apply_threads_) {
         delete t;
     }
+    for (auto t : async_threads_) {
+        delete t;
+    }
 }
 
 Status RaftServerImpl::Start() {
@@ -95,6 +98,10 @@ Status RaftServerImpl::Stop() {
         t->shutdown();
     }
 
+    for (auto& t : async_threads_) {
+        t->shutdown();
+    }
+
     if (snapshot_manager_ != nullptr) {
         snapshot_manager_.reset(nullptr);
     }
@@ -133,6 +140,7 @@ Status RaftServerImpl::CreateRaft(const RaftOptions& ops, std::shared_ptr<Raft>*
     if (!ops_.apply_in_place) {
         ctx.apply_thread = apply_threads_[counter % apply_threads_.size()];
     }
+    ctx.async_thread = async_threads_[counter % async_threads_.size()];
 
     std::shared_ptr<RaftImpl> r;
     try {

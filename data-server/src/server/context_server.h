@@ -22,6 +22,7 @@ class RunStatus;
 class RangeServer;
 class RunStatus;
 class RPCServer;
+class PersistServer;
 
 struct ContextServer {
     uint64_t node_id = 0;
@@ -38,6 +39,8 @@ struct ContextServer {
     storage::MetaStore *meta_store = nullptr;
 
     raft::RaftServer *raft_server = nullptr;
+
+    PersistServer *persist_server = nullptr;
 };
 
 }  // namespace server
