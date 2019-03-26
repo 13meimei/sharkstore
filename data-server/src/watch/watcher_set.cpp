@@ -58,10 +58,10 @@ WatcherSet::WatcherSet() {
             auto mill_sec = std::chrono::milliseconds(w_ptr->GetExpireTime()/1000);
             std::chrono::system_clock::time_point expire(mill_sec);
 
-            int64_t  waitBeginTime{w_ptr->GetMessage()->begin_time};
+            int64_t  waitBeginTime{w_ptr->GetBeginTtime()};
 
             if (watcher_expire_cond_.wait_until(lock, expire) == std::cv_status::timeout) {
-                auto excBegin = get_micro_second();
+                auto excBegin = NowMicros();
                 // send timeout response
                 auto resp = new watchpb::DsWatchResponse;
                 resp->mutable_resp()->set_code(Status::kTimedOut);
@@ -83,8 +83,8 @@ WatcherSet::WatcherSet() {
 
                 watcher_queue_.pop();
 
-                auto excEnd = get_micro_second();
-                //auto take_time = excEnd - waitBeginTime;
+                auto excEnd = NowMicros();
+                auto take_time = excEnd - waitBeginTime;
 
                 FLOG_INFO("queue_size:%" PRId64 " key: [%s] wait_until....session_id: %" PRId64 ",task msgid: %" PRId64 " watcher_id:%" PRId64
                                    " execute take time: %" PRId64 " us,wait time:%" PRId64 " us",
@@ -135,7 +135,7 @@ WatcherSet::~WatcherSet() {
 
 // private add/del watcher
 WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, WatcherMap& key_watchers, KeyMap& key_map, storage::Store* store, bool prefixFlag ) {
-    int64_t beginTime(getticks());
+    int64_t beginTime(NowMilliSeconds());
 
     std::unique_lock<std::mutex> lock_queue(watcher_queue_mutex_);
     std::lock_guard<std::mutex> lock_map(watcher_map_mutex_);
@@ -278,7 +278,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
         }
     }
 
-    int64_t endTime(getticks());
+    int64_t endTime(NowMilliSeconds());
     auto ret = watcher_map.emplace(std::make_pair(watcher_id, w_ptr)).second;
     if (ret) {
         //add to key_map_
@@ -302,7 +302,7 @@ WatchCode WatcherSet::AddWatcher(const WatcherKey& key, WatcherPtr& w_ptr, Watch
 }
 
 WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, WatcherMap& watcher_map_, KeyMap& key_map_) {
-    int64_t beginTime(getticks());
+    int64_t beginTime(NowMilliSeconds());
     std::lock_guard<std::mutex> lock(watcher_map_mutex_);
 
     // XXX del from queue, pop in watcher expire thread
@@ -373,7 +373,7 @@ WatchCode WatcherSet::DelWatcher(const WatcherKey& key, WatcherId watcher_id, Wa
         }
     }
 
-    int64_t endTime(getticks());
+    int64_t endTime(NowMilliSeconds());
     FLOG_INFO("watcher del end: watch_id:[%" PRIu64 "] key: [%s] take time:%" PRId64 " ms",
               watcher_id, EncodeToHexString(key).c_str(), endTime - beginTime);
 

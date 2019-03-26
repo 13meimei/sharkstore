@@ -5,7 +5,6 @@
 #include "base/status.h"
 #include "base/util.h"
 #include "common/ds_config.h"
-#include "frame/sf_util.h"
 #include "proto/gen/watchpb.pb.h"
 #include "proto/gen/schpb.pb.h"
 #include "range/range.h"
@@ -14,12 +13,12 @@
 #include "storage/store.h"
 
 #include "helper/mock/raft_server_mock.h"
-#include "helper/mock/socket_session_mock.h"
+#include "helper/mock/rpc_request_mock.h"
+
 #include "range/range.h"
 
 #include "watch/watcher.h"
 #include "watch/watcher_set.h"
-#include "common/socket_base.h"
 #include "test_public_funcs.h"
 
 //extern void EncodeWatchKey(std::string *buf, const uint64_t &tableId, const std::vector<std::string *> &keys);
@@ -41,16 +40,7 @@ int main(int argc, char *argv[]) {
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
 using namespace sharkstore::dataserver::storage;
-
-class SocketBaseMock: public common::SocketBase {
-
-public:
-    virtual int Find(response_buff_t *response) {
-        FLOG_DEBUG("Find mock...%s", response->buff);
-        return 0;
-    }
-};
-
+using namespace sharkstore::test::mock; 
 
 std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf) {
     std::vector<std::string *> vec;
@@ -60,18 +50,16 @@ std::string  DecodeSingleKey(const int16_t grpFlag, const std::string &encodeBuf
     watch::Watcher watcher(1, vec);
     watcher.DecodeKey(vec, encodeBuf);
 
-        if(grpFlag) {
-            for(auto it:vec) {
-                key.append(*it);
-            }
-        } else {
-            key.assign(*vec[0]);
+    if(grpFlag) {
+        for(auto it:vec) {
+            key.append(*it);
         }
-
+    } else {
+        key.assign(*vec[0]);
+    } 
     
    //     FLOG_DEBUG("DecodeWatchKey exception(%d), %s", int(vec.size()), EncodeToHexString(*buf).c_str());
     
-
     if(vec.size() > 0 && key.empty())
         key.assign(*vec[0]);
 
@@ -85,44 +73,29 @@ protected:
         log_init2();
         set_log_level(level);
 
+        strcpy(ds_config.engine_config.name, "rocksdb");
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
-        strcat(ds_config.rocksdb_config.path, std::to_string(getticks()).c_str());
-        ds_config.range_config.recover_concurrency = 10;
+        strcat(ds_config.rocksdb_config.path, std::to_string(NowMilliSeconds()).c_str());
+        ds_config.range_config.recover_concurrency = 10; 
+        ds_config.watch_config.watcher_thread_priority = 23; 
 
-        sf_socket_thread_config_t config;
-
-        ds_config.watch_config.watcher_thread_priority = 23;
-        config.send_thread_priority = 40;
-
-        sf_socket_status_t status = {0};
-
-        socket_.Init(&config, &status);
-
-        range_server_ = new server::RangeServer;
-
-        context_ = new server::ContextServer;
-
+        range_server_ = new server::RangeServer; 
+        context_ = new server::ContextServer; 
         context_->node_id = 1;
         context_->range_server = range_server_;
-        context_->socket_session = new SocketSessionMock;
         context_->raft_server = new RaftServerMock;
         context_->run_status = new server::RunStatus;
 
         range_server_->Init(context_);
-        now = getticks();
-
 
         {
             // begin test create range
-            auto msg = new common::ProtoMessage;
             schpb::CreateRangeRequest req;
             req.set_allocated_range(genRange1());
 
-            auto len = req.ByteSizeLong();
-            msg->body.resize(len);
-            ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+            auto rpc = NewMockRPCRequest(req);
 
-            range_server_->CreateRange(msg);
+            range_server_->CreateRange(*rpc.first);
             ASSERT_FALSE(range_server_->ranges_.empty());
 
             ASSERT_TRUE(range_server_->Find(1) != nullptr);
@@ -136,15 +109,12 @@ protected:
 
         {
             // begin test create range
-            auto msg = new common::ProtoMessage;
             schpb::CreateRangeRequest req;
             req.set_allocated_range(genRange2());
 
-            auto len = req.ByteSizeLong();
-            msg->body.resize(len);
-            ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+            auto rpc = NewMockRPCRequest(req);
 
-            range_server_->CreateRange(msg);
+            range_server_->CreateRange(*rpc.first);
             ASSERT_FALSE(range_server_->ranges_.empty());
 
             ASSERT_TRUE(range_server_->Find(2) != nullptr);
@@ -161,7 +131,6 @@ protected:
         DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
 
         delete context_->range_server;
-        delete context_->socket_session;
         delete context_->raft_server;
         delete context_->run_status;
         delete context_;
@@ -176,34 +145,26 @@ protected:
         raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[rangeId]->setLeaderFlag(true);
 
-        // begin test watch_get (ok)
-        auto msg1 = new common::ProtoMessage;
-        //put first
-        msg1->expire_time = getticks() + 1000;
-        msg1->begin_time = get_micro_second();
-        msg1->session_id = 1;
-        msg1->socket = &socket_;
-        watchpb::DsKvWatchPutRequest req1;
-
-        req1.mutable_header()->set_range_id(rangeId);
-        req1.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req1.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req1.mutable_req()->mutable_kv()->add_key(key1);
+        watchpb::DsKvWatchPutRequest req; 
+        req.mutable_header()->set_range_id(rangeId);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1); 
+        req.mutable_req()->mutable_kv()->add_key(key1);
         if(!key2.empty())
-            req1.mutable_req()->mutable_kv()->add_key(key2);
-        req1.mutable_req()->mutable_kv()->set_value(value);
+            req.mutable_req()->mutable_kv()->add_key(key2);
+        req.mutable_req()->mutable_kv()->set_value(value); 
 
-        auto len1 = req1.ByteSizeLong();
-        msg1->body.resize(len1);
-        ASSERT_TRUE(req1.SerializeToArray(msg1->body.data(), len1));
+        auto rpc = NewMockRPCRequest(req, funcpb::kFuncWatchPut);
+        rpc.first->expire_time = NowMilliSeconds() + 1000;
+        rpc.first->begin_time = NowMicros();
 
-        range_server_->WatchPut(msg1);
-        watchpb::DsKvWatchPutResponse resp1;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp1));
-        FLOG_DEBUG("watch_put first response: %s", resp1.DebugString().c_str());
+        range_server_->DealTask(std::move(rpc.first));
 
+        watchpb::DsKvWatchPutResponse resp;
+        auto s = rpc.second->Get(resp);
+        
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error()); 
         return;
     }
 
@@ -211,51 +172,38 @@ protected:
     {
         FLOG_DEBUG("justDel...range:%d key1:%s  key2:%s", rangeId, key1.c_str(), key2.c_str() );
 
-        // begin test watch_delete( ok )
-
         // set leader
         auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
         raft->ops_.leader = 1;
         raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[1]->setLeaderFlag(true);
 
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 3000;
-        msg->session_id = 1;
-        msg->socket = &socket_;
-        msg->begin_time = get_micro_second();
-        msg->msg_id = 20180813;
-
-        watchpb::DsKvWatchDeleteRequest req;
-
+        watchpb::DsKvWatchDeleteRequest req; 
         req.mutable_header()->set_range_id(rangeId);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
+        req.mutable_header()->mutable_range_epoch()->set_version(1); 
         req.mutable_req()->mutable_kv()->add_key(key1);
         if(!key2.empty())
-            req.mutable_req()->mutable_kv()->add_key(key2);
-
-        req.mutable_req()->mutable_kv()->set_version(1);
-
+            req.mutable_req()->mutable_kv()->add_key(key2); 
+        req.mutable_req()->mutable_kv()->set_version(1); 
         req.mutable_req()->set_prefix(prefix);
 
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
+        auto rpc = NewMockRPCRequest(req, funcpb::kFuncWatchDel);
+        rpc.first->expire_time = NowMilliSeconds() + 3000;
+        rpc.first->begin_time = NowMicros();
+        rpc.first->msg->head.msg_id = 20180813; 
 
-        range_server_->WatchDel(msg);
+        range_server_->DealTask(std::move(rpc.first));
 
         watchpb::DsKvWatchDeleteResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
-        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str());
-
+        auto s = rpc.second->Get(resp);
+        
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error()); 
         ASSERT_FALSE(resp.header().has_error());
+        FLOG_DEBUG("watch_del response: %s", resp.DebugString().c_str()); 
 
-        // end test watch_delete
-
+        // end test watch_delete 
     }
 
     void justGet(const int16_t &rangeId, const std::string key1, const std::string &key2, const std::string& val, const int32_t& cnt, bool prefix = false)
@@ -267,41 +215,29 @@ protected:
         raft->SetLeaderTerm(1, 1);
         range_server_->ranges_[rangeId]->setLeaderFlag(true);
 
-        // begin test pure_get(ok)
-        auto msg = new common::ProtoMessage;
-        msg->expire_time = getticks() + 1000;
-        msg->begin_time = get_micro_second();
-        msg->session_id = 1;
-        watchpb::DsKvWatchGetMultiRequest req;
-
+        watchpb::DsKvWatchGetMultiRequest req; 
         req.set_prefix(prefix);
         req.mutable_header()->set_range_id(rangeId);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
+        req.mutable_header()->mutable_range_epoch()->set_version(1); 
         req.mutable_kv()->set_version(0);
-        req.mutable_kv()->set_tableid(1);
-
+        req.mutable_kv()->set_tableid(1); 
         req.mutable_kv()->add_key(key1);
         if(!key2.empty())
             req.mutable_kv()->add_key(key2);
 
+        auto rpc = NewMockRPCRequest(req, funcpb::kFuncPureGet);
+        rpc.first->expire_time = NowMilliSeconds() + 1000;
+        rpc.first->begin_time = NowMicros();
 
-        auto len = req.ByteSizeLong();
-        msg->body.resize(len);
-        ASSERT_TRUE(req.SerializeToArray(msg->body.data(), len));
-
-        range_server_->PureGet(msg);
+        range_server_->DealTask(std::move(rpc.first));
 
         watchpb::DsKvWatchGetMultiResponse resp;
-        auto session_mock = static_cast<SocketSessionMock *>(context_->socket_session);
-
-        //cnt为０时，仍返回编码ＯＫ　　kvs_size() == 0
-        ASSERT_TRUE(session_mock->GetResult(&resp));
-
+        auto s = rpc.second->Get(resp);
+        
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_FALSE(resp.header().has_error()); 
         FLOG_DEBUG(">>>PureGet RESP:%s", resp.DebugString().c_str());
-
-        ASSERT_FALSE(resp.header().has_error());
         ASSERT_TRUE(resp.code() == 0);
         EXPECT_TRUE(resp.kvs_size() == cnt);
 
@@ -314,8 +250,6 @@ protected:
 protected:
     server::ContextServer *context_;
     server::RangeServer *range_server_;
-    int64_t now;
-    SocketBaseMock socket_;
 };
 
 
@@ -375,22 +309,25 @@ TEST_F(WatchTest, test_priority_queue) {
 
         while (cnt > 0) {
 
-            int64_t expireTime = get_micro_second() + 5000000;
+            int64_t expireTime = NowMicros() + 5000000;
             sprintf(tmp, "a_%ld", cnt);
             keys.assign(tmp);
 
             vecKey.clear();
             vecKey.push_back(new std::string(keys));
 
-            // begin test watch_get (key empty)
-            auto msg = new common::ProtoMessage;
-            msg->expire_time = getticks() + 5000;
-            msg->session_id = 1;
-            msg->socket = &socket_;
-            msg->begin_time = get_micro_second();
-            msg->msg_id = cnt + 100;
+            schpb::CreateRangeRequest req;
+            req.set_allocated_range(genRange1()); 
+            // begin test watch_get (key empty) 
+            auto rpc = NewMockRPCRequest(req);
+            range_server_->CreateRange(*rpc.first);
+            ASSERT_FALSE(range_server_->ranges_.empty());
 
-            auto w_ptr = std::make_shared<watch::Watcher>(watch::WATCH_KEY, 1, vecKey, 0, expireTime, msg);
+            rpc.first->expire_time = NowMilliSeconds() + 5000;
+            rpc.first->begin_time = NowMicros();
+            rpc.first->msg->head.msg_id = cnt + 100;
+
+            auto w_ptr = std::make_shared<watch::Watcher>(watch::WATCH_KEY, 1, vecKey, 0, expireTime, std::move(rpc.first));
 
             watcher_queue.push(w_ptr);
             cnt--;
@@ -412,12 +349,9 @@ TEST_F(WatchTest, test_priority_queue) {
             //FLOG_DEBUG("expire_time:%" PRId64, oldTime);
 
             watcher_queue.pop();
-        }
-
-    }
-
-}
-
+        } 
+    } 
+} 
 
 #undef watch_get_benchmark
 #ifdef watch_get_benchmark
@@ -427,11 +361,11 @@ TEST_F(WatchTest, watch_get_benchmark) {
     justPut(1, "01003001", "", "03003001:value");
 
     int64_t count(1000000);
-    int64_t bTime(getticks());
+    int64_t bTime(NowMilliSeconds());
     for (int i = 0; i < count; i++) {
         justGet(1, "01003001", "", "03003001:value", 1, false);
     }
-    int64_t endTime(getticks());
+    int64_t endTime(NowMilliSeconds());
     FLOG_WARN("count:%" PRId64 " elapse:%" PRId64 "s average:%" PRId64 "/s",count, (endTime - bTime)/1000, count/ ((endTime - bTime)/1000));
 
 }

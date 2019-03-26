@@ -12,17 +12,6 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-static const int64_t kDefaultKVMaxCount = 1000;
-
-static int64_t checkMaxCount(int64_t maxCount) {
-    if (maxCount <= 0)
-        maxCount = std::numeric_limits<int64_t>::max();
-    if (maxCount > kDefaultKVMaxCount) {
-        maxCount = kDefaultKVMaxCount ;
-    }
-    return maxCount;
-}
-
 void Range::KVSet(RPCRequestPtr rpc, kvrpcpb::DsKvSetRequest &req) {
     auto &key = req.req().kv().key();
     errorpb::Error *err = nullptr;

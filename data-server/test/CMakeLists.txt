@@ -65,4 +65,4 @@ foreach(testfile ${test_SRCS})
     endif()
 endforeach(testfile ${TESTS})
 
-#add_subdirectory(watch)
+add_subdirectory(watch)

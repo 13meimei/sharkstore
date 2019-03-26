@@ -79,8 +79,8 @@ TEST(TestWatcherSet, Base) {
 
     common::ProtoMessage msg;
     msg.session_id = 1;
-    msg.begin_time = getticks();
-    msg.expire_time = getticks()+3000;
+    msg.begin_time = NowMilliSeconds();
+    msg.expire_time = NowMilliSeconds()+3000;
     msg.msg_id = 100;
 
     std::string key("testkey");
