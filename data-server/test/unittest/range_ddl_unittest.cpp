@@ -53,6 +53,9 @@ protected:
         delete context_->range_server;
         delete context_->raft_server;
         delete context_;
+        if (strlen(ds_config.rocksdb_config.path) > 0) {
+            RemoveDirAll(ds_config.rocksdb_config.path);
+        }
     }
 
 protected:

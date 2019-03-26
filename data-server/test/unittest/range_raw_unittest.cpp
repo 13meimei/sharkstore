@@ -50,12 +50,13 @@ protected:
     }
 
     void TearDown() override {
-        DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
-
         delete context_->range_server;
         delete context_->raft_server;
         delete context_->run_status;
         delete context_;
+        if (strlen(ds_config.rocksdb_config.path) > 0) {
+            RemoveDirAll(ds_config.rocksdb_config.path);
+        }
     }
 
     Status testRawPut(const kvrpcpb::DsKvRawPutRequest& req, kvrpcpb::DsKvRawPutResponse& resp) {
