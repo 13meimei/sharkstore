@@ -179,7 +179,7 @@ Status DiskStorage::openLogs() {
         if (ops_.readonly) {
             return Status(Status::kCorruption, "open logs", "no log file");
         }
-        auto f = new LogFile(path_, 1, trunc_meta_.index() + 1);
+        auto f = std::make_shared<LogFile>(path_, 1, trunc_meta_.index() + 1);
         s = f->Open(ops_.allow_corrupt_startup);
         if (!s.ok()) {
             return s;
@@ -188,7 +188,7 @@ Status DiskStorage::openLogs() {
     } else {
         size_t count = 0;
         for (auto it = logs.begin(); it != logs.end(); ++it) {
-            auto f = new LogFile(path_, it->first, it->second, ops_.readonly);
+            auto f = std::make_shared<LogFile>(path_, it->first, it->second, ops_.readonly);
             s = f->Open(ops_.allow_corrupt_startup, count == logs.size() - 1);
             if (!s.ok()) {
                 return s;
@@ -207,7 +207,7 @@ Status DiskStorage::openLogs() {
 }
 
 Status DiskStorage::closeLogs() {
-    std::for_each(log_files_.begin(), log_files_.end(), [](LogFile* f) { delete f; });
+    //std::for_each(log_files_.begin(), log_files_.end(), [](std::shared_ptr<LogFile> f) { delete f; });
     log_files_.clear();
     return Status::OK();
 }
@@ -243,7 +243,7 @@ Status DiskStorage::tryRotate() {
         if (!s.ok()) {
             return s;
         }
-        auto newf = new LogFile(path_, f->Seq() + 1, last_index_ + 1);
+        auto newf = std::make_shared<LogFile>(path_, f->Seq() + 1, last_index_ + 1);
         s = newf->Open(false);
         if (!s.ok()) {
             return s;
@@ -353,7 +353,7 @@ Status DiskStorage::Term(uint64_t index, uint64_t* term, bool* is_compacted) con
     } else {
         *is_compacted = false;
         auto it = std::lower_bound(log_files_.cbegin(), log_files_.cend(), index,
-                                   [](LogFile* f, uint64_t index) { return f->LastIndex() < index; });
+                                   [](std::shared_ptr<LogFile> f, uint64_t index) { return f->LastIndex() < index; });
         if (it == log_files_.cend()) {
             return Status(Status::kNotFound, "locate term log file", std::to_string(index));
         }
@@ -384,7 +384,7 @@ Status DiskStorage::Entries(uint64_t lo, uint64_t hi, uint64_t max_size,
 
     // search start file
     auto it = std::lower_bound(log_files_.cbegin(), log_files_.cend(), lo,
-            [](LogFile* f, uint64_t index) { return f->LastIndex() < index; });
+            [](std::shared_ptr<LogFile> f, uint64_t index) { return f->LastIndex() < index; });
     if (it == log_files_.cend()) {
         return Status(Status::kNotFound, "locate file", std::to_string(lo));
     }
@@ -473,7 +473,7 @@ Status DiskStorage::truncateAll() {
     }
     log_files_.clear();
 
-    LogFile* f = new LogFile(path_, 1, trunc_meta_.index() + 1);
+    auto f = std::make_shared<LogFile>(path_, 1, trunc_meta_.index() + 1);
     s = f->Open(false);
     if (!s.ok()) {
         return s;
@@ -600,6 +600,21 @@ Status DiskStorage::Destroy(bool backup) {
     return Status::OK();
 }
 
+std::vector<std::shared_ptr<LogFile>>& DiskStorage::GetLogFiles() const {
+    return log_files_commited_;
+};
+
+Status DiskStorage::CopyToCommit(uint64_t commited) {
+    for (const auto& f : log_files_) {
+        if (f->GetFullFlag() == 0)
+            break;
+        if (f->LastIndex() > commited)
+            break;
+
+        log_files_commited_.emplace_back(f);
+    }
+    return Status::OK();
+}
 
 #ifndef NDEBUG
 void DiskStorage::TEST_Add_Corruption1() {

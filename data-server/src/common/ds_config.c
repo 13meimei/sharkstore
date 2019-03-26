@@ -151,6 +151,108 @@ static int load_rocksdb_config(IniContext *ini_context) {
     return 0;
 }
 
+static int load_async_rocksdb_config(IniContext *ini_context) {
+    char *section = "async_rocksdb";
+
+    // db路径
+    char *temp_str = iniGetStrValue(section, "path", ini_context);
+    if (temp_str != NULL) {
+        fprintf(stderr, "[ds config] rockdb path: %s section: %s\n", temp_str, section);
+        snprintf(ds_config.rocksdb_config.path, sizeof(ds_config.rocksdb_config.path), "%s", temp_str);
+    } else {
+        fprintf(stderr, "[ds config] rockdb path is missing");
+        return -1;
+    }
+
+    ds_config.async_rocksdb_config.block_cache_size =
+            load_bytes_value_ne(ini_context, section, "block_cache_size", 1024 * 1024 * 1024);
+
+    ds_config.async_rocksdb_config.row_cache_size =
+            load_bytes_value_ne(ini_context, section, "row_cache_size", 0);
+
+    ds_config.async_rocksdb_config.block_size =
+            load_bytes_value_ne(ini_context, section, "block_size", 16 * 1024);
+
+    ds_config.async_rocksdb_config.max_open_files =
+            load_integer_value_atleast(ini_context, section, "max_open_files", 1024, 100);
+
+    ds_config.async_rocksdb_config.bytes_per_sync =
+            load_bytes_value_ne(ini_context, section, "bytes_per_sync", 0);
+
+    ds_config.async_rocksdb_config.write_buffer_size =
+            load_bytes_value_ne(ini_context, section, "write_buffer_size", 128 << 20);
+
+    ds_config.async_rocksdb_config.max_write_buffer_number =
+            load_integer_value_atleast(ini_context, section, "max_write_buffer_number", 8, 2);
+
+    ds_config.async_rocksdb_config.min_write_buffer_number_to_merge =
+            load_integer_value_atleast(ini_context, section, "min_write_buffer_number_to_merge", 1, 1);
+
+    ds_config.async_rocksdb_config.max_bytes_for_level_base =
+            load_bytes_value_ne(ini_context, section, "max_bytes_for_level_base", 512 << 20);
+    ds_config.async_rocksdb_config.max_bytes_for_level_multiplier =
+            load_integer_value_atleast(ini_context, section, "max_bytes_for_level_multiplier", 10, 1);
+
+    ds_config.async_rocksdb_config.target_file_size_base =
+            load_bytes_value_ne(ini_context, section, "target_file_size_base", 128 << 20);
+    ds_config.async_rocksdb_config.target_file_size_multiplier =
+            load_integer_value_atleast(ini_context, section, "target_file_size_multiplier", 1, 1);
+
+    ds_config.async_rocksdb_config.max_background_flushes =
+            load_integer_value_atleast(ini_context, section, "max_background_flushes", 2, 1);
+    ds_config.async_rocksdb_config.max_background_compactions =
+            load_integer_value_atleast(ini_context, section, "max_background_compactions", 4, 1);
+    ds_config.async_rocksdb_config.background_rate_limit =
+            load_bytes_value_ne(ini_context, section, "background_rate_limit", 0);
+
+    ds_config.async_rocksdb_config.disable_auto_compactions =
+            (bool)iniGetIntValue(section, "disable_auto_compactions", ini_context, 0);
+
+    ds_config.async_rocksdb_config.read_checksum =
+            (bool)iniGetIntValue(section, "read_checksum", ini_context, 1);
+
+    ds_config.async_rocksdb_config.level0_file_num_compaction_trigger =
+            load_integer_value_atleast(ini_context, section, "level0_file_num_compaction_trigger", 8, 1);
+    ds_config.async_rocksdb_config.level0_slowdown_writes_trigger =
+            load_integer_value_atleast(ini_context, section, "level0_slowdown_writes_trigger", 40, 1);
+    ds_config.async_rocksdb_config.level0_stop_writes_trigger =
+            load_integer_value_atleast(ini_context, section, "level0_stop_writes_trigger", 46, 1);
+
+    ds_config.async_rocksdb_config.disable_wal =
+            (bool)iniGetIntValue(section, "disable_wal", ini_context, 0);
+
+    ds_config.async_rocksdb_config.cache_index_and_filter_blocks =
+            (bool)iniGetIntValue(section, "cache_index_and_filter_blocks", ini_context, 0);
+
+    ds_config.async_rocksdb_config.compression = load_integer_value_atleast(ini_context, section, "compression", 0, 0);
+
+    ds_config.async_rocksdb_config.storage_type = load_integer_value_atleast(ini_context, section, "storage_type", 0, 0);
+
+    ds_config.async_rocksdb_config.min_blob_size = load_integer_value_atleast(ini_context, section, "min_blob_size", 0, 0);
+    ds_config.async_rocksdb_config.blob_file_size =  load_bytes_value_ne(ini_context, section, "blob_file_size", 256 * 1024 * 1024UL);
+    ds_config.async_rocksdb_config.enable_garbage_collection =
+            (bool)iniGetIntValue(section, "enable_garbage_collection", ini_context, 1);
+
+    ds_config.async_rocksdb_config.blob_gc_percent = load_integer_value_atleast(ini_context, section, "blob_gc_percent", 75, 10);
+    if (ds_config.async_rocksdb_config.blob_gc_percent > 100) {
+        fprintf(stderr, "invalid rocksdb blob_gc_percent config(%d)", ds_config.rocksdb_config.blob_gc_percent);
+        return -1;
+    }
+    ds_config.async_rocksdb_config.blob_compression = load_integer_value_atleast(ini_context, section, "blob_compression", 0, 0);
+    ds_config.async_rocksdb_config.blob_cache_size = load_bytes_value_ne(ini_context, section, "blob_cache_size", 0);
+    ds_config.async_rocksdb_config.blob_ttl_range = (uint64_t)load_integer_value_atleast(ini_context, section, "blob_ttl_range", 3600, 60);
+
+    ds_config.async_rocksdb_config.ttl = load_integer_value_atleast(ini_context, section, "ttl", 0, 0);
+
+    ds_config.async_rocksdb_config.enable_stats =
+            (bool)iniGetIntValue(section, "enable_stats",ini_context, 1);
+
+    ds_config.async_rocksdb_config.enable_debug_log =
+            (bool)iniGetIntValue(section, "enable_debug_log",ini_context, 0);
+
+    return 0;
+}
+
 void print_rocksdb_config() {
     FLOG_INFO("rockdb_configs: "
               "\n\tpath: %s"
@@ -525,6 +627,10 @@ int load_from_conf_file(IniContext *ini_context, const char *filename) {
     }
 
     if (load_rocksdb_config(ini_context) != 0) {
+        return -1;
+    }
+
+    if (load_async_rocksdb_config(ini_context) != 0) {
         return -1;
     }
 

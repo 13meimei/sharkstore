@@ -213,6 +213,8 @@ Status LogFile::Rotate() {
     if (!s.ok()) {
         return s;
     }
+
+    setFullFlag();
     return Sync();
 }
 

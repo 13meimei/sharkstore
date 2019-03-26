@@ -42,7 +42,9 @@ public:
     Status Flush();  // 一次写入的最后一条日志写完需要Flush
     Status Rotate();
     Status Truncate(uint64_t index);
-
+    int GetFullFlag() const {
+        return full_flag_;
+    }
 // for tests
 #ifndef NDEBUG
     void TEST_Append_RandomData();
@@ -63,6 +65,9 @@ private:
     Status readRecord(off_t offset, Record* rec, std::vector<char>* payload) const;
     Status writeRecord(RecordType type, const ::google::protobuf::Message& msg);
 
+    void setFullFlag() noexcept {
+        full_flag_ = 1;
+    }
 private:
     const uint64_t seq_ = 0;    // 日志文件的序号
     const uint64_t index_ = 0;  // 日志文件起始index
@@ -74,6 +79,7 @@ private:
     FILE* writer_ = nullptr;
     std::vector<char> write_buf_;
 
+    int full_flag_ = 0;
     LogIndex log_index_;
 };
 

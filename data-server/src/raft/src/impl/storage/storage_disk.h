@@ -20,9 +20,6 @@ public:
         // 最多保留多少个日志文件，超过此数则截断旧文件
         size_t max_log_files = std::numeric_limits<size_t>::max();
 
-        // 启动时检测到文件损坏是否继续，若是则备份可以正常打开工作
-        bool allow_corrupt_startup = false;
-
         // 创建时日志的起始index，之前的视作被截断
         uint64_t initial_first_index = 0;
 
@@ -61,6 +58,13 @@ public:
     Status Destroy(bool backup = false) override;
 
     size_t FilesCount() const { return log_files_.size(); }
+    size_t CommitFileCount() const { return log_files_commited_.size(); }
+
+    std::vector<std::shared_ptr<LogFile>>& GetLogFiles() const {
+        return log_files_commited_;
+    };
+
+    Status CopyToCommit(uint64_t commited);
 
 // for tests
 #ifndef NDEBUG
@@ -98,9 +102,10 @@ private:
     pb::TruncateMeta trunc_meta_;
     uint64_t applied_ = 0;  // 大于applied_的不可截断
 
-    std::vector<LogFile*> log_files_;
+    std::vector<std::shared_ptr<LogFile>> log_files_;
     uint64_t last_index_ = 0;
 
+    std::vector<std::shared_ptr<LogFile>> log_files_commited_;
     std::atomic<bool> destroyed_ = {false};
 };
 

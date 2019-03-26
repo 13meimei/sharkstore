@@ -58,6 +58,7 @@ typedef struct ds_config_s {
     } hb_config;
 
     struct rocksdb_config_t rocksdb_config;
+    struct rocksdb_config_t async_rocksdb_config;
 
     struct {
         bool recover_skip_fail;
