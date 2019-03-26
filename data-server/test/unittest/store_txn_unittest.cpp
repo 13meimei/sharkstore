@@ -51,28 +51,28 @@ TEST_F(StoreTxnTest, TxnValue) {
 //select and get version
 //prepare taking version
 TEST_F(StoreTxnTest, Prepare) {
-    ASSERT_TRUE(!table_->GetColumn("id").name().empty());
-
-    rows_ = {{"44","user4","444"},
-            {"22","user2","222"},
-            {"112222","user13333","133311"},
-             {"33","user3","333"}};
-    uint64_t len = rows_.size();
-    auto s = testInsert(rows_, &len);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-
-    std::vector<uint64_t> vers;
-    // select all rows
-    {
-        decltype(rows_) row0;
-        auto s = testTxnSelect(
-                [](TxnSelectRequestBuilder& b) {
-                    b.AddAllFields();
-                },
-                rows_, vers
-        );
-        ASSERT_TRUE(s.ok()) << s.ToString();
-    }
+//    ASSERT_TRUE(!table_->GetColumn("id").name().empty());
+//
+//    rows_ = {{"44","user4","444"},
+//            {"22","user2","222"},
+//            {"112222","user13333","133311"},
+//             {"33","user3","333"}};
+//    uint64_t len = rows_.size();
+//    auto s = testInsert(rows_, &len);
+//    ASSERT_TRUE(s.ok()) << s.ToString();
+//
+//    std::vector<uint64_t> vers;
+//    // select all rows
+//    {
+//        decltype(rows_) row0;
+//        auto s = testTxnSelect(
+//                [](TxnSelectRequestBuilder& b) {
+//                    b.AddAllFields();
+//                },
+//                rows_, vers
+//        );
+//        ASSERT_TRUE(s.ok()) << s.ToString();
+//    }
 
     txnpb::TxnIntent tnt;
     randomIntent(tnt);

@@ -1,6 +1,9 @@
 #include "helper_util.h"
 
 #include "common/ds_encoding.h"
+#include "storage/db/rocksdb_impl/rocksdb_impl.h"
+#include "storage/db/skiplist_impl/skiplist_impl.h"
+#include "storage/db/mass_tree_impl/mass_tree_mvcc.h"
 
 namespace sharkstore {
 namespace test {
@@ -164,6 +167,33 @@ void DecodeColumnValue(const std::string& buf, size_t& offset, const metapb::Col
             throw std::runtime_error(std::string("EncodeColumnValue: invalid column data type: ") +
                                      std::to_string(static_cast<int>(col.data_type())));
     }
+}
+
+Status OpenDB(const std::string& path, dataserver::storage::DbInterface **db_ptr) {
+    auto db_env = ::getenv("DB");
+    std::string db_name = "rocksdb";
+    if (db_env != nullptr) {
+        db_name = db_env;
+    }
+    if (db_name == "rocksdb") {
+        std::cout << "Create rocksdb ...." << std::endl;
+        std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
+        column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
+        column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
+        rocksdb::Options ops;
+        ops.create_if_missing = true;
+        ops.error_if_exists = true;
+        *db_ptr = new dataserver::storage::RocksDBImpl(ops, path);
+    } else if (db_name == "mass-tree" || db_name == "mass") {
+        std::cout << "Create mass-tree db ...." << std::endl;
+        *db_ptr = new dataserver::storage::MvccMassTree();
+    } else if (db_name == "skiplist" || db_name == "skip") {
+        std::cout << "Create skip list db ...." << std::endl;
+        *db_ptr = new dataserver::storage::SkipListDBImpl();
+    } else {
+        return Status(Status::kNotSupported, "open db", db_name);
+    }
+    return (*db_ptr)->Open();
 }
 
 } /* namespace helper */

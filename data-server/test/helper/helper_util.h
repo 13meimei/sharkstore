@@ -2,6 +2,7 @@ _Pragma("once");
 
 #include "proto/gen/metapb.pb.h"
 #include "table.h"
+#include "storage/db/db_interface.h"
 
 namespace sharkstore {
 namespace test {
@@ -23,6 +24,8 @@ void EncodePrimaryKey(std::string *buf, const metapb::Column& col, const std::st
 void EncodeColumnValue(std::string *buf, const metapb::Column& col, const std::string& val);
 
 void DecodeColumnValue(const std::string& buf, size_t& offset, const metapb::Column& col, std::string *val);
+
+Status OpenDB(const std::string& path, dataserver::storage::DbInterface **db_ptr);
 
 } /* namespace helper */
 } /* namespace test */

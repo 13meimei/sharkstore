@@ -8,9 +8,6 @@
 
 #include "fastcommon/logger.h"
 #include <fastcommon/shared_func.h>
-#include "storage/db/rocksdb_impl/rocksdb_impl.h"
-#include "storage/db/skiplist_impl/skiplist_impl.h"
-#include "storage/db/mass_tree_impl/mass_tree_mvcc.h"
 
 namespace sharkstore {
 namespace test {
@@ -38,16 +35,7 @@ void StoreTestFixture::SetUp() {
     ASSERT_TRUE(tmp != NULL);
     tmp_dir_ = tmp;
 
-    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
-    column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
-    column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
-
-    rocksdb::Options ops;
-    ops.create_if_missing = true;
-    ops.error_if_exists = true;
-//    db_ = new dataserver::storage::RocksDBImpl(ops, tmp_dir_);
-    db_ = new dataserver::storage::MvccMassTree();
-    auto s = db_->Open();
+    auto s = OpenDB(tmp_dir_, &db_);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     // make meta
