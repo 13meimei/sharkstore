@@ -3,6 +3,7 @@
 #include "storage/db/mass_tree_impl/mass_tree_db.h"
 #include "storage/db/mass_tree_impl/scaner.h"
 #include "common/ds_encoding.h"
+#include "base/util.h"
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -36,9 +37,9 @@ void test_scan(std::unique_ptr<Scaner> scaner_ptr,
         auto k = scaner->Key();
         auto v = scaner->Value();
 
-        std::string buf;
-        EncodeUvarintAscending(&buf, i);
-        ASSERT_TRUE(k == buf);
+//        std::string buf;
+//        EncodeUvarintAscending(&buf, i);
+//        ASSERT_TRUE(k == buf);
 
         scaner->Next();
         ++i;
@@ -174,6 +175,21 @@ TEST_F(ScanerTest, rows234) {
         ASSERT_TRUE(expected_endi == 234);
     }
 
+}
+
+TEST_F(ScanerTest, rows500) {
+    for (auto i = 0; i < 500; i++) {
+        auto key = sharkstore::randomString(200);
+        tree_.Put(key, key);
+    }
+    { // "\0" ... "\xff"
+        std::string start("");
+        std::string end("\xff", 1);
+        uint64_t expected_endi;
+
+        test_scan(tree_.NewScaner(start, end), 0, &expected_endi);
+        ASSERT_TRUE(expected_endi == 500);
+    }
 }
 
 }

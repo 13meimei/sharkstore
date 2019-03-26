@@ -34,14 +34,15 @@ public:
     bool visit_value(Str key, std::string* value, threadinfo &) {
 //        std::cout << "visit value: key " << std::string(key.s, key.len) << " value: " << *value << std::endl;
         auto k = std::string(key.data(), key.length());
-
         if (rows_ == max_rows_) {
             last_key_ = k;
+            last_flag_ = true;
             return false;
         }
 
         if ((!vend_.empty()) && (k >= vend_)) {
             last_key_ = k;
+            last_flag_ = true;
             return false;
         }
 
@@ -56,7 +57,9 @@ public:
             if (iter_valid()) {
                 goto ITER;
             } else {
-                do_scan();
+                if (last_flag_) {
+                    do_scan();
+                }
             }
         }
 
@@ -78,6 +81,9 @@ public:
 
 private:
     bool scan_valid() {
+        if (!last_flag_) {
+            return false;
+        }
         if (kvs_.size() != max_rows_) {
             return false;
         } else {
@@ -104,6 +110,7 @@ private:
 
     void reset() {
         rows_ = 0;
+        last_flag_ = false;
         kvs_.clear();
     }
 
@@ -121,6 +128,7 @@ private:
     const size_t max_rows_ = 100;
     size_t rows_ = 0;
 
+    bool last_flag_;
     std::string last_key_;
     KVPairVector kvs_;
     KVPairVector::iterator kvs_it_;

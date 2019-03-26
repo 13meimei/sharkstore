@@ -65,11 +65,11 @@ TEST(MassTree, Iter) {
     auto set_iter = key_values.begin();
     while (tree_iter->Valid()) {
         std::cout << tree_iter->Key() << std::endl;
-//        ASSERT_LT(count, key_values.size());
-//        ASSERT_EQ(tree_iter->Key(), set_iter->key) << " at index " << count;
-//        ASSERT_EQ(tree_iter->Value(), set_iter->value) << " at index " << count;
-//        ++count;
-//        ++set_iter;
+        ASSERT_LT(count, key_values.size());
+        ASSERT_EQ(tree_iter->Key(), set_iter->key) << " at index " << count;
+        ASSERT_EQ(tree_iter->Value(), set_iter->value) << " at index " << count;
+        ++count;
+        ++set_iter;
         tree_iter->Next();
     }
     ASSERT_EQ(count, key_values.size());
