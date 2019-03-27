@@ -29,6 +29,9 @@ struct TransportOptions {
     // 接收IO线程数量(Server端)
     size_t recv_io_threads = 4;
 
+    // 到同一个NodeID的通信连接建立多少条
+    size_t connection_pool_size = 4;
+
     Status Validate() const;
 };
 

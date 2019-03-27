@@ -82,6 +82,7 @@ typedef struct ds_config_s {
         size_t apply_queue;
         size_t transport_send_threads;
         size_t transport_recv_threads;
+        size_t connection_pool_size;
         size_t tick_interval_ms;
         size_t max_msg_size;
     } raft_config;
