@@ -57,10 +57,7 @@ Status RaftServerImpl::Start() {
     if (ops_.transport_options.use_inprocess_transport) {
         transport_.reset(new transport::InProcessTransport(ops_.node_id));
     } else {
-        transport_.reset(new transport::TcpTransport(
-                ops_.transport_options.resolver,
-                ops_.transport_options.send_io_threads,
-                ops_.transport_options.recv_io_threads));
+        transport_.reset(new transport::TcpTransport(ops_.transport_options));
     }
     status = transport_->Start(
         ops_.transport_options.listen_ip, ops_.transport_options.listen_port,

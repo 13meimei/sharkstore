@@ -2,10 +2,10 @@ _Pragma("once");
 
 #include "transport.h"
 #include "base/shared_mutex.h"
-#include "raft/node_resolver.h"
 #include "net/server.h"
 #include "net/context_pool.h"
 #include "net/session.h"
+#include "raft/options.h"
 
 namespace sharkstore {
 namespace raft {
@@ -28,8 +28,7 @@ using TcpConnPtr = std::shared_ptr<TcpConnection>;
 
 class TcpTransport : public Transport {
 public:
-    TcpTransport(const std::shared_ptr<NodeResolver>& resolver,
-            size_t send_threads_num, size_t recv_threads_num);
+    explicit TcpTransport(const TransportOptions& ops);
 
     ~TcpTransport();
 
@@ -46,12 +45,13 @@ public:
 private:
     using CreateConnFunc = std::function<Status(uint64_t, TcpConnPtr&)>;
 
-    class ConnectionPool {
+    // Group管理到不同NodeID的连接，每个NodeID一个连接
+    class ConnectionGroup {
     public:
-        explicit ConnectionPool(const CreateConnFunc& create_func);
+        explicit ConnectionGroup(const CreateConnFunc& create_func);
 
-        ConnectionPool(const ConnectionPool&) = delete;
-        ConnectionPool& operator=(const ConnectionPool&) = delete;
+        ConnectionGroup(const ConnectionGroup&) = delete;
+        ConnectionGroup& operator=(const ConnectionGroup&) = delete;
 
         TcpConnPtr Get(uint64_t to);
         void Remove(uint64_t to, const TcpConnPtr& conn);
@@ -72,7 +72,8 @@ private:
     std::unique_ptr<net::Server> server_;
     MessageHandler handler_;
 
-    std::unique_ptr<ConnectionPool> conn_pool_;
+    std::vector<std::unique_ptr<ConnectionGroup>> conn_pool_;
+    std::atomic<uint64_t> send_rr_counter_ = {0};
     std::unique_ptr<net::IOContextPool> client_; // 客户端IO线程
     net::SessionOptions client_opt_;
 };

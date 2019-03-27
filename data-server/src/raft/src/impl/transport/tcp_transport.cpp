@@ -44,11 +44,11 @@ Status TcpConnection::Close() {
 }
 
 
-TcpTransport::ConnectionPool::ConnectionPool(const CreateConnFunc& create_func) :
+TcpTransport::ConnectionGroup::ConnectionGroup(const CreateConnFunc& create_func) :
     create_func_(create_func) {
 }
 
-TcpConnPtr TcpTransport::ConnectionPool::Get(uint64_t to) {
+TcpConnPtr TcpTransport::ConnectionGroup::Get(uint64_t to) {
     {
         sharkstore::shared_lock<sharkstore::shared_mutex> locker(mu_);
         auto it = connections_.find(to);
@@ -72,7 +72,7 @@ TcpConnPtr TcpTransport::ConnectionPool::Get(uint64_t to) {
     return conn;
 }
 
-void TcpTransport::ConnectionPool::Remove(uint64_t to, const TcpConnPtr& conn) {
+void TcpTransport::ConnectionGroup::Remove(uint64_t to, const TcpConnPtr& conn) {
     std::unique_lock<sharkstore::shared_mutex> locker(mu_);
 
     auto it = connections_.find(to);
@@ -83,20 +83,23 @@ void TcpTransport::ConnectionPool::Remove(uint64_t to, const TcpConnPtr& conn) {
 
 // TcpTransport Methods
 //
-TcpTransport::TcpTransport(const std::shared_ptr<NodeResolver>& resolver,
-             size_t send_threads_num, size_t recv_threads_num) : resolver_(resolver) {
+TcpTransport::TcpTransport(const TransportOptions& ops) :
+    resolver_(ops.resolver) {
     // new server
     net::ServerOptions sopt;
-    sopt.io_threads_num = recv_threads_num;
+    sopt.io_threads_num = ops.recv_io_threads;
     server_.reset(new net::Server(sopt, "raft-srv"));
 
     // 初始化客户端连接池
     CreateConnFunc create_func =
             [this](uint64_t to, TcpConnPtr& conn) { return newConnection(to, conn); };
-    conn_pool_.reset(new ConnectionPool(create_func));
+    for (size_t i = 0; i < ops.connection_pool_size; ++i) {
+        std::unique_ptr<ConnectionGroup> group(new ConnectionGroup(create_func));
+        conn_pool_.push_back(std::move(group));
+    }
 
     // 初始化客户端IO线程
-    client_.reset(new net::IOContextPool(send_threads_num, "raft-cli"));
+    client_.reset(new net::IOContextPool(ops.send_io_threads, "raft-cli"));
 }
 
 TcpTransport::~TcpTransport() {
@@ -147,7 +150,8 @@ void TcpTransport::Shutdown() {
 }
 
 void TcpTransport::SendMessage(MessagePtr& msg) {
-    auto conn = conn_pool_->Get(msg->to());
+    auto& group = conn_pool_[++send_rr_counter_ % conn_pool_.size()];
+    auto conn = group->Get(msg->to());
     if (!conn) {
         RAFT_LOG_ERROR("raft[Transport] could not get a connection to %" PRIu64, msg->to());
         return;
@@ -155,7 +159,7 @@ void TcpTransport::SendMessage(MessagePtr& msg) {
     auto ret = conn->Send(msg);
     if (!ret.ok()) {
         RAFT_LOG_ERROR("raft[Transport] send to %" PRIu64 " error: %s", msg->to(), ret.ToString().c_str());
-        conn_pool_->Remove(msg->to(), conn);
+        group->Remove(msg->to(), conn);
     }
 }
 
