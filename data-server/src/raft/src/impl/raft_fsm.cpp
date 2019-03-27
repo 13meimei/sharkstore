@@ -506,7 +506,7 @@ Status RaftFsm::TruncateLog(uint64_t index) {
 
 Status RaftFsm::DestroyLog(bool backup) { return storage_->Destroy(backup); }
 
-std::shared_ptr<storage::Storage> RaftFsm::GetStorage() const {
+std::shared_ptr<storage::Storage>& RaftFsm::GetStorage() const {
     return storage_;
 }
 

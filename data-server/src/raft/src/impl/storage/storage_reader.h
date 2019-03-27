@@ -4,6 +4,8 @@ _Pragma("once");
 #include <unordered_map>
 #include <memory>
 #include <functional>
+#include <mutex>
+#include <condition_variable>
 
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "storage/db/db_interface.h"
@@ -11,6 +13,7 @@ _Pragma("once");
 #include "storage_disk.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
+#include "../work_thread.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -32,7 +35,7 @@ namespace storage {
 
 using StorageThread = sharkstore::raft::impl::WorkThread;
 
-class StorageReader {
+class StorageReader : public std::enable_shared_from_this<StorageReader> {
 public:
     StorageReader(const uint64_t id,
               std::function<bool(const std::string&)> f0,
@@ -42,23 +45,16 @@ public:
               sharkstore::raft::impl::WorkThread* trd);
     ~ StorageReader();
 
-    Status Run() {
-        std::unique_lock<std::mutex> lock(mtx_);
-        do {
-            if (!running_) break;
-            ProcessFiles();
-            cond_.wait(lock);
-        } while (true);
-        return Status::OK();
-    }
     StorageReader(const StorageReader&) = delete;
     StorageReader& operator=(const StorageReader&) = delete;
 
-    Status GetCommitFiles();
+    Status Run();
+    size_t GetCommitFiles();
     Status ProcessFiles();
 
     Status ApplyRaftCmd(const raft_cmdpb::Command& cmd);
-    Status ApplyIndex(uint64_t index);
+    Status StoreAppliedIndex(const uint64_t& seq, const uint64_t& index);
+    Status AppliedTo(uint64_t index);
     Status ApplySnapshot(const pb::SnapshotMeta&meta);
 
     uint64_t Applied() const { return applied_; };
@@ -72,6 +68,7 @@ private:
     Status storeRawPut(const raft_cmdpb::Command &cmd);
     Status saveApplyIndex(uint64_t range_id, uint64_t apply_index);
 
+    bool tryPost(const std::function<void()>& f);
     Status listLogs();
 
     std::function<bool(const std::string& key)> keyInRange;

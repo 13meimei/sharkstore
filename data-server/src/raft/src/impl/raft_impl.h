@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include <list>
+#include <src/raft/src/impl/storage/storage.h>
 #include "raft/options.h"
 #include "raft/raft.h"
 
@@ -46,6 +47,7 @@ public:
 
     void Truncate(uint64_t index) override;
 
+    std::shared_ptr<impl::storage::Storage>& GetStorage() const { return fsm_->GetStorage(); }
     // 备份raft日志
     Status BackupLog();
 
