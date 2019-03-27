@@ -170,7 +170,7 @@ Status TcpTransport::newConnection(uint64_t to, TcpConnPtr& conn) {
         RAFT_LOG_ERROR("raft[Transport] could not resolve address of %" PRIu64, to);
         return Status(Status::kInvalidArgument, "resolve node address", std::to_string(to));
     } else {
-        RAFT_LOG_ERROR("raft[Transport] resolve address of %" PRIu64 " is %s", to, addr.c_str());
+        RAFT_LOG_INFO("raft[Transport] resolve address of %" PRIu64 " is %s", to, addr.c_str());
     }
 
     // split ip & port
