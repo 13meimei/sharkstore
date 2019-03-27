@@ -23,6 +23,7 @@ public:
     storage::MetaStore* MetaStore() override { return server_->meta_store; }
     range::RangeStats* Statistics() override { return server_->run_status; }
 	watch::WatchServer* WatchServer() override { return server_->range_server->watch_server_; }
+    server::PersistServer* PersistServer() override { return server_->persist_server; }
 
     uint64_t GetFSUsagePercent() const override;
 

@@ -84,6 +84,15 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
         return Status(Status::kInvalidArgument, "create raft", s.ToString());
     }
 
+    // create raft log reader
+    s = context_->PersistServer()->CreateReader(id_,
+                                                std::bind(&Range::KeyInRange, shared_from_this(), std::placeholders::_1),
+                                                std::bind(&Range::EpochIsEqual, shared_from_this(), std::placeholders::_1),
+                                                &reader_);
+    if (!s.ok()) {
+        return Status(Status::kInvalidArgument, "create raft log reader", s.ToString());
+    }
+
     if (leader == node_id_) {
         context_->Statistics()->ReportLeader(id_, true);
         is_leader_ = true;
@@ -190,6 +199,7 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
         return Status(Status::kIOError, "no left space", "apply");
     }
 
+    Status sts;
     switch (cmd.cmd_type()) {
 //        case raft_cmdpb::CmdType::Lock:
 //            return ApplyLock(cmd, index);
@@ -205,25 +215,35 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
 //            return ApplyWatchDel(cmd, index);
 
         case raft_cmdpb::CmdType::RawPut:
-            return ApplyRawPut(cmd);
+            sts = ApplyRawPut(cmd);
+            break;
         case raft_cmdpb::CmdType::RawDelete:
-            return ApplyRawDelete(cmd);
+            sts = ApplyRawDelete(cmd);
+            break;
         case raft_cmdpb::CmdType::Insert:
-            return ApplyInsert(cmd);
+            sts = ApplyInsert(cmd);
+            break;
         case raft_cmdpb::CmdType::Update:
-            return ApplyUpdate(cmd);
+            sts = ApplyUpdate(cmd);
+            break;
         case raft_cmdpb::CmdType::Delete:
-            return ApplyDelete(cmd);
+            sts = ApplyDelete(cmd);
+            break;
         case raft_cmdpb::CmdType::KvSet:
-            return ApplyKVSet(cmd);
+            sts = ApplyKVSet(cmd);
+            break;
         case raft_cmdpb::CmdType::KvBatchSet:
-            return ApplyKVBatchSet(cmd);
+            sts = ApplyKVBatchSet(cmd);
+            break;
         case raft_cmdpb::CmdType::KvDelete:
-            return ApplyKVDelete(cmd);
+            sts = ApplyKVDelete(cmd);
+            break;
         case raft_cmdpb::CmdType::KvBatchDel:
-            return ApplyKVBatchDelete(cmd);
+            sts = ApplyKVBatchDelete(cmd);
+            break;
         case raft_cmdpb::CmdType::KvRangeDel:
-            return ApplyKVRangeDelete(cmd);
+            sts = ApplyKVRangeDelete(cmd);
+            break;
         case raft_cmdpb::CmdType::TxnPrepare:
             return ApplyTxnPrepare(cmd, index);
         case raft_cmdpb::CmdType::TxnDecide:
@@ -234,6 +254,11 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
             RANGE_LOG_ERROR("Apply cmd type error %s", CmdType_Name(cmd.cmd_type()).c_str());
             return Status(Status::kNotSupported, "cmd type not supported", "");
     }
+
+    //TO DO judge need trigger persist
+    context_->PersistServer()->TriggerPersist( id_, reader_->Applied(), index);
+
+    return sts;
 }
 
 Status Range::Apply(const std::string &cmd, uint64_t index) {

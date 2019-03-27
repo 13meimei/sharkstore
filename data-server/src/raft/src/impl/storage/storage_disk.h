@@ -53,6 +53,7 @@ public:
     Status ApplySnapshot(const pb::SnapshotMeta& meta) override;
 
     void AppliedTo(uint64_t applied) override;
+    uint64_t Applied() const { return applied_; }
 
     Status Close() override;
     Status Destroy(bool backup = false) override;
@@ -64,7 +65,7 @@ public:
         return log_files_commited_;
     };
 
-    Status CopyToCommit(uint64_t commited);
+    Status LoadCommitFiles(uint64_t commited);
 
 // for tests
 #ifndef NDEBUG

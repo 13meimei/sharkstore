@@ -1,5 +1,8 @@
 #include "persist_server.h"
 
+#include <unordered_map>
+#include <src/raft/src/impl/storage/storage_reader.h>
+
 #include "frame/sf_logger.h"
 #include "common/ds_config.h"
 #include "worker.h"
@@ -32,11 +35,35 @@ int PersistServer::Init(ContextServer *context) {
 
 Status PersistServer::Start() {
 
+    for (int i = 0; i < ops_.thread_num; ++i) {
+        auto t = new sharkstore::raft::impl::WorkThread(this, ops_.queue_capacity,
+                                std::string("storage-reader:") + std::to_string(i));
+        threads_.emplace_back(t);
+    }
+    FLOG_INFO("persist[server] %d storage reader threads start. queue capacity=%d",
+                  ops_.thread_num, ops_.queue_capacity);
+
+    running_ = true;
     return Status::OK();
 }
 
 Status PersistServer::Stop() {
+    if (!running_) return Status::OK();
+
+    running_ = false;
+    for (auto& t : threads_) {
+        t->shutdown();
+    }
+
+    CloseDB();
     return Status::OK();
+}
+
+void PersistServer::TriggerPersist(const uint64_t range_id, const uint64_t persist, const uint64_t applied) {
+    //TO DO get persist index
+    if (applied  - persist > ops_.delay_count) {
+        readers_[range_id]->Notify(range_id, applied);
+    }
 }
 
 int PersistServer::OpenDB() {
@@ -58,6 +85,20 @@ void PersistServer::CloseDB() {
         delete db_;
         db_ = nullptr;
     }
+}
+
+Status PersistServer::CreateReader(const uint64_t range_id,
+                                   std::function<bool(const std::string&)> f0,
+                                   std::function<bool(const metapb::Range &meta)> f1,
+                                   std::shared_ptr<StorageReader>* reader)
+{
+    auto idx = (range_id % threads_.size());
+    auto r = std::make_shared<sharkstore::raft::impl::storage::StorageReader>(
+            range_id, f0, f1, context_->raft_server, db_, threads_);
+    readers_.emplace(std::make_pair(range_id, r));
+    *reader = r;
+
+    return Status::OK();
 }
 
 } /* namespace server */

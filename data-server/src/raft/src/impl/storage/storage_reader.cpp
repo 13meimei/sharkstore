@@ -17,12 +17,13 @@ namespace raft {
 namespace impl {
 namespace storage {
 
-// 只截断已应用的减去kKeepCountBeforeApplied之前的日志
-static const unsigned kKeepLogCountBeforeApplied = 30;
-
-StorageReader::StorageReader(const uint64_t id, raft::impl::RaftServerImpl *server,
-      const std::string& path, dataserver::storage::DbInterface* db) :
-        id_(id), server_(server), path_(path), db_(db)
+StorageReader::StorageReader(const uint64_t id,
+                             std::function<bool(const std::string&)> f0,
+                             std::function<bool(const metapb::Range &meta)> f1,
+                             raft::impl::RaftServerImpl *server,
+                             dataserver::storage::DbInterface* db,
+                             sharkstore::raft::impl::WorkThread* trd) :
+        keyInRange(f0), EpochIsEqual(f1), id_(id), server_(server), db_(db), trd_(trd)
 {
     log_files_.clear();
 };
@@ -31,8 +32,12 @@ StorageReader::~StorageReader() { Close(); }
 
 Status StorageReader::GetCommitFiles() {
     auto raft = server_->FindRaft(id_);
+    assert(raft != nullptr);
     storage_ = raft->GetStorage();
-    if (storage->CommitFileCount() == 0) {
+    assert(storage_ != nullptr);
+
+    storage_->LoadCommitFiles(storage_->Applied());
+    if (storage_->CommitFileCount() == 0) {
         return Status(Status::kNotFound, "GetCommitFiles() get nothing.", "commited file not exists.");
     }
     log_files_ = storage->GetLogFiles();
@@ -99,6 +104,7 @@ Status StorageReader::listLogs() {
     return Status::OK();
 }
 
+
 //StoreAppliedIndex
 Status StorageReader::StoreAppliedIndex(const uint64_t& seq, const uint64_t& index) {
     std::string key = dataserver::storage::kPersistRaftLogPrefix + std::to_string(seq);
@@ -117,6 +123,21 @@ Status StorageReader::ApplySnapshot(const pb::SnapshotMeta& meta) {
     return Status::OK();
 }
 
+Status StorageReader::Notify(const uint64_t range_id, const uint64_t index)
+    if (!running_) {
+        return Status(Status::kShutdownInProgress, "server is stopping",
+                      std::to_string(id_));
+    }
+
+    std::string cmd{""};
+    if (trd_->submit(
+            id_, &running_,
+            std::bind(&StorageReader::Run, shared_from_this()), cmd)) {
+        return Status::OK();
+    } else {
+        return Status(Status::kBusy);
+    }
+}
 Status StorageReader::ApplyIndex(uint64_t applied) {
     auto s = saveApplyIndex(id_, applied);
     if (!s.ok()) {
@@ -130,6 +151,7 @@ Status StorageReader::ApplyIndex(uint64_t applied) {
 }
 
 Status StorageReader::Close() {
+    running_ = false;
     return Status::OK();
 }
 

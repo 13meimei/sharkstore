@@ -19,6 +19,7 @@ namespace dataserver {
 namespace master { class Worker; }
 namespace storage { class MetaStore; }
 namespace watch { class WatchServer; }
+namespace server { class PersistServer; }
 
 namespace range {
 
@@ -40,6 +41,7 @@ public:
     virtual storage::MetaStore* MetaStore() = 0;
     virtual RangeStats* Statistics() = 0;
     virtual watch::WatchServer* WatchServer() = 0;
+    virtual server::PersistServer* PersistServer() = 0;
 
     // filesystem usage percent for check writable
     virtual uint64_t GetFSUsagePercent() const = 0;

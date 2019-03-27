@@ -179,7 +179,8 @@ int DataServer::Start() {
         return -1;
     }
 
-    if (context_->persist_server->Start() != 0) {
+    if ((ret = context_->persist_server->Start()) != 0) {
+        FLOG_ERROR("start persist server failed. %s", ret.ToString().c_str());
         return -1;
     }
 

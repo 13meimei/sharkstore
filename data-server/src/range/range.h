@@ -33,6 +33,7 @@ _Pragma("once");
 
 // for test friend class
 namespace sharkstore { namespace test { namespace helper { class RangeTestFixture; }}}
+namespace sharkstore { namespace raft { namespace impl { namespace storage { class StorageReader; }}}}
 
 namespace sharkstore {
 namespace dataserver {
@@ -310,6 +311,9 @@ private:
 
     std::unique_ptr<storage::Store> store_;
     std::shared_ptr<raft::Raft> raft_;
+
+    using StorageReader = raft::impl::storage::StorageReader;
+    std::shared_ptr<StorageReader> reader_;
 };
 
 }  // namespace range

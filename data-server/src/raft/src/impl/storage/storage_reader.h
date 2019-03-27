@@ -3,10 +3,12 @@ _Pragma("once");
 #include <atomic>
 #include <unordered_map>
 #include <memory>
+#include <functional>
+
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "storage/db/db_interface.h"
 #include "meta_file.h"
-#include "storage.h"
+#include "storage_disk.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 
@@ -20,6 +22,7 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
     class RaftServerImpl;
+    class WorkThread;
 }}}
 
 namespace sharkstore {
@@ -27,21 +30,24 @@ namespace raft {
 namespace impl {
 namespace storage {
 
+using StorageThread = sharkstore::raft::impl::WorkThread;
+
 class StorageReader {
 public:
     StorageReader(const uint64_t id,
+              std::function<bool(const std::string&)> f0,
+              std::function<bool(const metapb::Range &meta)> f1,
               raft::impl::RaftServerImpl *server,
-              const std::string& path,
-              dataserver::storage::DbInterface* db);
+              dataserver::storage::DbInterface* db,
+              sharkstore::raft::impl::WorkThread* trd);
     ~ StorageReader();
 
-    Status Init() {
-        return GetCommitFiles();
-    }
     Status Run() {
+        std::unique_lock<std::mutex> lock(mtx_);
         do {
-            if (!running_flag_) break;
+            if (!running_) break;
             ProcessFiles();
+            cond_.wait(lock);
         } while (true);
         return Status::OK();
     }
@@ -55,6 +61,10 @@ public:
     Status ApplyIndex(uint64_t index);
     Status ApplySnapshot(const pb::SnapshotMeta&meta);
 
+    uint64_t Applied() const { return applied_; };
+
+    //index: range applied index
+    Status Notify(const uint64_t range_id, const uint64_t index);
     Status Close();
 
 private:
@@ -63,22 +73,28 @@ private:
     Status saveApplyIndex(uint64_t range_id, uint64_t apply_index);
 
     Status listLogs();
+
+    std::function<bool(const std::string& key)> keyInRange;
+    std::function<bool(const metapb::Range &meta)> EpochIsEqual;
 private:
     uint64_t id_{0};
     uint64_t applied_{0};
     uint64_t curr_seq_{0};
     uint64_t curr_index_{0};
-    std::string path_{""};
 
     raft::impl::RaftServerImpl* server_ = nullptr;
-    std::shared_ptr<impl::storage::Storage> storage_ = nullptr;
+    std::shared_ptr<impl::storage::DiskStorage> storage_ = nullptr;
 
     std::vector<std::shared_ptr<LogFile>> log_files_;
     //<seq, applied_index>
     std::unordered_map<uint64_t, uint64_t> done_files_;
     //rocksdb
     dataserver::storage::DbInterface* db_ == nullptr;
-    std::atomic<bool> running_flag_ = false;
+    std::atomic<bool> running_ = false;
+    StorageThread* trd_ == nullptr;
+
+    std::mutex  mtx_;
+    std::condition_variable cond_;
 };
 
 } /* namespace storage */
