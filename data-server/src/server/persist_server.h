@@ -55,7 +55,7 @@ private:
     ContextServer* context_ = nullptr;
     storage::DbInterface* db_ = nullptr;
 
-    std::atomic<bool> running_ = false;
+    std::atomic<bool> running_ = {false};
 
     std::unordered_map<uint64_t, std::shared_ptr<StorageReader>> readers_;
 

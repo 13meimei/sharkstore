@@ -1,4 +1,4 @@
-#include "storage_reader.h"
+#include "raft/storage_reader.h"
 
 #include <assert.h>
 #include <dirent.h>
@@ -7,11 +7,13 @@
 #include <unistd.h>
 #include <algorithm>
 #include <sstream>
+#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
 #include "../logger.h"
 #include "base/util.h"
 #include "log_file.h"
 #include "../server_impl.h"
+#include "../raft_impl.h"
 
 namespace sharkstore {
 namespace raft {
@@ -21,8 +23,8 @@ namespace storage {
 StorageReader::StorageReader(const uint64_t id,
                              std::function<bool(const std::string&)> f0,
                              std::function<bool(const metapb::Range &meta)> f1,
-                             raft::impl::RaftServerImpl *server,
-                             dataserver::storage::DbInterface* db,
+                             RaftServerImpl *server,
+                             DbInterface* db,
                              sharkstore::raft::impl::WorkThread* trd) :
         keyInRange(f0), EpochIsEqual(f1), id_(id), server_(server), db_(db), trd_(trd)
 {
@@ -48,19 +50,19 @@ Status StorageReader::Run() {
     return Status::OK();
 }
 size_t StorageReader::GetCommitFiles() {
-    auto raft = server_->FindRaft(id_);
+    auto raft = std::static_pointer_cast<RaftImpl>( server_->FindRaft(id_) );
     assert(raft != nullptr);
-    storage_ = static_cast<RaftImpl>(raft)->GetStorage();
+    storage_ =  std::static_pointer_cast<DiskStorage>( raft->GetStorage() );
     assert(storage_ != nullptr);
 
     storage_->LoadCommitFiles(storage_->Applied());
     if (storage_->CommitFileCount() == 0) {
-        return Status(Status::kNotFound, "GetCommitFiles() get nothing.", "commited file not exists.");
+        return -1;
     }
     log_files_.swap(storage_->GetLogFiles());
 
     for (auto f = log_files_.begin(); f != log_files_.end(); ) {
-        if (done_files_.find(((*f)->Seq()) != done_files_.end())) {
+        if (done_files_.find((*f)->Seq()) != done_files_.end()) {
             log_files_.erase(f);
         } else {
             f++;
@@ -132,7 +134,7 @@ Status StorageReader::listLogs() {
 }
 
 Status StorageReader::StoreAppliedIndex(const uint64_t& seq, const uint64_t& index) {
-    std::string key = dataserver::storage::kPersistRaftLogPrefix + std::to_string(id_);
+    std::string key = sharkstore::dataserver::storage::kPersistRaftLogPrefix + std::to_string(id_);
     const std::string& value = std::to_string(index);
     // put into db
     auto ret = db_->Put(key, value);
@@ -144,9 +146,9 @@ Status StorageReader::StoreAppliedIndex(const uint64_t& seq, const uint64_t& ind
     return Status::OK();
 }
 
-Status StorageReader::ApplySnapshot(const pb::SnapshotMeta& meta) {
+/*Status StorageReader::ApplySnapshot(const pb::SnapshotMeta& meta) {
     return Status::OK();
-}
+}*/
 
 bool StorageReader::tryPost(const std::function<void()>& f) {
     Work w;
@@ -185,8 +187,9 @@ Status StorageReader::Close() {
 
 Status StorageReader::saveApplyIndex(uint64_t range_id, uint64_t apply_index) {
     std::string key = sharkstore::dataserver::storage::kPersistRaftLogPrefix + std::to_string(range_id);
-    auto ret =
-            db_->Put(rocksdb::WriteOptions(), key, std::to_string(apply_index));
+    //TO DO rocksdb
+    //auto ret = db_->Put(rocksdb::WriteOptions(), key, std::to_string(apply_index));
+    Status ret;
     if (ret.ok()) {
         return Status::OK();
     } else {
@@ -194,12 +197,13 @@ Status StorageReader::saveApplyIndex(uint64_t range_id, uint64_t apply_index) {
     }
 }
 
-std::unique_ptr<raft_cmdpb::Command> StorageReader::decodeEntry(EntryPtr entry) {
-    std::unique_ptr<raft_cmdpb::Command> raft_cmd = std::make_unique<raft_cmdpb::Command>();
-    google::protobuf::io::ArrayInputStream input(entry->data(), static_cast<int>(entry->ByteSizeLong()));
+std::shared_ptr<raft_cmdpb::Command> StorageReader::decodeEntry(EntryPtr entry) {
+    std::shared_ptr<raft_cmdpb::Command> raft_cmd = std::make_shared<raft_cmdpb::Command>();
+    google::protobuf::io::ArrayInputStream input(entry->data().c_str(), static_cast<int>(entry->ByteSizeLong()));
     if(!raft_cmd->ParseFromZeroCopyStream(&input)) {
         RAFT_LOG_ERROR("parse raft command failed");
-        return Status(Status::kCorruption, "parse raft command", EncodeToHex(entry->data()));
+        //return Status(Status::kCorruption, "parse raft command", EncodeToHex(entry->data()));
+        return nullptr;
     }
     return raft_cmd;
 }
@@ -236,7 +240,6 @@ Status StorageReader::storeRawPut(const raft_cmdpb::Command &cmd) {
 
     RAFT_LOG_DEBUG("storeRawPut begin");
     auto &req = cmd.kv_raw_put_req();
-    auto btime = NowMicros();
 
     do {
         ret = db_->Put(req.key(), req.value());

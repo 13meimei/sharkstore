@@ -424,7 +424,7 @@ Status DiskStorage::truncateOld(uint64_t index) {
         if (f->LastIndex() <= index) {
             auto s = f->Destroy();
             if (!s.ok()) return s;
-            delete f;
+            //delete f;
             log_files_.erase(log_files_.begin());
         } else {
             break;
@@ -441,7 +441,7 @@ Status DiskStorage::truncateNew(uint64_t index) {
         if (last->Index() > index) {
             s = last->Destroy();
             if (!s.ok()) return s;
-            delete last;
+            //delete last;
             log_files_.pop_back();
         } else {
             s = last->Truncate(index);
@@ -469,7 +469,7 @@ Status DiskStorage::truncateAll() {
         if (!s.ok()) {
             return s;
         }
-        delete (*it);
+        //delete (*it);
     }
     log_files_.clear();
 
@@ -600,7 +600,7 @@ Status DiskStorage::Destroy(bool backup) {
     return Status::OK();
 }
 
-std::vector<std::shared_ptr<LogFile>>& DiskStorage::GetLogFiles() const {
+std::vector<std::shared_ptr<LogFile>>& DiskStorage::GetLogFiles() {
     return log_files_commited_;
 };
 

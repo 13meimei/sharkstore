@@ -14,6 +14,10 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
+namespace storage {
+    class Storage;
+}
+
 class RaftFsm;
 struct SnapContext;
 struct SnapResult;
@@ -47,7 +51,7 @@ public:
 
     void Truncate(uint64_t index) override;
 
-    std::shared_ptr<impl::storage::Storage>& GetStorage() const { return fsm_->GetStorage(); }
+    std::shared_ptr<impl::storage::Storage>& GetStorage();
     // 备份raft日志
     Status BackupLog();
 

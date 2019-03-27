@@ -8,7 +8,6 @@
 #include "ready.h"
 #include "replica.h"
 #include "storage/storage_disk.h"
-#include "src/raft/src/impl/storage/storage_reader.h"
 #include "storage/storage_memory.h"
 
 namespace sharkstore {
@@ -506,7 +505,7 @@ Status RaftFsm::TruncateLog(uint64_t index) {
 
 Status RaftFsm::DestroyLog(bool backup) { return storage_->Destroy(backup); }
 
-std::shared_ptr<storage::Storage>& RaftFsm::GetStorage() const {
+std::shared_ptr<storage::Storage>& RaftFsm::GetStorage() {
     return storage_;
 }
 

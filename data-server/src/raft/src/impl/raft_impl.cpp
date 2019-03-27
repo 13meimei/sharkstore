@@ -104,6 +104,10 @@ void RaftImpl::Truncate(uint64_t index) {
     post(std::bind(&RaftImpl::truncate, shared_from_this(), index));
 }
 
+std::shared_ptr<impl::storage::Storage>& RaftImpl::GetStorage() {
+    return fsm_->GetStorage();
+}
+
 void RaftImpl::RecvMsg(MessagePtr msg) {
 #ifdef FBASE_RAFT_TRACE_MSG
     if (msg->type() != pb::LOCAL_TICK) {
