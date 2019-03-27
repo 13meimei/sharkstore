@@ -18,6 +18,8 @@ public:
     MvccMassTree();
     ~MvccMassTree();
 
+    bool IsInMemory() override() { return true; }
+
     Status Open() override { return Status::OK(); }
 
     Status Get(const std::string &key, std::string *value) override;

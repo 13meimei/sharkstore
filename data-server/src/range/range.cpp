@@ -26,8 +26,8 @@ Range::Range(RangeContext* context, const metapb::Range &meta) :
     store_ = std::unique_ptr<storage::Store>(new storage::Store(meta, context->DBInstance()));
     eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
                                           ds_config.watch_config.buffer_queue_size);
+    save_apply_index_ = !(context->DBInstance()->IsInMemory());
 }
-
 
 Range::~Range() {
     delete eventBuffer;
@@ -266,10 +266,12 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     }
 
     apply_index_ = index;
-    auto s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
-    if (!s.ok()) {
-        RANGE_LOG_ERROR("save apply index error %s", s.ToString().c_str());
-        return s;
+    if (save_apply_index_) {
+        auto s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
+        if (!s.ok()) {
+            RANGE_LOG_ERROR("save apply index error %s", s.ToString().c_str());
+            return s;
+        }
     }
 
     auto end = std::chrono::system_clock::now();

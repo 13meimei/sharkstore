@@ -24,6 +24,8 @@ public:
     DbInterface(const DbInterface&) = delete;
     DbInterface& operator=(const DbInterface&) = delete;
 
+    virtual bool IsInMemory() = 0;
+
     virtual Status Open() = 0;
 
     virtual Status Get(const std::string& key, std::string* value) = 0;

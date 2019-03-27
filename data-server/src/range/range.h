@@ -306,6 +306,7 @@ private:
     std::atomic<bool> valid_ = { true };
 
     uint64_t apply_index_ = 0;
+    bool save_apply_index_ = {true};
     std::atomic<bool> is_leader_ = {false};
 
     uint64_t real_size_ = 0;

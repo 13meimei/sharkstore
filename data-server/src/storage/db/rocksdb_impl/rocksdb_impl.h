@@ -20,6 +20,8 @@ public:
     ~RocksDBImpl();
 
 public:
+    bool IsInMemory() override { return false; }
+
     Status Open() override;
 
     Status Get(const std::string& key, std::string* value) override;
