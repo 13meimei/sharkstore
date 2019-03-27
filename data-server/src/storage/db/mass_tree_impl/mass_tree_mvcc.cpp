@@ -20,7 +20,7 @@ MvccMassTree::~MvccMassTree() {
 }
 
 Status MvccMassTree::get(MassTreeDB* tree, const std::string& key, std::string* value) {
-    auto ver = mvcc_.load();
+    auto ver = mvcc_.insert();
     MultiVersionKey multi_key(key, ver, true);
 
     Status ret(Status::kNotFound);

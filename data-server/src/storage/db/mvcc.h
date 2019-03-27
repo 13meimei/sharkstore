@@ -46,10 +46,6 @@ public:
         return version_;
     }
 
-    uint64_t incr() {
-        return ++version_;
-    }
-
 private:
     std::atomic<uint64_t> version_ = {0};
     tbb::concurrent_hash_map<uint64_t, int> mvcc_;
