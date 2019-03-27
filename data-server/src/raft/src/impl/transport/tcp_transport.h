@@ -73,7 +73,6 @@ private:
     MessageHandler handler_;
 
     std::vector<std::unique_ptr<ConnectionGroup>> conn_pool_;
-    std::atomic<uint64_t> send_rr_counter_ = {0};
     std::unique_ptr<net::IOContextPool> client_; // 客户端IO线程
     net::SessionOptions client_opt_;
 };

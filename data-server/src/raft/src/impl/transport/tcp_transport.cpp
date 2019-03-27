@@ -150,7 +150,7 @@ void TcpTransport::Shutdown() {
 }
 
 void TcpTransport::SendMessage(MessagePtr& msg) {
-    auto& group = conn_pool_[++send_rr_counter_ % conn_pool_.size()];
+    auto& group = conn_pool_[msg->id() % conn_pool_.size()];
     auto conn = group->Get(msg->to());
     if (!conn) {
         RAFT_LOG_ERROR("raft[Transport] could not get a connection to %" PRIu64, msg->to());
