@@ -48,6 +48,7 @@ public:
 
 private:
     std::atomic<uint64_t> version_ = {0};
+    //todo::init appropriate capacity
     tbb::concurrent_hash_map<uint64_t, int> mvcc_;
 };
 }

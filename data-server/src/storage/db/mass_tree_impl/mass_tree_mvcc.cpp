@@ -164,6 +164,7 @@ void MvccMassTree::Scrub() {
     MultiVersionKey cur_key;
     for (iter->Next(); iter->Valid(); iter->Next()) {
         cur_key.from_string(iter->Key());
+        //todo:bug retain last version if key is not deleted
         if (cur_key.key() == cmp_base.key()) {
             if (cur_key.ver() < ver) {
                 default_tree_->Delete(iter->Key());
