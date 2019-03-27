@@ -1,6 +1,7 @@
 #include "range.h"
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include <common/ds_config.h>
 #include "common/ds_config.h"
 #include "master/worker.h"
 #include "server/range_server.h"
@@ -55,6 +56,9 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     options.leader = leader;
     options.applied = apply_index_;
     options.statemachine = shared_from_this();
+    if (ds_config.raft_config.in_memory_log) {
+        options.use_memory_storage = true;
+    }
     options.log_file_size = ds_config.raft_config.log_file_size;
     options.max_log_files = ds_config.raft_config.max_log_files;
     options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt > 0;

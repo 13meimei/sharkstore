@@ -71,6 +71,7 @@ typedef struct ds_config_s {
 
     struct {
         int port;  // raft server port
+        bool in_memory_log;
         char log_path[PATH_MAX];
         size_t log_file_size;
         size_t max_log_files;

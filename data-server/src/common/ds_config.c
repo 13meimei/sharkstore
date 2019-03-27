@@ -317,6 +317,12 @@ static int load_raft_config(IniContext *ini_context) {
         ds_config.raft_config.port = kDefaultPort;
     }
 
+    ds_config.raft_config.in_memory_log =
+            (bool)iniGetIntValue(section, "in_memory_log", ini_context, 0);
+    if (ds_config.raft_config.in_memory_log) {
+        FLOG_WARN("raft use in memory log");
+    }
+
     temp_str = iniGetStrValue(section, "log_path", ini_context);
     if (temp_str != NULL) {
         snprintf(ds_config.raft_config.log_path, sizeof(ds_config.raft_config.log_path),
