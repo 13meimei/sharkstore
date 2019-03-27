@@ -18,7 +18,7 @@ public:
     MvccMassTree();
     ~MvccMassTree();
 
-    bool IsInMemory() override() { return true; }
+    bool IsInMemory() override { return true; }
 
     Status Open() override { return Status::OK(); }
 

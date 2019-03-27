@@ -12,7 +12,7 @@ public:
     BwTreeDBImpl();
     ~BwTreeDBImpl();
 
-    bool IsInMemory() override() { return true; }
+    bool IsInMemory() override { return true; }
 
     Status Open() override { return Status::OK(); }
 
