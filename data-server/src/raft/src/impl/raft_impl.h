@@ -1,7 +1,6 @@
 _Pragma("once");
 
 #include <list>
-#include <src/raft/src/impl/storage/storage.h>
 #include "raft/options.h"
 #include "raft/raft.h"
 

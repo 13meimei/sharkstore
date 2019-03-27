@@ -6,6 +6,8 @@ _Pragma("once");
 #include "storage/db/db_interface.h"
 #include "common/ds_config.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
+#include "raft/storage_reader.h"
+#include "proto/gen/metapb.pb.h"
 
 namespace sharkstore {
 namespace raft {
@@ -14,15 +16,14 @@ namespace impl {
     namespace storage {
         class StorageReader;
     }
-}
-}
-}
+}}}
 
 namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-using StorageReader = sharkstore::raft::impl::storage::StorageReader;
+using StorageReader = sharkstore::raft::StorageReader;
+using WorkThread = sharkstore::raft::impl::WorkThread;
 
 class PersistServer final {
 public:
@@ -47,8 +48,8 @@ public:
     void CloseDB();
 
     Status CreateReader(const uint64_t range_id,
-                        std::function<bool(const std::string&)> f0,
-                        std::function<bool(const metapb::Range &meta)> f1,
+                        const std::function<bool(const std::string&)>& f0,
+                        const std::function<bool(const metapb::Range &meta)>& f1,
                         std::shared_ptr<StorageReader>* reader);
 private:
     const Options ops_;
@@ -59,7 +60,7 @@ private:
 
     std::unordered_map<uint64_t, std::shared_ptr<StorageReader>> readers_;
 
-    std::vector<sharkstore::raft::impl::WorkThread*> threads_;
+    std::vector<WorkThread*> threads_;
 };
 
 } /* namespace server */

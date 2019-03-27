@@ -38,7 +38,7 @@ namespace impl {
         class DiskStorage;
         class LogFile;
     }
-}}}
+}
 
 using Status = sharkstore::Status;
 using StorageThread =  sharkstore::raft::impl::WorkThread;
@@ -52,8 +52,8 @@ using RaftImpl =  sharkstore::raft::impl::RaftImpl;
 class StorageReader : public std::enable_shared_from_this<StorageReader> {
 public:
     StorageReader(const uint64_t id,
-              std::function<bool(const std::string&)> f0,
-              std::function<bool(const metapb::Range &meta)> f1,
+              const std::function<bool(const std::string&)>& f0,
+              const std::function<bool(const metapb::Range &meta)>& f1,
               RaftServerImpl *server,
               sharkstore::dataserver::storage::DbInterface* db,
               sharkstore::raft::impl::WorkThread* trd);
@@ -94,7 +94,7 @@ private:
     uint64_t curr_seq_{0};
     uint64_t curr_index_{0};
 
-    sharkstore::raft:impl::RaftServerImpl* server_ = nullptr;
+    sharkstore::raft::impl::RaftServerImpl* server_ = nullptr;
     std::shared_ptr<DiskStorage> storage_ = nullptr;
 
     std::vector<std::shared_ptr<LogFile>> log_files_;
@@ -109,6 +109,5 @@ private:
     std::condition_variable cond_;
 };
 
-} /* namespace impl */
 } /* namespace raft */
 } /* namespace sharkstore */

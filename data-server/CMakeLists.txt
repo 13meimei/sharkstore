@@ -202,6 +202,7 @@ set(SOURCES
     src/server/range_context_impl.cpp
     src/server/range_server.cpp
     src/server/rpc_server.cpp
+    src/server/persist_server.cpp
     src/server/version.cpp
     src/range/range.cpp
     #src/range/lock.cpp

@@ -17,13 +17,13 @@
 
 namespace sharkstore {
 namespace raft {
-namespace impl {
-namespace storage {
+//namespace impl {
+//namespace storage {
 
 StorageReader::StorageReader(const uint64_t id,
-                             std::function<bool(const std::string&)> f0,
-                             std::function<bool(const metapb::Range &meta)> f1,
-                             RaftServerImpl *server,
+                             const std::function<bool(const std::string&)>& f0,
+                             const std::function<bool(const metapb::Range &meta)>& f1,
+                             RaftServerImpl* server,
                              DbInterface* db,
                              sharkstore::raft::impl::WorkThread* trd) :
         keyInRange(f0), EpochIsEqual(f1), id_(id), server_(server), db_(db), trd_(trd)
@@ -254,7 +254,7 @@ Status StorageReader::storeRawPut(const raft_cmdpb::Command &cmd) {
 }
 
 
-} /* namespace storage */
-} /* namespace impl */
+//} /* namespace storage */
+//} /* namespace impl */
 } /* namespace raft */
 } /* namespace sharkstore */

@@ -35,12 +35,11 @@ int PersistServer::Init(ContextServer *context) {
 
 Status PersistServer::Start() {
 
-    for (int i = 0; i < ops_.thread_num; ++i) {
-        auto t = new sharkstore::raft::impl::WorkThread(this, ops_.queue_capacity,
-                                std::string("storage-reader:") + std::to_string(i));
+    for (uint64_t i = 0; i < ops_.thread_num; ++i) {
+        auto t = new WorkThread((raft::RaftServerImpl*)(context_->raft_server), ops_.queue_capacity, std::string("storage-reader:") + std::to_string(i));
         threads_.emplace_back(t);
     }
-    FLOG_INFO("persist[server] %d storage reader threads start. queue capacity=%d",
+    FLOG_INFO("persist[server] %llu storage reader threads start. queue capacity=%llu",
                   ops_.thread_num, ops_.queue_capacity);
 
     running_ = true;
@@ -62,7 +61,7 @@ Status PersistServer::Stop() {
 void PersistServer::TriggerPersist(const uint64_t range_id, const uint64_t persist, const uint64_t applied) {
     //TO DO get persist index
     if (applied  - persist > ops_.delay_count) {
-        readers_[range_id]->Notify(range_id, applied);
+        readers_.find(range_id)->second->Notify(range_id, applied);
     }
 }
 
@@ -88,13 +87,13 @@ void PersistServer::CloseDB() {
 }
 
 Status PersistServer::CreateReader(const uint64_t range_id,
-                                   std::function<bool(const std::string&)> f0,
-                                   std::function<bool(const metapb::Range &meta)> f1,
+                                   const std::function<bool(const std::string&)>& f0,
+                                   const std::function<bool(const metapb::Range &meta)>& f1,
                                    std::shared_ptr<StorageReader>* reader)
 {
     auto idx = (range_id % threads_.size());
-    auto r = std::make_shared<sharkstore::raft::impl::storage::StorageReader>(
-            range_id, f0, f1, context_->raft_server, db_, threads_);
+    auto r = std::make_shared<sharkstore::raft::StorageReader>(
+            range_id, f0, f1, context_->raft_server, db_, threads_[idx]);
     readers_.emplace(std::make_pair(range_id, r));
     *reader = r;
 
