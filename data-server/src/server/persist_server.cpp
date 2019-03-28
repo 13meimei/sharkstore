@@ -1,12 +1,10 @@
 #include "persist_server.h"
 
 #include <unordered_map>
-//#include <src/raft/src/impl/storage_reader.h>
 
 #include "frame/sf_logger.h"
 #include "common/ds_config.h"
-#include "worker.h"
-#include "work_thread.h"
+#include "common_thread.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -37,8 +35,7 @@ int PersistServer::Init(ContextServer *context) {
 Status PersistServer::Start() {
 
     for (uint64_t i = 0; i < ops_.thread_num; ++i) {
-        auto t = new WorkThread((raft::impl::RaftServerImpl*)(context_->raft_server), 
-                ops_.queue_capacity, std::string("storage-reader:") + std::to_string(i));
+        auto t = new WorkThread( ops_.queue_capacity, std::string("storage-reader:") + std::to_string(i));
         threads_.emplace_back(t);
     }
     FLOG_INFO("persist[server] %" PRIu64 " storage reader threads start. queue capacity=%" PRIu64 ,
@@ -90,7 +87,7 @@ void PersistServer::CloseDB() {
 
 Status PersistServer::CreateReader(const uint64_t range_id,
                                    std::function<bool(const std::string&)> f0,
-                                   std::function<bool(const metapb::Range &meta)> f1,
+                                   std::function<bool(const metapb::RangeEpoch &)> f1,
                                    std::shared_ptr<raft::RaftLogReader>* reader)
 {
     auto idx = (range_id % threads_.size());

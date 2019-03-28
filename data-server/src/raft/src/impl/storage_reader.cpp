@@ -15,6 +15,7 @@
 #include "server_impl.h"
 #include "raft_impl.h"
 #include "storage/storage_disk.h"
+#include "../../../server/common_thread.h"
 
 namespace sharkstore {
 namespace raft {
@@ -22,10 +23,10 @@ namespace impl {
 
 StorageReader::StorageReader(const uint64_t id,
                              const std::function<bool(const std::string&)>& f0,
-                             const std::function<bool(const metapb::Range &meta)>& f1,
+                             const std::function<bool(const metapb::RangeEpoch&)>& f1,
                              RaftServer* server,
                              DbInterface* db,
-                             sharkstore::raft::impl::WorkThread* trd) :
+                             dataserver::WorkThread* trd) :
         keyInRange(f0), EpochIsEqual(f1), id_(id), server_(server), db_(db), trd_(trd)
 {
     log_files_.clear();
@@ -33,19 +34,21 @@ StorageReader::StorageReader(const uint64_t id,
 
 StorageReader::~StorageReader() { Close(); }
 
+//task func
 Status StorageReader::Run() {
     do {
         if (!running_) break;
 
         {
-            std::unique_lock<std::mutex> lock(mtx_);
+            //std::unique_lock<std::mutex> lock(mtx_);
             if (0 == GetCommitFiles()) {
-                cond_.wait(lock);
+                //cond_.wait(lock);
+                break;
             }
         }
 
         ProcessFiles();
-    } while (true);
+    } while (false);
 
     return Status::OK();
 }
@@ -71,7 +74,7 @@ size_t StorageReader::GetCommitFiles() {
     }
 
     if (log_files_.size() == 0) {
-        //impl::RAFT_LOG_INFO("GetCommitFiles() all file processed, wait...");
+        RAFT_LOG_INFO("GetCommitFiles() all file processed, wait...");
     }
 
 #ifndef NDEBUG
@@ -95,7 +98,7 @@ Status StorageReader::ProcessFiles() {
 
             ret = (*f)->Get(i, &ent);
             if (!ret.ok()) {
-                //impl::RAFT_LOG_ERROR("LogFile::Get() error, path: %s index: %llu", (*f)->Path(), i);
+                RAFT_LOG_ERROR("LogFile::Get() error, path: %s index: %llu", (*f)->Path(), i);
                 break;
             }
 
@@ -103,13 +106,12 @@ Status StorageReader::ProcessFiles() {
             if (cmd) {
                 auto ret = ApplyRaftCmd(*cmd);
                 if (!ret.ok()) {
-                    //impl::RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path(), i);
+                    RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path(), i);
                     break;
                 }
                 ret = StoreAppliedIndex(curr_seq_, curr_index_);
-                //ret = AppliedTo(i);
                 if (!ret.ok()) {
-                    //impl::RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path(), i);
+                    RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path(), i);
                     break;
                 }
             }
@@ -119,7 +121,7 @@ Status StorageReader::ProcessFiles() {
             done_files_.emplace(std::pair<uint64_t, uint64_t>((*f)->Seq(), (*f)->LastIndex()));
             log_files_.erase(f);
         } else {
-            //impl::RAFT_LOG_WARN("StorageReader::ApplyIndex() error, path: %s index: %llu", (*f)->Path(), i);
+            RAFT_LOG_WARN("StorageReader::ApplyIndex() error, path: %s index: %llu", (*f)->Path(), i);
             f++;
         }
     } //end all file
@@ -128,8 +130,8 @@ Status StorageReader::ProcessFiles() {
 
 Status StorageReader::listLogs() {
     for (auto f : log_files_) {
-        //impl::RAFT_LOG_DEBUG("path: %s \nfile_size: %llu \nlog item size: %d",
-        //               f->Path(), f->FileSize(), f->LogSize());
+        RAFT_LOG_DEBUG("path: %s \nfile_size: %llu \nlog item size: %d",
+                       f->Path(), f->FileSize(), f->LogSize());
     }
     return Status::OK();
 }
@@ -152,7 +154,7 @@ Status StorageReader::StoreAppliedIndex(const uint64_t& seq, const uint64_t& ind
 }*/
 
 bool StorageReader::tryPost(const std::function<void()>& f) {
-    impl::Work w;
+    dataserver::Work w;
     w.owner = id_;
     w.stopped = &running_;
     w.f0 = f;
@@ -166,7 +168,7 @@ Status StorageReader::Notify(const uint64_t range_id, const uint64_t index) {
     }
 
     if(!tryPost(std::bind(&StorageReader::Run, shared_from_this()))) {
-        //impl::RAFT_LOG_WARN("StorageReader::tryPost fail...");
+        RAFT_LOG_WARN("StorageReader::tryPost fail...");
     }
     return Status::OK();
 }
@@ -208,7 +210,7 @@ std::shared_ptr<raft_cmdpb::Command> StorageReader::decodeEntry(EntryPtr entry) 
     std::shared_ptr<raft_cmdpb::Command> raft_cmd = std::make_shared<raft_cmdpb::Command>();
     google::protobuf::io::ArrayInputStream input(entry->data().c_str(), static_cast<int>(entry->ByteSizeLong()));
     if(!raft_cmd->ParseFromZeroCopyStream(&input)) {
-        //impl::RAFT_LOG_ERROR("parse raft command failed");
+        RAFT_LOG_ERROR("parse raft command failed");
         //return Status(Status::kCorruption, "parse raft command", EncodeToHex(entry->data()));
         return nullptr;
     }

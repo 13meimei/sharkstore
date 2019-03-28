@@ -18,6 +18,7 @@ _Pragma("once");
 namespace sharkstore {
     class Status;
 namespace dataserver {
+    class WorkThread;
 namespace storage {
 //    static const std::string kPersistRaftLogPrefix = "\x06";
 
@@ -28,8 +29,6 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
     class Work;
-
-    class WorkThread;
 
     class RaftServerImpl;
 
@@ -45,7 +44,6 @@ namespace impl {
 }}}
 
 using Status = sharkstore::Status;
-using StorageThread =  sharkstore::raft::impl::WorkThread;
 using RaftServerImpl = sharkstore::raft::impl::RaftServerImpl;
 using RaftServer = sharkstore::raft::RaftServer;
 using DiskStorage = sharkstore::raft::impl::storage::DiskStorage;
@@ -66,7 +64,8 @@ public:
         const std::function<bool(const metapb::Range &meta)>& f1,
         RaftServer *server,
         sharkstore::dataserver::storage::DbInterface* db,
-        sharkstore::raft::impl::WorkThread* trd);
+        sharkstore::dataserver::WorkThread* trd);
+        //sharkstore::raft::impl::WorkThread* trd);
     virtual ~ RaftLogReader() = default;
 
     RaftLogReader(const RaftLogReader&) = delete;
@@ -92,10 +91,11 @@ public:
 std::shared_ptr<RaftLogReader> CreateRaftLogReader(
         const uint64_t id,
         const std::function<bool(const std::string&)>& f0,
-        const std::function<bool(const metapb::Range &meta)>& f1,
+        const std::function<bool(const metapb::RangeEpoch&)>& f1,
         RaftServer *server,
         sharkstore::dataserver::storage::DbInterface* db,
-        sharkstore::raft::impl::WorkThread* trd);
+        sharkstore::dataserver::WorkThread* trd);
+        //sharkstore::raft::impl::WorkThread* trd);
 
 } /* namespace raft */
 } /* namespace sharkstore */
