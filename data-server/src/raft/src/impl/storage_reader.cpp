@@ -98,7 +98,7 @@ Status StorageReader::ProcessFiles() {
 
             ret = (*f)->Get(i, &ent);
             if (!ret.ok()) {
-                RAFT_LOG_ERROR("LogFile::Get() error, path: %s index: %llu", (*f)->Path(), i);
+                RAFT_LOG_ERROR("LogFile::Get() error, path: %s index: %llu", (*f)->Path().c_str(), i);
                 break;
             }
 
@@ -106,12 +106,12 @@ Status StorageReader::ProcessFiles() {
             if (cmd) {
                 auto ret = ApplyRaftCmd(*cmd);
                 if (!ret.ok()) {
-                    RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path(), i);
+                    RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path().c_str(), i);
                     break;
                 }
                 ret = StoreAppliedIndex(curr_seq_, curr_index_);
                 if (!ret.ok()) {
-                    RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path(), i);
+                    RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path().c_str(), i);
                     break;
                 }
             }
@@ -121,7 +121,7 @@ Status StorageReader::ProcessFiles() {
             done_files_.emplace(std::pair<uint64_t, uint64_t>((*f)->Seq(), (*f)->LastIndex()));
             log_files_.erase(f);
         } else {
-            RAFT_LOG_WARN("StorageReader::ApplyIndex() error, path: %s index: %llu", (*f)->Path(), i);
+            RAFT_LOG_WARN("StorageReader::ApplyIndex() error, path: %s index: %llu", (*f)->Path().c_str(), i);
             f++;
         }
     } //end all file
@@ -131,7 +131,7 @@ Status StorageReader::ProcessFiles() {
 Status StorageReader::listLogs() {
     for (auto f : log_files_) {
         RAFT_LOG_DEBUG("path: %s \nfile_size: %llu \nlog item size: %d",
-                       f->Path(), f->FileSize(), f->LogSize());
+                       f->Path().c_str(), f->FileSize(), f->LogSize());
     }
     return Status::OK();
 }
