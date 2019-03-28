@@ -9,7 +9,7 @@ std::shared_ptr<RaftLogReader> CreateRaftLogReader(const uint64_t id,
                                                    const std::function<bool(const metapb::RangeEpoch &epoch, errorpb::Error *&err)>& f1,
                                                    RaftServer *server,
                                                    sharkstore::dataserver::storage::DbInterface* db,
-                                                   sharkstore::raft::impl::WorkThread* trd)
+                                                   sharkstore::dataserver::WorkThread* trd)
 {
     return std::shared_ptr<RaftLogReader>(new impl::StorageReader(id, f0, f1, server, db, trd));
 }

@@ -4,8 +4,8 @@ _Pragma("once");
 #include <unordered_map>
 #include <memory>
 #include <functional>
-#include <mutex>
-#include <condition_variable>
+//#include <mutex>
+//#include <condition_variable>
 #include <vector>
 
 #include "raft/raft_log_reader.h"
@@ -17,35 +17,16 @@ _Pragma("once");
 namespace sharkstore {
     class Status;
 namespace dataserver {
+    class WorkThread;
 namespace storage {
     static const std::string kPersistRaftLogPrefix = "\x06";
 
     class DbInterface;
 }}}
 
-namespace sharkstore {
-namespace raft {
-    class RaftServer;
-namespace impl {
-    class Work;
-
-    class WorkThread;
-
-    class RaftImpl;
-    namespace pb {
-        class Entry;
-    }
-
-    namespace storage {
-        class DiskStorage;
-        class LogFile;
-    }
-}}}
-
 using Status = sharkstore::Status;
-using StorageThread =  sharkstore::raft::impl::WorkThread;
+using WorkThread =  sharkstore::dataserver::WorkThread;
 using RaftServer = sharkstore::raft::RaftServer;
-using DiskStorage = sharkstore::raft::impl::storage::DiskStorage;
 using LogFile = sharkstore::raft::impl::storage::LogFile;
 using Entry = sharkstore::raft::impl::pb::Entry;
 using DbInterface = sharkstore::dataserver::storage::DbInterface;
@@ -61,8 +42,8 @@ public:
               const std::function<bool(const std::string&, errorpb::Error *&err)>& f0,
               const std::function<bool(const metapb::RangeEpoch &meta, errorpb::Error *&err)>& f1,
               RaftServer *server,
-              sharkstore::dataserver::storage::DbInterface* db,
-              sharkstore::raft::impl::WorkThread* trd);
+              DbInterface* db,
+              WorkThread* trd);
     ~ StorageReader() override ;
 
     StorageReader(const StorageReader&) = delete;
@@ -115,7 +96,6 @@ private:
     uint64_t curr_index_{0};
 
     sharkstore::raft::RaftServer* server_ = nullptr;
-    //std::shared_ptr<DiskStorage> storage_ = nullptr;
 
     std::vector<std::shared_ptr<LogFile>> log_files_;
     //<seq, applied_index>
@@ -123,10 +103,10 @@ private:
     //rocksdb
     DbInterface* db_ = nullptr;
     std::atomic<bool> running_ = {false};
-    StorageThread* trd_ = nullptr;
+    WorkThread* trd_ = nullptr;
 
-    std::mutex  mtx_;
-    std::condition_variable cond_;
+    //std::mutex  mtx_;
+    //std::condition_variable cond_;
 };
 
 } /* namespace impl */

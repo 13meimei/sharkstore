@@ -33,6 +33,8 @@ public:
     RangeStats* Statistics() override { return range_stats_.get(); }
 //    watch::WatchServer* WatchServer() override { return watch_server_.get(); }
     watch::WatchServer* WatchServer() override { return nullptr; }
+    
+    server::PersistServer* PersistServer() override { return nullptr; }
 
     void SetFSUsagePercent(uint64_t value) { fs_usage_percent_ = value; }
     uint64_t GetFSUsagePercent() const override { return fs_usage_percent_.load(); }

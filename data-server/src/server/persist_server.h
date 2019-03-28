@@ -8,20 +8,15 @@ _Pragma("once");
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "raft/raft_log_reader.h"
 #include "proto/gen/metapb.pb.h"
-
-namespace sharkstore {
-namespace raft {
-namespace impl {
-    class WorkThread;
-}}}
+#include "common_thread.h"
 
 namespace sharkstore {
 namespace dataserver {
+    class WorkThread;
 namespace server {
 
-using WorkThread = sharkstore::raft::impl::WorkThread;
-
-class PersistServer final {
+using WorkThread = sharkstore::dataserver::WorkThread;
+class PersistServer final: public std::enable_shared_from_this<PersistServer> {
 public:
     struct Options {
         uint64_t thread_num = 4;
@@ -45,7 +40,7 @@ public:
 
     Status CreateReader(const uint64_t range_id,
                         std::function<bool(const std::string&)> f0,
-                        std::function<bool(const metapb::Range &meta)> f1,
+                        std::function<bool(const metapb::RangeEpoch&)> f1,
                         std::shared_ptr<raft::RaftLogReader>* reader);
 private:
     const Options ops_;
