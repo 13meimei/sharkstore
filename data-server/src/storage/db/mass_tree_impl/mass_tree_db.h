@@ -18,7 +18,7 @@ public:
     Status Get(const std::string& key, std::string* value);
     Status Delete(const std::string& key);
 
-    std::unique_ptr<Scaner> NewScaner(const std::string& start, const std::string& limit);
+    std::unique_ptr<Scaner> NewScaner(const std::string& start, const std::string& limit, size_t max_per_scan = 100);
 
 private:
     thread_local static std::unique_ptr<threadinfo, ThreadInfoDeleter> thread_info_;

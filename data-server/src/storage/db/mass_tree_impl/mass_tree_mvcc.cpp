@@ -24,7 +24,7 @@ Status MvccMassTree::get(MassTreeDB* tree, const std::string& key, std::string* 
     MultiVersionKey multi_key(key, ver, true);
 
     Status ret(Status::kNotFound);
-    auto iter = tree->NewScaner(multi_key.to_string(), "");
+    auto iter = tree->NewScaner(multi_key.to_string(), "", 1);
     if (iter->Valid()) {
         multi_key.from_string(iter->Key());
         if (multi_key.key() == key && !multi_key.is_del()) {
