@@ -10,10 +10,12 @@ using namespace sharkstore::monitor;
 
 void Range::Insert(RPCRequestPtr rpc, kvrpcpb::DsInsertRequest &req) {
     {
-        kvrpcpb::DsInsertResponse resp;
-        resp.mutable_resp()->set_affected_keys(1);
-        storage::g_metric.AddWrite(1, 1);
-        return SendResponse(rpc, resp, req.header(), nullptr);
+         uint64_t affected_keys = 0;
+         auto ret = store_->Insert(req.req(), &affected_keys);
+         kvrpcpb::DsInsertResponse resp;
+         resp.mutable_resp()->set_affected_keys(affected_keys);
+         resp.mutable_resp()->set_code(ret.code());
+         return SendResponse(rpc, resp, req.header(), nullptr);
     }
 
     errorpb::Error *err = nullptr;
