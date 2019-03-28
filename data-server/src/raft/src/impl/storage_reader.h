@@ -58,8 +58,8 @@ namespace impl {
 class StorageReader : public RaftLogReader,  public std::enable_shared_from_this<StorageReader> {
 public:
     StorageReader(const uint64_t id,
-              const std::function<bool(const std::string&)>& f0,
-              const std::function<bool(const metapb::Range &meta)>& f1,
+              const std::function<bool(const std::string&, errorpb::Error *&err)>& f0,
+              const std::function<bool(const metapb::RangeEpoch &meta, errorpb::Error *&err)>& f1,
               RaftServer *server,
               sharkstore::dataserver::storage::DbInterface* db,
               sharkstore::raft::impl::WorkThread* trd);
@@ -86,14 +86,28 @@ public:
 private:
     using EntryPtr = std::shared_ptr<Entry>;
     std::shared_ptr<raft_cmdpb::Command> decodeEntry(EntryPtr entry);
+
     Status storeRawPut(const raft_cmdpb::Command &cmd);
+    Status storeRawDelete(const raft_cmdpb::Command &cmd);
+
+    Status storeInsert(const raft_cmdpb::Command & cmd);
+    Status storeUpdate(const raft_cmdpb::Command & cmd);
+    Status storeDelete(const raft_cmdpb::Command & cmd);
+
+    Status storeKVSet(const raft_cmdpb::Command & cmd);
+    Status storeKVBatchSet(const raft_cmdpb::Command & cmd);
+    Status storeKVDelete(const raft_cmdpb::Command & cmd);
+    Status storeKVBatchDelete(const raft_cmdpb::Command & cmd);
+    Status storeKvRangeDelete(const raft_cmdpb::Command & cmd);
+
+
     Status saveApplyIndex(uint64_t range_id, uint64_t apply_index);
 
     bool tryPost(const std::function<void()>& f);
     Status listLogs();
 
-    std::function<bool(const std::string& key)> keyInRange;
-    std::function<bool(const metapb::Range &meta)> EpochIsEqual;
+    std::function<bool(const std::string& key, errorpb::Error *&err)> keyInRange;
+    std::function<bool(const metapb::RangeEpoch &meta, errorpb::Error *&err)> EpochIsEqual;
 private:
     uint64_t id_{0};
     uint64_t applied_{0};
