@@ -15,7 +15,7 @@ _Pragma("once");
 #include "raft/raft.h"
 #include "raft/statemachine.h"
 #include "raft/types.h"
-#include "impl/storage_reader.h"
+#include "raft/raft_log_reader.h"
 #include "server/context_server.h"
 #include "server/run_status.h"
 //#include "watch/watch_event_buffer.h"
@@ -34,8 +34,6 @@ _Pragma("once");
 
 // for test friend class
 namespace sharkstore { namespace test { namespace helper { class RangeTestFixture; }}}
-namespace sharkstore { namespace raft { namespace impl { class StorageReader; }}}
-using StorageReader = sharkstore::raft::impl::StorageReader;
 
 namespace sharkstore {
 namespace dataserver {
@@ -314,7 +312,7 @@ private:
     std::unique_ptr<storage::Store> store_;
     std::shared_ptr<raft::Raft> raft_;
 
-    std::shared_ptr<StorageReader> reader_;
+    std::shared_ptr<raft::RaftLogReader> reader_;
 };
 
 }  // namespace range

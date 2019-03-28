@@ -8,7 +8,7 @@ _Pragma("once");
 #include <condition_variable>
 #include <vector>
 
-//#include "../../raft.pb.h"
+#include "raft/raft_log_reader.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "storage/db/db_interface.h"
 #include "proto/gen/mspb.pb.h"
@@ -56,7 +56,7 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
-class StorageReader : public std::enable_shared_from_this<StorageReader> {
+class StorageReader : public RaftLogReader,  public std::enable_shared_from_this<StorageReader> {
 public:
     StorageReader(const uint64_t id,
               const std::function<bool(const std::string&)>& f0,
@@ -64,25 +64,25 @@ public:
               RaftServerImpl *server,
               sharkstore::dataserver::storage::DbInterface* db,
               sharkstore::raft::impl::WorkThread* trd);
-    ~ StorageReader();
+    ~ StorageReader() override ;
 
     StorageReader(const StorageReader&) = delete;
     StorageReader& operator=(const StorageReader&) = delete;
 
-    Status Run();
-    size_t GetCommitFiles();
-    Status ProcessFiles();
+    Status Run() override ;
+    size_t GetCommitFiles() override ;
+    Status ProcessFiles() override ;
 
-    Status ApplyRaftCmd(const raft_cmdpb::Command& cmd);
-    Status StoreAppliedIndex(const uint64_t& seq, const uint64_t& index);
-    Status AppliedTo(uint64_t index);
+    Status ApplyRaftCmd(const raft_cmdpb::Command& cmd) override ;
+    Status StoreAppliedIndex(const uint64_t& seq, const uint64_t& index) override ;
+    Status AppliedTo(uint64_t index) override ;
     //Status ApplySnapshot(const pb::SnapshotMeta&meta);
 
-    uint64_t Applied() const { return applied_; };
+    uint64_t Applied()  const override  { return applied_; };
 
     //index: range applied index
-    Status Notify(const uint64_t range_id, const uint64_t index);
-    Status Close();
+    Status Notify(const uint64_t range_id, const uint64_t index) override ;
+    Status Close() override ;
 
 private:
     using EntryPtr = std::shared_ptr<Entry>;

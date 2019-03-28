@@ -1,4 +1,4 @@
-#include "src/raft/src/impl/storage_reader.h"
+#include "storage_reader.h"
 
 #include <assert.h>
 #include <dirent.h>

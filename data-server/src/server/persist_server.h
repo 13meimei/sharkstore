@@ -6,21 +6,19 @@ _Pragma("once");
 #include "storage/db/db_interface.h"
 #include "common/ds_config.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
-#include "impl/storage_reader.h"
+#include "raft/raft_log_reader.h"
 #include "proto/gen/metapb.pb.h"
 
 namespace sharkstore {
 namespace raft {
 namespace impl {
     class WorkThread;
-    class StorageReader;
 }}}
 
 namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-using StorageReader = sharkstore::raft::impl::StorageReader;
 using WorkThread = sharkstore::raft::impl::WorkThread;
 
 class PersistServer final {
@@ -46,9 +44,9 @@ public:
     void CloseDB();
 
     Status CreateReader(const uint64_t range_id,
-                        const std::function<bool(const std::string&)>& f0,
-                        const std::function<bool(const metapb::Range &meta)>& f1,
-                        std::shared_ptr<StorageReader>* reader);
+                        std::function<bool(const std::string&)>& f0,
+                        std::function<bool(const metapb::Range &meta)>& f1,
+                        std::shared_ptr<raft::RaftLogReader>* reader);
 private:
     const Options ops_;
     ContextServer* context_ = nullptr;
@@ -56,7 +54,7 @@ private:
 
     std::atomic<bool> running_ = {false};
 
-    std::unordered_map<uint64_t, std::shared_ptr<StorageReader>> readers_;
+    std::unordered_map<uint64_t, std::shared_ptr<raft::RaftLogReader>> readers_;
 
     std::vector<WorkThread*> threads_;
 };

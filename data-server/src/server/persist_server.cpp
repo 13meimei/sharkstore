@@ -1,7 +1,7 @@
 #include "persist_server.h"
 
 #include <unordered_map>
-#include <src/raft/src/impl/storage_reader.h>
+//#include <src/raft/src/impl/storage_reader.h>
 
 #include "frame/sf_logger.h"
 #include "common/ds_config.h"
@@ -87,13 +87,14 @@ void PersistServer::CloseDB() {
 }
 
 Status PersistServer::CreateReader(const uint64_t range_id,
-                                   const std::function<bool(const std::string&)>& f0,
-                                   const std::function<bool(const metapb::Range &meta)>& f1,
-                                   std::shared_ptr<StorageReader>* reader)
+                                   std::function<bool(const std::string&)>& f0,
+                                   std::function<bool(const metapb::Range &meta)>& f1,
+                                   std::shared_ptr<raft::RaftLogReader>* reader)
 {
     auto idx = (range_id % threads_.size());
-    auto r = std::make_shared<sharkstore::raft::impl::StorageReader>(
-            range_id, f0, f1, context_->raft_server, db_, threads_[idx]);
+    auto r = raft::CreateRaftLogReader(range_id, f0, f1, context_->raft_server, db_, threads_[idx]);
+    //auto r = std::make_shared<sharkstore::raft::impl::StorageReader>(
+    //        range_id, f0, f1, context_->raft_server, db_, threads_[idx]);
     readers_.emplace(std::make_pair(range_id, r));
     *reader = r;
 
