@@ -1,6 +1,7 @@
 #include "persist_server.h"
 
 #include <unordered_map>
+#include <src/common/ds_config.h>
 
 #include "frame/sf_logger.h"
 #include "common/ds_config.h"
@@ -22,6 +23,12 @@ int PersistServer::Init(ContextServer *context) {
     FLOG_INFO("PersistServer Init begin ...");
 
     context_ = context;
+
+    Options ops;
+    ops.thread_num = ds_config.persist_config.persist_threads;
+    ops.delay_count = ds_config.persist_config.persist_delay_size;
+    ops.queue_capacity = ds_config.persist_config.persist_queue_size;
+    ops_ = ops;
 
     // 打开数据db
     if (OpenDB() != 0) {
@@ -58,7 +65,6 @@ Status PersistServer::Stop() {
 }
 
 void PersistServer::PostPersist(const uint64_t range_id, const uint64_t persist, const uint64_t applied) {
-    //TO DO get persist index
     if (applied  - persist > ops_.delay_count) {
         readers_.find(range_id)->second->Notify(range_id, applied);
     }
@@ -91,7 +97,8 @@ Status PersistServer::CreateReader(const uint64_t range_id,
                                    std::shared_ptr<raft::RaftLogReader>* reader)
 {
     auto idx = (range_id % threads_.size());
-    *reader  = raft::CreateRaftLogReader(range_id, std::move(f0), std::move(f1), context_->raft_server, db_, threads_[idx]);
+    *reader  = raft::CreateRaftLogReader(range_id, std::move(f0), std::move(f1),
+                                         context_->raft_server, db_, threads_[idx]);
     //auto r = std::make_shared<sharkstore::raft::impl::StorageReader>(
     //        range_id, f0, f1, context_->raft_server, db_, threads_[idx]);
     readers_.emplace(std::make_pair(range_id, *reader));

@@ -21,6 +21,8 @@ namespace sharkstore {
 namespace raft {
 namespace impl {
 
+static const int PERSIST_DONE_FILE_SIZE = 10;
+
 StorageReader::StorageReader(const uint64_t id,
                              const std::function<bool(const std::string&)>& f0,
                              const std::function<bool(const metapb::RangeEpoch&)>& f1,
@@ -35,7 +37,7 @@ StorageReader::StorageReader(const uint64_t id,
 StorageReader::~StorageReader() { Close(); }
 
 //task func
-Status StorageReader::Run() {
+Status StorageReader::DealTask() {
     do {
         if (!running_) break;
 
@@ -89,36 +91,55 @@ Status StorageReader::ProcessFiles() {
     EntryPtr ent = nullptr;
 
     uint64_t i = 0;
+    uint64_t start{0};
+    uint64_t last{0};
     for (auto f = log_files_.begin(); f != log_files_.end(); ) {
-        for (i = (*f)->Index(); i<(*f)->LastIndex(); i++) {
-            if (i == (*f)->Index()) {
-                curr_seq_ = (*f)->Seq();
-                curr_index_ = (*f)->Index();
-            }
+        start = (*f)->Index();
+        last = (*f)->LastIndex();
+        curr_seq_ = (*f)->Seq();
+        curr_index_ = start;
+        RAFT_LOG_INFO("persisting file...%s  log_size: %" PRIu64 " raft index scope: " PRIu64 " - %" PRIu64
+                              " persist index: %" PRIu64,
+                      (*f)->Path(), (*f)->LogSize(), start, last, applied_);
 
+        if (start-1 > applied_) {
+            RAFT_LOG_ERROR("persist error: start index upper than applied\nfile: %s\n(%"
+                                   PRIu64 " > %" PRIu64 ")", (*f)->Path(), start, applied_);
+            break;
+        }
+        i = start>applied_? start: applied_;
+        for (;i <= last; i++) {
             ret = (*f)->Get(i, &ent);
             if (!ret.ok()) {
                 RAFT_LOG_ERROR("LogFile::Get() error, path: %s index: %llu", (*f)->Path(), i);
                 break;
             }
 
+            //ignore?
             auto cmd = decodeEntry(ent);
-            if (cmd) {
-                auto ret = ApplyRaftCmd(*cmd);
-                if (!ret.ok()) {
-                    RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path(), i);
-                    break;
-                }
-                ret = StoreAppliedIndex(curr_seq_, curr_index_);
-                if (!ret.ok()) {
-                    RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path(), i);
-                    break;
-                }
+            if (cmd == nullptr) {
+                RAFT_LOG_ERROR("decodeEntry error, file_name: %s", (*f)->Path().c_str());
+                continue;
             }
+
+            auto ret = ApplyRaftCmd(*cmd);
+            if (!ret.ok()) {
+                RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path(), i);
+                break;
+            }
+            ret = StoreAppliedIndex(curr_seq_, i);
+            if (!ret.ok()) {
+                RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path(), i);
+                break;
+            }
+
         } //end one file
 
-        if (i == (*f)->LastIndex()) {
+        if (i >= last) {
             done_files_.emplace(std::pair<uint64_t, uint64_t>((*f)->Seq(), (*f)->LastIndex()));
+            if (done_files_.size() > PERSIST_DONE_FILE_SIZE) {
+                done_files_.erase(done_files_.begin());
+            }
             log_files_.erase(f);
         } else {
             RAFT_LOG_WARN("StorageReader::ApplyIndex() error, path: %s index: %llu", (*f)->Path(), i);
@@ -166,8 +187,11 @@ Status StorageReader::Notify(const uint64_t range_id, const uint64_t index) {
         return Status(Status::kShutdownInProgress, "server is stopping",
                       std::to_string(id_));
     }
+    RAFT_LOG_DEBUG("Notify to persist, range_id: %" PRIu64
+                           " persist index: %" PRIu64 " applied index: %" PRIu64,
+                   range_id, applied_, index);
 
-    if(!tryPost(std::bind(&StorageReader::Run, shared_from_this()))) {
+    if(!tryPost(std::bind(&StorageReader::DealTask, shared_from_this()))) {
         RAFT_LOG_WARN("StorageReader::tryPost fail...");
     }
     return Status::OK();

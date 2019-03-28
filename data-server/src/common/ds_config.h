@@ -103,6 +103,13 @@ typedef struct ds_config_s {
     struct {
         char name[8];
     } engine_config;
+
+    struct {
+        int persist_threads;
+        int persist_queue_size;
+        int persist_delay_size;
+    } persist_config;
+
 } ds_config_t;
 
 extern ds_config_t ds_config;

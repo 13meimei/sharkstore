@@ -7,6 +7,7 @@ _Pragma("once");
 //#include <mutex>
 //#include <condition_variable>
 #include <vector>
+#include <map>
 
 #include "raft/raft_log_reader.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
@@ -49,12 +50,13 @@ public:
     StorageReader(const StorageReader&) = delete;
     StorageReader& operator=(const StorageReader&) = delete;
 
-    Status Run() override ;
+    Status DealTask() override ;
     size_t GetCommitFiles() override ;
     Status ProcessFiles() override ;
 
     Status ApplyRaftCmd(const raft_cmdpb::Command& cmd) override ;
     Status StoreAppliedIndex(const uint64_t& seq, const uint64_t& index) override ;
+
     Status AppliedTo(uint64_t index) override ;
     //Status ApplySnapshot(const pb::SnapshotMeta&meta);
 
@@ -73,6 +75,7 @@ private:
     bool tryPost(const std::function<void()>& f);
     Status listLogs();
 
+    Status restoreAppliedIndex();
     std::function<bool(const std::string& key)> keyInRange;
     std::function<bool(const metapb::RangeEpoch& meta)> EpochIsEqual;
 private:
@@ -85,7 +88,7 @@ private:
 
     std::vector<std::shared_ptr<LogFile>> log_files_;
     //<seq, applied_index>
-    std::unordered_map<uint64_t, uint64_t> done_files_;
+    std::map<uint64_t, uint64_t> done_files_;
     //rocksdb
     DbInterface* db_ = nullptr;
     std::atomic<bool> running_ = {false};

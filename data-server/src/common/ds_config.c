@@ -599,6 +599,29 @@ static int load_woker_num_config(IniContext *ini_context) {
     return 0;
 }
 
+static int load_async_persist_config(IniContext *ini_context) {
+    char *section = "async_persist";
+
+    ds_config.persist_config.persist_threads =
+            iniGetIntValue(section, "persist_threads", ini_context, 4);
+    if (ds_config.persist_config.persist_threads <= 0) {
+        ds_config.persist_config.persist_threads = 4;
+    }
+
+    ds_config.persist_config.persist_queue_size =
+            iniGetIntValue(section, "persist_queue_size", ini_context, 100000);
+    if (ds_config.persist_config.persist_queue_size <= 0) {
+        ds_config.persist_config.persist_queue_size = 100000;
+    }
+
+    ds_config.persist_config.persist_delay_size =
+            iniGetIntValue(section, "persist_delay_size", ini_context, 10000);
+    if (ds_config.persist_config.persist_delay_size <= 0) {
+        ds_config.persist_config.persist_delay_size = 10000;
+    }
+    return 0;
+}
+
 int load_from_conf_file(IniContext *ini_context, const char *filename) {
     int result = 0;
 
@@ -655,5 +678,8 @@ int load_from_conf_file(IniContext *ini_context, const char *filename) {
         ds_config.task_timeout = 3000;
     }
 
+    if (load_async_persist_config(ini_context) != 0) {
+        return -1;
+    }
     return 0;
 }
