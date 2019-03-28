@@ -92,8 +92,8 @@ void PersistServer::CloseDB() {
 }
 
 Status PersistServer::CreateReader(const uint64_t range_id,
-                                   std::function<bool(const std::string&)> f0,
-                                   std::function<bool(const metapb::RangeEpoch &)> f1,
+                                   std::function<bool(const std::string&, errorpb::Error *&err)> f0,
+                                   std::function<bool(const metapb::RangeEpoch &, errorpb::Error *&err)> f1,
                                    std::shared_ptr<raft::RaftLogReader>* reader)
 {
     auto idx = (range_id % threads_.size());

@@ -86,11 +86,11 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
     }
 
     // create raft log reader
-    bool (Range::*fn0)(const std::string&) = &Range::KeyInRange;
-    bool (Range::*fn1)(const metapb::RangeEpoch&) = &Range::EpochIsEqual;
+    bool (Range::*fn0)(const std::string&, errorpb::Error *&err) = &Range::KeyInRange;
+    bool (Range::*fn1)(const metapb::RangeEpoch&, errorpb::Error *&err) = &Range::EpochIsEqual;
     s = context_->PersistServer()->CreateReader(id_,
-                                                std::bind(fn0, shared_from_this(), std::placeholders::_1),
-                                                std::bind(fn1, shared_from_this(), std::placeholders::_1),
+                                                std::bind(fn0, shared_from_this(), std::placeholders::_1, std::placeholders::_2),
+                                                std::bind(fn1, shared_from_this(), std::placeholders::_1, std::placeholders::_2),
                                                 &reader_);
     if (!s.ok()) {
         return Status(Status::kInvalidArgument, "create raft log reader", s.ToString());
