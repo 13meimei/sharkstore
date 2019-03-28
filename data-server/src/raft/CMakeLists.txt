@@ -32,7 +32,7 @@ set(raft_SOURCES
     src/server.cpp
     src/status.cpp
     src/types.cpp
-    src/raft_Log_reader.cpp
+    src/raft_log_reader.cpp
 )
 
 foreach(f IN LISTS raft_SOURCES) 
