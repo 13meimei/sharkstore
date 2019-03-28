@@ -297,30 +297,30 @@ Status StorageReader::storeRawDelete(const raft_cmdpb::Command &cmd)
 Status StorageReader::storeInsert(const raft_cmdpb::Command & cmd)
 {
     Status ret;
-    uint64_t affected_keys = 0;
-    RAFT_LOG_DEBUG("storeInsert begin.");
-
-    auto &req = cmd.insert_req();
-    auto btime = NowMicros();
-    errorpb::Error *err = nullptr;
-
-    do {
-        auto &epoch = cmd.verify_epoch();
-
-        if (!EpochIsEqual(epoch, err)) {
-            RAFT_LOG_WARN("storeUpdate failed, epoch is changed.error:%s", err->message().c_str());
-            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
-            break;
-        }
-
-        ret = db_->Insert(req, &affected_keys);
-        if (!ret.ok()){
-            RAFT_LOG_ERROR("storeInsert failed, code:%d, msg:%s",
-                    ret.code(), ret.ToString().c_str());
-            break;
-        }
-
-    } while(false); 
+//    uint64_t affected_keys = 0;
+//    RAFT_LOG_DEBUG("storeInsert begin.");
+//
+//    auto &req = cmd.insert_req();
+//    auto btime = NowMicros();
+//    errorpb::Error *err = nullptr;
+//
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//
+//        if (!EpochIsEqual(epoch, err)) {
+//            RAFT_LOG_WARN("storeUpdate failed, epoch is changed.error:%s", err->message().c_str());
+//            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
+//            break;
+//        }
+//
+//        ret = db_->Insert(req, &affected_keys);
+//        if (!ret.ok()){
+//            RAFT_LOG_ERROR("storeInsert failed, code:%d, msg:%s",
+//                    ret.code(), ret.ToString().c_str());
+//            break;
+//        }
+//
+//    } while(false); 
 
     return ret;
 }
@@ -329,30 +329,30 @@ Status StorageReader::storeUpdate(const raft_cmdpb::Command & cmd)
 {
     Status ret;
     uint64_t affected_keys = 0; 
-    uint64_t update_bytes = 0;
-    
-    RAFT_LOG_DEBUG("storeUpdate begin.");
-
-    auto &req = cmd.update_req();
-    auto btime = NowMicros();
-    errorpb::Error *err = nullptr;
-    
-    do {
-        auto &epoch = cmd.verify_epoch();
-
-        if (!EpochIsEqual(epoch, err)) {
-            RAFT_LOG_WARN("storeUpdate failed, epoch is changed.error:%s", err->message().c_str());
-            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
-            break;
-        }
-
-        ret = db_->update(req, &affected_keys, &update_bytes);
-        if (!ret.ok()){
-            RAFT_LOG_ERROR("storeUpdate failed, code:%d, msg:%s",
-                    ret.code(), ret.ToString().c_str());
-            break;
-        }
-    } while(false); 
+//    uint64_t update_bytes = 0;
+//    
+//    RAFT_LOG_DEBUG("storeUpdate begin.");
+//
+//    auto &req = cmd.update_req();
+//    auto btime = NowMicros();
+//    errorpb::Error *err = nullptr;
+//    
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//
+//        if (!EpochIsEqual(epoch, err)) {
+//            RAFT_LOG_WARN("storeUpdate failed, epoch is changed.error:%s", err->message().c_str());
+//            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
+//            break;
+//        }
+//
+//        ret = db_->update(req, &affected_keys, &update_bytes);
+//        if (!ret.ok()){
+//            RAFT_LOG_ERROR("storeUpdate failed, code:%d, msg:%s",
+//                    ret.code(), ret.ToString().c_str());
+//            break;
+//        }
+//    } while(false); 
 
     return ret;
 }
@@ -360,40 +360,40 @@ Status StorageReader::storeUpdate(const raft_cmdpb::Command & cmd)
 Status StorageReader::storeDelete(const raft_cmdpb::Command & cmd)
 {
     Status ret;
-    uint64_t affected_keys = 0;
-
-    RAFT_LOG_DEBUG("storeDelte begin.");
-
-    auto &req = cmd.delete_req();
-    auto btime = NowMicros();
-    errorpb::Error *err = nullptr;
-
-    do {
-        auto &key = req.key();
-
-        if (key.empty()){
-            auto &epoch = cmd.verify_epoch();
-
-            if (!EpochIsEqual(epoch, err)){ 
-                RAFT_LOG_WARN("storeDelete failed, epoch is changed.error:%s", err->message().c_str());
-                ret = Status(Status::kInvalidArgument, "epoch is changed", "");
-                break;
-            }
-        } else {
-            if (!keyInRange(key, err)) { 
-                RAFT_LOG_WARN("storeUpdate failed, epoch is changed.error:%s", err->message().c_str());
-                ret = Status(Status::kInvalidArgument, "key not in range", "");
-                break;
-            }
-        } 
-
-        ret = db_->DeleteRow(req, &affected_keys);
-        if (!ret.ok()) {
-            RAFT_LOG_ERROR("storeDelete failed, code:%d, msg:%s",
-                    ret.code, ret.ToString().c_str());
-            break;
-        }
-    } while(false);
+//    uint64_t affected_keys = 0;
+//
+//    RAFT_LOG_DEBUG("storeDelte begin.");
+//
+//    auto &req = cmd.delete_req();
+//    auto btime = NowMicros();
+//    errorpb::Error *err = nullptr;
+//
+//    do {
+//        auto &key = req.key();
+//
+//        if (key.empty()){
+//            auto &epoch = cmd.verify_epoch();
+//
+//            if (!EpochIsEqual(epoch, err)){ 
+//                RAFT_LOG_WARN("storeDelete failed, epoch is changed.error:%s", err->message().c_str());
+//                ret = Status(Status::kInvalidArgument, "epoch is changed", "");
+//                break;
+//            }
+//        } else {
+//            if (!keyInRange(key, err)) { 
+//                RAFT_LOG_WARN("storeUpdate failed, epoch is changed.error:%s", err->message().c_str());
+//                ret = Status(Status::kInvalidArgument, "key not in range", "");
+//                break;
+//            }
+//        } 
+//
+//        ret = db_->DeleteRow(req, &affected_keys);
+//        if (!ret.ok()) {
+//            RAFT_LOG_ERROR("storeDelete failed, code:%d, msg:%s",
+//                    ret.code, ret.ToString().c_str());
+//            break;
+//        }
+//    } while(false);
 
     return ret;
 }
@@ -401,42 +401,42 @@ Status StorageReader::storeDelete(const raft_cmdpb::Command & cmd)
 Status StorageReader::storeKVSet(const raft_cmdpb::Command & cmd)
 {
     Status ret;
-    uint64_t affected_keys = 0;
-
-    RAFT_LOG_DEBUG("storeKvSet begin.");
-
-    auto &req = cmd.kv_set_req();
-    auto btime = NowMicros(); 
-    errorpb::Error *err = nullptr;
-
-    do {
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)){ 
-            RAFT_LOG_WARN("storeKvSet failed, epoch is changed.error:%s", err->message().c_str());
-            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
-            break;
-        }
-
-        if (req.case_() != kvrpcpb::EC_Force) {
-            bool bExists = db_->KeyExists(req.kv().key());
-            if ((req.case_() == kvrpcb::EC_Exists && !bExists) 
-                    || (req.case_() == kvrpcpb::EC_NotExists && bExists)) { 
-
-                break;
-            }
-
-            if (bExists) {
-                affected_keys = 1;
-            } 
-        }
-
-        ret = db_->Put(req.kv().key(), req.kv().value());
-        if (!ret.ok()) {
-            RAFT_LOG_ERROR("storeKvSet failed. code:%d, msg:%s",
-                    ret.code, ret.ToString().c_str());
-            break;
-        }
-    } while(false); 
+//    uint64_t affected_keys = 0;
+//
+//    RAFT_LOG_DEBUG("storeKvSet begin.");
+//
+//    auto &req = cmd.kv_set_req();
+//    auto btime = NowMicros(); 
+//    errorpb::Error *err = nullptr;
+//
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)){ 
+//            RAFT_LOG_WARN("storeKvSet failed, epoch is changed.error:%s", err->message().c_str());
+//            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
+//            break;
+//        }
+//
+//        if (req.case_() != kvrpcpb::EC_Force) {
+//            bool bExists = db_->KeyExists(req.kv().key());
+//            if ((req.case_() == kvrpcb::EC_Exists && !bExists) 
+//                    || (req.case_() == kvrpcpb::EC_NotExists && bExists)) { 
+//
+//                break;
+//            }
+//
+//            if (bExists) {
+//                affected_keys = 1;
+//            } 
+//        }
+//
+//        ret = db_->Put(req.kv().key(), req.kv().value());
+//        if (!ret.ok()) {
+//            RAFT_LOG_ERROR("storeKvSet failed. code:%d, msg:%s",
+//                    ret.code, ret.ToString().c_str());
+//            break;
+//        }
+//    } while(false); 
 
     return ret;
 }
@@ -444,59 +444,59 @@ Status StorageReader::storeKVSet(const raft_cmdpb::Command & cmd)
 Status StorageReader::storeKVBatchSet(const raft_cmdpb::Command & cmd) 
 {
     Status ret;
-    uint64_t affected_keys = 0;
-
-    RAFT_LOG_DEBUG("storeKvBatchSet begin.");
-
-    auto &req = cmd.kv_batch_set_req();
-    auto btime = NowMicros();
-    errorpb::Error *err = nullptr;
-    auto total_size = 0, total_count = 0;
-
-    do {
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)){ 
-            RAFT_LOG_WARN("storeKvBatchSet failed, epoch is changed.error:%s", err->message().c_str());
-            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
-            break;
-        }
-
-        std::vector<std::pair<std::string, std::string>> keyValues;
-        
-        auto existCase = req.case_();
-        for (int i = 0, count = req.kvs_size(); i < count; ++i) {
-            auto kv = req.kvs(i);
-            do {
-                if (req.case_() != kvrpcpb::EC_Force) {
-                    bool bExists = db_->KeyExists(kv.key());
-                    if ((existCase == kvrpcpb::EC_Exists && !bExists) ||
-                            (existCase == kvrpcpb::EC_NotExits && bExists)) {
-
-                        break;
-                    }
-
-                    if (bExists) {
-                        ++affected_keys;
-                    }
-                }
-
-                total_size += kv.key().size() + kv.value().size();
-                ++total_count;
-
-                keyValues.push_back(std::pair<std::string, std::string>(kv.key(), kv.value()));
-
-            } while(false);
-
-            ret = db_->BatchSet(keyValues);
-
-            if (!ret.ok()) {
-                RAFT_LOG_ERROR("storeKvBatchSet failed, ret:%d, msg:%s",
-                        ret.code(), ret.ToString().c_str());
-                break;
-            }
-        }
-        
-    } while (false);
+//    uint64_t affected_keys = 0;
+//
+//    RAFT_LOG_DEBUG("storeKvBatchSet begin.");
+//
+//    auto &req = cmd.kv_batch_set_req();
+//    auto btime = NowMicros();
+//    errorpb::Error *err = nullptr;
+//    auto total_size = 0, total_count = 0;
+//
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)){ 
+//            RAFT_LOG_WARN("storeKvBatchSet failed, epoch is changed.error:%s", err->message().c_str());
+//            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
+//            break;
+//        }
+//
+//        std::vector<std::pair<std::string, std::string>> keyValues;
+//        
+//        auto existCase = req.case_();
+//        for (int i = 0, count = req.kvs_size(); i < count; ++i) {
+//            auto kv = req.kvs(i);
+//            do {
+//                if (req.case_() != kvrpcpb::EC_Force) {
+//                    bool bExists = db_->KeyExists(kv.key());
+//                    if ((existCase == kvrpcpb::EC_Exists && !bExists) ||
+//                            (existCase == kvrpcpb::EC_NotExits && bExists)) {
+//
+//                        break;
+//                    }
+//
+//                    if (bExists) {
+//                        ++affected_keys;
+//                    }
+//                }
+//
+//                total_size += kv.key().size() + kv.value().size();
+//                ++total_count;
+//
+//                keyValues.push_back(std::pair<std::string, std::string>(kv.key(), kv.value()));
+//
+//            } while(false);
+//
+//            ret = db_->BatchSet(keyValues);
+//
+//            if (!ret.ok()) {
+//                RAFT_LOG_ERROR("storeKvBatchSet failed, ret:%d, msg:%s",
+//                        ret.code(), ret.ToString().c_str());
+//                break;
+//            }
+//        }
+//        
+//    } while (false);
 
     return ret;
 } 
@@ -505,27 +505,27 @@ Status StorageReader::storeKVDelete(const raft_cmdpb::Command & cmd)
 {
     Status ret;
 
-    RAFT_LOG_DEBUG("storeKvDelete begin.");
-
-    auto &req = cmd.kv_delete_req();
-    auto btime = NowMicros();
-    errorpb::Error *err = nullptr;
-
-    do {
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)){ 
-            RAFT_LOG_WARN("storeKvDelete failed, epoch is changed.error:%s", err->message().c_str());
-            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
-            break;
-        }
-
-        ret = db_->Delete(req.key());
-        if (!ret.ok()) {
-            RAFT_LOG_ERROR("storeKvDelete failed, code:%d, msg:%s", 
-                    ret.code(), ret.ToString().c_str());
-            break;
-        }
-    } while (false);
+//    RAFT_LOG_DEBUG("storeKvDelete begin.");
+//
+//    auto &req = cmd.kv_delete_req();
+//    auto btime = NowMicros();
+//    errorpb::Error *err = nullptr;
+//
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)){ 
+//            RAFT_LOG_WARN("storeKvDelete failed, epoch is changed.error:%s", err->message().c_str());
+//            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
+//            break;
+//        }
+//
+//        ret = db_->Delete(req.key());
+//        if (!ret.ok()) {
+//            RAFT_LOG_ERROR("storeKvDelete failed, code:%d, msg:%s", 
+//                    ret.code(), ret.ToString().c_str());
+//            break;
+//        }
+//    } while (false);
 
     return ret;
 }
@@ -533,46 +533,46 @@ Status StorageReader::storeKVDelete(const raft_cmdpb::Command & cmd)
 Status StorageReader::storeKVBatchDelete(const raft_cmdpb::Command & cmd)
 {
     Status ret;
-    uint64_t affected_keys = 0;
-
-    RAFT_LOG_DEBUG("storeKvBatchDelete begin.");
-
-    auto &req = cmd.kv_batch_del_req();
-    auto btime = NowMicros();
-    errorpb::Error *err = nullptr;
-
-    do {
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)){ 
-            RAFT_LOG_WARN("storeKvBatchDelete failed, epoch is changed.error:%s", err->message().c_str());
-            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
-            break;
-        } 
-
-        std::vector<std::string> delKeys(req.keys_size());
-        for (int i = 0, count = req.keys_size(); i < count; ++i ) {
-            auto &key = req.keys(i);
-            if (req.case_() == kvrpcpb::EC_Exists 
-                    || req.case_() == kvrpcpb::EC_AnyCase) {
-
-                if (db_->KeyExists(key)) {
-                    ++affected_keys;
-                    delKeys.push_back(std::move(key));
-                } 
-            } else {
-                delKeys.push_back(std::move(key));
-            }
-        }
-
-        ret = db_->BatchDelete(delKeys);
-
-        if (!ret.ok()) {
-            RAFT_LOG_ERROR("storeKvBatchDelete failed, code:%d, msg:%s",
-                    ret.code(), ret.ToString().c_str());
-            break;
-        } 
-
-    } while(false);
+//    uint64_t affected_keys = 0;
+//
+//    RAFT_LOG_DEBUG("storeKvBatchDelete begin.");
+//
+//    auto &req = cmd.kv_batch_del_req();
+//    auto btime = NowMicros();
+//    errorpb::Error *err = nullptr;
+//
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)){ 
+//            RAFT_LOG_WARN("storeKvBatchDelete failed, epoch is changed.error:%s", err->message().c_str());
+//            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
+//            break;
+//        } 
+//
+//        std::vector<std::string> delKeys(req.keys_size());
+//        for (int i = 0, count = req.keys_size(); i < count; ++i ) {
+//            auto &key = req.keys(i);
+//            if (req.case_() == kvrpcpb::EC_Exists 
+//                    || req.case_() == kvrpcpb::EC_AnyCase) {
+//
+//                if (db_->KeyExists(key)) {
+//                    ++affected_keys;
+//                    delKeys.push_back(std::move(key));
+//                } 
+//            } else {
+//                delKeys.push_back(std::move(key));
+//            }
+//        }
+//
+//        ret = db_->BatchDelete(delKeys);
+//
+//        if (!ret.ok()) {
+//            RAFT_LOG_ERROR("storeKvBatchDelete failed, code:%d, msg:%s",
+//                    ret.code(), ret.ToString().c_str());
+//            break;
+//        } 
+//
+//    } while(false);
 
     return ret;
 }
@@ -580,18 +580,18 @@ Status StorageReader::storeKVBatchDelete(const raft_cmdpb::Command & cmd)
 Status StorageReader::storeKVRangeDelete(const raft_cmdpb::Command & cmd)
 {
     Status ret; 
-    std::string last_key;
-
-    RAFT_LOG_DEBUG("storeKvRangeDelete begin.");
-
-    auto &req = cmd.kv_range_del_req();
-    auto btime = NowMicros();
-    
-    do {
-        //auto start = std::max(req.start(), start_key_);
-        ;
-    } while (false);
-
+//    std::string last_key;
+//
+//    RAFT_LOG_DEBUG("storeKvRangeDelete begin.");
+//
+//    auto &req = cmd.kv_range_del_req();
+//    auto btime = NowMicros();
+//    
+//    do {
+//        //auto start = std::max(req.start(), start_key_);
+//        ;
+//    } while (false);
+//
     return ret;
 }
 

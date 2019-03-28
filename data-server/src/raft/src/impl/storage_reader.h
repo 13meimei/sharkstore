@@ -98,7 +98,7 @@ private:
     Status storeKVBatchSet(const raft_cmdpb::Command & cmd);
     Status storeKVDelete(const raft_cmdpb::Command & cmd);
     Status storeKVBatchDelete(const raft_cmdpb::Command & cmd);
-    Status storeKvRangeDelete(const raft_cmdpb::Command & cmd);
+    Status storeKVRangeDelete(const raft_cmdpb::Command & cmd);
 
 
     Status saveApplyIndex(uint64_t range_id, uint64_t apply_index);
@@ -107,7 +107,7 @@ private:
     Status listLogs();
 
     std::function<bool(const std::string& key, errorpb::Error *&err)> keyInRange;
-    std::function<bool(const metapb::RangeEpoch &meta, errorpb::Error *&err)> EpochIsEqual;
+    std::function<bool(const metapb::RangeEpoch &epoch, errorpb::Error *&err)> EpochIsEqual;
 private:
     uint64_t id_{0};
     uint64_t applied_{0};
