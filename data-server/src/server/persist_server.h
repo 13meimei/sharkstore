@@ -6,23 +6,21 @@ _Pragma("once");
 #include "storage/db/db_interface.h"
 #include "common/ds_config.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
-#include "raft/storage_reader.h"
+#include "impl/storage_reader.h"
 #include "proto/gen/metapb.pb.h"
 
 namespace sharkstore {
 namespace raft {
 namespace impl {
     class WorkThread;
-    namespace storage {
-        class StorageReader;
-    }
+    class StorageReader;
 }}}
 
 namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-using StorageReader = sharkstore::raft::StorageReader;
+using StorageReader = sharkstore::raft::impl::StorageReader;
 using WorkThread = sharkstore::raft::impl::WorkThread;
 
 class PersistServer final {
@@ -42,7 +40,7 @@ public:
     int Init(ContextServer *context);
     Status Start();
     Status Stop();
-    void TriggerPersist(const uint64_t range_id, const uint64_t persist, const uint64_t applied);
+    void PostPersist(const uint64_t range_id, const uint64_t persist, const uint64_t applied);
 
     int OpenDB();
     void CloseDB();

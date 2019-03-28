@@ -23,6 +23,7 @@ set(raft_SOURCES
     src/impl/storage/meta_file.cpp
     src/impl/storage/storage_disk.cpp
     src/impl/storage/storage_memory.cpp
+        src/impl/storage_reader.cpp
     src/impl/transport/inprocess_transport.cpp
     src/impl/transport/tcp_transport.cpp
     src/impl/work_thread.cpp

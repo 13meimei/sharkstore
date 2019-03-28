@@ -258,7 +258,7 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
     }
 
     //TO DO judge need trigger persist
-    context_->PersistServer()->TriggerPersist( id_, reader_->Applied(), index);
+    context_->PersistServer()->PostPersist( id_, reader_->Applied(), index);
 
     return sts;
 }

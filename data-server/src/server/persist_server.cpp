@@ -1,7 +1,7 @@
 #include "persist_server.h"
 
 #include <unordered_map>
-#include <src/raft/include/raft/storage_reader.h>
+#include <src/raft/src/impl/storage_reader.h>
 
 #include "frame/sf_logger.h"
 #include "common/ds_config.h"
@@ -58,7 +58,7 @@ Status PersistServer::Stop() {
     return Status::OK();
 }
 
-void PersistServer::TriggerPersist(const uint64_t range_id, const uint64_t persist, const uint64_t applied) {
+void PersistServer::PostPersist(const uint64_t range_id, const uint64_t persist, const uint64_t applied) {
     //TO DO get persist index
     if (applied  - persist > ops_.delay_count) {
         readers_.find(range_id)->second->Notify(range_id, applied);
@@ -92,7 +92,7 @@ Status PersistServer::CreateReader(const uint64_t range_id,
                                    std::shared_ptr<StorageReader>* reader)
 {
     auto idx = (range_id % threads_.size());
-    auto r = std::make_shared<sharkstore::raft::StorageReader>(
+    auto r = std::make_shared<sharkstore::raft::impl::StorageReader>(
             range_id, f0, f1, context_->raft_server, db_, threads_[idx]);
     readers_.emplace(std::make_pair(range_id, r));
     *reader = r;
