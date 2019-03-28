@@ -23,7 +23,7 @@ namespace impl {
 StorageReader::StorageReader(const uint64_t id,
                              const std::function<bool(const std::string&)>& f0,
                              const std::function<bool(const metapb::Range &meta)>& f1,
-                             RaftServerImpl* server,
+                             RaftServer* server,
                              DbInterface* db,
                              sharkstore::raft::impl::WorkThread* trd) :
         keyInRange(f0), EpochIsEqual(f1), id_(id), server_(server), db_(db), trd_(trd)
@@ -181,6 +181,10 @@ Status StorageReader::AppliedTo(uint64_t applied) {
     }
 
     return s;
+}
+
+uint64_t StorageReader::Applied() {
+    return applied_;
 }
 
 Status StorageReader::Close() {

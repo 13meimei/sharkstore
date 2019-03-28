@@ -6,6 +6,7 @@
 #include "frame/sf_logger.h"
 #include "common/ds_config.h"
 #include "worker.h"
+#include "work_thread.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -36,10 +37,11 @@ int PersistServer::Init(ContextServer *context) {
 Status PersistServer::Start() {
 
     for (uint64_t i = 0; i < ops_.thread_num; ++i) {
-        auto t = new WorkThread((raft::RaftServerImpl*)(context_->raft_server), ops_.queue_capacity, std::string("storage-reader:") + std::to_string(i));
+        auto t = new WorkThread((raft::impl::RaftServerImpl*)(context_->raft_server), 
+                ops_.queue_capacity, std::string("storage-reader:") + std::to_string(i));
         threads_.emplace_back(t);
     }
-    FLOG_INFO("persist[server] %llu storage reader threads start. queue capacity=%llu",
+    FLOG_INFO("persist[server] %" PRIu64 " storage reader threads start. queue capacity=%" PRIu64 ,
                   ops_.thread_num, ops_.queue_capacity);
 
     running_ = true;
@@ -87,16 +89,15 @@ void PersistServer::CloseDB() {
 }
 
 Status PersistServer::CreateReader(const uint64_t range_id,
-                                   std::function<bool(const std::string&)>& f0,
-                                   std::function<bool(const metapb::Range &meta)>& f1,
+                                   std::function<bool(const std::string&)> f0,
+                                   std::function<bool(const metapb::Range &meta)> f1,
                                    std::shared_ptr<raft::RaftLogReader>* reader)
 {
     auto idx = (range_id % threads_.size());
-    auto r = raft::CreateRaftLogReader(range_id, f0, f1, context_->raft_server, db_, threads_[idx]);
+    *reader  = raft::CreateRaftLogReader(range_id, std::move(f0), std::move(f1), context_->raft_server, db_, threads_[idx]);
     //auto r = std::make_shared<sharkstore::raft::impl::StorageReader>(
     //        range_id, f0, f1, context_->raft_server, db_, threads_[idx]);
-    readers_.emplace(std::make_pair(range_id, r));
-    *reader = r;
+    readers_.emplace(std::make_pair(range_id, *reader));
 
     return Status::OK();
 }

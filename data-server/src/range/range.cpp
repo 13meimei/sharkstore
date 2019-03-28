@@ -4,6 +4,7 @@
 #include "common/ds_config.h"
 #include "master/worker.h"
 #include "server/range_server.h"
+#include "server/persist_server.h"
 #include "server/run_status.h"
 #include "storage/meta_store.h"
 

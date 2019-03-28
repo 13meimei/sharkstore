@@ -13,12 +13,13 @@ _Pragma("once");
 #include "storage/db/db_interface.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
+#include "raft/server.h"
 
 namespace sharkstore {
     class Status;
 namespace dataserver {
 namespace storage {
-    static const std::string kPersistRaftLogPrefix = "\x06";
+//    static const std::string kPersistRaftLogPrefix = "\x06";
 
     class DbInterface;
 }}}
@@ -46,6 +47,7 @@ namespace impl {
 using Status = sharkstore::Status;
 using StorageThread =  sharkstore::raft::impl::WorkThread;
 using RaftServerImpl = sharkstore::raft::impl::RaftServerImpl;
+using RaftServer = sharkstore::raft::RaftServer;
 using DiskStorage = sharkstore::raft::impl::storage::DiskStorage;
 using LogFile = sharkstore::raft::impl::storage::LogFile;
 using Entry = sharkstore::raft::impl::pb::Entry;
@@ -57,13 +59,15 @@ namespace raft {
 
 class RaftLogReader {
 public:
-    RaftLogReader(const uint64_t id,
-              const std::function<bool(const std::string&)>& f0,
-              const std::function<bool(const metapb::Range &meta)>& f1,
-              RaftServerImpl *server,
-              sharkstore::dataserver::storage::DbInterface* db,
-              sharkstore::raft::impl::WorkThread* trd);
-    virtual ~ RaftLogReader();
+    RaftLogReader() = default;
+    RaftLogReader( 
+        const uint64_t id,
+        const std::function<bool(const std::string&)>& f0,
+        const std::function<bool(const metapb::Range &meta)>& f1,
+        RaftServer *server,
+        sharkstore::dataserver::storage::DbInterface* db,
+        sharkstore::raft::impl::WorkThread* trd);
+    virtual ~ RaftLogReader() = default;
 
     RaftLogReader(const RaftLogReader&) = delete;
     RaftLogReader& operator=(const RaftLogReader&) = delete;
@@ -85,12 +89,13 @@ public:
 
 };
 
-std::unique_ptr<RaftLogReader> CreateRaftLogReader(const uint64_t id,
-                                                   const std::function<bool(const std::string&)>& f0,
-                                                   const std::function<bool(const metapb::Range &meta)>& f1,
-                                                   RaftServerImpl *server,
-                                                   sharkstore::dataserver::storage::DbInterface* db,
-                                                   sharkstore::raft::impl::WorkThread* trd);
+std::shared_ptr<RaftLogReader> CreateRaftLogReader(
+        const uint64_t id,
+        const std::function<bool(const std::string&)>& f0,
+        const std::function<bool(const metapb::Range &meta)>& f1,
+        RaftServer *server,
+        sharkstore::dataserver::storage::DbInterface* db,
+        sharkstore::raft::impl::WorkThread* trd);
 
 } /* namespace raft */
 } /* namespace sharkstore */

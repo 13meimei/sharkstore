@@ -25,12 +25,11 @@ namespace storage {
 
 namespace sharkstore {
 namespace raft {
+    class RaftServer;
 namespace impl {
     class Work;
 
     class WorkThread;
-
-    class RaftServerImpl;
 
     class RaftImpl;
     namespace pb {
@@ -45,7 +44,7 @@ namespace impl {
 
 using Status = sharkstore::Status;
 using StorageThread =  sharkstore::raft::impl::WorkThread;
-using RaftServerImpl = sharkstore::raft::impl::RaftServerImpl;
+using RaftServer = sharkstore::raft::RaftServer;
 using DiskStorage = sharkstore::raft::impl::storage::DiskStorage;
 using LogFile = sharkstore::raft::impl::storage::LogFile;
 using Entry = sharkstore::raft::impl::pb::Entry;
@@ -61,7 +60,7 @@ public:
     StorageReader(const uint64_t id,
               const std::function<bool(const std::string&)>& f0,
               const std::function<bool(const metapb::Range &meta)>& f1,
-              RaftServerImpl *server,
+              RaftServer *server,
               sharkstore::dataserver::storage::DbInterface* db,
               sharkstore::raft::impl::WorkThread* trd);
     ~ StorageReader() override ;
@@ -78,7 +77,7 @@ public:
     Status AppliedTo(uint64_t index) override ;
     //Status ApplySnapshot(const pb::SnapshotMeta&meta);
 
-    uint64_t Applied()  const override  { return applied_; };
+    uint64_t Applied()  override;
 
     //index: range applied index
     Status Notify(const uint64_t range_id, const uint64_t index) override ;
@@ -101,7 +100,7 @@ private:
     uint64_t curr_seq_{0};
     uint64_t curr_index_{0};
 
-    sharkstore::raft::impl::RaftServerImpl* server_ = nullptr;
+    sharkstore::raft::RaftServer* server_ = nullptr;
     //std::shared_ptr<DiskStorage> storage_ = nullptr;
 
     std::vector<std::shared_ptr<LogFile>> log_files_;

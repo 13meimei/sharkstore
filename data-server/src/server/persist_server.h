@@ -44,8 +44,8 @@ public:
     void CloseDB();
 
     Status CreateReader(const uint64_t range_id,
-                        std::function<bool(const std::string&)>& f0,
-                        std::function<bool(const metapb::Range &meta)>& f1,
+                        std::function<bool(const std::string&)> f0,
+                        std::function<bool(const metapb::Range &meta)> f1,
                         std::shared_ptr<raft::RaftLogReader>* reader);
 private:
     const Options ops_;
