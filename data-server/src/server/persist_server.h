@@ -43,7 +43,7 @@ public:
                         std::function<bool(const metapb::RangeEpoch&, errorpb::Error *&err)> f1,
                         std::shared_ptr<raft::RaftLogReader>* reader);
 private:
-    const Options ops_;
+    Options ops_;
     ContextServer* context_ = nullptr;
     storage::DbInterface* db_ = nullptr;
 

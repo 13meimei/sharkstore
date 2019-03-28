@@ -71,7 +71,7 @@ public:
     RaftLogReader(const RaftLogReader&) = delete;
     RaftLogReader& operator=(const RaftLogReader&) = delete;
 
-    virtual Status Run() = 0;
+    virtual Status DealTask() = 0;
     virtual size_t GetCommitFiles() = 0;
     virtual Status ProcessFiles() = 0;
 

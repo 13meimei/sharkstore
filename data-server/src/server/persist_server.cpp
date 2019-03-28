@@ -1,7 +1,7 @@
 #include "persist_server.h"
 
 #include <unordered_map>
-#include <src/common/ds_config.h>
+#include <common/ds_config.h>
 
 #include "frame/sf_logger.h"
 #include "common/ds_config.h"
