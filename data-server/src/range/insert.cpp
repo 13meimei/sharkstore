@@ -9,6 +9,13 @@ namespace range {
 using namespace sharkstore::monitor;
 
 void Range::Insert(RPCRequestPtr rpc, kvrpcpb::DsInsertRequest &req) {
+    {
+        kvrpcpb::DsInsertResponse resp;
+        resp.mutable_resp()->set_affected_keys(1);
+        storage::g_metric.AddWrite(1, 1);
+        return SendResponse(rpc, resp, req.header(), nullptr);
+    }
+
     errorpb::Error *err = nullptr;
 
     RANGE_LOG_DEBUG("Insert begin");
