@@ -139,7 +139,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
 
 
     auto req = cmd.lock_req(); // TODO: remove copy
-    auto resp = new (kvrpcpb::DsLockResponse);
+    std::unique_ptr<kvrpcpb::DsLockResponse> resp(new kvrpcpb::DsLockResponse);
     do {
         auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
@@ -193,7 +193,7 @@ Status Range::ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err, atime);
+        ReplySubmit(cmd, resp.release(), err, atime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -250,7 +250,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     errorpb::Error *err = nullptr;
     auto atime = get_micro_second();
     auto &req = cmd.lock_update_req();
-    auto resp = new (kvrpcpb::DsLockUpdateResponse);
+    std::unique_ptr<kvrpcpb::DsLockUpdateResponse> resp(new kvrpcpb::DsLockUpdateResponse);
 
     do {
         auto &epoch = cmd.verify_epoch();
@@ -317,7 +317,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err, atime);
+        ReplySubmit(cmd, resp.release(), err, atime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -366,7 +366,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
     errorpb::Error *err = nullptr;
     auto atime = get_micro_second();
     auto &req = cmd.unlock_req();
-    auto resp = new (kvrpcpb::DsUnlockResponse);
+    std::unique_ptr<kvrpcpb::DsUnlockResponse> resp(new kvrpcpb::DsUnlockResponse);
 
     do {
         auto &epoch = cmd.verify_epoch();
@@ -425,7 +425,7 @@ Status Range::ApplyUnlock(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err, atime);
+        ReplySubmit(cmd, resp.release(), err, atime);
     } else if (err != nullptr) {
         delete err;
     }
@@ -474,7 +474,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     auto atime = get_micro_second();
 
     auto &req = cmd.unlock_force_req();
-    auto resp = new (kvrpcpb::DsUnlockForceResponse);
+    std::unique_ptr<kvrpcpb::DsUnlockForceResponse> resp(new kvrpcpb::DsUnlockForceResponse);
     do {
         auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
@@ -522,7 +522,7 @@ Status Range::ApplyUnlockForce(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, resp, err, atime);
+        ReplySubmit(cmd, resp.release(), err, atime);
     } else if (err != nullptr) {
         delete err;
     }
