@@ -84,6 +84,13 @@ private:
     Status storeKVRangeDelete(const raft_cmdpb::Command & cmd);
 
 
+    Status storeDBGet(const std::string &key, std::string * value);
+    Status storeDBPut(const std::string &key, const std::string & value);
+    Status storeDBDelete(const std::string &key);
+    Status storeDBInsert(const kvrpcpb::InsertRequest &req, uint64_t * affected);
+    Status storeDBUpdate(const kvrpcpb::UpdateRequest &req, uint64_t * affected, uint64_t update_bytes);
+
+
     Status saveApplyIndex(uint64_t range_id, uint64_t apply_index);
 
     bool tryPost(const std::function<void()>& f);

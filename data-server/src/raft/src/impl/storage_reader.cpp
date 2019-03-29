@@ -100,11 +100,11 @@ Status StorageReader::ProcessFiles() {
         curr_index_ = start;
         RAFT_LOG_INFO("persisting file...%s  log_size: %" PRIu64 " raft index scope: " PRIu64 " - %" PRIu64
                               " persist index: %" PRIu64,
-                      (*f)->Path(), (*f)->LogSize(), start, last, applied_);
+                      (*f)->Path().c_str(), (*f)->LogSize(), start, last, applied_);
 
         if (start-1 > applied_) {
             RAFT_LOG_ERROR("persist error: start index upper than applied\nfile: %s\n(%"
-                                   PRIu64 " > %" PRIu64 ")", (*f)->Path(), start, applied_);
+                                   PRIu64 " > %" PRIu64 ")", (*f)->Path().c_str(), start, applied_);
             break;
         }
         i = start>applied_? start: applied_;
@@ -124,12 +124,12 @@ Status StorageReader::ProcessFiles() {
 
             auto ret = ApplyRaftCmd(*cmd);
             if (!ret.ok()) {
-                RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path(), i);
+                RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path().c_str(), i);
                 break;
             }
             ret = StoreAppliedIndex(curr_seq_, i);
             if (!ret.ok()) {
-                RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path(), i);
+                RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path().c_str(), i);
                 break;
             }
 
@@ -282,7 +282,7 @@ Status StorageReader::storeRawPut(const raft_cmdpb::Command &cmd) {
             break; 
         }
 
-        ret = db_->Put(req.key(), req.value());
+        ret = storeDBPut(req.key(), req.value());
         if (!ret.ok()) {
             RAFT_LOG_ERROR("storeRawPut failed, code:%d, msg:%s", 
                     ret.code(), ret.ToString().c_str());
@@ -308,7 +308,7 @@ Status StorageReader::storeRawDelete(const raft_cmdpb::Command &cmd)
             break; 
         } 
 
-        ret = db_->Delete(req.key());
+        ret = storeDBDelete(req.key());
         if (!ret.ok()) {
             RAFT_LOG_ERROR("storeRawDelete failed, code %d, msg:%s",
                     ret.code(), ret.ToString().c_str());
@@ -323,30 +323,30 @@ Status StorageReader::storeRawDelete(const raft_cmdpb::Command &cmd)
 Status StorageReader::storeInsert(const raft_cmdpb::Command & cmd)
 {
     Status ret;
-//    uint64_t affected_keys = 0;
-//    RAFT_LOG_DEBUG("storeInsert begin.");
-//
-//    auto &req = cmd.insert_req();
-//    auto btime = NowMicros();
-//    errorpb::Error *err = nullptr;
-//
-//    do {
-//        auto &epoch = cmd.verify_epoch();
-//
-//        if (!EpochIsEqual(epoch, err)) {
-//            RAFT_LOG_WARN("storeUpdate failed, epoch is changed.error:%s", err->message().c_str());
-//            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
-//            break;
-//        }
-//
-//        ret = db_->Insert(req, &affected_keys);
-//        if (!ret.ok()){
-//            RAFT_LOG_ERROR("storeInsert failed, code:%d, msg:%s",
-//                    ret.code(), ret.ToString().c_str());
-//            break;
-//        }
-//
-//    } while(false); 
+    uint64_t affected_keys = 0;
+    RAFT_LOG_DEBUG("storeInsert begin.");
+
+    auto &req = cmd.insert_req();
+    auto btime = NowMicros();
+    errorpb::Error *err = nullptr;
+
+    do {
+        auto &epoch = cmd.verify_epoch();
+
+        if (!EpochIsEqual(epoch, err)) {
+            RAFT_LOG_WARN("storeUpdate failed, epoch is changed.error:%s", err->message().c_str());
+            ret = Status(Status::kInvalidArgument, "epoch is changed", "");
+            break;
+        }
+        
+        ret = storeDBInsert(req, &affected_keys);
+        if (!ret.ok()){
+            RAFT_LOG_ERROR("storeInsert failed, code:%d, msg:%s",
+                    ret.code(), ret.ToString().c_str());
+            break;
+        }
+
+    } while(false); 
 
     return ret;
 }
@@ -619,6 +619,84 @@ Status StorageReader::storeKVRangeDelete(const raft_cmdpb::Command & cmd)
 //    } while (false);
 //
     return ret;
+}
+
+
+Status StorageReader::storeDBGet(const std::string &key, std::string * value)
+{
+    auto s = db_->Get(key, value);
+    switch(s.code()) {
+        case Status::kOk:
+            return Status::OK();
+        case Status::kNotFound:
+            return Status(Status::kNotFound);
+        default:
+            return Status(Status::kIOError, "get", s.ToString()); 
+    }
+}
+
+Status StorageReader::storeDBPut(const std::string &key, const std::string & value)
+{
+    auto s = db_->Put(key, value);
+    if (s.ok()){
+        return Status::OK();
+    }
+    return Status(Status::kIOError, "put", s.ToString());
+}
+
+Status StorageReader::storeDBDelete(const std::string &key)
+{
+    auto s = db_->Delete(key);
+    switch(s.code()) {
+        case Status::kOk:
+            return Status::OK();
+        case Status::kNotFound:
+            return Status(Status::kNotFound);
+        default:
+            return Status(Status::kIOError, "delete", s.ToString());
+    } 
+}
+
+Status StorageReader::storeDBInsert(const kvrpcpb::InsertRequest &req, uint64_t * affected)
+{
+
+    auto batch = db_->NewBatch();
+    std::string value;
+    *affected = 0;
+    uint64_t bytes_written = 0;
+    Status s ;
+    bool check_dup = req.check_duplicate();
+
+    for (int i = 0; i< req.rows_size(); ++i) {
+        const kvrpcpb::KeyValue &kv = req.rows(i);
+        if (check_dup) {
+            s = db_->Get(kv.key(), &value);
+            if (s.ok()) {
+                return Status(Status::kDuplicate);
+            } else if (s.code() != Status::kNotFound) {
+                return Status(Status::kIOError, "get", s.ToString());
+            }
+        }
+        s = batch->Put(kv.key(), kv.value());
+        if (s.ok()) {
+            return s;
+        }
+        *affected = *affected + 1;
+        bytes_written +=(kv.key().size(), kv.value().size());
+    }
+
+    s = db_->Write(batch.get());
+    if (!s.ok()) {
+        return s;
+    } else {
+        return Status::OK(); 
+    }
+}
+
+Status StorageReader::storeDBUpdate(const kvrpcpb::UpdateRequest &req, uint64_t * affected, uint64_t update_bytes)
+{
+
+    return Status::OK();
 }
 
 
