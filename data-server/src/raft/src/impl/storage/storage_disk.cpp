@@ -604,12 +604,12 @@ std::vector<std::shared_ptr<LogFile>>& DiskStorage::GetLogFiles() {
     return log_files_commited_;
 };
 
-Status DiskStorage::LoadCommitFiles(uint64_t commited) {
+Status DiskStorage::LoadCommitFiles() {
     log_files_commited_.clear();
     for (const auto& f : log_files_) {
         if (f->GetFullFlag() == 0)
             break;
-        if (f->LastIndex() > commited)
+        if (f->LastIndex() > applied_)
             break;
 
         log_files_commited_.emplace_back(f);

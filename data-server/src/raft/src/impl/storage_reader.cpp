@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include <sstream>
+#include <string>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
 #include "logger.h"
@@ -32,6 +33,7 @@ StorageReader::StorageReader(const uint64_t id,
         keyInRange(f0), EpochIsEqual(f1), id_(id), server_(server), db_(db), trd_(trd)
 {
     log_files_.clear();
+    init();
 };
 
 StorageReader::~StorageReader() { Close(); }
@@ -61,7 +63,7 @@ size_t StorageReader::GetCommitFiles() {
     auto s =  std::static_pointer_cast<DiskStorage>( raft->GetStorage() );
     assert(s != nullptr);
 
-    s->LoadCommitFiles(s->Applied());
+    s->LoadCommitFiles();
     if (s->CommitFileCount() == 0) {
         return -1;
     }
@@ -127,7 +129,8 @@ Status StorageReader::ProcessFiles() {
                 RAFT_LOG_ERROR("StorageReader::ApplyRaftCmd() error, path: %s index: %llu", (*f)->Path().c_str(), i);
                 break;
             }
-            ret = StoreAppliedIndex(curr_seq_, i);
+
+            ret = AppliedTo(i);
             if (!ret.ok()) {
                 RAFT_LOG_ERROR("StorageReader::ProcessFiles() warn, path: %s index: %llu", (*f)->Path().c_str(), i);
                 break;
@@ -154,19 +157,6 @@ Status StorageReader::listLogs() {
         RAFT_LOG_DEBUG("path: %s \nfile_size: %llu \nlog item size: %d",
                        f->Path().c_str(), f->FileSize(), f->LogSize());
     }
-    return Status::OK();
-}
-
-Status StorageReader::StoreAppliedIndex(const uint64_t& seq, const uint64_t& index) {
-    std::string key = sharkstore::dataserver::storage::kPersistRaftLogPrefix + std::to_string(id_);
-    const std::string& value = std::to_string(index);
-    // put into db
-    auto ret = db_->Put(key, value);
-    if (!ret.ok()) {
-        return Status(Status::kIOError, "put", ret.ToString());
-    }
-
-    AppliedTo(index);
     return Status::OK();
 }
 
@@ -209,6 +199,15 @@ Status StorageReader::AppliedTo(uint64_t applied) {
     return s;
 }
 
+Status StorageReader::LoadApplied(uint64_t *index) {
+    uint64_t idx;
+    auto s = restoreAppliedIndex(id_, &idx);
+    if (s.ok()) {
+        *index = idx;
+    }
+    return s;
+}
+
 uint64_t StorageReader::Applied() {
     return applied_;
 }
@@ -218,18 +217,42 @@ Status StorageReader::Close() {
     return Status::OK();
 }
 
-Status StorageReader::saveApplyIndex(uint64_t range_id, uint64_t apply_index) {
-    std::string key = sharkstore::dataserver::storage::kPersistRaftLogPrefix + std::to_string(range_id);
-    //TO DO rocksdb
-    //auto ret = db_->Put(rocksdb::WriteOptions(), key, std::to_string(apply_index));
-    Status ret;
-    if (ret.ok()) {
-        return Status::OK();
-    } else {
-        return Status(Status::kIOError, "meta save apply", ret.ToString());
+Status StorageReader::saveApplyIndex(const uint64_t range_id, const uint64_t apply_index) {
+    //key: perfix + range value: index
+    const std::string key = sharkstore::dataserver::storage::kStorageRangePersistPrefix + std::to_string(range_id);
+    const std::string& value = std::to_string(apply_index);
+    // put into db
+    auto ret = db_->Put(key, value);
+    if (!ret.ok()) {
+        return Status(Status::kIOError, "put", ret.ToString());
     }
 }
 
+Status StorageReader::restoreAppliedIndex(const uint64_t range_id, uint64_t* apply_index) {
+    //key: perfix + range value: apply_index
+    const std::string key = sharkstore::dataserver::storage::kStorageRangePersistPrefix + std::to_string(range_id);
+    const std::string& value = std::to_string(apply_index);
+    // put into db
+    std::string val{""};
+    auto s = db_->Get(key, &val);
+    switch (s.code()) {
+        case Status::kOk:
+        case Status::kNotFound:
+            *apply_index = std::stoull(val);
+            return Status::OK();
+        default:
+            return Status(Status::kIOError, "get", s.ToString());
+    }
+}
+
+void StorageReader::init() {
+    uint64_t idx{0};
+    auto s = LoadApplied(&idx);
+    if (!s.ok()) {
+        init_flag = false;
+    }
+    init_flag = true;
+}
 std::shared_ptr<raft_cmdpb::Command> StorageReader::decodeEntry(EntryPtr entry) {
     std::shared_ptr<raft_cmdpb::Command> raft_cmd = std::make_shared<raft_cmdpb::Command>();
     google::protobuf::io::ArrayInputStream input(entry->data().c_str(), static_cast<int>(entry->ByteSizeLong()));

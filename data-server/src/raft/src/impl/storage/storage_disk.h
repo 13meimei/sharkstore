@@ -64,7 +64,7 @@ public:
 
     std::vector<std::shared_ptr<LogFile>>& GetLogFiles();
 
-    Status LoadCommitFiles(uint64_t commited);
+    Status LoadCommitFiles();
 
 // for tests
 #ifndef NDEBUG

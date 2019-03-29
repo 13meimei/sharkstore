@@ -17,6 +17,7 @@ static const std::string kRangeMetaPrefix = "\x02";
 static const std::string kRangeApplyPrefix = "\x03";
 static const std::string kNodeIDKey = "\x04NodeID";
 static const std::string kRangeVersionPrefix = "\x05";
+static const std::string kRangePersistPrefix = "\x06";
 
 class MetaStore {
 public:

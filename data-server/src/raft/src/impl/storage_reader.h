@@ -20,7 +20,8 @@ namespace sharkstore {
 namespace dataserver {
     class WorkThread;
 namespace storage {
-    static const std::string kPersistRaftLogPrefix = "\x06";
+    //need move to meta_store.cpp
+    static const std::string kStorageRangePersistPrefix = "\x06";
 
     class DbInterface;
 }}}
@@ -55,9 +56,9 @@ public:
     Status ProcessFiles() override ;
 
     Status ApplyRaftCmd(const raft_cmdpb::Command& cmd) override ;
-    Status StoreAppliedIndex(const uint64_t& seq, const uint64_t& index) override ;
 
     Status AppliedTo(uint64_t index) override ;
+    Status LoadApplied(uint64_t *index) override ;
     //Status ApplySnapshot(const pb::SnapshotMeta&meta);
 
     uint64_t Applied()  override;
@@ -65,8 +66,12 @@ public:
     //index: range applied index
     Status Notify(const uint64_t range_id, const uint64_t index) override ;
     Status Close() override ;
+    //TO DO 后续改造reader仅负责解析文件，读取文件（读取完毕切换），并返回raft command结构
+    //持久化放在persist server中调度，双range结构
+    Status Next(uint64_t& index, std::shared_ptr<raft_cmdpb::Command>& cmd);
 
 private:
+    void init();
     using EntryPtr = std::shared_ptr<Entry>;
     std::shared_ptr<raft_cmdpb::Command> decodeEntry(EntryPtr entry);
 
@@ -83,24 +88,24 @@ private:
     Status storeKVBatchDelete(const raft_cmdpb::Command & cmd);
     Status storeKVRangeDelete(const raft_cmdpb::Command & cmd);
 
-
     Status storeDBGet(const std::string &key, std::string * value);
     Status storeDBPut(const std::string &key, const std::string & value);
     Status storeDBDelete(const std::string &key);
     Status storeDBInsert(const kvrpcpb::InsertRequest &req, uint64_t * affected);
     Status storeDBUpdate(const kvrpcpb::UpdateRequest &req, uint64_t * affected, uint64_t update_bytes);
 
-
-    Status saveApplyIndex(uint64_t range_id, uint64_t apply_index);
+    Status saveApplyIndex(const uint64_t range_id, const uint64_t apply_index);
+    Status restoreAppliedIndex(const uint64_t range_id, uint64_t* apply_index);
 
     bool tryPost(const std::function<void()>& f);
     Status listLogs();
 
-    Status restoreAppliedIndex();
+
     std::function<bool(const std::string& key, errorpb::Error *&err)> keyInRange;
     std::function<bool(const metapb::RangeEpoch &epoch, errorpb::Error *&err)> EpochIsEqual;
 
 private:
+    std::atomic<bool> init_flag = {false};
     uint64_t id_{0};
     uint64_t applied_{0};
     uint64_t curr_seq_{0};

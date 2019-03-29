@@ -39,10 +39,14 @@ public:
     int OpenDB();
     void CloseDB();
 
+    storage::IteratorInterface* GetIterator(const std::string& start, const std::string& limit);
+
     Status CreateReader(const uint64_t range_id,
                         std::function<bool(const std::string&, errorpb::Error *&err)> f0,
                         std::function<bool(const metapb::RangeEpoch&, errorpb::Error *&err)> f1,
                         std::shared_ptr<raft::RaftLogReader>* reader);
+
+
 private:
     Options ops_;
     ContextServer* context_ = nullptr;

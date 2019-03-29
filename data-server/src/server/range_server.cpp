@@ -34,6 +34,7 @@
 
 #include "server.h"
 #include "range_context_impl.h"
+#include "persist_server.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -777,6 +778,37 @@ void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
     SetResponseHeader(resp, req, err);
 }
 
+Status RangeServer::recoverKV(const range::Range& rng) {
+    if (!strcasecmp(ds_config.engine_config.name, "rocksdb")) {
+        return Status::OK();
+    }
+
+    Status ret;
+    bool err{false};
+
+    auto it = context_->persist_server->GetIterator(rng.meta_->GetStartKey(), rng.meta_.GetEndKey());
+    if (!it) {
+        return Status(Status::kInvalid, "recoverKV", "GetIterator error.");
+    }
+
+    while (it->Valid()) {
+        ret = db_->Put(std::move(it->key()), std::move(it->value()));
+        if (!ret.ok()) {
+            err = true;
+            FLOG_ERROR("recoverKV error, put KV failed");
+            break;
+        }
+        it->Next();
+    }
+
+    delete it;
+
+    if (err) {
+        return ret;
+    }
+    return Status::OK();
+}
+
 Status RangeServer::recover(const metapb::Range& meta) {
     auto rng = std::make_shared<range::Range>(range_context_.get(), meta);
     auto s = rng->Initialize(0);
@@ -787,6 +819,13 @@ Status RangeServer::recover(const metapb::Range& meta) {
     if (!ret.second) {
         return Status(Status::kDuplicate, "save range", std::to_string(meta.id()));
     }
+
+    s = recoverKV(rng);
+    if (!s.ok()) {
+        FLOG_ERROR("load local range meta failed");
+        return Status(Status::kUnexpected, "load range KV", std::to_string(meta.id()));
+    }
+
     return Status::OK();
 }
 

@@ -92,6 +92,14 @@ void PersistServer::CloseDB() {
     }
 }
 
+storage::IteratorInterface* PersistServer::GetIterator(const std::string& start, const std::string& limit) {
+    if (!db_) {
+        return nullptr;
+    }
+
+    return db_->NewIterator(start, limit);
+}
+
 Status PersistServer::CreateReader(const uint64_t range_id,
                                    std::function<bool(const std::string&, errorpb::Error *&err)> f0,
                                    std::function<bool(const metapb::RangeEpoch &, errorpb::Error *&err)> f1,
