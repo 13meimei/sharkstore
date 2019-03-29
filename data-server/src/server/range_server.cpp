@@ -778,7 +778,7 @@ void RangeServer::RangeNotFound(const kvrpcpb::RequestHeader &req,
     SetResponseHeader(resp, req, err);
 }
 
-Status RangeServer::recoverKV(const range::Range& rng) {
+Status RangeServer::recoverKV(const std::string& start_key, const std::string& end_key) {
     if (!strcasecmp(ds_config.engine_config.name, "rocksdb")) {
         return Status::OK();
     }
@@ -786,7 +786,7 @@ Status RangeServer::recoverKV(const range::Range& rng) {
     Status ret;
     bool err{false};
 
-    auto it = context_->persist_server->GetIterator(rng.meta_->GetStartKey(), rng.meta_.GetEndKey());
+    auto it = context_->persist_server->GetIterator(start_key, end_key); 
     if (!it) {
         return Status(Status::kInvalid, "recoverKV", "GetIterator error.");
     }
@@ -820,7 +820,7 @@ Status RangeServer::recover(const metapb::Range& meta) {
         return Status(Status::kDuplicate, "save range", std::to_string(meta.id()));
     }
 
-    s = recoverKV(rng);
+    s = recoverKV(meta.start_key(), meta.end_key());
     if (!s.ok()) {
         FLOG_ERROR("load local range meta failed");
         return Status(Status::kUnexpected, "load range KV", std::to_string(meta.id()));

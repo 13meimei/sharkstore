@@ -78,7 +78,7 @@ public:
     virtual Status ApplyRaftCmd(const raft_cmdpb::Command& cmd) = 0;
 
     virtual Status AppliedTo(uint64_t index) = 0;
-    Status LoadApplied(uint64_t *index) = 0;
+    virtual Status LoadApplied(uint64_t *index) = 0;
     //Status ApplySnapshot(const pb::SnapshotMeta&meta);
 
     virtual uint64_t Applied() = 0;

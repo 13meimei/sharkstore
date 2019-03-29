@@ -226,12 +226,13 @@ Status StorageReader::saveApplyIndex(const uint64_t range_id, const uint64_t app
     if (!ret.ok()) {
         return Status(Status::kIOError, "put", ret.ToString());
     }
+    return Status::OK();
 }
 
 Status StorageReader::restoreAppliedIndex(const uint64_t range_id, uint64_t* apply_index) {
     //key: perfix + range value: apply_index
     const std::string key = sharkstore::dataserver::storage::kStorageRangePersistPrefix + std::to_string(range_id);
-    const std::string& value = std::to_string(apply_index);
+    const std::string& value = std::to_string(*apply_index);
     // put into db
     std::string val{""};
     auto s = db_->Get(key, &val);

@@ -58,7 +58,7 @@ private:
     int OpenDB();
     void CloseDB();
 
-    Status recoverKV(const range::Range& rng);
+    Status recoverKV(const std::string& start_key, const std::string& end_key);
     Status recover(const metapb::Range& meta);
     int recover(const std::vector<metapb::Range> &metas);
 
