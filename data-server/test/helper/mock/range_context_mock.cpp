@@ -56,6 +56,8 @@ Status RangeContextMock::Init() {
 
     // watch server
 //    watch_server_.reset(new watch::WatchServer);
+    persist_server_.reset(new dataserver::server::PersistServer);
+    //persist_server_->Start();
 
     return Status::OK();
 }

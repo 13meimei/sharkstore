@@ -8,6 +8,7 @@ _Pragma("once");
 #include "master/worker.h"
 #include "watch/watch_server.h"
 #include "storage/db/db_interface.h"
+#include "server/persist_server.h"
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
@@ -34,7 +35,7 @@ public:
 //    watch::WatchServer* WatchServer() override { return watch_server_.get(); }
     watch::WatchServer* WatchServer() override { return nullptr; }
     
-    server::PersistServer* PersistServer() override { return nullptr; }
+    dataserver::server::PersistServer* PersistServer() override { return persist_server_.get(); }
 
     void SetFSUsagePercent(uint64_t value) { fs_usage_percent_ = value; }
     uint64_t GetFSUsagePercent() const override { return fs_usage_percent_.load(); }
@@ -54,6 +55,7 @@ private:
     std::unique_ptr<storage::MetaStore> meta_store_;
     std::unique_ptr<master::Worker> master_worker_;
     std::unique_ptr<raft::RaftServer> raft_server_;
+    std::unique_ptr<dataserver::server::PersistServer> persist_server_;
     std::unique_ptr<RangeStats> range_stats_;
     std::unique_ptr<SplitPolicy> split_policy_;
 //    std::unique_ptr<watch::WatchServer> watch_server_;

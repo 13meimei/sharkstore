@@ -11,6 +11,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace server {
 
+PersistServer::PersistServer() {}
 PersistServer::PersistServer(const Options& ops) :
     ops_(ops) {
 }

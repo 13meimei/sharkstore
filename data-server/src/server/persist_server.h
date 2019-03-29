@@ -24,7 +24,8 @@ public:
         uint64_t queue_capacity = 100000;
     };
 public:
-    explicit PersistServer(const Options& ops);
+    PersistServer();
+    PersistServer(const Options& ops);
     ~PersistServer();
 
     PersistServer(const PersistServer&) = delete;
