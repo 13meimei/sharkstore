@@ -238,14 +238,14 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     errorpb::Error *err = nullptr;
     auto atime = NowMicros();
     auto &req = cmd.lock_update_req();
-    auto resp = new (kvrpcpb::DsLockUpdateResponse);
+    kvrpcpb::DsLockUpdateResponse resp;
 
     do {
         auto &epoch = cmd.verify_epoch();
         if (!EpochIsEqual(epoch, err)) {
             RANGE_LOG_WARN("ApplyLockUpdate error: %s", err->message().c_str());
-            resp->mutable_resp()->set_code(LOCK_EPOCH_ERROR);
-            resp->mutable_resp()->set_error(err->message());
+            resp.mutable_resp()->set_code(LOCK_EPOCH_ERROR);
+            resp.mutable_resp()->set_error(err->message());
             break;
         }
 
@@ -255,18 +255,18 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         kvrpcpb::LockValue val;
         if (!LockQuery(encode_key, &val)) {
             RANGE_LOG_WARN("ApplyLockUpdate error: lock [%s] is not existed", req.key().c_str());
-            resp->mutable_resp()->set_code(LOCK_NOT_EXIST);
-            resp->mutable_resp()->set_error("not exist");
+            resp.mutable_resp()->set_code(LOCK_NOT_EXIST);
+            resp.mutable_resp()->set_error("not exist");
             break;
         }
 
         if (req.id() != val.id()) {
             RANGE_LOG_WARN("ApplyLockUpdate error: lock [%s] can not update with id %s != %s",
                       req.key().c_str(), req.id().c_str(), val.id().c_str());
-            resp->mutable_resp()->set_code(LOCK_ID_MISMATCHED);
-            resp->mutable_resp()->set_error("wrong id: " + val.id());
-            resp->mutable_resp()->set_value(val.value());
-            resp->mutable_resp()->set_update_time(val.update_time());
+            resp.mutable_resp()->set_code(LOCK_ID_MISMATCHED);
+            resp.mutable_resp()->set_error("wrong id: " + val.id());
+            resp.mutable_resp()->set_value(val.value());
+            resp.mutable_resp()->set_update_time(val.update_time());
             break;
         }
 
@@ -291,8 +291,8 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyLockUpdate failed, code:%d, msg:%s", ret.code(),
                        ret.ToString().c_str());
-            resp->mutable_resp()->set_code(LOCK_STORE_FAILED);
-            resp->mutable_resp()->set_error("lock update failed");
+            resp.mutable_resp()->set_code(LOCK_STORE_FAILED);
+            resp.mutable_resp()->set_error("lock update failed");
             break;
         }
 
@@ -305,7 +305,7 @@ Status Range::ApplyLockUpdate(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        ReplySubmit(cmd, *resp, err, atime);
+        ReplySubmit(cmd, resp, err, atime);
     } else if (err != nullptr) {
         delete err;
     }
