@@ -5,6 +5,7 @@ _Pragma("once");
 #include "mass_tree_db.h"
 
 class MassTreeTest;
+namespace sharkstore { namespace test { namespace mock { class MvccMassTreeMock; }}}
 
 namespace sharkstore {
 namespace dataserver {
@@ -14,6 +15,7 @@ class MvccMassTree : public DbInterface {
 public:
     friend class MassTreeIterator;
     friend class ::MassTreeTest;
+    friend class sharkstore::test::mock::MvccMassTreeMock;
 
     MvccMassTree();
     ~MvccMassTree();

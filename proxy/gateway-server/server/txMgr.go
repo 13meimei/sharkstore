@@ -1,13 +1,12 @@
 package server
 
 import (
-	"errors"
 	"fmt"
+	"model/pkg/txn"
+	"proxy/store/dskv"
 	"sort"
 	"util"
 	"util/log"
-	"model/pkg/txn"
-	"proxy/store/dskv"
 )
 
 type TX interface {
@@ -213,8 +212,8 @@ func (t *TxObj) Commit() (err error) {
 	//todo local txn optimize: 1 phase commit
 	err = t.prepareAndDecidePrimaryKey(ctx, priIntents, secIntentsGroup)
 	if err != nil {
-		if err == dskv.ErrRouteChange {
-			log.Warn("prepare and decide tx %v primary intents router change, do ", t.GetTxId())
+		if err == dskv.ErrRouteChange || err == dskv.ErrMultiRange {
+			log.Warn("txn[%v] run 1ph error[%v], try 2ph", t.GetTxId())
 			goto TOW_PHASE_COMMIT
 		}
 		return err
@@ -300,13 +299,9 @@ func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*t
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
 			if errForRetry != nil {
-				log.Error("[commit]%s txn[%v] do 1ph run timeout", ctx, t.GetTxId())
+				log.Error("[commit]%s txn[%v] run 1ph timeout", ctx, t.GetTxId())
 				return
 			}
-		}
-
-		if err == dskv.ErrRouteChange {
-			return
 		}
 
 		var partSecIntents [][]*txnpb.TxnIntent
@@ -318,18 +313,19 @@ func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*t
 			secIntents = append(secIntents, partSecIntents...)
 		}
 		if !isLocalTxn(priIntents, partSecIntents) {
-			err = errors.New("txn[%v] is not local transaction, try 2ph")
+			err = dskv.ErrMultiRange
 			return
 		}
 
-		log.Debug("txn[%v] do 1ph, intents size: %v", t.GetTxId(), len(priIntents))
+		log.Debug("txn[%v] run 1ph, intents size: %v", t.GetTxId(), len(priIntents))
 		req.Intents = priIntents
 		err = t.proxy.handlePrepare(ctx, req, t.GetTable())
 		if err != nil {
+			errForRetry = err
 			// todo if range leader switch, can do continue
-			return err
+			return
 		}
-		log.Debug("txn[%v] 1ph done success", t.GetTxId())
+		log.Debug("txn[%v] run 1ph done success", t.GetTxId())
 		return
 	}
 }
