@@ -7,6 +7,7 @@ var (
 	ErrServerBusy = errors.New("server is busy")
 	ErrInternalError = errors.New("internal error")
 	ErrRouteChange = errors.New("route change")
+	ErrMultiRange = errors.New("multi range")
 	ErrInvalidNode = errors.New("invalid node ID")
 	ErrNotSupportParallelExec = errors.New("proxy not support parallel exec")
 
