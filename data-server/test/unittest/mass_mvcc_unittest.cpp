@@ -2,8 +2,10 @@
 #include <gtest/gtest.h>
 #include "storage/db/multi_v_key.h"
 #include "helper/mock/mass_tree_mvcc_mock.h"
+#include "helper/mock/mass_tree_iterator_mock.h"
 
 using namespace sharkstore::test::mock;
+using namespace sharkstore::dataserver::storage;
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -24,109 +26,47 @@ protected:
     }
 
 protected:
-    sharkstore::dataserver::storage::DbInterface* db_;
+    MvccMassTreeMock* db_;
 };
 
-TEST_F(MassMvccTest, MassPutGet) {
+TEST_F(MassMvccTest, SingleKey) {
     auto db = getenv("DB");
-    std::cout << db << std::endl;
-    ASSERT_STREQ(db, "mass-tree");
+    ASSERT_STREQ(db, "mass-tree-mock");
 
-    std::string k = "k";
-    std::string v = "v";
+    MultiVersionKey mulitKey;
+    std::string k = "a";
+    std::string v = "a";
     db_->Put(k, v);
-    db_->Put(k, v);
-    db_->Put(k, v);
-    db_->Put(k, v+v);
 
-    std::string* retVal = new std::string();
-    db_->Get(k, retVal);
-    std::cout << *retVal << std::endl;
+    std::unique_ptr<MassTreeIteratorMock> it(static_cast<MassTreeIteratorMock*>(db_->NewIterator("", "")));
+    ASSERT_TRUE(it->Valid());
+    mulitKey = it->getMultiKey();
+    //std::cout << mulitKey.key() << " ver=" << mulitKey.ver() << "::::" <<it->key() << std::endl;
+    ASSERT_STREQ(mulitKey.key().c_str(), "a");
+    ASSERT_STREQ(it->value().c_str(), "a");
+    ASSERT_EQ(mulitKey.ver(), 1);
 
-    ASSERT_STREQ(retVal->c_str(), (v+v).c_str());
-}
+    db_->Delete(k);
 
-TEST_F(MassMvccTest, MassDelete) {
-    std::string k1 = "k1";
-    std::string v1 = "v1";
-    std::string k2 = "k2";
-    std::string v2 = "v2";
-    db_->Put(k1, v1);
-    db_->Put(k2, v2);
+    it.reset(static_cast<MassTreeIteratorMock*>(db_->NewIterator("", "")));
+    ASSERT_FALSE(it->Valid());
 
-    db_->Delete(k1);
+    db_->seek_set(false);
+    it.reset(static_cast<MassTreeIteratorMock*>(db_->NewIterator("", "")));
+    ASSERT_TRUE(it->Valid());
 
-    auto ite = db_->NewIterator("", "");
-    while (ite->Valid()) {
-        sharkstore::dataserver::storage::MultiVersionKey mvk(ite->key(), 0, false);
-        mvk.from_string(ite->key());
-        std::cout << "[MassDelete]" << mvk.key() << "," << mvk.ver() << "," <<  mvk.is_del() << std::endl;
-        ASSERT_STREQ(mvk.key().c_str(), k2.c_str());
-        ite->Next();
-    }
-}
+    mulitKey = it->getMultiKey();
+    ASSERT_STREQ(mulitKey.key().c_str(), "a");
+    ASSERT_TRUE(mulitKey.is_del());
+    ASSERT_EQ(mulitKey.ver(), 2);
 
-TEST_F(MassMvccTest, MassIterator) {
-    std::string k1 = "k1";
-    std::string v1 = "v1";
-    std::string k2 = "k2";
-    std::string v2 = "v2";
-    std::string k3 = "k3";
-    std::string v3 = "v3";
-    db_->Put(k1, v1);
-    db_->Put(k2, v2);
-    db_->Put(k3, v3);
-
-    int i = 0;
-    auto ite = db_->NewIterator("", "");
-    while (ite->Valid()) {
-        sharkstore::dataserver::storage::MultiVersionKey mvk(ite->key(), 0, false);
-        mvk.from_string(ite->key());
-        std::cout << "[MassIterator]" << mvk.key() << "," << mvk.ver() << "," <<  mvk.is_del() << std::endl;
-        switch (i) {
-            case 0:
-                ASSERT_STREQ(mvk.key().c_str(), k1.c_str());
-                break;
-            case 1:
-                ASSERT_STREQ(mvk.key().c_str(), k2.c_str());
-                break;
-            case 2:
-                ASSERT_STREQ(mvk.key().c_str(), k3.c_str());
-                break;
-            default:
-                break;
-        }
-        ite->Next();
-        ++i;
-    }
-}
-
-TEST_F(MassMvccTest, MassGc) {
-    std::string k1 = "k1";
-    std::string v1 = "v1";
-    std::string k2 = "k2";
-    std::string v2 = "v2";
-    std::string k3 = "k3";
-    std::string v3 = "v3";
-    db_->Put(k1, v1);
-    db_->Put(k1, v1+v1);
-    db_->Put(k1, v1+v1+v1);
-    db_->Put(k1, v1+v1+v1+v1);
-    db_->Put(k2, v2);
-    db_->Put(k3, v3);
-
-    db_->Scrub();
-
-    //db_->Put(k1, v1+v1+v1+v1+v1);
-    auto ite = db_->NewIterator("k1", "");
-    while (ite->Valid()) {
-        sharkstore::dataserver::storage::MultiVersionKey mvk(ite->key(), 0, false);
-        mvk.from_string(ite->key());
-        std::cout << "[MassGc]" << mvk.key() << "," << mvk.ver() << "," <<  mvk.is_del() << std::endl;
-        std::cout << "[MassGc]" << ite->value() << std::endl;
-        //ASSERT_STREQ(mvk.key().c_str(), k2.c_str());
-        ite->Next();
-    }
+    it->Traverse();
+    ASSERT_TRUE(it->Valid());
+    mulitKey = it->getMultiKey();
+    ASSERT_STREQ(mulitKey.key().c_str(), "a");
+    ASSERT_STREQ(it->value().c_str(), "a");
+    ASSERT_FALSE(mulitKey.is_del());
+    ASSERT_EQ(mulitKey.ver(), 1);
 }
 
 }

@@ -15,14 +15,14 @@ using namespace sharkstore::dataserver::storage;
 
 class MassTreeIteratorMock: public MassTreeIterator{
 public:
-    MassTreeIteratorMock(std::unique_ptr<Scaner> scaner, uint64_t version, const Releaser& release_func)
-            : MassTreeIterator(std::move(scaner), version, release_func) {}
+    MassTreeIteratorMock(std::unique_ptr<Scaner> scaner, uint64_t version,
+            const Releaser& release_func, bool seek = false);
 
     ~MassTreeIteratorMock() = default;
 
-    void Traverse() {
-        scaner_->Next();
-    }
+    void Traverse() ;
+
+    MultiVersionKey getMultiKey() ;
 };
 
 }

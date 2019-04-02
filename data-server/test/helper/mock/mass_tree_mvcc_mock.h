@@ -36,8 +36,12 @@ public:
     uint64_t LoadVersion() { return mvcc_.load(); }
     void StoreVersion(uint64_t ver) { mvcc_.store(ver); }
 
+    void seek_set(bool seek) {
+         seek_ = seek;
+    }
 private:
     MvccMock mvcc_;
+    bool seek_ = true;
 };
 
 }

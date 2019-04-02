@@ -10,7 +10,7 @@ IteratorInterface* MvccMassTreeMock::newIterMock(MassTreeDB *tree, const std::st
     MultiVersionKey start_key(start, version, true);
     MultiVersionKey end_key(limit, std::numeric_limits<uint64_t>::max(), true);
     auto scaner = tree->NewScaner(start_key.to_string(), limit.empty() ? "" : end_key.to_string());
-    return new MassTreeIteratorMock(std::move(scaner), version, [this, version] { mvcc_.erase(version); });
+    return new MassTreeIteratorMock(std::move(scaner), version, [this, version] { mvcc_.erase(version); }, seek_);
 }
 
 }

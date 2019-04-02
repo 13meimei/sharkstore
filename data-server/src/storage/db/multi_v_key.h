@@ -137,6 +137,7 @@ public:
         if(this != &key) {
             key_ = key.key_;
             version_ = key.version_;
+            del_flag_ = key.del_flag_;
         }
         return *this;
     }

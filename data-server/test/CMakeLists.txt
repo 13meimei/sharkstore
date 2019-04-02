@@ -7,6 +7,7 @@ set(test_helper_SRCS
     helper/mock/range_context_mock.cpp
     helper/mock/rpc_request_mock.cpp
     helper/mock/mass_tree_mvcc_mock.cpp
+    helper/mock/mass_tree_iterator_mock.cpp
     helper/helper_util.cpp
     helper/request_builder.cpp
     helper/query_parser.cpp

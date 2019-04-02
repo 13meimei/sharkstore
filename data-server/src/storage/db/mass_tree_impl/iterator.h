@@ -21,7 +21,8 @@ public:
     friend class ::sharkstore::test::mock::MassTreeIteratorMock;
     using Releaser = std::function<void()>;
 
-    MassTreeIterator(std::unique_ptr<Scaner> scaner, uint64_t version, const Releaser& release_func);
+    MassTreeIterator(std::unique_ptr<Scaner> scaner, uint64_t version,
+            const Releaser& release_func, bool seek = true);
     ~MassTreeIterator();
 
     bool Valid();

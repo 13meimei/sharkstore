@@ -8,11 +8,15 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-MassTreeIterator::MassTreeIterator(std::unique_ptr<Scaner> scaner, uint64_t version, const Releaser& release_func) :
+MassTreeIterator::MassTreeIterator(std::unique_ptr<Scaner> scaner, uint64_t version,
+        const Releaser& release_func, bool seek) :
     scaner_(std::move(scaner)),
     ver_(version),
-    releaser_(release_func) {
-    this->seek();
+    releaser_(release_func)
+{
+    if (seek) {
+        this->seek();
+    }
 }
 
 MassTreeIterator::~MassTreeIterator() {
@@ -32,7 +36,8 @@ void MassTreeIterator::seek() {
         iter_key.from_string(scaner_->Key());
         bool different_key = !cur_assigned_ || iter_key.key() != cur_key_.key();
         if (different_key && iter_key.ver() <= ver_) {
-            cur_key_.set_key(iter_key.key()); // 选择了该key，但还需要判断是否是delete，不是的话就算拿到
+            // 选择了该key，但还需要判断是否是delete，不是的话就算拿到
+            cur_key_ = iter_key;
             cur_assigned_ = true;
             if (!iter_key.is_del()) {
                 break;
