@@ -6,6 +6,8 @@ _Pragma("once");
 #include "storage/db/multi_v_key.h"
 #include "base/status.h"
 
+namespace sharkstore { namespace test { namespace mock { class MassTreeIteratorMock; }}}
+
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
@@ -13,9 +15,10 @@ namespace storage {
 class Scaner;
 class MvccMassTree;
 
-
 class MassTreeIterator: public IteratorInterface {
+
 public:
+    friend class ::sharkstore::test::mock::MassTreeIteratorMock;
     using Releaser = std::function<void()>;
 
     MassTreeIterator(std::unique_ptr<Scaner> scaner, uint64_t version, const Releaser& release_func);

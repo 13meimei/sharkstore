@@ -4,12 +4,15 @@
 #include <atomic>
 #include "tbb/concurrent_hash_map.h"
 
+namespace sharkstore { namespace test { namespace mock { class MvccMock; }}}
+
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
 class Mvcc {
 public:
+    friend class sharkstore::test::mock::MvccMock;
     Mvcc() = default;
     ~Mvcc() = default;
     Mvcc(const Mvcc&) = delete;
