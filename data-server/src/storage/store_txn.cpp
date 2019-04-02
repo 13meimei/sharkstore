@@ -243,12 +243,22 @@ TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& int
 }
 
 void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareResponse* resp) {
-    // TODO: local txn
     bool primary_lockable = true;
     auto batch = db_->NewBatch();
     for (const auto& intent: req.intents()) {
         bool stop_flag = false;
-        auto err = prepareIntent(req, intent, version, batch.get());
+        TxnErrorPtr err;
+
+        if (!req.local()) {
+            err = prepareIntent(req, intent, version, batch.get());
+        } else {
+            uint64_t bytes_written;
+            bool exist_flag = false;
+
+            err = checkLockable(intent.key(), req.txn_id(), &exist_flag);
+            auto ret = commitIntent(intent, version, bytes_written, batch.get());
+            // todo judge err & ret
+        }
         if (err != nullptr) {
             if (err->err_type() == TxnError_ErrType_LOCKED) {
                 if (intent.is_primary()) {
@@ -269,6 +279,8 @@ void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareRespo
             resp->clear_errors();
             setTxnServerErr(resp->add_errors(), ret.code(), ret.ToString());
         }
+    } else {
+        // todo return primary cannot lock erorr?
     }
 }
 

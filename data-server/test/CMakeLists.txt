@@ -6,6 +6,7 @@ set(test_helper_SRCS
     helper/mock/raft_server_mock.cpp
     helper/mock/range_context_mock.cpp
     helper/mock/rpc_request_mock.cpp
+    helper/mock/mass_tree_mvcc_mock.cpp
     helper/helper_util.cpp
     helper/request_builder.cpp
     helper/query_parser.cpp
@@ -45,6 +46,7 @@ set(test_SRCS
     unittest/store_txn_unittest.cpp
     unittest/timer_unittest.cpp
     unittest/util_unittest.cpp
+    unittest/mass_mvcc_unittest.cpp
 )
 
 if(ENABLE_TBB)

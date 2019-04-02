@@ -2,7 +2,7 @@ add_custom_command(OUTPUT
         ${CMAKE_CURRENT_SOURCE_DIR}/config.h
         COMMAND echo "GENERATING MassTree config.h"
         COMMAND ./bootstrap.sh
-        COMMAND ./configure
+        COMMAND ./configure --disable-superpage
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         )
 
