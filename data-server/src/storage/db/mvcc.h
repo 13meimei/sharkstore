@@ -49,6 +49,9 @@ public:
         return version_;
     }
 
+    void store(uint64_t ver) {
+        version_.store(ver);
+    }
 private:
     std::atomic<uint64_t> version_ = {0};
     //todo::init appropriate capacity

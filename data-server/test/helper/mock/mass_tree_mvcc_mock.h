@@ -2,7 +2,7 @@
 #define SHARKSTORE_DS_MASS_TREE_MVCC_MOCK_H
 
 #include "storage/db/mass_tree_impl/mass_tree_mvcc.h"
-#include "mvcc_mock.h"
+//#include "mvcc_mock.h"
 
 namespace sharkstore {
 namespace test {
@@ -40,7 +40,7 @@ public:
          seek_ = seek;
     }
 private:
-    MvccMock mvcc_;
+    //MvccMock mvcc_;
     bool seek_ = true;
 };
 
