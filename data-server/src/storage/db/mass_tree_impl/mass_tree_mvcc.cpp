@@ -152,7 +152,7 @@ void MvccMassTree::PrintMetric() {}
 void MvccMassTree::Scrub() {
     uint64_t ver = mvcc_.min_ver();
 
-    auto iter = default_tree_->NewScaner(",", "");
+    auto iter = default_tree_->NewScaner("", "");
     if (!iter->Valid()) {
         return;
     }
