@@ -254,13 +254,18 @@ void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareRespo
             bool exist_flag = false;
 
             err = checkLockable(intent.key(), req.txn_id(), &exist_flag);
-            auto s = commitIntent(intent, version, bytes_written, batch.get());
-            if (!s.ok()) {
-                err = newTxnServerErr(s.code(), s.ToString());
+            if (err == nullptr) {
+                if (!exist_flag) {
+                    auto s = commitIntent(intent, version, bytes_written, batch.get());
+                    if (!s.ok()) {
+                        err = newTxnServerErr(s.code(), s.ToString());
+                    }
+                }
             }
         } else {
             err = prepareIntent(req, intent, version, batch.get());
         }
+
         if (err != nullptr) {
             if (err->err_type() == TxnError_ErrType_LOCKED) {
                 if (intent.is_primary()) {

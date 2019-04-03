@@ -47,7 +47,7 @@ set(test_SRCS
     unittest/store_txn_unittest.cpp
     unittest/timer_unittest.cpp
     unittest/util_unittest.cpp
-    unittest/mass_mvcc_unittest.cpp
+    #unittest/mass_mvcc_unittest.cpp
 )
 
 if(ENABLE_TBB)
