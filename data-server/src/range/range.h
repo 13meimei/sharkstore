@@ -4,6 +4,7 @@ _Pragma("once");
 #include <atomic>
 #include <string>
 
+#include "range_base.h"
 #include "frame/sf_logger.h"
 
 #include "base/shared_mutex.h"
@@ -52,7 +53,9 @@ enum {
     LOCK_PARAMETER_ERROR
 };
 
-class Range : public raft::StateMachine, public std::enable_shared_from_this<Range> {
+class RangeSlave;
+
+class Range : public RangeBase, public raft::StateMachine, public std::enable_shared_from_this<Range> {
 public:
     Range(RangeContext* context, const metapb::Range &meta);
     ~Range();
@@ -61,9 +64,10 @@ public:
     Range &operator=(const Range &) = delete;
     Range &operator=(const Range &) volatile = delete;
 
-    Status Initialize(uint64_t leader = 0, uint64_t log_start_index = 0);
-    Status Shutdown();
+    Status Initialize(uint64_t leader = 0, uint64_t log_start_index = 0, uint64_t sflag = 0) override ;
+    Status Shutdown() override ;
 
+    //fsm Apply
     Status Apply(const std::string &cmd, uint64_t index) override;
     Status ApplyMemberChange(const raft::ConfChange &cc, uint64_t index) override;
 
@@ -75,6 +79,8 @@ public:
     Status ApplySnapshotStart(const std::string &context) override;
     Status ApplySnapshotData(const std::vector<std::string> &datas) override;
     Status ApplySnapshotFinish(uint64_t index) override;
+
+    Status AppliedIndex(uint64_t& apply_index) override ;
 
     void TransferLeader();
     void GetPeerInfo(raft::RaftStatus *raft_status);
@@ -127,6 +133,18 @@ public:
 //    void WatchDel(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) {}
 //    bool WatchPutSubmit(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req) { return true; }
 //    bool WatchDeleteSubmit(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) { return true; }
+public:
+    //Status ApplyRawPut(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyRawDelete(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyInsert(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyUpdate(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyDelete(const raft_cmdpb::Command &cmd) override ;
+
+    Status ApplyKVSet(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyKVDelete(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) override ;
 
 private:
     Status Submit(const raft_cmdpb::Command &cmd);
@@ -137,29 +155,17 @@ private:
     void rawGet(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawGetRequest &req, bool redirect);
     void rawPut(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawPutRequest &req, bool redirect);
     void rawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, bool redirect);
-    Status ApplyRawPut(const raft_cmdpb::Command &cmd);
-    Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
-
-//    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raft_index);
-//    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raft_index);
-
-    void select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redirect);
-    void deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redirect);
-    Status ApplyInsert(const raft_cmdpb::Command &cmd);
-    Status ApplyUpdate(const raft_cmdpb::Command &cmd);
-    Status ApplyDelete(const raft_cmdpb::Command &cmd);
 
     Status ApplySplit(const raft_cmdpb::Command &cmd, uint64_t index);
 
     Status ApplyAddPeer(const raft::ConfChange &cc, bool *updated);
     Status ApplyDelPeer(const raft::ConfChange &cc, bool *updated);
     Status ApplyPromotePeer(const raft::ConfChange &cc, bool *updated);
+//    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+//    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raft_index);
 
-    Status ApplyKVSet(const raft_cmdpb::Command &cmd);
-    Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd);
-    Status ApplyKVDelete(const raft_cmdpb::Command &cmd);
-    Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd);
-    Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd);
+    void select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redirect);
+    void deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redirect);
 
 //    Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raft_index);
 //    Status ApplyLockUpdate(const raft_cmdpb::Command &cmd);
@@ -235,36 +241,39 @@ public:
     void ResetStatisSize(SplitKeyMode mode, uint64_t split_size, uint64_t max_size);
     void Heartbeat();
 
-    Status Destroy();
+//    Status Destroy();
 
-    // get private member
-public:
-    bool valid() { return valid_; }
-    metapb::Range options() const { return meta_.Get(); }
-    bool EpochIsEqual(const metapb::Range &meta) {
-        return EpochIsEqual(meta.range_epoch());
-    };
-    void SetRealSize(uint64_t rsize) { real_size_ = rsize; }
+//public:
+//    bool valid() { return valid_; }
+//    metapb::Range options() const { return meta_.Get(); }
+//    bool EpochIsEqual(const metapb::Range &meta) {
+//        return EpochIsEqual(meta.range_epoch());
+//    };
+//    void SetRealSize(uint64_t rsize) { real_size_ = rsize; }
     void GetReplica(metapb::Replica *rep);
-    uint64_t GetSplitRangeID() const { return split_range_id_; }
+//    uint64_t GetSplitRangeID() const { return split_range_id_; }
     size_t GetSubmitQueueSize() const { return submit_queue_.Size(); }
 
-    void setLeaderFlag(bool flag) {
-        is_leader_ = flag;
-    }
+//    void setLeaderFlag(bool flag) {
+//        is_leader_ = flag;
+//    }
 
 private:
+
     bool VerifyLeader(errorpb::Error *&err);
     bool VerifyReadable(uint64_t read_index, errorpb::Error *&err);
-    bool VerifyWriteable(errorpb::Error **err = nullptr); // 检查是否磁盘空间已满
-    bool KeyInRange(const std::string &key);
-    bool KeyInRange(const std::string &key, errorpb::Error *&err);
+//    bool VerifyWriteable(errorpb::Error **err = nullptr); // 检查是否磁盘空间已满
+
+//    bool KeyInRange(const std::string &key);
+//    bool KeyInRange(const std::string &key, errorpb::Error *&err);
+
     bool KeyInRange(const txnpb::PrepareRequest& req, const metapb::RangeEpoch& epoch,
             errorpb::Error** err);
     bool KeyInRange(const txnpb::DecideRequest& req, const metapb::RangeEpoch& epoch,
             errorpb::Error** err);
-    bool EpochIsEqual(const metapb::RangeEpoch &epoch);
-    bool EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&);
+
+    //bool EpochIsEqual(const metapb::RangeEpoch &epoch);
+    //bool EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&);
 
     bool PushHeartBeatMessage();
 
@@ -273,8 +282,8 @@ private:
     errorpb::Error *RaftFailError();
     errorpb::Error *NoLeaderError();
     errorpb::Error *NotLeaderError(metapb::Peer &&peer);
-    errorpb::Error *KeyNotInRange(const std::string &key);
-    errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
+    //errorpb::Error *KeyNotInRange(const std::string &key);
+    //errorpb::Error *StaleEpochError(const metapb::RangeEpoch &epoch);
     errorpb::Error *StaleReadIndexError(uint64_t read_index, uint64_t current_index);
 
 private:
@@ -285,34 +294,36 @@ private:
 //    int32_t SendNotify( watch::WatcherPtr& w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
 
 private:
-    static const int kTimeTakeWarnThresoldUSec = 500000;
+    uint64_t apply_index_;
 
-    RangeContext* context_ = nullptr;
-    const uint64_t node_id_ = 0;
-    const uint64_t id_ = 0;
-    // cache range's start key
-    // since it will not change unless we have merge operation
-    const std::string start_key_;
-
-    MetaKeeper meta_;
-
-    std::atomic<bool> valid_ = { true };
-
-    uint64_t apply_index_ = 0;
-    std::atomic<bool> is_leader_ = {false};
-
-    uint64_t real_size_ = 0;
-    std::atomic<bool> statis_flag_ = {false};
-    std::atomic<uint64_t> statis_size_ = {0};
-    uint64_t split_range_id_ = 0;
+//    static const int kTimeTakeWarnThresoldUSec = 500000;
+//
+//    RangeContext* context_ = nullptr;
+//    const uint64_t node_id_ = 0;
+//    const uint64_t id_ = 0;
+//    // cache range's start key
+//    // since it will not change unless we have merge operation
+//    const std::string start_key_;
+//
+//    MetaKeeper meta_;
+//
+//    std::atomic<bool> valid_ = { true };
+//
+//    uint64_t apply_index_ = 0;
+//    uint64_t persist_index_ = 0;
+//    std::atomic<bool> is_leader_ = {false};
+//
+//    uint64_t real_size_ = 0;
+//    std::atomic<bool> statis_flag_ = {false};
+//    std::atomic<uint64_t> statis_size_ = {0};
+//    uint64_t split_range_id_ = 0;
 
 //    watch::CEventBuffer *eventBuffer = nullptr;
     SubmitQueue submit_queue_;
 
-    std::unique_ptr<storage::Store> store_;
+    //std::unique_ptr<storage::Store> store_;
     std::shared_ptr<raft::Raft> raft_;
-
-    std::shared_ptr<raft::RaftLogReader> reader_;
+    std::shared_ptr<RangeBase> slave_range_;
 };
 
 }  // namespace range

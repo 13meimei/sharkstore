@@ -1,6 +1,7 @@
 #include "range.h"
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include <src/common/ds_config.h>
 #include "common/ds_config.h"
 #include "master/worker.h"
 #include "server/range_server.h"
@@ -15,17 +16,11 @@ namespace dataserver {
 namespace range {
 
 static const int kDownPeerThresholdSecs = 50;
-// 磁盘使用率大于百分之92停写
-static const uint64_t kStopWriteFsUsagePercent = 92;
 
-Range::Range(RangeContext* context, const metapb::Range &meta) :
-	context_(context),
-	node_id_(context_->GetNodeID()),
-	id_(meta.id()),
-	start_key_(meta.start_key()),
-	meta_(meta) {
-    store_ = std::unique_ptr<storage::Store>(new storage::Store(meta, context->DBInstance()));
-//    eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
+
+Range::Range(RangeContext* context, const metapb::Range &meta) : RangeBase(context, meta) {
+//      store_ = std::unique_ptr<storage::Store>(new storage::Store(meta, context->DBInstance()));
+//      eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
 //                                          ds_config.watch_config.buffer_queue_size);
 }
 
@@ -34,7 +29,9 @@ Range::~Range() {
 //    delete eventBuffer;
 }
 
-Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
+Status Range::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sflag) {
+    auto s = RangeBase::Initialize(leader, log_start_index, 0);
+
     // 加载apply位置
     auto s = context_->MetaStore()->LoadApplyIndex(id_, &apply_index_);
     if (!s.ok()) {
@@ -85,13 +82,9 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
         return Status(Status::kInvalidArgument, "create raft", s.ToString());
     }
 
-    // create raft log reader
-    bool (Range::*fn0)(const std::string&, errorpb::Error *&err) = &Range::KeyInRange;
-    bool (Range::*fn1)(const metapb::RangeEpoch&, errorpb::Error *&err) = &Range::EpochIsEqual;
-    s = context_->PersistServer()->CreateReader(id_,
-                                                std::bind(fn0, shared_from_this(), std::placeholders::_1, std::placeholders::_2),
-                                                std::bind(fn1, shared_from_this(), std::placeholders::_1, std::placeholders::_2),
-                                                &reader_);
+//    // create raft log reader
+//    s = context_->PersistServer()->CreateReader(id_,
+//                                                &reader_);
     if (!s.ok()) {
         return Status(Status::kInvalidArgument, "create raft log reader", s.ToString());
     }
@@ -101,10 +94,18 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index) {
         is_leader_ = true;
     }
 
+    if (ds_config.persist_config.persist_switch) {
+        slave_range_ = std::make_shared<RangeSlave>(context_, meta_);
+        slave_range_->Initialize(1, leader, log_start_index);
+    }
     return Status::OK();
 }
 
 Status Range::Shutdown() {
+    if (slave_range_ != nullptr) {
+        slave_range_->Shutdown();
+    }
+
     valid_ = false;
 
     context_->Statistics()->ReportLeader(id_, false);
@@ -198,12 +199,16 @@ bool Range::PushHeartBeatMessage() {
 }
 
 Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
-    if (!VerifyWriteable()) {
-        return Status(Status::kIOError, "no left space", "apply");
+//    if (!VerifyWriteable()) {
+//        return Status(Status::kIOError, "no left space", "apply");
+//    }
+    Status sts = RangeBase::Apply(cmd, index);
+    if (sts.ok()) {
+        return sts;
     }
 
-    Status sts;
-    switch (cmd.cmd_type()) {
+    if (sts.code() == Status::kNotSupported) {
+        switch (cmd.cmd_type()) {
 //        case raft_cmdpb::CmdType::Lock:
 //            return ApplyLock(cmd, index);
 //        case raft_cmdpb::CmdType::LockUpdate:
@@ -217,49 +222,47 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
 //        case raft_cmdpb::CmdType::KvWatchDel:
 //            return ApplyWatchDel(cmd, index);
 
-        case raft_cmdpb::CmdType::RawPut:
-            sts = ApplyRawPut(cmd);
-            break;
-        case raft_cmdpb::CmdType::RawDelete:
-            sts = ApplyRawDelete(cmd);
-            break;
-        case raft_cmdpb::CmdType::Insert:
-            sts = ApplyInsert(cmd);
-            break;
-        case raft_cmdpb::CmdType::Update:
-            sts = ApplyUpdate(cmd);
-            break;
-        case raft_cmdpb::CmdType::Delete:
-            sts = ApplyDelete(cmd);
-            break;
-        case raft_cmdpb::CmdType::KvSet:
-            sts = ApplyKVSet(cmd);
-            break;
-        case raft_cmdpb::CmdType::KvBatchSet:
-            sts = ApplyKVBatchSet(cmd);
-            break;
-        case raft_cmdpb::CmdType::KvDelete:
-            sts = ApplyKVDelete(cmd);
-            break;
-        case raft_cmdpb::CmdType::KvBatchDel:
-            sts = ApplyKVBatchDelete(cmd);
-            break;
-        case raft_cmdpb::CmdType::KvRangeDel:
-            sts = ApplyKVRangeDelete(cmd);
-            break;
-        case raft_cmdpb::CmdType::TxnPrepare:
-            return ApplyTxnPrepare(cmd, index);
-        case raft_cmdpb::CmdType::TxnDecide:
-            return ApplyTxnDecide(cmd, index);
-        case raft_cmdpb::CmdType::TxnClearup:
-            return ApplyTxnClearup(cmd, index);
-        default:
-            RANGE_LOG_ERROR("Apply cmd type error %s", CmdType_Name(cmd.cmd_type()).c_str());
-            return Status(Status::kNotSupported, "cmd type not supported", "");
+//        case raft_cmdpb::CmdType::RawPut:
+//            sts = ApplyRawPut(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::RawDelete:
+//            sts = ApplyRawDelete(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::Insert:
+//            sts = ApplyInsert(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::Update:
+//            sts = ApplyUpdate(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::Delete:
+//            sts = ApplyDelete(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::KvSet:
+//            sts = ApplyKVSet(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::KvBatchSet:
+//            sts = ApplyKVBatchSet(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::KvDelete:
+//            sts = ApplyKVDelete(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::KvBatchDel:
+//            sts = ApplyKVBatchDelete(cmd);
+//            break;
+//        case raft_cmdpb::CmdType::KvRangeDel:
+//            sts = ApplyKVRangeDelete(cmd);
+//            break;
+            case raft_cmdpb::CmdType::TxnPrepare:
+                return ApplyTxnPrepare(cmd, index);
+            case raft_cmdpb::CmdType::TxnDecide:
+                return ApplyTxnDecide(cmd, index);
+            case raft_cmdpb::CmdType::TxnClearup:
+                return ApplyTxnClearup(cmd, index);
+            default:
+                RANGE_LOG_ERROR("Apply cmd type error %s", CmdType_Name(cmd.cmd_type()).c_str());
+                return Status(Status::kNotSupported, "cmd type not supported", "");
+        }
     }
-
-    //TO DO judge need trigger persist
-    context_->PersistServer()->PostPersist( id_, reader_->Applied(), index);
 
     return sts;
 }
@@ -306,6 +309,11 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     if (elapsed_usec > kTimeTakeWarnThresoldUSec) {
         RANGE_LOG_WARN("apply takes too long(%ld ms), type: %s.", elapsed_usec / 1000,
                   raft_cmdpb::CmdType_Name(raft_cmd.cmd_type()).c_str());
+    }
+
+    //TO DO trigger persist
+    if (slave_range_) {
+        slave_range_->Submit(id_, std::static_pointer_cast<RangeSlave>(slave_range_)->PersistIndex(), apply_index_);
     }
 
     return Status::OK();
@@ -420,33 +428,33 @@ Status Range::ApplySnapshotFinish(uint64_t index) {
     }
 }
 
+Status Range::AppliedIndex(uint64_t& apply_index) {
+    if (ds_config.persist_config.persist_switch) {
+        apply_index = std::static_pointer_cast<RangeSlave>(slave_range_)->PersistIndex();
+    } else {
+        apply_index = apply_index_;
+    }
+    return Status::OK();
+}
+
 Status Range::SaveMeta(const metapb::Range &meta) {
     return context_->MetaStore()->AddRange(meta);
 }
 
 Status Range::Destroy() {
-    valid_ = false;
-
+    auto s = RangeBase::Destroy();
+    if (!s.ok()) {
+        RANGE_LOG_WARN("destroy rangeBase failed: %s", s.ToString().c_str());
+    }
     ClearExpiredContext();
 
-    context_->Statistics()->ReportLeader(id_, false);
-
     // 销毁raft
-    auto s = context_->RaftServer()->DestroyRaft(id_);
+    s = context_->RaftServer()->DestroyRaft(id_);
     if (!s.ok()) {
         RANGE_LOG_WARN("destroy raft failed: %s", s.ToString().c_str());
     }
     raft_.reset();
 
-    s = store_->Truncate();
-    if (!s.ok()) {
-        RANGE_LOG_ERROR("truncate store fail: %s", s.ToString().c_str());
-        return s;
-    }
-    s = context_->MetaStore()->DeleteApplyIndex(id_);
-    if (!s.ok()) {
-        RANGE_LOG_ERROR("truncate delete apply fail: %s", s.ToString().c_str());
-    }
     return s;
 }
 
@@ -515,7 +523,7 @@ bool Range::VerifyReadable(uint64_t read_index, errorpb::Error *&err) {
         return false;
     }
 }
-
+/*
 bool Range::VerifyWriteable(errorpb::Error **err) {
     auto percent = context_->GetFSUsagePercent();
     if (percent < kStopWriteFsUsagePercent) {
@@ -571,6 +579,7 @@ bool Range::EpochIsEqual(const metapb::RangeEpoch &epoch, errorpb::Error *&err) 
     }
     return true;
 }
+*/
 
 static errorpb::Error *timeoutError() {
     auto err = new errorpb::Error;
@@ -607,7 +616,7 @@ errorpb::Error *Range::NotLeaderError(metapb::Peer &&peer) {
     meta_.GetEpoch(err->mutable_not_leader()->mutable_epoch());
     return err;
 }
-
+/*
 errorpb::Error *Range::KeyNotInRange(const std::string &key) {
     auto err = new errorpb::Error;
     err->set_message("key not in range");
@@ -617,7 +626,7 @@ errorpb::Error *Range::KeyNotInRange(const std::string &key) {
     // end_key change at range split time
     err->mutable_key_not_in_range()->set_end_key(meta_.GetEndKey());
     return err;
-}
+}*/
 
 errorpb::Error *Range::RaftFailError() {
     auto err = new errorpb::Error;
@@ -626,27 +635,27 @@ errorpb::Error *Range::RaftFailError() {
     return err;
 }
 
-errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
-    auto err = new errorpb::Error;
-    std::string msg = "stale epoch, req version:";
-    msg += std::to_string(epoch.version());
-    msg += " cur version:";
-    msg += std::to_string(meta_.GetVersion());
-
-    err->set_message(std::move(msg));
-    auto stale_epoch = err->mutable_stale_epoch();
-    meta_.Get(stale_epoch->mutable_old_range());
-
-    if (split_range_id_ > 0) {
-        auto split_range = context_->FindRange(split_range_id_);
-        if (split_range) {
-            auto split_meta = split_range->options();
-            stale_epoch->set_allocated_new_range(new metapb::Range(std::move(split_meta)));
-        }
-    }
-
-    return err;
-}
+//errorpb::Error *Range::StaleEpochError(const metapb::RangeEpoch &epoch) {
+//    auto err = new errorpb::Error;
+//    std::string msg = "stale epoch, req version:";
+//    msg += std::to_string(epoch.version());
+//    msg += " cur version:";
+//    msg += std::to_string(meta_.GetVersion());
+//
+//    err->set_message(std::move(msg));
+//    auto stale_epoch = err->mutable_stale_epoch();
+//    meta_.Get(stale_epoch->mutable_old_range());
+//
+//    if (split_range_id_ > 0) {
+//        auto split_range = context_->FindRange(split_range_id_);
+//        if (split_range) {
+//            auto split_meta = split_range->options();
+//            stale_epoch->set_allocated_new_range(new metapb::Range(std::move(split_meta)));
+//        }
+//    }
+//
+//    return err;
+//}
 
 errorpb::Error *Range::StaleReadIndexError(uint64_t read_index, uint64_t current_index) {
     auto err = new errorpb::Error;

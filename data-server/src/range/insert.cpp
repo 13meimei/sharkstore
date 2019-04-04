@@ -41,52 +41,55 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
 
     errorpb::Error *err = nullptr;
 
-    RANGE_LOG_DEBUG("ApplyInsert begin");
+    //RANGE_LOG_DEBUG("ApplyInsert begin");
 
-    auto &req = cmd.insert_req();
+    //auto &req = cmd.insert_req();
     auto btime = NowMicros();
-    do {
-        auto &epoch = cmd.verify_epoch();
+    ret = RangeBase::ApplyInsert(cmd);
 
-        if (!EpochIsEqual(epoch, err)) {
-            RANGE_LOG_WARN("ApplyInsert error: %s", err->message().c_str());
-            break;
-        }
-
-        ret = store_->Insert(req, &affected_keys);
-        auto etime = NowMicros();
-        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("ApplyInsert failed, code:%d, msg:%s", ret.code(),
-                       ret.ToString().c_str());
-            break;
-        }
-
-        if (cmd.cmd_id().node_id() == node_id_) {
-            uint64_t len = 0;
-            auto size = req.rows_size();
-
-            for (int i = 0; i < size; i++) {
-                auto keys_size = req.rows(i).key().size();
-                auto values_size = req.rows(i).value().size();
-
-                len += keys_size + values_size;
-            }
-
-            CheckSplit(len);
-        }
-
-    } while (false);
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//
+//        if (!EpochIsEqual(epoch, err)) {
+//            RANGE_LOG_WARN("ApplyInsert error: %s", err->message().c_str());
+//            break;
+//        }
+//
+//        ret = store_->Insert(req, &affected_keys);
+//        auto etime = NowMicros();
+//        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
+//
+//        if (!ret.ok()) {
+//            RANGE_LOG_ERROR("ApplyInsert failed, code:%d, msg:%s", ret.code(),
+//                       ret.ToString().c_str());
+//            break;
+//        }
+//
+//        if (cmd.cmd_id().node_id() == node_id_) {
+//            uint64_t len = 0;
+//            auto size = req.rows_size();
+//
+//            for (int i = 0; i < size; i++) {
+//                auto keys_size = req.rows(i).key().size();
+//                auto values_size = req.rows(i).value().size();
+//
+//                len += keys_size + values_size;
+//            }
+//
+//            CheckSplit(len);
+//        }
+//
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsInsertResponse resp;
         resp.mutable_resp()->set_affected_keys(affected_keys);
         resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
-    } else if (err != nullptr) {
-        delete err;
     }
+//    else if (err != nullptr) {
+//        delete err;
+//    }
 
     return ret;
 }

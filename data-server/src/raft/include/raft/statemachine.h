@@ -31,6 +31,9 @@ public:
     virtual Status ApplySnapshotStart(const std::string& context) = 0;
     virtual Status ApplySnapshotData(const std::vector<std::string>& datas) = 0;
     virtual Status ApplySnapshotFinish(uint64_t index) = 0;
+
+    //persist on: range::persist_index  off: range::apply_index
+    virtual Status AppliedIndex(uint64_t& apply_index) = 0;
 };
 
 } /* namespace raft */

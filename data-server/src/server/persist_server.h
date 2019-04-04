@@ -8,6 +8,7 @@ _Pragma("once");
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "raft/raft_log_reader.h"
 #include "proto/gen/metapb.pb.h"
+#include "storage/meta_store.h"
 #include "common_thread.h"
 
 namespace sharkstore {
@@ -34,23 +35,29 @@ public:
     int Init(ContextServer *context);
     Status Start();
     Status Stop();
-    void PostPersist(const uint64_t range_id, const uint64_t persist, const uint64_t applied);
+    bool PersistServer::IndexInDistance(const uint64_t range_id,
+                                        const uint64_t aidx, const uint64_t pidx);
+
+    Status SavePersistIndex(const uint64_t range_id, const uint64_t persist_index);
+    Status LoadPersistIndex(const uint64_t range_id, uint64_t* persist_index);
 
     int OpenDB();
     void CloseDB();
 
     storage::IteratorInterface* GetIterator(const std::string& start, const std::string& limit);
 
+    Status GetWorkThread(const uint64_t range_id, dataserver::WorkThread*& trd);
     Status CreateReader(const uint64_t range_id,
-                        std::function<bool(const std::string&, errorpb::Error *&err)> f0,
-                        std::function<bool(const metapb::RangeEpoch&, errorpb::Error *&err)> f1,
+                        const uint64_t start_index,
                         std::shared_ptr<raft::RaftLogReader>* reader);
 
 
 private:
+    uint64_t pindex_ = 0;
     Options ops_;
     ContextServer* context_ = nullptr;
-    storage::DbInterface* db_ = nullptr;
+    storage::MetaStore* meta_ = nullptr;
+    storage::DbInterface* pdb_ = nullptr;
 
     std::atomic<bool> running_ = {false};
 

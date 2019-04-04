@@ -32,7 +32,7 @@ public:
     RunStatus(const RunStatus &) = delete;
     RunStatus &operator=(const RunStatus &) = delete;
 
-    int Init(ContextServer *context);
+    int Init(ContextServer *context, const uint64_t seq = 0);
     int Start();
     void Stop();
 
@@ -68,6 +68,7 @@ private:
     std::set<uint64_t> leaders_;
     mutable std::mutex leaders_mu_;
 
+    uint64_t seq_{0};
     std::mutex mutex_;
     std::condition_variable cond_;
     std::thread metric_thread_;

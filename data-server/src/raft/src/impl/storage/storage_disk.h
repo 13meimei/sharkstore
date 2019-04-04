@@ -1,8 +1,13 @@
 _Pragma("once");
 
 #include <atomic>
+#include <functional>
+#include <mutex>
+#include <condition_variable>
+
 #include "meta_file.h"
 #include "storage.h"
+#include "log_file.h"
 
 namespace sharkstore {
 namespace raft {
@@ -10,6 +15,66 @@ namespace impl {
 namespace storage {
 
 class LogFile;
+using PointerLogFile = std::shared_ptr<LogFile>;
+
+class VecLogFile : public std::vector<PointerLogFile> {
+public:
+    VecLogFile() {}
+    ~VecLogFile() {}
+
+    VecLogFile(const VecLogFile&) = delete;
+    VecLogFile& operator=(const VecLogFile&) = delete;
+
+    void push_back(PointerLogFile& in) {
+        std::lock_guard<std::mutex> lock(mtx_);
+        std::vector<PointerLogFile>::push_back(in);
+    }
+
+    void push_back(PointerLogFile&& in) {
+        std::lock_guard<std::mutex> lock(mtx_);
+        std::vector<PointerLogFile>::push_back(in);
+    }
+
+    std::vector<PointerLogFile>::iterator erase(std::vector<PointerLogFile>::iterator it) {
+        std::lock_guard<std::mutex> lock(mtx_);
+        return std::vector<PointerLogFile>::erase(it);
+    }
+
+    void clear() {
+        std::lock_guard<std::mutex> lock(mtx_);
+        std::vector<PointerLogFile>::clear();
+    }
+
+    Status GetCommitFiles(const uint64_t apply_index, std::vector<PointerLogFile>& vec) {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            for (auto &i : *this) {
+                if (i->GetFullFlag() == 0) break;
+                if (apply_index > i->LastIndex()) continue;
+                vec.emplace_back(i);
+            }
+        }
+        if (vec.empty()) {
+            return Status(Status::kNotFound, "Not found raft log file", "");
+        }
+        return Status::OK();
+    }
+
+    bool empty() {
+        std::lock_guard<std::mutex> lock(mtx_);
+        return std::vector<PointerLogFile>::empty();
+    }
+
+    void pop_back() {
+        std::lock_guard<std::mutex> lock(mtx_);
+        std::vector<PointerLogFile>::pop_back();
+    }
+
+private:
+    std::condition_variable cond_;
+    std::mutex mtx_;
+};
+
 
 class DiskStorage : public Storage {
 public:
@@ -31,7 +96,8 @@ public:
         bool readonly = false;
     };
 
-    DiskStorage(uint64_t id, const std::string& path, const Options& ops);
+    DiskStorage(uint64_t id, const std::string& path, const Options& ops,
+                std::function<Status(uint64_t&)>& f0);
     ~DiskStorage();
 
     DiskStorage(const DiskStorage&) = delete;
@@ -64,7 +130,7 @@ public:
 
     std::vector<std::shared_ptr<LogFile>>& GetLogFiles();
 
-    Status LoadCommitFiles();
+    Status LoadCommitFiles(const uint64_t idx);
 
 // for tests
 #ifndef NDEBUG
@@ -102,11 +168,13 @@ private:
     pb::TruncateMeta trunc_meta_;
     uint64_t applied_ = 0;  // 大于applied_的不可截断
 
-    std::vector<std::shared_ptr<LogFile>> log_files_;
+    //std::vector<std::shared_ptr<LogFile>> log_files_;
+    VecLogFile log_files_;
     uint64_t last_index_ = 0;
 
-    std::vector<std::shared_ptr<LogFile>> log_files_commited_;
+    std::vector<PointerLogFile> log_files_commited_;
     std::atomic<bool> destroyed_ = {false};
+    std::function<Status(uint64_t&)> get_apply_index;
 };
 
 } /* namespace storage */

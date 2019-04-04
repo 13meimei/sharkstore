@@ -66,33 +66,35 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
     errorpb::Error *err = nullptr;
     uint64_t affected_keys = 0;
 
-    auto &req = cmd.kv_set_req();
+    //auto &req = cmd.kv_set_req();
     auto btime = NowMicros();
-    do {
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)) {
-            RANGE_LOG_WARN("ApplyInsert error: %s", err->message().c_str());
-            break;
-        }
+    ret = RangeBase::ApplyKVSet(cmd, &affected_keys, err);
 
-        if (req.case_() != kvrpcpb::EC_Force) {
-            bool bExists = store_->KeyExists(req.kv().key());
-            if ((req.case_() == kvrpcpb::EC_Exists && !bExists) ||
-                (req.case_() == kvrpcpb::EC_NotExists && bExists)) {
-                break;
-            }
-            if (bExists) {
-                affected_keys = 1;
-            }
-        }
-        ret = store_->Put(req.kv().key(), req.kv().value());
-        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
-
-        if (cmd.cmd_id().node_id() == node_id_) {
-            auto len = req.kv().key().size() + req.kv().value().size();
-            CheckSplit(len);
-        }
-    } while (false);
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)) {
+//            RANGE_LOG_WARN("ApplyInsert error: %s", err->message().c_str());
+//            break;
+//        }
+//
+//        if (req.case_() != kvrpcpb::EC_Force) {
+//            bool bExists = store_->KeyExists(req.kv().key());
+//            if ((req.case_() == kvrpcpb::EC_Exists && !bExists) ||
+//                (req.case_() == kvrpcpb::EC_NotExists && bExists)) {
+//                break;
+//            }
+//            if (bExists) {
+//                affected_keys = 1;
+//            }
+//        }
+//        ret = store_->Put(req.kv().key(), req.kv().value());
+//        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
+//
+//        if (cmd.cmd_id().node_id() == node_id_) {
+//            auto len = req.kv().key().size() + req.kv().value().size();
+//            CheckSplit(len);
+//        }
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsInsertResponse resp;
@@ -171,52 +173,53 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
     auto btime = NowMicros();
+    ret = RangeBase::ApplyKVBatchSet(cmd, affected_keys, err);
 
-    do {
-        auto &req = cmd.kv_batch_set_req();
-        auto existCase = req.case_();
-
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)) {
-            RANGE_LOG_WARN("ApplyKVBatchSet error: %s", err->message().c_str());
-            break;
-        }
-
-        std::vector<std::pair<std::string, std::string>> keyValues;
-        for (int i = 0, count = req.kvs_size(); i < count; ++i) {
-            auto kv = req.kvs(i);
-            do {
-                if (req.case_() != kvrpcpb::EC_Force) {
-                    bool bExists = store_->KeyExists(kv.key());
-                    if ((existCase == kvrpcpb::EC_Exists && !bExists) ||
-                        (existCase == kvrpcpb::EC_NotExists && bExists)) {
-                        break;
-                    }
-                    if (bExists) {
-                        ++affected_keys;
-                    }
-                }
-                total_size += kv.key().size() + kv.value().size();
-                ++total_count;
-
-                keyValues.push_back(std::pair<std::string, std::string>(kv.key(), kv.value()));
-            } while (false);
-        }
-
-        ret = store_->BatchSet(keyValues);
-        context_->Statistics()->PushTime(HistogramType::kStore,
-                                       NowMicros() - btime);
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("ApplyKVBatchSet failed, code:%d, msg:%s", ret.code(),
-                       ret.ToString().c_str());
-            break;
-        }
-
-        if (cmd.cmd_id().node_id() == node_id_) {
-            CheckSplit(total_size);
-        }
-    } while (false);
+//    do {
+//        auto &req = cmd.kv_batch_set_req();
+//        auto existCase = req.case_();
+//
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)) {
+//            RANGE_LOG_WARN("ApplyKVBatchSet error: %s", err->message().c_str());
+//            break;
+//        }
+//
+//        std::vector<std::pair<std::string, std::string>> keyValues;
+//        for (int i = 0, count = req.kvs_size(); i < count; ++i) {
+//            auto kv = req.kvs(i);
+//            do {
+//                if (req.case_() != kvrpcpb::EC_Force) {
+//                    bool bExists = store_->KeyExists(kv.key());
+//                    if ((existCase == kvrpcpb::EC_Exists && !bExists) ||
+//                        (existCase == kvrpcpb::EC_NotExists && bExists)) {
+//                        break;
+//                    }
+//                    if (bExists) {
+//                        ++affected_keys;
+//                    }
+//                }
+//                total_size += kv.key().size() + kv.value().size();
+//                ++total_count;
+//
+//                keyValues.push_back(std::pair<std::string, std::string>(kv.key(), kv.value()));
+//            } while (false);
+//        }
+//
+//        ret = store_->BatchSet(keyValues);
+//        context_->Statistics()->PushTime(HistogramType::kStore,
+//                                       NowMicros() - btime);
+//
+//        if (!ret.ok()) {
+//            RANGE_LOG_ERROR("ApplyKVBatchSet failed, code:%d, msg:%s", ret.code(),
+//                       ret.ToString().c_str());
+//            break;
+//        }
+//
+//        if (cmd.cmd_id().node_id() == node_id_) {
+//            CheckSplit(total_size);
+//        }
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsKvBatchSetResponse resp;
@@ -292,26 +295,26 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
     Status ret;
     errorpb::Error *err = nullptr;
     auto btime = NowMicros();
-
-    do {
-        auto &req = cmd.kv_delete_req();
-
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)) {
-            RANGE_LOG_WARN("ApplyKVBatchSet error: %s", err->message().c_str());
-            break;
-        }
-
-        ret = store_->Delete(req.key());
-        context_->Statistics()->PushTime(HistogramType::kStore,
-                                       NowMicros() - btime);
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("ApplyKVDelete failed, code:%d, msg:%s", ret.code(),
-                       ret.ToString().c_str());
-            break;
-        }
-    } while (false);
+    ret = RangeBase::ApplyKVDelete(cmd, err);
+//    do {
+//        auto &req = cmd.kv_delete_req();
+//
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)) {
+//            RANGE_LOG_WARN("ApplyKVBatchSet error: %s", err->message().c_str());
+//            break;
+//        }
+//
+//        ret = store_->Delete(req.key());
+//        context_->Statistics()->PushTime(HistogramType::kStore,
+//                                       NowMicros() - btime);
+//
+//        if (!ret.ok()) {
+//            RANGE_LOG_ERROR("ApplyKVDelete failed, code:%d, msg:%s", ret.code(),
+//                       ret.ToString().c_str());
+//            break;
+//        }
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsKvDeleteResponse resp;
@@ -361,40 +364,40 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
     auto btime = NowMicros();
-
-    do {
-        auto &req = cmd.kv_batch_del_req();
-        std::vector<std::string> delKeys(req.keys_size());
-
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)) {
-            RANGE_LOG_WARN("ApplyKVBatchDelete error: %s", err->message().c_str());
-            break;
-        }
-
-        for (int i = 0, count = req.keys_size(); i < count; ++i) {
-            auto &key = req.keys(i);
-            if (req.case_() == kvrpcpb::EC_Exists ||
-                req.case_() == kvrpcpb::EC_AnyCase) {
-                if (store_->KeyExists(key)) {
-                    ++affected_keys;
-                    delKeys.push_back(std::move(key));
-                }
-            } else {
-                delKeys.push_back(std::move(key));
-            }
-        }
-
-        ret = store_->BatchDelete(delKeys);
-        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("ApplyKVBatchDelete failed, code:%d, msg:%s", ret.code(),
-                       ret.ToString().c_str());
-            break;
-        }
-
-    } while (false);
+    ret = RangeBase::ApplyKVBatchDelete(cmd, affected_keys, err);
+//    do {
+//        auto &req = cmd.kv_batch_del_req();
+//        std::vector<std::string> delKeys(req.keys_size());
+//
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)) {
+//            RANGE_LOG_WARN("ApplyKVBatchDelete error: %s", err->message().c_str());
+//            break;
+//        }
+//
+//        for (int i = 0, count = req.keys_size(); i < count; ++i) {
+//            auto &key = req.keys(i);
+//            if (req.case_() == kvrpcpb::EC_Exists ||
+//                req.case_() == kvrpcpb::EC_AnyCase) {
+//                if (store_->KeyExists(key)) {
+//                    ++affected_keys;
+//                    delKeys.push_back(std::move(key));
+//                }
+//            } else {
+//                delKeys.push_back(std::move(key));
+//            }
+//        }
+//
+//        ret = store_->BatchDelete(delKeys);
+//        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
+//
+//        if (!ret.ok()) {
+//            RANGE_LOG_ERROR("ApplyKVBatchDelete failed, code:%d, msg:%s", ret.code(),
+//                       ret.ToString().c_str());
+//            break;
+//        }
+//
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsKvBatchDeleteResponse resp;
@@ -439,42 +442,42 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
     errorpb::Error *err = nullptr;
     std::string last_key;
     auto btime = NowMicros();
-
-    do {
-        auto &req = cmd.kv_range_del_req();
-        auto start = std::max(req.start(), start_key_);
-        auto limit = std::min(req.limit(), meta_.GetEndKey());
-
-        auto &epoch = cmd.verify_epoch();
-        if (!EpochIsEqual(epoch, err)) {
-            RANGE_LOG_WARN("KVRangeDelet error: %s", err->message().c_str());
-            break;
-        }
-
-        if (req.case_() == kvrpcpb::EC_Exists ||
-            req.case_() == kvrpcpb::EC_AnyCase) {
-            std::unique_ptr<storage::IteratorInterface> iterator(
-                store_->NewIterator(start, limit));
-            int maxCount = checkMaxCount(req.max_count());
-            std::vector<std::string> delKeys(maxCount);
-
-            for (int i = 0; iterator->Valid() && i < maxCount; ++i) {
-                delKeys.push_back(std::move(iterator->key()));
-                iterator->Next();
-            }
-
-            if (delKeys.size() > 0) {
-                last_key = delKeys[delKeys.size() - 1];
-            }
-
-            ret = store_->BatchDelete(delKeys);
-            affected_keys = delKeys.size();
-        } else {
-            ret = store_->RangeDelete(start, limit);
-        }
-
-        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
-    } while (false);
+    ret = RangeBase::ApplyKVRangeDelete(cmd, affected_keys, err);
+//    do {
+//        auto &req = cmd.kv_range_del_req();
+//        auto start = std::max(req.start(), start_key_);
+//        auto limit = std::min(req.limit(), meta_.GetEndKey());
+//
+//        auto &epoch = cmd.verify_epoch();
+//        if (!EpochIsEqual(epoch, err)) {
+//            RANGE_LOG_WARN("KVRangeDelet error: %s", err->message().c_str());
+//            break;
+//        }
+//
+//        if (req.case_() == kvrpcpb::EC_Exists ||
+//            req.case_() == kvrpcpb::EC_AnyCase) {
+//            std::unique_ptr<storage::IteratorInterface> iterator(
+//                store_->NewIterator(start, limit));
+//            int maxCount = checkMaxCount(req.max_count());
+//            std::vector<std::string> delKeys(maxCount);
+//
+//            for (int i = 0; iterator->Valid() && i < maxCount; ++i) {
+//                delKeys.push_back(std::move(iterator->key()));
+//                iterator->Next();
+//            }
+//
+//            if (delKeys.size() > 0) {
+//                last_key = delKeys[delKeys.size() - 1];
+//            }
+//
+//            ret = store_->BatchDelete(delKeys);
+//            affected_keys = delKeys.size();
+//        } else {
+//            ret = store_->RangeDelete(start, limit);
+//        }
+//
+//        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsKvRangeDeleteResponse resp;

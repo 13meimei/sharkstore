@@ -83,41 +83,42 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
 
     RANGE_LOG_DEBUG("ApplyDelete begin");
 
-    auto &req = cmd.delete_req();
+//    auto &req = cmd.delete_req();
     auto btime = NowMicros();
-
-    do {
-        auto &key = req.key();
-        if (key.empty()) {
-            auto &epoch = cmd.verify_epoch();
-
-            if (!EpochIsEqual(epoch, err)) {
-                RANGE_LOG_WARN("ApplyDelete error: %s", err->message().c_str());
-                break;
-            }
-        } else {
-            if (!KeyInRange(key, err)) {
-                RANGE_LOG_WARN("ApplyDelete error: %s", err->message().c_str());
-                break;
-            }
-        }
-
-        ret = store_->DeleteRows(req, &affected_keys);
-        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("ApplyDelete failed, code:%d, msg:%s", ret.code(),
-                       ret.ToString().c_str());
-            break;
-        }
-    } while (false);
+    ret = RangeBase::ApplyDelete(cmd);
+//    do {
+//        auto &key = req.key();
+//        if (key.empty()) {
+//            auto &epoch = cmd.verify_epoch();
+//
+//            if (!EpochIsEqual(epoch, err)) {
+//                RANGE_LOG_WARN("ApplyDelete error: %s", err->message().c_str());
+//                break;
+//            }
+//        } else {
+//            if (!KeyInRange(key, err)) {
+//                RANGE_LOG_WARN("ApplyDelete error: %s", err->message().c_str());
+//                break;
+//            }
+//        }
+//
+//        ret = store_->DeleteRows(req, &affected_keys);
+//        context_->Statistics()->PushTime(HistogramType::kStore, NowMicros() - btime);
+//
+//        if (!ret.ok()) {
+//            RANGE_LOG_ERROR("ApplyDelete failed, code:%d, msg:%s", ret.code(),
+//                       ret.ToString().c_str());
+//            break;
+//        }
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsKvDeleteResponse resp;
         resp.mutable_resp()->set_affected_keys(affected_keys);
         resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
-    } else if (err != nullptr) {
+    }
+    if (err != nullptr) {
         delete err;
     }
 

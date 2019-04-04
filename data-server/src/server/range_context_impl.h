@@ -17,15 +17,19 @@ public:
 
     range::SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
 
-    storage::DbInterface *DBInstance() override { return server_->db; }
+    storage::DbInterface *DBInstance(const uint64_t flag = 0) override {
+        return flag==0? server_->db: server_->pdb;
+    }
     master::Worker* MasterClient() override  { return server_->master_worker; }
     raft::RaftServer* RaftServer() override { return server_->raft_server; }
     storage::MetaStore* MetaStore() override { return server_->meta_store; }
-    range::RangeStats* Statistics() override { return server_->run_status; }
+    range::RangeStats* Statistics(const uint64_t flag = 0) override {
+        return flag==0?server_->run_status:server_->persist_run_status;
+    }
 	watch::WatchServer* WatchServer() override { return server_->range_server->watch_server_; }
     server::PersistServer* PersistServer() override { return server_->persist_server; }
 
-    uint64_t GetFSUsagePercent() const override;
+    uint64_t GetFSUsagePercent(const uint64_t seq) const override;
 
     void ScheduleHeartbeat(uint64_t range_id, bool delay) override;
     void ScheduleCheckSize(uint64_t range_id) override;

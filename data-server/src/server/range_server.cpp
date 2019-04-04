@@ -3,6 +3,7 @@
 #include <chrono>
 #include <future>
 #include <thread>
+#include <cinttypes>
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <rocksdb/advanced_options.h>
@@ -13,6 +14,7 @@
 #include <rocksdb/rate_limiter.h>
 #include <fastcommon/shared_func.h>
 #include <common/ds_config.h>
+#include <src/common/ds_config.h>
 
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -90,6 +92,7 @@ int RangeServer::Init(ContextServer *context) {
         return -1;
     }
     context_->db = db_;
+    context_->pdb = pdb_;
 
     // 打开meta db
     auto meta_path = JoinFilePath({ds_config.rocksdb_config.path, kMetaPathSuffix});
@@ -235,6 +238,18 @@ int RangeServer::OpenDB() {
         return -1;
     } else {
         FLOG_INFO("open %s db successfully", engine_name.c_str());
+    }
+
+
+    if (ds_config.persist_config.persist_switch) {
+        //pdb_
+        if (strcasecmp(ds_config.persist_config.persist_type, "rocksdb") == 0) {
+            //print_rocksdb_config();
+            pdb_ = new storage::RocksDBImpl(ds_config.async_rocksdb_config);
+        } else {
+            FLOG_ERROR("unknown persist_type: %s", ds_config.persist_config.persist_type);
+            return -1;
+        }
     }
     return 0;
 }
@@ -784,26 +799,26 @@ Status RangeServer::recoverKV(const std::string& start_key, const std::string& e
     }
 
     Status ret;
-    bool err{false};
-
     auto it = context_->persist_server->GetIterator(start_key, end_key); 
     if (!it) {
         return Status(Status::kInvalid, "recoverKV", "GetIterator error.");
     }
 
+    auto bTime = NowMicros();
+    uint64_t keys{0};
     while (it->Valid()) {
         ret = db_->Put(std::move(it->key()), std::move(it->value()));
         if (!ret.ok()) {
-            err = true;
-            FLOG_ERROR("recoverKV error, put KV failed");
+            FLOG_ERROR("recoverKV error, put KV failed: %s", ret.ToString().c_str());
             break;
         }
+        keys++;
         it->Next();
     }
+    RANGE_LOG_INFO("recoverKv %" PRIu64 " keys, elapse %" PRIu64 " us", keys, NowMicros() - bTime);
 
     delete it;
-
-    if (err) {
+    if (!ret.ok()) {
         return ret;
     }
     return Status::OK();

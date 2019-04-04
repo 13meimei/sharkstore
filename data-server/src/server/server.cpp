@@ -32,6 +32,8 @@ DataServer::DataServer() {
     context_->worker = new Worker();
 
     context_->run_status = new RunStatus;
+    context_->persist_run_status = new RunStatus;
+
     context_->range_server = new RangeServer;
 
     net::ServerOptions sopt;
@@ -59,6 +61,7 @@ DataServer::~DataServer() {
     delete context_->worker;
     delete context_->master_worker;
     delete context_->run_status;
+    delete context_->persist_run_status;
     delete context_->range_server;
     delete context_->raft_server;
     delete context_->persist_server;
@@ -135,6 +138,11 @@ int DataServer::Init() {
         return -1;
     }
 
+    const uint64_t slave_range_flag = 1;
+    if (context_->persist_run_status->Init(context_, slave_range_flag) != 0) {
+        return -1;
+    }
+
     if (context_->persist_server->Init(context_) != 0) {
         return -1;
     }
@@ -189,6 +197,10 @@ int DataServer::Start() {
         return -1;
     }
 
+    if (context_->persist_run_status->Start() != 0) {
+        return -1;
+    }
+
     s = context_->master_worker->NodeLogin(context_->node_id);
     if (!s.ok()) {
         FLOG_ERROR("NodeLogin failed. %s", s.ToString().c_str());
@@ -219,6 +231,9 @@ void DataServer::Stop() {
     }
     if (context_->run_status != nullptr) {
         context_->run_status->Stop();
+    }
+    if (context_->persist_run_status != nullptr) {
+        context_->persist_run_status->Stop();
     }
 }
 

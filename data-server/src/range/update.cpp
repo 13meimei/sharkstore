@@ -43,41 +43,43 @@ Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
 
     RANGE_LOG_DEBUG("ApplyUpdate begin");
 
-    auto &req = cmd.update_req();
+    //auto &req = cmd.update_req();
     auto btime = NowMicros();
-    do {
-        auto &epoch = cmd.verify_epoch();
-
-        if (!EpochIsEqual(epoch, err)) {
-            RANGE_LOG_WARN("ApplyUpdate error: %s", err->message().c_str());
-            break;
-        }
-
-        uint64_t update_bytes = 0;
-
-        ret = store_->Update(req, &affected_keys, &update_bytes);
-        auto etime = NowMicros();
-        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("ApplyUpdate failed, code:%d, msg:%s", ret.code(),
-                            ret.ToString().c_str());
-            break;
-        }
-
-        if (cmd.cmd_id().node_id() == node_id_) {
-            CheckSplit(update_bytes);
-        }
-    } while (false);
+    ret = RangeBase::ApplyUpdate(cmd);
+//    do {
+//        auto &epoch = cmd.verify_epoch();
+//
+//        if (!EpochIsEqual(epoch, err)) {
+//            RANGE_LOG_WARN("ApplyUpdate error: %s", err->message().c_str());
+//            break;
+//        }
+//
+//        uint64_t update_bytes = 0;
+//
+//        ret = store_->Update(req, &affected_keys, &update_bytes);
+//        auto etime = NowMicros();
+//        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
+//
+//        if (!ret.ok()) {
+//            RANGE_LOG_ERROR("ApplyUpdate failed, code:%d, msg:%s", ret.code(),
+//                            ret.ToString().c_str());
+//            break;
+//        }
+//
+//        if (cmd.cmd_id().node_id() == node_id_) {
+//            CheckSplit(update_bytes);
+//        }
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsUpdateResponse resp;
         resp.mutable_resp()->set_affected_keys(affected_keys);
         resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
-    } else if (err != nullptr) {
-        delete err;
     }
+//    else if (err != nullptr) {
+//        delete err;
+//    }
 
     return ret;
 }

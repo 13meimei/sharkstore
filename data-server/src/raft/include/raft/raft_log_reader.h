@@ -7,32 +7,20 @@ _Pragma("once");
 #include <mutex>
 #include <condition_variable>
 #include <vector>
-
-//#include "../../raft.pb.h"
-#include "storage/db/rocksdb_impl/rocksdb_impl.h"
-#include "storage/db/db_interface.h"
 #include "proto/gen/mspb.pb.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "raft/server.h"
 
 namespace sharkstore {
     class Status;
-namespace dataserver {
-    class WorkThread;
-namespace storage {
-//    static const std::string kPersistRaftLogPrefix = "\x06";
-
-    class DbInterface;
-}}}
+}
 
 namespace sharkstore {
 namespace raft {
 namespace impl {
-    class Work;
-
     class RaftServerImpl;
-
     class RaftImpl;
+
     namespace pb {
         class Entry;
     }
@@ -49,7 +37,6 @@ using RaftServer = sharkstore::raft::RaftServer;
 using DiskStorage = sharkstore::raft::impl::storage::DiskStorage;
 using LogFile = sharkstore::raft::impl::storage::LogFile;
 using Entry = sharkstore::raft::impl::pb::Entry;
-using DbInterface = sharkstore::dataserver::storage::DbInterface;
 using RaftImpl =  sharkstore::raft::impl::RaftImpl;
 
 namespace sharkstore {
@@ -57,46 +44,22 @@ namespace raft {
 
 class RaftLogReader {
 public:
-    RaftLogReader() = default;
-    RaftLogReader( 
-        const uint64_t id,
-        const std::function<bool(const std::string&)>& f0,
-        const std::function<bool(const metapb::Range &meta)>& f1,
-        RaftServer *server,
-        sharkstore::dataserver::storage::DbInterface* db,
-        sharkstore::dataserver::WorkThread* trd);
-        //sharkstore::raft::impl::WorkThread* trd);
+    //range_id
+    RaftLogReader(const uint64_t, const uint64_t, RaftServer *server) = default;
     virtual ~ RaftLogReader() = default;
 
     RaftLogReader(const RaftLogReader&) = delete;
     RaftLogReader& operator=(const RaftLogReader&) = delete;
 
-    virtual Status DealTask() = 0;
-    virtual size_t GetCommitFiles() = 0;
-    virtual Status ProcessFiles() = 0;
-
-    virtual Status ApplyRaftCmd(const raft_cmdpb::Command& cmd) = 0;
-
-    virtual Status AppliedTo(uint64_t index) = 0;
-    virtual Status LoadApplied(uint64_t *index) = 0;
-    //Status ApplySnapshot(const pb::SnapshotMeta&meta);
-
-    virtual uint64_t Applied() = 0;
-
-    //index: range applied index
-    virtual Status Notify(const uint64_t range_id, const uint64_t index) = 0;
+    virtual Status GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Command>& cmd) = 0;
     virtual Status Close() = 0;
 
 };
 
 std::shared_ptr<RaftLogReader> CreateRaftLogReader(
         const uint64_t id,
-        const std::function<bool(const std::string&, errorpb::Error *&err)>& f0,
-        const std::function<bool(const metapb::RangeEpoch&, errorpb::Error *&err)>& f1,
-        RaftServer *server,
-        sharkstore::dataserver::storage::DbInterface* db,
-        sharkstore::dataserver::WorkThread* trd);
-        //sharkstore::raft::impl::WorkThread* trd);
+        const uint64_t start_idx,
+        RaftServer *server);
 
 } /* namespace raft */
 } /* namespace sharkstore */

@@ -5,13 +5,10 @@ namespace sharkstore {
 namespace raft {
 
 std::shared_ptr<RaftLogReader> CreateRaftLogReader(const uint64_t id,
-                                                   const std::function<bool(const std::string&, errorpb::Error *&err)>& f0,
-                                                   const std::function<bool(const metapb::RangeEpoch &epoch, errorpb::Error *&err)>& f1,
-                                                   RaftServer *server,
-                                                   sharkstore::dataserver::storage::DbInterface* db,
-                                                   sharkstore::dataserver::WorkThread* trd)
+                                                   const uint64_t start_idx,
+                                                   RaftServer *server)
 {
-    return std::shared_ptr<RaftLogReader>(new impl::StorageReader(id, f0, f1, server, db, trd));
+    return std::shared_ptr<RaftLogReader>(new impl::StorageReader(id, start_idx, server));
 }
 
 } /* namespace raft */

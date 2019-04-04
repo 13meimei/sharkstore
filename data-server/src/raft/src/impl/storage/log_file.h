@@ -17,6 +17,11 @@ class LogIndex;
 
 class LogFile {
 public:
+    enum DestroyFlag {
+        kDestroyFlagOff = 0,
+        kDestroyFlagOn = 1,
+    };
+public:
     LogFile(const std::string& path, uint64_t seq, uint64_t index, bool readonly = false);
     virtual ~LogFile();
 
@@ -80,6 +85,7 @@ private:
     std::vector<char> write_buf_;
 
     int full_flag_ = 0;
+    DestroyFlag destroy_flag_ = kDestroyFlagOff;
     LogIndex log_index_;
 };
 

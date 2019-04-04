@@ -35,16 +35,16 @@ public:
     // 分裂策略
     virtual SplitPolicy* GetSplitPolicy() = 0;
 
-    virtual storage::DbInterface* DBInstance() = 0;
+    virtual storage::DbInterface* DBInstance(const uint64_t flag = 0) = 0;
     virtual master::Worker* MasterClient() = 0;
     virtual raft::RaftServer* RaftServer() = 0;
     virtual storage::MetaStore* MetaStore() = 0;
-    virtual RangeStats* Statistics() = 0;
+    virtual RangeStats* Statistics(const uint64_t flag = 0) = 0;
     virtual watch::WatchServer* WatchServer() = 0;
     virtual server::PersistServer* PersistServer() = 0;
 
     // filesystem usage percent for check writable
-    virtual uint64_t GetFSUsagePercent() const = 0;
+    virtual uint64_t GetFSUsagePercent(const uint64_t seq) const = 0;
 
     virtual void ScheduleHeartbeat(uint64_t range_id, bool delay) = 0;
     virtual void ScheduleCheckSize(uint64_t range_id) = 0;

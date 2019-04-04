@@ -75,37 +75,41 @@ void Range::rawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, boo
 Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
     Status ret;
     errorpb::Error *err = nullptr;
-
-    RANGE_LOG_DEBUG("ApplyRawDelete begin");
-
     auto btime = NowMicros();
-    auto &req = cmd.kv_raw_delete_req();
 
-    do {
-        if (!KeyInRange(req.key(), err)) {
-            RANGE_LOG_WARN("ApplyRawDelete failed, epoch is changed");
-            break;
-        }
+    ret = RangeBase::ApplyRawDelete(cmd);
 
-        ret = store_->Delete(req.key());
-        context_->Statistics()->PushTime(HistogramType::kStore,
-                                       NowMicros() - btime);
-
-        if (!ret.ok()) {
-            RANGE_LOG_ERROR("ApplyRawDelete failed, code:%d, msg:%s", ret.code(),
-                       ret.ToString().c_str());
-            break;
-        }
-        // ignore delete CheckSplit
-    } while (false);
+//    RANGE_LOG_DEBUG("ApplyRawDelete begin");
+//
+//    auto btime = NowMicros();
+//    auto &req = cmd.kv_raw_delete_req();
+//
+//    do {
+//        if (!KeyInRange(req.key(), err)) {
+//            RANGE_LOG_WARN("ApplyRawDelete failed, epoch is changed");
+//            break;
+//        }
+//
+//        ret = store_->Delete(req.key());
+//        context_->Statistics()->PushTime(HistogramType::kStore,
+//                                       NowMicros() - btime);
+//
+//        if (!ret.ok()) {
+//            RANGE_LOG_ERROR("ApplyRawDelete failed, code:%d, msg:%s", ret.code(),
+//                       ret.ToString().c_str());
+//            break;
+//        }
+//        // ignore delete CheckSplit
+//    } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsKvRawDeleteResponse resp;
         resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
-    } else if (err != nullptr) {
-        delete err;
     }
+//    else if (err != nullptr) {
+//        delete err;
+//    }
     return ret;
 }
 

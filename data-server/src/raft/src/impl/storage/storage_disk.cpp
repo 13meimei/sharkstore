@@ -20,8 +20,9 @@ namespace storage {
 // 只截断已应用的减去kKeepCountBeforeApplied之前的日志
 static const unsigned kKeepLogCountBeforeApplied = 30;
 
-DiskStorage::DiskStorage(uint64_t id, const std::string& path, const Options& ops)
-    : id_(id), path_(path), ops_(ops), meta_file_(path) {}
+DiskStorage::DiskStorage(uint64_t id, const std::string& path, const Options& ops,
+                         std::function<Status(uint64_t&)>& f0)
+    : id_(id), path_(path), ops_(ops), meta_file_(path), get_apply_index(f0) {}
 
 DiskStorage::~DiskStorage() { Close(); }
 
@@ -209,6 +210,7 @@ Status DiskStorage::openLogs() {
 Status DiskStorage::closeLogs() {
     //std::for_each(log_files_.begin(), log_files_.end(), [](std::shared_ptr<LogFile> f) { delete f; });
     log_files_.clear();
+    log_files_commited_.clear();
     return Status::OK();
 }
 
@@ -281,10 +283,14 @@ Status DiskStorage::StoreEntries(const std::vector<EntryPtr>& entries) {
             applied_ > kKeepLogCountBeforeApplied;
     if (need_truncate) {
         uint64_t truncate_index = 0;
+        uint64_t persist_index = 0;
+        get_apply_index(persist_index);
+        assert(persist_index > 0);
         // 查找截断位置，跳过最后面的max_log_files个文件，从后往前找
         for (int idx = static_cast<int>(log_files_.size() - ops_.max_log_files - 1); idx >= 0; --idx) {
             // 只截断已经applied的日志
-            if (log_files_[idx]->LastIndex() < applied_ - kKeepLogCountBeforeApplied) {
+            //if (log_files_[idx]->LastIndex() < applied_ - kKeepLogCountBeforeApplied) {
+            if (log_files_[idx]->LastIndex() < persist_index - kKeepLogCountBeforeApplied) {
                 truncate_index = log_files_[idx]->LastIndex();
                 break;
             }
@@ -490,9 +496,13 @@ Status DiskStorage::Truncate(uint64_t index) {
     }
 
     // 未被应用的，不能截断
-    if (index > applied_) {
+    //if (index > applied_) {
+    uint64_t idx{0};
+    get_apply_index(idx);
+    //idx = std::min(applied_, idx);
+    if (index > idx ) {
         return Status(Status::kInvalidArgument, "try to truncate not applied logs",
-                      std::to_string(index) + " > " + std::to_string(applied_));
+                      std::to_string(index) + " > " + std::to_string(idx));
     }
     // 已经截断
     if (index <= trunc_meta_.index()) {
@@ -600,21 +610,14 @@ Status DiskStorage::Destroy(bool backup) {
     return Status::OK();
 }
 
-std::vector<std::shared_ptr<LogFile>>& DiskStorage::GetLogFiles() {
+std::vector<PointerLogFile>& DiskStorage::GetLogFiles() {
     return log_files_commited_;
 };
 
-Status DiskStorage::LoadCommitFiles() {
+Status DiskStorage::LoadCommitFiles(const uint64_t idx) {
     log_files_commited_.clear();
-    for (const auto& f : log_files_) {
-        if (f->GetFullFlag() == 0)
-            break;
-        if (f->LastIndex() > applied_)
-            break;
-
-        log_files_commited_.emplace_back(f);
-    }
-    return Status::OK();
+    auto r = log_files_.GetCommitFiles(idx, log_files_commited_);
+    return r;
 }
 
 #ifndef NDEBUG

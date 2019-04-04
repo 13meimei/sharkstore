@@ -207,6 +207,36 @@ Status MetaStore::LoadApplyIndex(uint64_t range_id, uint64_t *apply_index) {
     }
 }
 
+Status MetaStore::SavePersistIndex(uint64_t range_id, uint64_t persist_index) {
+    std::string key = kRangePersistPrefix + std::to_string(range_id);
+    auto ret =
+            db_->Put(rocksdb::WriteOptions(), key, std::to_string(persist_index));
+    if (ret.ok()) {
+        return Status::OK();
+    } else {
+        return Status(Status::kIOError, "meta save persist", ret.ToString());
+    }
+}
+
+Status MetaStore::LoadPersistIndex(uint64_t range_id, uint64_t *persist_index) {
+    std::string key = kRangePersistPrefix + std::to_string(range_id);
+    std::string value;
+    auto ret = db_->Get(rocksdb::ReadOptions(), key, &value);
+    if (ret.ok()) {
+        try {
+            *persist_index = std::stoull(value);
+        } catch (std::exception &e) {
+            return Status(Status::kCorruption, "invalid persist", EncodeToHex(value));
+        }
+        return Status::OK();
+    } else if (ret.IsNotFound()) {
+        *persist_index = 0;
+        return Status::OK();
+    } else {
+        return Status(Status::kIOError, "meta load persist", ret.ToString());
+    }
+}
+
 Status MetaStore::DeleteApplyIndex(uint64_t range_id) {
     std::string key = kRangeApplyPrefix + std::to_string(range_id);
     auto ret = db_->Delete(rocksdb::WriteOptions(), key);

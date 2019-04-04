@@ -105,6 +105,8 @@ typedef struct ds_config_s {
     } engine_config;
 
     struct {
+        int persist_switch;    //1 on 0 off
+        char persist_type[8];  //rocksdb
         int persist_threads;
         int persist_queue_size;
         int persist_delay_size;

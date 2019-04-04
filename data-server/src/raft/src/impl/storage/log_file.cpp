@@ -104,20 +104,32 @@ Status LogFile::Close() {
         writer_ = nullptr;
         fd_ = -1;
     }
+
+    if (destroy_flag_ == LogFile::kDestroyFlagOn) {
+        int ret = std::remove(file_path_.c_str());
+        if (ret != 0) {
+            return Status(Status::kIOError, "remove meta file", std::to_string(ret));
+        } else {
+            return Status::OK();
+        }
+    }
+
     return Status::OK();
 }
 
 Status LogFile::Destroy() {
-    auto s = Close();
-    if (!s.ok()) {
-        return Status(Status::kIOError, "close", s.ToString());
-    }
-    int ret = std::remove(file_path_.c_str());
-    if (ret != 0) {
-        return Status(Status::kIOError, "remove meta file", std::to_string(ret));
-    } else {
-        return Status::OK();
-    }
+//    auto s = Close();
+//    if (!s.ok()) {
+//        return Status(Status::kIOError, "close", s.ToString());
+//    }
+
+    destroy_flag_ = LogFile::kDestroyFlagOn;
+//    int ret = std::remove(file_path_.c_str());
+//    if (ret != 0) {
+//        return Status(Status::kIOError, "remove meta file", std::to_string(ret));
+//    } else {
+//        return Status::OK();
+//    }
 }
 
 Status LogFile::Get(uint64_t index, EntryPtr* e) const {

@@ -116,8 +116,11 @@ Status RaftFsm::start() {
         ops.max_log_files = rops_.max_log_files;
         ops.allow_corrupt_startup = rops_.allow_log_corrupt;
         ops.initial_first_index = rops_.initial_first_index;
+//        storage_ = std::shared_ptr<storage::Storage>(
+//            new storage::DiskStorage(id_, rops_.storage_path, ops));
         storage_ = std::shared_ptr<storage::Storage>(
-            new storage::DiskStorage(id_, rops_.storage_path, ops));
+                new storage::DiskStorage(id_, rops_.storage_path, ops,
+                                         [this](uint64_t& index) { sm_->AppliedIndex(index);} ));
     }
     auto s = storage_->Open();
     if (!s.ok()) {

@@ -110,6 +110,7 @@ private:
     std::thread range_heartbeat_;
 
     storage::DbInterface *db_ = nullptr;
+    storage::DbInterface *pdb_ = nullptr;
     storage::MetaStore *meta_store_ = nullptr;
 
     ContextServer *context_ = nullptr;

@@ -46,6 +46,10 @@ public:
     Status LoadApplyIndex(uint64_t range_id, uint64_t* apply_index);
     Status DeleteApplyIndex(uint64_t range_id);
 
+    Status SavePersistIndex(uint64_t range_id, uint64_t persist_index);
+    Status LoadPersistIndex(uint64_t range_id, uint64_t* persist_index);
+
+
 private:
     const std::string path_;
     rocksdb::WriteOptions write_options_;

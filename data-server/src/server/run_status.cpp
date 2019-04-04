@@ -18,8 +18,9 @@ namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-int RunStatus::Init(ContextServer *context) {
+int RunStatus::Init(ContextServer *context, const uint64_t seq = 0) {
     context_ = context;
+    seq_ = seq;
     return 0;
 }
 
@@ -58,8 +59,11 @@ void RunStatus::run() {
 
 bool RunStatus::GetFilesystemUsage(FileSystemUsage* usage) {
     uint64_t total = 0, available = 0;
-    if (system_status_.GetFileSystemUsage(ds_config.rocksdb_config.path, &total,
-                                          &available)) {
+    const char *tmp = ds_config.rocksdb_config.path;
+    if (1 == seq_) {
+        tmp = ds_config.async_rocksdb_config.path;
+    }
+    if (system_status_.GetFileSystemUsage(tmp, &total, &available)) {
         if (total > 0 && available <= total) {
             usage->total_size = total;
             usage->free_size = available;
