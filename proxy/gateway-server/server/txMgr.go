@@ -320,7 +320,7 @@ func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*t
 		}
 
 		var partSecIntents [][]*txnpb.TxnIntent
-		priIntents, partSecIntents, err = regroupIntentsByRange(ctx, t.GetTable(), t.getTxIntents())
+		priIntents, partSecIntents, err = regroupIntentsByRange(ctx, t.GetTable(), priIntents)
 		if err != nil || len(priIntents) == 0 {
 			return
 		}
