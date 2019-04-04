@@ -204,12 +204,17 @@ func (t *TxObj) Commit() (err error) {
 	}
 	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
 	var (
-		priIntents      []*txnpb.TxnIntent
-		secIntentsGroup [][]*txnpb.TxnIntent
+		priIntents      []*txnpb.TxnIntent = nil
+		secIntentsGroup [][]*txnpb.TxnIntent = nil
 	)
 	sort.Sort(TxnIntentSlice(t.intents))
 
 	//todo local txn optimize: 1 phase commit
+	priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.getTxIntents())
+	if err != nil {
+		return
+	}
+
 	err = t.prepareAndDecidePrimaryKey(ctx, priIntents, secIntentsGroup)
 	if err == nil {
 		return
@@ -227,6 +232,14 @@ func (t *TxObj) Commit() (err error) {
 	  priIntentsGroup and secIntentsGroup size are affected by priIntentsGroup prepare result,
 	  so they can be changed at func 'preparePrimaryIntents'(reference)
 	 */
+	priIntents = nil
+	secIntentsGroup = nil
+
+	priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.getTxIntents())
+	if err != nil {
+		return
+	}
+
 	err = t.preparePrimaryIntents(ctx, priIntents, secIntentsGroup)
 	if err != nil {
 		log.Error("[commit]prepare tx %v primary intents error %v", t.GetTxId(), err)
@@ -307,7 +320,7 @@ func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*t
 		}
 
 		var partSecIntents [][]*txnpb.TxnIntent
-		priIntents, partSecIntents, err = regroupIntentsByRange(ctx, t.GetTable(), priIntents)
+		priIntents, partSecIntents, err = regroupIntentsByRange(ctx, t.GetTable(), t.getTxIntents())
 		if err != nil || len(priIntents) == 0 {
 			return
 		}
