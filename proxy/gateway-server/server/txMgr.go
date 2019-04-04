@@ -211,12 +211,14 @@ func (t *TxObj) Commit() (err error) {
 
 	//todo local txn optimize: 1 phase commit
 	err = t.prepareAndDecidePrimaryKey(ctx, priIntents, secIntentsGroup)
-	if err != nil {
-		if err == dskv.ErrRouteChange || err == dskv.ErrMultiRange {
-			log.Warn("txn[%v] run 1ph error[%v], try 2ph", t.GetTxId())
-			goto TOW_PHASE_COMMIT
-		}
-		return err
+	if err == nil {
+		return
+	}
+	if err == dskv.ErrRouteChange || err == dskv.ErrMultiRange {
+		log.Warn("txn[%v] run 1ph error[%v], try 2ph", t.GetTxId())
+		goto TOW_PHASE_COMMIT
+	} else {
+		return
 	}
 
 	TOW_PHASE_COMMIT:
@@ -312,6 +314,8 @@ func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*t
 		if len(partSecIntents) > 0 {
 			secIntents = append(secIntents, partSecIntents...)
 		}
+		log.Debug("regroup result len(priIntents): %v, len(partSecIntents): %v",
+			len(priIntents), len(partSecIntents))
 		if !isLocalTxn(priIntents, partSecIntents) {
 			err = dskv.ErrMultiRange
 			return
