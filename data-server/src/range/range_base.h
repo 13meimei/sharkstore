@@ -38,6 +38,10 @@ namespace sharkstore {
 namespace dataserver {
 namespace range {
 
+static const int64_t kDefaultKVMaxCount = 1000;
+
+int64_t checkMaxCount(int64_t maxCount);
+
 class RangeBase {
 public:
     RangeBase(RangeContext* context, const metapb::Range &meta);
@@ -51,7 +55,7 @@ public:
     virtual Status Shutdown();
 
     virtual Status Apply(const raft_cmdpb::Command &cmd, uint64_t index);
-    virtual Status Submit(const uint64_t range_id, const uint64_t pidx, const uint64_t aidx);
+    //virtual Status Submit(const uint64_t range_id, const uint64_t pidx, const uint64_t aidx);
 public:
     virtual Status ApplyRawPut(const raft_cmdpb::Command &cmd);
     virtual Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
@@ -59,6 +63,12 @@ public:
     virtual Status ApplyInsert(const raft_cmdpb::Command &cmd);
     virtual Status ApplyUpdate(const raft_cmdpb::Command &cmd);
     virtual Status ApplyDelete(const raft_cmdpb::Command &cmd);
+
+    virtual Status ApplyKVSet(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    virtual Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    virtual Status ApplyKVDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    virtual Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    virtual Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
 
     virtual Status ApplyKVSet(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
     virtual Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
@@ -107,7 +117,7 @@ protected:
     // since it will not change unless we have merge operation
     const std::string start_key_;
     //1 slave range  0 master range(default)
-    const uint64_t slave_flag_{0};
+    uint64_t slave_flag_{0};
     MetaKeeper meta_;
 
     std::atomic<bool> valid_ = { true };

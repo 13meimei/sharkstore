@@ -51,7 +51,7 @@ void Range::rawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redi
                 break;
             } else {
                 // 重定向, 只重定向一次
-                rng->rawPut(std::move(rpc), req, false);
+                std::static_pointer_cast<Range>(rng)->rawPut(std::move(rpc), req, false);
                 return;
             }
         }
@@ -71,6 +71,7 @@ void Range::rawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redi
     }
 }
 
+/*
 Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
     Status ret;
 
@@ -115,7 +116,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
 
     return ret;
 }
-
+*/
 }  // namespace range
 }  // namespace dataserver
 }  // namespace sharkstore

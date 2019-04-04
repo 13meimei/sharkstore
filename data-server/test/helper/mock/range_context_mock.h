@@ -9,9 +9,14 @@ _Pragma("once");
 #include "watch/watch_server.h"
 #include "storage/db/db_interface.h"
 #include "server/persist_server.h"
+#include "range/range_base.h"
+#include "range/range.h"
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
+
+using Range = range::Range;
+using RangeBase = range::RangeBase;
 
 namespace sharkstore {
 namespace test {
@@ -27,25 +32,25 @@ public:
     // 分裂策略
     SplitPolicy* GetSplitPolicy() override { return split_policy_.get(); }
 
-    storage::DbInterface* DBInstance() override { return db_; }
+    storage::DbInterface* DBInstance(const uint64_t flag = 0) override { return db_; }
     master::Worker* MasterClient() override { return master_worker_.get(); }
     raft::RaftServer* RaftServer() override { return raft_server_.get(); }
     storage::MetaStore* MetaStore() override { return meta_store_.get(); }
-    RangeStats* Statistics() override { return range_stats_.get(); }
+    RangeStats* Statistics(const uint64_t flag = 0) override { return range_stats_.get(); }
 //    watch::WatchServer* WatchServer() override { return watch_server_.get(); }
     watch::WatchServer* WatchServer() override { return nullptr; }
     
     dataserver::server::PersistServer* PersistServer() override { return persist_server_.get(); }
 
     void SetFSUsagePercent(uint64_t value) { fs_usage_percent_ = value; }
-    uint64_t GetFSUsagePercent() const override { return fs_usage_percent_.load(); }
+    uint64_t GetFSUsagePercent(const uint64_t seq) const override { return fs_usage_percent_.load(); }
 
     void ScheduleHeartbeat(uint64_t range_id, bool delay) override;
     void ScheduleCheckSize(uint64_t range_id) override;
 
     Status CreateRange(const metapb::Range& meta, uint64_t leader = 0,
             uint64_t index = 0, std::shared_ptr<Range> *result = nullptr);
-    std::shared_ptr<Range> FindRange(uint64_t range_id) override;
+    std::shared_ptr<RangeBase> FindRange(uint64_t range_id) override;
     Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index) override;
 
 private:

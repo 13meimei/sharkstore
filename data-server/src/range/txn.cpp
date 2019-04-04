@@ -8,7 +8,7 @@ using namespace sharkstore::monitor;
 using namespace txnpb;
 
 
-bool Range::KeyInRange(const PrepareRequest& req, const metapb::RangeEpoch& epoch, errorpb::Error** err) {
+bool Range::TxnKeyInRange(const PrepareRequest& req, const metapb::RangeEpoch& epoch, errorpb::Error** err) {
     assert(err != nullptr);
     bool in_range = true;
     std::string wrong_key;
@@ -29,7 +29,7 @@ bool Range::KeyInRange(const PrepareRequest& req, const metapb::RangeEpoch& epoc
     return false;
 }
 
-bool Range::KeyInRange(const DecideRequest& req, const metapb::RangeEpoch& epoch, errorpb::Error** err) {
+bool Range::TxnKeyInRange(const DecideRequest& req, const metapb::RangeEpoch& epoch, errorpb::Error** err) {
     assert(err != nullptr);
     bool in_range = true;
     std::string wrong_key;
@@ -61,7 +61,7 @@ void Range::TxnPrepare(RPCRequestPtr rpc, DsPrepareRequest& req) {
         if (!VerifyLeader(err)) {
             break;
         }
-        if (!KeyInRange(req.req(), req.header().range_epoch(), &err)) {
+        if (!TxnKeyInRange(req.req(), req.header().range_epoch(), &err)) {
             break;
         }
 
@@ -90,7 +90,7 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     errorpb::Error *err = nullptr;
     std::unique_ptr<PrepareResponse> resp(new PrepareResponse);
     do {
-        if (!KeyInRange(req, cmd.verify_epoch(), &err)) {
+        if (!TxnKeyInRange(req, cmd.verify_epoch(), &err)) {
             break;
         }
         store_->TxnPrepare(req, raft_index, resp.get());
@@ -117,7 +117,7 @@ void Range::TxnDecide(RPCRequestPtr rpc, DsDecideRequest& req) {
         if (!VerifyLeader(err)) {
             break;
         }
-        if (!KeyInRange(req.req(), req.header().range_epoch(), &err)) {
+        if (!TxnKeyInRange(req.req(), req.header().range_epoch(), &err)) {
             break;
         }
 
@@ -148,7 +148,7 @@ Status Range::ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index
     uint64_t bytes_written = 0;
 
     do {
-        if (!KeyInRange(req, cmd.verify_epoch(), &err)) {
+        if (!TxnKeyInRange(req, cmd.verify_epoch(), &err)) {
             break;
         }
         bytes_written = store_->TxnDecide(req, resp.get());

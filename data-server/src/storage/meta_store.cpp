@@ -207,6 +207,16 @@ Status MetaStore::LoadApplyIndex(uint64_t range_id, uint64_t *apply_index) {
     }
 }
 
+Status MetaStore::DeleteApplyIndex(uint64_t range_id) {
+    std::string key = kRangeApplyPrefix + std::to_string(range_id);
+    auto ret = db_->Delete(rocksdb::WriteOptions(), key);
+    if (ret.ok()) {
+        return Status::OK();
+    } else {
+        return Status(Status::kIOError, "meta delete apply", ret.ToString());
+    }
+}
+
 Status MetaStore::SavePersistIndex(uint64_t range_id, uint64_t persist_index) {
     std::string key = kRangePersistPrefix + std::to_string(range_id);
     auto ret =
@@ -237,13 +247,13 @@ Status MetaStore::LoadPersistIndex(uint64_t range_id, uint64_t *persist_index) {
     }
 }
 
-Status MetaStore::DeleteApplyIndex(uint64_t range_id) {
-    std::string key = kRangeApplyPrefix + std::to_string(range_id);
+Status MetaStore::DeletePersistIndex(uint64_t range_id) {
+    std::string key = kRangePersistPrefix + std::to_string(range_id);
     auto ret = db_->Delete(rocksdb::WriteOptions(), key);
     if (ret.ok()) {
         return Status::OK();
     } else {
-        return Status(Status::kIOError, "meta delete apply", ret.ToString());
+        return Status(Status::kIOError, "meta delete persist", ret.ToString());
     }
 }
 

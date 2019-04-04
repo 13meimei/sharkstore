@@ -45,7 +45,8 @@ namespace raft {
 class RaftLogReader {
 public:
     //range_id
-    RaftLogReader(const uint64_t, const uint64_t, RaftServer *server) = default;
+    //RaftLogReader(const uint64_t, const uint64_t, RaftServer *server);
+    RaftLogReader() = default;
     virtual ~ RaftLogReader() = default;
 
     RaftLogReader(const RaftLogReader&) = delete;

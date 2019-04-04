@@ -5,7 +5,6 @@
 
 #include "frame/sf_logger.h"
 #include "common/ds_config.h"
-#include "common_thread.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -123,7 +122,7 @@ storage::IteratorInterface* PersistServer::GetIterator(const std::string& start,
     return pdb_->NewIterator(start, limit);
 }
 
-Status PersistServer::GetWorkThread(const uint64_t range_id, dataserver::WorkThread*& trd) {
+Status PersistServer::GetWorkThread(const uint64_t range_id, WorkThread*& trd) {
     auto idx = (range_id % threads_.size());
     trd = threads_[idx];
     return Status::OK();

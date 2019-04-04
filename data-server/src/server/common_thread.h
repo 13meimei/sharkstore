@@ -14,49 +14,51 @@ _Pragma("once");
 
 namespace sharkstore {
 namespace dataserver {
+namespace server {
 
 static const int kMaxBatchSize = 64;
 
-struct Work {
-    uint64_t owner = 0;
-    std::atomic<bool>* stopped = nullptr;
+struct CommonWork {
+    uint64_t owner;
+    std::atomic<bool>* stopped;
 
     std::function<void()> f0;
 
     void Do();
 };
 
-class WorkThread {
+class CommonThread {
 public:
-    WorkThread(size_t queue_capcity, const std::string& name = "worker");
-    ~WorkThread();
+    CommonThread(size_t queue_capcity, const std::string& name);
+    ~CommonThread();
 
-    WorkThread(const WorkThread&) = delete;
-    WorkThread& operator=(const WorkThread&) = delete;
+    CommonThread(const CommonThread&) = delete;
+    CommonThread& operator=(const CommonThread&) = delete;
 
     bool submit(uint64_t owner, std::atomic<bool>* stopped,
                 const std::function<void()>& f0, std::string& cmd);
 
-    bool tryPost(const Work& w);
-    void post(const Work& w);
-    void waitPost(const Work& w);
+    bool tryPost(const CommonWork& w);
+    void post(const CommonWork& w);
+    void waitPost(const CommonWork& w);
     void shutdown();
     int size() const;
 
 private:
-    bool pull(Work* w);
+    bool pull(CommonWork* w);
     void run();
 
 private:
-    const size_t capacity_ = 0;
+    const size_t capacity_;
 
     std::unique_ptr<std::thread> thr_;
     bool running_ = false;
-    std::queue<Work> queue_;
+    std::queue<CommonWork> queue_;
     mutable std::mutex mu_;
     std::condition_variable cv_;
 };
 
 
+} /* namespace server */
 } /* namespace dataserver */
 } /* namespace sharkstore */

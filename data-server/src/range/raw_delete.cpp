@@ -52,7 +52,7 @@ void Range::rawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, boo
                 break;
             } else {
                 // 重定向, 只重定向一次
-                rng->rawDelete(std::move(rpc), req, false);
+                std::static_pointer_cast<Range>(rng)->rawDelete(std::move(rpc), req, false);
                 return;
             }
         }

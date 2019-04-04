@@ -1,19 +1,20 @@
 #include "range.h"
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
-#include <src/common/ds_config.h>
 #include "common/ds_config.h"
 #include "master/worker.h"
 #include "server/range_server.h"
-#include "server/persist_server.h"
-#include "server/run_status.h"
+//#include "server/persist_server.h"
+//#include "server/run_status.h"
 #include "storage/meta_store.h"
 
-#include "range_logger.h"
+//#include "range_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace range {
+
+class RangeSlave;
 
 static const int kDownPeerThresholdSecs = 50;
 
@@ -31,9 +32,12 @@ Range::~Range() {
 
 Status Range::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sflag) {
     auto s = RangeBase::Initialize(leader, log_start_index, 0);
+    if (!s.ok()) {
+        return Status(Status::kCorruption, "RangeBase::Initialize error", s.ToString());
+    }
 
     // 加载apply位置
-    auto s = context_->MetaStore()->LoadApplyIndex(id_, &apply_index_);
+    s = context_->MetaStore()->LoadApplyIndex(id_, &apply_index_);
     if (!s.ok()) {
         return Status(Status::kCorruption, "load applied", s.ToString());
     }
@@ -95,7 +99,7 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sfl
     }
 
     if (ds_config.persist_config.persist_switch) {
-        slave_range_ = std::make_shared<RangeSlave>(context_, meta_);
+        slave_range_ = std::make_shared<RangeSlave>(context_, std::move(meta_.Get()));
         slave_range_->Initialize(1, leader, log_start_index);
     }
     return Status::OK();
@@ -313,7 +317,7 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 
     //TO DO trigger persist
     if (slave_range_) {
-        slave_range_->Submit(id_, std::static_pointer_cast<RangeSlave>(slave_range_)->PersistIndex(), apply_index_);
+        std::static_pointer_cast<RangeSlave>(slave_range_)->Submit(id_, 0, apply_index_);
     }
 
     return Status::OK();

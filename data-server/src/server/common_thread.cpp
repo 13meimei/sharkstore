@@ -1,25 +1,27 @@
 #include "common_thread.h"
+
 namespace sharkstore {
 namespace dataserver {
+namespace server {
 
-void Work::Do() {
+void CommonWork::Do() {
     if (!(*stopped)) {
         f0();
     }
 }
 
-WorkThread::WorkThread(size_t queue_capcity, const std::string& name)
+CommonThread::CommonThread(size_t queue_capcity, const std::string& name)
     : capacity_(queue_capcity), running_(true) {
     assert(capacity_ > 0);
 
-    thr_.reset(new std::thread(std::bind(&WorkThread::run, this)));
+    thr_.reset(new std::thread(std::bind(&CommonThread::run, this)));
     // 设置线程名称
     AnnotateThread(thr_->native_handle(), name.c_str());
 }
 
-WorkThread::~WorkThread() { shutdown(); }
+CommonThread::~CommonThread() { shutdown(); }
 
-bool WorkThread::submit(uint64_t owner, std::atomic<bool>* stopped,
+bool CommonThread::submit(uint64_t owner, std::atomic<bool>* stopped,
                         const std::function<void()>& f0,
                         std::string& cmd) {
 
@@ -31,7 +33,7 @@ bool WorkThread::submit(uint64_t owner, std::atomic<bool>* stopped,
         if (queue_.size() >= capacity_) {
             return false;
         } else {
-            Work w;
+            CommonWork w;
             w.owner = owner;
             w.stopped = stopped;
             w.f0 = f0;
@@ -45,7 +47,7 @@ bool WorkThread::submit(uint64_t owner, std::atomic<bool>* stopped,
     return true;
 }
 
-bool WorkThread::tryPost(const Work& w) {
+bool CommonThread::tryPost(const CommonWork& w) {
     {
         std::lock_guard<std::mutex> lock(mu_);
         if (!running_) return false;
@@ -59,7 +61,7 @@ bool WorkThread::tryPost(const Work& w) {
     return true;
 }
 
-void WorkThread::post(const Work& w) {
+void CommonThread::post(const CommonWork& w) {
     {
         std::lock_guard<std::mutex> lock(mu_);
         if (!running_) return;
@@ -68,7 +70,7 @@ void WorkThread::post(const Work& w) {
     cv_.notify_one();
 }
 
-void WorkThread::waitPost(const Work& w) {
+void CommonThread::waitPost(const CommonWork& w) {
     std::unique_lock<std::mutex> lock(mu_);
     while (queue_.size() >= capacity_ && running_) {
         cv_.wait(lock);
@@ -81,7 +83,7 @@ void WorkThread::waitPost(const Work& w) {
     }
 }
 
-void WorkThread::shutdown() {
+void CommonThread::shutdown() {
     {
         std::unique_lock<std::mutex> lock(mu_);
         if (!running_) return;
@@ -91,7 +93,7 @@ void WorkThread::shutdown() {
     thr_->join();
 }
 
-bool WorkThread::pull(Work* w) {
+bool CommonThread::pull(CommonWork* w) {
     std::unique_lock<std::mutex> lock(mu_);
 
     while (queue_.empty() && running_) {
@@ -106,9 +108,9 @@ bool WorkThread::pull(Work* w) {
     return true;
 }
 
-void WorkThread::run() {
+void CommonThread::run() {
     while (true) {
-        Work work;
+        CommonWork work;
         if (pull(&work)) {
             try {
                 work.Do();
@@ -122,10 +124,12 @@ void WorkThread::run() {
     }
 }
 
-int WorkThread::size() const {
+int CommonThread::size() const {
     std::lock_guard<std::mutex> lock(mu_);
     return queue_.size();
 }
 
-}
-}
+
+} /* namespace server */
+} /* namespace dataserver */
+} /* namespace sharkstore */

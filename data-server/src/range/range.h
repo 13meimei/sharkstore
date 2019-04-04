@@ -1,37 +1,7 @@
 _Pragma("once");
-
-#include <stdint.h>
-#include <atomic>
-#include <string>
-
 #include "range_base.h"
-#include "frame/sf_logger.h"
-
-#include "base/shared_mutex.h"
-#include "base/util.h"
-
-#include "common/ds_encoding.h"
-#include "common/rpc_request.h"
-#include "storage/store.h"
-#include "raft/raft.h"
-#include "raft/statemachine.h"
-#include "raft/types.h"
-#include "raft/raft_log_reader.h"
-#include "server/context_server.h"
-#include "server/run_status.h"
-//#include "watch/watch_event_buffer.h"
-//#include "watch/watcher.h"
-#include "proto/gen/funcpb.pb.h"
-#include "proto/gen/kvrpcpb.pb.h"
-#include "proto/gen/mspb.pb.h"
-#include "proto/gen/raft_cmdpb.pb.h"
-#include "proto/gen/watchpb.pb.h"
-#include "proto/gen/txn.pb.h"
-
-#include "meta_keeper.h"
-#include "context.h"
-#include "submit.h"
 #include "range_logger.h"
+#include "range_slave.h"
 
 // for test friend class
 namespace sharkstore { namespace test { namespace helper { class RangeTestFixture; }}}
@@ -52,8 +22,6 @@ enum {
     LOCK_TIME_OUT = Status::kTimedOut,  //value 7 same with defined in status.h
     LOCK_PARAMETER_ERROR
 };
-
-class RangeSlave;
 
 class Range : public RangeBase, public raft::StateMachine, public std::enable_shared_from_this<Range> {
 public:
@@ -145,6 +113,12 @@ public:
     Status ApplyKVDelete(const raft_cmdpb::Command &cmd) override ;
     Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) override ;
     Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) override ;
+
+    Status ApplyKVSet(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&) override;
+    Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&) override;
+    Status ApplyKVDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&) override;
+    Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&) override;
+    Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&) override;
 
 private:
     Status Submit(const raft_cmdpb::Command &cmd);
@@ -241,7 +215,7 @@ public:
     void ResetStatisSize(SplitKeyMode mode, uint64_t split_size, uint64_t max_size);
     void Heartbeat();
 
-//    Status Destroy();
+    Status Destroy() override;
 
 //public:
 //    bool valid() { return valid_; }
@@ -267,9 +241,9 @@ private:
 //    bool KeyInRange(const std::string &key);
 //    bool KeyInRange(const std::string &key, errorpb::Error *&err);
 
-    bool KeyInRange(const txnpb::PrepareRequest& req, const metapb::RangeEpoch& epoch,
+    bool TxnKeyInRange(const txnpb::PrepareRequest& req, const metapb::RangeEpoch& epoch,
             errorpb::Error** err);
-    bool KeyInRange(const txnpb::DecideRequest& req, const metapb::RangeEpoch& epoch,
+    bool TxnKeyInRange(const txnpb::DecideRequest& req, const metapb::RangeEpoch& epoch,
             errorpb::Error** err);
 
     //bool EpochIsEqual(const metapb::RangeEpoch &epoch);

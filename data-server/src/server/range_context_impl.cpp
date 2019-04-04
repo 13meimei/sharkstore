@@ -64,7 +64,7 @@ void RangeContextImpl::ScheduleCheckSize(uint64_t range_id) {
     server_->range_server->StatisPush(range_id);
 }
 
-std::shared_ptr<range::Range> RangeContextImpl::FindRange(uint64_t range_id) {
+std::shared_ptr<range::RangeBase> RangeContextImpl::FindRange(uint64_t range_id) {
     return server_->range_server->Find(range_id);
 }
 

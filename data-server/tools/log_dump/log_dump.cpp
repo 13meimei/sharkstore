@@ -3,9 +3,11 @@
 
 #include "raft/src/impl/storage/storage_disk.h"
 #include "proto/gen/raft_cmdpb.pb.h"
+#include "base/status.h"
 
 using namespace sharkstore::raft::impl;
 using namespace sharkstore::raft::impl::storage;
+using Status = sharkstore::Status;
 
 struct DumpOptions {
     uint64_t start = 0;
@@ -92,7 +94,8 @@ void dump(const std::string& path, const DumpOptions& ops) {
     // open for readonly
     DiskStorage::Options dops;
     dops.readonly = true;
-    DiskStorage ds(1, path, dops);
+    //DiskStorage ds(1, path, dops);
+    DiskStorage ds(1, path, dops, [](uint64_t& index){ return Status::OK(); });
     auto s = ds.Open();
     if (!s.ok()) {
         std::cerr << "Open log failed(" << path << ") failed: " << s.ToString() << std::endl;

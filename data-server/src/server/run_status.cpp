@@ -18,7 +18,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-int RunStatus::Init(ContextServer *context, const uint64_t seq = 0) {
+int RunStatus::Init(ContextServer *context, const uint64_t seq) {
     context_ = context;
     seq_ = seq;
     return 0;

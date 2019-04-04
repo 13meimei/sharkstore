@@ -40,7 +40,7 @@ namespace impl {
 
 class StorageReader : public RaftLogReader,  public std::enable_shared_from_this<StorageReader> {
 public:
-    StorageReader(const uint64_t id, const uint64_t index, RaftServer *server) = default;
+    StorageReader(const uint64_t id, const uint64_t index, RaftServer *server);
     ~ StorageReader() override ;
 
     StorageReader(const StorageReader&) = delete;

@@ -47,7 +47,7 @@ void Range::rawGet(RPCRequestPtr rpc, kvrpcpb::DsKvRawGetRequest &req, bool redi
                 break;
             } else {
                 // 重定向, 只重定向一次
-                rng->rawGet(std::move(rpc), req, false);
+                std::static_pointer_cast<Range>(rng)->rawGet(std::move(rpc), req, false);
                 return;
             }
         }

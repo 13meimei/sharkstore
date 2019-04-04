@@ -14,7 +14,6 @@
 #include <rocksdb/rate_limiter.h>
 #include <fastcommon/shared_func.h>
 #include <common/ds_config.h>
-#include <src/common/ds_config.h>
 
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -815,7 +814,7 @@ Status RangeServer::recoverKV(const std::string& start_key, const std::string& e
         keys++;
         it->Next();
     }
-    RANGE_LOG_INFO("recoverKv %" PRIu64 " keys, elapse %" PRIu64 " us", keys, NowMicros() - bTime);
+    FLOG_INFO("recoverKv %" PRIu64 " keys, elapse %" PRIu64 " us", keys, NowMicros() - bTime);
 
     delete it;
     if (!ret.ok()) {

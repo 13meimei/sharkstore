@@ -67,10 +67,9 @@ Status StorageReader::getCurrLogFile(const uint64_t idx) {
             return r;
         }
 
-        log_files_.swap(s->GetLogFiles());
-//        for (auto &f : s->GetLogFiles()) {
-//            log_files_.emplace(f);
-//        }
+        for (auto &f : s->GetLogFiles()) {
+            log_files_.emplace(f);
+        }
     }
 
     if (log_files_.empty() && curr_log_file_ == nullptr) {
@@ -115,9 +114,10 @@ Status StorageReader::GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Co
 }
 
 Status StorageReader::listLogs() {
-    for (auto f : log_files_) {
-        RAFT_LOG_DEBUG("path: %s \nfile_size: %llu \nlog item size: %d",
-                       f->Path().c_str(), f->FileSize(), f->LogSize());
+    if (log_files_.size() > 0) {
+        auto f = log_files_.front();
+        RAFT_LOG_DEBUG("files: %zd >>>1.)path: %s \nfile_size: %" PRIu64 " \nlog item size: %d",
+                log_files_.size(), f->Path().c_str(), f->FileSize(), f->LogSize());
     }
     return Status::OK();
 }

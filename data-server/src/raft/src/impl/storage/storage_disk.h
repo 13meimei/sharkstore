@@ -97,7 +97,7 @@ public:
     };
 
     DiskStorage(uint64_t id, const std::string& path, const Options& ops,
-                std::function<Status(uint64_t&)>& f0);
+                const std::function<Status(uint64_t&)>& f0);
     ~DiskStorage();
 
     DiskStorage(const DiskStorage&) = delete;

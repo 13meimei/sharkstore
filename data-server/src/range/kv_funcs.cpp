@@ -12,17 +12,6 @@ namespace range {
 
 using namespace sharkstore::monitor;
 
-static const int64_t kDefaultKVMaxCount = 1000;
-
-static int64_t checkMaxCount(int64_t maxCount) {
-    if (maxCount <= 0)
-        maxCount = std::numeric_limits<int64_t>::max();
-    if (maxCount > kDefaultKVMaxCount) {
-        maxCount = kDefaultKVMaxCount ;
-    }
-    return maxCount;
-}
-
 void Range::KVSet(RPCRequestPtr rpc, kvrpcpb::DsKvSetRequest &req) {
     auto &key = req.req().kv().key();
     errorpb::Error *err = nullptr;
@@ -68,7 +57,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
 
     //auto &req = cmd.kv_set_req();
     auto btime = NowMicros();
-    ret = RangeBase::ApplyKVSet(cmd, &affected_keys, err);
+    ret = RangeBase::ApplyKVSet(cmd, affected_keys, err);
 
 //    do {
 //        auto &epoch = cmd.verify_epoch();
@@ -521,6 +510,22 @@ void Range::KVScan(RPCRequestPtr rpc, kvrpcpb::DsKvScanRequest &req) {
     }
 
     SendResponse(rpc, ds_resp, req.header(), err);
+}
+
+Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
+    return RangeBase::ApplyKVSet(cmd, affected_keys, err);
+}
+Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
+    return RangeBase::ApplyKVBatchSet(cmd, affected_keys, err);
+}
+Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&err) {
+    return RangeBase::ApplyKVDelete(cmd, err);
+}
+Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
+    return RangeBase::ApplyKVBatchDelete(cmd, affected_keys, err);
+}
+Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
+    return RangeBase::ApplyKVRangeDelete(cmd, affected_keys, err);
 }
 
 }

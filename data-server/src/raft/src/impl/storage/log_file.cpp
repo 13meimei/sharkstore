@@ -130,6 +130,7 @@ Status LogFile::Destroy() {
 //    } else {
 //        return Status::OK();
 //    }
+    return Status::OK();
 }
 
 Status LogFile::Get(uint64_t index, EntryPtr* e) const {

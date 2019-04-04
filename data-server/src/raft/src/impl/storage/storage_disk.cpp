@@ -21,7 +21,7 @@ namespace storage {
 static const unsigned kKeepLogCountBeforeApplied = 30;
 
 DiskStorage::DiskStorage(uint64_t id, const std::string& path, const Options& ops,
-                         std::function<Status(uint64_t&)>& f0)
+                         const std::function<Status(uint64_t&)>& f0)
     : id_(id), path_(path), ops_(ops), meta_file_(path), get_apply_index(f0) {}
 
 DiskStorage::~DiskStorage() { Close(); }

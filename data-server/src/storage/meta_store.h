@@ -48,6 +48,7 @@ public:
 
     Status SavePersistIndex(uint64_t range_id, uint64_t persist_index);
     Status LoadPersistIndex(uint64_t range_id, uint64_t* persist_index);
+    Status DeletePersistIndex(uint64_t range_id);
 
 
 private:

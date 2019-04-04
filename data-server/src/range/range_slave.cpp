@@ -4,7 +4,6 @@
 #include "range_logger.h"
 #include "server/persist_server.h"
 
-
 namespace sharkstore {
 namespace dataserver {
 namespace range {
@@ -29,7 +28,7 @@ Status RangeSlave::Initialize(uint64_t leader, uint64_t log_start_index, uint64_
 
     //acquire raft log reader object
     std::shared_ptr<raft::RaftLogReader> reader;
-    context_->PersistServer()->CreateReader(id_, &reader);
+    context_->PersistServer()->CreateReader(id_, persist_index_, &reader);
     reader_ = reader.get();
 
     //acquire work thread
@@ -55,7 +54,8 @@ Status RangeSlave::Submit(const uint64_t range_id, const uint64_t pidx, const ui
         return Status(Status::kShutdownInProgress, "server is stopping",
                       std::to_string(id_));
     }
-    if(!context_->PersistServer()->IndexInDistance(range_id, aidx, pidx)) {
+    //if(!context_->PersistServer()->IndexInDistance(range_id, aidx, pidx)) {
+    if(!context_->PersistServer()->IndexInDistance(range_id, aidx, persist_index_)) {
         return Status::OK();
     }
 
@@ -70,7 +70,7 @@ Status RangeSlave::Submit(const uint64_t range_id, const uint64_t pidx, const ui
 }
 
 bool RangeSlave::tryPost(const std::function<void()>& f) {
-    dataserver::Work w;
+    Work w;
     w.owner = id_;
     w.stopped = &running_;
     w.f0 = f;
@@ -79,7 +79,7 @@ bool RangeSlave::tryPost(const std::function<void()>& f) {
 
 Status RangeSlave::dealTask() {
     Status ret;
-    uint64_t idx{persist_index_};
+    uint64_t idx = persist_index_;
     do {
         if (!running_) break;
 
@@ -90,7 +90,7 @@ Status RangeSlave::dealTask() {
             break;
         }
 
-        ret = Apply(cmd, idx);
+        ret = RangeBase::Apply(*cmd, idx);
         if (!ret.ok()) {
             break;
         }

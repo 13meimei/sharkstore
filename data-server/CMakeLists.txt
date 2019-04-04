@@ -205,7 +205,9 @@ set(SOURCES
     src/server/persist_server.cpp
     src/server/version.cpp
     src/server/common_thread.cpp
+    src/range/range_base.cpp
     src/range/range.cpp
+    src/range/range_slave.cpp
     #src/range/lock.cpp
     src/range/meta_keeper.cpp
     src/range/raw_get.cpp

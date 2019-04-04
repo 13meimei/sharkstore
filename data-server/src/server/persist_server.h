@@ -13,10 +13,10 @@ _Pragma("once");
 
 namespace sharkstore {
 namespace dataserver {
-    class WorkThread;
 namespace server {
 
-using WorkThread = sharkstore::dataserver::WorkThread;
+using WorkThread = sharkstore::dataserver::server::CommonThread;
+
 class PersistServer final: public std::enable_shared_from_this<PersistServer> {
 public:
     struct Options {
@@ -35,7 +35,7 @@ public:
     int Init(ContextServer *context);
     Status Start();
     Status Stop();
-    bool PersistServer::IndexInDistance(const uint64_t range_id,
+    bool IndexInDistance(const uint64_t range_id,
                                         const uint64_t aidx, const uint64_t pidx);
 
     Status SavePersistIndex(const uint64_t range_id, const uint64_t persist_index);
@@ -46,7 +46,7 @@ public:
 
     storage::IteratorInterface* GetIterator(const std::string& start, const std::string& limit);
 
-    Status GetWorkThread(const uint64_t range_id, dataserver::WorkThread*& trd);
+    Status GetWorkThread(const uint64_t range_id, WorkThread*& trd);
     Status CreateReader(const uint64_t range_id,
                         const uint64_t start_index,
                         std::shared_ptr<raft::RaftLogReader>* reader);

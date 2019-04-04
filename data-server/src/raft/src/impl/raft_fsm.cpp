@@ -120,7 +120,7 @@ Status RaftFsm::start() {
 //            new storage::DiskStorage(id_, rops_.storage_path, ops));
         storage_ = std::shared_ptr<storage::Storage>(
                 new storage::DiskStorage(id_, rops_.storage_path, ops,
-                                         [this](uint64_t& index) { sm_->AppliedIndex(index);} ));
+                                         [this](uint64_t& index) { return sm_->AppliedIndex(index);} ));
     }
     auto s = storage_->Open();
     if (!s.ok()) {

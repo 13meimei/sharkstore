@@ -48,7 +48,7 @@ void Range::select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redire
                     break;
                 } else {
                     // 重定向, 只重定向一次
-                    rng->select(std::move(rpc), req, false);
+                    std::static_pointer_cast<Range>(rng)->select(std::move(rpc), req, false);
                     return;
                 }
             }

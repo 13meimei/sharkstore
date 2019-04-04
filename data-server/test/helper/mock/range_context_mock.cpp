@@ -97,7 +97,7 @@ Status RangeContextMock::CreateRange(const metapb::Range& meta, uint64_t leader,
     return Status::OK();
 }
 
-std::shared_ptr<Range> RangeContextMock::FindRange(uint64_t range_id) {
+std::shared_ptr<RangeBase> RangeContextMock::FindRange(uint64_t range_id) {
     std::lock_guard<std::mutex> lock(mu_);
     auto it = ranges_.find(range_id);
     if (it == ranges_.end()) {

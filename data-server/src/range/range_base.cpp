@@ -1,7 +1,7 @@
 #include "range_base.h"
 
 #include <cinttypes>
-
+#include "storage/meta_store.h"
 #include "range_logger.h"
 
 namespace sharkstore {
@@ -10,6 +10,15 @@ namespace range {
 
 // 磁盘使用率大于百分之92停写
 static const uint64_t kStopWriteFsUsagePercent = 92;
+
+int64_t checkMaxCount(int64_t maxCount) {
+    if (maxCount <= 0)
+        maxCount = std::numeric_limits<int64_t>::max();
+    if (maxCount > kDefaultKVMaxCount) {
+        maxCount = kDefaultKVMaxCount ;
+    }
+    return maxCount;
+}
 
 RangeBase::RangeBase(RangeContext* context, const metapb::Range &meta) :
         context_(context),
@@ -25,7 +34,7 @@ RangeBase::~RangeBase() {}
 
 Status RangeBase::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sflag) {
     slave_flag_ = sflag;
-    store_ = std::unique_ptr<storage::Store>(new storage::Store(meta_, context_->DBInstance(slave_flag_)));
+    store_ = std::unique_ptr<storage::Store>(new storage::Store(std::move(meta_.Get()), context_->DBInstance(slave_flag_)));
 
     return Status::OK();
 }
@@ -119,7 +128,7 @@ Status RangeBase::ApplyRawPut(const raft_cmdpb::Command &cmd) {
 
         ret = store_->Put(req.key(), req.value());
 
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore,
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore,
                                          NowMicros() - btime);
 
         if (!ret.ok()) {
@@ -158,7 +167,7 @@ Status RangeBase::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
         }
 
         ret = store_->Delete(req.key());
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore,
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore,
                                          NowMicros() - btime);
 
         if (!ret.ok()) {
@@ -195,7 +204,7 @@ Status RangeBase::ApplyInsert(const raft_cmdpb::Command &cmd) {
 
         ret = store_->Insert(req, &affected_keys);
         auto etime = NowMicros();
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore, etime - btime);
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore, etime - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyInsert failed, code:%d, msg:%s", ret.code(),
@@ -254,7 +263,7 @@ Status RangeBase::ApplyUpdate(const raft_cmdpb::Command &cmd) {
 
         ret = store_->Update(req, &affected_keys, &update_bytes);
         auto etime = NowMicros();
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore, etime - btime);
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore, etime - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyUpdate failed, code:%d, msg:%s", ret.code(),
@@ -307,7 +316,7 @@ Status RangeBase::ApplyDelete(const raft_cmdpb::Command &cmd) {
         }
 
         ret = store_->DeleteRows(req, &affected_keys);
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore, NowMicros() - btime);
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore, NowMicros() - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyDelete failed, code:%d, msg:%s", ret.code(),
@@ -354,7 +363,7 @@ Status RangeBase::ApplyKVSet(const raft_cmdpb::Command &cmd, uint64_t& affected_
             }
         }
         ret = store_->Put(req.kv().key(), req.kv().value());
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore, NowMicros() - btime);
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore, NowMicros() - btime);
 
         if (slave_flag_ == 0 && cmd.cmd_id().node_id() == node_id_) {
             auto len = req.kv().key().size() + req.kv().value().size();
@@ -414,7 +423,7 @@ Status RangeBase::ApplyKVBatchSet(const raft_cmdpb::Command &cmd, uint64_t& affe
         }
 
         ret = store_->BatchSet(keyValues);
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore,
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore,
                                          NowMicros() - btime);
 
         if (!ret.ok()) {
@@ -455,7 +464,7 @@ Status RangeBase::ApplyKVDelete(const raft_cmdpb::Command &cmd, errorpb::Error *
         }
 
         ret = store_->Delete(req.key());
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore,
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore,
                                          NowMicros() - btime);
 
         if (!ret.ok()) {
@@ -506,7 +515,7 @@ Status RangeBase::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd, uint64_t& a
         }
 
         ret = store_->BatchDelete(delKeys);
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore, NowMicros() - btime);
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore, NowMicros() - btime);
 
         if (!ret.ok()) {
             RANGE_LOG_ERROR("ApplyKVBatchDelete failed, code:%d, msg:%s", ret.code(),
@@ -568,7 +577,7 @@ Status RangeBase::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd, uint64_t& a
             ret = store_->RangeDelete(start, limit);
         }
 
-        context_->Statistics(slave_flag_)->PushTime(HistogramType::kStore, NowMicros() - btime);
+        context_->Statistics(slave_flag_)->PushTime(monitor::HistogramType::kStore, NowMicros() - btime);
     } while (false);
 
 //        if (cmd.cmd_id().node_id() == node_id_) {
