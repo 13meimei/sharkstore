@@ -27,6 +27,7 @@ struct IndexVer {
     IndexVer(int inx, uint64_t ver) :
     index(inx),max_ver(ver) {}
 };
+
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
@@ -49,6 +50,20 @@ protected:
     MvccMassTreeMock* db_;
 };
 
+/*
+ * put=>a1=>check=>delete=>a3,a1=>check(a3,a1)
+ *
+ * example:
+ * 1.generate key=>a
+ * 2.put=>a1
+ * 3.iterator,check key=>a1
+ * 4.delete key=>a3=>keylist:a3,a1
+ * 5.iterator,check key=>"a" not exists
+ * 6.origin iterator
+ * 6.1check first key a3
+ * 6.2cursor next
+ * 6.3check second key a1
+*/
 TEST_F(MassMvccTest, SingleKey) {
     auto db = getenv("DB");
     ASSERT_STREQ(db, "mass-tree-mock");
@@ -91,7 +106,14 @@ TEST_F(MassMvccTest, SingleKey) {
     ASSERT_EQ(multiKey.ver(), 1);
 }
 
-
+/*
+ * put=>a3,a2,a1,b5,b4
+ * iterator check(a3,b5)
+ * origin iterator check(a3,a2,a1,b5,b4)
+ * delete "a"=>a8,a3,a2,a1,b5,b4=>
+ * iterator check(b5)
+ * origin iterator check(a8,a3,a2,a1,b5,b4)
+ */
 TEST_F(MassMvccTest, MultiKey) {
     auto db = getenv("DB");
     ASSERT_STREQ(db, "mass-tree-mock");
@@ -175,6 +197,13 @@ TEST_F(MassMvccTest, MultiKey) {
     }
 } //TEST_F end
 
+/*
+ * put=>a3,a2,a1,b6,b5,b4,c9,c8,c7
+ * reset version to 4
+ * iterator=>version=5, check result=>a3,b5
+ * reset version to 7
+ * iterator=>version=8, check result=>a3,b5,c8
+ */
 TEST_F(MassMvccTest, Snapshot) {
     MultiVersionKey multiKey;
 
@@ -230,11 +259,25 @@ TEST_F(MassMvccTest, Snapshot) {
     }
 }
 
-TEST_F(MassMvccTest, Bound) {
-
-} // TEST_F end
-
-TEST_F(MassMvccTest, SingleKeyScrub) {
+/*
+ * put=>a1
+ * iterator check(a1)
+ * scrub();
+ * iterator check(a1)//scrub no impact
+ * delete "a"=>a4-del,a1
+ * scrub();=>a clear
+ * iterator check=>no data
+ * origin iterator check=>no data
+ * reset version,version=0
+ * put=>a3,a2,a1
+ * scrub();
+ * origin iterator check(a3,a2,a1)
+ * put=>a6,a5,a3,a2,a1
+ * delete "a"=>a7-del,a6,a5,a3,a2,a1
+ * scrub();=>clear a
+ * origin iterator check=>no data
+ */
+TEST_F(MassMvccTest, SingleKeyDelScrub) {
     MultiVersionKey multiKey;
 
     std::vector<KeyStatus> kv;
@@ -321,6 +364,41 @@ TEST_F(MassMvccTest, SingleKeyScrub) {
     ASSERT_FALSE(it->Valid());
 }
 
+/*
+ * put=>a1,b2,c3
+ * scrub();
+ * iterator check(a1,b2,c3)
+ * delete "a"=>a5-del,a1,b2,c3
+ * scrub();=>b2,c3
+ * delete "c"=>b2,c8-del,c3
+ * scrub();=>b2
+ * iterator check(b2)
+ * origin iterator check(b2)
+ * put=>a13,a12,a11,b15,b14,b2,c18,c17,c16
+ * scrub();
+ * iterator check(a13,b15,c18)
+ * origin iterator check(a13,b15,c18)
+ * put=>a23,a22,a21,a13,b25,b24,b15,c28,c27,c26,c18
+ * reset version,version=18
+ * iterator=>version=19
+ * scrub();=>a23,a22,a21,b25,b24,c28,c27,c26
+ * iterator check(a23,b25,c28)
+ * origin iterator check(a23,a22,a21,b25,b24,c28,c27,c26
+ * reset version,version=28
+ * delete "c"
+ * put=>a30,a23,a22,a21,b31,b25,b24,c29-del,c28,c27,c26
+ * reset version,version=28
+ * iterator=>version=29
+ * scrub();=>a30,b31,c29-del
+ * reset version,version=31
+ * iterator check(a30,b31,c29-del)
+ * put=>a33,a30,b34,b31,c29-del
+ * reset version,version=29
+ * iterator=>version=30
+ * scrub();=>a33,a30,b34,b31
+ * reset version,version=34
+ * origin iterator check(a33,a30,b34,b31)
+ */
 TEST_F(MassMvccTest, MultiKeyDelScrub) {
     MultiVersionKey multiKey;
 
@@ -569,11 +647,154 @@ TEST_F(MassMvccTest, MultiKeyDelScrub) {
     }
     ASSERT_FALSE(it->Valid());
 }
-//TEST_F(MassMvccTest, SingleKeyDelScrub) {
-//
-//}
-TEST_F(MassMvccTest, SingleKeyDelScrub) {
 
+/*
+ * put=>a1,b2,c3
+ * delete "c"=>a1,b2,c4-del,c3
+ * delete "c"=>a1,b2,c5-del,c4-del,c3
+ * origin iterator check(a1,b2,c5-del,c4-del,c3)
+ * scrub();
+ * origin iterator check(a1,b2)
+ */
+TEST_F(MassMvccTest, MultiKeyDelBound) {
+    MultiVersionKey multiKey;
+    std::vector<IndexVer> index_map;
+
+    std::vector<KeyStatus> kv;
+    kv.emplace_back("a", "va", 1, false);
+    kv.emplace_back("b", "vb", 2, false);
+    kv.emplace_back("c", "vc", 3, false);
+
+    int i = 0;
+    db_->Put(kv.at(i).key, kv.at(i).val);//ver=1,i=0
+    i++;db_->Put(kv.at(i).key, kv.at(i).val);//ver=2,i=1
+    i++;db_->Put(kv.at(i).key, kv.at(i).val);//ver=3,i=2
+
+    db_->Delete("c");//ver=4
+    db_->Delete("c");//ver=5,a1,b2,c5-del,c4-del,c3
+    kv.emplace_back("c", "", 4, true);
+    kv.emplace_back("c", "", 5, true);
+    i++;
+    i++;
+
+    db_->seek_set(false);
+    std::unique_ptr<MassTreeIteratorMock> it(
+            static_cast<MassTreeIteratorMock *>(db_->NewIterator("", "")));//ver=6
+    index_map.emplace_back(0, 1);//kv[0]=>a1
+    index_map.emplace_back(1, 2);//kv[1]=>b2
+    index_map.emplace_back(4, 5);//kv[4]=>c5
+    index_map.emplace_back(3, 4);//kv[3]=>c4
+    index_map.emplace_back(2, 3);//kv[2]=>c3
+    for (int i = 0; i < 5 && it->Valid(); i++) {
+        multiKey = it->getMultiKey();
+        ASSERT_STREQ(multiKey.key().c_str(), kv.at(index_map[i].index).key.c_str());
+        ASSERT_STREQ(it->value().c_str(), kv.at(index_map[i].index).val.c_str());
+        ASSERT_EQ(multiKey.ver(), index_map[i].max_ver);
+        ASSERT_EQ(multiKey.is_del(), kv.at(index_map[i].index).del_flag);
+        it->Traverse();
+    }
+    ASSERT_FALSE(it->Valid());
+
+    db_->Scrub();
+
+    it.reset(static_cast<MassTreeIteratorMock *>(db_->NewIterator("", "")));//ver=8
+    index_map.clear();
+    index_map.emplace_back(0, 1);//kv[0]=>a1
+    index_map.emplace_back(1, 2);//kv[1]=>b2
+    for (int i = 0; i < 2 && it->Valid(); i++) {
+        multiKey = it->getMultiKey();
+        ASSERT_STREQ(multiKey.key().c_str(), kv.at(index_map[i].index).key.c_str());
+        ASSERT_STREQ(it->value().c_str(), kv.at(index_map[i].index).val.c_str());
+        ASSERT_EQ(multiKey.ver(), index_map[i].max_ver);
+        ASSERT_EQ(multiKey.is_del(), kv.at(index_map[i].index).del_flag);
+        it->Traverse();
+    }
+    ASSERT_FALSE(it->Valid());
 }
+
+/*
+ * put=>a1,b2
+ * delete "c"=>a1,b2,c3-del
+ * delete "c"=>a1,b2,c4-del,c3-del
+ * origin iterator check(a1,b2,c4-del,c3-del)
+ * reset version,version=3
+ * iterator=>version=4
+ * scrub();=>a1,b2,c4-del
+ * origin iterator check(a1,b2,c4-del)
+ * scrub();=>a1,b2
+ * origin iterator check(a1,b2)
+ */
+TEST_F(MassMvccTest, MultiKeyDelNotExistsBound) {
+    MultiVersionKey multiKey;
+    std::vector<IndexVer> index_map;
+
+    std::vector<KeyStatus> kv;
+    kv.emplace_back("a", "va", 1, false);
+    kv.emplace_back("b", "vb", 2, false);
+
+    int i = 0;
+    db_->Put(kv.at(i).key, kv.at(i).val);//ver=1,i=0
+    i++;db_->Put(kv.at(i).key, kv.at(i).val);//ver=2,i=1
+
+    db_->Delete("c");//ver=3
+    db_->Delete("c");//ver=4,a1,b2,c4-del,c3-del
+    kv.emplace_back("c", "", 3, true);
+    kv.emplace_back("c", "", 4, true);
+    i++;
+    i++;
+
+    db_->seek_set(false);
+    std::unique_ptr<MassTreeIteratorMock> it(
+            static_cast<MassTreeIteratorMock *>(db_->NewIterator("", "")));//ver=5
+    index_map.emplace_back(0, 1);//kv[0]=>a1
+    index_map.emplace_back(1, 2);//kv[1]=>b2
+    index_map.emplace_back(3, 4);//kv[3]=>c4
+    index_map.emplace_back(2, 3);//kv[2]=>c3
+    for (int i = 0; i < 4 && it->Valid(); i++) {
+        multiKey = it->getMultiKey();
+        ASSERT_STREQ(multiKey.key().c_str(), kv.at(index_map[i].index).key.c_str());
+        ASSERT_STREQ(it->value().c_str(), kv.at(index_map[i].index).val.c_str());
+        ASSERT_EQ(multiKey.ver(), index_map[i].max_ver);
+        ASSERT_EQ(multiKey.is_del(), kv.at(index_map[i].index).del_flag);
+        it->Traverse();
+    }
+    ASSERT_FALSE(it->Valid());
+
+    db_->StoreVersion(3);
+    it.reset(static_cast<MassTreeIteratorMock *>(db_->NewIterator("", "")));//ver=4
+    db_->Scrub();
+
+    it.reset(static_cast<MassTreeIteratorMock *>(db_->NewIterator("", "")));//ver=5
+    index_map.clear();
+    index_map.emplace_back(0, 1);//kv[0]=>a1
+    index_map.emplace_back(1, 2);//kv[1]=>b2
+    index_map.emplace_back(3, 4);//kv[3]=>c4
+    for (int i = 0; i < 3 && it->Valid(); i++) {
+        multiKey = it->getMultiKey();
+        ASSERT_STREQ(multiKey.key().c_str(), kv.at(index_map[i].index).key.c_str());
+        ASSERT_STREQ(it->value().c_str(), kv.at(index_map[i].index).val.c_str());
+        ASSERT_EQ(multiKey.ver(), index_map[i].max_ver);
+        ASSERT_EQ(multiKey.is_del(), kv.at(index_map[i].index).del_flag);
+        it->Traverse();
+    }
+    ASSERT_FALSE(it->Valid());
+
+    db_->Scrub();
+
+    it.reset(static_cast<MassTreeIteratorMock *>(db_->NewIterator("", "")));//ver=6
+    index_map.clear();
+    index_map.emplace_back(0, 1);//kv[0]=>a1
+    index_map.emplace_back(1, 2);//kv[1]=>b2
+    for (int i = 0; i < 2 && it->Valid(); i++) {
+        multiKey = it->getMultiKey();
+        ASSERT_STREQ(multiKey.key().c_str(), kv.at(index_map[i].index).key.c_str());
+        ASSERT_STREQ(it->value().c_str(), kv.at(index_map[i].index).val.c_str());
+        ASSERT_EQ(multiKey.ver(), index_map[i].max_ver);
+        ASSERT_EQ(multiKey.is_del(), kv.at(index_map[i].index).del_flag);
+        it->Traverse();
+    }
+    ASSERT_FALSE(it->Valid());
+}
+
 } // namespace end
 
