@@ -1034,3 +1034,30 @@ func getTx(t *testing.T, proxy *Proxy, sql string, index int) *TxObj {
 	}
 	return tx
 }
+
+func Test1ph(t *testing.T) {
+	tx := &TxObj{
+		txId:       fmt.Sprintf("%v", 1),
+		primaryKey: intents[0].GetKey(),
+		implicit:   false,
+		intents:    intents,
+		table:      table,
+		proxy:      proxy,
+		Timeout:    50,
+	}
+	ctx := dskv.NewPRConext(int(tx.Timeout * 1000))
+	var (
+		priIntents      []*txnpb.TxnIntent = nil
+		secIntentsGroup [][]*txnpb.TxnIntent = nil
+	)
+	priIntents, secIntentsGroup, err := regroupIntentsByRange(ctx, tx.GetTable(), tx.getTxIntents())
+	if err != nil {
+		t.Fatalf("txn 1ph regroup error: %v", err)
+	}
+
+	err = tx.prepareAndDecidePrimaryKey(ctx, priIntents, secIntentsGroup)
+	if err == nil {
+		t.Fatalf("txn 1ph prepare and decide error: %v", err)
+	}
+
+}

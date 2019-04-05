@@ -220,7 +220,7 @@ func (t *TxObj) Commit() (err error) {
 		return
 	}
 	if err == dskv.ErrRouteChange || err == dskv.ErrMultiRange {
-		log.Warn("txn[%v] run 1ph error[%v], try 2ph", t.GetTxId())
+		log.Warn("txn[%v] run 1ph error[%v], try 2ph", t.GetTxId(), err)
 		goto TOW_PHASE_COMMIT
 	} else {
 		return
@@ -319,17 +319,19 @@ func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*t
 			}
 		}
 
-		var partSecIntents [][]*txnpb.TxnIntent
-		priIntents, partSecIntents, err = regroupIntentsByRange(ctx, t.GetTable(), priIntents)
-		if err != nil || len(priIntents) == 0 {
-			return
+		if err == dskv.ErrRouteChange {
+			var partSecIntents [][]*txnpb.TxnIntent
+			priIntents, partSecIntents, err = regroupIntentsByRange(ctx, t.GetTable(), priIntents)
+			if err != nil || len(priIntents) == 0 {
+				return
+			}
+			if len(partSecIntents) > 0 {
+				secIntents = append(secIntents, partSecIntents...)
+			}
+			log.Debug("regroup result len(priIntents): %v, len(partSecIntents): %v",
+				len(priIntents), len(partSecIntents))
 		}
-		if len(partSecIntents) > 0 {
-			secIntents = append(secIntents, partSecIntents...)
-		}
-		log.Debug("regroup result len(priIntents): %v, len(partSecIntents): %v",
-			len(priIntents), len(partSecIntents))
-		if !isLocalTxn(priIntents, partSecIntents) {
+		if !isLocalTxn(priIntents, secIntents) {
 			err = dskv.ErrMultiRange
 			return
 		}
