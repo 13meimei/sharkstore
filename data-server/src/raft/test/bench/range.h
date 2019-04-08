@@ -45,6 +45,11 @@ public:
         return Status(Status::kNotSupported);
     }
 
+    Status AppliedIndex(uint64_t& apply_index) override {
+        apply_index = 0;
+        return Status::OK();
+    }
+
 private:
     class RequestQueue {
     public:

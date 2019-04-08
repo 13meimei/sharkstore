@@ -42,7 +42,11 @@ private:
         DiskStorage::Options ops;
         ops.log_file_size = 1024;
         ops.allow_corrupt_startup = true;
-        storage_ = std::shared_ptr<Storage>(new DiskStorage(1, tmp_dir_, ops));
+        storage_ = std::shared_ptr<Storage>(new DiskStorage(1, tmp_dir_, ops, 
+                    [](uint64_t& index) {
+                        index = 0; 
+                        return Status::OK(); 
+                    }));
         auto s = storage_->Open();
         ASSERT_TRUE(s.ok()) << s.ToString();
         raft_log_ = new RaftLog(1, storage_);

@@ -103,6 +103,11 @@ public:
         return Status::OK();
     }
 
+    Status AppliedIndex(uint64_t& apply_index) override {
+        apply_index = 0;
+        return Status::OK();
+    }
+
 private:
     class Snapshot : public raft::Snapshot {
     public:

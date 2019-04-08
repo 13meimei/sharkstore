@@ -3,6 +3,9 @@ _Pragma("once");
 #include "base/status.h"
 #include "raft/src/impl/raft_types.h"
 #include "raft/src/impl/snapshot/types.h"
+#include "base/status.h"
+
+using Status = sharkstore::Status;
 
 namespace sharkstore {
 namespace raft {

@@ -111,6 +111,10 @@ public:
         return s;
     }
 
+    Status AppliedIndex(uint64_t& apply_index) override {
+        apply_index = pre_num_ + 1;
+        return Status::OK();
+    }
 private:
     std::shared_ptr<TestSnapshot> expected_;
     uint64_t pre_num_ = 0;

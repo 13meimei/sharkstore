@@ -4,6 +4,9 @@
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "raft/src/impl/storage/storage_disk.h"
 #include "test_util.h"
+#include "base/status.h"
+
+using Status = sharkstore::Status;
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
@@ -55,7 +58,7 @@ protected:
 
 private:
     void Open() {
-        storage_ = new DiskStorage(1, tmp_dir_, ops_);
+        storage_ = new DiskStorage(1, tmp_dir_, ops_, [](uint64_t& index) { index = 0; return Status::OK(); });
         auto s = storage_->Open();
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
@@ -350,7 +353,7 @@ TEST_F(StorageTest, DestroyBak) {
     ASSERT_TRUE(!bak_path.empty());
 
     // load entries from backup
-    DiskStorage bds(1, bak_path, DiskStorage::Options());
+    DiskStorage bds(1, bak_path, DiskStorage::Options(), [](uint64_t& index) { index = 0; return Status::OK();});
     s = bds.Open();
     ASSERT_TRUE(s.ok()) << s.ToString();
     std::vector<EntryPtr > ents;
