@@ -211,6 +211,7 @@ Status DiskStorage::closeLogs() {
     //std::for_each(log_files_.begin(), log_files_.end(), [](std::shared_ptr<LogFile> f) { delete f; });
     log_files_.clear();
     log_files_commited_.clear();
+    log_files_truncated_.clear();
     return Status::OK();
 }
 
@@ -431,7 +432,10 @@ Status DiskStorage::truncateOld(uint64_t index) {
             auto s = f->Destroy();
             if (!s.ok()) return s;
             //delete f;
+            decltype(f) truncated = nullptr;
+            std::swap(truncated, f);
             log_files_.erase(log_files_.begin());
+            log_files_truncated_.emplace_back(std::move(truncated));
         } else {
             break;
         }
@@ -447,8 +451,11 @@ Status DiskStorage::truncateNew(uint64_t index) {
         if (last->Index() > index) {
             s = last->Destroy();
             if (!s.ok()) return s;
+            decltype(last) truncated = nullptr;
+            std::swap(truncated, last);
             //delete last;
             log_files_.pop_back();
+            log_files_truncated_.emplace_back(std::move(truncated));
         } else {
             s = last->Truncate(index);
             if (!s.ok()) {
@@ -477,6 +484,7 @@ Status DiskStorage::truncateAll() {
         }
         //delete (*it);
     }
+    log_files_truncated_.swap(log_files_);
     log_files_.clear();
 
     auto f = std::make_shared<LogFile>(path_, 1, trunc_meta_.index() + 1);

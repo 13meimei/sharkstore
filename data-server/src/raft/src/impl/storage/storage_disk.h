@@ -170,6 +170,7 @@ private:
 
     //std::vector<std::shared_ptr<LogFile>> log_files_;
     VecLogFile log_files_;
+    VecLogFile log_files_truncated_;
     uint64_t last_index_ = 0;
 
     std::vector<PointerLogFile> log_files_commited_;
