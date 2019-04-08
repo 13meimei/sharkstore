@@ -105,8 +105,12 @@ public:
     Status ApplyRawPut(const raft_cmdpb::Command &cmd) override ;
     Status ApplyRawDelete(const raft_cmdpb::Command &cmd) override ;
 
-    Status ApplyRawPut(const raft_cmdpb::Command &cmd, errorpb::Error *&err) override { return RangeBase::ApplyRawPut(cmd, err); };
-    Status ApplyRawDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&err) override { return RangeBase::ApplyRawDelete(cmd, err); };
+    Status ApplyRawPut(const raft_cmdpb::Command &cmd, errorpb::Error *&err) override { 
+        return RangeBase::ApplyRawPut(cmd, err); 
+    };
+    Status ApplyRawDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&err) override {
+        return RangeBase::ApplyRawDelete(cmd, err); 
+    };
 
     Status ApplyInsert(const raft_cmdpb::Command &cmd) override ;
     Status ApplyUpdate(const raft_cmdpb::Command &cmd) override ;
@@ -128,11 +132,21 @@ public:
     Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) override ;
     Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) override ;
 
-    Status ApplyKVSet(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&) override;
-    Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&) override;
-    Status ApplyKVDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&) override;
-    Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&) override;
-    Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&) override;
+    Status ApplyKVSet(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) override {
+        return RangeBase::ApplyKVSet(cmd, affected_keys, err);
+    }
+    Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) override {
+        return RangeBase::ApplyKVBatchSet(cmd, affected_keys, err);
+    }
+    Status ApplyKVDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&err) override {
+        return RangeBase::ApplyKVDelete(cmd, err);
+    }
+    Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) override {
+        return RangeBase::ApplyKVBatchDelete(cmd, affected_keys, err);
+    }
+    Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) override {
+        return RangeBase::ApplyKVRangeDelete(cmd, affected_keys, err);
+    }
 
 private:
     Status Submit(const raft_cmdpb::Command &cmd);

@@ -162,7 +162,7 @@ Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
     auto btime = NowMicros();
-    ret = RangeBase::ApplyKVBatchSet(cmd, affected_keys, err);
+    ret = ApplyKVBatchSet(cmd, affected_keys, err);
 
 //    do {
 //        auto &req = cmd.kv_batch_set_req();
@@ -284,7 +284,7 @@ Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd) {
     Status ret;
     errorpb::Error *err = nullptr;
     auto btime = NowMicros();
-    ret = RangeBase::ApplyKVDelete(cmd, err);
+    ret = ApplyKVDelete(cmd, err);
 //    do {
 //        auto &req = cmd.kv_delete_req();
 //
@@ -353,7 +353,7 @@ Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
     uint64_t affected_keys = 0;
     errorpb::Error *err = nullptr;
     auto btime = NowMicros();
-    ret = RangeBase::ApplyKVBatchDelete(cmd, affected_keys, err);
+    ret = ApplyKVBatchDelete(cmd, affected_keys, err);
 //    do {
 //        auto &req = cmd.kv_batch_del_req();
 //        std::vector<std::string> delKeys(req.keys_size());
@@ -431,7 +431,7 @@ Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
     errorpb::Error *err = nullptr;
     std::string last_key;
     auto btime = NowMicros();
-    ret = RangeBase::ApplyKVRangeDelete(cmd, affected_keys, err);
+    ret = ApplyKVRangeDelete(cmd, affected_keys, err);
 //    do {
 //        auto &req = cmd.kv_range_del_req();
 //        auto start = std::max(req.start(), start_key_);
@@ -510,22 +510,6 @@ void Range::KVScan(RPCRequestPtr rpc, kvrpcpb::DsKvScanRequest &req) {
     }
 
     SendResponse(rpc, ds_resp, req.header(), err);
-}
-
-Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
-    return RangeBase::ApplyKVSet(cmd, affected_keys, err);
-}
-Status Range::ApplyKVBatchSet(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
-    return RangeBase::ApplyKVBatchSet(cmd, affected_keys, err);
-}
-Status Range::ApplyKVDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&err) {
-    return RangeBase::ApplyKVDelete(cmd, err);
-}
-Status Range::ApplyKVBatchDelete(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
-    return RangeBase::ApplyKVBatchDelete(cmd, affected_keys, err);
-}
-Status Range::ApplyKVRangeDelete(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
-    return RangeBase::ApplyKVRangeDelete(cmd, affected_keys, err);
 }
 
 }
