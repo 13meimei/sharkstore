@@ -235,6 +235,9 @@ void DataServer::Stop() {
     if (context_->persist_run_status != nullptr) {
         context_->persist_run_status->Stop();
     }
+    if (context_->persist_server != nullptr) {
+        context_->persist_server->Stop();
+    }
 }
 
 } /* namespace server */
