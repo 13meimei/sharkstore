@@ -187,9 +187,14 @@ func benchmark(s *server.Server) {
 			go insertOrder(s, concur, 0, ip)
 		}
 	}
-
-	// order insert and select
+	// order select
 	if s.GetCfg().BenchConfig.Type == 11 {
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			go selectOrder(s, concur, 0, ip)
+		}
+	}
+	// order insert and select
+	if s.GetCfg().BenchConfig.Type == 12 {
 		var wg sync.WaitGroup
 		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
 			wg.Add(1)
@@ -208,6 +213,18 @@ func benchmark(s *server.Server) {
 			}(&wg)
 		}
 		wg.Wait()
+	}
+	// raw set
+	if s.GetCfg().BenchConfig.Type == 13 {
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			go rawSet(s, concur, ip)
+		}
+	}
+	// raw get
+	if s.GetCfg().BenchConfig.Type == 14 {
+		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+			go rawGet(s, concur, ip)
+		}
 	}
 }
 
@@ -770,6 +787,39 @@ func selectOrder(s *server.Server, threadNo, total int, ip string) {
 			} else {
 				log.Warn("execute failed, %v", reply)
 			}
+		}
+	}
+}
+
+func rawSet(s *server.Server, threadNo int, ip string)  {
+	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+		key := fmt.Sprintf("%v_%v_%v", ip, threadNo, i) // ip_tid_no
+
+		if err := api.RawSet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key), []byte(key)); err == nil {
+			atomic.AddInt64(&stat.lastCount, 1)
+		} else {
+			log.Warn("raw set error: %v", err)
+
+			atomic.AddInt64(&stat.errCount, 1)
+			i = i - 1
+		}
+	}
+}
+func rawGet(s *server.Server, threadNo int, ip string) {
+	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+		key := fmt.Sprintf("%v_%v_%v", ip, threadNo, i) // ip_tid_no
+
+		_, err := api.RawGet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key))
+		if err == nil {
+			atomic.AddInt64(&stat.lastSelCount, 1)
+
+			//if bytes.Compare([]byte(key), value) != 0 {
+			//	log.Warn("raw get error: value not equal")
+			//	atomic.AddInt64(&stat.errSelCount, 1)
+			//}
+		} else {
+			log.Warn("raw get error: %v", err)
+			atomic.AddInt64(&stat.errSelCount, 1)
 		}
 	}
 }
