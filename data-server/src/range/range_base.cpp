@@ -110,14 +110,14 @@ Status RangeBase::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
     return sts;
 }
 
-Status RangeBase::ApplyRawPut(const raft_cmdpb::Command &cmd) {
+Status RangeBase::ApplyRawPut(const raft_cmdpb::Command &cmd, errorpb::Error *&err) {
     Status ret;
 
     RANGE_LOG_DEBUG("ApplyRawPut begin");
     auto &req = cmd.kv_raw_put_req();
     auto btime = NowMicros();
 
-    errorpb::Error *err = nullptr;
+//    errorpb::Error *err = nullptr;
 
     do {
         if (!KeyInRange(req.key(), err)) {
@@ -144,16 +144,16 @@ Status RangeBase::ApplyRawPut(const raft_cmdpb::Command &cmd) {
         }
     } while (false);
 
-    if (err != nullptr) {
-        delete err;
-    }
+//    if (err != nullptr) {
+//        delete err;
+//    }
 
     return ret;
 }
 
-Status RangeBase::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
+Status RangeBase::ApplyRawDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&err) {
     Status ret;
-    errorpb::Error *err = nullptr;
+//    errorpb::Error *err = nullptr;
 
     RANGE_LOG_DEBUG("ApplyRawDelete begin");
 
@@ -178,9 +178,9 @@ Status RangeBase::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
         // ignore delete CheckSplit
     } while (false);
 
-    if (err != nullptr) {
-        delete err;
-    }
+//    if (err != nullptr) {
+//        delete err;
+//    }
     return ret;
 }
 

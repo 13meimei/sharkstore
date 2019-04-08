@@ -71,7 +71,6 @@ void Range::rawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redi
     }
 }
 
-/*
 Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
     Status ret;
 
@@ -80,7 +79,8 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
     auto btime = NowMicros();
 
     errorpb::Error *err = nullptr;
-
+    ret = ApplyRawPut(cmd, err);
+    /*
     do {
         if (!KeyInRange(req.key(), err)) {
             RANGE_LOG_WARN("Apply RawPut failed, epoch is changed");
@@ -103,7 +103,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
             CheckSplit(len);
         }
     } while (false);
-
+    */
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsKvRawPutResponse resp;
         if (!ret.ok()) {
@@ -116,7 +116,7 @@ Status Range::ApplyRawPut(const raft_cmdpb::Command &cmd) {
 
     return ret;
 }
-*/
+
 }  // namespace range
 }  // namespace dataserver
 }  // namespace sharkstore

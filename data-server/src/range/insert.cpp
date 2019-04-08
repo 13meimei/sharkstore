@@ -45,7 +45,6 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
     //auto &req = cmd.insert_req();
     auto btime = NowMicros();
     ret = ApplyInsert(cmd, affected_keys, err);
-    RANGE_LOG_DEBUG("RangeBase::ApplyInsert end: %s", ret.ToString().c_str());
 
 //    do {
 //        auto &epoch = cmd.verify_epoch();

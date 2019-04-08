@@ -102,8 +102,12 @@ public:
 //    bool WatchPutSubmit(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req) { return true; }
 //    bool WatchDeleteSubmit(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) { return true; }
 public:
-    //Status ApplyRawPut(const raft_cmdpb::Command &cmd) override ;
+    Status ApplyRawPut(const raft_cmdpb::Command &cmd) override ;
     Status ApplyRawDelete(const raft_cmdpb::Command &cmd) override ;
+
+    Status ApplyRawPut(const raft_cmdpb::Command &cmd, errorpb::Error *&err) override { return RangeBase::ApplyRawPut(cmd, err); };
+    Status ApplyRawDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&err) override { return RangeBase::ApplyRawDelete(cmd, err); };
+
     Status ApplyInsert(const raft_cmdpb::Command &cmd) override ;
     Status ApplyUpdate(const raft_cmdpb::Command &cmd) override ;
     Status ApplyDelete(const raft_cmdpb::Command &cmd) override ;

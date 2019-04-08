@@ -77,7 +77,7 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
     errorpb::Error *err = nullptr;
     auto btime = NowMicros();
 
-    ret = RangeBase::ApplyRawDelete(cmd);
+    ret = ApplyRawDelete(cmd, err);
 
 //    RANGE_LOG_DEBUG("ApplyRawDelete begin");
 //
@@ -106,10 +106,9 @@ Status Range::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
         kvrpcpb::DsKvRawDeleteResponse resp;
         resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
+    } else if (err != nullptr) {
+        delete err;
     }
-//    else if (err != nullptr) {
-//        delete err;
-//    }
     return ret;
 }
 
