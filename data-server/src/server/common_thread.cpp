@@ -90,7 +90,9 @@ void CommonThread::shutdown() {
         running_ = false;
     }
     cv_.notify_one();
-    thr_->join();
+    if (thr_->joinable()) {
+        thr_->join();
+    }
 }
 
 bool CommonThread::pull(CommonWork* w) {
