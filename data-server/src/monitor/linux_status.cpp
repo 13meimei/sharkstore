@@ -1,6 +1,7 @@
 #include "linux_status.h"
 
 #include <sys/vfs.h>
+#include <sys/sysinfo.h>
 #include <string.h>
 
 namespace sharkstore {
@@ -20,8 +21,14 @@ bool LinuxStatus::GetFileSystemUsage(const char *path, uint64_t *total, uint64_t
 }
 
 bool LinuxStatus::GetMemoryUsage(uint64_t *total, uint64_t *available) {
-    // TODO:
-    return false;
+    struct sysinfo si;
+    if (::sysinfo(&si) != 0) {
+        perror("call sysinfo failed:");
+        return false;
+    }
+    *total = si.totalram;
+    *available = si.freeram;
+    return true;
 }
 
 }

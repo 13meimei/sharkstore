@@ -19,6 +19,10 @@ TEST(Monitor, Basic) {
     ASSERT_GT(total, 0);
     ASSERT_GT(available, 0);
     ASSERT_GE(total, available);
+
+    ASSERT_TRUE(s->GetMemoryUsage(&total, &available));
+    std::cout << "memory total: " << total << std::endl;
+    std::cout << "memory available: " << available << std::endl;
 }
 
 TEST(Monitor, Statistics) {
