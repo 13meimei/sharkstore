@@ -328,9 +328,9 @@ func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*t
 			if len(partSecIntents) > 0 {
 				secIntents = append(secIntents, partSecIntents...)
 			}
-			log.Debug("regroup result len(priIntents): %v, len(partSecIntents): %v",
-				len(priIntents), len(partSecIntents))
 		}
+		log.Debug("regroup result priIntents: %+v, partSecIntents: %+v",
+			priIntents, secIntents)
 		if !isLocalTxn(priIntents, secIntents) {
 			err = dskv.ErrMultiRange
 			return
