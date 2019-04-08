@@ -85,7 +85,7 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
 
 //    auto &req = cmd.delete_req();
     auto btime = NowMicros();
-    ret = RangeBase::ApplyDelete(cmd);
+    ret = ApplyDelete(cmd, affected_keys, err);
 //    do {
 //        auto &key = req.key();
 //        if (key.empty()) {
@@ -117,8 +117,7 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
         resp.mutable_resp()->set_affected_keys(affected_keys);
         resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
-    }
-    if (err != nullptr) {
+    } else if (err != nullptr) {
         delete err;
     }
 

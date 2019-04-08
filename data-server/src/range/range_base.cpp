@@ -184,11 +184,10 @@ Status RangeBase::ApplyRawDelete(const raft_cmdpb::Command &cmd) {
     return ret;
 }
 
-Status RangeBase::ApplyInsert(const raft_cmdpb::Command &cmd) {
+Status RangeBase::ApplyInsert(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
     Status ret;
-    uint64_t affected_keys = 0;
-
-    errorpb::Error *err = nullptr;
+//    uint64_t affected_keys = 0;
+//    errorpb::Error *err = nullptr;
 
     RANGE_LOG_DEBUG("ApplyInsert begin");
 
@@ -233,19 +232,17 @@ Status RangeBase::ApplyInsert(const raft_cmdpb::Command &cmd) {
 //            resp.mutable_resp()->set_affected_keys(affected_keys);
 //            resp.mutable_resp()->set_code(ret.code());
 //            ReplySubmit(cmd, resp, err, btime);
-//        } else
-    if (err != nullptr) {
-        delete err;
-    }
+//        } else if (err != nullptr) {
+//        delete err;
+//    }
 
     return ret;
 }
 
-Status RangeBase::ApplyUpdate(const raft_cmdpb::Command &cmd) {
+Status RangeBase::ApplyUpdate(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
     Status ret;
-    uint64_t affected_keys = 0;
-
-    errorpb::Error *err = nullptr;
+//    uint64_t affected_keys = 0;
+//    errorpb::Error *err = nullptr;
 
     RANGE_LOG_DEBUG("ApplyUpdate begin");
 
@@ -281,18 +278,17 @@ Status RangeBase::ApplyUpdate(const raft_cmdpb::Command &cmd) {
 //            resp.mutable_resp()->set_affected_keys(affected_keys);
 //            resp.mutable_resp()->set_code(ret.code());
 //            ReplySubmit(cmd, resp, err, btime);
-//        } else
-    if (err != nullptr) {
-        delete err;
-    }
+//        } else if (err != nullptr) {
+//        delete err;
+//    }
 
     return ret;
 }
 
-Status RangeBase::ApplyDelete(const raft_cmdpb::Command &cmd) {
+Status RangeBase::ApplyDelete(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) {
     Status ret;
-    uint64_t affected_keys = 0;
-    errorpb::Error *err = nullptr;
+//    uint64_t affected_keys = 0;
+//    errorpb::Error *err = nullptr;
 
     RANGE_LOG_DEBUG("ApplyDelete begin");
 
@@ -330,10 +326,9 @@ Status RangeBase::ApplyDelete(const raft_cmdpb::Command &cmd) {
 //            resp.mutable_resp()->set_affected_keys(affected_keys);
 //            resp.mutable_resp()->set_code(ret.code());
 //            ReplySubmit(cmd, resp, err, btime);
-//        } else
-    if (err != nullptr) {
-        delete err;
-    }
+//        } else if (err != nullptr) {
+//        delete err;
+//    }
 
     return ret;
 }

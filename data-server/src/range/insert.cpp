@@ -38,14 +38,14 @@ void Range::Insert(RPCRequestPtr rpc, kvrpcpb::DsInsertRequest &req) {
 Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
     Status ret;
     uint64_t affected_keys = 0;
-
     errorpb::Error *err = nullptr;
 
     //RANGE_LOG_DEBUG("ApplyInsert begin");
 
     //auto &req = cmd.insert_req();
     auto btime = NowMicros();
-    ret = RangeBase::ApplyInsert(cmd);
+    ret = ApplyInsert(cmd, affected_keys, err);
+    RANGE_LOG_DEBUG("RangeBase::ApplyInsert end: %s", ret.ToString().c_str());
 
 //    do {
 //        auto &epoch = cmd.verify_epoch();
@@ -81,6 +81,8 @@ Status Range::ApplyInsert(const raft_cmdpb::Command &cmd) {
 //
 //    } while (false);
 
+    RANGE_LOG_DEBUG("cmd::node_id: %" PRIu64 " range::node_id_: %" PRIu64 " affected_keys: %" PRIu64,
+            cmd.cmd_id().node_id(), node_id_, affected_keys);
     if (cmd.cmd_id().node_id() == node_id_) {
         kvrpcpb::DsInsertResponse resp;
         resp.mutable_resp()->set_affected_keys(affected_keys);

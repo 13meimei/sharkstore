@@ -38,14 +38,13 @@ void Range::Update(RPCRequestPtr rpc, kvrpcpb::DsUpdateRequest &req) {
 Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
     Status ret;
     uint64_t affected_keys = 0;
-
     errorpb::Error *err = nullptr;
 
     RANGE_LOG_DEBUG("ApplyUpdate begin");
 
     //auto &req = cmd.update_req();
     auto btime = NowMicros();
-    ret = RangeBase::ApplyUpdate(cmd);
+    ret = ApplyUpdate(cmd, affected_keys, err);
 //    do {
 //        auto &epoch = cmd.verify_epoch();
 //
@@ -76,10 +75,9 @@ Status Range::ApplyUpdate(const raft_cmdpb::Command &cmd) {
         resp.mutable_resp()->set_affected_keys(affected_keys);
         resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
+    } else if (err != nullptr) {
+        delete err;
     }
-//    else if (err != nullptr) {
-//        delete err;
-//    }
 
     return ret;
 }

@@ -107,6 +107,16 @@ public:
     Status ApplyInsert(const raft_cmdpb::Command &cmd) override ;
     Status ApplyUpdate(const raft_cmdpb::Command &cmd) override ;
     Status ApplyDelete(const raft_cmdpb::Command &cmd) override ;
+    
+    Status ApplyInsert(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) override {
+        return RangeBase::ApplyInsert(cmd, affected_keys, err);
+    };
+    Status ApplyUpdate(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) override {
+        return RangeBase::ApplyUpdate(cmd, affected_keys, err);
+    }
+    Status ApplyDelete(const raft_cmdpb::Command &cmd, uint64_t& affected_keys, errorpb::Error *&err) override {
+        return RangeBase::ApplyDelete(cmd, affected_keys, err);
+    }
 
     Status ApplyKVSet(const raft_cmdpb::Command &cmd) override ;
     Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd) override ;

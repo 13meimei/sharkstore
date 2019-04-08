@@ -57,7 +57,7 @@ Status Range::ApplyKVSet(const raft_cmdpb::Command &cmd) {
 
     //auto &req = cmd.kv_set_req();
     auto btime = NowMicros();
-    ret = RangeBase::ApplyKVSet(cmd, affected_keys, err);
+    ret = ApplyKVSet(cmd, affected_keys, err);
 
 //    do {
 //        auto &epoch = cmd.verify_epoch();

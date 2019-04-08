@@ -60,9 +60,13 @@ public:
     virtual Status ApplyRawPut(const raft_cmdpb::Command &cmd);
     virtual Status ApplyRawDelete(const raft_cmdpb::Command &cmd);
 
-    virtual Status ApplyInsert(const raft_cmdpb::Command &cmd);
-    virtual Status ApplyUpdate(const raft_cmdpb::Command &cmd);
-    virtual Status ApplyDelete(const raft_cmdpb::Command &cmd);
+    virtual Status ApplyInsert(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    virtual Status ApplyUpdate(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    virtual Status ApplyDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    
+    virtual Status ApplyInsert(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
+    virtual Status ApplyUpdate(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
+    virtual Status ApplyDelete(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
 
     virtual Status ApplyKVSet(const raft_cmdpb::Command &cmd) { return Status::OK(); };
     virtual Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd) { return Status::OK(); };
