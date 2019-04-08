@@ -1,13 +1,12 @@
-#include "mac_status.h"
+#include "linux_status.h"
 
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <cstring>
+#include <sys/vfs.h>
+#include <string.h>
 
 namespace sharkstore {
 namespace monitor {
 
-bool MacStatus::GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *available) {
+bool LinuxStatus::GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *available) {
     struct statfs buf;
     memset(&buf, 0, sizeof(buf));
     int ret = ::statfs(path, &buf);
@@ -20,7 +19,7 @@ bool MacStatus::GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *
     }
 }
 
-bool MacStatus::GetMemoryUsage(uint64_t *total, uint64_t *available) {
+bool LinuxStatus::GetMemoryUsage(uint64_t *total, uint64_t *available) {
     // TODO:
     return false;
 }

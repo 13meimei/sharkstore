@@ -251,16 +251,13 @@ set(SOURCES
     src/master/connection.cpp
     src/master/rpc_types.cpp
     src/master/worker_impl.cpp
-    src/monitor/isystemstatus.cpp
-    src/monitor/datacacl.cpp
-    src/monitor/encodedata.cpp
     src/monitor/histogram.cpp
-    src/monitor/rangedata.cpp
+    src/monitor/statistics.cpp
+    src/monitor/system_status.cpp
 	src/watch/watcher.cpp
 	src/watch/watcher_set.cpp
 	src/watch/watch_server.cpp
 	src/watch/watch_event_buffer.cpp
-    src/monitor/statistics.cpp
     src/admin/admin_server.cpp
     src/admin/get_config.cpp
     src/admin/get_info.cpp
@@ -274,7 +271,7 @@ endif()
 if (APPLE)
     list(APPEND SOURCES src/monitor/mac_status.cpp)
 elseif(UNIX)
-    list(APPEND SOURCES src/monitor/linuxstatus.cpp)
+    list(APPEND SOURCES src/monitor/linux_status.cpp)
 else()
     message(FATAL_ERROR "Unsupported OS Type: " ${CMAKE_SYSTEM_NAME})
 endif()

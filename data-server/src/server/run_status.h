@@ -7,8 +7,7 @@ _Pragma("once");
 #include <thread>
 #include <set>
 
-#include "monitor/isystemstatus.h"
-#include "monitor/syscommon.h"
+#include "monitor/system_status.h"
 #include "monitor/statistics.h"
 #include "range/stats.h"
 
@@ -18,7 +17,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-struct FileSystemUsage {
+struct DBUsage {
     uint64_t total_size = 0;
     uint64_t used_size = 0;
     uint64_t free_size = 0;
@@ -26,7 +25,7 @@ struct FileSystemUsage {
 
 class RunStatus : public range::RangeStats {
 public:
-    RunStatus() = default;
+    RunStatus();
     ~RunStatus() = default;
 
     RunStatus(const RunStatus &) = delete;
@@ -40,8 +39,8 @@ public:
         if (time > 0) statistics_.PushTime(type, static_cast<uint64_t>(time));
     }
 
-    bool GetFilesystemUsage(FileSystemUsage* usage);
-    uint64_t GetFilesystemUsedPercent() const { return fs_usage_percent_.load();}
+    bool GetDBUsage(DBUsage* usage);
+    uint64_t GetDBUsedPercent() const { return db_usage_percent_.load();}
 
     void ReportLeader(uint64_t range_id, bool is_leader) override;
     uint64_t GetLeaderCount() const;
@@ -52,17 +51,17 @@ public:
 
 private:
     void run();
-    void collectDiskUsage();
+    void collectDBUsage();
     void printStatistics();
     void printDBMetric();
 
 private:
     ContextServer *context_ = nullptr;
 
-    monitor::ISystemStatus system_status_;
+    std::unique_ptr<monitor::SystemStatus> system_status_;
     monitor::Statistics statistics_;
 
-    std::atomic<uint64_t> fs_usage_percent_ = {0};
+    std::atomic<uint64_t> db_usage_percent_ = {0};
     std::atomic<uint64_t> split_count_ = {0};
 
     std::set<uint64_t> leaders_;

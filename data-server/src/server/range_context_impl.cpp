@@ -47,8 +47,8 @@ RangeContextImpl::RangeContextImpl(ContextServer *s) :
     split_policy_(new DefaultSplitPolicy) {
 }
 
-uint64_t RangeContextImpl::GetFSUsagePercent() const {
-    return server_->run_status->GetFilesystemUsedPercent();
+uint64_t RangeContextImpl::GetDBUsagePercent() const {
+    return server_->run_status->GetDBUsedPercent();
 }
 
 void RangeContextImpl::ScheduleHeartbeat(uint64_t range_id, bool delay) {

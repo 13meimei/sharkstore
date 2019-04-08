@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "monitor/isystemstatus.h"
+#include "monitor/system_status.h"
 #include "monitor/statistics.h"
 
 int main(int argc, char* argv[]) {
@@ -13,9 +13,9 @@ namespace {
 using namespace sharkstore::monitor;
 
 TEST(Monitor, Basic) {
-    ISystemStatus s;
+    auto s = SystemStatus::New();
     uint64_t total = 0, available = 0;
-    ASSERT_TRUE(s.GetFileSystemUsage(".", &total, &available));
+    ASSERT_TRUE(s->GetFileSystemUsage(".", &total, &available));
     ASSERT_GT(total, 0);
     ASSERT_GT(available, 0);
     ASSERT_GE(total, available);

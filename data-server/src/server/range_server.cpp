@@ -981,12 +981,12 @@ void RangeServer::CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) {
     stats->set_receiving_snap_count(rss.total_snap_applying);
     stats->set_applying_snap_count(rss.total_snap_applying);
 
-    // collect file system usage
-    FileSystemUsage fs_usage;
-    context_->run_status->GetFilesystemUsage(&fs_usage);
-    stats->set_capacity(fs_usage.total_size);
-    stats->set_used_size(fs_usage.used_size);
-    stats->set_available(fs_usage.free_size);
+    // collect db usage
+    DBUsage db_usage;
+    context_->run_status->GetDBUsage(&db_usage);
+    stats->set_capacity(db_usage.total_size);
+    stats->set_used_size(db_usage.used_size);
+    stats->set_available(db_usage.free_size);
 
     // collect storage metric
     storage::MetricStat mstat;

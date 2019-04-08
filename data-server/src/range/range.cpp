@@ -15,8 +15,8 @@ namespace dataserver {
 namespace range {
 
 static const int kDownPeerThresholdSecs = 50;
-// 磁盘使用率大于百分之92停写
-static const uint64_t kStopWriteFsUsagePercent = 92;
+// DB使用率大于百分之92停写
+static const uint64_t kStopWriteDBUsagePercent = 92;
 
 Range::Range(RangeContext* context, const metapb::Range &meta) :
 	context_(context),
@@ -495,13 +495,13 @@ bool Range::VerifyReadable(uint64_t read_index, errorpb::Error *&err) {
 }
 
 bool Range::VerifyWriteable(errorpb::Error **err) {
-    auto percent = context_->GetFSUsagePercent();
-    if (percent < kStopWriteFsUsagePercent) {
+    auto percent = context_->GetDBUsagePercent();
+    if (percent < kStopWriteDBUsagePercent) {
         return true;
     }
 
-    RANGE_LOG_ERROR("filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
-            percent, kStopWriteFsUsagePercent);
+    RANGE_LOG_ERROR("db usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
+            percent, kStopWriteDBUsagePercent);
 
     if (err != nullptr) {
         auto no_left_space_err = new errorpb::Error;

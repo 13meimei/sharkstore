@@ -46,8 +46,8 @@ static Status getServerInfo(ContextServer* ctx, const vector<string>& path, Json
     writer.Key("leader_count");
     writer.Uint64(ctx->run_status->GetLeaderCount());
 
-    writer.Key("disk_usage_percent");
-    writer.Uint64(ctx->run_status->GetFilesystemUsedPercent());
+    writer.Key("db_usage_percent");
+    writer.Uint64(ctx->run_status->GetDBUsedPercent());
 
     writer.Key("fast_queue_size");
     writer.Uint64(ctx->worker->FastQueueSize());

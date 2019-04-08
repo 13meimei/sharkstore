@@ -24,7 +24,7 @@ public:
     range::RangeStats* Statistics() override { return server_->run_status; }
 	watch::WatchServer* WatchServer() override { return server_->range_server->watch_server_; }
 
-    uint64_t GetFSUsagePercent() const override;
+    uint64_t GetDBUsagePercent() const override;
 
     void ScheduleHeartbeat(uint64_t range_id, bool delay) override;
     void ScheduleCheckSize(uint64_t range_id) override;
