@@ -57,25 +57,62 @@ public:
     virtual Status Apply(const raft_cmdpb::Command &cmd, uint64_t index);
     //virtual Status Submit(const uint64_t range_id, const uint64_t pidx, const uint64_t aidx);
 public:
-    virtual Status ApplyRawPut(const raft_cmdpb::Command &cmd) { return Status::OK(); };
-    virtual Status ApplyRawDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    virtual Status ApplyRawPut(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        return ApplyRawPut(cmd, err);
+    };
+    virtual Status ApplyRawDelete(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        return ApplyRawDelete(cmd, err);
+    };
 
     virtual Status ApplyRawPut(const raft_cmdpb::Command &cmd, errorpb::Error *&err);
     virtual Status ApplyRawDelete(const raft_cmdpb::Command &cmd, errorpb::Error *&err);
 
-    virtual Status ApplyInsert(const raft_cmdpb::Command &cmd) { return Status::OK(); };
-    virtual Status ApplyUpdate(const raft_cmdpb::Command &cmd) { return Status::OK(); };
-    virtual Status ApplyDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
-    
+    virtual Status ApplyInsert(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        uint64_t affected_keys{0};
+        return ApplyInsert(cmd, affected_keys, err);
+    };
+    virtual Status ApplyUpdate(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        uint64_t affected_keys{0};
+        return ApplyUpdate(cmd, affected_keys, err);
+    };
+    virtual Status ApplyDelete(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        uint64_t affected_keys{0};
+        return ApplyDelete(cmd, affected_keys, err);
+    };
+
     virtual Status ApplyInsert(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
     virtual Status ApplyUpdate(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
     virtual Status ApplyDelete(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
 
-    virtual Status ApplyKVSet(const raft_cmdpb::Command &cmd) { return Status::OK(); };
-    virtual Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd) { return Status::OK(); };
-    virtual Status ApplyKVDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
-    virtual Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
-    virtual Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) { return Status::OK(); };
+    virtual Status ApplyKVSet(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        uint64_t affected_keys{0};
+        return ApplyKVSet(cmd, affected_keys, err);
+    };
+    virtual Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        uint64_t affected_keys{0};
+        return ApplyKVBatchSet(cmd, affected_keys, err);
+    };
+    virtual Status ApplyKVDelete(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        return ApplyKVDelete(cmd, err);
+    };
+    virtual Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        uint64_t affected_keys{0};
+        return ApplyKVBatchDelete(cmd, affected_keys, err);
+    };
+    virtual Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd) {
+        errorpb::Error *err = nullptr;
+        uint64_t affected_keys{0};
+        return ApplyKVRangeDelete(cmd, affected_keys, err);
+    };
 
     virtual Status ApplyKVSet(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
     virtual Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd, uint64_t& , errorpb::Error *&);
@@ -139,7 +176,7 @@ protected:
     uint64_t split_range_id_ = 0;
 
     std::unique_ptr<storage::Store> store_;
-    
+
 };
 
 
