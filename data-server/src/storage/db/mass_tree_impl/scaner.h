@@ -16,14 +16,20 @@ using KVPairVector = std::vector<std::pair<std::string, std::string>>;
 class Scaner {
 public:
     Scaner() = delete;
-    ~Scaner() = default;
+    ~Scaner() {
+        if (rcu_stop_) {
+            rcu_stop_();
+        }
+    }
 
-    Scaner(TreeType* tree, const std::string vbegin, const std::string vend):
-            tree_(tree), vbegin_(vbegin), vend_(vend), last_key_(vbegin) {
+    using RcuStoper = std::function<void()>;
+
+    Scaner(TreeType* tree, const std::string vbegin, const std::string vend, const RcuStoper& rcu_stop):
+            tree_(tree), vbegin_(vbegin), vend_(vend), last_key_(vbegin), rcu_stop_(rcu_stop) {
         do_scan();
     }
-    Scaner(TreeType* tree, const std::string vbegin, const std::string vend, size_t max_rows):
-            tree_(tree), vbegin_(vbegin), vend_(vend), max_rows_(max_rows), last_key_(vbegin) {
+    Scaner(TreeType* tree, const std::string vbegin, const std::string vend, size_t max_rows, const RcuStoper& rcu_stop):
+            tree_(tree), vbegin_(vbegin), vend_(vend), max_rows_(max_rows), last_key_(vbegin), rcu_stop_(rcu_stop) {
         do_scan();
     }
 
@@ -133,6 +139,8 @@ private:
     KVPairVector kvs_;
     KVPairVector::iterator kvs_it_;
     KVPair it_kv_;
+
+    RcuStoper rcu_stop_;
 };
 
 }

@@ -1,4 +1,5 @@
 _Pragma("once");
+#include <thread>
 
 #include "storage/db/db_interface.h"
 #include "storage/db/mvcc.h"
@@ -27,7 +28,7 @@ public:
 
     bool IsInMemory() override { return true; }
 
-    Status Open() override { return Status::OK(); }
+    Status Open() override;
 
     Status Get(const std::string &key, std::string *value) override;
     Status Get(void *column_family, const std::string &key, std::string *value) override;
@@ -70,6 +71,14 @@ private:
 private:
     MvccTree default_tree_;
     MvccTree txn_tree_;
+
+    struct RcuThread {
+        std::thread thread_;
+        std::mutex  mutex_;
+        std::condition_variable cond_; 
+    } thread_rcu_, thread_epoch_;
+
+    bool thread_loop_ = true;
 };
 
 

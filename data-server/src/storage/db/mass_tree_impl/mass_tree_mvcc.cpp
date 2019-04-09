@@ -9,6 +9,32 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+Status MvccMassTree::Open() {
+    thread_rcu_.thread_ = std::thread([this] {
+            std::chrono::seconds delay(30);
+            while (thread_loop_) {
+                this->Scrub(&default_tree_);
+                this->Scrub(&txn_tree_);
+
+                std::unique_lock<std::mutex> lk(thread_rcu_.mutex_);
+                thread_rcu_.cond_.wait_for(lk, delay, [&thread_loop_]{return !thread_loop_});
+            }
+        });
+
+    thread_epoch_.thread_ = std::thread([this] {
+            std::chrono::seconds delay(2);
+            while (thread_loop_) {
+                this->default_tree_.tree.EpochIncr();
+                this->txn_tree_.tree.EpochIncr();
+
+                std::unique_lock<std::mutex> lk(thread_epoch_.mutex_);
+                thread_epoch_.cond_.wait_for(lk, delay, [&thread_loop_]{return !thread_loop_});
+            }
+        });
+
+    return Status::OK();
+}
+
 Status MvccMassTree::get(MvccTree *family, const std::string& key, std::string* value) {
     auto ver = family->mvcc.insert();
     MultiVersionKey multi_key(key, ver, true);

@@ -18,6 +18,8 @@ public:
     Status Get(const std::string& key, std::string* value);
     Status Delete(const std::string& key);
 
+    void EpochIncr();
+
     std::unique_ptr<Scaner> NewScaner(const std::string& start, const std::string& limit, size_t max_per_scan = 100);
 
 private:
