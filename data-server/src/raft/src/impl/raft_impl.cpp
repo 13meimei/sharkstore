@@ -104,8 +104,8 @@ void RaftImpl::Truncate(uint64_t index) {
     post(std::bind(&RaftImpl::truncate, shared_from_this(), index));
 }
 
-std::shared_ptr<impl::storage::Storage>& RaftImpl::GetStorage() {
-    return fsm_->GetStorage();
+std::shared_ptr<impl::storage::Storage>&& RaftImpl::GetStorage() {
+    return std::move(fsm_->GetStorage());
 }
 
 void RaftImpl::RecvMsg(MessagePtr msg) {

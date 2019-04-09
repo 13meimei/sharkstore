@@ -6,6 +6,9 @@ _Pragma("once");
 namespace sharkstore {
 namespace raft {
 
+namespace impl { namespace storage { class Storage; }}
+using Storage = sharkstore::raft::impl::storage::Storage;
+
 class Raft {
 public:
     Raft() = default;
@@ -27,6 +30,7 @@ public:
     virtual void GetStatus(RaftStatus* status) const = 0;
 
     virtual void Truncate(uint64_t index) = 0;
+    virtual std::shared_ptr<Storage>&& GetStorage() = 0;
 };
 
 } /* namespace raft */

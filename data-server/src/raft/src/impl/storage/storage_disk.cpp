@@ -618,7 +618,7 @@ Status DiskStorage::Destroy(bool backup) {
     return Status::OK();
 }
 
-std::vector<PointerLogFile>& DiskStorage::GetLogFiles() {
+std::vector<PointerLogFile>& DiskStorage::GetCommitFiles() {
     return log_files_commited_;
 };
 

@@ -24,3 +24,9 @@ bool RaftMock::IsLeader() const {
     // TODO: 使用构造函数传递本节点NodeId
     return leader_ == 1;
 }
+
+std::shared_ptr<Storage> tmp = nullptr;
+//using Storage = sharkstore::raft::impl::storage::Storage; 
+std::shared_ptr<Storage>&& RaftMock::GetStorage() {
+    return std::move(tmp);
+}

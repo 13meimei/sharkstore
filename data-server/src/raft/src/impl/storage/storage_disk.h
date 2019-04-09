@@ -10,6 +10,9 @@ _Pragma("once");
 #include "log_file.h"
 
 namespace sharkstore {
+
+namespace test { class StorageTest; }
+
 namespace raft {
 namespace impl {
 namespace storage {
@@ -18,9 +21,10 @@ class LogFile;
 using PointerLogFile = std::shared_ptr<LogFile>;
 
 class VecLogFile : public std::vector<PointerLogFile> {
+
 public:
-    VecLogFile() {}
-    ~VecLogFile() {}
+    VecLogFile() = default;
+    ~VecLogFile() = default; 
 
     VecLogFile(const VecLogFile&) = delete;
     VecLogFile& operator=(const VecLogFile&) = delete;
@@ -77,6 +81,11 @@ private:
 
 
 class DiskStorage : public Storage {
+#ifndef NDEBUG
+public:
+    friend class sharkstore::test::StorageTest;
+#endif
+
 public:
     struct Options {
         // 一个日志文件的大小
@@ -128,7 +137,7 @@ public:
     size_t FilesCount() const { return log_files_.size(); }
     size_t CommitFileCount() const { return log_files_commited_.size(); }
 
-    std::vector<std::shared_ptr<LogFile>>& GetLogFiles();
+    std::vector<std::shared_ptr<LogFile>>& GetCommitFiles();
 
     Status LoadCommitFiles(const uint64_t idx);
 

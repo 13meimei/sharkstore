@@ -5,6 +5,7 @@
 
 using namespace sharkstore;
 using namespace sharkstore::raft;
+using namespace sharkstore::raft::impl::storage;
 
 class RaftMock : public Raft {
 public:
@@ -23,6 +24,7 @@ public:
     void GetStatus(RaftStatus* status) const override {}
 
     void Truncate(uint64_t index) override {}
+    std::shared_ptr<Storage>&& GetStorage() override;
 
 private:
     RaftOptions ops_;

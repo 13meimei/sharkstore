@@ -67,7 +67,7 @@ Status StorageReader::getCurrLogFile(const uint64_t idx) {
             return r;
         }
 
-        for (auto &f : s->GetLogFiles()) {
+        for (auto &f : s->GetCommitFiles()) {
             log_files_.emplace(f);
         }
     }
@@ -79,16 +79,19 @@ Status StorageReader::getCurrLogFile(const uint64_t idx) {
 }
 
 Status StorageReader::GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Command>& cmd) {
-    if (idx < start_index_ || idx > applied_ + 1) {
+    if ((start_index_ > 0 && idx < start_index_) || 
+            (applied_ > 0 && idx > applied_ + 1)) 
+    {
         return Status(Status::kOutOfBound, "StorageReader::GetData error", "passin invalid index");
     }
 
-    auto r = getCurrLogFile(idx);
+    Status r;
+#ifdef NDEBUG
+    r = getCurrLogFile(idx);
     if (!r.ok()) {
         RAFT_LOG_ERROR("getCurrLogFile error, %s", r.ToString().c_str());
         return r;
     }
-#ifndef NDEBUG
     listLogs();
 #endif
 
@@ -116,6 +119,9 @@ Status StorageReader::GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Co
 Status StorageReader::listLogs() {
     if (log_files_.size() > 0) {
         auto f = log_files_.front();
+        RAFT_LOG_DEBUG("files: %zd >>>1.)path: %s \nfile_size: %" PRIu64 " \nlog item size: %d",
+                log_files_.size(), f->Path().c_str(), f->FileSize(), f->LogSize());
+        f = log_files_.back();
         RAFT_LOG_DEBUG("files: %zd >>>1.)path: %s \nfile_size: %" PRIu64 " \nlog item size: %d",
                 log_files_.size(), f->Path().c_str(), f->FileSize(), f->LogSize());
     }

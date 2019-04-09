@@ -50,7 +50,7 @@ public:
 
     void Truncate(uint64_t index) override;
 
-    std::shared_ptr<impl::storage::Storage>& GetStorage();
+    std::shared_ptr<impl::storage::Storage>&& GetStorage() override;
     // 备份raft日志
     Status BackupLog();
 

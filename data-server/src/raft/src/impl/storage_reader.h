@@ -35,8 +35,11 @@ using DbInterface = sharkstore::dataserver::storage::DbInterface;
 using RaftImpl =  sharkstore::raft::impl::RaftImpl;
 
 namespace sharkstore {
+namespace test { class StorageTest; }
+
 namespace raft {
 namespace impl {
+
 
 class StorageReader : public RaftLogReader,  public std::enable_shared_from_this<StorageReader> {
 public:
@@ -46,8 +49,8 @@ public:
     StorageReader(const StorageReader&) = delete;
     StorageReader& operator=(const StorageReader&) = delete;
 
-    Status GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Command>& cmd);
-    Status Close() override ;
+    Status GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Command>& cmd) override;
+    Status Close() override;
 
 private:
     Status getCurrLogFile(const uint64_t idx);
@@ -66,6 +69,10 @@ private:
     //std::vector<std::shared_ptr<LogFile>> log_files_;
     std::queue<std::shared_ptr<LogFile>> log_files_;
     std::shared_ptr<LogFile> curr_log_file_ = nullptr;
+#ifndef NDEBUG
+public:
+    friend class sharkstore::test::StorageTest;
+#endif
 };
 
 } /* namespace impl */

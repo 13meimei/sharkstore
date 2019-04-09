@@ -27,7 +27,7 @@ Status RangeSlave::Initialize(uint64_t leader, uint64_t log_start_index, uint64_
     }
 
     //acquire raft log reader object
-    std::shared_ptr<raft::RaftLogReader> reader;
+    std::shared_ptr<raft::RaftLogReader> reader = nullptr;
     context_->PersistServer()->CreateReader(id_, persist_index_, &reader);
     reader_ = reader.get();
 

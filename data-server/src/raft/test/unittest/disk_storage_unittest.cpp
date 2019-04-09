@@ -3,6 +3,7 @@
 #include "base/util.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "raft/src/impl/storage/storage_disk.h"
+#include "raft/src/impl/storage_reader.h"
 #include "test_util.h"
 #include "base/status.h"
 
@@ -13,7 +14,8 @@ int main(int argc, char* argv[]) {
     return RUN_ALL_TESTS();
 }
 
-namespace {
+namespace sharkstore {
+namespace test {
 
 using namespace sharkstore::raft::impl;
 using namespace sharkstore::raft::impl::storage;
@@ -56,17 +58,51 @@ protected:
         ReOpen();
     }
 
+    VecLogFile&& GetLogFiles() {
+        return std::move(storage_->log_files_);
+    }
+    VecLogFile&& GetTruncFiles() {
+        return std::move(storage_->log_files_truncated_);
+    }
+
+    Status LoadFromDiskStorage() {
+        auto& log_file = storage_reader_->log_files_;
+        Status s;
+        if (storage_->CommitFileCount() == 0) {
+            s = storage_->LoadCommitFiles(1);
+            //ASSERT_TRUE(s.ok()) << s.ToString();
+        }
+        for (const auto& f : storage_->GetCommitFiles()) {
+            log_file.emplace(f);
+        }
+        storage_reader_->listLogs();
+
+        return Status::OK();
+    }
+
 private:
     void Open() {
-        storage_ = new DiskStorage(1, tmp_dir_, ops_, [](uint64_t& index) { index = 0; return Status::OK(); });
+        storage_ = new DiskStorage(1, tmp_dir_, ops_, 
+                [&](uint64_t& index) { 
+                index = storage_->Applied(); return Status::OK(); 
+                });
         auto s = storage_->Open();
         ASSERT_TRUE(s.ok()) << s.ToString();
+
+        s = initReader();
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+
+    Status initReader() {
+        storage_reader_ = new StorageReader(1, 1, nullptr);
+        return Status::OK();
     }
 
 protected:
     std::string tmp_dir_;
     DiskStorage::Options ops_; // open options
     DiskStorage* storage_;
+    StorageReader* storage_reader_;
 };
 
 class StorageHoleTest : public StorageTest {
@@ -275,8 +311,11 @@ TEST_F(StorageTest, KeepCount) {
     auto count = storage_->FilesCount();
     auto e = RandomEntry(100);
     s = storage_->StoreEntries(std::vector<EntryPtr>{e});
+    if (!s.ok()) {
+        std::cout << "StoreEntries error: " << s.ToString().c_str() << std::endl;
+    }
     auto count2 = storage_->FilesCount();
-
+   
     std::cout << count << ", " << count2 << std::endl;
     ASSERT_LT(count2, count);
     ASSERT_GE(count2, 3);
@@ -581,6 +620,80 @@ TEST_F(StorageHoleTest, StartIndex) {
 }
 
 
+TEST_F(StorageTest, GetFromRaftLogFile) {
+    LimitMaxLogs(3);
+    uint64_t lo = 1, hi = 100;
+    std::vector<EntryPtr> to_writes;
+    RandomEntries(lo, hi, 256, &to_writes);
+    auto s = storage_->StoreEntries(to_writes);
+    storage_->AppliedTo(99);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    auto count = storage_->FilesCount();
+    auto e = RandomEntry(100);
+    s = storage_->StoreEntries(std::vector<EntryPtr>{e});
+    if (!s.ok()) {
+        std::cout << "StoreEntries error: " << s.ToString().c_str() << std::endl;
+    }
+    //file_size >= 1024 就切换生成新的文件
+    auto count2 = storage_->FilesCount();
+   
+    const uint64_t apply_index = 0;
+    uint64_t start_index{0};
+    s = storage_->LoadCommitFiles(apply_index);
+    assert(s.ok());
+    for (const auto& f : storage_->GetCommitFiles()) {
+        if (start_index == 0) {
+            start_index = f->Index();
+        }
+        std::cout << f->Path().c_str() << ":" << f->GetFullFlag() << std::endl;
+    }
+
+    std::shared_ptr<raft_cmdpb::Command> cmd = nullptr;
+    s = LoadFromDiskStorage();
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    s = storage_reader_->GetData(start_index, cmd);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+
+    /*
+    std::cout << "iterator all log_files\n";
+    for (const auto& f : GetLogFiles()) {
+        std::cout << f->Path().c_str() << ":" << f->GetFullFlag() << std::endl;
+    }
+    std::cout << "iterator all log_files_truncated_\n";
+    for (const auto& f : GetTruncFiles()) {
+        std::cout << f->Path().c_str() << ":" << f->GetFullFlag() << std::endl;
+    }
+    */
+
+    std::cout << count << ", " << count2 << std::endl;
+    ASSERT_LT(count2, count);
+    ASSERT_GE(count2, 3);
 
 
-} /* namespace  */
+    uint64_t index = 0;
+    s = storage_->FirstIndex(&index);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    std::cout << "First: " << index << std::endl;
+
+    std::vector<EntryPtr> ents;
+    bool compacted = false;
+    s = storage_->Entries(index, 101, std::numeric_limits<uint64_t>::max(), &ents,
+                          &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+
+    ReOpen();
+    std::vector<EntryPtr> ents2;
+    s = storage_->Entries(index, 101, std::numeric_limits<uint64_t>::max(), &ents2,
+                          &compacted);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_FALSE(compacted);
+
+    s = Equal(ents, ents2);
+    ASSERT_TRUE(s.ok()) << s.ToString();
+}
+
+
+} /* namespace test */
+} /* namespace sharkstore */
