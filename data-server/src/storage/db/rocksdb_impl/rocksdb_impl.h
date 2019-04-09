@@ -48,7 +48,6 @@ public:
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
 
     void PrintMetric() override;
-    void Scrub() override {}
 
 public:
     Status CompactRange(const rocksdb::CompactRangeOptions& ops,

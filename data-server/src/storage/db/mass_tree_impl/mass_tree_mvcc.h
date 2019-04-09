@@ -54,8 +54,6 @@ public:
 
     void PrintMetric() override;
 
-    void Scrub() override;
-
 public:
     MassTreeDB *GetDefaultTree() { return default_tree_; }
 
@@ -68,6 +66,7 @@ private:
     Status deleteRange(MassTreeDB *tree, const std::string& begin_key, const std::string& end_key);
     IteratorInterface *newIter(MassTreeDB *tree, const std::string &start, const std::string &limit);
 
+    void Scrub();
 private:
     MassTreeDB *default_tree_ = nullptr;
     MassTreeDB *txn_tree_ = nullptr;
