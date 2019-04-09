@@ -17,28 +17,33 @@ public:
     MvccMassTreeMock() = default;
     ~MvccMassTreeMock() = default;
 
-    IteratorInterface* newIterMock(MassTreeDB *tree,
+    IteratorInterface* newIterMock(MvccTree *tree,
             const std::string &start, const std::string &limit);
 
     IteratorInterface* NewIterator(const std::string& start, const std::string& limit) {
-        return newIterMock(default_tree_, start, limit);
+        return newIterMock(&default_tree_, start, limit);
     }
 
     Status NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
             std::unique_ptr<IteratorInterface>& txn_iter,
             const std::string& start, const std::string& limit)
     {
-        data_iter.reset(newIterMock(default_tree_, start, limit));
-        txn_iter.reset(newIterMock(txn_tree_, start, limit));
+        data_iter.reset(newIterMock(&default_tree_, start, limit));
+        txn_iter.reset(newIterMock(&txn_tree_, start, limit));
         return Status::OK();
     }
 
-    uint64_t LoadVersion() { return mvcc_.load(); }
-    void StoreVersion(uint64_t ver) { mvcc_.store(ver); }
+    uint64_t LoadVersion() { return default_tree_.mvcc.load(); }
+    void StoreVersion(uint64_t ver) { default_tree_.mvcc.store(ver); }
 
     void seek_set(bool seek) {
          seek_ = seek;
     }
+
+    void Scrub() {
+        MvccMassTree::Scrub(static_cast<MvccMassTree::MvccTree*>(DefaultColumnFamily()));
+    }
+
 private:
     //MvccMock mvcc_;
     bool seek_ = true;

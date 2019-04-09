@@ -17,8 +17,13 @@ public:
     friend class ::MassTreeTest;
     friend class sharkstore::test::mock::MvccMassTreeMock;
 
-    MvccMassTree();
-    ~MvccMassTree();
+    MvccMassTree() = default;
+    ~MvccMassTree() = default;
+
+    struct MvccTree {
+        MassTreeDB tree;
+        Mvcc mvcc;
+    };
 
     bool IsInMemory() override { return true; }
 
@@ -54,23 +59,17 @@ public:
 
     void PrintMetric() override;
 
-public:
-    MassTreeDB *GetDefaultTree() { return default_tree_; }
-
-    MassTreeDB *GetTxnTree() { return txn_tree_; }
+private:
+    Status get(MvccTree *family, const std::string &key, std::string *value);
+    Status put(MvccTree *family, const std::string &key, const std::string &value);
+    Status del(MvccTree *family, const std::string &key);
+    Status deleteRange(MvccTree *family, const std::string& begin_key, const std::string& end_key);
+    IteratorInterface *newIter(MvccTree *family, const std::string &start, const std::string &limit);
+    void Scrub(MvccTree *family);
 
 private:
-    Status get(MassTreeDB *tree, const std::string &key, std::string *value);
-    Status put(MassTreeDB *tree, const std::string &key, const std::string &value);
-    Status del(MassTreeDB *tree, const std::string &key);
-    Status deleteRange(MassTreeDB *tree, const std::string& begin_key, const std::string& end_key);
-    IteratorInterface *newIter(MassTreeDB *tree, const std::string &start, const std::string &limit);
-
-    void Scrub();
-private:
-    MassTreeDB *default_tree_ = nullptr;
-    MassTreeDB *txn_tree_ = nullptr;
-    Mvcc mvcc_;
+    MvccTree default_tree_;
+    MvccTree txn_tree_;
 };
 
 
