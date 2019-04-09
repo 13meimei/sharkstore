@@ -2,6 +2,7 @@
 
 #include "base/util.h"
 #include "proto/gen/raft_cmdpb.pb.h"
+#include "proto/gen/kvrpcpb.pb.h"
 #include "raft/src/impl/storage/storage_disk.h"
 #include "raft/src/impl/storage_reader.h"
 #include "test_util.h"
@@ -80,6 +81,26 @@ protected:
         return Status::OK();
     }
 
+    std::string generateRaftCmd(const uint64_t size) {
+        auto cmd = std::make_shared<raft_cmdpb::Command>();
+        cmds.emplace_back(cmd);
+
+        cmd->set_cmd_type(raft_cmdpb::RawPut);
+        auto cmd_id = cmd->mutable_cmd_id();
+        uint64_t node_id(1);
+        uint64_t seq(randomInt());
+        cmd_id->set_node_id(node_id);
+        cmd_id->set_seq(seq);
+
+        auto epoch = cmd->mutable_verify_epoch();
+        auto raw_put_seq = cmd->mutable_kv_raw_put_req();
+        auto key = randomString(size); 
+        raw_put_seq->set_key(key);
+        raw_put_seq->set_value(key +":value");
+
+        auto cmd_str = cmd->SerializeAsString();
+        return cmd_str;
+    }
 private:
     void Open() {
         storage_ = new DiskStorage(1, tmp_dir_, ops_, 
@@ -103,6 +124,7 @@ protected:
     DiskStorage::Options ops_; // open options
     DiskStorage* storage_;
     StorageReader* storage_reader_;
+    std::vector<std::shared_ptr<raft_cmdpb::Command>> cmds;
 };
 
 class StorageHoleTest : public StorageTest {
@@ -624,7 +646,13 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
     LimitMaxLogs(3);
     uint64_t lo = 1, hi = 100;
     std::vector<EntryPtr> to_writes;
-    RandomEntries(lo, hi, 256, &to_writes);
+    const uint64_t val_size{128};
+    RandomEntries(lo, hi, val_size, &to_writes);
+
+    for (auto& ent : to_writes) {
+        ent->set_data(generateRaftCmd(val_size));
+    }
+
     auto s = storage_->StoreEntries(to_writes);
     storage_->AppliedTo(99);
     ASSERT_TRUE(s.ok()) << s.ToString();
