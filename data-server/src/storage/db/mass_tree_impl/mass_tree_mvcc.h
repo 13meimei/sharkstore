@@ -1,5 +1,8 @@
 _Pragma("once");
+
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "storage/db/db_interface.h"
 #include "storage/db/mvcc.h"
@@ -19,7 +22,7 @@ public:
     friend class sharkstore::test::mock::MvccMassTreeMock;
 
     MvccMassTree() = default;
-    ~MvccMassTree() = default;
+    ~MvccMassTree();
 
     struct MvccTree {
         MassTreeDB tree;

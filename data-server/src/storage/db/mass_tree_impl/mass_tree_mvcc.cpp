@@ -9,6 +9,17 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
+MvccMassTree::~MvccMassTree() {
+    thread_loop_ = false;
+    if (thread_rcu_.thread_.joinable()) {
+        thread_rcu_.thread_.join();
+    }
+
+    if (thread_epoch_.thread_.joinable()) {
+        thread_epoch_.thread_.join();
+    }
+}
+
 Status MvccMassTree::Open() {
     thread_rcu_.thread_ = std::thread([this] {
             std::chrono::seconds delay(30);
@@ -17,7 +28,7 @@ Status MvccMassTree::Open() {
                 this->Scrub(&txn_tree_);
 
                 std::unique_lock<std::mutex> lk(thread_rcu_.mutex_);
-                thread_rcu_.cond_.wait_for(lk, delay, [&thread_loop_]{return !thread_loop_});
+                thread_rcu_.cond_.wait_for(lk, delay, [this]{return !this->thread_loop_;});
             }
         });
 
@@ -28,7 +39,7 @@ Status MvccMassTree::Open() {
                 this->txn_tree_.tree.EpochIncr();
 
                 std::unique_lock<std::mutex> lk(thread_epoch_.mutex_);
-                thread_epoch_.cond_.wait_for(lk, delay, [&thread_loop_]{return !thread_loop_});
+                thread_epoch_.cond_.wait_for(lk, delay, [this]{return !this->thread_loop_;});
             }
         });
 
