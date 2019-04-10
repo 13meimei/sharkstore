@@ -44,7 +44,10 @@ Status StorageReader::getCurrLogFile(const uint64_t idx) {
             if (!log_files_.empty()) {
                 min = log_files_.front()->Index();
                 max = log_files_.back()->LastIndex();
-                if (idx >= min && idx <= max) break;
+                if (idx >= min && idx <= max) {
+                    curr_log_file_ = nullptr;
+                    break;
+                } 
             }
             reload = true;
         }

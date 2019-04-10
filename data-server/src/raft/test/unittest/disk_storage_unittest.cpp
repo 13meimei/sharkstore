@@ -77,12 +77,37 @@ protected:
         for (const auto& f : storage_->GetCommitFiles()) {
             log_file.emplace(f);
         }
-        storage_reader_->listLogs();
+        //storage_reader_->listLogs();
 
         return Status::OK();
     }
 
-    std::string generateRaftCmd(const uint64_t size) {
+    Status GetIndexScope(uint64_t& s, uint64_t& e) {
+        s = storage_->log_files_commited_.front()->Index();
+        e = storage_->log_files_commited_.back()->LastIndex();
+        return Status::OK();
+    }
+
+    bool SwitchLogFile(const uint64_t idx) {
+        auto between = [this](const uint64_t idx) {
+            if (storage_reader_->curr_log_file_ != nullptr) {
+               return idx >= storage_reader_->curr_log_file_->Index() && 
+                      idx <= storage_reader_->curr_log_file_->LastIndex();
+            }
+            return false;
+        };
+        if (between(idx)) return true;
+
+        if (!storage_reader_->log_files_.empty()) {
+            storage_reader_->curr_log_file_ = storage_reader_->log_files_.front();
+            storage_reader_->log_files_.pop();
+            return true;
+        }
+
+        return false;
+    }
+
+    std::string GenerateRaftCmd(const uint64_t size) {
         auto cmd = std::make_shared<raft_cmdpb::Command>();
         cmds.emplace_back(cmd);
 
@@ -95,7 +120,7 @@ protected:
 
         auto epoch = cmd->mutable_verify_epoch();
         auto raw_put_seq = cmd->mutable_kv_raw_put_req();
-        auto key = randomString(size); 
+        auto key = randomString(size);
         raw_put_seq->set_key(key);
         raw_put_seq->set_value(key +":value");
 
@@ -104,9 +129,9 @@ protected:
     }
 private:
     void Open() {
-        storage_ = new DiskStorage(1, tmp_dir_, ops_, 
-                [&](uint64_t& index) { 
-                index = storage_->Applied(); return Status::OK(); 
+        storage_ = new DiskStorage(1, tmp_dir_, ops_,
+                [&](uint64_t& index) {
+                index = storage_->Applied(); return Status::OK();
                 });
         auto s = storage_->Open();
         ASSERT_TRUE(s.ok()) << s.ToString();
@@ -338,7 +363,7 @@ TEST_F(StorageTest, KeepCount) {
         std::cout << "StoreEntries error: " << s.ToString().c_str() << std::endl;
     }
     auto count2 = storage_->FilesCount();
-   
+
     std::cout << count << ", " << count2 << std::endl;
     ASSERT_LT(count2, count);
     ASSERT_GE(count2, 3);
@@ -648,13 +673,16 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
     uint64_t lo = 1, hi = 100;
     std::vector<EntryPtr> to_writes;
     const uint64_t val_size{128};
+    //随机生成100个entry 128个长度的字符串
     RandomEntries(lo, hi, val_size, &to_writes);
 
+    //刷新字符串为raft_cmdpb::Command格式
     for (auto& ent : to_writes) {
         ent->set_type(sharkstore::raft::impl::pb::ENTRY_NORMAL);
-        ent->set_data(generateRaftCmd(val_size));
+        ent->set_data(GenerateRaftCmd(val_size));
     }
 
+    //写raft log文件
     auto s = storage_->StoreEntries(to_writes);
     storage_->AppliedTo(99);
     ASSERT_TRUE(s.ok()) << s.ToString();
@@ -667,25 +695,49 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
     }
     //file_size >= 1024 就切换生成新的文件
     auto count2 = storage_->FilesCount();
-   
+    std::cout << count << ", " << count2 << std::endl;
+    ASSERT_LT(count2, count);
+    ASSERT_GE(count2, 3);
+
     const uint64_t apply_index = 0;
     uint64_t start_index{0};
+    uint64_t last_index{0};
+
+    //加载commit文件（确认文件commit)
     s = storage_->LoadCommitFiles(apply_index);
-    assert(s.ok());
+    ASSERT_TRUE(s.ok() && storage_->CommitFileCount() > 0);
+   
+    s = GetIndexScope(start_index, last_index);
+    std::cout << "start_index:" << start_index << "  last_index:" << last_index << std::endl;
+    
+    //显示已经commit的完整文件（确保文件指针单独使用）
+    std::cout << "------------commit files---------------------------\n";
     for (const auto& f : storage_->GetCommitFiles()) {
-        if (start_index == 0) {
-            start_index = f->Index();
-        }
-        std::cout << f->Path().c_str() << ":" << f->GetFullFlag() << std::endl;
+        std::cout << f->Index() << ":" << f->Path().c_str() << ":" << f->GetFullFlag() << std::endl;
     }
+    std::cout << "---------------------------------------------------\n";
 
     std::shared_ptr<raft_cmdpb::Command> cmd = nullptr;
+    //共享文件指针到storageReader
     s = LoadFromDiskStorage();
     ASSERT_TRUE(s.ok()) << s.ToString();
-    s = storage_reader_->GetData(start_index, cmd);
-    ASSERT_TRUE(s.ok()) << s.ToString();
-    
-    ASSERT_EQ(cmd->cmd_type(), raft_cmdpb::RawPut);
+    uint64_t tmp_idx(start_index);
+    do {
+        if (!SwitchLogFile(tmp_idx)) {
+            tmp_idx--;
+            break;
+        }
+
+        s = storage_reader_->GetData(tmp_idx, cmd);
+        if (!s.ok()) break;
+
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(cmd->cmd_type(), raft_cmdpb::RawPut);
+
+        tmp_idx++;
+    } while(true);
+    ASSERT_EQ(last_index, tmp_idx);
+
     /*
     std::cout << "iterator all log_files\n";
     for (const auto& f : GetLogFiles()) {
@@ -697,11 +749,7 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
     }
     */
 
-    std::cout << count << ", " << count2 << std::endl;
-    ASSERT_LT(count2, count);
-    ASSERT_GE(count2, 3);
-
-
+    /*
     uint64_t index = 0;
     s = storage_->FirstIndex(&index);
     ASSERT_TRUE(s.ok()) << s.ToString();
@@ -722,7 +770,7 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
     ASSERT_FALSE(compacted);
 
     s = Equal(ents, ents2);
-    ASSERT_TRUE(s.ok()) << s.ToString();
+    ASSERT_TRUE(s.ok()) << s.ToString();*/
 }
 
 
