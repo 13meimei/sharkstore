@@ -54,8 +54,8 @@ public:
     virtual Status Initialize(uint64_t leader = 0, uint64_t log_start_index = 0, uint64_t sflag = 0);
     virtual Status Shutdown();
 
+    //virtual Status Apply(const std::string &cmd, uint64_t index) { return Status::OK(); };
     virtual Status Apply(const raft_cmdpb::Command &cmd, uint64_t index);
-    //virtual Status Submit(const uint64_t range_id, const uint64_t pidx, const uint64_t aidx);
 public:
     virtual Status ApplyRawPut(const raft_cmdpb::Command &cmd) {
         errorpb::Error *err = nullptr;

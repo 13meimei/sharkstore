@@ -47,6 +47,7 @@ protected:
     }
 
     void TearDown() override {
+        cmds.clear();
         if (storage_ != nullptr) {
             auto s = storage_->Destroy(false);
             ASSERT_TRUE(s.ok()) << s.ToString();
@@ -650,6 +651,7 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
     RandomEntries(lo, hi, val_size, &to_writes);
 
     for (auto& ent : to_writes) {
+        ent->set_type(sharkstore::raft::impl::pb::ENTRY_NORMAL);
         ent->set_data(generateRaftCmd(val_size));
     }
 
@@ -682,7 +684,8 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
     ASSERT_TRUE(s.ok()) << s.ToString();
     s = storage_reader_->GetData(start_index, cmd);
     ASSERT_TRUE(s.ok()) << s.ToString();
-
+    
+    ASSERT_EQ(cmd->cmd_type(), raft_cmdpb::RawPut);
     /*
     std::cout << "iterator all log_files\n";
     for (const auto& f : GetLogFiles()) {

@@ -137,11 +137,11 @@ Status StorageReader::Close() {
 
 Status StorageReader::decodeEntry(EntryPtr entry, std::shared_ptr<raft_cmdpb::Command>& raft_cmd) {
     raft_cmd = std::make_shared<raft_cmdpb::Command>();
-    google::protobuf::io::ArrayInputStream input(entry->data().c_str(), static_cast<int>(entry->ByteSizeLong()));
+    google::protobuf::io::ArrayInputStream input(entry->data().data(), static_cast<int>(entry->data().size()));
     if(!raft_cmd->ParseFromZeroCopyStream(&input)) {
         RAFT_LOG_ERROR("parse raft command failed");
-        //return Status(Status::kCorruption, "parse raft command", EncodeToHex(entry->data()));
-        return Status(Status::kAborted, "decodeEntry", "parse Entry error");
+        return Status(Status::kCorruption, "parse raft command", EncodeToHex(entry->data().data()));
+        //return Status(Status::kAborted, "decodeEntry", "parse Entry error");
     }
 
     return Status::OK();
