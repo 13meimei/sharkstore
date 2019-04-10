@@ -75,9 +75,10 @@ Status MassTreeDB::Delete(const std::string& key) {
 
 void MassTreeDB::EpochIncr() {
     globalepoch += 1;
+    auto& ti = *thread_info_; // 确保thread_local先初始化，避免死锁
     {
         std::lock_guard<std::mutex> lock(thread_infos_mu);
-        active_epoch = thread_info_->min_active_epoch();
+        active_epoch = ti.min_active_epoch();
     }
 }
 
