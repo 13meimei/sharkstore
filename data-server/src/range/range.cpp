@@ -100,7 +100,7 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sfl
 
     if (ds_config.persist_config.persist_switch) {
         slave_range_ = std::make_shared<RangeSlave>(context_, std::move(meta_.Get()));
-        slave_range_->Initialize(1, leader, log_start_index);
+        slave_range_->Initialize(leader, log_start_index, 1);
     }
     return Status::OK();
 }
