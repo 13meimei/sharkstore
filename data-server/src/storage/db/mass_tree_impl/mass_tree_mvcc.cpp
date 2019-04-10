@@ -35,8 +35,7 @@ Status MvccMassTree::Open() {
     thread_epoch_.thread_ = std::thread([this] {
             std::chrono::seconds delay(2);
             while (thread_loop_) {
-                this->default_tree_.tree.EpochIncr();
-                this->txn_tree_.tree.EpochIncr();
+                MassTreeDB::EpochIncr();
 
                 std::unique_lock<std::mutex> lk(thread_epoch_.mutex_);
                 thread_epoch_.cond_.wait_for(lk, delay, [this]{return !this->thread_loop_;});

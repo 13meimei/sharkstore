@@ -1,14 +1,15 @@
 _Pragma("once");
 
-#include "scaner.h"
+#include <memory>
+
 #include "base/status.h"
+#include "scaner.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
 // 包装MassTree的基本操作
-class Scaner;
 class MassTreeDB {
 public:
     MassTreeDB();
@@ -18,7 +19,10 @@ public:
     Status Get(const std::string& key, std::string* value);
     Status Delete(const std::string& key);
 
-    void EpochIncr();
+    static void EpochIncr();
+
+    template <typename F>
+    int Scan(const std::string& begin, F& scanner);
 
     std::unique_ptr<Scaner> NewScaner(const std::string& start, const std::string& limit, size_t max_per_scan = 100);
 

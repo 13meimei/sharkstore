@@ -1,7 +1,11 @@
 #include "mass_tree_db.h"
 
+#include <mutex>
 #include "masstree-beta/masstree_insert.hh"
 #include "masstree-beta/masstree_remove.hh"
+#include "masstree-beta/masstree_scan.hh"
+
+#include "scaner.h"
 
 volatile mrcu_epoch_type globalepoch = 1;     // global epoch, updated by main thread regularly
 volatile mrcu_epoch_type active_epoch = 1;
@@ -10,10 +14,17 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-thread_local std::unique_ptr<threadinfo, ThreadInfoDeleter> MassTreeDB::thread_info_(
-        threadinfo::make(threadinfo::TI_PROCESS, -1));
+// 保护 thread_info list
+static std::mutex thread_infos_mu;
 
-MassTreeDB::MassTreeDB() : tree_(new TreeType){
+static threadinfo* createThreadInfo() {
+    std::lock_guard<std::mutex> lock(thread_infos_mu);
+    return threadinfo::make(threadinfo::TI_PROCESS, -1);
+}
+
+thread_local std::unique_ptr<threadinfo, ThreadInfoDeleter> MassTreeDB::thread_info_(createThreadInfo());
+
+MassTreeDB::MassTreeDB() : tree_(new TreeType) {
     tree_->initialize(*thread_info_);
 }
 
@@ -64,12 +75,24 @@ Status MassTreeDB::Delete(const std::string& key) {
 
 void MassTreeDB::EpochIncr() {
     globalepoch += 1;
-    active_epoch = thread_info_->min_active_epoch();
+    {
+        std::lock_guard<std::mutex> lock(thread_infos_mu);
+        active_epoch = thread_info_->min_active_epoch();
+    }
+}
+
+template int MassTreeDB::Scan(const std::string&, Scaner&);
+
+template <typename F>
+int MassTreeDB::Scan(const std::string& begin, F& scanner) {
+    thread_info_->rcu_start();
+    auto count = tree_->scan(begin, true, scanner, *thread_info_);
+    thread_info_->rcu_stop();
+    return count;
 }
 
 std::unique_ptr<Scaner> MassTreeDB::NewScaner(const std::string& start, const std::string& limit, size_t max_per_scan) {
-    thread_info_->rcu_start();
-    std::unique_ptr<Scaner> ptr(new Scaner(tree_, start, limit, max_per_scan, []{ thread_info_->rcu_stop(); }));
+    std::unique_ptr<Scaner> ptr(new Scaner(this, start, limit, max_per_scan));
     return ptr;
 }
 

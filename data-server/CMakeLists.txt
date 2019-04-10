@@ -242,6 +242,7 @@ set(SOURCES
     src/storage/db/mass_tree_impl/mass_tree_db.cpp
     src/storage/db/mass_tree_impl/mass_tree_mvcc.cpp
     src/storage/db/mass_tree_impl/iterator.cpp
+    src/storage/db/mass_tree_impl/scaner.cpp
     src/storage/store_watch.cpp
     src/storage/where_expr.cpp
     src/storage/store_txn.cpp
