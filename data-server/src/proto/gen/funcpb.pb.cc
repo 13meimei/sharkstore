@@ -80,7 +80,7 @@ namespace {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\014funcpb.proto\022\006funcpb*\337\006\n\nFunctionID\022\022\n"
+      "\n\014funcpb.proto\022\006funcpb*\362\006\n\nFunctionID\022\022\n"
       "\016kFuncHeartbeat\020\000\022\017\n\013kFuncRawGet\020\001\022\017\n\013kF"
       "uncRawPut\020\002\022\022\n\016kFuncRawDelete\020\003\022\023\n\017kFunc"
       "RawExecute\020\004\022\017\n\013kFuncSelect\020\n\022\017\n\013kFuncIn"
@@ -96,16 +96,16 @@ void AddDescriptorsImpl() {
       "\001\022\023\n\016kFuncLockWatch\020\314\001\022\021\n\014kFuncLockGet\020\315"
       "\001\022\024\n\017kFuncTxnPrepare\020\255\002\022\023\n\016kFuncTxnDecid"
       "e\020\256\002\022\024\n\017kFuncTxnClearup\020\257\002\022\030\n\023kFuncTxnGe"
-      "tLockInfo\020\260\002\022\023\n\016kFuncTxnSelect\020\261\002\022\025\n\020kFu"
-      "ncCreateRange\020\351\007\022\025\n\020kFuncDeleteRange\020\352\007\022"
-      "\035\n\030kFuncRangeTransferLeader\020\353\007\022\025\n\020kFuncU"
-      "pdateRange\020\354\007\022\025\n\020kFuncGetPeerInfo\020\355\007\022\031\n\024"
-      "kFuncSetNodeLogLevel\020\356\007\022\026\n\021kFuncOfflineR"
-      "ange\020\357\007\022\026\n\021kFuncReplaceRange\020\360\007\022\017\n\nkFunc"
-      "Admin\020\321\017b\006proto3"
+      "tLockInfo\020\260\002\022\023\n\016kFuncTxnSelect\020\261\002\022\021\n\014kFu"
+      "ncTxnScan\020\262\002\022\025\n\020kFuncCreateRange\020\351\007\022\025\n\020k"
+      "FuncDeleteRange\020\352\007\022\035\n\030kFuncRangeTransfer"
+      "Leader\020\353\007\022\025\n\020kFuncUpdateRange\020\354\007\022\025\n\020kFun"
+      "cGetPeerInfo\020\355\007\022\031\n\024kFuncSetNodeLogLevel\020"
+      "\356\007\022\026\n\021kFuncOfflineRange\020\357\007\022\026\n\021kFuncRepla"
+      "ceRange\020\360\007\022\017\n\nkFuncAdmin\020\321\017b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 896);
+      descriptor, 915);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "funcpb.proto", &protobuf_RegisterTypes);
 }
@@ -163,6 +163,7 @@ bool FunctionID_IsValid(int value) {
     case 303:
     case 304:
     case 305:
+    case 306:
     case 1001:
     case 1002:
     case 1003:

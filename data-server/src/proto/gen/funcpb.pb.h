@@ -83,6 +83,7 @@ enum FunctionID {
   kFuncTxnClearup = 303,
   kFuncTxnGetLockInfo = 304,
   kFuncTxnSelect = 305,
+  kFuncTxnScan = 306,
   kFuncCreateRange = 1001,
   kFuncDeleteRange = 1002,
   kFuncRangeTransferLeader = 1003,
