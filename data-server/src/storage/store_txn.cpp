@@ -1,10 +1,12 @@
 #include "store.h"
 
 #include "base/util.h"
+#include "frame/sf_logger.h"
 #include "common/ds_encoding.h"
+
 #include "select_txn.h"
 #include "util.h"
-#include "frame/sf_logger.h"
+#include "txn_iterator.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -519,6 +521,58 @@ Status Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
         }
     }
     resp->set_offset(all);
+    return s;
+}
+
+Status Store::TxnScan(const txnpb::ScanRequest& req, txnpb::ScanResponse* resp) {
+    std::unique_ptr<IteratorInterface> data_iter, txn_iter;
+    auto s = NewIterators(data_iter, txn_iter, req.start_key(), req.end_key());
+    if (!s.ok()) {
+        return s;
+    }
+
+    int64_t count = 0;
+    TxnIterator iter(std::move(data_iter), std::move(txn_iter));
+    bool over = false;
+    while (!over) {
+        std::string key, data_value, txn_value;
+        s = iter.Next(key, data_value, txn_value, over);
+        if (!s.ok() || over) {
+            break;
+        }
+
+        auto kv = resp->add_kvs();
+        kv->set_key(std::move(key));
+
+        bool has_del_intent = false;
+        bool has_value = false;
+        if (!data_value.empty()) {
+            kv->set_value(std::move(data_value));
+            kv->set_has_value(true);
+            has_value = true;
+        }
+
+        if (!txn_value.empty()) {
+            txnpb::TxnValue tv;
+            if (!tv.ParseFromString(txn_value)) {
+                return Status(Status::kCorruption, "parse txn value", EncodeToHex(txn_value));
+            }
+            // TODO: use move
+            has_del_intent = tv.intent().typ() == txnpb::DELETE;
+            auto intent = kv->mutable_intent();
+            intent->set_op_type(tv.intent().typ());
+            intent->set_txn_id(tv.txn_id());
+            intent->set_primary_key(tv.primary_key());
+            intent->set_value(tv.intent().value());
+        }
+
+        if (has_value && !has_del_intent) { // 有可能这条不算
+            ++count;
+        }
+        if (count >= req.max_count()) {
+            break;
+        }
+    }
     return s;
 }
 

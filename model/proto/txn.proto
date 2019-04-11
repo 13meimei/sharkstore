@@ -281,7 +281,7 @@ message KeyValue {
 message ScanRequest {
     bytes start_key     = 1;
     bytes end_key       = 2;
-    uint64 max_count    = 3;
+    int64 max_count     = 3;
 }
 
 message ScanResponse {

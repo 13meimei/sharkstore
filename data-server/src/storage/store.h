@@ -75,6 +75,7 @@ public:
     void TxnClearup(const txnpb::ClearupRequest& req, txnpb::ClearupResponse* resp);
     void TxnGetLockInfo(const txnpb::GetLockInfoRequest& req, txnpb::GetLockInfoResponse* resp);
     Status TxnSelect(const txnpb::SelectRequest& req, txnpb::SelectResponse* resp);
+    Status TxnScan(const txnpb::ScanRequest& req, txnpb::ScanResponse* resp);
 
 public:
     IteratorInterface* NewIterator(const ::kvrpcpb::Scope& scope);

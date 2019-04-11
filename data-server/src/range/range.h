@@ -116,6 +116,7 @@ public:
     void TxnClearup(RPCRequestPtr rpc, txnpb::DsClearupRequest& req);
     void TxnGetLockInfo(RPCRequestPtr rpc, txnpb::DsGetLockInfoRequest& req);
     void TxnSelect(RPCRequestPtr rpc, txnpb::DsSelectRequest& req);
+    void TxnScan(RPCRequestPtr rpc, txnpb::DsScanRequest& req);
 
     //KV watch series
     Status GetAndResp(watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey,

@@ -4907,11 +4907,11 @@ class ScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::std::string* release_end_key();
   void set_allocated_end_key(::std::string* end_key);
 
-  // uint64 max_count = 3;
+  // int64 max_count = 3;
   void clear_max_count();
   static const int kMaxCountFieldNumber = 3;
-  ::google::protobuf::uint64 max_count() const;
-  void set_max_count(::google::protobuf::uint64 value);
+  ::google::protobuf::int64 max_count() const;
+  void set_max_count(::google::protobuf::int64 value);
 
   // @@protoc_insertion_point(class_scope:txnpb.ScanRequest)
  private:
@@ -4919,7 +4919,7 @@ class ScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr start_key_;
   ::google::protobuf::internal::ArenaStringPtr end_key_;
-  ::google::protobuf::uint64 max_count_;
+  ::google::protobuf::int64 max_count_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -9719,15 +9719,15 @@ inline void ScanRequest::set_allocated_end_key(::std::string* end_key) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.ScanRequest.end_key)
 }
 
-// uint64 max_count = 3;
+// int64 max_count = 3;
 inline void ScanRequest::clear_max_count() {
-  max_count_ = GOOGLE_ULONGLONG(0);
+  max_count_ = GOOGLE_LONGLONG(0);
 }
-inline ::google::protobuf::uint64 ScanRequest::max_count() const {
+inline ::google::protobuf::int64 ScanRequest::max_count() const {
   // @@protoc_insertion_point(field_get:txnpb.ScanRequest.max_count)
   return max_count_;
 }
-inline void ScanRequest::set_max_count(::google::protobuf::uint64 value) {
+inline void ScanRequest::set_max_count(::google::protobuf::int64 value) {
   
   max_count_ = value;
   // @@protoc_insertion_point(field_set:txnpb.ScanRequest.max_count)

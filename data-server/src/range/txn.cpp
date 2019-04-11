@@ -313,6 +313,49 @@ void Range::TxnSelect(RPCRequestPtr rpc, txnpb::DsSelectRequest& req) {
     SendResponse(rpc, ds_resp, req.header(), err);
 }
 
+void Range::TxnScan(RPCRequestPtr rpc, txnpb::DsScanRequest& req) {
+    RANGE_LOG_DEBUG("TxnScan begin, req: %s", req.DebugString().c_str());
+
+    auto btime = NowMicros();
+    errorpb::Error *err = nullptr;
+    txnpb::DsScanResponse ds_resp;
+    do {
+        if (!VerifyLeader(err)) {
+            break;
+        }
+
+        if (!EpochIsEqual(req.header().range_epoch(), err)) {
+            break;
+        }
+
+        auto resp = ds_resp.mutable_resp();
+        auto ret = store_->TxnScan(req.req(), resp);
+        auto etime = NowMicros();
+        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
+
+        if (!ret.ok()) {
+            RANGE_LOG_ERROR("TxnScan from store error: %s", ret.ToString().c_str());
+            resp->set_code(static_cast<int>(ret.code()));
+            break;
+        }
+
+        if (!EpochIsEqual(req.header().range_epoch(), err)) {
+            ds_resp.clear_resp();
+            RANGE_LOG_WARN("epoch change Select error: %s", err->message().c_str());
+        }
+    } while (false);
+
+    if (err != nullptr) {
+        RANGE_LOG_WARN("TxnScan error: %s", err->message().c_str());
+    } else {
+        RANGE_LOG_DEBUG("TxnSelect result: code=%d, size=%d",
+                        (ds_resp.has_resp() ? ds_resp.resp().code() : 0),
+                        (ds_resp.has_resp() ? ds_resp.resp().kvs_size() : 0));
+    }
+
+    SendResponse(rpc, ds_resp, req.header(), err);
+}
+
 }  // namespace range
 }  // namespace dataserver
 }  // namespace sharkstore

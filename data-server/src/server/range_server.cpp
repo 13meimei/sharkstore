@@ -365,6 +365,9 @@ void RangeServer::DealTask(RPCRequestPtr rpc) {
         case funcpb::kFuncTxnSelect:
             ForwardToRange<txnpb::DsSelectRequest, txnpb::DsSelectResponse>(rpc, &Range::TxnSelect);
             break;
+        case funcpb::kFuncTxnScan:
+            ForwardToRange<txnpb::DsScanRequest, txnpb::DsScanResponse>(rpc, &Range::TxnScan);
+            break;
         default:
             FLOG_ERROR("func id is Invalid %d", header.func_id);
     }

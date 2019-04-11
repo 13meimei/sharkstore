@@ -993,7 +993,7 @@ void AddDescriptorsImpl() {
       "\014\022\021\n\thas_value\030\002 \001(\010\022\r\n\005value\030\003 \001(\014\022\017\n\007v"
       "ersion\030\004 \001(\014\022\"\n\006intent\030\n \001(\0132\022.txnpb.Val"
       "ueIntent\"D\n\013ScanRequest\022\021\n\tstart_key\030\001 \001"
-      "(\014\022\017\n\007end_key\030\002 \001(\014\022\021\n\tmax_count\030\003 \001(\004\":"
+      "(\014\022\017\n\007end_key\030\002 \001(\014\022\021\n\tmax_count\030\003 \001(\003\":"
       "\n\014ScanResponse\022\014\n\004code\030\001 \001(\005\022\034\n\003kvs\030\002 \003("
       "\0132\017.txnpb.KeyValue\"X\n\rDsScanRequest\022&\n\006h"
       "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\037\n\003r"
@@ -17659,7 +17659,7 @@ ScanRequest::ScanRequest(const ScanRequest& from)
 void ScanRequest::SharedCtor() {
   start_key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   end_key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  max_count_ = GOOGLE_ULONGLONG(0);
+  max_count_ = GOOGLE_LONGLONG(0);
   _cached_size_ = 0;
 }
 
@@ -17704,7 +17704,7 @@ void ScanRequest::Clear() {
 
   start_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   end_key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  max_count_ = GOOGLE_ULONGLONG(0);
+  max_count_ = GOOGLE_LONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -17742,13 +17742,13 @@ bool ScanRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // uint64 max_count = 3;
+      // int64 max_count = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
                  input, &max_count_)));
         } else {
           goto handle_unusual;
@@ -17794,9 +17794,9 @@ void ScanRequest::SerializeWithCachedSizes(
       2, this->end_key(), output);
   }
 
-  // uint64 max_count = 3;
+  // int64 max_count = 3;
   if (this->max_count() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->max_count(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(3, this->max_count(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -17827,9 +17827,9 @@ void ScanRequest::SerializeWithCachedSizes(
         2, this->end_key(), target);
   }
 
-  // uint64 max_count = 3;
+  // int64 max_count = 3;
   if (this->max_count() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->max_count(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(3, this->max_count(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -17863,10 +17863,10 @@ size_t ScanRequest::ByteSizeLong() const {
         this->end_key());
   }
 
-  // uint64 max_count = 3;
+  // int64 max_count = 3;
   if (this->max_count() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
         this->max_count());
   }
 
@@ -18057,15 +18057,15 @@ void ScanRequest::set_allocated_end_key(::std::string* end_key) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.ScanRequest.end_key)
 }
 
-// uint64 max_count = 3;
+// int64 max_count = 3;
 void ScanRequest::clear_max_count() {
-  max_count_ = GOOGLE_ULONGLONG(0);
+  max_count_ = GOOGLE_LONGLONG(0);
 }
-::google::protobuf::uint64 ScanRequest::max_count() const {
+::google::protobuf::int64 ScanRequest::max_count() const {
   // @@protoc_insertion_point(field_get:txnpb.ScanRequest.max_count)
   return max_count_;
 }
-void ScanRequest::set_max_count(::google::protobuf::uint64 value) {
+void ScanRequest::set_max_count(::google::protobuf::int64 value) {
   
   max_count_ = value;
   // @@protoc_insertion_point(field_set:txnpb.ScanRequest.max_count)
