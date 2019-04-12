@@ -25,7 +25,7 @@ bool LinuxStatus::GetMemoryUsage(uint64_t *total, uint64_t *available) {
     const char* kTotalName = "MemTotal";
     const char* kAvailableName = "MemAvailable";
 
-    FILE* fp = fopen("/proc/meminfo", "r");
+    FILE* fp = ::fopen("/proc/meminfo", "r");
     if (fp == NULL) {
         perror("open /proc/meminfo");
         return false;
@@ -51,6 +51,7 @@ bool LinuxStatus::GetMemoryUsage(uint64_t *total, uint64_t *available) {
             find_avail = true;
         }
     }
+    ::fclose(fp);
     return find_total && find_avail;
 }
 
