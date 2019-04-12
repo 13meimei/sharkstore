@@ -177,6 +177,17 @@ TEST_F(StoreTxnTest, PrepareLocal_intentKeyLocked) {
 }
 
 TEST_F(StoreTxnTest, Iterator) {
+    // test empty iter
+    {
+        auto iter = store_->NewTxnIterator("", "");
+        std::string key, v1, v2;
+        bool over = false;
+        auto s = iter->Next(key, v1, v2, over);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(over);
+        ASSERT_TRUE(key.empty() && v1.empty() && v2.empty());
+    }
+
     struct Elem {
         std::string key;
         std::string db_value;

@@ -17,7 +17,6 @@ namespace storage {
 
 class MvccMassTree : public DbInterface {
 public:
-    friend class MassTreeIterator;
     friend class ::MassTreeTest;
     friend class sharkstore::test::mock::MvccMassTreeMock;
 
@@ -69,19 +68,22 @@ private:
     Status del(MvccTree *family, const std::string &key);
     Status deleteRange(MvccTree *family, const std::string& begin_key, const std::string& end_key);
     IteratorInterface *newIter(MvccTree *family, const std::string &start, const std::string &limit);
-    void Scrub(MvccTree *family);
+
+    void runGC();
+    void scrub(MvccTree *family);
 
 private:
+    const size_t gc_interval_msec_ = 2000; // gc周期, 每次进行RCU回收和epoch增长
+    const size_t mvcc_scan_tick_ = 10;  // 每隔多少个周期执行一次mvcc扫描
+
     MvccTree default_tree_;
     MvccTree txn_tree_;
 
-    struct RcuThread {
-        std::thread thread_;
-        std::mutex  mutex_;
-        std::condition_variable cond_; 
-    } thread_rcu_, thread_epoch_;
-
-    bool thread_loop_ = true;
+    std::atomic<bool> gc_running_ = {true};
+    std::mutex gc_mutex_;
+    std::condition_variable gc_cond_;
+    uint64_t gc_tick_counter_ = 0;
+    std::thread gc_thread_;
 };
 
 

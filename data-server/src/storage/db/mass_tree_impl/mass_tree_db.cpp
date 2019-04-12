@@ -82,6 +82,12 @@ void MassTreeDB::EpochIncr() {
     }
 }
 
+void MassTreeDB::RCUFree() {
+    // 尝试回收
+    thread_info_->rcu_start();
+    thread_info_->rcu_stop();
+}
+
 template int MassTreeDB::Scan(const std::string&, Scaner&);
 
 template <typename F>

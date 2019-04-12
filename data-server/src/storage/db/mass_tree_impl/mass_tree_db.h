@@ -20,6 +20,7 @@ public:
     Status Delete(const std::string& key);
 
     static void EpochIncr();
+    static void RCUFree();
 
     template <typename F>
     int Scan(const std::string& begin, F& scanner);

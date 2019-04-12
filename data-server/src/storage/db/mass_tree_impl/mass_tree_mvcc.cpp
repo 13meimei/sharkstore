@@ -10,38 +10,18 @@ namespace dataserver {
 namespace storage {
 
 MvccMassTree::~MvccMassTree() {
-    thread_loop_ = false;
-    if (thread_rcu_.thread_.joinable()) {
-        thread_rcu_.thread_.join();
+    {
+        std::lock_guard<std::mutex> lock(gc_mutex_);
+        gc_running_ = false;
     }
-
-    if (thread_epoch_.thread_.joinable()) {
-        thread_epoch_.thread_.join();
+    gc_cond_.notify_one();
+    if (gc_thread_.joinable()) {
+        gc_thread_.join();
     }
 }
 
 Status MvccMassTree::Open() {
-    thread_rcu_.thread_ = std::thread([this] {
-            std::chrono::seconds delay(30);
-            while (thread_loop_) {
-                this->Scrub(&default_tree_);
-                this->Scrub(&txn_tree_);
-
-                std::unique_lock<std::mutex> lk(thread_rcu_.mutex_);
-                thread_rcu_.cond_.wait_for(lk, delay, [this]{return !this->thread_loop_;});
-            }
-        });
-
-    thread_epoch_.thread_ = std::thread([this] {
-            std::chrono::seconds delay(2);
-            while (thread_loop_) {
-                MassTreeDB::EpochIncr();
-
-                std::unique_lock<std::mutex> lk(thread_epoch_.mutex_);
-                thread_epoch_.cond_.wait_for(lk, delay, [this]{return !this->thread_loop_;});
-            }
-        });
-
+    gc_thread_ = std::thread([this]{ runGC(); });
     return Status::OK();
 }
 
@@ -175,7 +155,29 @@ Status MvccMassTree::SetDBOptions(const std::unordered_map<std::string, std::str
 
 void MvccMassTree::PrintMetric() {}
 
-void MvccMassTree::Scrub(MvccTree *family) {
+void MvccMassTree::runGC() {
+    while (gc_running_) {
+        // sleep interval
+        {
+            std::unique_lock<std::mutex> lock(gc_mutex_);
+            if (gc_cond_.wait_for(lock, std::chrono::milliseconds(gc_interval_msec_),
+                                  [this]() { return !gc_running_; })) {
+                return;
+            }
+        }
+
+        MassTreeDB::EpochIncr();
+        MassTreeDB::RCUFree();
+
+        if (++gc_tick_counter_ >= mvcc_scan_tick_) {
+            gc_tick_counter_ = 0;
+            scrub(&default_tree_);
+            scrub(&txn_tree_);
+        }
+    }
+}
+
+void MvccMassTree::scrub(MvccTree *family) {
     uint64_t ver = family->mvcc.min_ver();
 
     auto iter = family->tree.NewScaner("", "");
@@ -188,7 +190,12 @@ void MvccMassTree::Scrub(MvccTree *family) {
     cmp_base.from_string(cmp_base_str);
 
     MultiVersionKey cur_key;
+    uint64_t count = 0;
     for (iter->Next(); iter->Valid(); iter->Next()) {
+        if (!gc_running_) {
+            return;
+        }
+
         cur_key.from_string(iter->Key());
         if (cur_key.key() == cmp_base.key()) {
             if (cur_key.ver() < ver) {
@@ -200,6 +207,12 @@ void MvccMassTree::Scrub(MvccTree *family) {
             }
             cmp_base_str = iter->Key();
             cmp_base.from_string(cmp_base_str);
+        }
+
+        // 隔100条，尝试回收一下
+        if (++count % 100 == 99) {
+            MassTreeDB::EpochIncr();
+            MassTreeDB::RCUFree();
         }
     }
 

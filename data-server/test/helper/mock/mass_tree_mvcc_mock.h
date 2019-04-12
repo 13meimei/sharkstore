@@ -41,7 +41,7 @@ public:
     }
 
     void Scrub() {
-        MvccMassTree::Scrub(static_cast<MvccMassTree::MvccTree*>(DefaultColumnFamily()));
+        MvccMassTree::scrub(static_cast<MvccMassTree::MvccTree*>(DefaultColumnFamily()));
     }
 
 private:
