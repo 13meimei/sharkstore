@@ -2,9 +2,10 @@
 
 #include "base/util.h"
 #include "storage/util.h"
+#include "helper/helper_util.h"
 #include "helper/store_test_fixture.h"
 #include "helper/request_builder.h"
-#include "../helper/txn_request_builder.h"
+#include "helper/txn_request_builder.h"
 #include "common/ds_encoding.h"
 
 int main(int argc, char* argv[]) {
@@ -175,5 +176,56 @@ TEST_F(StoreTxnTest, PrepareLocal_intentKeyLocked) {
     ASSERT_TRUE(actual_value.empty());
 }
 
-TEST_F(StoreTxnTest, Scan) {
+TEST_F(StoreTxnTest, Iterator) {
+    struct Elem {
+        std::string key;
+        std::string db_value;
+        std::string txn_value;
+    };
+
+    std::vector<Elem> expected;
+    for (int i = 0; i < 100; ++i) {
+        char suffix[20] = {'\0'};
+        snprintf(suffix, 20, "%05d", i);
+        std::string key;
+        EncodeKeyPrefix(&key, meta_.table_id());
+        key += suffix;
+
+        expected.emplace_back(Elem());
+        expected.back().key = key;
+        int choice = randomInt() % 3;
+        bool has_value = choice == 0 || choice == 2;
+        bool has_intent = choice == 1 || choice == 2;
+        ASSERT_TRUE(has_value || has_intent);
+        if (has_value) {
+            std::string value = randomString(10, 20);
+            auto s = store_->Put(key, value);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            expected.back().db_value = value;
+        }
+        if (has_intent) {
+            TxnValue txn_val;
+            randomTxnValue(txn_val);
+            txn_val.mutable_intent()->set_key(key);
+            auto s = putTxn(key, txn_val);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            expected.back().txn_value = txn_val.SerializeAsString();
+        }
+    }
+
+    int index = 0;
+    auto iter = store_->NewTxnIterator("", "");
+    ASSERT_TRUE(iter != nullptr);
+    bool over = false;
+    while (!over) {
+        std::string key, db_value, txn_value;
+        auto s = iter->Next(key, db_value, txn_value, over);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        if (over) break;
+        ASSERT_EQ(key, expected[index].key);
+        ASSERT_EQ(db_value, expected[index].db_value);
+        ASSERT_EQ(txn_value, expected[index].txn_value);
+        ++index;
+    }
+    ASSERT_EQ(index, expected.size());
 }

@@ -211,6 +211,15 @@ uint64_t StoreTestFixture::statSizeUntil(const std::string& end) {
     return size;
 }
 
+Status StoreTestFixture::putTxn(const std::string& key, const txnpb::TxnValue& value) {
+    auto batch = db_->NewBatch();
+    auto s = store_->writeTxnValue(value, batch.get());
+    if (!s.ok()) {
+        return s;
+    }
+    return db_->Write(batch.get());
+}
+
 } /* namespace helper */
 } /* namespace test */
 } /* namespace sharkstore */

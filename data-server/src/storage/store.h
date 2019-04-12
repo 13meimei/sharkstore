@@ -11,6 +11,7 @@ _Pragma("once");
 #include "db/db_interface.h"
 #include "db/iterator_interface.h"
 #include "raft/snapshot.h"
+#include "txn_iterator.h"
 
 // test fixture forward declare for friend class
 namespace sharkstore { namespace test { namespace helper { class StoreTestFixture; }}}
@@ -69,6 +70,7 @@ public:
 
     Status GetTxnValue(const std::string& key, std::string& db_value);
     Status GetTxnValue(const std::string& key, txnpb::TxnValue* value);
+    std::unique_ptr<TxnIterator> NewTxnIterator(const std::string& start = "", const std::string& limit = "");
 
     void TxnPrepare(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);
     uint64_t TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);

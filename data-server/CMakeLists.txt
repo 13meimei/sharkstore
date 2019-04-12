@@ -331,12 +331,17 @@ message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 add_executable(data-server ${SOURCES})
 target_link_libraries(data-server ${depend_LIBRARYS})
 
-add_custom_target(
-    gen-version ALL
-    ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR} -DBUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DBUILD_FLAGS=${CMAKE_CXX_FLAGS} -P ${PROJECT_SOURCE_DIR}/cmake/version.cmake
-)
-add_dependencies(data-server gen-version)
+
+OPTION (BUILD_VERSION "build sharkstore version" ON)
+MESSAGE(STATUS BUILD_VERSION=${BUILD_VERSION})
+if (BUILD_VERSION)
+    add_custom_target(
+        gen-version ALL
+        ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR} -DBUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DBUILD_FLAGS=${CMAKE_CXX_FLAGS} -P ${PROJECT_SOURCE_DIR}/cmake/version.cmake
+    )
+    add_dependencies(data-server gen-version)
+endif()
 
 install(TARGETS data-server RUNTIME DESTINATION bin)
 

@@ -13,7 +13,7 @@ TxnIterator::TxnIterator(std::unique_ptr<IteratorInterface> data_iter,
 }
 
 bool TxnIterator::valid() {
-    if (over_ || status_.ok()) {
+    if (over_ || !status_.ok()) {
         return false;
     }
 
@@ -36,11 +36,11 @@ bool TxnIterator::valid() {
 
 Status TxnIterator::Next(std::string& key, std::string& data_value, std::string& intent_value, bool &over) {
     if (!valid()) {
-        over_ = true;
+        over = true;
         return status_;
     }
 
-    over_ = false;
+    over = false;
 
     bool has_data = false, has_intent = false;
     std::string data_key, intent_key;

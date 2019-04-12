@@ -122,6 +122,16 @@ Status Store::GetTxnValue(const std::string &key, TxnValue *value) {
     return Status::OK();
 }
 
+std::unique_ptr<TxnIterator> Store::NewTxnIterator(const std::string& start, const std::string& limit) {
+    std::unique_ptr<IteratorInterface> data_iter, txn_iter;
+    auto s = NewIterators(data_iter, txn_iter, start, limit);
+    if (!s.ok()) {
+        return nullptr;
+    }
+    std::unique_ptr<TxnIterator> iter(new TxnIterator(std::move(data_iter), std::move(txn_iter)));
+    return iter;
+}
+
 Status Store::writeTxnValue(const txnpb::TxnValue& value, WriteBatchInterface* batch) {
     std::string db_value;
     if (!value.SerializeToString(&db_value)) {
@@ -525,18 +535,17 @@ Status Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
 }
 
 Status Store::TxnScan(const txnpb::ScanRequest& req, txnpb::ScanResponse* resp) {
-    std::unique_ptr<IteratorInterface> data_iter, txn_iter;
-    auto s = NewIterators(data_iter, txn_iter, req.start_key(), req.end_key());
-    if (!s.ok()) {
-        return s;
+    auto iter = NewTxnIterator(req.start_key(), req.end_key());
+    if (iter == nullptr) {
+        return Status(Status::kIOError, "new iterators", "");
     }
 
     int64_t count = 0;
-    TxnIterator iter(std::move(data_iter), std::move(txn_iter));
     bool over = false;
+    Status s;
     while (!over) {
         std::string key, data_value, txn_value;
-        s = iter.Next(key, data_value, txn_value, over);
+        s = iter->Next(key, data_value, txn_value, over);
         if (!s.ok() || over) {
             break;
         }
