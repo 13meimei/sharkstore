@@ -27,7 +27,7 @@ bool LinuxStatus::GetMemoryUsage(uint64_t *total, uint64_t *available) {
         return false;
     }
     *total = si.totalram;
-    *available = si.freeram;
+    *available = si.freeram + si.bufferram;
     return true;
 }
 

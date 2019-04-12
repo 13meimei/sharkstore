@@ -174,3 +174,6 @@ TEST_F(StoreTxnTest, PrepareLocal_intentKeyLocked) {
     store_->Get(key, &actual_value);
     ASSERT_TRUE(actual_value.empty());
 }
+
+TEST_F(StoreTxnTest, Scan) {
+}
