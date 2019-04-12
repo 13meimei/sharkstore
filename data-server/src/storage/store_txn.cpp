@@ -557,7 +557,6 @@ Status Store::TxnScan(const txnpb::ScanRequest& req, txnpb::ScanResponse* resp) 
         bool has_value = false;
         if (!data_value.empty()) {
             kv->set_value(std::move(data_value));
-            kv->set_has_value(true);
             has_value = true;
         }
 

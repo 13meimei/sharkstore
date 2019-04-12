@@ -4741,9 +4741,9 @@ class KeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_key();
   void set_allocated_key(::std::string* key);
 
-  // bytes value = 3;
+  // bytes value = 2;
   void clear_value();
-  static const int kValueFieldNumber = 3;
+  static const int kValueFieldNumber = 2;
   const ::std::string& value() const;
   void set_value(const ::std::string& value);
   #if LANG_CXX11
@@ -4755,20 +4755,6 @@ class KeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
 
-  // bytes version = 4;
-  void clear_version();
-  static const int kVersionFieldNumber = 4;
-  const ::std::string& version() const;
-  void set_version(const ::std::string& value);
-  #if LANG_CXX11
-  void set_version(::std::string&& value);
-  #endif
-  void set_version(const char* value);
-  void set_version(const void* value, size_t size);
-  ::std::string* mutable_version();
-  ::std::string* release_version();
-  void set_allocated_version(::std::string* version);
-
   // .txnpb.ValueIntent intent = 10;
   bool has_intent() const;
   void clear_intent();
@@ -4778,21 +4764,13 @@ class KeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::txnpb::ValueIntent* release_intent();
   void set_allocated_intent(::txnpb::ValueIntent* intent);
 
-  // bool has_value = 2;
-  void clear_has_value();
-  static const int kHasValueFieldNumber = 2;
-  bool has_value() const;
-  void set_has_value(bool value);
-
   // @@protoc_insertion_point(class_scope:txnpb.KeyValue)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::google::protobuf::internal::ArenaStringPtr value_;
-  ::google::protobuf::internal::ArenaStringPtr version_;
   ::txnpb::ValueIntent* intent_;
-  bool has_value_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -9449,21 +9427,7 @@ inline void KeyValue::set_allocated_key(::std::string* key) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.KeyValue.key)
 }
 
-// bool has_value = 2;
-inline void KeyValue::clear_has_value() {
-  has_value_ = false;
-}
-inline bool KeyValue::has_value() const {
-  // @@protoc_insertion_point(field_get:txnpb.KeyValue.has_value)
-  return has_value_;
-}
-inline void KeyValue::set_has_value(bool value) {
-  
-  has_value_ = value;
-  // @@protoc_insertion_point(field_set:txnpb.KeyValue.has_value)
-}
-
-// bytes value = 3;
+// bytes value = 2;
 inline void KeyValue::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -9514,59 +9478,6 @@ inline void KeyValue::set_allocated_value(::std::string* value) {
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set_allocated:txnpb.KeyValue.value)
-}
-
-// bytes version = 4;
-inline void KeyValue::clear_version() {
-  version_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& KeyValue::version() const {
-  // @@protoc_insertion_point(field_get:txnpb.KeyValue.version)
-  return version_.GetNoArena();
-}
-inline void KeyValue::set_version(const ::std::string& value) {
-  
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txnpb.KeyValue.version)
-}
-#if LANG_CXX11
-inline void KeyValue::set_version(::std::string&& value) {
-  
-  version_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txnpb.KeyValue.version)
-}
-#endif
-inline void KeyValue::set_version(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txnpb.KeyValue.version)
-}
-inline void KeyValue::set_version(const void* value, size_t size) {
-  
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txnpb.KeyValue.version)
-}
-inline ::std::string* KeyValue::mutable_version() {
-  
-  // @@protoc_insertion_point(field_mutable:txnpb.KeyValue.version)
-  return version_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* KeyValue::release_version() {
-  // @@protoc_insertion_point(field_release:txnpb.KeyValue.version)
-  
-  return version_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void KeyValue::set_allocated_version(::std::string* version) {
-  if (version != NULL) {
-    
-  } else {
-    
-  }
-  version_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), version);
-  // @@protoc_insertion_point(field_set_allocated:txnpb.KeyValue.version)
 }
 
 // .txnpb.ValueIntent intent = 10;

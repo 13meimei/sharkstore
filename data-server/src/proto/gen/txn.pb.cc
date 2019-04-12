@@ -571,9 +571,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_ATTRIBUTE_SECTION
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(KeyValue, key_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(KeyValue, has_value_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(KeyValue, value_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(KeyValue, version_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(KeyValue, intent_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ScanRequest, _internal_metadata_),
@@ -642,10 +640,10 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_ATTR
   { 265, -1, sizeof(DsSelectResponse)},
   { 272, -1, sizeof(ValueIntent)},
   { 282, -1, sizeof(KeyValue)},
-  { 292, -1, sizeof(ScanRequest)},
-  { 300, -1, sizeof(ScanResponse)},
-  { 307, -1, sizeof(DsScanRequest)},
-  { 314, -1, sizeof(DsScanResponse)},
+  { 290, -1, sizeof(ScanRequest)},
+  { 298, -1, sizeof(ScanResponse)},
+  { 305, -1, sizeof(DsScanRequest)},
+  { 312, -1, sizeof(DsScanResponse)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -989,23 +987,22 @@ void AddDescriptorsImpl() {
       "txnpb.SelectResponse\"r\n\013ValueIntent\022\036\n\007o"
       "p_type\030\001 \001(\0162\r.txnpb.OpType\022\016\n\006txn_id\030\002 "
       "\001(\t\022\023\n\013primary_key\030\003 \001(\014\022\017\n\007timeout\030\004 \001("
-      "\010\022\r\n\005value\030\n \001(\014\"n\n\010KeyValue\022\013\n\003key\030\001 \001("
-      "\014\022\021\n\thas_value\030\002 \001(\010\022\r\n\005value\030\003 \001(\014\022\017\n\007v"
-      "ersion\030\004 \001(\014\022\"\n\006intent\030\n \001(\0132\022.txnpb.Val"
-      "ueIntent\"D\n\013ScanRequest\022\021\n\tstart_key\030\001 \001"
-      "(\014\022\017\n\007end_key\030\002 \001(\014\022\021\n\tmax_count\030\003 \001(\003\":"
-      "\n\014ScanResponse\022\014\n\004code\030\001 \001(\005\022\034\n\003kvs\030\002 \003("
-      "\0132\017.txnpb.KeyValue\"X\n\rDsScanRequest\022&\n\006h"
-      "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\037\n\003r"
-      "eq\030\002 \001(\0132\022.txnpb.ScanRequest\"\\\n\016DsScanRe"
-      "sponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respons"
-      "eHeader\022!\n\004resp\030\002 \001(\0132\023.txnpb.ScanRespon"
-      "se* \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001*1\n\t"
-      "TxnStatus\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013\n\007AB"
-      "ORTED\020\002b\006proto3"
+      "\010\022\r\n\005value\030\n \001(\014\"J\n\010KeyValue\022\013\n\003key\030\001 \001("
+      "\014\022\r\n\005value\030\002 \001(\014\022\"\n\006intent\030\n \001(\0132\022.txnpb"
+      ".ValueIntent\"D\n\013ScanRequest\022\021\n\tstart_key"
+      "\030\001 \001(\014\022\017\n\007end_key\030\002 \001(\014\022\021\n\tmax_count\030\003 \001"
+      "(\003\":\n\014ScanResponse\022\014\n\004code\030\001 \001(\005\022\034\n\003kvs\030"
+      "\002 \003(\0132\017.txnpb.KeyValue\"X\n\rDsScanRequest\022"
+      "&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022"
+      "\037\n\003req\030\002 \001(\0132\022.txnpb.ScanRequest\"\\\n\016DsSc"
+      "anResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Res"
+      "ponseHeader\022!\n\004resp\030\002 \001(\0132\023.txnpb.ScanRe"
+      "sponse* \n\006OpType\022\n\n\006INSERT\020\000\022\n\n\006DELETE\020\001"
+      "*1\n\tTxnStatus\022\010\n\004INIT\020\000\022\r\n\tCOMMITTED\020\001\022\013"
+      "\n\007ABORTED\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 4215);
+      descriptor, 4179);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "txn.proto", &protobuf_RegisterTypes);
   ::kvrpcpb::protobuf_kvrpcpb_2eproto::AddDescriptors();
@@ -16992,9 +16989,7 @@ void ValueIntent::set_allocated_value(::std::string* value) {
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int KeyValue::kKeyFieldNumber;
-const int KeyValue::kHasValueFieldNumber;
 const int KeyValue::kValueFieldNumber;
-const int KeyValue::kVersionFieldNumber;
 const int KeyValue::kIntentFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -17019,26 +17014,18 @@ KeyValue::KeyValue(const KeyValue& from)
   if (from.value().size() > 0) {
     value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
   }
-  version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.version().size() > 0) {
-    version_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.version_);
-  }
   if (from.has_intent()) {
     intent_ = new ::txnpb::ValueIntent(*from.intent_);
   } else {
     intent_ = NULL;
   }
-  has_value_ = from.has_value_;
   // @@protoc_insertion_point(copy_constructor:txnpb.KeyValue)
 }
 
 void KeyValue::SharedCtor() {
   key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&intent_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&has_value_) -
-      reinterpret_cast<char*>(&intent_)) + sizeof(has_value_));
+  intent_ = NULL;
   _cached_size_ = 0;
 }
 
@@ -17050,7 +17037,6 @@ KeyValue::~KeyValue() {
 void KeyValue::SharedDtor() {
   key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  version_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete intent_;
 }
 
@@ -17085,12 +17071,10 @@ void KeyValue::Clear() {
 
   key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  version_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && intent_ != NULL) {
     delete intent_;
   }
   intent_ = NULL;
-  has_value_ = false;
   _internal_metadata_.Clear();
 }
 
@@ -17116,38 +17100,12 @@ bool KeyValue::MergePartialFromCodedStream(
         break;
       }
 
-      // bool has_value = 2;
+      // bytes value = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &has_value_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // bytes value = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_value()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // bytes version = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_version()));
         } else {
           goto handle_unusual;
         }
@@ -17198,21 +17156,10 @@ void KeyValue::SerializeWithCachedSizes(
       1, this->key(), output);
   }
 
-  // bool has_value = 2;
-  if (this->has_value() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(2, this->has_value(), output);
-  }
-
-  // bytes value = 3;
+  // bytes value = 2;
   if (this->value().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      3, this->value(), output);
-  }
-
-  // bytes version = 4;
-  if (this->version().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      4, this->version(), output);
+      2, this->value(), output);
   }
 
   // .txnpb.ValueIntent intent = 10;
@@ -17242,23 +17189,11 @@ void KeyValue::SerializeWithCachedSizes(
         1, this->key(), target);
   }
 
-  // bool has_value = 2;
-  if (this->has_value() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(2, this->has_value(), target);
-  }
-
-  // bytes value = 3;
+  // bytes value = 2;
   if (this->value().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        3, this->value(), target);
-  }
-
-  // bytes version = 4;
-  if (this->version().size() > 0) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        4, this->version(), target);
+        2, this->value(), target);
   }
 
   // .txnpb.ValueIntent intent = 10;
@@ -17292,18 +17227,11 @@ size_t KeyValue::ByteSizeLong() const {
         this->key());
   }
 
-  // bytes value = 3;
+  // bytes value = 2;
   if (this->value().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->value());
-  }
-
-  // bytes version = 4;
-  if (this->version().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->version());
   }
 
   // .txnpb.ValueIntent intent = 10;
@@ -17311,11 +17239,6 @@ size_t KeyValue::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->intent_);
-  }
-
-  // bool has_value = 2;
-  if (this->has_value() != 0) {
-    total_size += 1 + 1;
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -17355,15 +17278,8 @@ void KeyValue::MergeFrom(const KeyValue& from) {
 
     value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
   }
-  if (from.version().size() > 0) {
-
-    version_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.version_);
-  }
   if (from.has_intent()) {
     mutable_intent()->::txnpb::ValueIntent::MergeFrom(from.intent());
-  }
-  if (from.has_value() != 0) {
-    set_has_value(from.has_value());
   }
 }
 
@@ -17393,9 +17309,7 @@ void KeyValue::InternalSwap(KeyValue* other) {
   using std::swap;
   key_.Swap(&other->key_);
   value_.Swap(&other->value_);
-  version_.Swap(&other->version_);
   swap(intent_, other->intent_);
-  swap(has_value_, other->has_value_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -17461,21 +17375,7 @@ void KeyValue::set_allocated_key(::std::string* key) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.KeyValue.key)
 }
 
-// bool has_value = 2;
-void KeyValue::clear_has_value() {
-  has_value_ = false;
-}
-bool KeyValue::has_value() const {
-  // @@protoc_insertion_point(field_get:txnpb.KeyValue.has_value)
-  return has_value_;
-}
-void KeyValue::set_has_value(bool value) {
-  
-  has_value_ = value;
-  // @@protoc_insertion_point(field_set:txnpb.KeyValue.has_value)
-}
-
-// bytes value = 3;
+// bytes value = 2;
 void KeyValue::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -17526,59 +17426,6 @@ void KeyValue::set_allocated_value(::std::string* value) {
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
   // @@protoc_insertion_point(field_set_allocated:txnpb.KeyValue.value)
-}
-
-// bytes version = 4;
-void KeyValue::clear_version() {
-  version_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-const ::std::string& KeyValue::version() const {
-  // @@protoc_insertion_point(field_get:txnpb.KeyValue.version)
-  return version_.GetNoArena();
-}
-void KeyValue::set_version(const ::std::string& value) {
-  
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:txnpb.KeyValue.version)
-}
-#if LANG_CXX11
-void KeyValue::set_version(::std::string&& value) {
-  
-  version_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:txnpb.KeyValue.version)
-}
-#endif
-void KeyValue::set_version(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:txnpb.KeyValue.version)
-}
-void KeyValue::set_version(const void* value, size_t size) {
-  
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:txnpb.KeyValue.version)
-}
-::std::string* KeyValue::mutable_version() {
-  
-  // @@protoc_insertion_point(field_mutable:txnpb.KeyValue.version)
-  return version_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-::std::string* KeyValue::release_version() {
-  // @@protoc_insertion_point(field_release:txnpb.KeyValue.version)
-  
-  return version_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-void KeyValue::set_allocated_version(::std::string* version) {
-  if (version != NULL) {
-    
-  } else {
-    
-  }
-  version_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), version);
-  // @@protoc_insertion_point(field_set_allocated:txnpb.KeyValue.version)
 }
 
 // .txnpb.ValueIntent intent = 10;

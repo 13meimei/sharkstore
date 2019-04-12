@@ -272,9 +272,7 @@ message ValueIntent {
 
 message KeyValue {
     bytes key           = 1;
-    bool has_value      = 2; // 可能是has_value为true，value为nil，也代表存在
-    bytes value         = 3;
-    bytes version       = 4;
+    bytes value         = 2;
     ValueIntent intent  = 10;
 }
 

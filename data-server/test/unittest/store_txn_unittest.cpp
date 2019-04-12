@@ -240,3 +240,76 @@ TEST_F(StoreTxnTest, Iterator) {
     }
     ASSERT_EQ(index, expected.size());
 }
+
+
+TEST_F(StoreTxnTest, Scan) {
+    // scan empty
+    {
+        txnpb::ScanRequest req;
+        txnpb::ScanResponse resp;
+        auto s = store_->TxnScan(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(resp.kvs_size(), 0);
+        ASSERT_EQ(resp.code(), 0);
+    }
+
+    // insert some keys
+    struct Elem {
+        std::string key;
+        std::string db_value;
+        std::string txn_value;
+    };
+    std::vector<Elem> expected;
+    for (int i = 0; i < 100; ++i) {
+        char suffix[20] = {'\0'};
+        snprintf(suffix, 20, "%05d", i);
+        std::string key;
+        EncodeKeyPrefix(&key, meta_.table_id());
+        key += suffix;
+
+        expected.emplace_back(Elem());
+        expected.back().key = key;
+        int choice = randomInt() % 3;
+        bool has_value = choice == 0 || choice == 2;
+        bool has_intent = choice == 1 || choice == 2;
+        ASSERT_TRUE(has_value || has_intent);
+        if (has_value) {
+            std::string value = randomString(10, 20);
+            auto s = store_->Put(key, value);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            expected.back().db_value = value;
+        }
+        if (has_intent) {
+            TxnValue txn_val;
+            randomTxnValue(txn_val);
+            txn_val.mutable_intent()->set_key(key);
+            auto s = putTxn(key, txn_val);
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            expected.back().txn_value = txn_val.SerializeAsString();
+        }
+    }
+
+    // scan all
+    {
+        txnpb::ScanRequest req;
+        req.set_max_count(1000000);
+        txnpb::ScanResponse resp;
+        auto s = store_->TxnScan(req, &resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_EQ(resp.kvs_size(), expected.size());
+        for (int i = 0; i < resp.kvs_size(); ++i) {
+            ASSERT_EQ(resp.kvs(i).key(), expected[i].key);
+            ASSERT_EQ(resp.kvs(i).value(), expected[i].db_value);
+            ASSERT_EQ(resp.kvs(i).has_intent(), !expected[i].txn_value.empty());
+            if (resp.kvs(i).has_intent()) {
+                txnpb::TxnValue txn_value;
+                ASSERT_TRUE(txn_value.ParseFromString(expected[i].txn_value));
+                auto& intent = resp.kvs(i).intent();
+                ASSERT_EQ(intent.op_type(), txn_value.intent().typ());
+                ASSERT_EQ(intent.txn_id(), txn_value.txn_id());
+                ASSERT_EQ(intent.primary_key(), txn_value.primary_key());
+                ASSERT_EQ(intent.value(), txn_value.intent().value());
+            }
+        }
+    }
+}
