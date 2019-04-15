@@ -44,10 +44,10 @@ bool LinuxStatus::GetMemoryUsage(uint64_t *total, uint64_t *available) {
             break;
         }
         if (strncmp(name, kTotalName, strlen(kTotalName)) == 0) {
-            *total = val;
+            *total = val * 1024; // KB to bytes
             find_total = true;
         } else if (strncmp(name, kAvailableName, strlen(kAvailableName)) == 0) {
-            *available = val;
+            *available = val * 1024; // KB to bytes
             find_avail = true;
         }
     }
