@@ -48,6 +48,7 @@ type KvClient interface {
 	TxCleanup(ctx context.Context, addr string, req *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
 	TxSelect(ctx context.Context, addr string, req *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error)
 	TxGetLock(ctx context.Context, addr string, req *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error)
+	TxScan(ctx context.Context, addr string, req *txnpb.DsScanRequest) (*txnpb.DsScanResponse, error)
 }
 
 type KvRpcClient struct {
@@ -312,6 +313,15 @@ func (c *KvRpcClient) TxGetLock(ctx context.Context, addr string, req *txnpb.DsG
 		return nil, err
 	}
 	resp, err := conn.TxGetLock(ctx, req)
+	return resp, err
+}
+
+func (c *KvRpcClient) TxScan(ctx context.Context, addr string, req *txnpb.DsScanRequest) (*txnpb.DsScanResponse, error) {
+	conn, err := c.getConn(addr)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := conn.TxScan(ctx, req)
 	return resp, err
 }
 

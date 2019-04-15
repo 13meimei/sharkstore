@@ -13,6 +13,7 @@ import (
 	"model/pkg/kvrpcpb"
 	"model/pkg/txn"
 	"model/pkg/metapb"
+	"errors"
 )
 
 // HandleUpdate handle update
@@ -132,7 +133,7 @@ func (p *Proxy) doUpdate(t *Table, exprs []*kvrpcpb.Field, matches []Match, limi
 	return
 }
 
-func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kvrpcpb.Field, ) ([]*txnpb.TxnIntent, uint64, error) {
+func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kvrpcpb.Field) ([]*txnpb.TxnIntent, uint64, error) {
 	var (
 		intents      []*txnpb.TxnIntent
 		affected     uint64
@@ -158,67 +159,22 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 	for _, expr := range exprs {
 		exprMap[expr.Column.Name] = expr
 	}
+	context := dskv.NewPRConext(dskv.GetMaxBackoff)
 	for _, partRData := range results {
 		for _, rData := range partRData {
-			var (
-				rValue   *Row
-				rowValue InsertRowValue
-			)
-			rValue, err = decodeRow(t, selectFields, rData)
+			var oldRowValue, newRowValue InsertRowValue
+			oldRowValue, newRowValue, err = convertTxnResult(t, sreq.GetFieldList(), rData, exprMap)
 			if err != nil {
-				log.Error("[delete]decode row err: %v", err)
+				log.Error("[update]convert row err: %v", err)
 				return nil, 0, err
 			}
-			log.Debug("[update]select row data: %v", rValue)
-			for i, field := range sreq.GetFieldList() {
-				var (
-					col                = field.GetColumn()
-					oldValue, newValue []byte
-					oldKey             []byte
-				)
-				//deal business data
-				if rValue.fields[i].value != nil {
-					oldValue, err = formatValue(rValue.fields[i].value)
-					if err != nil {
-						log.Error("[update]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
-						return nil, 0, err
-					}
-				}
-				if expr, ok := exprMap[col.GetName()]; ok {
-					if newValue, err = computeUpdExpr(col, expr, oldValue); err != nil {
-						log.Error("[update]compute field %v expr value err: %v", col.GetName(), rValue.fields[i].value, err)
-						return nil, 0, err
-					}
-					rowValue = append(rowValue, newValue)
-					//old index key
-					if col.GetIndex() {
-						oldKey, err = encodeIndexKey(t, col, colMap, oldValue, rValue)
-						if err != nil {
-							log.Error("[update]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
-							return nil, 0, err
-						}
-						log.Debug("[update]assemble old index key: %v", oldKey)
-						intents = append(intents, &txnpb.TxnIntent{
-							Typ:         txnpb.OpType_DELETE,
-							Key:         oldKey,
-							CheckUnique: false,
-							//todo need ds to support: query index version
-							//ExpectedVer: rData.GetValue().GetVersion(),
-							ExpectedVer: 0,
-						})
-					}
-				} else {
-					rowValue = append(rowValue, oldValue)
-				}
-			}
+
 			var recordKvPair *kvrpcpb.KeyValue
-			recordKvPair, err = p.EncodeRow(t, colMap, rowValue)
+			recordKvPair, err = p.EncodeRow(t, colMap, newRowValue)
 			if err != nil {
 				log.Error("[update]encode row kv pair err:%v", err)
 				return nil, 0, err
 			}
-			log.Debug("[update]assemble new row Key: %v, row value: %v", recordKvPair.GetKey(), recordKvPair.GetValue())
-			affected += 1
 			intents = append(intents, &txnpb.TxnIntent{
 				Typ:         txnpb.OpType_INSERT,
 				Key:         recordKvPair.GetKey(),
@@ -226,13 +182,34 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 				CheckUnique: false,
 				ExpectedVer: rData.GetValue().GetVersion(),
 			})
-			var tIndexKvPairs []*kvrpcpb.KeyValue
-			tIndexKvPairs, err = p.EncodeIndexes(t, colMap, rowValue)
+			log.Debug("[update]assemble new row Key: %v, row value: %v", recordKvPair.GetKey(), recordKvPair.GetValue())
+			affected += 1
+
+			var tIndexKvPairsForInsert, tIndexKvPairsForDel []*kvrpcpb.KeyValue
+			tIndexKvPairsForInsert, tIndexKvPairsForDel, err = p.EncodeIndexesForUpd(t, colMap, oldRowValue, newRowValue)
 			if err != nil {
 				log.Error("[update]encode index kv pair err:%v", err)
 				return nil, 0, err
 			}
-			for _, idxKvPair := range tIndexKvPairs {
+
+			for _, idxKvPair := range tIndexKvPairsForDel {
+				oldKey := idxKvPair.GetKey()
+				//scan index, todo need ds to batch support
+				var rVersion uint64
+				rVersion, err = p.scanIndex(context, t, oldKey)
+				if err != nil {
+					return nil, 0, err
+				}
+				log.Debug("[update]assemble old index key: %v", oldKey)
+				intents = append(intents, &txnpb.TxnIntent{
+					Typ:         txnpb.OpType_DELETE,
+					Key:         oldKey,
+					CheckUnique: false,
+					ExpectedVer: rVersion,
+				})
+			}
+
+			for _, idxKvPair := range tIndexKvPairsForInsert {
 				log.Debug("[update]assemble new index Key: %v, index value: %v", idxKvPair.GetKey(), idxKvPair.GetValue())
 				intents = append(intents, &txnpb.TxnIntent{
 					Typ:         txnpb.OpType_INSERT,
@@ -246,6 +223,141 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 	}
 	return intents, affected, nil
 }
+
+func (p *Proxy) scanIndex(ctx *dskv.ReqContext, t *Table, startKey []byte) (version uint64, err error) {
+	var (
+		req = &txnpb.ScanRequest{
+			StartKey: startKey,
+			EndKey:   nextComparableBytes(startKey),
+		}
+		kv    *txnpb.KeyValue
+		value []byte
+	)
+	kv, err = sendScanIndexReq(p, ctx, t, req)
+	if err != nil {
+		return
+	}
+	value, err = handleScanRow(p, ctx, t, req, kv)
+	if err != nil || value == nil {
+		return
+	}
+	//decode value
+	//todo version
+	return
+}
+
+func sendScanIndexReq(p *Proxy, ctx *dskv.ReqContext, t *Table, req *txnpb.ScanRequest) (*txnpb.KeyValue, error) {
+	var (
+		resp *txnpb.ScanResponse
+		err  error
+	)
+	resp, err = p.handleTxnScan(ctx, t, req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.GetCode() != 0 {
+		err = errors.New(fmt.Sprintf("scan response code is err %v", resp.GetCode()))
+		log.Error("%v", err)
+		return nil, err
+	}
+	kvs := resp.GetKvs()
+	if len(kvs) != 1 {
+		err = fmt.Errorf("scan response kv size is not equal 1, error")
+		return nil, err
+	}
+	return kvs[0], nil
+}
+
+func handleScanRow(p *Proxy, ctx *dskv.ReqContext, t *Table, sourceReq *txnpb.ScanRequest, kv *txnpb.KeyValue) (value []byte, err error) {
+	var (
+		kValue  = kv.GetValue()
+		kIntent = kv.GetIntent()
+	)
+	if kIntent != nil {
+		//must be secondary row
+		var (
+			txId       = kIntent.GetTxnId()
+			primaryKey = kIntent.GetPrimaryKey()
+			status     txnpb.TxnStatus
+			txErr      *txnpb.TxnError
+		)
+		if kIntent.GetTimeout() {
+			//try to aborted, async
+			status, err, txErr = p.recoverFromSecondary(ctx, txId, primaryKey, t, false)
+		} else {
+			//GetLockInfo
+			status, err, txErr = p.handleGetLockInfo(ctx, txId, primaryKey, t)
+		}
+		if err != nil {
+			return
+		}
+		//for TxnError_NOT_FOUND
+		if txErr != nil {
+			//retry read single key
+			var kv *txnpb.KeyValue
+			kv, err = sendScanIndexReq(p, ctx, t, sourceReq)
+			if err != nil {
+				return
+			}
+			//ignore intent, use row value, consider time order
+			return kv.GetValue(), nil
+		}
+		if status == txnpb.TxnStatus_COMMITTED {
+			//use row intent
+			switch kIntent.GetOpType() {
+			case txnpb.OpType_INSERT:
+				return kIntent.GetValue(), nil
+			default:
+				return nil, nil
+			}
+		} else {
+			//ignore intent, use row value
+			return kValue, nil
+		}
+	}
+	return kValue, nil
+}
+
+func convertTxnResult(t *Table, selectFields []*kvrpcpb.SelectField, rData *txnpb.Row, exprMap map[string]*kvrpcpb.Field) (InsertRowValue, InsertRowValue, error) {
+	var (
+		rValue                   *Row
+		oldRowValue, newRowValue InsertRowValue
+		err                      error
+	)
+	rValue, err = decodeRow(t, selectFields, rData)
+	if err != nil {
+		log.Error("[update]decode row err: %v", err)
+		return nil, nil, err
+	}
+	log.Debug("[update]select row data: %v", rValue)
+
+	for i, field := range selectFields {
+		var (
+			col                = field.GetColumn()
+			oldValue, newValue []byte
+		)
+		//deal business data
+		if rValue.fields[i].value != nil {
+			oldValue, err = formatValue(rValue.fields[i].value)
+			if err != nil {
+				log.Error("[update]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
+				return nil, nil, err
+			}
+		}
+		oldRowValue = append(oldRowValue, oldValue)
+		if expr, ok := exprMap[col.GetName()]; ok {
+			if newValue, err = computeUpdExpr(col, expr, oldValue); err != nil {
+				log.Error("[update]compute field %v expr value err: %v", col.GetName(), rValue.fields[i].value, err)
+				return nil, nil, err
+			}
+			newRowValue = append(newRowValue, newValue)
+		} else {
+			newRowValue = append(newRowValue, oldValue)
+		}
+	}
+	return oldRowValue, newRowValue, nil
+}
+
 func encodeIndexKey(t *Table, col *metapb.Column, colMap map[string]int, idxValue []byte, row *Row) (key []byte, err error) {
 	key, err = encodeUniqueIndexKey(t, col, idxValue)
 	if err != nil {
@@ -313,7 +425,7 @@ func computeUpdExpr(col *metapb.Column, expr *kvrpcpb.Field, oldValue []byte) (n
 func operate(col *metapb.Column, expr *kvrpcpb.Field, oldValue []byte) (result []byte, err error) {
 	var (
 		valueStr = string(oldValue)
-		exprStr = string(expr.GetValue())
+		exprStr  = string(expr.GetValue())
 	)
 	switch col.DataType {
 	case metapb.DataType_Tinyint, metapb.DataType_Smallint, metapb.DataType_Int, metapb.DataType_BigInt:
