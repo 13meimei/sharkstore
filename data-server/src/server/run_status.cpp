@@ -110,6 +110,9 @@ void RunStatus::printStatistics() {
 void RunStatus::printDBMetric() {
     assert(context_->db != nullptr);
     context_->db->PrintMetric();
+    if (1 == seq_) {
+        context_->pdb->PrintMetric();
+    }
 }
 
 

@@ -5,8 +5,6 @@ namespace sharkstore {
 namespace dataserver {
 namespace server {
 
-thread_local uint64_t do_cnt = 0;
-    
 void CommonWork::Do() {
     if (*running) {
         f0();

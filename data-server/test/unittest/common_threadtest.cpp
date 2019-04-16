@@ -24,7 +24,7 @@ TEST( COMMON_THREAD, common_thrad_func_submit) {
     /* test 1 */
     CommonThread thr(queue_cap, "common_thread_1 test");
     std::string str_cmd = "command";
-    std::atomic<bool> running = {false};
+    std::atomic<bool> running = {true};
     std::function<void(void)> f0 = [&ct](void) { 
 //        std::cerr << "test 1 output:{" << ct << "}" << std::endl;
         ct.fetch_add(1); 
@@ -93,7 +93,7 @@ TEST( COMMON_THREAD, common_thrad_func_submit) {
     /* test 3 */
     thr.shutdown();
 
-    for (size_t i = 0; i < queue_cap - 1; i++ ) {
+    for (size_t i = 0; i < queue_cap + 1; i++ ) {
         ASSERT_FALSE(thr.submit(i, &running, f0, str_cmd));
     }
     ASSERT_EQ(thr.size(), 0); 
@@ -109,7 +109,7 @@ TEST( COMMON_THREAD, common_thrad_func_tryPost) {
     /* test 1 */
     CommonThread thr(queue_cap, "common_thread_1 test");
     std::string str_cmd = "command";
-    std::atomic<bool> running = {false};
+    std::atomic<bool> running = {true};
     std::function<void(void)> f0 = [&ct](void) { 
 //        std::cerr << "test 1 output:{" << ct << "}" << std::endl;
         ct.fetch_add(1); 
@@ -193,7 +193,7 @@ TEST( COMMON_THREAD, common_thrad_func_tryPost) {
     /* test 3 */
     thr.shutdown();
 
-    for (size_t i = 0; i < queue_cap - 1; i++ ) {
+    for (size_t i = 0; i < queue_cap + 1; i++ ) {
         CommonWork cw;
         cw.owner = i;
         cw.running = &running;
@@ -214,7 +214,7 @@ TEST( COMMON_THREAD, common_thrad_func_post) {
     /* test 1 */
     CommonThread thr(queue_cap, "common_thread_1 test");
     std::string str_cmd = "command";
-    std::atomic<bool> running = {false};
+    std::atomic<bool> running = {true};
     std::function<void(void)> f0 = [&ct](void) { 
 //        std::cerr << "test 1 output:{" << ct << "}" << std::endl;
         ct.fetch_add(1); 
@@ -299,7 +299,7 @@ TEST( COMMON_THREAD, common_thrad_func_post) {
     /* test 3 */
     thr.shutdown();
 
-    for (size_t i = 0; i < queue_cap - 1; i++ ) {
+    for (size_t i = 0; i < queue_cap + 1; i++ ) {
         CommonWork cw;
         cw.owner = i;
         cw.running = &running;
@@ -319,7 +319,7 @@ TEST( COMMON_THREAD, common_thrad_func_waitPost) {
     /* test 1 */
     CommonThread thr(queue_cap, "common_thread_1 test");
     std::string str_cmd = "command";
-    std::atomic<bool> running = {false};
+    std::atomic<bool> running = {true};
     std::function<void(void)> f0 = [&ct](void) { 
 //        std::cerr << "test 1 output:{" << ct << "}" << std::endl;
         ct.fetch_add(1); 
