@@ -41,8 +41,9 @@ DataServer::DataServer() {
     context_->rpc_server = new RPCServer(sopt);
 
     PersistServer::Options pops;
-    pops.thread_num = 4;
-    pops.delay_count = 10000;
+    pops.thread_num = ds_config.persist_config.persist_threads;
+    pops.delay_count = ds_config.persist_config.persist_delay_size;
+    pops.queue_capacity = ds_config.persist_config.persist_queue_size;
     context_->persist_server = new PersistServer(pops);
 
     // create master worker
