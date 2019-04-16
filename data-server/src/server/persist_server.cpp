@@ -23,8 +23,10 @@ int PersistServer::Init(ContextServer *context) {
     FLOG_INFO("PersistServer Init begin ...");
 
     context_ = context;
-    meta_ = context->meta_store;
-    pdb_ = context->pdb;
+    if (context_) {
+        meta_ = context_->meta_store;
+        pdb_ = context_->pdb;
+    }
 
     Options ops;
     ops.thread_num = ds_config.persist_config.persist_threads;
@@ -46,6 +48,7 @@ int PersistServer::Init(ContextServer *context) {
 
 Status PersistServer::Start() {
     for (uint64_t i = 0; i < ops_.thread_num; ++i) {
+        FLOG_DEBUG("Create WorkThread %" PRIu64 "...", i);
         threads_.emplace_back(new WorkThread( ops_.queue_capacity,
                                               std::string("storage-reader:") + std::to_string(i)));
     }
@@ -76,7 +79,9 @@ Status PersistServer::Stop() {
 }
 
 bool PersistServer::IndexInDistance(const uint64_t range_id, const uint64_t aidx, const uint64_t pidx) {
-    if (aidx  - pidx > ops_.delay_count) {
+    FLOG_DEBUG("---apply_index: %" PRIu64 " persist_index: %" PRIu64 " delay_count: %" PRIu64 "---",
+            aidx, pidx, ops_.delay_count);
+    if (aidx  - pidx >= ops_.delay_count) {
         return true;
     }
     return false;
@@ -132,7 +137,8 @@ Status PersistServer::CreateReader(const uint64_t range_id,
                                    const uint64_t start_index,
                                    std::shared_ptr<raft::RaftLogReader>* reader)
 {
-    *reader  = raft::CreateRaftLogReader(range_id, start_index, context_->raft_server);
+    //*reader  = raft::CreateRaftLogReader(range_id, start_index, context_->raft_server);
+    *reader  = raft::CreateRaftLogReader(range_id, start_index, context_?context_->raft_server:nullptr);
     readers_.emplace(std::make_pair(range_id, *reader));
 
     return Status::OK();

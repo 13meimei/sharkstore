@@ -20,7 +20,7 @@ static const int kMaxBatchSize = 64;
 
 struct CommonWork {
     uint64_t owner;
-    std::atomic<bool>* stopped;
+    std::atomic<bool>* running;
 
     std::function<void()> f0;
 
@@ -35,7 +35,7 @@ public:
     CommonThread(const CommonThread&) = delete;
     CommonThread& operator=(const CommonThread&) = delete;
 
-    bool submit(uint64_t owner, std::atomic<bool>* stopped,
+    bool submit(uint64_t owner, std::atomic<bool>* running,
                 const std::function<void()>& f0, std::string& cmd);
 
     bool tryPost(const CommonWork& w);

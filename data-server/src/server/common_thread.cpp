@@ -1,11 +1,14 @@
 #include "common_thread.h"
+#include <iostream>
 
 namespace sharkstore {
 namespace dataserver {
 namespace server {
 
+thread_local uint64_t do_cnt = 0;
+    
 void CommonWork::Do() {
-    if (!(*stopped)) {
+    if (*running) {
         f0();
     }
 }
@@ -21,7 +24,7 @@ CommonThread::CommonThread(size_t queue_capcity, const std::string& name)
 
 CommonThread::~CommonThread() { shutdown(); }
 
-bool CommonThread::submit(uint64_t owner, std::atomic<bool>* stopped,
+bool CommonThread::submit(uint64_t owner, std::atomic<bool>* running,
                         const std::function<void()>& f0,
                         std::string& cmd) {
 
@@ -35,7 +38,7 @@ bool CommonThread::submit(uint64_t owner, std::atomic<bool>* stopped,
         } else {
             CommonWork w;
             w.owner = owner;
-            w.stopped = stopped;
+            w.running = running;
             w.f0 = f0;
             queue_.push(w);
             notify = true;
@@ -120,7 +123,7 @@ void CommonThread::run() {
                 //FLOG_ERROR("Do error: unknown error occured.");
             }
         } else {
-            // shutdown
+            //shutdown
             return;
         }
     }

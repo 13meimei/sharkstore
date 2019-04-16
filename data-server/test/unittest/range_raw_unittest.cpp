@@ -10,6 +10,7 @@
 #include "range/range.h"
 #include "server/range_server.h"
 #include "server/run_status.h"
+#include "server/persist_server.h"
 #include "storage/store.h"
 
 #include "helper/table.h"
@@ -21,11 +22,14 @@ int main(int argc, char *argv[]) {
     return RUN_ALL_TESTS();
 }
 
-char level[8] = "warn";
+//char level[8] = "warn";
+char level[8] = "debug";
 
 using namespace sharkstore::test::helper;
 using namespace sharkstore::test::mock;
 using namespace sharkstore::dataserver;
+using namespace sharkstore::dataserver::server;
+using namespace sharkstore::dataserver::range;
 using namespace sharkstore::dataserver::storage;
 
 class RawTest : public ::testing::Test {
@@ -34,10 +38,17 @@ protected:
         log_init2();
         set_log_level(level);
 
-        strcpy(ds_config.engine_config.name, "rocksdb");
+        //strcpy(ds_config.engine_config.name, "rocksdb");
+        strcpy(ds_config.engine_config.name, "memory");
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(NowMilliSeconds()).c_str());
         ds_config.range_config.recover_concurrency = 1;
+
+        ds_config.persist_config.persist_switch = 1;
+        strcpy(ds_config.persist_config.persist_type, "rocksdb");
+        ds_config.persist_config.persist_threads = 10;
+        ds_config.persist_config.persist_queue_size = 10000;
+        ds_config.persist_config.persist_delay_size = 1;
 
         range_server_ = new server::RangeServer;
 
@@ -48,16 +59,30 @@ protected:
         context_->raft_server = new RaftServerMock;
         context_->run_status = new server::RunStatus;
 
+        PersistServer::Options opt;
+        opt.thread_num = 10;
+        opt.delay_count = 1;
+        opt.queue_capacity = 10000;
+        context_->persist_server = new server::PersistServer(opt);
+        //context_->persist_server->Init();
+        context_->persist_server->Start();
+
         range_server_->Init(context_);
     }
 
     void TearDown() override {
         DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
 
+        context_->range_server->Stop();
         delete context_->range_server;
+        context_->raft_server->Stop();
         delete context_->raft_server;
         delete context_->run_status;
+        context_->persist_server->Stop();
+        delete context_->persist_server;
         delete context_;
+
+        FLOG_DEBUG("TearDown...");
     }
 
     Status testRawPut(const kvrpcpb::DsKvRawPutRequest& req, kvrpcpb::DsKvRawPutResponse& resp) {
@@ -794,5 +819,83 @@ TEST_F(RawTest, Raw) {
         auto ret = range_server_->meta_store_->GetAllRange(&metas);
         ASSERT_TRUE(metas.size() == 0) << metas.size();
         // end test delete range
+    }
+
+}
+
+TEST_F(RawTest, TestRangeSlave) {
+    {
+        // begin test create range
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange1());
+
+        auto rpc = NewMockRPCRequest(req);
+        range_server_->CreateRange(*rpc.first);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->Find(1) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 1) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test create range
+        schpb::CreateRangeRequest req;
+        req.set_allocated_range(genRange2());
+
+        auto rpc = NewMockRPCRequest(req);
+        range_server_->CreateRange(*rpc.first);
+        ASSERT_FALSE(range_server_->ranges_.empty());
+
+        ASSERT_TRUE(range_server_->Find(2) != nullptr);
+
+        std::vector<metapb::Range> metas;
+        auto ret = range_server_->meta_store_->GetAllRange(&metas);
+
+        ASSERT_TRUE(metas.size() == 2) << metas.size();
+        // end test create range
+    }
+
+    {
+        // begin test raw_put (ok)
+
+        // set leader
+        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
+        raft->SetLeaderTerm(1, 1);
+        range_server_->ranges_[1]->is_leader_ = true;
+
+        kvrpcpb::DsKvRawPutRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key("01003001");
+        req.mutable_req()->set_value("01003001:value");
+
+        kvrpcpb::DsKvRawPutResponse resp;
+        auto s = testRawPut(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+
+        ASSERT_FALSE(resp.header().has_error());
+        auto rng1 = range_server_->Find(1);
+        ASSERT_TRUE(rng1 != nullptr);
+        int b(0);
+        static int aidx(0);
+        static int pidx(0);
+        do {
+            pidx = ++aidx;
+            std::static_pointer_cast<RangeSlave>(rng1->slave_range_)->Submit(1, pidx, aidx);
+
+            if (b++ > 100) break;
+            if (b%5 == 0) {
+                FLOG_INFO("Submit...%d, size: %d", b,
+                        std::static_pointer_cast<RangeSlave>(rng1->slave_range_)->trd_->size());
+            }
+        } while(true);
+
+        // end test raw_put
     }
 }

@@ -100,11 +100,14 @@ Status StorageReader::GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Co
 
     EntryPtr ent = nullptr;
     //judge index scope
-    if (curr_log_file_ == nullptr) {
+    if (curr_log_file_ == nullptr && !log_files_.empty()) {
         curr_log_file_ = log_files_.front();
         log_files_.pop();
     }
 
+    if (curr_log_file_ == nullptr) {
+        return Status(Status::kNotFound, "GetData", "log file isn't ready");
+    }
     r = curr_log_file_->Get(idx, &ent);
     if (!r.ok()) {
         return r;

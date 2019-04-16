@@ -9,7 +9,7 @@ namespace dataserver {
 namespace range {
 
 RangeSlave::RangeSlave(RangeContext* context, const metapb::Range &meta) : RangeBase(context, meta) {}
-RangeSlave::~RangeSlave() {}
+RangeSlave::~RangeSlave() { Shutdown(); }
 
 Status RangeSlave::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sflag) {
     // 加载persist位置
@@ -50,17 +50,18 @@ Status RangeSlave::Shutdown() {
 }
 
 Status RangeSlave::Submit(const uint64_t range_id, const uint64_t pidx, const uint64_t aidx) {
+    RANGE_LOG_DEBUG("Submit, Notify to persist, range_id: %" PRIu64  " persist index: %" PRIu64
+                            " applied index: %" PRIu64 " running: %s", range_id, pidx, aidx, running_?"yes":"no");
+
     if (!running_) {
         return Status(Status::kShutdownInProgress, "server is stopping",
                       std::to_string(id_));
     }
     //if(!context_->PersistServer()->IndexInDistance(range_id, aidx, pidx)) {
     if(!context_->PersistServer()->IndexInDistance(range_id, aidx, persist_index_)) {
+        RANGE_LOG_DEBUG("not in distance");
         return Status::OK();
     }
-
-    RANGE_LOG_DEBUG("Notify to persist, range_id: %" PRIu64  " persist index: %" PRIu64
-                            " applied index: %" PRIu64, range_id, pidx, aidx);
 
     if(!tryPost(std::bind(&RangeSlave::dealTask, shared_from_this()))) {
         RANGE_LOG_ERROR("Notify to persist fail, maybe overlimit capacity, range_id: %" PRIu64
@@ -72,7 +73,7 @@ Status RangeSlave::Submit(const uint64_t range_id, const uint64_t pidx, const ui
 bool RangeSlave::tryPost(const std::function<void()>& f) {
     Work w;
     w.owner = id_;
-    w.stopped = &running_;
+    w.running = &running_;
     w.f0 = f;
     return trd_->tryPost(w);
 }
@@ -80,6 +81,7 @@ bool RangeSlave::tryPost(const std::function<void()>& f) {
 Status RangeSlave::dealTask() {
     Status ret;
     uint64_t idx = persist_index_;
+    RANGE_LOG_DEBUG("RangeSlave dealTask()...");
     do {
         if (!running_) break;
 

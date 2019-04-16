@@ -100,7 +100,10 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sfl
 
     if (ds_config.persist_config.persist_switch) {
         slave_range_ = std::make_shared<RangeSlave>(context_, std::move(meta_.Get()));
-        slave_range_->Initialize(leader, log_start_index, 1);
+        s = slave_range_->Initialize(leader, log_start_index, 1);
+        if (!s.ok()) {
+            RANGE_LOG_ERROR("Initialize range slave error: %s", s.ToString().c_str());
+        }
     }
     return Status::OK();
 }
@@ -459,6 +462,9 @@ Status Range::Destroy() {
     }
     raft_.reset();
 
+    if (slave_range_ != nullptr) {
+        slave_range_.reset();
+    }
     return s;
 }
 

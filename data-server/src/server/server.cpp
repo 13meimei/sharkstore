@@ -110,6 +110,9 @@ int DataServer::Init() {
     // GetNodeId from master server
     bool clearup = false;
     uint64_t node_id = 0;
+#ifndef NDEBUG
+    node_id = 1;
+#else
     mspb::GetNodeIdRequest req;
     req.set_server_port(static_cast<uint32_t>(ds_config.worker_config.port));
     req.set_raft_port(static_cast<uint32_t>(ds_config.raft_config.port));
@@ -120,6 +123,7 @@ int DataServer::Init() {
         FLOG_ERROR("GetNodeId failed. %s", s.ToString().c_str());
         return -1;
     }
+#endif
     context_->node_id = node_id;
 
     if (clearup) {
