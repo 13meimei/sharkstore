@@ -24,14 +24,14 @@ TEST( COMMON_THREAD, common_thrad_func_submit) {
     /* test 1 */
     CommonThread thr(queue_cap, "common_thread_1 test");
     std::string str_cmd = "command";
-    std::atomic<bool> stopped = {false};
+    std::atomic<bool> running = {false};
     std::function<void(void)> f0 = [&ct](void) { 
 //        std::cerr << "test 1 output:{" << ct << "}" << std::endl;
         ct.fetch_add(1); 
     };
     
     for (size_t i = 0 ; i< queue_cap ; i++) {
-        ASSERT_TRUE(thr.submit( i, &stopped, f0, str_cmd)); 
+        ASSERT_TRUE(thr.submit( i, &running, f0, str_cmd)); 
     }
     
     size_t count = 0;
@@ -62,13 +62,13 @@ TEST( COMMON_THREAD, common_thrad_func_submit) {
     mu.lock();
     for (size_t i = 0; i < queue_cap+1 ; i++ ) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); 
-        ASSERT_TRUE(thr.submit(i, &stopped, f1, str_cmd));
+        ASSERT_TRUE(thr.submit(i, &running, f1, str_cmd));
     } 
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); 
     ASSERT_EQ(thr.size(), queue_cap);
     for (size_t i = 0; i < queue_cap+1 ; i++ ) {
-        ASSERT_FALSE(thr.submit(i, &stopped, f1, str_cmd));
+        ASSERT_FALSE(thr.submit(i, &running, f1, str_cmd));
     }
     ASSERT_EQ(thr.size(), queue_cap );
 
@@ -94,7 +94,7 @@ TEST( COMMON_THREAD, common_thrad_func_submit) {
     thr.shutdown();
 
     for (size_t i = 0; i < queue_cap - 1; i++ ) {
-        ASSERT_FALSE(thr.submit(i, &stopped, f0, str_cmd));
+        ASSERT_FALSE(thr.submit(i, &running, f0, str_cmd));
     }
     ASSERT_EQ(thr.size(), 0); 
 
@@ -109,7 +109,7 @@ TEST( COMMON_THREAD, common_thrad_func_tryPost) {
     /* test 1 */
     CommonThread thr(queue_cap, "common_thread_1 test");
     std::string str_cmd = "command";
-    std::atomic<bool> stopped = {false};
+    std::atomic<bool> running = {false};
     std::function<void(void)> f0 = [&ct](void) { 
 //        std::cerr << "test 1 output:{" << ct << "}" << std::endl;
         ct.fetch_add(1); 
@@ -118,7 +118,7 @@ TEST( COMMON_THREAD, common_thrad_func_tryPost) {
     for (size_t i = 0 ; i< queue_cap ; i++) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f0; 
         
         ASSERT_TRUE(thr.tryPost(cw)); 
@@ -153,7 +153,7 @@ TEST( COMMON_THREAD, common_thrad_func_tryPost) {
     for (size_t i = 0; i < queue_cap+1 ; i++ ) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f1; 
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); 
@@ -165,7 +165,7 @@ TEST( COMMON_THREAD, common_thrad_func_tryPost) {
     for (size_t i = 0; i < queue_cap+1 ; i++ ) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f1; 
         
         ASSERT_FALSE(thr.tryPost(cw)); 
@@ -196,7 +196,7 @@ TEST( COMMON_THREAD, common_thrad_func_tryPost) {
     for (size_t i = 0; i < queue_cap - 1; i++ ) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f0; 
         
         ASSERT_FALSE(thr.tryPost(cw)); 
@@ -214,7 +214,7 @@ TEST( COMMON_THREAD, common_thrad_func_post) {
     /* test 1 */
     CommonThread thr(queue_cap, "common_thread_1 test");
     std::string str_cmd = "command";
-    std::atomic<bool> stopped = {false};
+    std::atomic<bool> running = {false};
     std::function<void(void)> f0 = [&ct](void) { 
 //        std::cerr << "test 1 output:{" << ct << "}" << std::endl;
         ct.fetch_add(1); 
@@ -223,7 +223,7 @@ TEST( COMMON_THREAD, common_thrad_func_post) {
     for (size_t i = 0 ; i< queue_cap ; i++) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f0; 
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); 
@@ -259,7 +259,7 @@ TEST( COMMON_THREAD, common_thrad_func_post) {
     for (size_t i = 0; i < queue_cap+1 ; i++ ) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f1; 
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); 
@@ -271,7 +271,7 @@ TEST( COMMON_THREAD, common_thrad_func_post) {
     for (size_t i = 0; i < queue_cap+1 ; i++ ) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f1; 
         
         thr.post(cw); 
@@ -302,7 +302,7 @@ TEST( COMMON_THREAD, common_thrad_func_post) {
     for (size_t i = 0; i < queue_cap - 1; i++ ) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f0; 
         
         thr.post(cw); 
@@ -319,7 +319,7 @@ TEST( COMMON_THREAD, common_thrad_func_waitPost) {
     /* test 1 */
     CommonThread thr(queue_cap, "common_thread_1 test");
     std::string str_cmd = "command";
-    std::atomic<bool> stopped = {false};
+    std::atomic<bool> running = {false};
     std::function<void(void)> f0 = [&ct](void) { 
 //        std::cerr << "test 1 output:{" << ct << "}" << std::endl;
         ct.fetch_add(1); 
@@ -329,7 +329,7 @@ TEST( COMMON_THREAD, common_thrad_func_waitPost) {
     for (size_t i = 0 ; i< queue_cap ; i++) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f0; 
         
         thr.waitPost(cw); 
@@ -351,7 +351,7 @@ TEST( COMMON_THREAD, common_thrad_func_waitPost) {
     for (size_t i = 0; i < 2*queue_cap+1 ; i++ ) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f0; 
         
         thr.waitPost(cw); 
@@ -375,7 +375,7 @@ TEST( COMMON_THREAD, common_thrad_func_waitPost) {
     for (size_t i = 0; i < queue_cap - 1; i++ ) {
         CommonWork cw;
         cw.owner = i;
-        cw.stopped = &stopped;
+        cw.running = &running;
         cw.f0 = f0; 
         
         thr.waitPost(cw); 
