@@ -7,6 +7,8 @@ import (
 	"util/log"
 	"model/pkg/metapb"
 	"model/pkg/kvrpcpb"
+	"model/pkg/txn"
+	"proxy/store/dskv"
 )
 
 // EncodeIndexes: encode unique and non-unique index data
@@ -160,11 +162,11 @@ func initValueByDataType(col *metapb.Column) []byte {
 	return value
 }
 
-// EncodeIndexes: encode unique and non-unique index data
-func (p *Proxy) EncodeIndexesForUpd(t *Table, colMap map[string]int, oldRowValue, newRowValue InsertRowValue) ([]*kvrpcpb.KeyValue, []*kvrpcpb.KeyValue, error) {
+// EncodeIndexesForUpd: encode unique and non-unique index data, insert and delete
+func (p *Proxy) EncodeIndexesForUpd(ctx *dskv.ReqContext, t *Table, colMap map[string]int, oldRowValue, newRowValue InsertRowValue) ([]*txnpb.TxnIntent, error) {
 	var (
-		indexKvPairsForInsert, indexKvPairForDel []*kvrpcpb.KeyValue
-		err                                      error
+		idxIntents []*txnpb.TxnIntent
+		err        error
 	)
 	uniqueIndexCols := t.AllUniqueIndexes()
 	nonUniqueIndexCols := t.AllNonUniqueIndexes()
@@ -178,7 +180,7 @@ func (p *Proxy) EncodeIndexesForUpd(t *Table, colMap map[string]int, oldRowValue
 			colIndex, ok := colMap[col.GetName()]
 			if !ok {
 				err = fmt.Errorf("")
-				return nil, nil, err
+				return nil, err
 			}
 			oldIdxVal = oldRowValue[colIndex]
 			newIdxVal = newRowValue[colIndex]
@@ -188,15 +190,36 @@ func (p *Proxy) EncodeIndexesForUpd(t *Table, colMap map[string]int, oldRowValue
 
 			delKv, err = encodeUniqueIndexKV(t, colMap, col, oldIdxVal, oldRowValue)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			indexKvPairForDel = append(indexKvPairForDel, delKv)
+
+			oldKey := delKv.GetKey()
+			//scan index, todo need ds to batch support
+			var rVersion uint64
+			rVersion, err = p.scanIndex(ctx, t, col, oldKey)
+			if err != nil {
+				return nil, err
+			}
+
+			log.Debug("[update]assemble old index key: %v", oldKey)
+			idxIntents = append(idxIntents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_DELETE,
+				Key:         oldKey,
+				CheckUnique: false,
+				ExpectedVer: rVersion,
+			})
 
 			insertKv, err = encodeUniqueIndexKV(t, colMap, col, newIdxVal, newRowValue)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			indexKvPairsForInsert = append(indexKvPairsForInsert, insertKv)
+			idxIntents = append(idxIntents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_INSERT,
+				Key:         insertKv.GetKey(),
+				Value:       insertKv.GetValue(),
+				CheckUnique: true,
+				ExpectedVer: 0,
+			})
 		}
 	}
 
@@ -209,7 +232,7 @@ func (p *Proxy) EncodeIndexesForUpd(t *Table, colMap map[string]int, oldRowValue
 			colIndex, ok := colMap[col.GetName()]
 			if !ok {
 				err = fmt.Errorf("")
-				return nil, nil, err
+				return nil, err
 			}
 			oldIdxVal = oldRowValue[colIndex]
 			newIdxVal = newRowValue[colIndex]
@@ -219,16 +242,37 @@ func (p *Proxy) EncodeIndexesForUpd(t *Table, colMap map[string]int, oldRowValue
 
 			delKv, err = encodeNonUniqueIndexKv(t, colMap, col, oldIdxVal, oldRowValue)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			indexKvPairForDel = append(indexKvPairForDel, delKv)
+
+			oldKey := delKv.GetKey()
+			//scan index, todo need ds to batch support
+			var rVersion uint64
+			rVersion, err = p.scanIndex(ctx, t, col, oldKey)
+			if err != nil {
+				return nil, err
+			}
+
+			log.Debug("[update]assemble old index key: %v", oldKey)
+			idxIntents = append(idxIntents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_DELETE,
+				Key:         oldKey,
+				CheckUnique: false,
+				ExpectedVer: rVersion,
+			})
 
 			insertKv, err = encodeNonUniqueIndexKv(t, colMap, col, newIdxVal, newRowValue)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			indexKvPairsForInsert = append(indexKvPairsForInsert, insertKv)
+			idxIntents = append(idxIntents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_INSERT,
+				Key:         insertKv.GetKey(),
+				Value:       insertKv.GetValue(),
+				CheckUnique: true,
+				ExpectedVer: 0,
+			})
 		}
 	}
-	return indexKvPairForDel, indexKvPairsForInsert, nil
+	return idxIntents, nil
 }

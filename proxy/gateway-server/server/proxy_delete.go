@@ -149,7 +149,7 @@ func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([]*txnpb.T
 					log.Info("[delete]assemble old index key: %v", indexKey)
 					//scan index, todo need ds to batch support
 					var rVersion uint64
-					rVersion, err = p.scanIndex(context, t, indexKey)
+					rVersion, err = p.scanIndex(context, t, col, indexKey)
 					if err != nil {
 						return nil, 0, err
 					}

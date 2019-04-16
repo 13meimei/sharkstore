@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"util"
 	"util/log"
+	"util/hack"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
 	"proxy/store/dskv"
@@ -185,46 +186,19 @@ func (p *Proxy) selectForUpdate(t *Table, sreq *txnpb.SelectRequest, exprs []*kv
 			log.Debug("[update]assemble new row Key: %v, row value: %v", recordKvPair.GetKey(), recordKvPair.GetValue())
 			affected += 1
 
-			var tIndexKvPairsForInsert, tIndexKvPairsForDel []*kvrpcpb.KeyValue
-			tIndexKvPairsForInsert, tIndexKvPairsForDel, err = p.EncodeIndexesForUpd(t, colMap, oldRowValue, newRowValue)
+			var idxIntents []*txnpb.TxnIntent
+			idxIntents, err = p.EncodeIndexesForUpd(context, t, colMap, oldRowValue, newRowValue)
 			if err != nil {
 				log.Error("[update]encode index kv pair err:%v", err)
 				return nil, 0, err
 			}
-
-			for _, idxKvPair := range tIndexKvPairsForDel {
-				oldKey := idxKvPair.GetKey()
-				//scan index, todo need ds to batch support
-				var rVersion uint64
-				rVersion, err = p.scanIndex(context, t, oldKey)
-				if err != nil {
-					return nil, 0, err
-				}
-				log.Debug("[update]assemble old index key: %v", oldKey)
-				intents = append(intents, &txnpb.TxnIntent{
-					Typ:         txnpb.OpType_DELETE,
-					Key:         oldKey,
-					CheckUnique: false,
-					ExpectedVer: rVersion,
-				})
-			}
-
-			for _, idxKvPair := range tIndexKvPairsForInsert {
-				log.Debug("[update]assemble new index Key: %v, index value: %v", idxKvPair.GetKey(), idxKvPair.GetValue())
-				intents = append(intents, &txnpb.TxnIntent{
-					Typ:         txnpb.OpType_INSERT,
-					Key:         idxKvPair.GetKey(),
-					Value:       idxKvPair.GetValue(),
-					CheckUnique: true,
-					ExpectedVer: 0,
-				})
-			}
+			intents = append(intents, idxIntents...)
 		}
 	}
 	return intents, affected, nil
 }
 
-func (p *Proxy) scanIndex(ctx *dskv.ReqContext, t *Table, startKey []byte) (version uint64, err error) {
+func (p *Proxy) scanIndex(ctx *dskv.ReqContext, t *Table, col *metapb.Column, startKey []byte) (version uint64, err error) {
 	var (
 		req = &txnpb.ScanRequest{
 			StartKey: startKey,
@@ -241,9 +215,22 @@ func (p *Proxy) scanIndex(ctx *dskv.ReqContext, t *Table, startKey []byte) (vers
 	if err != nil || value == nil {
 		return
 	}
-	//decode value
-	//todo version
-	return
+	if col.GetUnique() {
+		//decode pk
+		for i := 0; i < len(t.PKS()); i++ {
+			value, _, _, _, err = util.DecodeValue2(value)
+			if err != nil {
+				return
+			}
+		}
+	}
+	var versionB []byte
+	_, _, versionB, _, err = util.DecodeValue2(value)
+	if err != nil || versionB == nil {
+		return
+	}
+	//decode version
+	return strconv.ParseUint(hack.String([]byte(versionB)), 10, 64)
 }
 
 func sendScanIndexReq(p *Proxy, ctx *dskv.ReqContext, t *Table, req *txnpb.ScanRequest) (*txnpb.KeyValue, error) {
