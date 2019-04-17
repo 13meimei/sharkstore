@@ -258,6 +258,10 @@ void RangeServer::CloseDB() {
         delete db_;
         db_ = nullptr;
     }
+    if (pdb_ != nullptr) {
+        delete pdb_;
+        pdb_ = nullptr;
+    }
 }
 
 void RangeServer::Clear() {
@@ -265,6 +269,7 @@ void RangeServer::Clear() {
 
     RemoveDirAll(ds_config.raft_config.log_path);
     RemoveDirAll(ds_config.rocksdb_config.path);
+    RemoveDirAll(ds_config.async_rocksdb_config.path);
 }
 
 void RangeServer::DealTask(RPCRequestPtr rpc) {
