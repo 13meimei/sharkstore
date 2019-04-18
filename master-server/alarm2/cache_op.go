@@ -150,8 +150,8 @@ func (s *Server) jimExistsCommand(key string) error {
 	if err != nil {
 		return err
 	}
-	if replyInt == 0 { // key not exists
-		return errors.New("reply int is 0")
+	if replyInt == 0 {
+		return errors.New("key not exists")
 	}
 	return nil
 }

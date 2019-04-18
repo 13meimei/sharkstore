@@ -1,24 +1,24 @@
 package main
 
 import (
-	"net"
-	"strings"
+	"errors"
 	"flag"
-	"runtime"
-	"math/rand"
+	"fmt"
 	"hash/fnv"
+	"math/rand"
+	"net"
+	"runtime"
+	"strings"
 	"sync/atomic"
 	"time"
-	"fmt"
-	"errors"
 
-	"util/log"
-	"util/gogc"
-	"proxy/gateway-server/server"
 	"model/pkg/metapb"
-	"util"
 	"proxy/benchmark/blob_store"
+	"proxy/gateway-server/server"
 	"sync"
+	"util"
+	"util/gogc"
+	"util/log"
 )
 
 var (
