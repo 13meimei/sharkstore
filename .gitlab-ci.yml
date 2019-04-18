@@ -1,6 +1,6 @@
 before_script:
-    - mkdir -p ${CI_CI_PROJECT_DIR}/src
-    - export GOPATH=$GOPATH:${CI_CI_PROJECT_DIR}
+    - mkdir -p ${CI_PROJECT_DIR}/src
+    - export GOPATH=$GOPATH:${CI_PROJECT_DIR}
     - gcc --version && go version
 
 stages:
