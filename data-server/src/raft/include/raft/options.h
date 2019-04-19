@@ -116,9 +116,6 @@ struct RaftOptions {
     // raft日志不持久化，只在内存中存储, 供测试用
     bool use_memory_storage = false;
 
-    // raft日志异步持久化
-    bool async_switch = true;
-
     // raft日志存储目录
     std::string storage_path;
     // 单个日志文件的大小
