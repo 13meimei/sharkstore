@@ -53,7 +53,7 @@ public:
         {
             std::lock_guard<std::mutex> lock(mtx_);
             for (auto &i : *this) {
-                if (i->GetFullFlag() == 0) break;
+           //     if (i->GetFullFlag() == 0) break;
                 if (apply_index > i->LastIndex()) continue;
                 vec.emplace_back(i);
             }

@@ -89,14 +89,12 @@ Status StorageReader::GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Co
     }
 
     Status r;
-#ifdef NDEBUG
     r = getCurrLogFile(idx);
     if (!r.ok()) {
         RAFT_LOG_ERROR("getCurrLogFile error, %s", r.ToString().c_str());
         return r;
     }
     listLogs();
-#endif
 
     EntryPtr ent = nullptr;
     //judge index scope
@@ -143,14 +141,14 @@ Status StorageReader::Close() {
 
 Status StorageReader::decodeEntry(EntryPtr entry, std::shared_ptr<raft_cmdpb::Command>& raft_cmd) {
     raft_cmd = std::make_shared<raft_cmdpb::Command>();
-    google::protobuf::io::ArrayInputStream input(entry->data().data(), static_cast<int>(entry->data().size()));
-    if(!raft_cmd->ParseFromZeroCopyStream(&input)) {
-        RAFT_LOG_ERROR("parse raft command failed");
-        return Status(Status::kCorruption, "parse raft command", EncodeToHex(entry->data().data()));
-        //return Status(Status::kAborted, "decodeEntry", "parse Entry error");
-    }
-
-    return Status::OK();
+    auto data =  entry->data().data();
+    auto len = static_cast<int>(entry->data().size());
+    
+//    if (len > 0 && entry->type() == pb::ENTRY_NORMAL ) { 
+    raft_cmd->ParseFromArray(data, len);
+//    }
+    
+    return Status::OK(); 
 }
 
 
