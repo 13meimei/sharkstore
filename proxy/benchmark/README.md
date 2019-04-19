@@ -3,24 +3,25 @@
 ## 测试的目标表结构
 
 ### 不带H的表结构
-|  Column     |  DataType | 
-| ----------- | --------- |
-|  user_name  |  varchar  |
-|  pass_word  |  varchar  |
-|  real_name  |  varchar  |
+
+|  Column     |  DataType |   PK  |
+| ----------- | --------- | ----- |
+|  user_name  |  Varchar  | true  |
+|  pass_word  |  Varchar  | false |
+|  real_name  |  Varchar  | false |
 
 
 ### 带H的表结构
 
-|  Column     |  DataType | 
-| ----------- | --------- |
-|  h          |  int      |
-|  user_name  |  varchar  |
-|  pass_word  |  varchar  |
-|  real_name  |  varchar  |
+|  Column     |  DataType |   PK  |
+| ----------- | --------- | ----- |
+|  h          |  Int      | true  |
+|  user_name  |  Varchar  | true  |
+|  pass_word  |  Varchar  | false |
+|  real_name  |  Varchar  | false |
 
 
-## Type
+## Benchmark Type
 
 |  Type  |          Explain           | 
 | ------ | -------------------------- |

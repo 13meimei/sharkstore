@@ -3,21 +3,23 @@ package server
 import (
 	"util"
 	"util/log"
+
 	"github.com/BurntSushi/toml"
 
-	"time"
-	"fmt"
 	"bufio"
-	"strings"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
+	"time"
 )
 
 const (
-	DefaultHttpPort    = 8080
-	DefaultLockRpcPort = 8090
-	DefaultSqlPort     = 6060
+	DefaultHttpPort      = 8080
+	DefaultLockRpcPort   = 8090
+	DefaultSqlPort       = 6060
+	DefaultMaxConnection = 10000
 
 	DefaultServerName = "gateway"
 
@@ -137,8 +139,8 @@ func (c *Config) LoadConfig(configFileName *string) {
 }
 
 type AlarmConfig struct {
-	Address string `toml:"address,omitempty" json:"address"`
-	PingInterval int64 `toml:"ping-interval,omitempty" json:"ping-interval"`
+	Address      string `toml:"address,omitempty" json:"address"`
+	PingInterval int64  `toml:"ping-interval,omitempty" json:"ping-interval"`
 }
 
 type PerformConfig struct {
@@ -227,7 +229,7 @@ func (c *Config) adjust() error {
 	}
 
 	if c.MaxClients == 0 {
-		return fmt.Errorf("max-clients not specified")
+		c.MaxClients = DefaultMaxConnection
 	}
 
 	if c.User == "" {
@@ -337,7 +339,7 @@ func readAndReplaceConfig(fileName string, addr string) (string, error) {
 		if strings.Contains(line, "[metric]") {
 			blockFlag = true
 		}
-		if blockFlag && strings.Contains(line, "address")  && strings.Contains(line, "=") {
+		if blockFlag && strings.Contains(line, "address") && strings.Contains(line, "=") {
 			line = "address = \"" + addr + "\"\n"
 			blockFlag = false
 		}
