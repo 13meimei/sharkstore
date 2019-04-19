@@ -331,12 +331,7 @@ message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 add_executable(data-server ${SOURCES})
 target_link_libraries(data-server ${depend_LIBRARYS})
 
-
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    OPTION (BUILD_VERSION "build sharkstore version" ON)
-else()
-    OPTION (BUILD_VERSION "build sharkstore version" OFF)
-endif()
+OPTION (BUILD_VERSION "build sharkstore version" ON)
 MESSAGE(STATUS BUILD_VERSION=${BUILD_VERSION})
 if (BUILD_VERSION)
     add_custom_target(
