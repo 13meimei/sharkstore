@@ -6,22 +6,23 @@ import (
 	"testing"
 	"time"
 
+	"model/pkg/metapb"
 	dsClient "pkg-go/ds_client"
 	msClient "pkg-go/ms_client"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
-	"model/pkg/metapb"
+	"proxy/store/dskv"
+	"proxy/store/dskv/mock_ds"
+	"proxy/store/dskv/mock_ms"
 	"util/assert"
 	"util/hlc"
-	"proxy/store/dskv/mock_ms"
-	"proxy/store/dskv/mock_ds"
-	"proxy/store/dskv"
+
+	"model/pkg/txn"
+	"os"
+	"util/deepcopy"
+	"util/log"
 
 	"golang.org/x/net/context"
-	"util/deepcopy"
-	"os"
-	"util/log"
-	"model/pkg/txn"
 )
 
 const testDBName = "testdb"
@@ -94,7 +95,9 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 		msCli:  cli,
 		dsCli:  dsClient.NewRPCClient(),
 		router: NewRouter(cli),
-		config: &Config{MaxLimit: DefaultMaxRawCount,
+		config: &ProxyConfig{
+			AggrEnable: true,
+			MaxLimit:   DefaultMaxRawCount,
 			Performance: PerformConfig{
 				GrpcInitWinSize: 1024 * 1024 * 10,
 				GrpcPoolSize:    1,
@@ -119,7 +122,7 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 	return p
 }
 
-func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ... *metapb.Range) *Proxy {
+func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ...*metapb.Range) *Proxy {
 	log.Info("create Test Proxy2")
 	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
 	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
@@ -158,7 +161,9 @@ func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ... *metapb.Ra
 		msCli:  cli,
 		dsCli:  dsClient.NewRPCClient(),
 		router: NewRouter(cli),
-		config: &Config{MaxLimit: DefaultMaxRawCount,
+		config: &ProxyConfig{
+			AggrEnable: true,
+			MaxLimit:   DefaultMaxRawCount,
 			Performance: PerformConfig{
 				GrpcInitWinSize: 1024 * 1024 * 10,
 				GrpcPoolSize:    1,

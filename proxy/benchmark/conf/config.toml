@@ -1,27 +1,5 @@
-
-# include GS Configuration.
-
-# GS Configuration.
-
-#http port
-http-port = 8080
-
-#distributed lock grpc service port
-lock-port = 8090
-
-#mysql port
-mysql-port = 6060
-
-#max client connection number allowed for sql port
-max-clients = 10000
-#max limit number for row record
 max-record-limit = 10000
-#mysql login user
-user = "test"
-password = "123456"
-#mysql connect property
-charset = "utf8"
-
+aggr-func = true
 
 [performance]
 #proxy concurrency number
@@ -33,38 +11,30 @@ grpc-pool-size = 10
 # 128 KB
 grpc-win-size = 131072
 #be identified to 'slow command' when time consuming is greater than the value, unit: millisecond
-slow-insert = "20ms"
-slow-select = "100ms"
-slow-delete = "20ms"
+slow-insert = "200ms"
+slow-select = "500ms"
+slow-delete = "200ms"
 
 
 [cluster]
-id = 1
-address = ["127.0.165.52:8887"]
-token = "xxxx"
+id = 999
+address = ["172.22.212.59:7791","172.22.212.60:7791","172.22.212.61:7791"]
+token = "test"
 
 
 [log]
-dir = "./log"
-module = "gateway"
+dir = "/export/Logs/shark-bench999"
+module = "bench"
 # log level debug, info, warn, error
-level = "debug"
-
-
-[metric]
-# metric client push interval, set "0s" to disable metric.
-interval = "15s"
-#receive metric server address
-address = ""
-
+level = "info"
 
 [benchmark]
-type = 0
+type = 1
 data-len = 256
-send-num = 1000000000
-threads = 100
-table = "test"
+send-num = 100
+threads = 10
 db = "test"
-batch = 1
+table = "testh"
+batch = 10
 #1-16384
-scope = 1
+#scope = 1

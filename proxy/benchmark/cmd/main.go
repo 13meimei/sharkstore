@@ -33,9 +33,12 @@ var (
 	//tableId uint64 = 209
 
 	//blob db leavel
-	path = "/export/home/admin/source/fbase/src/data-server/build/db/data/blob_dir"
-	//path := "/Users/wumeijun/Documents"
+	path = "./data/blob_dir"
 )
+
+var cfg *Config
+var api *server.SharkStoreApi
+var stat *Stat
 
 func main() {
 	flag.Parse()
@@ -43,25 +46,29 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU() - 1)
 
 	// load bench mark config file
-	conf := new(server.Config)
-	conf.LoadConfig(configFileName)
-	log.InitFileLog(conf.Log.Dir, conf.Log.Module, conf.Log.Level)
-	srv, err := server.NewServer(conf)
-	if err != nil {
-		log.Fatal("init server failed, err[%v]", err)
-		return
+	cfg = new(Config)
+	cfg.LoadConfig(configFileName)
+
+	// init logger
+	log.InitFileLog(cfg.Log.Dir, cfg.Log.Module, cfg.Log.Level)
+	log.Info("bench config: %v", *cfg)
+
+	// create global api
+	proxyCfg := &server.ProxyConfig{
+		AggrEnable:  cfg.AggrEnable,
+		MaxLimit:    cfg.MaxLimit,
+		Performance: cfg.Performance,
 	}
+	api = server.NewSharkStoreAPI(cfg.Cluster.ServerAddr, proxyCfg)
 
-	go benchmark(srv)
-
-	go gogc.TickerPrintGCSummary(log.GetFileLogger(), "info")
-	srv.Run()
+	go benchmark()
+	gogc.TickerPrintGCSummary(log.GetFileLogger(), "info")
 }
 
 /**
 
 *for benchmark
-*/
+ */
 
 //=================================================================
 
@@ -106,12 +113,7 @@ type Stat struct {
 	delCount int64
 }
 
-var api *server.SharkStoreApi
-
-var stat *Stat
-
-func benchmark(s *server.Server) {
-	api = &server.SharkStoreApi{}
+func benchmark() {
 	stat = &Stat{}
 	time.Sleep(1000)
 
@@ -144,86 +146,86 @@ func benchmark(s *server.Server) {
 	ip := getIp()
 
 	//insert data
-	if s.GetCfg().BenchConfig.Type == 1 {
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
-			go insertTestData(s, concur, 10000, ip)
+	if cfg.BenchConfig.Type == 1 {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
+			go insertTestData(concur, 10000, ip)
 		}
 	}
 
 	//insert data with auto increment pk
-	if s.GetCfg().BenchConfig.Type == 2 {
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
-			go insertNoPkTestData(s, concur, 10000, ip)
+	if cfg.BenchConfig.Type == 2 {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
+			go insertNoPkTestData(concur, 10000, ip)
 		}
 	}
 
 	//select data
-	if s.GetCfg().BenchConfig.Type == 3 {
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
-			go selectTest(s, concur, 10000, ip)
+	if cfg.BenchConfig.Type == 3 {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
+			go selectTest(concur, 10000, ip)
 		}
 	}
 
 	//correct and concurrent check update function
-	if s.GetCfg().BenchConfig.Type == 4 {
+	if cfg.BenchConfig.Type == 4 {
 		// when select, check elapsed time and correctness after updating
-		go correctCheck4Update(s)
+		go correctCheck4Update()
 	}
 
-	if s.GetCfg().BenchConfig.Type == 5 {
+	if cfg.BenchConfig.Type == 5 {
 		// when select, check elapsed time and correctness after deleting
 		// when select, check elapsed time and correctness after inserting
-		go correctCheck4DelAndInsert(s)
+		go correctCheck4DelAndInsert()
 	}
 
 	//check the elapsed time and correctness after deleting at blob_db level
-	if s.GetCfg().BenchConfig.Type == 6 {
-		go correct4BatchDelete(s)
+	if cfg.BenchConfig.Type == 6 {
+		go correct4BatchDelete()
 	}
 
 	// order insert
-	if s.GetCfg().BenchConfig.Type == 10 {
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
-			go insertOrder(s, concur, 0, ip)
+	if cfg.BenchConfig.Type == 10 {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
+			go insertOrder(concur, 0, ip)
 		}
 	}
 	// order select
-	if s.GetCfg().BenchConfig.Type == 11 {
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
-			go selectOrder(s, concur, 0, ip)
+	if cfg.BenchConfig.Type == 11 {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
+			go selectOrder(concur, 0, ip)
 		}
 	}
 	// order insert and select
-	if s.GetCfg().BenchConfig.Type == 12 {
+	if cfg.BenchConfig.Type == 12 {
 		var wg sync.WaitGroup
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
 			wg.Add(1)
 			func(wg *sync.WaitGroup) {
 				defer wg.Done()
-				insertOrder(s, concur, 0, ip)
+				insertOrder(concur, 0, ip)
 			}(&wg)
 		}
 		wg.Wait()
 
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
 			wg.Add(1)
 			func(wg *sync.WaitGroup) {
 				defer wg.Done()
-				selectOrder(s, concur, 0, ip)
+				selectOrder(concur, 0, ip)
 			}(&wg)
 		}
 		wg.Wait()
 	}
 	// raw set
-	if s.GetCfg().BenchConfig.Type == 13 {
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
-			go rawSet(s, concur, ip)
+	if cfg.BenchConfig.Type == 13 {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
+			go rawSet(concur, ip)
 		}
 	}
 	// raw get
-	if s.GetCfg().BenchConfig.Type == 14 {
-		for concur := 0; concur < s.GetCfg().BenchConfig.Threads; concur++ {
-			go rawGet(s, concur, ip)
+	if cfg.BenchConfig.Type == 14 {
+		for concur := 0; concur < cfg.BenchConfig.Threads; concur++ {
+			go rawGet(concur, ip)
 		}
 	}
 }
@@ -243,16 +245,16 @@ func getIp() string {
 	return ip
 }
 
-func selectTest(s *server.Server, threadNo, total int, ip string) {
+func selectTest(threadNo, total int, ip string) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	pks := make(map[string]interface{})
 	for {
-		no := r.Intn(s.GetCfg().BenchConfig.SendNum)
+		no := r.Intn(cfg.BenchConfig.SendNum)
 		user_name := getUserName(no, ip, threadNo)
 		h := hash(user_name) % 16384
 		pks["user_name"] = user_name
 		pks["h"] = h
-		reply := api.Select(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, pks, nil)
+		reply := api.Select(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields, pks, nil)
 		log.Debug("userName %s, h %v, select result:%v", user_name, h, reply)
 		if reply.Code == 0 && len(reply.Values) > 0 {
 			atomic.AddInt64(&stat.lastSelCount, 1)
@@ -270,19 +272,19 @@ func selectTest(s *server.Server, threadNo, total int, ip string) {
 }
 
 // check correct: select after update
-func correctCheck4Update(s *server.Server) {
-	if s.GetCfg().BenchConfig.Scope < 1 || s.GetCfg().BenchConfig.Scope > 16384 {
+func correctCheck4Update() {
+	if cfg.BenchConfig.Scope < 1 || cfg.BenchConfig.Scope > 16384 {
 		log.Fatal("bench config scope should be between 1 and 16384")
 	}
 	updateMsg := fmt.Sprintf("update message, %v", time.Now().Format("2006-01-02 15:04:05.000"))
-	for i := 1; i <= s.GetCfg().BenchConfig.Scope; i++ {
+	for i := 1; i <= cfg.BenchConfig.Scope; i++ {
 		h := uint32(i - 1)
-		userNames, err := selectSource(s, h)
+		userNames, err := selectSource(h)
 		if err != nil || len(userNames) == 0 {
 			log.Fatal("h %v no user", h)
 		}
 		log.Info("h: %v source data length: %v", h, len(userNames))
-		threadNum := s.GetCfg().BenchConfig.Threads
+		threadNum := cfg.BenchConfig.Threads
 		increase := len(userNames)/threadNum + 1
 		for concur := 0; concur < threadNum; concur++ {
 			start := concur * increase
@@ -300,14 +302,14 @@ func correctCheck4Update(s *server.Server) {
 				keyArray := make([]string, 0)
 				var loop int
 				for i := 0; i < len(subUserNames); i++ {
-					if s.GetCfg().BenchConfig.Batch > 1 {
-						if loop == s.GetCfg().BenchConfig.Batch {
+					if cfg.BenchConfig.Batch > 1 {
+						if loop == cfg.BenchConfig.Batch {
 							log.Info("h: %v start %v end %v, size: %v", h, start, end, len(keyArray))
 							for {
-								reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+								reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields, rows)
 								if reply.Code == 0 {
 									atomic.AddInt64(&stat.lastUpdCount, 1)
-									checkElapsedTimeBatch(s, h, keyArray, updateMsg)
+									checkElapsedTimeBatch(h, keyArray, updateMsg)
 									rows = make([][]interface{}, 0)
 									keyArray = make([]string, 0)
 									loop = 0
@@ -321,13 +323,13 @@ func correctCheck4Update(s *server.Server) {
 						rows = append(rows, createRow(h, subUserNames[i], updateMsg, updateMsg))
 						keyArray = append(keyArray, subUserNames[i])
 						loop++
-						if i == len(subUserNames) - 1 {
+						if i == len(subUserNames)-1 {
 							log.Info("h: %v start %v end %v, size: %v", h, start, end, len(keyArray))
 							for {
-								reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+								reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields, rows)
 								if reply.Code == 0 {
 									atomic.AddInt64(&stat.lastUpdCount, 1)
-									checkElapsedTimeBatch(s, h, keyArray, updateMsg)
+									checkElapsedTimeBatch(h, keyArray, updateMsg)
 									rows = make([][]interface{}, 0)
 									keyArray = make([]string, 0)
 									loop = 0
@@ -339,11 +341,11 @@ func correctCheck4Update(s *server.Server) {
 							}
 						}
 					} else {
-						reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields,
+						reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields,
 							createRows(h, subUserNames[i], updateMsg, updateMsg))
 						if reply.Code == 0 {
 							atomic.AddInt64(&stat.lastUpdCount, 1)
-							checkElapsedTime(s, h, subUserNames[i], updateMsg)
+							checkElapsedTime(h, subUserNames[i], updateMsg)
 						} else {
 							atomic.AddInt64(&stat.errUpdCount, 1)
 							i = i - 1
@@ -357,14 +359,14 @@ func correctCheck4Update(s *server.Server) {
 }
 
 // check correct when select after delete, update
-func correctCheck4DelAndInsert(s *server.Server) {
-	if s.GetCfg().BenchConfig.Scope < 1 || s.GetCfg().BenchConfig.Scope > 16384 {
+func correctCheck4DelAndInsert() {
+	if cfg.BenchConfig.Scope < 1 || cfg.BenchConfig.Scope > 16384 {
 		log.Fatal("bench config scope should be between 1 and 16384")
 	}
 	insertMsg := fmt.Sprintf("insert message, %v", time.Now().Format("2006-01-02 15:04:05.000"))
-	for i := 1; i <= s.GetCfg().BenchConfig.Scope; i++ {
+	for i := 1; i <= cfg.BenchConfig.Scope; i++ {
 		h := uint32(i - 1)
-		userNames, err := selectSource(s, h)
+		userNames, err := selectSource(h)
 		if err != nil || len(userNames) == 0 {
 			log.Fatal("h %v no user", h)
 		}
@@ -373,14 +375,14 @@ func correctCheck4DelAndInsert(s *server.Server) {
 
 		pks := make(map[string]interface{})
 		pks["h"] = h
-		reply := api.Delete(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, HField, pks)
+		reply := api.Delete(cfg.BenchConfig.DB, cfg.BenchConfig.Table, HField, pks)
 		if reply.Code != 0 {
 			log.Fatal("h: %v delete failed, %v", h, reply.Message)
 		}
 
 		t1 := time.Now()
 		for {
-			leavedData, err := selectSource(s, h)
+			leavedData, err := selectSource(h)
 			if err != nil {
 				log.Fatal("h: %v select leave data after delete error, %v", h, err)
 			}
@@ -391,7 +393,7 @@ func correctCheck4DelAndInsert(s *server.Server) {
 		log.Info("h: %v, delete success, elapsed time: %v", h, time.Since(t1))
 		atomic.AddInt64(&stat.delCount, int64(len(userNames)))
 
-		threadNum := s.GetCfg().BenchConfig.Threads
+		threadNum := cfg.BenchConfig.Threads
 		increase := len(userNames)/threadNum + 1
 		for concur := 0; concur < threadNum; concur++ {
 			start := concur * increase
@@ -408,13 +410,13 @@ func correctCheck4DelAndInsert(s *server.Server) {
 				keyArray := make([]string, 0)
 				var loop int
 				for i := 0; i < len(subUserNames); i++ {
-					if s.GetCfg().BenchConfig.Batch > 1 {
-						if loop == s.GetCfg().BenchConfig.Batch {
+					if cfg.BenchConfig.Batch > 1 {
+						if loop == cfg.BenchConfig.Batch {
 							for {
-								reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+								reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields, rows)
 								if reply.Code == 0 {
 									atomic.AddInt64(&stat.lastUpdCount, 1)
-									checkElapsedTimeBatch(s, h, keyArray, insertMsg)
+									checkElapsedTimeBatch(h, keyArray, insertMsg)
 									rows = make([][]interface{}, 0)
 									keyArray = make([]string, 0)
 									loop = 0
@@ -428,12 +430,12 @@ func correctCheck4DelAndInsert(s *server.Server) {
 						rows = append(rows, createRow(h, subUserNames[i], insertMsg, insertMsg))
 						keyArray = append(keyArray, subUserNames[i])
 						loop++
-						if i == len(subUserNames) - 1 {
+						if i == len(subUserNames)-1 {
 							for {
-								reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+								reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields, rows)
 								if reply.Code == 0 {
 									atomic.AddInt64(&stat.lastUpdCount, 1)
-									checkElapsedTimeBatch(s, h, keyArray, insertMsg)
+									checkElapsedTimeBatch(h, keyArray, insertMsg)
 									rows = make([][]interface{}, 0)
 									keyArray = make([]string, 0)
 									loop = 0
@@ -445,11 +447,11 @@ func correctCheck4DelAndInsert(s *server.Server) {
 							}
 						}
 					} else {
-						reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields,
+						reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields,
 							createRows(h, subUserNames[i], insertMsg, insertMsg))
 						if reply.Code == 0 {
 							atomic.AddInt64(&stat.lastUpdCount, 1)
-							checkElapsedTime(s, h, subUserNames[i], insertMsg)
+							checkElapsedTime(h, subUserNames[i], insertMsg)
 						} else {
 							atomic.AddInt64(&stat.errUpdCount, 1)
 							i = i - 1
@@ -463,19 +465,19 @@ func correctCheck4DelAndInsert(s *server.Server) {
 }
 
 //delete most data, and check the db data at rocksdb level
-func correct4BatchDelete(s *server.Server) {
-	if s.GetCfg().BenchConfig.Scope < 1 || s.GetCfg().BenchConfig.Scope > 16384 {
+func correct4BatchDelete() {
+	if cfg.BenchConfig.Scope < 1 || cfg.BenchConfig.Scope > 16384 {
 		log.Fatal("bench config scope should be between 1 and 16384")
 	}
 	temp := uint32(0)
 	concurrentC := &temp
 	var pkMap map[uint32][]string
-	pkMap = make(map[uint32][]string, s.GetCfg().BenchConfig.Scope)
+	pkMap = make(map[uint32][]string, cfg.BenchConfig.Scope)
 
 	var lock sync.Mutex
 
-	threadNum := s.GetCfg().BenchConfig.Threads
-	scope := s.GetCfg().BenchConfig.Scope // 1 ~ 16384
+	threadNum := cfg.BenchConfig.Threads
+	scope := cfg.BenchConfig.Scope // 1 ~ 16384
 	increase := scope/threadNum + 1
 	for concur := 0; concur < threadNum; concur++ {
 		start := concur * increase
@@ -490,7 +492,7 @@ func correct4BatchDelete(s *server.Server) {
 		go func(cc *uint32) {
 			for i := start; i < end; i++ {
 				h := uint32(i)
-				userNames, err := selectSource(s, h)
+				userNames, err := selectSource(h)
 				if err != nil {
 					log.Error("h: %v select user error %v", h, err)
 					atomic.AddUint32(cc, 1)
@@ -509,7 +511,7 @@ func correct4BatchDelete(s *server.Server) {
 				time.Sleep(time.Second)
 				go func(cc2 *uint32) {
 					defer atomic.AddUint32(cc2, 1)
-					deleteByH(s, h, len(userNames))
+					deleteByH(h, len(userNames))
 				}(cc)
 			}
 		}(concurrentC)
@@ -519,7 +521,7 @@ func correct4BatchDelete(s *server.Server) {
 
 	for {
 		log.Info("loop ============, %v", atomic.LoadUint32(concurrentC))
-		if int(atomic.LoadUint32(concurrentC)) == s.GetCfg().BenchConfig.Scope {
+		if int(atomic.LoadUint32(concurrentC)) == cfg.BenchConfig.Scope {
 			break
 		}
 		time.Sleep(time.Second)
@@ -534,7 +536,7 @@ func correct4BatchDelete(s *server.Server) {
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < 5; i++ {
-		tempH := uint32(r.Intn(s.GetCfg().BenchConfig.Scope))
+		tempH := uint32(r.Intn(cfg.BenchConfig.Scope))
 		userNames, ok := pkMap[tempH]
 		if !ok || len(userNames) == 0 {
 			i--
@@ -586,17 +588,17 @@ func getKey(h uint32, userName string) ([]byte, error) {
 	return prefix, nil
 }
 
-func deleteByH(s *server.Server, h uint32, sourceLength int) {
+func deleteByH(h uint32, sourceLength int) {
 	pks := make(map[string]interface{})
 	pks["h"] = h
-	reply := api.Delete(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, HField, pks)
+	reply := api.Delete(cfg.BenchConfig.DB, cfg.BenchConfig.Table, HField, pks)
 	if reply.Code != 0 {
 		log.Fatal("h: %v delete failed, %v", h, reply)
 	}
 
 	t1 := time.Now()
 	for {
-		leavedData, err := selectSource(s, h)
+		leavedData, err := selectSource(h)
 		if err != nil {
 			log.Warn("h: %v  select leave data after delete error, %v", h, reply)
 			continue
@@ -609,7 +611,7 @@ func deleteByH(s *server.Server, h uint32, sourceLength int) {
 	atomic.AddInt64(&stat.delCount, int64(sourceLength))
 }
 
-func selectSource(s *server.Server, h uint32) ([]string, error) {
+func selectSource(h uint32) ([]string, error) {
 	pks := make(map[string]interface{})
 	pks["h"] = h
 	var userNames []string
@@ -619,7 +621,7 @@ func selectSource(s *server.Server, h uint32) ([]string, error) {
 			Offset:   uint64(i * 10000),
 			RowCount: 10000,
 		}
-		reply := api.Select(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, UField, pks, limit_)
+		reply := api.Select(cfg.BenchConfig.DB, cfg.BenchConfig.Table, UField, pks, limit_)
 		if reply.Code != 0 {
 			return nil, errors.New(fmt.Sprintf("select h %v source data: %s", h, reply.Message))
 		}
@@ -636,48 +638,48 @@ func selectSource(s *server.Server, h uint32) ([]string, error) {
 	return userNames, nil
 }
 
-func checkElapsedTimeBatch(s *server.Server, h uint32, userNames []string, firstUpdate string) {
+func checkElapsedTimeBatch(h uint32, userNames []string, firstUpdate string) {
 	var pksMult []map[string]interface{}
-		for _, userName := range userNames {
-			pks := make(map[string]interface{})
-			pks["h"] = h
-			pks["user_name"] = userName
-			pksMult = append(pksMult, pks)
-		}
+	for _, userName := range userNames {
+		pks := make(map[string]interface{})
+		pks["h"] = h
+		pks["user_name"] = userName
+		pksMult = append(pksMult, pks)
+	}
 
-		currentTime := time.Now()
-		flag := 0
-		loop := 0
-		for {
-			loop++
-			selectReply := api.MultSelect(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, PField, pksMult, nil)
-			if selectReply.Code == 0 && len(selectReply.Values) > 0 {
-				if len(selectReply.Values) != len(userNames) {
-					flag = len(selectReply.Values)
-				} else {
-					for _, row := range selectReply.Values {
-						for _, r := range row {
-							passWord := r.(string)
-							if passWord != firstUpdate {
-								flag++
-							}
+	currentTime := time.Now()
+	flag := 0
+	loop := 0
+	for {
+		loop++
+		selectReply := api.MultSelect(cfg.BenchConfig.DB, cfg.BenchConfig.Table, PField, pksMult, nil)
+		if selectReply.Code == 0 && len(selectReply.Values) > 0 {
+			if len(selectReply.Values) != len(userNames) {
+				flag = len(selectReply.Values)
+			} else {
+				for _, row := range selectReply.Values {
+					for _, r := range row {
+						passWord := r.(string)
+						if passWord != firstUpdate {
+							flag++
 						}
 					}
 				}
-				break
-			} else {
-				log.Warn("retry select after update, h: %v, userName: [%v], reply: %v", h, userNames, selectReply)
 			}
-		}
-
-		if flag > 0 {
-			log.Error("multSelect after multUpdate:  update size %v, select size %v, loop: %v", len(userNames), flag, loop)
+			break
 		} else {
-			log.Warn("multSelect after multUpdate:  update size %v correct , elapsed time: %v, loop: %v", len(userNames), time.Since(currentTime), loop)
+			log.Warn("retry select after update, h: %v, userName: [%v], reply: %v", h, userNames, selectReply)
+		}
+	}
+
+	if flag > 0 {
+		log.Error("multSelect after multUpdate:  update size %v, select size %v, loop: %v", len(userNames), flag, loop)
+	} else {
+		log.Warn("multSelect after multUpdate:  update size %v correct , elapsed time: %v, loop: %v", len(userNames), time.Since(currentTime), loop)
 	}
 }
 
-func checkElapsedTime(s *server.Server, h uint32, userName, firstUpdate string) {
+func checkElapsedTime(h uint32, userName, firstUpdate string) {
 	pks := make(map[string]interface{})
 	pks["h"] = h
 	pks["user_name"] = userName
@@ -688,7 +690,7 @@ func checkElapsedTime(s *server.Server, h uint32, userName, firstUpdate string) 
 	for {
 		loop++
 
-		selectReply := api.Select(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, PField, pks, nil)
+		selectReply := api.Select(cfg.BenchConfig.DB, cfg.BenchConfig.Table, PField, pks, nil)
 		if selectReply.Code == 0 && len(selectReply.Values) > 0 {
 			var passWords []string
 			for _, row := range selectReply.Values {
@@ -751,14 +753,14 @@ func getUserName(no int, ip string, threadNo int) string {
 	return fmt.Sprintf("%d-%s-%d", no, ip, threadNo)
 }
 
-func insertOrder(s *server.Server, threadNo, total int, ip string) {
-	real_name := makeString(s.GetCfg().BenchConfig.DataLen)
+func insertOrder(threadNo, total int, ip string) {
+	real_name := makeString(cfg.BenchConfig.DataLen)
 	pass_word := "pw"
-	for no := 0; no < s.GetCfg().BenchConfig.SendNum; no++ {
+	for no := 0; no < cfg.BenchConfig.SendNum; no++ {
 		user_name := getUserName(no, ip, threadNo)
 		h := hash(user_name) % 16384
 		rows := createRows(h, user_name, pass_word, real_name)
-		reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+		reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields, rows)
 		log.Debug("%v", reply)
 		if reply.Code == 0 {
 			atomic.AddInt64(&stat.lastCount, 1)
@@ -769,14 +771,14 @@ func insertOrder(s *server.Server, threadNo, total int, ip string) {
 	}
 }
 
-func selectOrder(s *server.Server, threadNo, total int, ip string) {
+func selectOrder(threadNo, total int, ip string) {
 	pks := make(map[string]interface{})
-	for no := 0; no < s.GetCfg().BenchConfig.SendNum; no++ {
+	for no := 0; no < cfg.BenchConfig.SendNum; no++ {
 		user_name := getUserName(no, ip, threadNo)
 		h := hash(user_name) % 16384
 		pks["user_name"] = user_name
 		pks["h"] = h
-		reply := api.Select(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, pks, nil)
+		reply := api.Select(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields, pks, nil)
 		log.Debug("userName %s, h %v, select result:%v", user_name, h, reply)
 		if reply.Code == 0 && len(reply.Values) > 0 {
 			atomic.AddInt64(&stat.lastSelCount, 1)
@@ -791,11 +793,11 @@ func selectOrder(s *server.Server, threadNo, total int, ip string) {
 	}
 }
 
-func rawSet(s *server.Server, threadNo int, ip string)  {
-	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+func rawSet(threadNo int, ip string) {
+	for i := 0; i < cfg.BenchConfig.SendNum; i++ {
 		key := fmt.Sprintf("%v_%v_%v", ip, threadNo, i) // ip_tid_no
 
-		if err := api.RawSet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key), []byte(key)); err == nil {
+		if err := api.RawSet(cfg.BenchConfig.DB, cfg.BenchConfig.Table, []byte(key), []byte(key)); err == nil {
 			atomic.AddInt64(&stat.lastCount, 1)
 		} else {
 			log.Warn("raw set error: %v", err)
@@ -805,11 +807,11 @@ func rawSet(s *server.Server, threadNo int, ip string)  {
 		}
 	}
 }
-func rawGet(s *server.Server, threadNo int, ip string) {
-	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+func rawGet(threadNo int, ip string) {
+	for i := 0; i < cfg.BenchConfig.SendNum; i++ {
 		key := fmt.Sprintf("%v_%v_%v", ip, threadNo, i) // ip_tid_no
 
-		_, err := api.RawGet(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, []byte(key))
+		_, err := api.RawGet(cfg.BenchConfig.DB, cfg.BenchConfig.Table, []byte(key))
 		if err == nil {
 			atomic.AddInt64(&stat.lastSelCount, 1)
 
@@ -824,18 +826,18 @@ func rawGet(s *server.Server, threadNo int, ip string) {
 	}
 }
 
-func insertTestData(s *server.Server, threadNo, total int, ip string) {
-	real_name := randomString(s.GetCfg().BenchConfig.DataLen)
+func insertTestData(threadNo, total int, ip string) {
+	real_name := randomString(cfg.BenchConfig.DataLen)
 	pass_word := "pw"
-	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+	for i := 0; i < cfg.BenchConfig.SendNum; i++ {
 		user_name := getUserName(i, ip, threadNo)
 		h := hash(user_name) % 16384
 		rows := createRows(h, user_name, pass_word, real_name)
-		for b := 1; b < s.GetCfg().BenchConfig.Batch; b++ {
+		for b := 1; b < cfg.BenchConfig.Batch; b++ {
 			row := createRow(h, fmt.Sprintf("%s-%d", user_name, b), pass_word, real_name)
 			rows = append(rows, row)
 		}
-		reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFields, rows)
+		reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFields, rows)
 		log.Debug("%v", reply)
 		if reply.Code == 0 {
 			atomic.AddInt64(&stat.lastCount, 1)
@@ -848,18 +850,18 @@ func insertTestData(s *server.Server, threadNo, total int, ip string) {
 
 }
 
-func insertNoPkTestData(s *server.Server, threadNo, total int, ip string) {
-	real_name := randomString(s.GetCfg().BenchConfig.DataLen)
+func insertNoPkTestData(threadNo, total int, ip string) {
+	real_name := randomString(cfg.BenchConfig.DataLen)
 	pass_word := "pw"
 	TableFieldsNoPk := []string{"user_name", "pass_word", "real_name"}
-	for i := 0; i < s.GetCfg().BenchConfig.SendNum; i++ {
+	for i := 0; i < cfg.BenchConfig.SendNum; i++ {
 		user_name := getUserName(i, ip, threadNo)
 		rows := createRowsNoPk(user_name, pass_word, real_name)
-		for b := 1; b < s.GetCfg().BenchConfig.Batch; b++ {
+		for b := 1; b < cfg.BenchConfig.Batch; b++ {
 			row := createRowNoPk(fmt.Sprintf("%s-%d", user_name, b), pass_word, real_name)
 			rows = append(rows, row)
 		}
-		reply := api.Insert(s, s.GetCfg().BenchConfig.DB, s.GetCfg().BenchConfig.Table, TableFieldsNoPk, rows)
+		reply := api.Insert(cfg.BenchConfig.DB, cfg.BenchConfig.Table, TableFieldsNoPk, rows)
 		log.Debug("%v", reply)
 		if reply.Code == 0 {
 			atomic.AddInt64(&stat.lastCount, 1)
