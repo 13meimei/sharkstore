@@ -14,8 +14,7 @@ build_sharkstore:
 
   - mkdir -p ${CI_PROJECT_DIR}/data-server/build/
   - cd ${CI_PROJECT_DIR}/data-server/build/ &&
-    cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TEST=ON -DBUILD_TOOL=ON &&
-    make -j 4
+    cmake .. -DBUILD_TEST=ON && make -j `nproc`
 
   - echo "build sharkstore master-server"
   - cd ${CI_PROJECT_DIR}/master-server/cmd && go build -o master-server
