@@ -93,9 +93,9 @@ Status RangeSlave::dealTask() {
         }
 
         ret = RangeBase::Apply(*cmd, idx);
-        if (!ret.ok()) {
-            break;
-        }
+//        if (!ret.ok()) {
+//            break;
+//        }
 
         ret = context_->MetaStore()->SavePersistIndex(id_, idx);
         if (!ret.ok()) {

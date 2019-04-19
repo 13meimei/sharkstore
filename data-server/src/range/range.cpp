@@ -103,6 +103,7 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sfl
         s = slave_range_->Initialize(leader, log_start_index, 1);
         if (!s.ok()) {
             RANGE_LOG_ERROR("Initialize range slave error: %s", s.ToString().c_str());
+            return s;
         }
     }
     return Status::OK();
