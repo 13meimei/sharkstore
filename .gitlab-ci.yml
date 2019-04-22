@@ -14,16 +14,8 @@ ds_ci:
   - cd ${CI_PROJECT_DIR}/data-server/build/ &&
     cmake .. -DBUILD_TEST=ON && make -j `nproc`
 
-  - echo "run sharkstore test....."
-  - cd ${CI_PROJECT_DIR}/data-server/build/test
-  - echo $PWD
-  - ./range_ddl_unittest
-  - ./range_meta_unittest
-  - ./range_raw_unittest
-  - ./range_sql_unittest
-  - ./store_unittest
-
-  - echo "done"
+  - echo "run data-server test....."
+  - cd ${CI_PROJECT_DIR}/data-server/build && ctest
 
 gw_ci:
   stage: test
@@ -31,11 +23,9 @@ gw_ci:
   - echo "build sharkstore gateway-server"
   - cd ${CI_PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
 
-  - echo "run sharkstore test....."
+  - echo "run gateway-server test....."
   - cd ${CI_PROJECT_DIR}/proxy/gateway-server/
-  - go test -v -short $(go list ./...)
-
-  - echo "done"
+  - go test $(go list ./...)
 
 ms_ci:
   stage: test
@@ -43,10 +33,8 @@ ms_ci:
   - echo "build sharkstore master-server"
   - cd ${CI_PROJECT_DIR}/master-server/cmd && go build -o master-server
 
-  - echo "done"
-
 deploy:
   stage: deploy
   script:
-  - echo "todo deploy"
+  - echo "todo deploy..."
 
