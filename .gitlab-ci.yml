@@ -3,32 +3,18 @@ before_script:
     - export GOPATH=$GOPATH:${CI_PROJECT_DIR}
 
 stages:
-- build
-- test
+- build_and_test
 - deploy
 
-build_sharkstore:
-  stage: build
+ ds_ci:
+  stage: build_and_test
   script:
   - echo "build sharkstore data-server....."
-
   - mkdir -p ${CI_PROJECT_DIR}/data-server/build/
   - cd ${CI_PROJECT_DIR}/data-server/build/ &&
     cmake .. -DBUILD_TEST=ON && make -j `nproc`
 
-  - echo "build sharkstore master-server"
-  - cd ${CI_PROJECT_DIR}/master-server/cmd && go build -o master-server
-
-  - echo "build sharkstore gateway-server"
-  - cd ${CI_PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
-
-  - echo "done"
-
-test_sharkstore_ds:
-  stage: test
-  script:
   - echo "run sharkstore test....."
-
   - cd ${CI_PROJECT_DIR}/data-server/build/test
   - echo $PWD
   - ./range_ddl_unittest
@@ -39,17 +25,27 @@ test_sharkstore_ds:
 
   - echo "done"
 
-test_sharkstore_gs:
-  stage: test
+gw_ci:
+  stage: build_and_test
   script:
-  - echo "run sharkstore test....."
+  - echo "build sharkstore gateway-server"
+  - cd ${CI_PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
 
+  - echo "run sharkstore test....."
   - cd ${CI_PROJECT_DIR}/proxy/gateway-server/
   - go test -v -short $(go list ./...)
 
   - echo "done"
 
-deploy_sharkstore:
+ms_ci:
+  stage: build_and_test
+  script:
+  - echo "build sharkstore master-server"
+  - cd ${CI_PROJECT_DIR}/master-server/cmd && go build -o master-server
+
+  - echo "done"
+
+deploy:
   stage: deploy
   script:
   - echo "todo deploy"
