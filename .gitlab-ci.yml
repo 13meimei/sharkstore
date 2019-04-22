@@ -3,11 +3,11 @@ before_script:
     - export GOPATH=$GOPATH:${CI_PROJECT_DIR}
 
 stages:
-- build_and_test
+- test
 - deploy
 
  ds_ci:
-  stage: build_and_test
+  stage: test
   script:
   - echo "build sharkstore data-server....."
   - mkdir -p ${CI_PROJECT_DIR}/data-server/build/
@@ -26,7 +26,7 @@ stages:
   - echo "done"
 
 gw_ci:
-  stage: build_and_test
+  stage: test
   script:
   - echo "build sharkstore gateway-server"
   - cd ${CI_PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
@@ -38,7 +38,7 @@ gw_ci:
   - echo "done"
 
 ms_ci:
-  stage: build_and_test
+  stage: test
   script:
   - echo "build sharkstore master-server"
   - cd ${CI_PROJECT_DIR}/master-server/cmd && go build -o master-server
