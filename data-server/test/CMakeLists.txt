@@ -44,7 +44,7 @@ set(test_SRCS
     unittest/store_txn_unittest.cpp
     unittest/timer_unittest.cpp
     unittest/util_unittest.cpp
-    unittest/common_threadtest.cpp
+    unittest/common_thread_unittest.cpp
     unittest/range_unittest.cpp
 )
 
