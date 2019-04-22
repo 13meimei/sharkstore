@@ -6,7 +6,7 @@ stages:
 - test
 - deploy
 
- ds_ci:
+ds_ci:
   stage: test
   script:
   - echo "build sharkstore data-server....."
