@@ -45,6 +45,9 @@ protected:
         ds_config.range_config.recover_concurrency = 1;
 
         ds_config.persist_config.persist_switch = 1;
+
+        strcat(ds_config.async_rocksdb_config.path, ds_config.rocksdb_config.path );
+        strcat(ds_config.async_rocksdb_config.path, "/asyn" );
         strcpy(ds_config.persist_config.persist_type, "rocksdb");
         ds_config.persist_config.persist_threads = 10;
         ds_config.persist_config.persist_queue_size = 10000;
