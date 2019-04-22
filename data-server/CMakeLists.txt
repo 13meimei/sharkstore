@@ -46,6 +46,9 @@ MESSAGE(STATUS CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
+# pre make third-part
+execute_process(COMMAND sh ../pre_make.sh)
+
 # third-party
 include_directories(${PROJECT_SOURCE_DIR}/third-party)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
