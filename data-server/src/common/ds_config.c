@@ -312,6 +312,11 @@ static int load_raft_config(IniContext *ini_context) {
     char *temp_str;
     char *section = "raft";
 
+    ds_config.raft_config.disabled = (bool)iniGetIntValue(section, "disabled", ini_context, 0);
+    if (ds_config.raft_config.disabled) {
+        FLOG_WARN("raft is disabled");
+    }
+
     ds_config.raft_config.port = iniGetIntValue(section, "port", ini_context, 6182);
     if (ds_config.raft_config.port <= 0) {
         ds_config.raft_config.port = kDefaultPort;
