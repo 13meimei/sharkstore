@@ -88,18 +88,23 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     auto &req = cmd.txn_prepare_req();
     auto btime = NowMicros();
     errorpb::Error *err = nullptr;
+    uint64_t bytes_written = 0;
     std::unique_ptr<PrepareResponse> resp(new PrepareResponse);
     do {
         if (!KeyInRange(req, cmd.verify_epoch(), &err)) {
             break;
         }
-        store_->TxnPrepare(req, raft_index, resp.get());
+        bytes_written = store_->TxnPrepare(req, raft_index, resp.get());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         DsPrepareResponse ds_resp;
         ds_resp.set_allocated_resp(resp.release());
         ReplySubmit(cmd, ds_resp, err, btime);
+
+        if (bytes_written > 0) {
+            CheckSplit(bytes_written);
+        }
     } else if (err != nullptr) {
         delete err;
     }

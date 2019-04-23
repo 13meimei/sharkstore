@@ -72,7 +72,7 @@ public:
     Status GetTxnValue(const std::string& key, txnpb::TxnValue* value);
     std::unique_ptr<TxnIterator> NewTxnIterator(const std::string& start = "", const std::string& limit = "");
 
-    void TxnPrepare(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);
+    uint64_t TxnPrepare(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);
     uint64_t TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
     void TxnClearup(const txnpb::ClearupRequest& req, txnpb::ClearupResponse* resp);
     void TxnGetLockInfo(const txnpb::GetLockInfoRequest& req, txnpb::GetLockInfoResponse* resp);
@@ -118,8 +118,10 @@ private:
     TxnErrorPtr checkLockable(const std::string& key, const std::string& txn_id, bool *exist_flag);
     Status getKeyVersion(const std::string& key, uint64_t *version);
     TxnErrorPtr checkUniqueAndVersion(const txnpb::TxnIntent& intent);
+    uint64_t prepareLocal(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);
     TxnErrorPtr prepareIntent(const txnpb::PrepareRequest& req, const txnpb::TxnIntent& intent,
             uint64_t version, WriteBatchInterface* batch);
+
 
     Status commitIntent(const txnpb::TxnIntent& intent, uint64_t version,
             uint64_t &bytes_written, WriteBatchInterface* batch);
