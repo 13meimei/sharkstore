@@ -73,9 +73,8 @@ protected:
         ops.transport_options.recv_io_threads = ds_config.raft_config.transport_recv_threads;
 //        ops.transport_options.resolver = std::make_shared<NodeAddress>(context_->master_worker);
         
-        ops.snapshot_options.max_send_concurrency = 1;   
-        ops.snapshot_options.max_apply_concurrency = 1;   
-    
+        ops.snapshot_options.max_send_concurrency = 1;
+        ops.snapshot_options.max_apply_concurrency = 1; 
 
         auto rs = raft::CreateRaftServer(ops);
         context_->raft_server = rs.release();
@@ -90,8 +89,8 @@ protected:
         auto sp = server::CreatePersistServer(opt);
         context_->persist_server = sp.release(); 
 
-        ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer Init error."; 
         ASSERT_EQ(context_->persist_server->Init(context_), 0) << "PersistServer Init error";
+        ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer Init error."; 
 
         context_->persist_server->Start();
     }
@@ -269,8 +268,8 @@ protected:
         // sf_socket_thread_config_t manager_config;
         // sf_socket_thread_config_t worker_config;
         
-//        strcpy(ds.engine_config.name, "rocksdb");
-        strcpy(ds.engine_config.name, "memory");
+        strcpy(ds.engine_config.name, "rocksdb");
+//        strcpy(ds.engine_config.name, "memory");
         
         ds_config.range_config.recover_concurrency = 1;
 
@@ -291,8 +290,8 @@ metapb::Range *genRange1() {
     auto meta = new metapb::Range;
 
     meta->set_id(1);
-    meta->set_start_key("01003");
-    meta->set_end_key("01004");
+    meta->set_start_key("1003");
+    meta->set_end_key("1004");
     meta->mutable_range_epoch()->set_conf_ver(1);
     meta->mutable_range_epoch()->set_version(1);
 
@@ -302,10 +301,6 @@ metapb::Range *genRange1() {
     peer->set_id(1);
     peer->set_node_id(1);
 
-/*    peer = meta->add_peers();
-    peer->set_id(2);
-    peer->set_node_id(2);
-*/
     auto pks = CreateAccountTable()->GetPKs();
     for (const auto& pk : pks) {
         auto p = meta->add_primary_keys();
@@ -319,8 +314,8 @@ metapb::Range *genRange2() {
     auto meta = new metapb::Range;
 
     meta->set_id(2);
-    meta->set_start_key("01004");
-    meta->set_end_key("01005");
+    meta->set_start_key("1004");
+    meta->set_end_key("1005");
     meta->mutable_range_epoch()->set_conf_ver(1);
     meta->mutable_range_epoch()->set_version(1);
 
@@ -358,7 +353,6 @@ TEST_F(RangeTest, Range_Raw) {
         // end test create range
     }
 
-
     {
         // begin test create range
         schpb::CreateRangeRequest req;
@@ -389,59 +383,86 @@ TEST_F(RangeTest, Range_Raw) {
         } 
     }
 
-
+    const auto len = 10000;
+    const auto range1_start = 10030000000;
+    for (auto i = 0; i < len; i++ )
     {
-        // begin test raw_put (no leader)
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
+
         kvrpcpb::DsKvRawPutRequest req;
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-        req.mutable_req()->set_value("01003001:value");
+        req.mutable_req()->set_key(str_key);
+        req.mutable_req()->set_value(str_val);
 
         kvrpcpb::DsKvRawPutResponse resp;
         auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().message();
-
-        // end test raw_put
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().message(); 
     }
 
+    const auto range2_start = 10040000000; 
+    for (auto i = 0; i < len; i++ )
     {
-        // begin test raw_put (no leader)
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
+
         kvrpcpb::DsKvRawPutRequest req;
-        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->set_range_id(2);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("0100300");
-        req.mutable_req()->set_value("0100300:value");
+        req.mutable_req()->set_key(str_key);
+        req.mutable_req()->set_value(str_val);
 
         kvrpcpb::DsKvRawPutResponse resp;
         auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().message();
-
-        // end test raw_put
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().message(); 
     }
 
+    // stop range server
+    context_->range_server->Stop();
+    // start range server
+    ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer reInit error."; 
+
+    for (auto i = 0; i < len; i++ )
     {
-        // begin test raw_put (no leader)
-        kvrpcpb::DsKvRawPutRequest req;
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
+
+        kvrpcpb::DsKvRawGetRequest req;
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("010030");
-        req.mutable_req()->set_value("010030:value");
+        req.mutable_req()->set_key(str_key);
 
-        kvrpcpb::DsKvRawPutResponse resp;
-        auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), str_val) << "resp vlaue error";
+        
+    }
 
-        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().message();
+    for (auto i = 0; i < len; i++ )
+    {
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
 
-        // end test raw_put
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(2);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), str_val) << "resp vlaue error";
     }
 
 
@@ -472,57 +493,6 @@ TEST_F(RangeTest, Range_Raw) {
         // end test raw_put
     }
 
-    {
-        // begin test raw_put (not in range)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawPutRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01004001");
-        req.mutable_req()->set_value("01004001:value");
-
-        kvrpcpb::DsKvRawPutResponse resp;
-        auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-        ASSERT_TRUE(resp.header().error().key_not_in_range().start_key() == "01003");
-        ASSERT_TRUE(resp.header().error().key_not_in_range().end_key() == "01004");
-
-        // end test raw_put
-    }
-
-    {
-        // begin test raw_put (stale epoch)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawPutRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(2);
-        req.mutable_req()->set_key("01004001");
-        req.mutable_req()->set_value("01004001:value");
-
-        kvrpcpb::DsKvRawPutResponse resp;
-        auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_stale_epoch());
-
-        // end test raw_put
-    }
 
     {
         // begin test raw_put (key empty)
@@ -550,368 +520,7 @@ TEST_F(RangeTest, Range_Raw) {
         // end test raw_put
     }
 
-    {
-        // begin test raw_put (ok)
 
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawPutRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-        req.mutable_req()->set_value("01003001:value");
-
-        kvrpcpb::DsKvRawPutResponse resp;
-        auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // end test raw_put
-    }
-
-    {
-        // begin test raw_put (ok, retry split range)
-
-        // set leader
-        range_server_->ranges_[1]->split_range_id_ = 2;
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->SetLeaderTerm(1, 1);
-            range_server_->ranges_[1]->is_leader_ = true;
-        }
-
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->SetLeaderTerm(1, 1);
-            range_server_->ranges_[2]->is_leader_ = true;
-        }
-
-        kvrpcpb::DsKvRawPutRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(2);
-        req.mutable_req()->set_key("01004001");
-        req.mutable_req()->set_value("01004001:value");
-
-        kvrpcpb::DsKvRawPutResponse resp;
-        auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // end test raw_put
-    }
-
-    {
-        // begin test raw_get(ok)
-        kvrpcpb::DsKvRawGetRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01003001:value");
-
-        // end test raw_get
-    }
-
-    {
-        // begin test raw_get (ok)
-        kvrpcpb::DsKvRawGetRequest req;
-        req.mutable_header()->set_range_id(2);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01004001");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().DebugString();
-        ASSERT_TRUE(resp.resp().value() == "01004001:value");
-
-        // end test raw_get
-    }
-
-    {
-        // begin test raw_get (key empty)
-        kvrpcpb::DsKvRawGetRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-        // end test raw_get
-    }
-
-    {
-        // begin test raw_get (no leader)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(0, 2);
-        range_server_->ranges_[1]->is_leader_ = false;
-
-        kvrpcpb::DsKvRawGetRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_FALSE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().message() == "no leader");
-
-        // end test raw_get
-    }
-
-    {
-        // begin test raw_get (not leader)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(2, 2);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawGetRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().leader().node_id() == 2);
-
-        // end test raw_get
-    }
-
-    {
-        // begin test raw_get (not in range)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawGetRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01004001");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-
-        // end test raw_get
-    }
-
-    {
-        // begin test raw_get (ok, retry split range)
-
-        // set leader
-        range_server_->ranges_[1]->split_range_id_ = 2;
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->SetLeaderTerm(1, 1);
-            range_server_->ranges_[1]->is_leader_ = true;
-        }
-
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->SetLeaderTerm(1, 1);
-            range_server_->ranges_[2]->is_leader_ = true;
-        }
-
-        kvrpcpb::DsKvRawGetRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(2);
-        req.mutable_req()->set_key("01004001");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01004001:value");
-
-        // end test raw_get
-    }
-
-    {
-        // begin test raw_delete (key empty)
-        kvrpcpb::DsKvRawDeleteRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-
-        req.mutable_req()->set_key("");
-
-        kvrpcpb::DsKvRawDeleteResponse resp;
-        auto s = testRawDelete(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-        // end test raw_delete
-    }
-
-    {
-        // begin test raw_delete (no leader)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(0, 1);
-        range_server_->ranges_[1]->is_leader_ = false;
-
-        kvrpcpb::DsKvRawDeleteRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-
-        kvrpcpb::DsKvRawDeleteResponse resp;
-        auto s = testRawDelete(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_FALSE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().message() == "no leader");
-
-        // end test raw_delete
-    }
-
-    {
-        // begin test raw_delete (not leader)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(2, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawDeleteRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-
-        kvrpcpb::DsKvRawDeleteResponse resp;
-        auto s = testRawDelete(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().leader().node_id() == 2);
-
-        // end test raw_delete
-    }
-
-    {
-        // begin test raw_delete (not in range)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawDeleteRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01004001");
-
-        kvrpcpb::DsKvRawDeleteResponse resp;
-        auto s = testRawDelete(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-
-        // end test raw_delete
-    }
-
-    {
-        // begin test raw_get( ensure not to be deleted )
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawGetRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01003001:value");
-
-        // end test raw_get
-    }
-
-    {
-        // begin test raw_get( ensure not to be deleted )
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawGetRequest req;
-        req.mutable_header()->set_range_id(2);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01004001");
-
-        kvrpcpb::DsKvRawGetResponse resp;
-        auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value() == "01004001:value");
-
-        // end test raw_get
-    }
 
     {
         // begin test raw_delete( ok )
@@ -1088,44 +697,6 @@ TEST_F(RawTest, TestRangeSlave) {
         // end test create range
     }
 
-    {
-        // begin test raw_put (ok)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawPutRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-        req.mutable_req()->set_value("01003001:value");
-
-        kvrpcpb::DsKvRawPutResponse resp;
-        auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-        auto rng1 = range_server_->Find(1);
-        ASSERT_TRUE(rng1 != nullptr);
-        int b(0);
-        static int aidx(0);
-        static int pidx(0);
-        do {
-            pidx = ++aidx;
-            std::static_pointer_cast<RangeSlave>(rng1->slave_range_)->Submit(1, pidx, aidx);
-
-            if (b++ > 100) break;
-            if (b%5 == 0) {
-                FLOG_INFO("Submit...%d, size: %d", b,
-                        std::static_pointer_cast<RangeSlave>(rng1->slave_range_)->trd_->size());
-            }
-        } while(true);
-
-        // end test raw_put
-    }
 }
 */
 

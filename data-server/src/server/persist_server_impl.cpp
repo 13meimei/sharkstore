@@ -77,7 +77,7 @@ Status PersistServerImpl::Stop()
 
 bool PersistServerImpl::IndexInDistance(const uint64_t range_id, const uint64_t apply_id, const uint64_t persist_id)
 {
-    FLOG_DEBUG("---apply_index: %" PRIu64 "---apply_index: %" PRIu64 " persist_index: %" PRIu64 " delay_count: %" PRIu64 "---",
+    FLOG_DEBUG("---range_index: %" PRIu64 "---apply_index: %" PRIu64 " persist_index: %" PRIu64 " delay_count: %" PRIu64 "---",
             range_id, apply_id, persist_id, ops_.delay_count);
     if (apply_id - persist_id >= ops_.delay_count) {
         return true;
