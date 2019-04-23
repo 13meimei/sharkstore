@@ -3,7 +3,9 @@ include_directories(${PROJECT_SOURCE_DIR}/test)
 set(test_helper_SRCS
     helper/mock/master_worker_mock.cpp
     helper/mock/raft_mock.cpp
+    helper/mock/raft_log_reader_mock.cpp
     helper/mock/raft_server_mock.cpp
+    helper/mock/persist_server_mock.cpp
     helper/mock/range_context_mock.cpp
     helper/mock/rpc_request_mock.cpp
     helper/mock/rpc_request_wait_mock.cpp

@@ -3,12 +3,7 @@ _Pragma("once");
 #include <google/protobuf/message.h>
 #include "base/status.h"
 #include "server/context_server.h"
-#include "storage/db/db_interface.h"
-#include "common/ds_config.h"
-#include "storage/db/rocksdb_impl/rocksdb_impl.h"
 #include "raft/raft_log_reader.h"
-#include "proto/gen/metapb.pb.h"
-#include "storage/meta_store.h"
 #include "common_thread.h"
 
 namespace sharkstore {
@@ -17,54 +12,34 @@ namespace server {
 
 using WorkThread = sharkstore::dataserver::server::CommonThread;
 
-class PersistServer final: public std::enable_shared_from_this<PersistServer> {
+struct PersistOptions {
+    uint64_t thread_num = 4;
+    uint64_t delay_count = 10000;
+    uint64_t queue_capacity = 100000;
+}; 
+
+class PersistServer { 
 public:
-    struct Options {
-        uint64_t thread_num = 4;
-        uint64_t delay_count = 10000;
-        uint64_t queue_capacity = 100000;
-    };
-public:
-    PersistServer();
-    PersistServer(const Options& ops);
-    ~PersistServer();
+    PersistServer() = default;
+    virtual ~PersistServer() = default;
 
     PersistServer(const PersistServer&) = delete;
     PersistServer& operator=(const PersistServer&) = delete;
 
-    int Init(ContextServer *context);
-    Status Start();
-    Status Stop();
-    bool IndexInDistance(const uint64_t range_id,
-                                        const uint64_t aidx, const uint64_t pidx);
+    virtual int Init(ContextServer *context) = 0;
+    virtual Status Start() = 0 ;
+    virtual Status Stop() = 0 ;
+    virtual bool IndexInDistance(const uint64_t range_id, const uint64_t apply_id, const uint64_t persist_id) = 0 ; 
+    virtual storage::IteratorInterface* GetIterator(const std::string& start, const std::string& limit) = 0;
 
-    Status SavePersistIndex(const uint64_t range_id, const uint64_t persist_index);
-    Status LoadPersistIndex(const uint64_t range_id, uint64_t* persist_index);
+    virtual Status GetWorkThread(const uint64_t range_id, WorkThread*& trd) = 0;
+    virtual Status CreateReader(const uint64_t range_id, const uint64_t start_index,
+                        std::shared_ptr<raft::RaftLogReader>* reader) = 0 ;
 
-    int OpenDB();
-    void CloseDB();
-
-    storage::IteratorInterface* GetIterator(const std::string& start, const std::string& limit);
-
-    Status GetWorkThread(const uint64_t range_id, WorkThread*& trd);
-    Status CreateReader(const uint64_t range_id,
-                        const uint64_t start_index,
-                        std::shared_ptr<raft::RaftLogReader>* reader);
-
-
-private:
-    uint64_t pindex_ = 0;
-    Options ops_;
-    ContextServer* context_ = nullptr;
-    storage::MetaStore* meta_ = nullptr;
-    storage::DbInterface* pdb_ = nullptr;
-
-    std::atomic<bool> running_ = {false};
-
-    std::unordered_map<uint64_t, std::shared_ptr<raft::RaftLogReader>> readers_;
-
-    std::vector<WorkThread*> threads_;
 };
+
+std::unique_ptr<PersistServer> CreatePersistServer(const PersistOptions & ops);
+
 
 } /* namespace server */
 } /* namespace dataserver  */

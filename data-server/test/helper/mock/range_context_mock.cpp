@@ -18,6 +18,7 @@ namespace mock {
 
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::range;
+using namespace sharkstore::dataserver::server;
 
 
 Status RangeContextMock::Init() {
@@ -56,7 +57,12 @@ Status RangeContextMock::Init() {
 
     // watch server
 //    watch_server_.reset(new watch::WatchServer);
-    persist_server_.reset(new dataserver::server::PersistServer);
+
+    PersistOptions pops;
+    pops.thread_num = ds_config.persist_config.persist_threads;
+    pops.delay_count = ds_config.persist_config.persist_delay_size;
+    pops.queue_capacity = ds_config.persist_config.persist_queue_size;
+    persist_server_.reset(CreatePersistServer(pops).release());
     //persist_server_->Start();
 
     return Status::OK();

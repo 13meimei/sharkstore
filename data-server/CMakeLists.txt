@@ -203,6 +203,7 @@ set(SOURCES
     src/server/range_server.cpp
     src/server/rpc_server.cpp
     src/server/persist_server.cpp
+    src/server/persist_server_impl.cpp
     src/server/version.cpp
     src/server/common_thread.cpp
     src/range/range_base.cpp

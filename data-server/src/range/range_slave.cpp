@@ -3,6 +3,7 @@
 #include <cinttypes>
 #include "range_logger.h"
 #include "server/persist_server.h"
+#include "storage/meta_store.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -93,9 +94,10 @@ Status RangeSlave::dealTask() {
         }
 
         ret = RangeBase::Apply(*cmd, idx);
-//        if (!ret.ok()) {
+        if (!ret.ok()) { 
+            RANGE_LOG_WARN("RangeSlave dealTask Apply Failed. range_id:%" PRIu64 ",persist_index :%" PRIu64, id_, idx );
 //            break;
-//        }
+        }
 
         ret = context_->MetaStore()->SavePersistIndex(id_, idx);
         if (!ret.ok()) {

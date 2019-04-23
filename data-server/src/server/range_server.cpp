@@ -239,24 +239,6 @@ int RangeServer::OpenDB() {
         FLOG_INFO("open %s db successfully", engine_name.c_str());
     } 
 
-    if (ds_config.persist_config.persist_switch) {
-        //pdb_
-        if (strcasecmp(ds_config.persist_config.persist_type, "rocksdb") == 0) {
-            //print_rocksdb_config();
-            pdb_ = new storage::RocksDBImpl(ds_config.async_rocksdb_config);
-            auto s = pdb_->Open();
-            if (!s.ok()) {
-                FLOG_ERROR("open async rocksdb failed: %s", s.ToString().c_str());
-                return -1;
-            } else {
-                FLOG_INFO("open async rocksdb successfully");
-            }
-
-        } else {
-            FLOG_ERROR("unknown persist_type: %s", ds_config.persist_config.persist_type);
-            return -1;
-        }
-    }
     return 0;
 }
 
@@ -265,12 +247,6 @@ void RangeServer::CloseDB() {
         delete db_;
         db_ = nullptr;
     } 
-
-//    if (pdb_ != nullptr) {
-//        delete pdb_;
-//        pdb_ = nullptr; 
-//    } 
-
 }
 
 void RangeServer::Clear() {
@@ -847,12 +823,14 @@ Status RangeServer::recover(const metapb::Range& meta) {
     if (!ret.second) {
         return Status(Status::kDuplicate, "save range", std::to_string(meta.id()));
     }
-
-    s = recoverKV(meta.start_key(), meta.end_key());
-    if (!s.ok()) {
-        FLOG_ERROR("load local range meta failed");
-        return Status(Status::kUnexpected, "load range KV", std::to_string(meta.id()));
-    }
+    
+    if (ds_config.persist_config.persist_switch) { 
+        s = recoverKV(meta.start_key(), meta.end_key());
+        if (!s.ok()) {
+            FLOG_ERROR("load local range meta failed");
+            return Status(Status::kUnexpected, "load range KV", std::to_string(meta.id()));
+        } 
+    } 
 
     return Status::OK();
 }

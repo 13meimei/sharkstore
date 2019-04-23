@@ -43,6 +43,8 @@ struct ContextServer {
     raft::RaftServer *raft_server = nullptr;
 
     PersistServer *persist_server = nullptr;
+
+
 };
 
 }  // namespace server

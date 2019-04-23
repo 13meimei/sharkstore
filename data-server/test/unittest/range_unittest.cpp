@@ -26,16 +26,15 @@ int main(int argc, char *argv[]) {
 //char level[8] = "warn";
 char level[8] = "debug";
 
+using namespace sharkstore;
 using namespace sharkstore::test::helper;
 using namespace sharkstore::test::mock;
 using namespace sharkstore::dataserver;
 using namespace sharkstore::dataserver::server;
 using namespace sharkstore::dataserver::range;
 using namespace sharkstore::dataserver::storage;
-using namespace sharkstore;
 using namespace sharkstore::raft;
 using namespace sharkstore::raft::impl;
-
 
 class RangeTest : public ::testing::Test {
 protected:
@@ -83,11 +82,13 @@ protected:
         auto s = context_->raft_server->Start();
         ASSERT_TRUE(s.ok()) << "raft_server start error.";
 
-        PersistServer::Options opt;
+        server::PersistOptions opt;
         opt.thread_num = ds_config.persist_config.persist_threads;
         opt.delay_count = ds_config.persist_config.persist_delay_size;
-        opt.queue_capacity = ds_config.persist_config.persist_queue_size;
-        context_->persist_server = new server::PersistServer(opt);
+        opt.queue_capacity = ds_config.persist_config.persist_queue_size; 
+
+        auto sp = server::CreatePersistServer(opt);
+        context_->persist_server = sp.release(); 
 
         ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer Init error."; 
         ASSERT_EQ(context_->persist_server->Init(context_), 0) << "PersistServer Init error";

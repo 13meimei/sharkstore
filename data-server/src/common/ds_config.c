@@ -336,6 +336,89 @@ void print_rocksdb_config() {
     }
 }
 
+void print_async_rocksdb_config() {
+    FLOG_INFO("async_rockdb_configs: "
+              "\n\tpath: %s"
+              "\n\tblock_cache_size: %lu"
+              "\n\trow_cache_size: %lu"
+              "\n\tblock_size: %lu"
+              "\n\tmax_open_files: %d"
+              "\n\tbytes_per_sync: %lu"
+              "\n\twrite_buffer_size: %lu"
+              "\n\tmax_write_buffer_number: %d"
+              "\n\tmin_write_buffer_number_to_merge: %d"
+              "\n\tmax_bytes_for_level_base: %lu"
+              "\n\tmax_bytes_for_level_multiplier: %d"
+              "\n\ttarget_file_size_base: %lu"
+              "\n\ttarget_file_size_multiplier: %d"
+              "\n\tmax_background_flushes: %d"
+              "\n\tmax_background_compactions: %d"
+              "\n\tbackground_rate_limit: %lu"
+              "\n\tdisable_auto_compactions: %d"
+              "\n\tread_checksum: %d"
+              "\n\tlevel0_file_num_compaction_trigger: %d"
+              "\n\tlevel0_slowdown_writes_trigger: %d"
+              "\n\tlevel0_stop_writes_trigger: %d"
+              "\n\tdisable_wal: %d"
+              "\n\tcache_index_and_filter_blocks: %d"
+              "\n\tcompression: %d"
+              "\n\tstorage_type: %d"
+              "\n\tmin_blob_size: %d"
+              "\n\tblob_file_size: %lu"
+              "\n\tenable_garbage_collection: %d"
+              "\n\tblob_gc_percent: %d"
+              "\n\tblob_compression: %d"
+              "\n\tblob_cache_size: %lu"
+              "\n\tblob_ttl_range: %" PRIu64
+              "\n\tttl: %d"
+              "\n\tenable_stats: %d"
+              "\n\tenable_debug_log: %d"
+              ,
+              ds_config.async_rocksdb_config.path,
+              ds_config.async_rocksdb_config.block_cache_size,
+              ds_config.async_rocksdb_config.row_cache_size,
+              ds_config.async_rocksdb_config.block_size,
+              ds_config.async_rocksdb_config.max_open_files,
+              ds_config.async_rocksdb_config.bytes_per_sync,
+              ds_config.async_rocksdb_config.write_buffer_size,
+              ds_config.async_rocksdb_config.max_write_buffer_number,
+              ds_config.async_rocksdb_config.min_write_buffer_number_to_merge,
+              ds_config.async_rocksdb_config.max_bytes_for_level_base,
+              ds_config.async_rocksdb_config.max_bytes_for_level_multiplier,
+              ds_config.async_rocksdb_config.target_file_size_base,
+              ds_config.async_rocksdb_config.target_file_size_multiplier,
+              ds_config.async_rocksdb_config.max_background_flushes,
+              ds_config.async_rocksdb_config.max_background_compactions,
+              ds_config.async_rocksdb_config.background_rate_limit,
+              ds_config.async_rocksdb_config.disable_auto_compactions,
+              ds_config.async_rocksdb_config.read_checksum,
+              ds_config.async_rocksdb_config.level0_file_num_compaction_trigger,
+              ds_config.async_rocksdb_config.level0_slowdown_writes_trigger,
+              ds_config.async_rocksdb_config.level0_stop_writes_trigger,
+              ds_config.async_rocksdb_config.disable_wal,
+              ds_config.async_rocksdb_config.cache_index_and_filter_blocks,
+              ds_config.async_rocksdb_config.compression,
+              ds_config.async_rocksdb_config.storage_type,
+              ds_config.async_rocksdb_config.min_blob_size,
+              ds_config.async_rocksdb_config.blob_file_size,
+              ds_config.async_rocksdb_config.enable_garbage_collection,
+              ds_config.async_rocksdb_config.blob_gc_percent,
+              ds_config.async_rocksdb_config.blob_compression,
+              ds_config.async_rocksdb_config.blob_cache_size,
+              ds_config.async_rocksdb_config.blob_ttl_range,
+              ds_config.async_rocksdb_config.ttl,
+              ds_config.async_rocksdb_config.enable_stats,
+              ds_config.async_rocksdb_config.enable_debug_log
+              );
+
+    if (ds_config.async_rocksdb_config.ttl > 0) {
+        FLOG_WARN("rocksdb ttl enabled. ttl=%d", ds_config.async_rocksdb_config.ttl);
+    }
+    if (ds_config.async_rocksdb_config.disable_auto_compactions) {
+        FLOG_WARN("rocksdb auto compactions is disabled.");
+    }
+}
+
 static int load_range_config(IniContext *ini_context) {
     int mega = 1024 * 1024;
 

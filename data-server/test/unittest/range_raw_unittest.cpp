@@ -11,6 +11,7 @@
 #include "server/range_server.h"
 #include "server/run_status.h"
 #include "server/persist_server.h"
+#include "server/persist_server_impl.h"
 #include "storage/store.h"
 
 #include "helper/table.h"
@@ -62,11 +63,12 @@ protected:
         context_->raft_server = new RaftServerMock;
         context_->run_status = new server::RunStatus;
 
-        PersistServer::Options opt;
+        PersistOptions opt;
         opt.thread_num = 10;
         opt.delay_count = 1;
         opt.queue_capacity = 10000;
-        context_->persist_server = new server::PersistServer(opt);
+        auto ps = CreatePersistServer(opt);
+        context_->persist_server = ps.release();
         //context_->persist_server->Init();
         context_->persist_server->Start();
 

@@ -40,11 +40,13 @@ DataServer::DataServer() {
     buildRPCOptions(sopt);
     context_->rpc_server = new RPCServer(sopt);
 
-    PersistServer::Options pops;
+    PersistOptions pops;
     pops.thread_num = ds_config.persist_config.persist_threads;
     pops.delay_count = ds_config.persist_config.persist_delay_size;
     pops.queue_capacity = ds_config.persist_config.persist_queue_size;
-    context_->persist_server = new PersistServer(pops);
+    
+    auto ps = CreatePersistServer(pops);
+    context_->persist_server = ps.release();
 
     // create master worker
     std::vector<std::string> ms_addrs;
