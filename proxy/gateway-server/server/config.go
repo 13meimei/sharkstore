@@ -1,23 +1,25 @@
 package server
 
 import (
-	"util"
-	"util/log"
-	"github.com/BurntSushi/toml"
-
-	"time"
-	"fmt"
 	"bufio"
-	"strings"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
+	"time"
+
+	"github.com/BurntSushi/toml"
+
+	"util"
+	"util/log"
 )
 
 const (
-	DefaultHttpPort    = 8080
-	DefaultLockRpcPort = 8090
-	DefaultSqlPort     = 6060
+	DefaultHttpPort      = 8080
+	DefaultLockRpcPort   = 8090
+	DefaultSqlPort       = 6060
+	DefaultMaxConnection = 10000
 
 	DefaultServerName = "gateway"
 
@@ -53,8 +55,6 @@ type Config struct {
 	Cluster     ClusterConfig `toml:"cluster,omitempty" json:"cluster"`
 	Log         LogConfig     `toml:"log,omitempty" json:"log"`
 	Metric      MetricConfig  `toml:"metric,omitempty" json:"metric"`
-
-	BenchConfig BenchMarkConfig `toml:"benchmark,omitempty" json:"benchmark"`
 }
 
 const DefaultConfig = `
@@ -137,8 +137,8 @@ func (c *Config) LoadConfig(configFileName *string) {
 }
 
 type AlarmConfig struct {
-	Address string `toml:"address,omitempty" json:"address"`
-	PingInterval int64 `toml:"ping-interval,omitempty" json:"ping-interval"`
+	Address      string `toml:"address,omitempty" json:"address"`
+	PingInterval int64  `toml:"ping-interval,omitempty" json:"ping-interval"`
 }
 
 type PerformConfig struct {
@@ -155,7 +155,7 @@ type PerformConfig struct {
 	//HeartbeatIntervalSec util.Duration `toml:"hb-interval,omitempty" json:"hb-interval"`
 }
 
-func (p *PerformConfig) adjust() error {
+func (p *PerformConfig) Adjust() error {
 	adjustUint64(&p.MaxWorkNum, DefaultMaxWorkNum)
 	adjustUint64(&p.MaxTaskQueueLen, DefaultMaxTaskQueueLen)
 	adjustInt(&p.GrpcPoolSize, DefaultGrpcPoolSize)
@@ -176,7 +176,7 @@ type ClusterConfig struct {
 	Token      string   `toml:"token,omitempty" json:"token"`
 }
 
-func (c *ClusterConfig) adjust() error {
+func (c *ClusterConfig) Adjust() error {
 	if c.ID == uint64(0) {
 		return fmt.Errorf("invalid cluster.id config")
 	}
@@ -192,11 +192,11 @@ type LogConfig struct {
 	Level  string `toml:"level,omitempty" json:"level"`
 }
 
-func (c *LogConfig) adjust() error {
+func (c *LogConfig) Adjust(module string) error {
 	if c.Dir == "" {
 		return fmt.Errorf("invalid log dir")
 	}
-	adjustString(&c.Module, DefaultServerName)
+	adjustString(&c.Module, module)
 	adjustString(&c.Level, "info")
 	switch c.Level {
 	case "TRACE", "trace", "Trace":
@@ -227,7 +227,7 @@ func (c *Config) adjust() error {
 	}
 
 	if c.MaxClients == 0 {
-		return fmt.Errorf("max-clients not specified")
+		c.MaxClients = DefaultMaxConnection
 	}
 
 	if c.User == "" {
@@ -239,17 +239,17 @@ func (c *Config) adjust() error {
 	}
 
 	var err error
-	err = c.Performance.adjust()
+	err = c.Performance.Adjust()
 	if err != nil {
 		return err
 	}
 
-	err = c.Cluster.adjust()
+	err = c.Cluster.Adjust()
 	if err != nil {
 		return err
 	}
 
-	err = c.Log.adjust()
+	err = c.Log.Adjust(DefaultServerName)
 	if err != nil {
 		return err
 	}
@@ -293,17 +293,6 @@ func adjustDuration(v *util.Duration, defValue time.Duration) {
 	}
 }
 
-type BenchMarkConfig struct {
-	Type    int    `toml:"type,omitempty" json:"type"`
-	DataLen int    `toml:"data-len,omitempty" json:"data-len"`
-	SendNum int    `toml:"send-num,omitempty" json:"send-num"`
-	Threads int    `toml:"threads,omitempty" json:"threads"`
-	DB      string `toml:"db,omitempty" json:"db"`
-	Table   string `toml:"table,omitempty" json:"table"`
-	Batch   int    `toml:"batch,omitempty" json:"batch"`
-	Scope   int    `toml:"scope,omitempty" json:"scope"`
-}
-
 func UpdateConfig(addr string) error {
 	if *configFileN == "" {
 		return nil
@@ -337,7 +326,7 @@ func readAndReplaceConfig(fileName string, addr string) (string, error) {
 		if strings.Contains(line, "[metric]") {
 			blockFlag = true
 		}
-		if blockFlag && strings.Contains(line, "address")  && strings.Contains(line, "=") {
+		if blockFlag && strings.Contains(line, "address") && strings.Contains(line, "=") {
 			line = "address = \"" + addr + "\"\n"
 			blockFlag = false
 		}

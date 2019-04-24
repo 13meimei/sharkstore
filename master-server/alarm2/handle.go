@@ -29,6 +29,7 @@ func (s *Server) handleAppHeartbeat(header *alarmpb2.RequestHeader, req *alarmpb
 	// setex key with ttl ping_interval to jimdb
 	vStr, _ := encodeCacheValue(cacheValue{})
 	if err = s.cacheOpImpl.setex(aliveKey, vStr, req.GetHbIntervalTime()*2); err != nil {
+		log.Error("handle app heartbeat: jim setex error: %v", err)
 		resp.Header.Code = alarmpb2.AlarmResponseCode_ERROR
 		resp.Header.Error = err.Error()
 		return

@@ -1,18 +1,25 @@
 package server
 
 import (
-	"util/log"
 	"encoding/json"
 	"fmt"
 	"time"
 	"util"
+	"util/log"
 )
 
 type SharkStoreApi struct {
+	proxy *Proxy
 }
 
-func (api *SharkStoreApi) RawSet(s *Server, dbName, tableName string, key, value []byte) error {
-	table := s.proxy.router.FindTable(dbName, tableName)
+func NewSharkStoreAPI(msAddr []string, config *ProxyConfig) *SharkStoreApi {
+	return &SharkStoreApi{
+		proxy: NewProxy(msAddr, config),
+	}
+}
+
+func (api *SharkStoreApi) RawSet(dbName, tableName string, key, value []byte) error {
+	table := api.proxy.router.FindTable(dbName, tableName)
 	if table == nil {
 		err := fmt.Errorf("table(%s) of db(%s) not exist", tableName, dbName)
 		return err
@@ -21,11 +28,11 @@ func (api *SharkStoreApi) RawSet(s *Server, dbName, tableName string, key, value
 	keyPrefix := util.EncodeStorePrefix(util.Store_Prefix_KV, table.ID())
 	keyEncoded := append(keyPrefix, key...)
 
-	return s.proxy.RawPut(dbName, tableName, keyEncoded, value)
+	return api.proxy.RawPut(dbName, tableName, keyEncoded, value)
 }
 
-func (api *SharkStoreApi) RawGet(s *Server, dbName, tableName string, key []byte) ([]byte, error) {
-	table := s.proxy.router.FindTable(dbName, tableName)
+func (api *SharkStoreApi) RawGet(dbName, tableName string, key []byte) ([]byte, error) {
+	table := api.proxy.router.FindTable(dbName, tableName)
 	if table == nil {
 		err := fmt.Errorf("table(%s) of db(%s) not exist", tableName, dbName)
 		return nil, err
@@ -34,10 +41,10 @@ func (api *SharkStoreApi) RawGet(s *Server, dbName, tableName string, key []byte
 	keyPrefix := util.EncodeStorePrefix(util.Store_Prefix_KV, table.ID())
 	keyEncoded := append(keyPrefix, key...)
 
-	return s.proxy.RawGet(dbName, tableName, keyEncoded)
+	return api.proxy.RawGet(dbName, tableName, keyEncoded)
 }
 
-func (api *SharkStoreApi) Insert(s *Server, dbName string, tableName string, fields []string, values [][]interface{}) *Reply {
+func (api *SharkStoreApi) Insert(dbName string, tableName string, fields []string, values [][]interface{}) *Reply {
 
 	cmd := &Command{
 		Type:   "set",
@@ -48,11 +55,11 @@ func (api *SharkStoreApi) Insert(s *Server, dbName string, tableName string, fie
 		Command: cmd,
 	}
 
-	return api.execute(s, dbName, tableName, query)
+	return api.execute(dbName, tableName, query)
 
 }
 
-func (api *SharkStoreApi) Select(s *Server, dbName string, tableName string, fields []string, pks map[string]interface{}, limit_ *Limit_) *Reply {
+func (api *SharkStoreApi) Select(dbName string, tableName string, fields []string, pks map[string]interface{}, limit_ *Limit_) *Reply {
 	ands := make([]*And, 0)
 	for k, v := range pks {
 		and := &And{
@@ -76,10 +83,10 @@ func (api *SharkStoreApi) Select(s *Server, dbName string, tableName string, fie
 		Command: cmd,
 	}
 
-	return api.execute(s, dbName, tableName, query)
+	return api.execute(dbName, tableName, query)
 }
 
-func (api *SharkStoreApi) MultSelect(s *Server, dbName string, tableName string, fields []string, pkMults []map[string]interface{}, limit_ *Limit_) *Reply {
+func (api *SharkStoreApi) MultSelect(dbName string, tableName string, fields []string, pkMults []map[string]interface{}, limit_ *Limit_) *Reply {
 	andMult := make([][]*And, 0)
 	for _, pks := range pkMults {
 		ands := make([]*And, 0)
@@ -96,7 +103,7 @@ func (api *SharkStoreApi) MultSelect(s *Server, dbName string, tableName string,
 	cmd := &Command{
 		Type:  "get",
 		Field: fields,
-		PKs: andMult,
+		PKs:   andMult,
 	}
 	if limit_ != nil {
 		cmd.Filter.Limit = limit_
@@ -105,10 +112,10 @@ func (api *SharkStoreApi) MultSelect(s *Server, dbName string, tableName string,
 		Command: cmd,
 	}
 
-	return api.execute(s, dbName, tableName, query)
+	return api.execute(dbName, tableName, query)
 }
 
-func (api *SharkStoreApi) Delete(s *Server, dbName string, tableName string, fields []string, pks map[string]interface{}) *Reply {
+func (api *SharkStoreApi) Delete(dbName string, tableName string, fields []string, pks map[string]interface{}) *Reply {
 	ands := make([]*And, 0)
 	for k, v := range pks {
 		and := &And{
@@ -129,10 +136,10 @@ func (api *SharkStoreApi) Delete(s *Server, dbName string, tableName string, fie
 		Command: cmd,
 	}
 
-	return api.execute(s, dbName, tableName, query)
+	return api.execute(dbName, tableName, query)
 }
 
-func (api *SharkStoreApi) execute(s *Server, dbName string, tableName string, query *Query) (reply *Reply) {
+func (api *SharkStoreApi) execute(dbName string, tableName string, query *Query) (reply *Reply) {
 	var err error
 	if len(dbName) == 0 {
 		log.Error("args[dbName] wrong")
@@ -150,7 +157,7 @@ func (api *SharkStoreApi) execute(s *Server, dbName string, tableName string, qu
 		return reply
 	}
 
-	t := s.proxy.router.FindTable(dbName, tableName)
+	t := api.proxy.router.FindTable(dbName, tableName)
 	if t == nil {
 		log.Error("table %s.%s doesn't exist", dbName, tableName)
 		reply = &Reply{Code: errCommandNoTable, Message: ErrNotExistTable.Error()}
@@ -162,29 +169,29 @@ func (api *SharkStoreApi) execute(s *Server, dbName string, tableName string, qu
 	query.commandFieldNameToLower()
 	switch query.Command.Type {
 	case "get":
-		slowLogThreshold = s.proxy.config.Performance.SelectSlowLog
-		reply, err = query.getCommand(s.proxy, t)
+		slowLogThreshold = api.proxy.config.Performance.SelectSlowLog
+		reply, err = query.getCommand(api.proxy, t)
 		if err != nil {
 			log.Error("getcommand error: %v", err)
 			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
 		}
 	case "set":
-		slowLogThreshold = s.proxy.config.Performance.InsertSlowLog
-		reply, err = query.setCommand(s.proxy, t)
+		slowLogThreshold = api.proxy.config.Performance.InsertSlowLog
+		reply, err = query.setCommand(api.proxy, t)
 		if err != nil {
 			log.Error("setcommand error: %v", err)
 			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
 		}
 	case "upd":
-		slowLogThreshold = s.proxy.config.Performance.UpdateSlowLog
-		reply, err = query.setCommand(s.proxy, t)
+		slowLogThreshold = api.proxy.config.Performance.UpdateSlowLog
+		reply, err = query.setCommand(api.proxy, t)
 		if err != nil {
 			log.Error("updcommand error: %v", err)
 			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}
 		}
 	case "del":
-		slowLogThreshold = s.proxy.config.Performance.SelectSlowLog
-		reply, err = query.delCommand(s.proxy, t)
+		slowLogThreshold = api.proxy.config.Performance.SelectSlowLog
+		reply, err = query.delCommand(api.proxy, t)
 		if err != nil {
 			log.Error("delcommand error: %v", err)
 			reply = &Reply{Code: errCommandRun, Message: fmt.Errorf("%v: %v", ErrHttpCmdRun, err).Error()}

@@ -290,15 +290,21 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 }
 
 Status Range::Submit(const raft_cmdpb::Command &cmd) {
-    if (is_leader_) {
-        std::string str_cmd = cmd.SerializeAsString();
-        if (str_cmd.empty()) {
-            return Status(Status::kCorruption, "protobuf serialize failed", "");
+    if (!ds_config.raft_config.disabled) {
+        if (is_leader_) {
+            std::string str_cmd = cmd.SerializeAsString();
+            if (str_cmd.empty()) {
+                return Status(Status::kCorruption, "protobuf serialize failed", "");
+            }
+            return raft_->Submit(str_cmd);
+            // return Apply(cmd,0);
+        } else {
+            return Status(Status::kNotLeader, "Not Leader", "");
         }
-        return raft_->Submit(str_cmd);
-        // return Apply(cmd,0);
     } else {
-        return Status(Status::kNotLeader, "Not Leader", "");
+        static std::atomic<uint64_t> fake_index = {0};
+        Apply(cmd, ++fake_index);
+        return Status::OK();
     }
 }
 

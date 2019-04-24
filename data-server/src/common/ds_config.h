@@ -70,6 +70,7 @@ typedef struct ds_config_s {
     } range_config;
 
     struct {
+        bool disabled;
         int port;  // raft server port
         bool in_memory_log;
         char log_path[PATH_MAX];

@@ -49,10 +49,14 @@ func (c *Client) AlarmAppHeartbeat(clusterId int64, ipAddr, appName string, inte
 			HbIntervalTime: intervalTime,
 		},
 	})
+
+	if err != nil {
+		return err
+	}
 	if resp != nil && resp.GetHeader() != nil {
 		if resp.GetHeader().GetCode() != alarmpb2.AlarmResponseCode_OK ||
 			len(resp.GetHeader().GetError()) != 0 {
-				return errors.New(resp.GetHeader().GetError())
+				err = errors.New(resp.GetHeader().GetError())
 		}
 	}
 	return err
@@ -81,10 +85,14 @@ func (c *Client) RuleAlarm(clusterId int64, ipAddr, appName string,
 			Remark: remark,
 		},
 	})
+
+	if err != nil {
+		return err
+	}
 	if resp != nil && resp.GetHeader() != nil {
 		if resp.GetHeader().GetCode() != alarmpb2.AlarmResponseCode_OK ||
 			len(resp.GetHeader().GetError()) != 0 {
-			return errors.New(resp.GetHeader().GetError())
+			err = errors.New(resp.GetHeader().GetError())
 		}
 	}
 	return err

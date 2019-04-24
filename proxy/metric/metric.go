@@ -165,7 +165,7 @@ func (m *Metric) Run() {
 		select {
 		case <-timer.C:
 		// slowlog
-			log.Warn("report slowlog metric...")
+		log.Info("report slowlog metric...")
 		func() {
 			m.lock.Lock()
 			slowLogger := m.slowLogger
@@ -210,7 +210,7 @@ func (m *Metric) Run() {
 		}()
 
 		// error log
-			log.Warn("report errorlog metric...")
+		log.Info("report errorlog metric...")
 		func() {
 			m.errorLogLock.Lock()
 			errorLogger := m.errorLogger
@@ -220,7 +220,7 @@ func (m *Metric) Run() {
 			}
 			m.errorLogLock.Unlock()
 			if len(errorLogger.errorLog) == 0 {
-				log.Warn("no error log in queue")
+				log.Info("no error log in queue")
 				return
 			}
 			// errorlog alarm

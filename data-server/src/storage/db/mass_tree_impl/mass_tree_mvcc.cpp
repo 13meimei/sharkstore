@@ -1,5 +1,6 @@
 #include "mass_tree_mvcc.h"
 
+#include <sstream>
 #include "storage/db/memdb_batch.h"
 #include "storage/db/multi_v_key.h"
 
@@ -153,8 +154,6 @@ Status MvccMassTree::SetDBOptions(const std::unordered_map<std::string, std::str
     return Status::OK();
 }
 
-void MvccMassTree::PrintMetric() {}
-
 void MvccMassTree::runGC() {
     while (gc_running_) {
         // sleep interval
@@ -219,6 +218,20 @@ void MvccMassTree::scrub(MvccTree *family) {
     if (cmp_base.is_del() && cmp_base.ver() < ver) {
         family->tree.Delete(cmp_base_str);
     }
+}
+
+std::string MvccMassTree::GetMetrics() {
+    std::ostringstream ss;
+    ss << "MassTree counters: alloc=" << MassTreeDB::GetCounter(tc_alloc);
+    ss << ", alloc_other=" << MassTreeDB::GetCounter(tc_alloc_other);
+    ss << ", gc=" << MassTreeDB::GetCounter(tc_gc);
+    ss << ", leaf_split=" << MassTreeDB::GetCounter(tc_stable_leaf_split);
+    ss << std::endl;
+
+    ss << "MassTree default tree stat: " << default_tree_.tree.Stat() << std::endl;
+    ss << "MassTree txn tree stat: " << txn_tree_.tree.Stat() << std::endl;
+
+    return ss.str();
 }
 
 } /* namespace storage */

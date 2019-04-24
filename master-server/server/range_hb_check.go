@@ -59,8 +59,12 @@ func (hb *RangeHbCheckWorker) Work(cluster *Cluster) {
 					log.Error("range[%d:%d] no heartbeat, leader is [%d], lastHeartbeat:[%v]",
 						table.GetId(), r.GetId(), leader.GetNodeId(), r.LastHbTimeTS)
 
+					leaderNode := cluster.FindNodeById(leader.GetNodeId())
+					if leaderNode == nil {
+						continue
+					}
 					desc = fmt.Sprintf("cluster[%v] table[%v] range[%v] no heartbeat, leader node[id %v, addr %v], lastheartbeat:[%v]",
-						cluster.GetClusterId(), table.GetId(), r.GetId(), leader.GetNodeId(), cluster.FindNodeById(leader.GetNodeId()).GetServerAddr(), r.LastHbTimeTS)
+						cluster.GetClusterId(), table.GetId(), r.GetId(), leader.GetNodeId(), leaderNode.GetServerAddr(), r.LastHbTimeTS)
 				}
 
 				hbAlarmDeal(cluster, leader, table, r, desc)

@@ -1,21 +1,27 @@
 package server
 
 import (
-	"sync"
 	dsClient "pkg-go/ds_client"
 	msClient "pkg-go/ms_client"
+	"sync"
 	"util/hlc"
 
 	"golang.org/x/net/context"
 )
 
+type ProxyConfig struct {
+	AggrEnable  bool
+	MaxLimit    uint64
+	Performance PerformConfig
+}
+
 type Proxy struct {
+	config *ProxyConfig
+
 	msCli  msClient.Client
 	dsCli  dsClient.KvClient
-	config *Config
 	router *Router
-
-	clock *hlc.Clock
+	clock  *hlc.Clock
 
 	maxWorkNum  uint64
 	taskQueues  []chan Task
@@ -25,7 +31,7 @@ type Proxy struct {
 	cancel      context.CancelFunc
 }
 
-func NewProxy(msAddrs []string, config *Config) *Proxy {
+func NewProxy(msAddrs []string, config *ProxyConfig) *Proxy {
 	msCli, err := msClient.NewClient(msAddrs)
 	if err != nil {
 		return nil
@@ -41,10 +47,9 @@ func NewProxy(msAddrs []string, config *Config) *Proxy {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	proxy := &Proxy{
-		router: router,
-		msCli:  msCli,
-		dsCli:  dsClient.NewRPCClient(config.Performance.GrpcPoolSize),
-		//metric:  metrics.NewMetricMeter("gateway", new(Report)),
+		router:      router,
+		msCli:       msCli,
+		dsCli:       dsClient.NewRPCClient(config.Performance.GrpcPoolSize),
 		clock:       hlc.NewClock(hlc.UnixNano, 0),
 		config:      config,
 		ctx:         ctx,

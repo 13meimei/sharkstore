@@ -164,10 +164,10 @@ func (c *Cluster) LoginNode(nodeId uint64, force bool) error {
 		}
 	}
 
-	if err := c.UpdateNodeState(node, metapb.NodeState_N_Initial); err != nil {
+	if err := c.UpdateNodeState(node, metapb.NodeState_N_Login); err != nil {
 		return err
 	}
-
+	node.LastHeartbeatTS = time.Now()
 	return nil
 }
 

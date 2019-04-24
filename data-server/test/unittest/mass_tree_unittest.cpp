@@ -103,6 +103,38 @@ TEST(MvccMassTree, Iter) {
     }
 }
 
+TEST(MvccMassTree, DISABLED_GC) {
+    MvccMassTree tree;
+    tree.Open();
+    std::set<std::string> keys;
+    for (int i = 0; i < 100000; ++i) {
+        auto key = randomString(10, 230);
+        auto s = tree.Put(key, "");
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        keys.insert(key);
+    }
+    std::cout << "Put over. " << std::endl;
+    std::cout << tree.GetMetrics() << std::endl;
 
+    for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
+        auto s = tree.Delete(*it);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+    }
+    std::cout << "Delete over. " << std::endl;
+    std::cout << tree.GetMetrics() << std::endl;
+
+    for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
+        std::string value;
+        auto s = tree.Get(*it, &value);
+        ASSERT_EQ(s.code(), Status::kNotFound);
+    }
+    std::cout << "Get over. " << std::endl;
+    std::cout << tree.GetMetrics() << std::endl;
+
+    for (int i = 0; i < 100; ++i) {
+        sleep(10);
+        std::cout << tree.GetMetrics() << std::endl;
+    }
+}
 
 } /* namespace  */

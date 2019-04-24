@@ -47,7 +47,7 @@ public:
     Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
 
-    void PrintMetric() override;
+    std::string GetMetrics() override;
 
 public:
     Status CompactRange(const rocksdb::CompactRangeOptions& ops,
@@ -66,7 +66,7 @@ private:
     rocksdb::Options ops_;
     rocksdb::blob_db::BlobDBOptions bops_;
 
-    rocksdb::DB* db_;
+    rocksdb::DB* db_ = nullptr;
     rocksdb::ReadOptions read_options_;
     rocksdb::WriteOptions write_options_;
     std::vector<rocksdb::ColumnFamilyHandle*> cf_handles_;

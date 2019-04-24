@@ -224,8 +224,51 @@ TxnErrorPtr Store::checkUniqueAndVersion(const txnpb::TxnIntent& intent) {
 }
 
 
+uint64_t Store::prepareLocal(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp) {
+    assert(req.local());
+    auto batch = db_->NewBatch();
+    uint64_t bytes_written = 0;
+    bool exist_flag = false;
+    for (const auto& intent: req.intents()) {
+        // check lockable
+        auto err = checkLockable(intent.key(), req.txn_id(), &exist_flag);
+        if (err != nullptr) {
+            resp->add_errors()->Swap(err.get());
+            return 0;
+        }
+        if (exist_flag) {
+            setTxnServerErr(resp->add_errors(), Status::kExisted, "lock already exist");
+            return 0;
+        }
+
+        // check unique and version
+        if (intent.check_unique() || intent.expected_ver() != 0) {
+            err = checkUniqueAndVersion(intent);
+            if (err != nullptr) {
+                resp->add_errors()->Swap(err.get());
+                return 0;
+            }
+        }
+        // commit directly
+        auto s = commitIntent(intent, version, bytes_written, batch.get());
+        if (!s.ok()) {
+            setTxnServerErr(resp->add_errors(), s.code(), s.ToString());
+            return 0;
+        }
+    }
+
+    auto ret = db_->Write(batch.get());
+    if (!ret.ok()) {
+        setTxnServerErr(resp->add_errors(), ret.code(), ret.ToString());
+        return 0;
+    } else {
+        addMetricWrite(req.intents_size(), bytes_written);
+        return bytes_written;
+    }
+}
+
 TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& intent,
-        uint64_t version, WriteBatchInterface* batch) {
+                                 uint64_t version, WriteBatchInterface* batch) {
     // check lockable
     bool exist_flag = false;
     auto err = checkLockable(intent.key(), req.txn_id(), &exist_flag);
@@ -254,51 +297,39 @@ TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& int
     return nullptr;
 }
 
-void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareResponse* resp) {
-    bool primary_lockable = true;
+uint64_t Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareResponse* resp) {
+    if (req.local()) {
+        return prepareLocal(req, version, resp);
+    }
+
+    bool primary_success = true;
+    bool fatal_error = false;
     auto batch = db_->NewBatch();
     for (const auto& intent: req.intents()) {
-        bool stop_flag = false;
-        TxnErrorPtr err;
-
-        if (req.local()) {
-            uint64_t bytes_written;
-            bool exist_flag = false;
-
-            err = checkLockable(intent.key(), req.txn_id(), &exist_flag);
-            if (err == nullptr) {
-                if (!exist_flag) {
-                    auto s = commitIntent(intent, version, bytes_written, batch.get());
-                    if (!s.ok()) {
-                        err = newTxnServerErr(s.code(), s.ToString());
-                    }
-                }
-            }
-        } else {
-            err = prepareIntent(req, intent, version, batch.get());
-        }
-
+        auto err = prepareIntent(req, intent, version, batch.get());
         if (err != nullptr) {
             if (err->err_type() == TxnError_ErrType_LOCKED) {
                 if (intent.is_primary()) {
-                    primary_lockable = false;
+                    primary_success = false;
                 }
-            } else { // 其他类型错误，终止prepare
-                resp->clear_errors(); // 清除其他错误
-                stop_flag = true;
+            } else { // 其他类型错误，终止prepare，视作整个请求失败
+                resp->clear_errors(); // 清除其他错误，只返回关键错误
+                fatal_error = true;
             }
             resp->add_errors()->Swap(err.get());
         }
-        if (stop_flag) break;
+        if (fatal_error) break;
     }
 
-    if (primary_lockable) {
+    // 只要primary可以prepare成功就执行写入
+    if (!fatal_error && primary_success) {
         auto ret = db_->Write(batch.get());
         if (!ret.ok()) {
             resp->clear_errors();
             setTxnServerErr(resp->add_errors(), ret.code(), ret.ToString());
         }
     }
+    return 0;
 }
 
 Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version,
@@ -452,6 +483,7 @@ uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
         setTxnServerErr(resp->mutable_err(), Status::kIOError, ret.ToString());
         return 0;
     } else {
+        addMetricWrite(req.keys_size(), bytes_written);
         return bytes_written;
     }
 }
