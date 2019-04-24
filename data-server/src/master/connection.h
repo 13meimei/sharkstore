@@ -20,7 +20,7 @@ public:
     Connection(const Connection &) = delete;
     Connection &operator=(const Connection &) = delete;
 
-    std::unique_ptr<mspb::MsServer::Stub> &GetStub() { return stub_; }
+    mspb::MsServer::Stub& GetStub() { return *stub_; }
     const std::string &GetAddr() const { return addr_; }
 
 private:

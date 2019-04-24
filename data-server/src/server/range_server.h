@@ -52,7 +52,6 @@ public:
     void OnNodeHeartbeatResp(const mspb::NodeHeartbeatResponse &) override;
     void OnRangeHeartbeatResp(const mspb::RangeHeartbeatResponse &) override;
     void OnAskSplitResp(const mspb::AskSplitResponse &) override;
-    void CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) override;
 
 private:
     int OpenDB();

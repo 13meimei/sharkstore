@@ -8,7 +8,7 @@ namespace sharkstore {
 namespace dataserver {
 namespace master {
 
-static const int kRpcTimeoutMs = 5000;
+static const int kDefaultRPCTimeoutMS = 5000;
 
 enum class AsyncCallType : char {
     kInvalid = 0,

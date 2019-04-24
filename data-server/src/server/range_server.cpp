@@ -970,38 +970,6 @@ void RangeServer::OnAskSplitResp(const mspb::AskSplitResponse &resp) {
     range->AdminSplit(copy_resp);
 }
 
-void RangeServer::CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) {
-    req->set_node_id(context_->node_id);
-
-    auto stats = req->mutable_stats();
-    stats->set_range_count(GetRangesSize());
-    stats->set_range_leader_count(context_->run_status->GetLeaderCount());
-    stats->set_range_split_count(context_->run_status->GetSplitCount());
-
-    raft::ServerStatus rss;
-    context_->raft_server->GetStatus(&rss);
-    stats->set_sending_snap_count(rss.total_snap_sending);
-    stats->set_receiving_snap_count(rss.total_snap_applying);
-    stats->set_applying_snap_count(rss.total_snap_applying);
-
-    // collect db usage
-    DBUsage db_usage;
-    context_->run_status->GetDBUsage(&db_usage);
-    stats->set_capacity(db_usage.total_size);
-    stats->set_used_size(db_usage.used_size);
-    stats->set_available(db_usage.free_size);
-
-    // collect storage metric
-    storage::MetricStat mstat;
-    storage::Metric::CollectAll(&mstat);
-    stats->set_keys_read(mstat.keys_read_per_sec);
-    stats->set_bytes_read(mstat.bytes_read_per_sec);
-    stats->set_keys_written(mstat.keys_write_per_sec);
-    stats->set_bytes_written(mstat.bytes_write_per_sec);
-
-    stats->set_is_busy(false);
-}
-
 }  // namespace server
 }  // namespace dataserver
 }  // namespace sharkstore

@@ -55,9 +55,6 @@ private:
     void doCallRPC();
     void doNodeHeartbeat(TaskHandler *handler);
 
-private:
-    const size_t node_heartbeat_secs_ = 10;
-
     Client *client_ = nullptr;
 
     bool stopped_ = false;

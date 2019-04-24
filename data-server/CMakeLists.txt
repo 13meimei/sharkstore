@@ -249,7 +249,7 @@ set(SOURCES
     src/storage/select_txn.cpp
     src/storage/txn_iterator.cpp
     src/storage/util.cpp
-    src/master/client.cpp
+    src/master/client_impl.cpp
     src/master/connection.cpp
     src/master/rpc_types.cpp
     src/master/worker_impl.cpp
