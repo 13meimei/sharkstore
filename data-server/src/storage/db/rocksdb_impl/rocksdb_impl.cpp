@@ -4,6 +4,7 @@
 
 #include "rocksdb_impl.h"
 
+#include <sstream>
 #include <rocksdb/utilities/blob_db/blob_db.h>
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
@@ -12,7 +13,6 @@
 #include <rocksdb/utilities/db_ttl.h>
 
 #include "base/util.h"
-#include "frame/sf_logger.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -361,41 +361,47 @@ Status RocksDBImpl::Flush(const rocksdb::FlushOptions& ops) {
     }
 }
 
-void RocksDBImpl::PrintMetric() {
+std::string RocksDBImpl::GetMetrics() {
+    std::ostringstream ss;
+
     std::string tr_mem_usage;
     db_->GetProperty("rocksdb.estimate-table-readers-mem", &tr_mem_usage);
     std::string mem_table_usage;
     db_->GetProperty("rocksdb.cur-size-all-mem-tables", &mem_table_usage);
-    FLOG_INFO("rocksdb memory usages: table-readers=%s, memtables=%s, "
-              "block-cache=%lu, pinned=%lu, row-cache=%lu",
-              tr_mem_usage.c_str(), mem_table_usage.c_str(),
-              (block_cache_ ? block_cache_->GetUsage() : 0),
-              (block_cache_ ? block_cache_->GetPinnedUsage() : 0),
-              (row_cache_ ? row_cache_->GetUsage() : 0));
+
+    ss << "rocksdb memory usages: table-readers=" << tr_mem_usage;
+    ss << ", memtables=" << mem_table_usage;
+    ss << ", block-cache=" << (block_cache_ ? block_cache_->GetUsage() : 0);
+    ss << ", pinned=" << (block_cache_ ? block_cache_->GetPinnedUsage() : 0);
+    ss << ", row-cache=" << (row_cache_ ? row_cache_->GetUsage() : 0);
+    ss << std::endl;
 
     auto stat = db_stats_;
     if (stat) {
-        FLOG_INFO("rocksdb row-cache stats: hit=%" PRIu64 ", miss=%" PRIu64,
-                  stat->getAndResetTickerCount(rocksdb::ROW_CACHE_HIT),
-                  stat->getAndResetTickerCount(rocksdb::ROW_CACHE_MISS));
+        ss << "rocksdb row-cache stats: hit="  << stat->getAndResetTickerCount(rocksdb::ROW_CACHE_HIT);
+        ss << ", miss="  << stat->getAndResetTickerCount(rocksdb::ROW_CACHE_MISS);
+        ss << std::endl;
 
-        FLOG_INFO("rocksdb block-cache stats: hit=%" PRIu64 ", miss=%" PRIu64,
-                  stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_HIT),
-                  stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_MISS));
+        ss << "rocksdb block-cache stats: hit="  << stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_HIT);
+        ss << ", miss="  << stat->getAndResetTickerCount(rocksdb::BLOCK_CACHE_MISS);
+        ss << std::endl;
 
 #ifdef BLOB_EXTEND_OPTIONS
         if (bops_.blob_cache) {
-            FLOG_INFO("rocksdb blobdb-cache stats: hit=%" PRIu64 ", miss=%" PRIu64,
-                      stat->getAndResetTickerCount(rocksdb::BLOB_DB_CACHE_HIT),
-                      stat->getAndResetTickerCount(rocksdb::BLOB_DB_CACHE_MISS));
+            ss << "rocksdb blobdb-cache stats: hit="  << stat->getAndResetTickerCount(rocksdb::BLOB_DB_CACHE_HIT);
+            ss << ", miss="  << stat->getAndResetTickerCount(rocksdb::BLOB_DB_CACHE_MISS);
+            ss << std::endl;
         }
 #endif
-
-        FLOG_INFO("rockdb get histograms: %s", stat->getHistogramString(rocksdb::DB_GET).c_str());
-        FLOG_INFO("rockdb write histograms: %s", stat->getHistogramString(rocksdb::DB_WRITE).c_str());
+        ss << "rockdb get histograms: " << stat->getHistogramString(rocksdb::DB_GET) << std::endl;
+        ss << "rockdb write histograms: " <<  stat->getHistogramString(rocksdb::DB_WRITE) << std::endl;
 
         stat->Reset();
     }
+
+    return ss.str();
 }
 
-}}}
+}
+}
+}

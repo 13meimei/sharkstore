@@ -39,7 +39,7 @@ public:
     void GetProperty(const std::string& k, std::string* v) override;
     Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
-    void PrintMetric() override;
+    std::string GetMetrics() override;
 
 private:
     struct ValueEqualityChecker {

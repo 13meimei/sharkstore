@@ -113,7 +113,7 @@ void RunStatus::printStatistics() {
 
 void RunStatus::printDBMetric() {
     assert(context_->db != nullptr);
-    context_->db->PrintMetric();
+    FLOG_INFO("DB Metric: %s", context_->db->GetMetrics().c_str());
 }
 
 

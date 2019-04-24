@@ -4,6 +4,8 @@
 #include "masstree-beta/masstree_insert.hh"
 #include "masstree-beta/masstree_remove.hh"
 #include "masstree-beta/masstree_scan.hh"
+#include "masstree-beta/masstree_stats.hh"
+#include "masstree-beta/json.hh"
 
 #include "scaner.h"
 
@@ -88,6 +90,16 @@ void MassTreeDB::RCUFree() {
     thread_info_->rcu_stop();
 }
 
+uint64_t MassTreeDB::GetCounter(threadcounter c) {
+    uint64_t count = 0;
+    std::lock_guard<std::mutex> lock(thread_infos_mu);
+    for (threadinfo* ti = threadinfo::allthreads; ti; ti = ti->next()) {
+        prefetch((const void*) ti->next());
+        count += ti->counter(c);
+    }
+    return count;
+}
+
 template int MassTreeDB::Scan(const std::string&, Scaner&);
 
 template <typename F>
@@ -101,6 +113,15 @@ int MassTreeDB::Scan(const std::string& begin, F& scanner) {
 std::unique_ptr<Scaner> MassTreeDB::NewScaner(const std::string& start, const std::string& limit, size_t max_per_scan) {
     std::unique_ptr<Scaner> ptr(new Scaner(this, start, limit, max_per_scan));
     return ptr;
+}
+
+std::string MassTreeDB::Stat() {
+    auto j = Masstree::json_stats(*tree_, *thread_info_);
+    if (j) {
+        return j.unparse(lcdf::Json::indent_depth(1).tab_width(2).newline_terminator(true));
+    } else {
+        return "";
+    }
 }
 
 } /* namespace storage */

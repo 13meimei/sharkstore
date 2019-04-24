@@ -58,7 +58,7 @@ public:
     virtual Status SetOptions(void* column_family,
             const std::unordered_map<std::string, std::string>& new_options) = 0;
 
-    virtual void PrintMetric() = 0;
+    virtual std::string GetMetrics() = 0;
 };
 
 }

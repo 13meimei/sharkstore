@@ -315,8 +315,8 @@ class threadinfo {
     limbo_group* limbo_tail_;
     mutable kvtimestamp_t ts_;
 
-    //enum { ncounters = (int) tc_max };
-    enum { ncounters = 0 };
+    enum { ncounters = (int) tc_max };
+    // enum { ncounters = 0 };
     uint64_t counters_[ncounters];
 
     void refill_pool(int nl);

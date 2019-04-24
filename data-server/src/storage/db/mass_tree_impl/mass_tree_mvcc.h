@@ -8,7 +8,6 @@ _Pragma("once");
 #include "storage/db/mvcc.h"
 #include "mass_tree_db.h"
 
-class MassTreeTest;
 namespace sharkstore { namespace test { namespace mock { class MvccMassTreeMock; }}}
 
 namespace sharkstore {
@@ -17,7 +16,6 @@ namespace storage {
 
 class MvccMassTree : public DbInterface {
 public:
-    friend class ::MassTreeTest;
     friend class sharkstore::test::mock::MvccMassTreeMock;
 
     MvccMassTree() = default;
@@ -60,7 +58,7 @@ public:
 
     Status SetDBOptions(const std::unordered_map<std::string, std::string> &new_options) override;
 
-    void PrintMetric() override;
+    std::string GetMetrics();
 
 private:
     Status get(MvccTree *family, const std::string &key, std::string *value);
@@ -71,6 +69,7 @@ private:
 
     void runGC();
     void scrub(MvccTree *family);
+
 
 private:
     const size_t gc_interval_msec_ = 2000; // gc周期, 每次进行RCU回收和epoch增长
