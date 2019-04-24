@@ -105,17 +105,19 @@ WatcherSet::WatcherSet() {
     snprintf(timer_name, 32, "watcher_timer");
     AnnotateThread(handle, timer_name);
 
-    struct sched_param param;
+    if (ds_config.watch_config.watcher_thread_priority > 0 && 
+        ds_config.watch_config.watcher_thread_priority < 100 ) {
+        struct sched_param param; 
+        int policy;
 
-    int policy;
-    pthread_getschedparam(watcher_timer_.native_handle(), &policy, &param);
-    param.sched_priority = ds_config.watch_config.watcher_thread_priority;
+        pthread_getschedparam(watcher_timer_.native_handle(), &policy, &param);
+        param.sched_priority = ds_config.watch_config.watcher_thread_priority;
 
-    FLOG_INFO("watcher_timer thread priority:%d", ds_config.watch_config.watcher_thread_priority);
-    if(pthread_setschedparam(watcher_timer_.native_handle(), SCHED_RR, &param) != 0) {
-        FLOG_WARN("pthread_setschedparam failed:%s", strerror(errno));
-    }
-
+        FLOG_INFO("watcher_timer thread priority:%d", ds_config.watch_config.watcher_thread_priority);
+        if(pthread_setschedparam(watcher_timer_.native_handle(), SCHED_RR, &param) != 0) {
+            FLOG_WARN("pthread_setschedparam failed:%s", strerror(errno));
+        }
+    } 
 }
 
 WatcherSet::~WatcherSet() {
