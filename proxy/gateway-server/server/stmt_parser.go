@@ -244,6 +244,7 @@ func (s *StmtParser) parseUpdateFields(t *Table, update *sqlparser.Update) ([]*k
 				}
 				field.Value = value
 				field.FieldType = kvrpcpb.FieldType(operateType)
+			//todo case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_TimeStamp:
 			default:
 				return nil, fmt.Errorf("unsupported type(%s) when update field(%s)", col.DataType.String(), col.Name)
 			}

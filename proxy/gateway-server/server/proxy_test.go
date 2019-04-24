@@ -1151,6 +1151,7 @@ func TestProxyAdminRoute(t *testing.T) {
 //}
 
 func TestProxyInsert(t *testing.T) {
+	t.Log("test proxy insert...")
 	log.InitFileLog(logPath, "proxy", "debug")
 	columns := []*columnInfo{
 		&columnInfo{name: "id", typ: metapb.DataType_BigInt, isUnsigned: true, isPK: true},
@@ -1398,7 +1399,7 @@ func TestProxyInsertOneRowWithRangeChange(t *testing.T) {
 	oldRng.EndKey = middle
 	oldRng.RangeEpoch.Version++
 
-	MockDs.RangeSplit(oldRng, newRng)
+	ds0.RangeSplit(oldRng, newRng)
 
 	tx := NewTx(true, p, 0)
 	ttable, intent := testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
@@ -1459,9 +1460,9 @@ func TestProxyInsertOneRowWithErrorNode(t *testing.T) {
 	var peers []*metapb.Peer
 	peers = append(peers, &metapb.Peer{Id: 3, NodeId: 2})
 	newRng.Peers = peers
-	MockDs.DelRange(oldRng.GetId())
-	MockDs1.SetRange(newRng)
-	MockMs.SetRange(newRng)
+	ds0.DelRange(oldRng.GetId())
+	ds1.SetRange(newRng)
+	ms.SetRange(newRng)
 
 	tx = NewTx(true, p, 0)
 	ttable, intent = testProxyInsert(t, p, 1, "insert into "+testTableName+"(id,name,balance) values(2, 'myname2', 1)")
@@ -1536,9 +1537,9 @@ func TestProxyInsertWithRangeChange(t *testing.T) {
 	newRng.Id++
 	newRng.StartKey = middle2
 
-	MockDs.RangeSplit(oldRng, newRng)
-	MockMs.SetRange(oldRng)
-	MockMs.SetRange(newRng)
+	ds0.RangeSplit(oldRng, newRng)
+	ms.SetRange(oldRng)
+	ms.SetRange(newRng)
 	log.Info("**********change range route***********8")
 
 	tx = NewTx(true, p, 0)
@@ -1704,9 +1705,9 @@ func TestSelectRoutChange(t *testing.T) {
 	newRng.Id = lastRangId
 	newRng.StartKey = middle2
 
-	MockDs.RangeSplit(oldRng, newRng)
-	MockMs.SetRange(oldRng)
-	MockMs.SetRange(newRng)
+	ds0.RangeSplit(oldRng, newRng)
+	ms.SetRange(oldRng)
+	ms.SetRange(newRng)
 	log.Info("**********change range route***********8")
 
 	testProxySelect(t, p, expected, "select * from "+testTableName)
@@ -1792,9 +1793,9 @@ func TestRowDeleteRoutChange(t *testing.T) {
 	newRng.Id = lastRangId
 	newRng.StartKey = middle2
 
-	MockDs.RangeSplit(oldRng, newRng)
-	MockMs.SetRange(oldRng)
-	MockMs.SetRange(newRng)
+	ds0.RangeSplit(oldRng, newRng)
+	ms.SetRange(oldRng)
+	ms.SetRange(newRng)
 	log.Info("**********change range route***********8")
 	log.Info("*****=======prepare delete======*****")
 	//delete one
@@ -1887,9 +1888,9 @@ func TestAllDeleteRoutChange(t *testing.T) {
 	newRng.Id = lastRangId
 	newRng.StartKey = middle2
 
-	MockDs.RangeSplit(oldRng, newRng)
-	MockMs.SetRange(oldRng)
-	MockMs.SetRange(newRng)
+	ds0.RangeSplit(oldRng, newRng)
+	ms.SetRange(oldRng)
+	ms.SetRange(newRng)
 	log.Info("**********change range route***********8")
 	log.Info("*****=======prepare delete======*****")
 	//delete one

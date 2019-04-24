@@ -20,7 +20,6 @@ import (
 	"golang.org/x/net/context"
 	"util/deepcopy"
 	"os"
-	"util/log"
 	"model/pkg/txn"
 )
 
@@ -29,10 +28,6 @@ const testTableName = "testTable"
 const dsPath = "/tmp/sharkstore/data"
 const dsPath1 = "/tmp/sharkstore/data1"
 const logPath = "/tmp/sharkstore/logs"
-
-var MockDs *mock_ds.DsRpcServer
-var MockDs1 *mock_ds.DsRpcServer
-var MockMs *mock_ms.Cluster
 
 type columnInfo struct {
 	name       string
@@ -56,31 +51,41 @@ func bytesPrefix(prefix []byte) ([]byte, []byte) {
 	return prefix, limit
 }
 
+var (
+	node0 *metapb.Node
+	node1 *metapb.Node
+	ms *mock_ms.Cluster
+	ds0 *mock_ds.DsRpcServer
+	ds1 *mock_ds.DsRpcServer
+)
+
+func init() {
+	ms = mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
+	node0 = &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
+	node1 = &metapb.Node{Id: 2, ServerAddr: "127.0.0.1:6061"}
+	ms.SetNode(node0)
+	ms.SetNode(node1)
+	go ms.Start()
+	time.Sleep(time.Second)
+
+	ds0 = mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
+	go ds0.Start()
+	time.Sleep(time.Second)
+
+	ds1 = mock_ds.NewDsRpcServer("127.0.0.1:6061", dsPath1)
+	go ds1.Start()
+	time.Sleep(time.Second)
+}
+
 // 创建一个只处理一个表的Proxy
 func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) *Proxy {
 	rng := deepcopy.Iface(rng_).(*metapb.Range)
-	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
-	node1 := &metapb.Node{Id: 2, ServerAddr: "127.0.0.1:6061"}
-	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
 	ms.SetDb(db)
 	ms.SetTable(table)
-	ms.SetNode(node)
-	ms.SetNode(node1)
 	ms.SetRange(rng)
-	go ms.Start()
-	MockMs = ms
-	time.Sleep(time.Second)
-	ds := mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
-	ds.SetRange(rng)
-	go ds.Start()
-	MockDs = ds
-	time.Sleep(time.Second)
-	ds1 := mock_ds.NewDsRpcServer("127.0.0.1:6061", dsPath1)
-	go ds1.Start()
-	MockDs1 = ds1
-	time.Sleep(time.Second)
-	ctx, cancel := context.WithCancel(context.Background())
+	ds0.SetRange(rng)
 
+	ctx, cancel := context.WithCancel(context.Background())
 	var taskQueues []chan Task
 	for i := 0; i < int(1); i++ {
 		queue := make(chan Task, 1)
@@ -120,31 +125,20 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 }
 
 func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ... *metapb.Range) *Proxy {
-	log.Info("create Test Proxy2")
-	node := &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
-	ms := mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
 	ms.SetDb(db)
 	ms.SetTable(table)
-	ms.SetNode(node)
+	//ms.SetNode(node)
 	for _, rng := range rngs {
 		rng := deepcopy.Iface(rng).(*metapb.Range)
 		ms.SetRange(rng)
 	}
 
-	go ms.Start()
-	MockMs = ms
-	time.Sleep(time.Second)
-	destoryDir(dsPath)
-	ds := mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
 	for _, rng := range rngs {
 		rng := deepcopy.Iface(rng).(*metapb.Range)
-		ds.SetRange(rng)
+		ds0.SetRange(rng)
 	}
-	go ds.Start()
-	MockDs = ds
-	time.Sleep(time.Second)
-	ctx, cancel := context.WithCancel(context.Background())
 
+	ctx, cancel := context.WithCancel(context.Background())
 	var taskQueues []chan Task
 	for i := 0; i < int(1); i++ {
 		queue := make(chan Task, 1)
@@ -187,12 +181,6 @@ func destoryDir(path string) {
 }
 
 func CloseMock(p *Proxy) {
-	//p.msCli.Close()
-	//p.dsCli.Close()
-	//time.Sleep(time.Second*30)
-	//MockDs.Stop()
-	//MockMs.Stop()
-
 }
 
 func makeTestTable(colInfos []*columnInfo) *metapb.Table {

@@ -1,12 +1,12 @@
 package server
 
 import (
-	"proxy/gateway-server/sqlparser"
 	"model/pkg/metapb"
+	"proxy/gateway-server/sqlparser"
 	"reflect"
 	"testing"
-	"util/assert"
 	"time"
+	"util/assert"
 )
 
 func TestParseInsertCols(t *testing.T) {
@@ -166,7 +166,8 @@ func TestParseUpdate(t *testing.T) {
 func parseUpdate(sql string, t *testing.T) {
 	colInfos := []*metapb.Column{
 		{Name: "h", Id: uint64(1), DataType: metapb.DataType_BigInt, PrimaryKey: uint64(1), Index: true},
-		{Name: "user_name", Id: uint64(2), DataType: metapb.DataType_Varchar, PrimaryKey: uint64(1), Index: true},
+		//{Name: "user_name", Id: uint64(2), DataType: metapb.DataType_Varchar, PrimaryKey: uint64(1), Index: true},
+		{Name: "user_name", Id: uint64(2), DataType: metapb.DataType_Varchar, Index: true},
 		{Name: "pass_word", Id: uint64(3), DataType: metapb.DataType_Varchar, Index: true},
 		{Name: "real_name", Id: uint64(4), DataType: metapb.DataType_Varchar, Index: true},
 		{Name: "age", Id: uint64(4), DataType: metapb.DataType_Tinyint, Index: true},
