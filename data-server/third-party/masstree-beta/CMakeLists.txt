@@ -1,12 +1,14 @@
 # generate config.h
-execute_process(
-        COMMAND ./bootstrap.sh
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-execute_process(
-        COMMAND env CXXFLAGS=-std=c++11 ./configure --disable-superpage
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/config.h")
+    execute_process(
+            COMMAND ./bootstrap.sh
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+    execute_process(
+            COMMAND env CXXFLAGS=-std=c++11 ./configure --disable-superpage
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include ${CMAKE_CURRENT_SOURCE_DIR}/config.h")
 
