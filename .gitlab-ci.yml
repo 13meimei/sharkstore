@@ -23,10 +23,6 @@ gw_ci:
   - echo "build sharkstore gateway-server"
   - cd ${CI_PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
 
-  - echo "run gateway-server test....."
-  - cd ${CI_PROJECT_DIR}/proxy/gateway-server/
-  - go list ./... | grep -v 'proxy/gateway-server/server' | xargs go test
-
 ms_ci:
   stage: test
   script:

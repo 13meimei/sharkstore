@@ -138,7 +138,6 @@ func (ds *DsServer) Start() {
 		Header: &mspb.RequestHeader{},
 		ServerPort: ds.port,
 		RaftPort: ds.port,
-		HttpPort: ds.port,
 		Version: "v1",
 	}
 	getNodeIdResp, err := ds.cli.GetNodeId(getNodeIdReq)
@@ -164,7 +163,6 @@ func (ds *DsServer) Start() {
 		Id:     nodeId,
 		ServerAddr: fmt.Sprintf(":%d", ds.port),
 		RaftAddr: fmt.Sprintf(":%d", ds.port),
-		HttpAddr: fmt.Sprintf(":%d", ds.port),
 		State: metapb.NodeState_N_Login,
 		Version: "v1",
 	}
