@@ -29,7 +29,7 @@ public:
 	watch::WatchServer* WatchServer() override { return server_->range_server->watch_server_; }
     server::PersistServer* PersistServer() override { return server_->persist_server; }
 
-    uint64_t GetFSUsagePercent(const uint64_t seq) const override;
+    uint64_t GetDBUsagePercent(const uint64_t seq) const override;
 
     void ScheduleHeartbeat(uint64_t range_id, bool delay) override;
     void ScheduleCheckSize(uint64_t range_id) override;

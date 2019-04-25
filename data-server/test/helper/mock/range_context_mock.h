@@ -42,8 +42,8 @@ public:
     
     dataserver::server::PersistServer* PersistServer() override { return persist_server_.get(); }
 
-    void SetFSUsagePercent(uint64_t value) { db_usage_percent_ = value; }
-    uint64_t GetFSUsagePercent(const uint64_t seq) const override { return db_usage_percent_.load(); }
+    void SetDBUsagePercent(uint64_t value) { db_usage_percent_ = value; }
+    uint64_t GetDBUsagePercent(const uint64_t seq) const override { return db_usage_percent_.load(); }
 
     void ScheduleHeartbeat(uint64_t range_id, bool delay) override;
     void ScheduleCheckSize(uint64_t range_id) override;

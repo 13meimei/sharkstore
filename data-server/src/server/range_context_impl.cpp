@@ -47,7 +47,7 @@ RangeContextImpl::RangeContextImpl(ContextServer *s) :
     split_policy_(new DefaultSplitPolicy) {
 }
 
-uint64_t RangeContextImpl::GetFSUsagePercent(const uint64_t seq) const {
+uint64_t RangeContextImpl::GetDBUsagePercent(const uint64_t seq) const {
     if (seq == 1) {
         return server_->persist_run_status->GetDBUsedPercent();
     }

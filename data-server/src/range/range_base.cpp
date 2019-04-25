@@ -631,7 +631,7 @@ void RangeBase::CheckSplit(uint64_t size) {
 
 
 bool RangeBase::VerifyWriteable(errorpb::Error **err) {
-    auto percent = context_->GetFSUsagePercent(slave_flag_);
+    auto percent = context_->GetDBUsagePercent(slave_flag_);
     if (percent < kStopWriteFsUsagePercent) {
         return true;
     }

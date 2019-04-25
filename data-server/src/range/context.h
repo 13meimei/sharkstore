@@ -45,7 +45,7 @@ public:
     virtual server::PersistServer* PersistServer() = 0;
 
     // filesystem usage percent for check writable
-    virtual uint64_t GetFSUsagePercent(const uint64_t seq) const = 0;
+    virtual uint64_t GetDBUsagePercent(const uint64_t seq) const = 0;
 
     virtual void ScheduleHeartbeat(uint64_t range_id, bool delay) = 0;
     virtual void ScheduleCheckSize(uint64_t range_id) = 0;
