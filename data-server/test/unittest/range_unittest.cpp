@@ -263,8 +263,9 @@ protected:
         // sf_socket_thread_config_t manager_config;
         // sf_socket_thread_config_t worker_config;
         
-        strcpy(ds.engine_config.name, "rocksdb");
+//        strcpy(ds.engine_config.name, "rocksdb");
 //        strcpy(ds.engine_config.name, "memory");
+        strcpy(ds.engine_config.name, "mass-tree");
         
         ds_config.range_config.recover_concurrency = 1;
 
@@ -865,7 +866,8 @@ TEST_F(RangeTest, Range_Raw_PUT_GET_DELETE_RECOVER_2) {
         kvrpcpb::DsKvRawGetResponse resp;
         auto s = testRawGet(req, resp);
         ASSERT_TRUE(s.ok()) << s.ToString(); 
-        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+//        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+        ASSERT_EQ(resp.mutable_resp()->code(), Status::kNotFound) << "resp.code() error";
         ASSERT_EQ(std::string(resp.mutable_resp()->value()), "") << "resp vlaue error";
         
     }
@@ -885,7 +887,8 @@ TEST_F(RangeTest, Range_Raw_PUT_GET_DELETE_RECOVER_2) {
         auto s = testRawGet(req, resp);
 
         ASSERT_TRUE(s.ok()) << s.ToString(); 
-        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+//        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+        ASSERT_EQ(resp.mutable_resp()->code(), Status::kNotFound) << "resp.code() error";
         ASSERT_EQ(std::string(resp.mutable_resp()->value()), "") << "resp vlaue error";
     } 
 

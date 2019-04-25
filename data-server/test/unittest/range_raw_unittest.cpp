@@ -11,12 +11,12 @@
 #include "server/range_server.h"
 #include "server/run_status.h"
 #include "server/persist_server.h"
-#include "server/persist_server_impl.h"
 #include "storage/store.h"
 
 #include "helper/table.h"
 #include "helper/mock/raft_server_mock.h"
 #include "helper/mock/rpc_request_mock.h"
+#include "helper/mock/persist_server_mock.h"
 #include "helper/helper_util.h"
 
 int main(int argc, char *argv[]) {
@@ -45,12 +45,12 @@ protected:
         strcat(ds_config.rocksdb_config.path, std::to_string(NowMilliSeconds()).c_str());
         ds_config.range_config.recover_concurrency = 1;
 
-        ds_config.persist_config.persist_switch = 0;
+        ds_config.persist_config.persist_switch = 1;
 
         strcat(ds_config.async_rocksdb_config.path, ds_config.rocksdb_config.path );
         strcat(ds_config.async_rocksdb_config.path, "/asyn" );
         strcpy(ds_config.persist_config.persist_type, "rocksdb");
-        ds_config.persist_config.persist_threads = 10;
+        ds_config.persist_config.persist_threads = 1;
         ds_config.persist_config.persist_queue_size = 10000;
         ds_config.persist_config.persist_delay_size = 1;
 
@@ -62,14 +62,15 @@ protected:
         context_->range_server = range_server_;
         context_->raft_server = new RaftServerMock;
         context_->run_status = new server::RunStatus;
+        context_->persist_run_status = new server::RunStatus;
 
         PersistOptions opt;
-        opt.thread_num = 10;
+        opt.thread_num = 1;
         opt.delay_count = 1;
         opt.queue_capacity = 10000;
-        auto ps = CreatePersistServer(opt);
+        auto ps = CreatePersistServerMock(opt);
         context_->persist_server = ps.release();
-        //context_->persist_server->Init();
+        context_->persist_server->Init(context_);
         context_->persist_server->Start();
 
         range_server_->Init(context_);
@@ -78,13 +79,18 @@ protected:
     void TearDown() override {
         DestroyDB(ds_config.rocksdb_config.path, rocksdb::Options());
 
+        context_->persist_server->Stop();
+        delete context_->persist_server; 
+
         context_->range_server->Stop();
         delete context_->range_server;
         context_->raft_server->Stop();
         delete context_->raft_server;
-        delete context_->run_status;
-        context_->persist_server->Stop();
-        delete context_->persist_server;
+        delete context_->run_status; 
+        if (context_->persist_run_status != nullptr) {
+            delete context_->persist_run_status;
+            context_->persist_run_status = nullptr; 
+        }
         delete context_;
         if (strlen(ds_config.rocksdb_config.path) > 0) {
             RemoveDirAll(ds_config.rocksdb_config.path);
@@ -830,6 +836,14 @@ TEST_F(RawTest, Raw) {
 }
 
 TEST_F(RawTest, TestRangeSlave) {
+
+    context_->persist_server->Stop();
+    range_server_->Stop();
+
+    context_->persist_server->Init(context_);
+    context_->persist_server->Start(); 
+    range_server_->Init(context_);
+
     {
         // begin test create range
         schpb::CreateRangeRequest req;
@@ -901,6 +915,7 @@ TEST_F(RawTest, TestRangeSlave) {
                         std::static_pointer_cast<RangeSlave>(rng1->slave_range_)->trd_->size());
             }
         } while(true);
+
 
         // end test raw_put
     }

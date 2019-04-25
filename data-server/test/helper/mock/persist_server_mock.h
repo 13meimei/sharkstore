@@ -46,6 +46,7 @@ class PersistServerMock : public PersistServer {
         std::vector<WorkThread*> threads_;
 };
 
+std::unique_ptr<PersistServer> CreatePersistServerMock(const PersistOptions & ops);
 
 } /* namespace mock */
 } /* namespace test */

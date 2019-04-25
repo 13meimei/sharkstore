@@ -133,6 +133,11 @@ Status PersistServerMock::CreateReader(const uint64_t range_id,
     return Status::OK();
 }
 
+std::unique_ptr<PersistServer> CreatePersistServerMock(const PersistOptions & ops)
+{
+    return std::unique_ptr<PersistServer>(new PersistServerMock(ops));
+}
+
 } /* namespace server */
 } /* namespace dataserver  */
 } /* namespace sharkstore */
