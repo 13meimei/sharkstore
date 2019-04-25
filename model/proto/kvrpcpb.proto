@@ -21,7 +21,7 @@ message RequestHeader {
     // timestamp specifies time at which read or writes should be
     // performed. If the timestamp is set to zero value, its value
     // is initialized to the wall time of the receiving node.
-    timestamp.Timestamp timestamp  = 2;
+    tspb.Timestamp timestamp       = 2;
     uint64 trace_id                = 3;
     uint64 range_id                = 4;
     metapb.RangeEpoch range_epoch  = 5;
@@ -33,11 +33,11 @@ message ResponseHeader {
     // timestamp is set only for non-transactional responses and denotes the
     // highest timestamp at which a command from the batch executed. At the
     // time of writing, it is used solely for informational purposes and tests.
-    timestamp.Timestamp timestamp  = 2;
+    tspb.Timestamp timestamp       = 2;
     uint64 trace_id                = 3;
     // now is the current time at the node sending the response,
     // which can be used by the receiver to update its local HLC.
-    timestamp.Timestamp now        = 4;
+    tspb.Timestamp now             = 4;
     errorpb.Error     error        = 5;
     uint64 apply_index             = 6;
 }
@@ -229,7 +229,7 @@ message SelectRequest {
     repeated metapb.Column group_bys    = 5;       // group by column ids
     Limit limit                         = 6;       // max range query num, 0 means no limit
 
-    timestamp.Timestamp timestamp       = 7;       // timestamp
+    tspb.Timestamp timestamp            = 7;       // timestamp
     MatchExt ext_filter                 = 10;      // extend where condition
 }
 
@@ -273,7 +273,7 @@ message DsInsertResponse {
 message InsertRequest {
     repeated KeyValue rows  = 1; // 多行
     bool  check_duplicate   = 2; // 是否检查对应的主键已经存在
-    timestamp.Timestamp timestamp  = 3;
+    tspb.Timestamp timestamp  = 3;
 }
 
 message InsertResponse {
@@ -307,7 +307,7 @@ message DeleteRequest {
     Scope scope                     = 2; // 删除某个范围
     repeated Match where_filters    = 3;
     repeated uint64 indexs          = 4; // 删除操作同时需要删除索引记录，因此提供对应的索引列
-    timestamp.Timestamp timestamp   = 10;
+    tspb.Timestamp timestamp   = 10;
 }
 
 message DeleteResponse {
@@ -596,7 +596,7 @@ message LockValue {
 message LockRequest {
     bytes key               = 1;
     LockValue value         = 2;
-    timestamp.Timestamp timestamp  = 10;
+    tspb.Timestamp timestamp  = 10;
 }
 
 message DsLockRequest {
@@ -631,7 +631,7 @@ message LockUpdateRequest {
     string id               = 3;
     int64 delete_time       = 5;
     bytes update_value      = 6;
-    timestamp.Timestamp timestamp  = 10;
+    tspb.Timestamp timestamp  = 10;
     string by               = 11;
 }
 
@@ -648,7 +648,7 @@ message DsLockUpdateResponse {
 message UnlockRequest {
     bytes key               = 1;
     string id               = 3;
-    timestamp.Timestamp timestamp  = 10;
+    tspb.Timestamp timestamp  = 10;
     string by               = 11;
 }
 
@@ -664,7 +664,7 @@ message DsUnlockResponse {
 
 message UnlockForceRequest {
     bytes key               = 1;
-    timestamp.Timestamp timestamp  = 10;
+    tspb.Timestamp timestamp  = 10;
     string by               = 11;
 }
 

@@ -193,5 +193,47 @@ TEST(Encoding, AscInt) {
     ASSERT_EQ(value, 1);
 }
 
+TEST(Encoding, DescUvarint) {
+    auto testFunc = [](uint64_t value, const std::string expected_hex) {
+        std::string buf;
+        EncodeUvarintDescending(&buf, value);
+        if (!expected_hex.empty()) {
+            ASSERT_EQ(toHex(buf), expected_hex) << "incorrect encoded result: " << toHex(buf) << std::endl;
+        }
+
+        uint64_t decode_value = 0;
+        size_t offset = 0;
+        ASSERT_TRUE(DecodeUvarintDescending(buf, offset, &decode_value));
+        ASSERT_EQ(offset, buf.size());
+        ASSERT_EQ(value, decode_value);
+    };
+
+    testFunc(0, "88");
+    testFunc(1, "87fe");
+
+    testFunc(0xff, "8700");   // 1
+    testFunc(0xff + 1, "86feff");
+
+    testFunc(0xffffUL, "860000"); // 2
+    testFunc(0xffffUL + 1, "85feffff");
+
+    testFunc(0xffffffUL, "85000000"); // 3
+    testFunc(0xffffffUL + 1, "84feffffff");
+
+    testFunc(0xffffffffUL, "8400000000"); // 4
+    testFunc(0xffffffffUL + 1, "83feffffffff");
+
+    testFunc(0xffffffffffUL, "830000000000"); // 5
+    testFunc(0xffffffffffUL + 1, "82feffffffffff");
+
+    testFunc(0xffffffffffffUL, "82000000000000"); // 6
+    testFunc(0xffffffffffffUL + 1, "81feffffffffffff");
+
+    testFunc(0xffffffffffffffUL, "8100000000000000"); // 7
+    testFunc(0xffffffffffffffUL + 1, "80feffffffffffffff");
+
+    testFunc(std::numeric_limits<uint64_t>::max(), "800000000000000000"); // 8
+}
+
 // end namespace
 }

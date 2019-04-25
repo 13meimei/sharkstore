@@ -91,8 +91,9 @@ func init() {
 	msgType[uint16(funcpb.FunctionID_kFuncTxnPrepare)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncTxnDecide)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncTxnClearup)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncTxnSelect)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncTxnGetLockInfo)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnSelect)] = &MsgTypeGroup{0x02, 0x12}
+	msgType[uint16(funcpb.FunctionID_kFuncTxnScan)] = &MsgTypeGroup{0x02, 0x12}
 
 	msgType[uint16(funcpb.FunctionID_kFuncCreateRange)] = &MsgTypeGroup{0x01, 0x11}
 	msgType[uint16(funcpb.FunctionID_kFuncDeleteRange)] = &MsgTypeGroup{0x01, 0x11}
@@ -173,6 +174,7 @@ type RpcClient interface {
 	TxCleanup(ctx context.Context, in *txnpb.DsClearupRequest) (*txnpb.DsClearupResponse, error)
 	TxSelect(ctx context.Context, in *txnpb.DsSelectRequest) (*txnpb.DsSelectResponse, error)
 	TxGetLock(ctx context.Context, in *txnpb.DsGetLockInfoRequest) (*txnpb.DsGetLockInfoResponse, error)
+	TxScan(ctx context.Context, in *txnpb.DsScanRequest) (*txnpb.DsScanResponse, error)
 
 	// admin
 	CreateRange(ctx context.Context, in *schpb.CreateRangeRequest) (*schpb.CreateRangeResponse, error)
@@ -780,6 +782,17 @@ func (c *DSRpcClient) TxGetLock(ctx context.Context, in *txnpb.DsGetLockInfoRequ
 		fastFlag = 1
 	}
 	msgId, err := c.executeWithFlags(uint16(funcpb.FunctionID_kFuncTxnGetLockInfo), ctx, in, out, fastFlag)
+	in.GetHeader().TraceId = msgId
+	if err != nil {
+		return nil, err
+	} else {
+		return out, nil
+	}
+}
+
+func (c *DSRpcClient) TxScan(ctx context.Context, in *txnpb.DsScanRequest) (*txnpb.DsScanResponse, error) {
+	out := new(txnpb.DsScanResponse)
+	msgId, err := c.executeWithFlags(uint16(funcpb.FunctionID_kFuncTxnScan), ctx, in, out, 0)
 	in.GetHeader().TraceId = msgId
 	if err != nil {
 		return nil, err

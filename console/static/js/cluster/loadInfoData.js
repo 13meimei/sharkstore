@@ -5,14 +5,16 @@ $(function () {
     datePairs($('#startGateWay'), $('#endGateWay'));
     datePairs($('#startEvent'), $('#endEvent'));
 });
-function formatDate(formatDate){
-    function padding(str){
-        if(str > 0 && str < 10){
+
+function formatDate(formatDate) {
+    function padding(str) {
+        if (str > 0 && str < 10) {
             return '0' + str;
-        }else{
+        } else {
             return str;
         }
     }
+
     var year = formatDate.getFullYear(),
         month = padding(formatDate.getMonth() + 1),
         date = padding(formatDate.getDate()),
@@ -394,11 +396,11 @@ function viewNodeMonitor(nodeId, host) {
     window.location.href = "/monitor/nodeMonitor?nodeId=" + nodeId + "&host=" + host + "&clusterId=" + clusterId;
 }
 
-//修改node状态， force上线(initail)、下线logout//todo 是否需要支持其他状态 ：login、tombstone、offline
+//修改node状态， 上线login、下线logout//todo 是否需要支持其他状态 ：tombstone、offline
 function updateNodeStatus(nodeId) {
     swal({
             title: "实例状态操作",
-            text: "<select class='form-control' id='selectNodeStatus' style='height: 33px'><option value='1'>force上线</option><option value='2'>下线</option></select>",
+            text: "<select class='form-control' id='selectNodeStatus' style='height: 33px'><option value='1'>上线login</option><option value='2'>下线logout</option></select>",
             html: true,
             showCancelButton: true,
             confirmButtonColor: "#DD6B55",
@@ -714,7 +716,8 @@ function getDsInfoOfNode(nodeId) {
                     if (data.code === 0) {
                         var info_html = "<textarea style='overflow: auto;width: 100%;height: 100px' readonly >" + data.data + "</textarea>";
                         //swal("DS运行信息", info, "success");
-                        swal({title: "info",
+                        swal({
+                            title: "info",
                             text: info_html,
                             html: true,
                             type: "success"

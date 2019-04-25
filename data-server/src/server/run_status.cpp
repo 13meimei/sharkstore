@@ -18,6 +18,10 @@ namespace sharkstore {
 namespace dataserver {
 namespace server {
 
+RunStatus::RunStatus() :
+    system_status_(monitor::SystemStatus::New()) {
+}
+
 int RunStatus::Init(ContextServer *context, const uint64_t seq) {
     context_ = context;
     seq_ = seq;
@@ -46,7 +50,7 @@ void RunStatus::Stop() {
 
 void RunStatus::run() {
     while (g_continue_flag) {
-        collectDiskUsage();
+        collectDBUsage();
         printDBMetric();
         context_->worker->PrintQueueSize();
         printStatistics();
@@ -57,25 +61,30 @@ void RunStatus::run() {
     }
 }
 
-bool RunStatus::GetFilesystemUsage(FileSystemUsage* usage) {
+bool RunStatus::GetDBUsage(DBUsage* usage) {
     uint64_t total = 0, available = 0;
-    const char *tmp = ds_config.rocksdb_config.path;
+    bool ret = false;
     if (1 == seq_) {
-        tmp = ds_config.async_rocksdb_config.path;
+        ret = system_status_->GetFileSystemUsage(ds_config.async_rocksdb_config.path, &total, &available);
+    } else {
+        if (context_->db->IsInMemory()) {
+            ret = system_status_->GetMemoryUsage(&total, &available);
+        } else {
+            ret = system_status_->GetFileSystemUsage(ds_config.rocksdb_config.path, &total, &available);
+        }
     }
-    if (system_status_.GetFileSystemUsage(tmp, &total, &available)) {
+    if (ret) {
         if (total > 0 && available <= total) {
             usage->total_size = total;
             usage->free_size = available;
             usage->used_size = total - available;
             return true;
         } else {
-            FLOG_ERROR("collect filesystem usage error(invalid size: %" PRIu64 ":%" PRIu64 ") ",
-                    total, available);
+            FLOG_ERROR("collect db usage error(invalid size: %" PRIu64 ":%" PRIu64 ") ", total, available);
             return false;
         }
     } else {
-        FLOG_ERROR("collect filesystem usage error: %s", strErrno(errno).c_str());
+        FLOG_ERROR("collect db usage error: %s", strErrno(errno).c_str());
         return false;
     }
 }
@@ -94,11 +103,11 @@ uint64_t RunStatus::GetLeaderCount() const {
     return leaders_.size();
 }
 
-// 定时采集磁盘使用率
-void RunStatus::collectDiskUsage() {
-    FileSystemUsage usage;
-    if (GetFilesystemUsage(&usage)) {
-        fs_usage_percent_ = usage.used_size * 100/ usage.total_size;
+// 定时采集db的磁盘或内存使用率
+void RunStatus::collectDBUsage() {
+    DBUsage usage;
+    if (GetDBUsage(&usage)) {
+        db_usage_percent_ = usage.used_size * 100/ usage.total_size;
     }
 }
 
@@ -108,10 +117,10 @@ void RunStatus::printStatistics() {
 }
 
 void RunStatus::printDBMetric() {
-    assert(context_->db != nullptr);
-    context_->db->PrintMetric();
     if (1 == seq_) {
-        context_->pdb->PrintMetric();
+        FLOG_INFO("DB Metric: %s", context_->pdb->GetMetrics().c_str());
+    } else {
+        FLOG_INFO("DB Metric: %s", context_->db->GetMetrics().c_str());
     }
 }
 

@@ -17,6 +17,8 @@ public:
     ~SkipListDBImpl() = default;
 
 public:
+    bool IsInMemory() override { return true; }
+
     Status Open() override { return Status::OK(); }
 
     Status Get(const std::string& key, std::string* value) override;
@@ -42,7 +44,7 @@ public:
 
     Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
-    void PrintMetric() override;
+    std::string GetMetrics() override;
 
 private:
     memstore::Store<std::string> db_;

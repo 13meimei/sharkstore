@@ -343,3 +343,26 @@ func (p *KvProxy) TxGetLock(rContext *ReqContext, req *txnpb.GetLockInfoRequest,
 	response := resp.GetTxLockInfoResp().GetResp()
 	return response, nil
 }
+
+func (p *KvProxy) TxScan(rContext *ReqContext, req *txnpb.ScanRequest, key []byte) (*txnpb.ScanResponse, error) {
+	startTime := time.Now()
+	in := GetRequest()
+	defer PutRequest(in)
+	in.Type = Type_TxScan
+	in.TxScanReq = &txnpb.DsScanRequest{
+		Header: &kvrpcpb.RequestHeader{},
+		Req:    req,
+	}
+	resp, _, err := p.do(rContext.GetBackOff(), in, key)
+	delay := time.Now().Sub(startTime)
+	if err != nil {
+		metric.GsMetric.StoreApiMetric("ScanKeyValue", false, delay)
+	} else {
+		metric.GsMetric.StoreApiMetric("ScanKeyValue", true, delay)
+	}
+	if err != nil {
+		return nil, err
+	}
+	response := resp.GetTxScanResp().GetResp()
+	return response, nil
+}

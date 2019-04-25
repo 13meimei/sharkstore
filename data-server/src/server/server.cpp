@@ -91,6 +91,7 @@ bool DataServer::startRaftServer() {
     ops.transport_options.listen_port = static_cast<uint16_t>(ds_config.raft_config.port);
     ops.transport_options.send_io_threads = ds_config.raft_config.transport_send_threads;
     ops.transport_options.recv_io_threads = ds_config.raft_config.transport_recv_threads;
+    ops.transport_options.connection_pool_size = ds_config.raft_config.connection_pool_size;
     ops.transport_options.resolver =
         std::make_shared<NodeAddress>(context_->master_worker);
 

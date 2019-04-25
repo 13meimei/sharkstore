@@ -26,12 +26,8 @@
 #include "storage/metric.h"
 #include "run_status.h"
 #include "monitor/statistics.h"
+#include "storage/db/db_factory.h"
 
-#include "storage/db/rocksdb_impl/rocksdb_impl.h"
-#include "storage/db/skiplist_impl/skiplist_impl.h"
-#ifdef SHARK_USE_BWTREE
-#include "storage/db/bwtree_impl/bwtree_db_impl.h"
-#endif
 
 #include "server.h"
 #include "range_context_impl.h"
@@ -117,7 +113,7 @@ int RangeServer::Init(ContextServer *context) {
 
     // 初始化WatchServer
     // TODO: enable
-   // watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
+    watch_server_ = new watch::WatchServer(ds_config.watch_config.watcher_set_size);
 
     std::vector<metapb::Range> range_metas;
     ret = meta_store_->GetAllRange(&range_metas);
@@ -213,32 +209,13 @@ void RangeServer::Stop() {
 }
 
 int RangeServer::OpenDB() {
-    std::string engine_name(ds_config.engine_config.name);
-    if (strcasecmp(engine_name.c_str(), "rocksdb") == 0) {
-        print_rocksdb_config();
-        db_ = new storage::RocksDBImpl(ds_config.rocksdb_config);
-    } else if (strcasecmp(engine_name.c_str(), "memory") == 0) {
-        db_ = new storage::SkipListDBImpl();
-    } else if (strcasecmp(engine_name.c_str(), "bwtree") == 0) {
-#ifdef SHARK_USE_BWTREE
-        db_ = new storage::BwTreeDBImpl();
-#else
-        FLOG_ERROR("bwtree is not enabled. confirm build opition ENABLE_BWTREE is on");
+    auto ret = storage::OpenDB(ds_config, &db_);
+    if (!ret.ok()) {
+        FLOG_ERROR("OpenDB failed: %s", ret.ToString().c_str());
         return -1;
-#endif
     } else {
-        FLOG_ERROR("unknown engine name: %s", engine_name.c_str());
+        return 0;
     }
-
-    auto s = db_->Open();
-    if (!s.ok()) {
-        FLOG_ERROR("open %s db failed: %s", engine_name.c_str(), s.ToString().c_str());
-        return -1;
-    } else {
-        FLOG_INFO("open %s db successfully", engine_name.c_str());
-    } 
-
-    return 0;
 }
 
 void RangeServer::CloseDB() {
@@ -315,39 +292,39 @@ void RangeServer::DealTask(RPCRequestPtr rpc) {
             ForwardToRange<kvrpcpb::DsDeleteRequest, kvrpcpb::DsDeleteResponse>(rpc, &Range::Delete);
             break;
 
-//        // Watch methods
-//        case funcpb::kFuncWatchGet:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsWatchRequest, watchpb::DsWatchResponse, WatchGet);
-//            break;
-//        case funcpb::kFuncPureGet:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchGetMultiRequest, watchpb::DsKvWatchGetMultiResponse, PureGet);
-//            break;
-//        case funcpb::kFuncWatchPut:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchPutRequest, watchpb::DsKvWatchPutResponse, WatchPut);
-//            break;
-//        case funcpb::kFuncWatchDel:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsKvWatchDeleteRequest, watchpb::DsKvWatchDeleteResponse, WatchDel);
-//            break;
+        // Watch methods
+        case funcpb::kFuncWatchGet:
+            ForwardToRange<watchpb::DsWatchRequest, watchpb::DsWatchResponse>(rpc, &Range::WatchGet);
+            break;
+        case funcpb::kFuncPureGet:
+            ForwardToRange<watchpb::DsKvWatchGetMultiRequest, watchpb::DsKvWatchGetMultiResponse>(rpc, &Range::PureGet);
+            break;
+        case funcpb::kFuncWatchPut:
+            ForwardToRange<watchpb::DsKvWatchPutRequest, watchpb::DsKvWatchPutResponse>(rpc, &Range::WatchPut);
+            break;
+        case funcpb::kFuncWatchDel:
+            ForwardToRange<watchpb::DsKvWatchDeleteRequest, watchpb::DsKvWatchDeleteResponse>(rpc, &Range::WatchDel);
+            break;
 
         // lock methods
-//        case funcpb::kFuncLock:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockRequest, kvrpcpb::DsLockResponse, Lock);
-//            break;
-//        case funcpb::kFuncLockUpdate:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockUpdateRequest, kvrpcpb::DsLockUpdateResponse, LockUpdate);
-//            break;
-//        case funcpb::kFuncUnlock:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsUnlockRequest, kvrpcpb::DsUnlockResponse, Unlock);
-//            break;
-//        case funcpb::kFuncUnlockForce:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsUnlockForceRequest, kvrpcpb::DsUnlockForceResponse, UnlockForce);
-//            break;
-//        case funcpb::kFuncLockWatch:
-//            FORWARD_TO_RANGE(rpc, watchpb::DsWatchRequest, watchpb::DsWatchResponse, LockWatch);
-//            break;
-//        case funcpb::kFuncLockGet:
-//            FORWARD_TO_RANGE(rpc, kvrpcpb::DsLockGetRequest, kvrpcpb::DsLockGetResponse, LockGet);
-//            break;
+        case funcpb::kFuncLock:
+            ForwardToRange<kvrpcpb::DsLockRequest, kvrpcpb::DsLockResponse>(rpc, &Range::Lock);
+            break;
+        case funcpb::kFuncLockUpdate:
+            ForwardToRange<kvrpcpb::DsLockUpdateRequest, kvrpcpb::DsLockUpdateResponse>(rpc, &Range::LockUpdate);
+            break;
+        case funcpb::kFuncUnlock:
+            ForwardToRange<kvrpcpb::DsUnlockRequest, kvrpcpb::DsUnlockResponse>(rpc, &Range::Unlock);
+            break;
+        case funcpb::kFuncUnlockForce:
+            ForwardToRange<kvrpcpb::DsUnlockForceRequest, kvrpcpb::DsUnlockForceResponse>(rpc, &Range::UnlockForce);
+            break;
+        case funcpb::kFuncLockWatch:
+            ForwardToRange<watchpb::DsWatchRequest, watchpb::DsWatchResponse>(rpc, &Range::LockWatch);
+            break;
+        case funcpb::kFuncLockGet:
+            ForwardToRange<kvrpcpb::DsLockGetRequest, kvrpcpb::DsLockGetResponse>(rpc, &Range::LockGet);
+            break;
 
         // redis method
         case funcpb::kFuncKvSet:
@@ -390,6 +367,9 @@ void RangeServer::DealTask(RPCRequestPtr rpc) {
             break;
         case funcpb::kFuncTxnSelect:
             ForwardToRange<txnpb::DsSelectRequest, txnpb::DsSelectResponse>(rpc, &Range::TxnSelect);
+            break;
+        case funcpb::kFuncTxnScan:
+            ForwardToRange<txnpb::DsScanRequest, txnpb::DsScanResponse>(rpc, &Range::TxnScan);
             break;
         default:
             FLOG_ERROR("func id is Invalid %d", header.func_id);
@@ -1047,12 +1027,12 @@ void RangeServer::CollectNodeHeartbeat(mspb::NodeHeartbeatRequest *req) {
     stats->set_receiving_snap_count(rss.total_snap_applying);
     stats->set_applying_snap_count(rss.total_snap_applying);
 
-    // collect file system usage
-    FileSystemUsage fs_usage;
-    context_->run_status->GetFilesystemUsage(&fs_usage);
-    stats->set_capacity(fs_usage.total_size);
-    stats->set_used_size(fs_usage.used_size);
-    stats->set_available(fs_usage.free_size);
+    // collect db usage
+    DBUsage db_usage;
+    context_->run_status->GetDBUsage(&db_usage);
+    stats->set_capacity(db_usage.total_size);
+    stats->set_used_size(db_usage.used_size);
+    stats->set_available(db_usage.free_size);
 
     // collect storage metric
     storage::MetricStat mstat;

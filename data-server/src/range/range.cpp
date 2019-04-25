@@ -1,6 +1,7 @@
 #include "range.h"
 
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include <common/ds_config.h>
 #include "common/ds_config.h"
 #include "master/worker.h"
 #include "server/range_server.h"
@@ -21,13 +22,13 @@ static const int kDownPeerThresholdSecs = 50;
 
 Range::Range(RangeContext* context, const metapb::Range &meta) : RangeBase(context, meta) {
 //      store_ = std::unique_ptr<storage::Store>(new storage::Store(meta, context->DBInstance()));
-//      eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
-//                                          ds_config.watch_config.buffer_queue_size);
+    eventBuffer = new watch::CEventBuffer(ds_config.watch_config.buffer_map_size,
+                                          ds_config.watch_config.buffer_queue_size);
+    save_apply_index_ = !(context->DBInstance()->IsInMemory());
 }
 
-
 Range::~Range() {
-//    delete eventBuffer;
+    delete eventBuffer;
 }
 
 Status Range::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sflag) {
@@ -57,6 +58,9 @@ Status Range::Initialize(uint64_t leader, uint64_t log_start_index, uint64_t sfl
     options.leader = leader;
     options.applied = apply_index_;
     options.statemachine = shared_from_this();
+    if (ds_config.raft_config.in_memory_log) {
+        options.use_memory_storage = true;
+    }
     options.log_file_size = ds_config.raft_config.log_file_size;
     options.max_log_files = ds_config.raft_config.max_log_files;
     options.allow_log_corrupt = ds_config.raft_config.allow_log_corrupt > 0;
@@ -305,10 +309,12 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
     }
 
     apply_index_ = index;
-    auto s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
-    if (!s.ok()) {
-        RANGE_LOG_ERROR("save apply index error %s", s.ToString().c_str());
-        return s;
+    if (save_apply_index_) {
+        auto s = context_->MetaStore()->SaveApplyIndex(id_, apply_index_);
+        if (!s.ok()) {
+            RANGE_LOG_ERROR("save apply index error %s", s.ToString().c_str());
+            return s;
+        }
     }
 
     auto end = std::chrono::system_clock::now();
@@ -328,15 +334,21 @@ Status Range::Apply(const std::string &cmd, uint64_t index) {
 }
 
 Status Range::Submit(const raft_cmdpb::Command &cmd) {
-    if (is_leader_) {
-        std::string str_cmd = cmd.SerializeAsString();
-        if (str_cmd.empty()) {
-            return Status(Status::kCorruption, "protobuf serialize failed", "");
+    if (!ds_config.raft_config.disabled) {
+        if (is_leader_) {
+            std::string str_cmd = cmd.SerializeAsString();
+            if (str_cmd.empty()) {
+                return Status(Status::kCorruption, "protobuf serialize failed", "");
+            }
+            return raft_->Submit(str_cmd);
+            // return Apply(cmd,0);
+        } else {
+            return Status(Status::kNotLeader, "Not Leader", "");
         }
-        return raft_->Submit(str_cmd);
-        // return Apply(cmd,0);
     } else {
-        return Status(Status::kNotLeader, "Not Leader", "");
+        static std::atomic<uint64_t> fake_index = {0};
+        Apply(cmd, ++fake_index);
+        return Status::OK();
     }
 }
 
@@ -536,13 +548,13 @@ bool Range::VerifyReadable(uint64_t read_index, errorpb::Error *&err) {
 }
 /*
 bool Range::VerifyWriteable(errorpb::Error **err) {
-    auto percent = context_->GetFSUsagePercent();
-    if (percent < kStopWriteFsUsagePercent) {
+    auto percent = context_->GetDBUsagePercent();
+    if (percent < kStopWriteDBUsagePercent) {
         return true;
     }
 
-    RANGE_LOG_ERROR("filesystem usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
-            percent, kStopWriteFsUsagePercent);
+    RANGE_LOG_ERROR("db usage percent(%" PRIu64 "> %" PRIu64 ") limit reached, reject write request",
+            percent, kStopWriteDBUsagePercent);
 
     if (err != nullptr) {
         auto no_left_space_err = new errorpb::Error;

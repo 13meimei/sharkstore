@@ -40,6 +40,8 @@ protected:
     Status testUpdate(const std::function<void(UpdateRequestBuilder&)>& build_func,
                       uint64_t expected_affected);
 
+    Status putTxn(const std::string& key, const txnpb::TxnValue& value);
+
 protected:
     std::string encodeWatchKey(const std::vector<std::string>& keys);
     Status testParseWatchSplitKey(const std::vector<std::string>& keys);

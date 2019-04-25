@@ -792,6 +792,7 @@ func (svr *DsRpcServer) txPrepare(msg *dsClient.Message) {
 	if err != nil {
 		resp = &txnpb.DsPrepareResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "deserialize txPrepare request failed"}}}
 	} else {
+		log.Info("tx prepare: %+v", *req)
 
 		//rangeId := req.Header.GetRangeId()
 		//rng := svr.GetRange(rangeId)
@@ -801,16 +802,19 @@ func (svr *DsRpcServer) txPrepare(msg *dsClient.Message) {
 		//	rngEpoch := req.Header.GetRangeEpoch()
 		//
 		//	if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
-		//		num := 0
-		//		for _, row := range req.GetReq().Rows {
-		//			err := svr.store.Put(row.Key, row.Value)
-		//			if err == nil {
-		//				num++
+		//		if req.GetReq().GetLocal() {
+		//			num := 0
+		//			for _, row := range req.GetReq().Rows {
+		//				err := svr.store.Put(row.Key, row.Value)
+		//				if err == nil {
+		//					num++
+		//				}
+		//
 		//			}
-		//
+		//			resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 0, AffectedKeys: uint64(num)}}
+		//		} else {
+		//			// todo put txn column family
 		//		}
-		//
-		//		resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 0, AffectedKeys: uint64(num)}}
 		//	} else {
 		//		resp = &kvrpcpb.DsInsertResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.InsertResponse{Code: 1, AffectedKeys: uint64(0)}}
 		//
@@ -835,6 +839,7 @@ func (svr *DsRpcServer) txDecide(msg *dsClient.Message) {
 	if err != nil {
 		resp = &txnpb.DsDecideResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "tx decide failed"}}}
 	} else {
+		// todo
 		resp = &txnpb.DsDecideResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &txnpb.DecideResponse{}}
 	}
 	data, _ := proto.Marshal(resp)
@@ -849,6 +854,7 @@ func (svr *DsRpcServer) txClearup(msg *dsClient.Message) {
 	if err != nil {
 		resp = &txnpb.DsClearupResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "tx clear up failed"}}}
 	} else {
+		// todo
 		resp = &txnpb.DsClearupResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &txnpb.ClearupResponse{}}
 	}
 	data, _ := proto.Marshal(resp)

@@ -29,8 +29,8 @@ _Pragma("once");
 #include "context.h"
 #include "submit.h"
 
-//#include "watch/watch_event_buffer.h"
-//#include "watch/watcher.h"
+#include "watch/watch_event_buffer.h"
+#include "watch/watcher.h"
 // for test friend class
 namespace sharkstore { namespace test { namespace helper { class RangeTestFixture; }}}
 

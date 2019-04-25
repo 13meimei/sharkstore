@@ -17,14 +17,12 @@
 #include "helper/table.h"
 #include "helper/mock/raft_server_mock.h"
 #include "helper/mock/rpc_request_mock.h"
+#include "helper/helper_util.h"
 
 int main(int argc, char *argv[]) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-
-//char level[8] = "warn";
-char level[8] = "debug";
 
 using namespace sharkstore::test::helper;
 using namespace sharkstore::test::mock;
@@ -36,8 +34,7 @@ using namespace sharkstore::dataserver::storage;
 class RawTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        log_init2();
-        set_log_level(level);
+        InitLog();
 
         //strcpy(ds_config.engine_config.name, "rocksdb");
         strcpy(ds_config.engine_config.name, "memory");
@@ -86,8 +83,9 @@ protected:
         context_->persist_server->Stop();
         delete context_->persist_server;
         delete context_;
-
-        FLOG_DEBUG("TearDown...");
+        if (strlen(ds_config.rocksdb_config.path) > 0) {
+            RemoveDirAll(ds_config.rocksdb_config.path);
+        }
     }
 
     Status testRawPut(const kvrpcpb::DsKvRawPutRequest& req, kvrpcpb::DsKvRawPutResponse& resp) {

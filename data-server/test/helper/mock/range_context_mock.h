@@ -42,8 +42,8 @@ public:
     
     dataserver::server::PersistServer* PersistServer() override { return persist_server_.get(); }
 
-    void SetFSUsagePercent(uint64_t value) { fs_usage_percent_ = value; }
-    uint64_t GetFSUsagePercent(const uint64_t seq) const override { return fs_usage_percent_.load(); }
+    void SetFSUsagePercent(uint64_t value) { db_usage_percent_ = value; }
+    uint64_t GetFSUsagePercent(const uint64_t seq) const override { return db_usage_percent_.load(); }
 
     void ScheduleHeartbeat(uint64_t range_id, bool delay) override;
     void ScheduleCheckSize(uint64_t range_id) override;
@@ -65,7 +65,7 @@ private:
     std::unique_ptr<SplitPolicy> split_policy_;
 //    std::unique_ptr<watch::WatchServer> watch_server_;
 
-    std::atomic<uint64_t> fs_usage_percent_ = {0};
+    std::atomic<uint64_t> db_usage_percent_ = {0};
 
     std::map<uint64_t, std::shared_ptr<Range>> ranges_;
     std::mutex mu_;

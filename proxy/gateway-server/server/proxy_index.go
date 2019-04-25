@@ -1,10 +1,14 @@
 package server
 
 import (
+	"fmt"
+	"bytes"
 	"util"
 	"util/log"
 	"model/pkg/metapb"
 	"model/pkg/kvrpcpb"
+	"model/pkg/txn"
+	"proxy/store/dskv"
 )
 
 // EncodeIndexes: encode unique and non-unique index data
@@ -45,7 +49,8 @@ func (p *Proxy) encodeNonUniqueIndexRows(t *Table, indexCols []*metapb.Column, c
 
 	for _, col := range indexCols {
 		var (
-			key, indexValue, value []byte
+			indexValue []byte
+			kv         *kvrpcpb.KeyValue
 		)
 		colIndex, ok := colMap[col.GetName()]
 		if !ok {
@@ -53,23 +58,29 @@ func (p *Proxy) encodeNonUniqueIndexRows(t *Table, indexCols []*metapb.Column, c
 		} else {
 			indexValue = rowValue[colIndex]
 		}
-
-		key, err = encodeUniqueIndexKey(t, col, indexValue)
+		kv, err = encodeNonUniqueIndexKv(t, colMap, col, indexValue, rowValue)
 		if err != nil {
 			return nil, err
 		}
-
-		key, err = encodePrimaryKeys(t, key, colMap, rowValue)
-		if err != nil {
-			return nil, err
-		}
-
-		keyValues = append(keyValues, &kvrpcpb.KeyValue{
-			Key:   key,
-			Value: value,
-		})
+		keyValues = append(keyValues, kv)
 	}
 	return keyValues, nil
+}
+
+func encodeNonUniqueIndexKv(t *Table, colMap map[string]int, idxCol *metapb.Column, idxVal []byte, rowValue InsertRowValue) (*kvrpcpb.KeyValue, error) {
+	key, err := encodeUniqueIndexKey(t, idxCol, idxVal)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err = encodePrimaryKeys(t, key, colMap, rowValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return &kvrpcpb.KeyValue{
+		Key: key,
+	}, nil
 }
 
 // Format of Unique Index Storage Structure:
@@ -90,7 +101,8 @@ func (p *Proxy) encodeUniqueIndexRows(t *Table, indexCols []*metapb.Column, colM
 
 	for _, col := range indexCols {
 		var (
-			key, indexValue, value []byte
+			indexValue []byte
+			kv         *kvrpcpb.KeyValue
 		)
 		colIndex, ok := colMap[col.GetName()]
 		if !ok {
@@ -98,22 +110,29 @@ func (p *Proxy) encodeUniqueIndexRows(t *Table, indexCols []*metapb.Column, colM
 		} else {
 			indexValue = rowValue[colIndex]
 		}
-
-		key, err = encodeUniqueIndexKey(t, col, indexValue)
+		kv, err = encodeUniqueIndexKV(t, colMap, col, indexValue, rowValue)
 		if err != nil {
 			return nil, err
 		}
-
-		value, err = encodePrimaryKeys(t, value, colMap, rowValue)
-		if err != nil {
-			return nil, err
-		}
-		keyValues = append(keyValues, &kvrpcpb.KeyValue{
-			Key:   key,
-			Value: value,
-		})
+		keyValues = append(keyValues, kv)
 	}
 	return keyValues, nil
+}
+
+func encodeUniqueIndexKV(t *Table, colMap map[string]int, idxCol *metapb.Column, idxVal []byte, rowValue InsertRowValue) (*kvrpcpb.KeyValue, error) {
+	key, err := encodeUniqueIndexKey(t, idxCol, idxVal)
+	if err != nil {
+		return nil, err
+	}
+	var value []byte
+	value, err = encodePrimaryKeys(t, value, colMap, rowValue)
+	if err != nil {
+		return nil, err
+	}
+	return &kvrpcpb.KeyValue{
+		Key:   key,
+		Value: value,
+	}, nil
 }
 
 func encodeUniqueIndexKey(t *Table, col *metapb.Column, idxDefVal []byte) ([]byte, error) {
@@ -141,4 +160,119 @@ func initValueByDataType(col *metapb.Column) []byte {
 	//case metapb.DataType_Varchar, metapb.DataType_Binary, metapb.DataType_Date, metapb.DataType_TimeStamp:
 	//}
 	return value
+}
+
+// EncodeIndexesForUpd: encode unique and non-unique index data, insert and delete
+func (p *Proxy) EncodeIndexesForUpd(ctx *dskv.ReqContext, t *Table, colMap map[string]int, oldRowValue, newRowValue InsertRowValue) ([]*txnpb.TxnIntent, error) {
+	var (
+		idxIntents []*txnpb.TxnIntent
+		err        error
+	)
+	uniqueIndexCols := t.AllUniqueIndexes()
+	nonUniqueIndexCols := t.AllNonUniqueIndexes()
+
+	if len(uniqueIndexCols) > 0 {
+		for _, col := range uniqueIndexCols {
+			var (
+				oldIdxVal, newIdxVal []byte
+				delKv, insertKv      *kvrpcpb.KeyValue
+			)
+			colIndex, ok := colMap[col.GetName()]
+			if !ok {
+				err = fmt.Errorf("")
+				return nil, err
+			}
+			oldIdxVal = oldRowValue[colIndex]
+			newIdxVal = newRowValue[colIndex]
+			if bytes.Compare(oldIdxVal, newIdxVal) == 0 {
+				continue
+			}
+
+			delKv, err = encodeUniqueIndexKV(t, colMap, col, oldIdxVal, oldRowValue)
+			if err != nil {
+				return nil, err
+			}
+
+			oldKey := delKv.GetKey()
+			//scan index, todo need ds to batch support
+			var rVersion uint64
+			rVersion, err = p.scanIndex(ctx, t, col, oldKey)
+			if err != nil {
+				return nil, err
+			}
+
+			log.Debug("[update]assemble old index key: %v", oldKey)
+			idxIntents = append(idxIntents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_DELETE,
+				Key:         oldKey,
+				CheckUnique: false,
+				ExpectedVer: rVersion,
+			})
+
+			insertKv, err = encodeUniqueIndexKV(t, colMap, col, newIdxVal, newRowValue)
+			if err != nil {
+				return nil, err
+			}
+			idxIntents = append(idxIntents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_INSERT,
+				Key:         insertKv.GetKey(),
+				Value:       insertKv.GetValue(),
+				CheckUnique: true,
+				ExpectedVer: 0,
+			})
+		}
+	}
+
+	if len(nonUniqueIndexCols) > 0 {
+		for _, col := range nonUniqueIndexCols {
+			var (
+				oldIdxVal, newIdxVal []byte
+				delKv, insertKv      *kvrpcpb.KeyValue
+			)
+			colIndex, ok := colMap[col.GetName()]
+			if !ok {
+				err = fmt.Errorf("")
+				return nil, err
+			}
+			oldIdxVal = oldRowValue[colIndex]
+			newIdxVal = newRowValue[colIndex]
+			if bytes.Compare(oldIdxVal, newIdxVal) == 0 {
+				continue
+			}
+
+			delKv, err = encodeNonUniqueIndexKv(t, colMap, col, oldIdxVal, oldRowValue)
+			if err != nil {
+				return nil, err
+			}
+
+			oldKey := delKv.GetKey()
+			//scan index, todo need ds to batch support
+			var rVersion uint64
+			rVersion, err = p.scanIndex(ctx, t, col, oldKey)
+			if err != nil {
+				return nil, err
+			}
+
+			log.Debug("[update]assemble old index key: %v", oldKey)
+			idxIntents = append(idxIntents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_DELETE,
+				Key:         oldKey,
+				CheckUnique: false,
+				ExpectedVer: rVersion,
+			})
+
+			insertKv, err = encodeNonUniqueIndexKv(t, colMap, col, newIdxVal, newRowValue)
+			if err != nil {
+				return nil, err
+			}
+			idxIntents = append(idxIntents, &txnpb.TxnIntent{
+				Typ:         txnpb.OpType_INSERT,
+				Key:         insertKv.GetKey(),
+				Value:       insertKv.GetValue(),
+				CheckUnique: true,
+				ExpectedVer: 0,
+			})
+		}
+	}
+	return idxIntents, nil
 }

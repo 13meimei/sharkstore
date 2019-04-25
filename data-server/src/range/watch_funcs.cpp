@@ -86,7 +86,7 @@ void Range::WatchGet(RPCRequestPtr rpc, watchpb::DsWatchRequest &req) {
 
     auto btime = NowMicros();
 
-    watchpb::DsWatchResponse ds_resp;
+    auto ds_resp = new watchpb::DsWatchResponse;
     std::string dbKey{""};
     std::string dbValue{""};
     int64_t dbVersion{0};
@@ -126,7 +126,7 @@ void Range::WatchGet(RPCRequestPtr rpc, watchpb::DsWatchRequest &req) {
 
     if (err != nullptr) {
         RANGE_LOG_WARN("WatchGet error: %s", err->message().c_str());
-        SendResponse(rpc, ds_resp, req.header(), err);
+        SendResponse(rpc, *ds_resp, req.header(), err);
         return;
     }
 
@@ -146,9 +146,9 @@ void Range::WatchGet(RPCRequestPtr rpc, watchpb::DsWatchRequest &req) {
         watchType = watch::WATCH_PREFIX;
     }
 
-    //int64_t expireTime = (req.req().longpull() > 0)?getticks() + req.req().longpull():msg->expire_time;
+    //int64_t expireTime = (req.req().longpull() > 0)?NowMilliSeconds() + req.req().longpull():msg->expire_time;
     int64_t expireTime = (req.req().longpull() > 0) ? NowMicros() + req.req().longpull()*1000 : rpc->expire_time*1000;
-    auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, rpc);
+    auto w_ptr = std::make_shared<watch::Watcher>(watchType, meta_.GetTableID(), keys, clientVersion, expireTime, std::move(rpc));
     // free keys
     for (auto k: keys) {
         delete k;
@@ -213,11 +213,13 @@ void Range::WatchGet(RPCRequestPtr rpc, watchpb::DsWatchRequest &req) {
     }
 }
 
-void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest &req) {
+void Range::PureGet(RPCRequestPtr rpc, watchpb::DsKvWatchGetMultiRequest &req) {
     errorpb::Error *err = nullptr;
 
     auto btime = NowMicros();
-    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
+    
+
+    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - rpc->begin_time);
 
     auto ds_resp = new watchpb::DsKvWatchGetMultiResponse;
     auto header = ds_resp->mutable_header();
@@ -229,7 +231,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
     int64_t maxVersion(0);
     auto prefix = req.prefix();
 
-    RANGE_LOG_DEBUG("PureGet beginmsgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
+    RANGE_LOG_DEBUG("PureGet beginmsgid: %" PRId64 " from: %s", rpc->msg->head.msg_id, rpc->ctx.remote_addr.c_str());
 
     do {
         if (!VerifyLeader(err)) {
@@ -244,7 +246,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         }
 
         //encode key
-        if( 0 != WatchEncodeAndDecode::EncodeKv(funcpb::kFuncWatchGet, meta_.Get(), req.kv(), dbKey, dbValue, err)) {
+        if( Status::kOk != WatchEncodeAndDecode::EncodeKv(funcpb::kFuncWatchGet, meta_.Get(), req.kv(), dbKey, dbValue, err)) {
             break;
         }
 
@@ -268,7 +270,7 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
 
         if (prefix) {
             dbKeyEnd.assign(dbKey);
-            if( 0 != WatchEncodeAndDecode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
+            if( Status::kOk != WatchEncodeAndDecode::NextComparableBytes(dbKey.data(), dbKey.length(), dbKeyEnd)) {
                 //to do set error message
                 break;
             }
@@ -335,18 +337,17 @@ void Range::PureGet(common::ProtoMessage *msg, watchpb::DsKvWatchGetMultiRequest
         RANGE_LOG_WARN("PureGet error: %s", err->message().c_str());
     }
 
-    common::SetResponseHeader(req.header(), header, err);
-    context_->SocketSession()->Send(msg, ds_resp);
+    SendResponse(rpc, *ds_resp, req.header(), err);
 }
 
-void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req) {
+void Range::WatchPut(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req) {
     errorpb::Error *err = nullptr;
     std::string dbKey;
 
     auto btime = NowMicros();
-    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - rpc->begin_time);
 
-    RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
+    RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " from: %s", rpc->msg->head.msg_id, rpc->ctx.remote_addr.c_str());
 
     do {
         if (!VerifyWriteable(&err)) {
@@ -410,10 +411,10 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
         kv->set_value(*dbValue);
         */
 
-        //raft propagate at first, propagate KV after encodding
-        if (!WatchPutSubmit(msg, req)) {
-            err = RaftFailError();
-        }
+        SubmitCmd<watchpb::DsKvWatchPutResponse>(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
+            cmd.set_cmd_type(raft_cmdpb::CmdType::KvWatchPut);
+            cmd.set_allocated_kv_watch_put_req(req.release_req());
+        }); 
 
     } while (false);
 
@@ -421,21 +422,21 @@ void Range::WatchPut(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &re
         RANGE_LOG_WARN("WatchPut error: %s", err->message().c_str());
 
         auto resp = new watchpb::DsKvWatchPutResponse;
-        return SendError(msg, req.header(), resp, err);
+        return SendResponse(rpc, *resp, req.header(), err);
     }
 
 }
 
-void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest &req) {
+void Range::WatchDel(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) {
     errorpb::Error *err = nullptr;
     std::string dbKey{""};
     //auto dbValue = std::make_shared<std::string>();
     //auto extPtr = std::make_shared<std::string>();
 
     auto btime = NowMicros();
-    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - msg->begin_time);
+    context_->Statistics()->PushTime(monitor::HistogramType::kQWait, btime - rpc->begin_time);
 
-    RANGE_LOG_DEBUG("WatchDel begin, msgid: %" PRId64 " session_id: %" PRId64, msg->header.msg_id, msg->session_id);
+    RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " from: %s", rpc->msg->head.msg_id, rpc->ctx.remote_addr.c_str());
 
     do {
         if (!VerifyWriteable(&err)) {
@@ -502,49 +503,20 @@ void Range::WatchDel(common::ProtoMessage *msg, watchpb::DsKvWatchDeleteRequest 
         kv->set_version(version);
         */
 
-        if (!WatchDeleteSubmit(msg, req)) {
-            err = RaftFailError();
-        }
+        SubmitCmd<watchpb::DsKvWatchDeleteResponse>(std::move(rpc), req.header(), [&req](raft_cmdpb::Command &cmd) {
+            cmd.set_cmd_type(raft_cmdpb::CmdType::KvWatchDel);
+            cmd.set_allocated_kv_watch_del_req(req.release_req());
+        }); 
+
     } while (false);
 
     if (err != nullptr) {
         RANGE_LOG_WARN("WatchDel error: %s", err->message().c_str());
 
         auto resp = new watchpb::DsKvWatchDeleteResponse;
-        return SendError(msg, req.header(), resp, err);
+        return SendResponse(rpc, *resp, req.header(), err);
     }
 
-}
-
-bool Range::WatchPutSubmit(common::ProtoMessage *msg, watchpb::DsKvWatchPutRequest &req) {
-    auto &kv = req.req().kv();
-
-    if (is_leader_ && kv.key_size() > 0 ) {
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::KvWatchPut);
-            cmd.set_allocated_kv_watch_put_req(req.release_req());
-        });
-
-        return ret.ok() ? true : false;
-    }
-
-    return false;
-}
-
-bool Range::WatchDeleteSubmit(common::ProtoMessage *msg,
-                            watchpb::DsKvWatchDeleteRequest &req) {
-    auto &kv = req.req().kv();
-
-    if (is_leader_ && kv.key_size() > 0 ) {
-        auto ret = SubmitCmd(msg, req.header(), [&req](raft_cmdpb::Command &cmd) {
-            cmd.set_cmd_type(raft_cmdpb::CmdType::KvWatchDel);
-            cmd.set_allocated_kv_watch_del_req(req.release_req());
-        });
-
-        return ret.ok() ? true : false;
-    }
-
-    return false;
 }
 
 Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
@@ -573,7 +545,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     notifyKv.set_version(version);
     RANGE_LOG_DEBUG("ApplyWatchPut new version[%" PRIu64 "]", version);
 
-    int64_t beginTime(getticks());
+    int64_t beginTime(NowMilliSeconds());
 
     std::string dbKey{""};
     std::string dbValue{""};
@@ -632,7 +604,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
     if (cmd.cmd_id().node_id() == node_id_) {
         auto resp = new watchpb::DsKvWatchPutResponse;
         resp->mutable_resp()->set_code(ret.code());
-        ReplySubmit(cmd, resp, err, btime);
+        ReplySubmit(cmd, *resp, err, btime);
 
         //notify watcher
         std::string errMsg("");
@@ -648,7 +620,7 @@ Status Range::ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         return ret;
     }
 
-    int64_t endTime(getticks());
+    int64_t endTime(NowMilliSeconds());
     FLOG_DEBUG("ApplyWatchPut key[%s], take time:%" PRId64 " ms", EncodeToHexString(dbKey).c_str(), endTime - beginTime);
 
     return ret;
@@ -766,7 +738,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
             //FLOG_DEBUG("Delete:%s del key:%s---last key:%s", ret.ToString().c_str(), EncodeToHexString(it).c_str(), EncodeToHexString(delKeys[keySize-1]).c_str());
             auto resp = new watchpb::DsKvWatchDeleteResponse;
             resp->mutable_resp()->set_code(ret.code());
-            ReplySubmit(cmd, resp, err, btime);
+            ReplySubmit(cmd, *resp, err, btime);
 
         } else if (err != nullptr) {
             delete err;
@@ -810,7 +782,7 @@ Status Range::ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raftIdx) {
         //Delete没有失败,统一返回ok
         ret = Status(Status::kOk);
         resp->mutable_resp()->set_code(ret.code());
-        ReplySubmit(cmd, resp, err, btime);
+        ReplySubmit(cmd, *resp, err, btime);
     }
 
     return ret;

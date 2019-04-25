@@ -258,3 +258,41 @@ message DsSelectResponse {
     kvrpcpb.ResponseHeader header = 1;
     SelectResponse resp           = 2;
 }
+
+
+
+// Scan API
+message ValueIntent {
+    OpType op_type          = 1;
+    string txn_id           = 2;
+    bytes primary_key       = 3;
+    bool timeout            = 4;
+    bytes value             = 10;
+}
+
+message KeyValue {
+    bytes key           = 1;
+    bytes value         = 2;
+    ValueIntent intent  = 10;
+}
+
+message ScanRequest {
+    bytes start_key     = 1;
+    bytes end_key       = 2;
+    int64 max_count     = 3;
+}
+
+message ScanResponse {
+    int32 code              = 1;
+    repeated KeyValue kvs   = 2;
+}
+
+message DsScanRequest {
+    kvrpcpb.RequestHeader header    = 1;
+    ScanRequest req                 = 2;
+}
+
+message DsScanResponse {
+    kvrpcpb.ResponseHeader header   = 1;
+    ScanResponse resp               = 2;
+}

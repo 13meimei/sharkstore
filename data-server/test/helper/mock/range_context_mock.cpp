@@ -6,11 +6,11 @@
 #include "storage/meta_store.h"
 #include "range/split_policy.h"
 #include "range/range.h"
+#include "common/ds_config.h"
 
+#include "../helper_util.h"
 #include "master_worker_mock.h"
 #include "raft_server_mock.h"
-#include "storage/db/skiplist_impl/skiplist_impl.h"
-#include "storage/db/rocksdb_impl/rocksdb_impl.h"
 
 namespace sharkstore {
 namespace test {
@@ -28,12 +28,10 @@ Status RangeContextMock::Init() {
     if (tmp == NULL) {
         return Status(Status::kIOError, "mkdtemp", "");
     }
-    // open rocksdb
     path_ = path;
-    rocksdb::Options ops;
-    db_ = new storage::RocksDBImpl(ops, JoinFilePath({path_, "data"}));
-//    db_ = new storage::SkipListDBImpl();
-    auto s = db_->Open();
+
+    // open db
+    auto s = helper::OpenDB(JoinFilePath({path_, "data"}), &db_);
     if (!s.ok()) {
         return s;
     }

@@ -17,7 +17,7 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 
-namespace timestamp {
+namespace tspb {
 class TimestampDefaultTypeInternal {
 public:
  ::google::protobuf::internal::ExplicitlyConstructed<Timestamp>
@@ -102,12 +102,11 @@ namespace {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\017timestamp.proto\022\ttimestamp\"/\n\tTimestam"
-      "p\022\021\n\twall_time\030\001 \001(\003\022\017\n\007logical\030\002 \001(\005b\006p"
-      "roto3"
+      "\n\017timestamp.proto\022\004tspb\"/\n\tTimestamp\022\021\n\t"
+      "wall_time\030\001 \001(\003\022\017\n\007logical\030\002 \001(\005b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 85);
+      descriptor, 80);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "timestamp.proto", &protobuf_RegisterTypes);
 }
@@ -140,7 +139,7 @@ Timestamp::Timestamp()
     protobuf_timestamp_2eproto::InitDefaults();
   }
   SharedCtor();
-  // @@protoc_insertion_point(constructor:timestamp.Timestamp)
+  // @@protoc_insertion_point(constructor:tspb.Timestamp)
 }
 Timestamp::Timestamp(const Timestamp& from)
   : ::google::protobuf::Message(),
@@ -150,7 +149,7 @@ Timestamp::Timestamp(const Timestamp& from)
   ::memcpy(&wall_time_, &from.wall_time_,
     static_cast<size_t>(reinterpret_cast<char*>(&logical_) -
     reinterpret_cast<char*>(&wall_time_)) + sizeof(logical_));
-  // @@protoc_insertion_point(copy_constructor:timestamp.Timestamp)
+  // @@protoc_insertion_point(copy_constructor:tspb.Timestamp)
 }
 
 void Timestamp::SharedCtor() {
@@ -161,7 +160,7 @@ void Timestamp::SharedCtor() {
 }
 
 Timestamp::~Timestamp() {
-  // @@protoc_insertion_point(destructor:timestamp.Timestamp)
+  // @@protoc_insertion_point(destructor:tspb.Timestamp)
   SharedDtor();
 }
 
@@ -192,7 +191,7 @@ Timestamp* Timestamp::New(::google::protobuf::Arena* arena) const {
 }
 
 void Timestamp::Clear() {
-// @@protoc_insertion_point(message_clear_start:timestamp.Timestamp)
+// @@protoc_insertion_point(message_clear_start:tspb.Timestamp)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -207,7 +206,7 @@ bool Timestamp::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:timestamp.Timestamp)
+  // @@protoc_insertion_point(parse_start:tspb.Timestamp)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -253,17 +252,17 @@ bool Timestamp::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:timestamp.Timestamp)
+  // @@protoc_insertion_point(parse_success:tspb.Timestamp)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:timestamp.Timestamp)
+  // @@protoc_insertion_point(parse_failure:tspb.Timestamp)
   return false;
 #undef DO_
 }
 
 void Timestamp::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:timestamp.Timestamp)
+  // @@protoc_insertion_point(serialize_start:tspb.Timestamp)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -281,13 +280,13 @@ void Timestamp::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:timestamp.Timestamp)
+  // @@protoc_insertion_point(serialize_end:tspb.Timestamp)
 }
 
 ::google::protobuf::uint8* Timestamp::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:timestamp.Timestamp)
+  // @@protoc_insertion_point(serialize_to_array_start:tspb.Timestamp)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -305,12 +304,12 @@ void Timestamp::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:timestamp.Timestamp)
+  // @@protoc_insertion_point(serialize_to_array_end:tspb.Timestamp)
   return target;
 }
 
 size_t Timestamp::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:timestamp.Timestamp)
+// @@protoc_insertion_point(message_byte_size_start:tspb.Timestamp)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -340,22 +339,22 @@ size_t Timestamp::ByteSizeLong() const {
 }
 
 void Timestamp::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:timestamp.Timestamp)
+// @@protoc_insertion_point(generalized_merge_from_start:tspb.Timestamp)
   GOOGLE_DCHECK_NE(&from, this);
   const Timestamp* source =
       ::google::protobuf::internal::DynamicCastToGenerated<const Timestamp>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:timestamp.Timestamp)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:tspb.Timestamp)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:timestamp.Timestamp)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:tspb.Timestamp)
     MergeFrom(*source);
   }
 }
 
 void Timestamp::MergeFrom(const Timestamp& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:timestamp.Timestamp)
+// @@protoc_insertion_point(class_specific_merge_from_start:tspb.Timestamp)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -370,14 +369,14 @@ void Timestamp::MergeFrom(const Timestamp& from) {
 }
 
 void Timestamp::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:timestamp.Timestamp)
+// @@protoc_insertion_point(generalized_copy_from_start:tspb.Timestamp)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void Timestamp::CopyFrom(const Timestamp& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:timestamp.Timestamp)
+// @@protoc_insertion_point(class_specific_copy_from_start:tspb.Timestamp)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -412,13 +411,13 @@ void Timestamp::clear_wall_time() {
   wall_time_ = GOOGLE_LONGLONG(0);
 }
 ::google::protobuf::int64 Timestamp::wall_time() const {
-  // @@protoc_insertion_point(field_get:timestamp.Timestamp.wall_time)
+  // @@protoc_insertion_point(field_get:tspb.Timestamp.wall_time)
   return wall_time_;
 }
 void Timestamp::set_wall_time(::google::protobuf::int64 value) {
   
   wall_time_ = value;
-  // @@protoc_insertion_point(field_set:timestamp.Timestamp.wall_time)
+  // @@protoc_insertion_point(field_set:tspb.Timestamp.wall_time)
 }
 
 // int32 logical = 2;
@@ -426,19 +425,19 @@ void Timestamp::clear_logical() {
   logical_ = 0;
 }
 ::google::protobuf::int32 Timestamp::logical() const {
-  // @@protoc_insertion_point(field_get:timestamp.Timestamp.logical)
+  // @@protoc_insertion_point(field_get:tspb.Timestamp.logical)
   return logical_;
 }
 void Timestamp::set_logical(::google::protobuf::int32 value) {
   
   logical_ = value;
-  // @@protoc_insertion_point(field_set:timestamp.Timestamp.logical)
+  // @@protoc_insertion_point(field_set:tspb.Timestamp.logical)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
 
 // @@protoc_insertion_point(namespace_scope)
 
-}  // namespace timestamp
+}  // namespace tspb
 
 // @@protoc_insertion_point(global_scope)

@@ -47,10 +47,12 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/raft/include)
 
 # third-party
+include_directories(${PROJECT_SOURCE_DIR}/third-party)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/asio-1-12-0/include)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/rapidjson-1.1.0/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/mem_store)
 include_directories(${PROJECT_SOURCE_DIR}/third-party/mem_store/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/third-party/masstree-beta)
 
 OPTION (ENABLE_BWTREE "Use BwTree" OFF)
 MESSAGE(STATUS ENABLE_BWTREE=${ENABLE_BWTREE})
@@ -209,7 +211,7 @@ set(SOURCES
     src/range/range_base.cpp
     src/range/range.cpp
     src/range/range_slave.cpp
-    #src/range/lock.cpp
+    src/range/lock.cpp
     src/range/meta_keeper.cpp
     src/range/raw_get.cpp
     src/range/raw_put.cpp
@@ -222,8 +224,8 @@ set(SOURCES
     src/range/split_policy.cpp
     src/range/peer.cpp
     src/range/kv_funcs.cpp
-#	src/range/watch.cpp
-#	src/range/watch_funcs.cpp
+	src/range/watch.cpp
+	src/range/watch_funcs.cpp
     src/range/submit.cpp
     src/range/txn.cpp
     src/storage/aggregate_calc.cpp
@@ -236,30 +238,33 @@ set(SOURCES
     src/storage/snapshot.cpp
     src/storage/store.cpp
     src/storage/db/memdb_batch.cpp
+    src/storage/db/db_factory.cpp
     src/storage/db/rocksdb_impl/iterator.cpp
     src/storage/db/rocksdb_impl/write_batch.cpp
     src/storage/db/rocksdb_impl/rocksdb_impl.cpp
     src/storage/db/skiplist_impl/iterator.cpp
     src/storage/db/skiplist_impl/skiplist_impl.cpp
+    src/storage/db/mass_tree_impl/mass_tree_db.cpp
+    src/storage/db/mass_tree_impl/mass_tree_mvcc.cpp
+    src/storage/db/mass_tree_impl/iterator.cpp
+    src/storage/db/mass_tree_impl/scaner.cpp
     src/storage/store_watch.cpp
     src/storage/where_expr.cpp
     src/storage/store_txn.cpp
     src/storage/select_txn.cpp
+    src/storage/txn_iterator.cpp
     src/storage/util.cpp
     src/master/client.cpp
     src/master/connection.cpp
     src/master/rpc_types.cpp
     src/master/worker_impl.cpp
-    src/monitor/isystemstatus.cpp
-    src/monitor/datacacl.cpp
-    src/monitor/encodedata.cpp
     src/monitor/histogram.cpp
-    src/monitor/rangedata.cpp
-#	src/watch/watcher.cpp
-#	src/watch/watcher_set.cpp
-#	src/watch/watch_server.cpp
-#	src/watch/watch_event_buffer.cpp
     src/monitor/statistics.cpp
+    src/monitor/system_status.cpp
+	src/watch/watcher.cpp
+	src/watch/watcher_set.cpp
+	src/watch/watch_server.cpp
+	src/watch/watch_event_buffer.cpp
     src/admin/admin_server.cpp
     src/admin/get_config.cpp
     src/admin/get_info.cpp
@@ -273,7 +278,7 @@ endif()
 if (APPLE)
     list(APPEND SOURCES src/monitor/mac_status.cpp)
 elseif(UNIX)
-    list(APPEND SOURCES src/monitor/linuxstatus.cpp)
+    list(APPEND SOURCES src/monitor/linux_status.cpp)
 else()
     message(FATAL_ERROR "Unsupported OS Type: " ${CMAKE_SYSTEM_NAME})
 endif()
@@ -305,6 +310,7 @@ set (depend_LIBRARYS
     ${ROCKSDB_LIB}
     ${FASTCOMMON_LIB}
     skiplist
+    mass-tree
     pthread
     dl
     z
@@ -330,12 +336,16 @@ message(STATUS "Depend Libraries: " "${depend_LIBRARYS}")
 add_executable(data-server ${SOURCES})
 target_link_libraries(data-server ${depend_LIBRARYS})
 
-add_custom_target(
-    gen-version ALL
-    ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR} -DBUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DBUILD_FLAGS=${CMAKE_CXX_FLAGS} -P ${PROJECT_SOURCE_DIR}/cmake/version.cmake
-)
-add_dependencies(data-server gen-version)
+OPTION (BUILD_VERSION "build sharkstore version" ON)
+MESSAGE(STATUS BUILD_VERSION=${BUILD_VERSION})
+if (BUILD_VERSION)
+    add_custom_target(
+        gen-version ALL
+        ${CMAKE_COMMAND} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR} -DBUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DBUILD_FLAGS=${CMAKE_CXX_FLAGS} -P ${PROJECT_SOURCE_DIR}/cmake/version.cmake
+    )
+    add_dependencies(data-server gen-version)
+endif()
 
 install(TARGETS data-server RUNTIME DESTINATION bin)
 

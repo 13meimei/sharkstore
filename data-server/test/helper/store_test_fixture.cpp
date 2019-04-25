@@ -6,10 +6,6 @@
 
 #include "frame/sf_config.h"
 
-#include "fastcommon/logger.h"
-#include <fastcommon/shared_func.h>
-#include "storage/db/rocksdb_impl/rocksdb_impl.h"
-#include "storage/db/skiplist_impl/skiplist_impl.h"
 
 namespace sharkstore {
 namespace test {
@@ -23,9 +19,7 @@ StoreTestFixture::StoreTestFixture(std::unique_ptr<Table> t) :
 }
 
 void StoreTestFixture::SetUp() {
-    log_init2();
-    char level[] = "debug";
-    set_log_level(level);
+    InitLog();
 
     if (!table_) {
         throw std::runtime_error("invalid table");
@@ -37,16 +31,7 @@ void StoreTestFixture::SetUp() {
     ASSERT_TRUE(tmp != NULL);
     tmp_dir_ = tmp;
 
-    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
-    column_families.emplace_back(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions());
-    column_families.emplace_back("txn", rocksdb::ColumnFamilyOptions());
-
-    rocksdb::Options ops;
-    ops.create_if_missing = true;
-    ops.error_if_exists = true;
-    db_ = new dataserver::storage::RocksDBImpl(ops, tmp_dir_);
-//    db_ = new dataserver::storage::SkipListDBImpl();
-    auto s = db_->Open();
+    auto s = OpenDB(tmp_dir_, &db_);
     ASSERT_TRUE(s.ok()) << s.ToString();
 
     // make meta
@@ -224,6 +209,15 @@ uint64_t StoreTestFixture::statSizeUntil(const std::string& end) {
         it->Next();
     }
     return size;
+}
+
+Status StoreTestFixture::putTxn(const std::string& key, const txnpb::TxnValue& value) {
+    auto batch = db_->NewBatch();
+    auto s = store_->writeTxnValue(value, batch.get());
+    if (!s.ok()) {
+        return s;
+    }
+    return db_->Write(batch.get());
 }
 
 } /* namespace helper */

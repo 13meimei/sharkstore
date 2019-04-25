@@ -2,11 +2,11 @@ package server
 
 import (
 	"fmt"
+	"model/pkg/txn"
+	"proxy/store/dskv"
 	"sort"
 	"util"
 	"util/log"
-	"model/pkg/txn"
-	"proxy/store/dskv"
 )
 
 type TX interface {
@@ -185,10 +185,10 @@ func (t *TxObj) Delete(intents []*txnpb.TxnIntent) (err error) {
 }
 
 /**
-	commit:  prepare and decide 2PL duration tx timeout (if tx is local, optimize to 1PL)
-	prepare: first write primary intents, second write secondary intents
-	decide:  decide primary intents, then async to decide secondary intents, last clear tx record
- */
+commit:  prepare and decide 2PL duration tx timeout (if tx is local, optimize to 1PL)
+prepare: first write primary intents, second write secondary intents
+decide:  decide primary intents, then async to decide secondary intents, last clear tx record
+*/
 func (t *TxObj) Commit() (err error) {
 	var (
 		passed bool
@@ -204,26 +204,47 @@ func (t *TxObj) Commit() (err error) {
 	}
 	ctx := dskv.NewPRConext(int(t.Timeout * 1000))
 	var (
-		priIntents      []*txnpb.TxnIntent
-		secIntentsGroup [][]*txnpb.TxnIntent
+		priIntents      []*txnpb.TxnIntent   = nil
+		secIntentsGroup [][]*txnpb.TxnIntent = nil
 	)
 	sort.Sort(TxnIntentSlice(t.intents))
-	priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.intents)
+
+	//todo local txn optimize: 1 phase commit
+	priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.getTxIntents())
 	if err != nil {
 		return
 	}
+
+	err = t.prepareAndDecidePrimaryKey(ctx, priIntents, secIntentsGroup)
+	if err == nil {
+		return
+	}
+	if err == dskv.ErrRouteChange || err == dskv.ErrMultiRange {
+		log.Warn("txn[%v] run 1ph error[%v], try 2ph", t.GetTxId(), err)
+		goto TOW_PHASE_COMMIT
+	} else {
+		return
+	}
+
+TOW_PHASE_COMMIT:
 	/**
 	  func: prepare primary row intents
 	  priIntentsGroup and secIntentsGroup size are affected by priIntentsGroup prepare result,
 	  so they can be changed at func 'preparePrimaryIntents'(reference)
-	 */
+	*/
+	priIntents = nil
+	secIntentsGroup = nil
+
+	priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.getTxIntents())
+	if err != nil {
+		return
+	}
+
 	err = t.preparePrimaryIntents(ctx, priIntents, secIntentsGroup)
 	if err != nil {
 		log.Error("[commit]prepare tx %v primary intents error %v", t.GetTxId(), err)
 		return
 	}
-	//todo local txn optimize to 1PL
-	//if !t.IsLocal() {
 	//concurrency prepare secondary row intents
 	err = t.prepareSecondaryIntents(ctx, secIntentsGroup)
 	if err != nil {
@@ -242,7 +263,7 @@ func (t *TxObj) Commit() (err error) {
 	go func(tx *TxObj, stat txnpb.TxnStatus) {
 		var (
 			context = dskv.NewPRConext(int(t.Timeout * 1000))
-			e   error
+			e       error
 		)
 		if e = tx.decideSecondaryKeys(context, stat); e != nil {
 			log.Warn("[commit]async decide txn %v secondary intents error %v", tx.GetTxId(), e)
@@ -259,8 +280,8 @@ func (t *TxObj) Commit() (err error) {
 }
 
 /**
-    rollback current transaction
- */
+  rollback current transaction
+*/
 func (t *TxObj) Rollback() (err error) {
 	var passed bool
 	passed, err = t.changeTxStatus(txnpb.TxnStatus_ABORTED)
@@ -280,8 +301,55 @@ func (t *TxObj) Rollback() (err error) {
 	return
 }
 
-func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent, secIntents [][]*txnpb.TxnIntent) (err error) {
+func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent, secIntents [][]*txnpb.TxnIntent) (err error) {
+	var (
+		req = &txnpb.PrepareRequest{
+			TxnId: t.GetTxId(),
+			Local: true,
+		}
+		errForRetry error
+	)
 
+	for {
+		if errForRetry != nil {
+			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
+			if errForRetry != nil {
+				log.Error("[commit]%s txn[%v] run 1ph timeout", ctx, t.GetTxId())
+				return
+			}
+		}
+
+		if err == dskv.ErrRouteChange {
+			var partSecIntents [][]*txnpb.TxnIntent
+			priIntents, partSecIntents, err = regroupIntentsByRange(ctx, t.GetTable(), priIntents)
+			if err != nil || len(priIntents) == 0 {
+				return
+			}
+			if len(partSecIntents) > 0 {
+				secIntents = append(secIntents, partSecIntents...)
+			}
+		}
+		log.Debug("regroup result priIntents: %+v, partSecIntents: %+v",
+			priIntents, secIntents)
+		if !isLocalTxn(priIntents, secIntents) {
+			err = dskv.ErrMultiRange
+			return
+		}
+
+		log.Debug("txn[%v] run 1ph, intents size: %v", t.GetTxId(), len(priIntents))
+		req.Intents = priIntents
+		err = t.proxy.handlePrepare(ctx, req, t.GetTable())
+		if err != nil {
+			errForRetry = err
+			// todo if range leader switch, can do continue
+			return
+		}
+		log.Debug("txn[%v] run 1ph done success", t.GetTxId())
+		return
+	}
+}
+
+func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.TxnIntent, secIntents [][]*txnpb.TxnIntent) (err error) {
 	var (
 		req = &txnpb.PrepareRequest{
 			TxnId:         t.GetTxId(),
@@ -292,8 +360,8 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 		errForRetry error
 	)
 	/**
-		loop solve: occur ErrRouteChange when prepare intents with primary row, regroup intents
-	 */
+	loop solve: occur ErrRouteChange when prepare intents with primary row, regroup intents
+	*/
 	for {
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
@@ -314,11 +382,9 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 			}
 		}
 
-		isLocal := isLocalTxn(priIntents, secIntents)
-		req.Local = isLocal
 		req.Intents = priIntents
 
-		log.Debug("start to prepare tx %v primary intents, local: %v, intents size: %v", t.GetTxId(), isLocal, len(priIntents))
+		log.Debug("start to prepare tx %v primary intents, intents size: %v", t.GetTxId(), len(priIntents))
 		err = t.proxy.handlePrepare(ctx, req, t.GetTable())
 		if err != nil {
 			if err == dskv.ErrRouteChange {
@@ -328,7 +394,6 @@ func (t *TxObj) preparePrimaryIntents(ctx *dskv.ReqContext, priIntents []*txnpb.
 			}
 			return err
 		}
-		t.local = isLocal
 		log.Debug("prepare tx %v primary intents success", t.GetTxId())
 		return
 	}
@@ -366,7 +431,7 @@ func (t *TxObj) prepareSecondaryIntents(ctx *dskv.ReqContext, secIntents [][]*tx
 
 func (t *TxObj) decidePrimaryKey(ctx *dskv.ReqContext, status txnpb.TxnStatus) (err error) {
 	var (
-		txId = t.GetTxId()
+		txId       = t.GetTxId()
 		primaryKey = t.GetPrimaryKey()
 	)
 	log.Debug("[commit]decide tx %v primary intent %v", txId, primaryKey)
@@ -494,7 +559,7 @@ func (t *TxObj) changeTxStatus(newStatus txnpb.TxnStatus) (bool, error) {
 	}
 	t.status = newStatus
 	if oldStatus != newStatus {
-		log.Info("change transaction[%v] status[%v] to [%v]", t.GetTxId(), oldStatus, newStatus)
+		log.Debug("change transaction[%v] status[%v] to [%v]", t.GetTxId(), oldStatus, newStatus)
 	}
 	return passed, nil
 }

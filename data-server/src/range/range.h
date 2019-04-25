@@ -1,4 +1,5 @@
 _Pragma("once");
+
 #include "range_base.h"
 #include "range_logger.h"
 #include "range_slave.h"
@@ -57,14 +58,14 @@ public:
     Status ForceSplit(uint64_t version, std::string* split_key);
 
     // lock
-//    bool LockQuery(const std::string &key, kvrpcpb::LockValue* lock_value);
-//    void Lock(RPCRequestPtr rpc, kvrpcpb::DsLockRequest &req);
-//    void LockUpdate(RPCRequestPtr rpc, kvrpcpb::DsLockUpdateRequest &req);
-//    void Unlock(RPCRequestPtr rpc, kvrpcpb::DsUnlockRequest &req);
-//    void UnlockForce(RPCRequestPtr rpc, kvrpcpb::DsUnlockForceRequest &req);
-//    void LockWatch(RPCRequestPtr rpc, watchpb::DsWatchRequest& req);
-//    void LockScan(RPCRequestPtr rpc, kvrpcpb::DsLockScanRequest &req);
-//    void LockGet(RPCRequestPtr rpc, kvrpcpb::DsLockGetRequest &req);
+    bool LockQuery(const std::string &key, kvrpcpb::LockValue* lock_value);
+    void Lock(RPCRequestPtr rpc, kvrpcpb::DsLockRequest &req);
+    void LockUpdate(RPCRequestPtr rpc, kvrpcpb::DsLockUpdateRequest &req);
+    void Unlock(RPCRequestPtr rpc, kvrpcpb::DsUnlockRequest &req);
+    void UnlockForce(RPCRequestPtr rpc, kvrpcpb::DsUnlockForceRequest &req);
+    void LockWatch(RPCRequestPtr rpc, watchpb::DsWatchRequest& req);
+    void LockScan(RPCRequestPtr rpc, kvrpcpb::DsLockScanRequest &req);
+    void LockGet(RPCRequestPtr rpc, kvrpcpb::DsLockGetRequest &req);
 
     // KV
     void RawGet(RPCRequestPtr rpc_request, kvrpcpb::DsKvRawGetRequest &req);
@@ -91,14 +92,15 @@ public:
     void TxnClearup(RPCRequestPtr rpc, txnpb::DsClearupRequest& req);
     void TxnGetLockInfo(RPCRequestPtr rpc, txnpb::DsGetLockInfoRequest& req);
     void TxnSelect(RPCRequestPtr rpc, txnpb::DsSelectRequest& req);
+    void TxnScan(RPCRequestPtr rpc, txnpb::DsScanRequest& req);
 
     //KV watch series
-//    Status GetAndResp(watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey,
-//            const bool &prefix, int64_t &version, watchpb::DsWatchResponse *dsResp);
-//    void WatchGet(RPCRequestPtr rpc, watchpb::DsWatchRequest &req) {}
-//    void PureGet(RPCRequestPtr rpc, watchpb::DsKvWatchGetMultiRequest &req) {}
-//    void WatchPut(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req) {}
-//    void WatchDel(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) {}
+    Status GetAndResp(watch::WatcherPtr pWatcher, const watchpb::WatchCreateRequest& req, const std::string &dbKey,
+            const bool &prefix, int64_t &version, watchpb::DsWatchResponse *dsResp);
+    void WatchGet(RPCRequestPtr rpc, watchpb::DsWatchRequest &req);
+    void PureGet(RPCRequestPtr rpc, watchpb::DsKvWatchGetMultiRequest &req);
+    void WatchPut(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req);
+    void WatchDel(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req);
 //    bool WatchPutSubmit(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req) { return true; }
 //    bool WatchDeleteSubmit(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) { return true; }
 public:
@@ -163,16 +165,16 @@ private:
     Status ApplyAddPeer(const raft::ConfChange &cc, bool *updated);
     Status ApplyDelPeer(const raft::ConfChange &cc, bool *updated);
     Status ApplyPromotePeer(const raft::ConfChange &cc, bool *updated);
-//    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raft_index);
-//    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+    Status ApplyWatchPut(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+    Status ApplyWatchDel(const raft_cmdpb::Command &cmd, uint64_t raft_index);
 
     void select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req, bool redirect);
     void deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool redirect);
 
-//    Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raft_index);
-//    Status ApplyLockUpdate(const raft_cmdpb::Command &cmd);
-//    Status ApplyUnlock(const raft_cmdpb::Command &cmd);
-//    Status ApplyUnlockForce(const raft_cmdpb::Command &cmd);
+    Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raft_index);
+    Status ApplyLockUpdate(const raft_cmdpb::Command &cmd);
+    Status ApplyUnlock(const raft_cmdpb::Command &cmd);
+    Status ApplyUnlockForce(const raft_cmdpb::Command &cmd);
 
     Status ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_index);
     Status ApplyTxnDecide(const raft_cmdpb::Command &cmd, uint64_t raft_index);
@@ -183,6 +185,16 @@ private:
     void AskSplit(std::string &&key, metapb::Range&& meta, bool force = false);
     void ReportSplit(const metapb::Range &new_range);
 
+
+    int64_t checkMaxCount(int64_t maxCount) { 
+        static const int64_t kDefaultKVMaxCount = 1000;
+        if (maxCount <= 0)
+            maxCount = std::numeric_limits<int64_t>::max();
+        if (maxCount > kDefaultKVMaxCount) {
+            maxCount = kDefaultKVMaxCount ;
+        }
+        return maxCount;
+    }
 
     // 根据request的header设定response的header，然后发送response
     template <class ResponseT>
@@ -291,9 +303,9 @@ private:
 private:
     friend class ::sharkstore::test::helper::RangeTestFixture;
 
-//    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version,
-//            std::string &errMsg, bool prefix = false);
-//    int32_t SendNotify( watch::WatcherPtr& w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
+    int32_t WatchNotify(const watchpb::EventType evtType, const watchpb::WatchKeyValue& kv, const int64_t &version,
+            std::string &errMsg, bool prefix = false);
+    int32_t SendNotify( watch::WatcherPtr& w, watchpb::DsWatchResponse *ds_resp, bool prefix = false);
 
 private:
     uint64_t apply_index_;
@@ -320,8 +332,10 @@ private:
 //    std::atomic<uint64_t> statis_size_ = {0};
 //    uint64_t split_range_id_ = 0;
 
-//    watch::CEventBuffer *eventBuffer = nullptr;
+    watch::CEventBuffer *eventBuffer = nullptr;
     SubmitQueue submit_queue_;
+
+    bool save_apply_index_ = true;
 
     //std::unique_ptr<storage::Store> store_;
     std::shared_ptr<raft::Raft> raft_;

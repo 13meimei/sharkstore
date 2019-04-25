@@ -22,16 +22,16 @@ import (
 	"sync/atomic"
 	"time"
 
+	"model/pkg/lockpb"
 	"proxy/gateway-server/errors"
 	"proxy/gateway-server/mysql"
+	"proxy/metric"
+	"util"
 	"util/log"
 	"util/server"
-	"util"
-	"proxy/metric"
-	"model/pkg/lockpb"
 
-	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type BlacklistSqls struct {
@@ -127,12 +127,19 @@ func NewServer(cfg *Config) (*Server, error) {
 
 	l = LimitListener(l, cfg.MaxClients)
 	s.listener = l
-	proxy := NewProxy(cfg.Cluster.ServerAddr, cfg)
+
+	proxyCfg := &ProxyConfig{
+		AggrEnable:  cfg.AggrEnable,
+		MaxLimit:    cfg.MaxLimit,
+		Performance: cfg.Performance,
+	}
+	proxy := NewProxy(cfg.Cluster.ServerAddr, proxyCfg)
 	if proxy == nil {
 		log.Fatal("proxy fault")
 		return nil, nil
 	}
 	s.proxy = proxy
+
 	// start http server for manage
 	svr := server.NewServer()
 	config := &server.ServerConfig{
@@ -160,14 +167,14 @@ func NewServer(cfg *Config) (*Server, error) {
 	return s, nil
 }
 
-func initMetricSender(cfg *Config)  {
+func initMetricSender(cfg *Config) {
 	ips := util.GetLocalIps()
 	addr := fmt.Sprintf("%s:%d", ips[0], cfg.SqlPort)
 	//performance monitor about mysql port [addr] transport to metric server[cfg.MetricAddr]
-	metric.GsMetric= metric.NewMetric(cfg.Cluster.ID, addr, cfg.Metric.Address, cfg.Performance.SlowLogMaxLen, cfg.Alarm.Address)
+	metric.GsMetric = metric.NewMetric(cfg.Cluster.ID, addr, cfg.Metric.Address, cfg.Performance.SlowLogMaxLen, cfg.Alarm.Address)
 }
 
-func (s *Server) GetCfg() *Config{
+func (s *Server) GetCfg() *Config {
 	return s.cfg
 }
 
@@ -234,8 +241,7 @@ func (s *Server) onConn(c net.Conn) {
 			const size = 4096
 			buf := make([]byte, size)
 			buf = buf[:runtime.Stack(buf, false)] //获得当前goroutine的stacktrace
-			log.Error("server onConn error remoteAddr:%s stack:%s", c.RemoteAddr().String(), string(buf),
-			)
+			log.Error("server onConn error remoteAddr:%s stack:%s", c.RemoteAddr().String(), string(buf))
 		}
 
 		conn.Close()
@@ -249,7 +255,7 @@ func (s *Server) onConn(c net.Conn) {
 		return
 	}
 	if err := conn.Handshake(); err != nil {
-		log.Info("server onConn %v ",err.Error())
+		log.Info("server onConn %v ", err.Error())
 		conn.writeError(err)
 		conn.Close()
 		return
@@ -322,4 +328,3 @@ func (s *Server) Close() {
 		s.listener.Close()
 	}
 }
-

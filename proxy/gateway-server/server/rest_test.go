@@ -1034,3 +1034,4 @@ func getTx(t *testing.T, proxy *Proxy, sql string, index int) *TxObj {
 	}
 	return tx
 }
+

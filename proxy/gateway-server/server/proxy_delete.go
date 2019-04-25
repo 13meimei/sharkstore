@@ -108,6 +108,7 @@ func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([]*txnpb.T
 		log.Error("[delete]select row error: %v", err)
 		return nil, 0, err
 	}
+	context := dskv.NewPRConext(dskv.GetMaxBackoff)
 	for _, partRData := range pksAndIdxData {
 		for _, rData := range partRData {
 			var (
@@ -145,14 +146,18 @@ func (p *Proxy) selectForDelete(t *Table, sreq *txnpb.SelectRequest) ([]*txnpb.T
 						log.Error("[delete]field %v value %v change to byte array err:%v", rValue.fields[i].col, rValue.fields[i].value, err)
 						return nil, 0, err
 					}
-					log.Info("[delete]assemble old index key: %v, new index Key: %v, new index value: %v", indexKey)
+					log.Info("[delete]assemble old index key: %v", indexKey)
+					//scan index, todo need ds to batch support
+					var rVersion uint64
+					rVersion, err = p.scanIndex(context, t, col, indexKey)
+					if err != nil {
+						return nil, 0, err
+					}
 					intents = append(intents, &txnpb.TxnIntent{
 						Typ:         txnpb.OpType_DELETE,
 						Key:         indexKey,
 						CheckUnique: false,
-						//todo need ds to support: query index version
-						//ExpectedVer: rVersion,
-						ExpectedVer: 0,
+						ExpectedVer: rVersion,
 					})
 				}
 			}

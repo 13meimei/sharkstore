@@ -759,14 +759,14 @@ class RequestHeader : public ::google::protobuf::Message /* @@protoc_insertion_p
 
   // accessors -------------------------------------------------------
 
-  // .timestamp.Timestamp timestamp = 2;
+  // .tspb.Timestamp timestamp = 2;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 2;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
   // .metapb.RangeEpoch range_epoch = 5;
   bool has_range_epoch() const;
@@ -805,7 +805,7 @@ class RequestHeader : public ::google::protobuf::Message /* @@protoc_insertion_p
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::timestamp::Timestamp* timestamp_;
+  ::tspb::Timestamp* timestamp_;
   ::metapb::RangeEpoch* range_epoch_;
   ::google::protobuf::uint64 cluster_id_;
   ::google::protobuf::uint64 trace_id_;
@@ -897,23 +897,23 @@ class ResponseHeader : public ::google::protobuf::Message /* @@protoc_insertion_
 
   // accessors -------------------------------------------------------
 
-  // .timestamp.Timestamp timestamp = 2;
+  // .tspb.Timestamp timestamp = 2;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 2;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
-  // .timestamp.Timestamp now = 4;
+  // .tspb.Timestamp now = 4;
   bool has_now() const;
   void clear_now();
   static const int kNowFieldNumber = 4;
-  const ::timestamp::Timestamp& now() const;
-  ::timestamp::Timestamp* mutable_now();
-  ::timestamp::Timestamp* release_now();
-  void set_allocated_now(::timestamp::Timestamp* now);
+  const ::tspb::Timestamp& now() const;
+  ::tspb::Timestamp* mutable_now();
+  ::tspb::Timestamp* release_now();
+  void set_allocated_now(::tspb::Timestamp* now);
 
   // .errorpb.Error error = 5;
   bool has_error() const;
@@ -946,8 +946,8 @@ class ResponseHeader : public ::google::protobuf::Message /* @@protoc_insertion_
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::timestamp::Timestamp* timestamp_;
-  ::timestamp::Timestamp* now_;
+  ::tspb::Timestamp* timestamp_;
+  ::tspb::Timestamp* now_;
   ::errorpb::Error* error_;
   ::google::protobuf::uint64 cluster_id_;
   ::google::protobuf::uint64 trace_id_;
@@ -3775,14 +3775,14 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::kvrpcpb::Limit* release_limit();
   void set_allocated_limit(::kvrpcpb::Limit* limit);
 
-  // .timestamp.Timestamp timestamp = 7;
+  // .tspb.Timestamp timestamp = 7;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 7;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
   // .kvrpcpb.MatchExt ext_filter = 10;
   bool has_ext_filter() const;
@@ -3803,7 +3803,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::kvrpcpb::Scope* scope_;
   ::kvrpcpb::Limit* limit_;
-  ::timestamp::Timestamp* timestamp_;
+  ::tspb::Timestamp* timestamp_;
   ::kvrpcpb::MatchExt* ext_filter_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
@@ -4611,14 +4611,14 @@ class InsertRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::KeyValue >&
       rows() const;
 
-  // .timestamp.Timestamp timestamp = 3;
+  // .tspb.Timestamp timestamp = 3;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 3;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
   // bool check_duplicate = 2;
   void clear_check_duplicate();
@@ -4631,7 +4631,7 @@ class InsertRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::RepeatedPtrField< ::kvrpcpb::KeyValue > rows_;
-  ::timestamp::Timestamp* timestamp_;
+  ::tspb::Timestamp* timestamp_;
   bool check_duplicate_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
@@ -5311,14 +5311,14 @@ class DeleteRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::kvrpcpb::Scope* release_scope();
   void set_allocated_scope(::kvrpcpb::Scope* scope);
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 10;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.DeleteRequest)
  private:
@@ -5329,7 +5329,7 @@ class DeleteRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   mutable int _indexs_cached_byte_size_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::kvrpcpb::Scope* scope_;
-  ::timestamp::Timestamp* timestamp_;
+  ::tspb::Timestamp* timestamp_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -10599,14 +10599,14 @@ class LockRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::kvrpcpb::LockValue* release_value();
   void set_allocated_value(::kvrpcpb::LockValue* value);
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 10;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.LockRequest)
  private:
@@ -10614,7 +10614,7 @@ class LockRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::kvrpcpb::LockValue* value_;
-  ::timestamp::Timestamp* timestamp_;
+  ::tspb::Timestamp* timestamp_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -11344,14 +11344,14 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::std::string* release_by();
   void set_allocated_by(::std::string* by);
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 10;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
   // int64 delete_time = 5;
   void clear_delete_time();
@@ -11367,7 +11367,7 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::internal::ArenaStringPtr id_;
   ::google::protobuf::internal::ArenaStringPtr update_value_;
   ::google::protobuf::internal::ArenaStringPtr by_;
-  ::timestamp::Timestamp* timestamp_;
+  ::tspb::Timestamp* timestamp_;
   ::google::protobuf::int64 delete_time_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
@@ -11717,14 +11717,14 @@ class UnlockRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::std::string* release_by();
   void set_allocated_by(::std::string* by);
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 10;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.UnlockRequest)
  private:
@@ -11733,7 +11733,7 @@ class UnlockRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::google::protobuf::internal::ArenaStringPtr id_;
   ::google::protobuf::internal::ArenaStringPtr by_;
-  ::timestamp::Timestamp* timestamp_;
+  ::tspb::Timestamp* timestamp_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -12068,14 +12068,14 @@ class UnlockForceRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::std::string* release_by();
   void set_allocated_by(::std::string* by);
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   bool has_timestamp() const;
   void clear_timestamp();
   static const int kTimestampFieldNumber = 10;
-  const ::timestamp::Timestamp& timestamp() const;
-  ::timestamp::Timestamp* mutable_timestamp();
-  ::timestamp::Timestamp* release_timestamp();
-  void set_allocated_timestamp(::timestamp::Timestamp* timestamp);
+  const ::tspb::Timestamp& timestamp() const;
+  ::tspb::Timestamp* mutable_timestamp();
+  ::tspb::Timestamp* release_timestamp();
+  void set_allocated_timestamp(::tspb::Timestamp* timestamp);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.UnlockForceRequest)
  private:
@@ -12083,7 +12083,7 @@ class UnlockForceRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::google::protobuf::internal::ArenaStringPtr by_;
-  ::timestamp::Timestamp* timestamp_;
+  ::tspb::Timestamp* timestamp_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -13237,7 +13237,7 @@ inline void RequestHeader::set_cluster_id(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.RequestHeader.cluster_id)
 }
 
-// .timestamp.Timestamp timestamp = 2;
+// .tspb.Timestamp timestamp = 2;
 inline bool RequestHeader::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -13245,28 +13245,28 @@ inline void RequestHeader::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& RequestHeader::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& RequestHeader::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.RequestHeader.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* RequestHeader::mutable_timestamp() {
+inline ::tspb::Timestamp* RequestHeader::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.RequestHeader.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* RequestHeader::release_timestamp() {
+inline ::tspb::Timestamp* RequestHeader::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.RequestHeader.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void RequestHeader::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void RequestHeader::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -13377,7 +13377,7 @@ inline void ResponseHeader::set_cluster_id(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.ResponseHeader.cluster_id)
 }
 
-// .timestamp.Timestamp timestamp = 2;
+// .tspb.Timestamp timestamp = 2;
 inline bool ResponseHeader::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -13385,28 +13385,28 @@ inline void ResponseHeader::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& ResponseHeader::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& ResponseHeader::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.ResponseHeader.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* ResponseHeader::mutable_timestamp() {
+inline ::tspb::Timestamp* ResponseHeader::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.ResponseHeader.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* ResponseHeader::release_timestamp() {
+inline ::tspb::Timestamp* ResponseHeader::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.ResponseHeader.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void ResponseHeader::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void ResponseHeader::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -13431,7 +13431,7 @@ inline void ResponseHeader::set_trace_id(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.ResponseHeader.trace_id)
 }
 
-// .timestamp.Timestamp now = 4;
+// .tspb.Timestamp now = 4;
 inline bool ResponseHeader::has_now() const {
   return this != internal_default_instance() && now_ != NULL;
 }
@@ -13439,28 +13439,28 @@ inline void ResponseHeader::clear_now() {
   if (GetArenaNoVirtual() == NULL && now_ != NULL) delete now_;
   now_ = NULL;
 }
-inline const ::timestamp::Timestamp& ResponseHeader::now() const {
-  const ::timestamp::Timestamp* p = now_;
+inline const ::tspb::Timestamp& ResponseHeader::now() const {
+  const ::tspb::Timestamp* p = now_;
   // @@protoc_insertion_point(field_get:kvrpcpb.ResponseHeader.now)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* ResponseHeader::mutable_now() {
+inline ::tspb::Timestamp* ResponseHeader::mutable_now() {
   
   if (now_ == NULL) {
-    now_ = new ::timestamp::Timestamp;
+    now_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.ResponseHeader.now)
   return now_;
 }
-inline ::timestamp::Timestamp* ResponseHeader::release_now() {
+inline ::tspb::Timestamp* ResponseHeader::release_now() {
   // @@protoc_insertion_point(field_release:kvrpcpb.ResponseHeader.now)
   
-  ::timestamp::Timestamp* temp = now_;
+  ::tspb::Timestamp* temp = now_;
   now_ = NULL;
   return temp;
 }
-inline void ResponseHeader::set_allocated_now(::timestamp::Timestamp* now) {
+inline void ResponseHeader::set_allocated_now(::tspb::Timestamp* now) {
   delete now_;
   now_ = now;
   if (now) {
@@ -15512,7 +15512,7 @@ inline void SelectRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.SelectRequest.limit)
 }
 
-// .timestamp.Timestamp timestamp = 7;
+// .tspb.Timestamp timestamp = 7;
 inline bool SelectRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -15520,28 +15520,28 @@ inline void SelectRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& SelectRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& SelectRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.SelectRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* SelectRequest::mutable_timestamp() {
+inline ::tspb::Timestamp* SelectRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.SelectRequest.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* SelectRequest::release_timestamp() {
+inline ::tspb::Timestamp* SelectRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.SelectRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void SelectRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void SelectRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -16218,7 +16218,7 @@ inline void InsertRequest::set_check_duplicate(bool value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.InsertRequest.check_duplicate)
 }
 
-// .timestamp.Timestamp timestamp = 3;
+// .tspb.Timestamp timestamp = 3;
 inline bool InsertRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -16226,28 +16226,28 @@ inline void InsertRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& InsertRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& InsertRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.InsertRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* InsertRequest::mutable_timestamp() {
+inline ::tspb::Timestamp* InsertRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.InsertRequest.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* InsertRequest::release_timestamp() {
+inline ::tspb::Timestamp* InsertRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.InsertRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void InsertRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void InsertRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -16736,7 +16736,7 @@ DeleteRequest::mutable_indexs() {
   return &indexs_;
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 inline bool DeleteRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -16744,28 +16744,28 @@ inline void DeleteRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& DeleteRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& DeleteRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.DeleteRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* DeleteRequest::mutable_timestamp() {
+inline ::tspb::Timestamp* DeleteRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.DeleteRequest.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* DeleteRequest::release_timestamp() {
+inline ::tspb::Timestamp* DeleteRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.DeleteRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void DeleteRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void DeleteRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -20719,7 +20719,7 @@ inline void LockRequest::set_allocated_value(::kvrpcpb::LockValue* value) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockRequest.value)
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 inline bool LockRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -20727,28 +20727,28 @@ inline void LockRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& LockRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& LockRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.LockRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* LockRequest::mutable_timestamp() {
+inline ::tspb::Timestamp* LockRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.LockRequest.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* LockRequest::release_timestamp() {
+inline ::tspb::Timestamp* LockRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.LockRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void LockRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void LockRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -21426,7 +21426,7 @@ inline void LockUpdateRequest::set_allocated_update_value(::std::string* update_
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockUpdateRequest.update_value)
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 inline bool LockUpdateRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -21434,28 +21434,28 @@ inline void LockUpdateRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& LockUpdateRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& LockUpdateRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.LockUpdateRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* LockUpdateRequest::mutable_timestamp() {
+inline ::tspb::Timestamp* LockUpdateRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.LockUpdateRequest.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* LockUpdateRequest::release_timestamp() {
+inline ::tspb::Timestamp* LockUpdateRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.LockUpdateRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void LockUpdateRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void LockUpdateRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -21797,7 +21797,7 @@ inline void UnlockRequest::set_allocated_id(::std::string* id) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UnlockRequest.id)
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 inline bool UnlockRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -21805,28 +21805,28 @@ inline void UnlockRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& UnlockRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& UnlockRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.UnlockRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* UnlockRequest::mutable_timestamp() {
+inline ::tspb::Timestamp* UnlockRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.UnlockRequest.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* UnlockRequest::release_timestamp() {
+inline ::tspb::Timestamp* UnlockRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.UnlockRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void UnlockRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void UnlockRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -22115,7 +22115,7 @@ inline void UnlockForceRequest::set_allocated_key(::std::string* key) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UnlockForceRequest.key)
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 inline bool UnlockForceRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -22123,28 +22123,28 @@ inline void UnlockForceRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-inline const ::timestamp::Timestamp& UnlockForceRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+inline const ::tspb::Timestamp& UnlockForceRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.UnlockForceRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-inline ::timestamp::Timestamp* UnlockForceRequest::mutable_timestamp() {
+inline ::tspb::Timestamp* UnlockForceRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.UnlockForceRequest.timestamp)
   return timestamp_;
 }
-inline ::timestamp::Timestamp* UnlockForceRequest::release_timestamp() {
+inline ::tspb::Timestamp* UnlockForceRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.UnlockForceRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-inline void UnlockForceRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+inline void UnlockForceRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {

@@ -24,6 +24,8 @@ public:
     DbInterface(const DbInterface&) = delete;
     DbInterface& operator=(const DbInterface&) = delete;
 
+    virtual bool IsInMemory() = 0;
+
     virtual Status Open() = 0;
 
     virtual Status Get(const std::string& key, std::string* value) = 0;
@@ -56,7 +58,7 @@ public:
     virtual Status SetOptions(void* column_family,
             const std::unordered_map<std::string, std::string>& new_options) = 0;
 
-    virtual void PrintMetric() = 0;
+    virtual std::string GetMetrics() = 0;
 };
 
 }

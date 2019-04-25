@@ -594,3 +594,32 @@ func regroupKeysByRange(context *dskv.ReqContext, t *Table, keys [][]byte) ([][]
 	}
 	return keysGroup, nil
 }
+
+func (p *Proxy) handleTxnScan(ctx *dskv.ReqContext, t *Table, req *txnpb.ScanRequest) (resp *txnpb.ScanResponse, err error) {
+	if len(req.GetStartKey()) == 0 || len(req.GetEndKey()) == 0 ||
+		bytes.Compare(req.GetStartKey(), req.GetEndKey()) >= 0 {
+		return
+	}
+	var errForRetry error
+	proxy := dskv.GetKvProxy()
+	defer dskv.PutKvProxy(proxy)
+	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	for {
+		if errForRetry != nil {
+			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
+			if errForRetry != nil {
+				log.Error("handleScanKeyValue [%s] execute timeout", ctx)
+				return
+			}
+		}
+		resp, err = proxy.TxScan(ctx, req, req.GetStartKey())
+		if err != nil {
+			if err == dskv.ErrRouteChange {
+				errForRetry = err
+				continue
+			}
+			return
+		}
+		return
+	}
+}

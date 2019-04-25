@@ -204,6 +204,13 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 			goto Err
 		}
 		resp.TxGetLockResp = _resp
+	case Type_TxScan:
+		_resp, _err := p.Cli.TxScan(ctx, addr, req.GetTxScanReq())
+		if _err != nil {
+			err = _err
+			goto Err
+		}
+		resp.TxScanResp = _resp
 	default:
 		return nil, false, ErrInternalError
 	}
@@ -301,6 +308,9 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 		timeout = client.ReadTimeoutMedium
 	case Type_TxGetLock:
 		header = req.TxGetLockReq.GetHeader()
+		timeout = client.ReadTimeoutMedium
+	case Type_TxScan:
+		header = req.TxScanReq.GetHeader()
 		timeout = client.ReadTimeoutMedium
 	default:
 		return timeout, header, fmt.Errorf("invalid request type %s", req.Type.String())

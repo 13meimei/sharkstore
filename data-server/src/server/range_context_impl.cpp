@@ -49,9 +49,9 @@ RangeContextImpl::RangeContextImpl(ContextServer *s) :
 
 uint64_t RangeContextImpl::GetFSUsagePercent(const uint64_t seq) const {
     if (seq == 1) {
-        return server_->persist_run_status->GetFilesystemUsedPercent();
+        return server_->persist_run_status->GetDBUsedPercent();
     }
-    return server_->run_status->GetFilesystemUsedPercent();
+    return server_->run_status->GetDBUsedPercent();
 }
 
 void RangeContextImpl::ScheduleHeartbeat(uint64_t range_id, bool delay) {

@@ -71,7 +71,9 @@ typedef struct ds_config_s {
     } range_config;
 
     struct {
+        bool disabled;
         int port;  // raft server port
+        bool in_memory_log;
         char log_path[PATH_MAX];
         size_t log_file_size;
         size_t max_log_files;
@@ -82,6 +84,7 @@ typedef struct ds_config_s {
         size_t apply_queue;
         size_t transport_send_threads;
         size_t transport_recv_threads;
+        size_t connection_pool_size;
         size_t tick_interval_ms;
         size_t max_msg_size;
     } raft_config;
@@ -101,7 +104,7 @@ typedef struct ds_config_s {
     sf_socket_thread_config_t worker_config;   // worker thread config
 
     struct {
-        char name[8];
+        char name[32];
     } engine_config;
 
     struct {

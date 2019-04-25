@@ -181,8 +181,7 @@ Status TxnRowFetcher::getRow(const std::string& key, const std::string& data_val
 
         const auto& intent = txn_value.intent();
         assert(key == intent.key());
-        FLOG_INFO("select txn intent: %s",
-                         intent.ShortDebugString().c_str());
+        FLOG_DEBUG("select txn intent: %s", intent.ShortDebugString().c_str());
         if (intent.is_primary()) { // primary可以直接确定当前事务的状态
             auto txn_status = txn_value.txn_status();
             switch (txn_status) {
@@ -281,7 +280,7 @@ Status PointRowFetcher::Next(txnpb::Row& row, bool& over) {
 
     fetched_ = true;
 
-    std::string data_value;
+    std::string data_value; // value里有version，只有Get到，data_value肯定不会为空字符串
     auto s = store_.Get(req_.key(), &data_value);
     if (s.code() == Status::kNotFound) {
         data_value.clear();
@@ -336,7 +335,6 @@ bool RangeRowFetcher::checkIterValid() {
         last_status_ = std::move(s);
         return false;
     }
-    s = txn_iter_->status();
     if (!s.ok()) {
         last_status_ = std::move(s);
         return false;

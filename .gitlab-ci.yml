@@ -1,27 +1,36 @@
+before_script:
+    - ln -sv ${CI_PROJECT_DIR} ${CI_PROJECT_DIR}/src
+    - export GOPATH=$GOPATH:${CI_PROJECT_DIR}
+
 stages:
-- build
 - test
 - deploy
 
-build_sharkstore:
-  stage: build
-  script:
-  - echo "build sharkstore....."
-  - echo "mvn clean"
-  - echo "done"
-
-test_sharkstore:
+ds_ci:
   stage: test
   script:
-  - echo "run sharkstore test....."
-  - echo "java -test"
-  - echo "done"
+  - echo "build sharkstore data-server....."
+  - mkdir -p ${CI_PROJECT_DIR}/data-server/build/
+  - cd ${CI_PROJECT_DIR}/data-server/build/ &&
+    cmake .. -DBUILD_TEST=ON && make -j `nproc`
 
-deploy_sharkstore:
+  - echo "run data-server test....."
+    #- cd ${CI_PROJECT_DIR}/data-server/build && ctest
+
+gw_ci:
+  stage: test
+  script:
+  - echo "build sharkstore gateway-server"
+  - cd ${CI_PROJECT_DIR}/proxy/gateway-server/cmd && go build -o gateway-server
+
+ms_ci:
+  stage: test
+  script:
+  - echo "build sharkstore master-server"
+  - cd ${CI_PROJECT_DIR}/master-server/cmd && go build -o master-server
+
+deploy:
   stage: deploy
   script:
-  - echo "deploy sharkstore...."
-  - echo "run mvn install"
-  - echo "done"
-
+  - echo "todo deploy..."
 

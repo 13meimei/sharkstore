@@ -64,11 +64,13 @@ bool DecodeBytesValue(const std::string& data, size_t& offset, std::string* valu
 bool SkipValue(const std::string& data, size_t& offset);
 
 void EncodeUvarintAscending(std::string* buf, uint64_t value);
+void EncodeUvarintDescending(std::string* buf, uint64_t value);
 void EncodeVarintAscending(std::string* buf, int64_t value);
 void EncodeFloatAscending(std::string* buf, double value);
 void EncodeBytesAscending(std::string* buf, const char* value, size_t value_size);
 
 bool DecodeUvarintAscending(const std::string& buf, size_t& pos, uint64_t* out);
+bool DecodeUvarintDescending(const std::string& buf, size_t& pos, uint64_t* out);
 bool DecodeVarintAscending(const std::string& buf, size_t& pos, int64_t* out);
 bool DecodeFloatAscending(const std::string& buf, size_t& pos, double* out);
 bool DecodeBytesAscending(const std::string& buf, size_t& pos, std::string* out);

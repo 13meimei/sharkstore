@@ -2,6 +2,7 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <cstring>
 
 namespace sharkstore {
 namespace monitor {
@@ -17,6 +18,11 @@ bool MacStatus::GetFileSystemUsage(const char *path, uint64_t *total, uint64_t *
     } else {
         return false;
     }
+}
+
+bool MacStatus::GetMemoryUsage(uint64_t *total, uint64_t *available) {
+    // TODO:
+    return false;
 }
 
 }

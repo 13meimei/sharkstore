@@ -1,10 +1,12 @@
 #include "store.h"
 
 #include "base/util.h"
+#include "frame/sf_logger.h"
 #include "common/ds_encoding.h"
+
 #include "select_txn.h"
 #include "util.h"
-#include "frame/sf_logger.h"
+#include "txn_iterator.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -120,6 +122,16 @@ Status Store::GetTxnValue(const std::string &key, TxnValue *value) {
     return Status::OK();
 }
 
+std::unique_ptr<TxnIterator> Store::NewTxnIterator(const std::string& start, const std::string& limit) {
+    std::unique_ptr<IteratorInterface> data_iter, txn_iter;
+    auto s = NewIterators(data_iter, txn_iter, start, limit);
+    if (!s.ok()) {
+        return nullptr;
+    }
+    std::unique_ptr<TxnIterator> iter(new TxnIterator(std::move(data_iter), std::move(txn_iter)));
+    return iter;
+}
+
 Status Store::writeTxnValue(const txnpb::TxnValue& value, WriteBatchInterface* batch) {
     std::string db_value;
     if (!value.SerializeToString(&db_value)) {
@@ -212,8 +224,51 @@ TxnErrorPtr Store::checkUniqueAndVersion(const txnpb::TxnIntent& intent) {
 }
 
 
+uint64_t Store::prepareLocal(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp) {
+    assert(req.local());
+    auto batch = db_->NewBatch();
+    uint64_t bytes_written = 0;
+    bool exist_flag = false;
+    for (const auto& intent: req.intents()) {
+        // check lockable
+        auto err = checkLockable(intent.key(), req.txn_id(), &exist_flag);
+        if (err != nullptr) {
+            resp->add_errors()->Swap(err.get());
+            return 0;
+        }
+        if (exist_flag) {
+            setTxnServerErr(resp->add_errors(), Status::kExisted, "lock already exist");
+            return 0;
+        }
+
+        // check unique and version
+        if (intent.check_unique() || intent.expected_ver() != 0) {
+            err = checkUniqueAndVersion(intent);
+            if (err != nullptr) {
+                resp->add_errors()->Swap(err.get());
+                return 0;
+            }
+        }
+        // commit directly
+        auto s = commitIntent(intent, version, bytes_written, batch.get());
+        if (!s.ok()) {
+            setTxnServerErr(resp->add_errors(), s.code(), s.ToString());
+            return 0;
+        }
+    }
+
+    auto ret = db_->Write(batch.get());
+    if (!ret.ok()) {
+        setTxnServerErr(resp->add_errors(), ret.code(), ret.ToString());
+        return 0;
+    } else {
+        addMetricWrite(req.intents_size(), bytes_written);
+        return bytes_written;
+    }
+}
+
 TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& intent,
-        uint64_t version, WriteBatchInterface* batch) {
+                                 uint64_t version, WriteBatchInterface* batch) {
     // check lockable
     bool exist_flag = false;
     auto err = checkLockable(intent.key(), req.txn_id(), &exist_flag);
@@ -242,34 +297,39 @@ TxnErrorPtr Store::prepareIntent(const PrepareRequest& req, const TxnIntent& int
     return nullptr;
 }
 
-void Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareResponse* resp) {
-    // TODO: local txn
-    bool primary_lockable = true;
+uint64_t Store::TxnPrepare(const PrepareRequest& req, uint64_t version, PrepareResponse* resp) {
+    if (req.local()) {
+        return prepareLocal(req, version, resp);
+    }
+
+    bool primary_success = true;
+    bool fatal_error = false;
     auto batch = db_->NewBatch();
     for (const auto& intent: req.intents()) {
-        bool stop_flag = false;
         auto err = prepareIntent(req, intent, version, batch.get());
         if (err != nullptr) {
             if (err->err_type() == TxnError_ErrType_LOCKED) {
                 if (intent.is_primary()) {
-                    primary_lockable = false;
+                    primary_success = false;
                 }
-            } else { // 其他类型错误，终止prepare
-                resp->clear_errors(); // 清除其他错误
-                stop_flag = true;
+            } else { // 其他类型错误，终止prepare，视作整个请求失败
+                resp->clear_errors(); // 清除其他错误，只返回关键错误
+                fatal_error = true;
             }
             resp->add_errors()->Swap(err.get());
         }
-        if (stop_flag) break;
+        if (fatal_error) break;
     }
 
-    if (primary_lockable) {
+    // 只要primary可以prepare成功就执行写入
+    if (!fatal_error && primary_success) {
         auto ret = db_->Write(batch.get());
         if (!ret.ok()) {
             resp->clear_errors();
             setTxnServerErr(resp->add_errors(), ret.code(), ret.ToString());
         }
     }
+    return 0;
 }
 
 Status Store::commitIntent(const txnpb::TxnIntent& intent, uint64_t version,
@@ -423,6 +483,7 @@ uint64_t Store::TxnDecide(const DecideRequest& req, DecideResponse* resp) {
         setTxnServerErr(resp->mutable_err(), Status::kIOError, ret.ToString());
         return 0;
     } else {
+        addMetricWrite(req.keys_size(), bytes_written);
         return bytes_written;
     }
 }
@@ -502,6 +563,56 @@ Status Store::TxnSelect(const SelectRequest& req, SelectResponse* resp) {
         }
     }
     resp->set_offset(all);
+    return s;
+}
+
+Status Store::TxnScan(const txnpb::ScanRequest& req, txnpb::ScanResponse* resp) {
+    auto iter = NewTxnIterator(req.start_key(), req.end_key());
+    if (iter == nullptr) {
+        return Status(Status::kIOError, "new iterators", "");
+    }
+
+    int64_t count = 0;
+    bool over = false;
+    Status s;
+    while (!over) {
+        std::string key, data_value, txn_value;
+        s = iter->Next(key, data_value, txn_value, over);
+        if (!s.ok() || over) {
+            break;
+        }
+
+        auto kv = resp->add_kvs();
+        kv->set_key(std::move(key));
+
+        bool has_del_intent = false;
+        bool has_value = false;
+        if (!data_value.empty()) {
+            kv->set_value(std::move(data_value));
+            has_value = true;
+        }
+
+        if (!txn_value.empty()) {
+            txnpb::TxnValue tv;
+            if (!tv.ParseFromString(txn_value)) {
+                return Status(Status::kCorruption, "parse txn value", EncodeToHex(txn_value));
+            }
+            // TODO: use move
+            has_del_intent = tv.intent().typ() == txnpb::DELETE;
+            auto intent = kv->mutable_intent();
+            intent->set_op_type(tv.intent().typ());
+            intent->set_txn_id(tv.txn_id());
+            intent->set_primary_key(tv.primary_key());
+            intent->set_value(tv.intent().value());
+        }
+
+        if (has_value && !has_del_intent) { // 有可能这条不算
+            ++count;
+        }
+        if (count >= req.max_count()) {
+            break;
+        }
+    }
     return s;
 }
 

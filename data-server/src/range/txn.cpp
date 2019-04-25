@@ -88,18 +88,23 @@ Status Range::ApplyTxnPrepare(const raft_cmdpb::Command &cmd, uint64_t raft_inde
     auto &req = cmd.txn_prepare_req();
     auto btime = NowMicros();
     errorpb::Error *err = nullptr;
+    uint64_t bytes_written = 0;
     std::unique_ptr<PrepareResponse> resp(new PrepareResponse);
     do {
         if (!TxnKeyInRange(req, cmd.verify_epoch(), &err)) {
             break;
         }
-        store_->TxnPrepare(req, raft_index, resp.get());
+        bytes_written = store_->TxnPrepare(req, raft_index, resp.get());
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
         DsPrepareResponse ds_resp;
         ds_resp.set_allocated_resp(resp.release());
         ReplySubmit(cmd, ds_resp, err, btime);
+
+        if (bytes_written > 0) {
+            CheckSplit(bytes_written);
+        }
     } else if (err != nullptr) {
         delete err;
     }
@@ -308,6 +313,49 @@ void Range::TxnSelect(RPCRequestPtr rpc, txnpb::DsSelectRequest& req) {
         RANGE_LOG_DEBUG("TxnSelect result: code=%d, rows=%d",
                         (ds_resp.has_resp() ? ds_resp.resp().code() : 0),
                         (ds_resp.has_resp() ? ds_resp.resp().rows_size() : 0));
+    }
+
+    SendResponse(rpc, ds_resp, req.header(), err);
+}
+
+void Range::TxnScan(RPCRequestPtr rpc, txnpb::DsScanRequest& req) {
+    RANGE_LOG_DEBUG("TxnScan begin, req: %s", req.DebugString().c_str());
+
+    auto btime = NowMicros();
+    errorpb::Error *err = nullptr;
+    txnpb::DsScanResponse ds_resp;
+    do {
+        if (!VerifyLeader(err)) {
+            break;
+        }
+
+        if (!EpochIsEqual(req.header().range_epoch(), err)) {
+            break;
+        }
+
+        auto resp = ds_resp.mutable_resp();
+        auto ret = store_->TxnScan(req.req(), resp);
+        auto etime = NowMicros();
+        context_->Statistics()->PushTime(HistogramType::kStore, etime - btime);
+
+        if (!ret.ok()) {
+            RANGE_LOG_ERROR("TxnScan from store error: %s", ret.ToString().c_str());
+            resp->set_code(static_cast<int>(ret.code()));
+            break;
+        }
+
+        if (!EpochIsEqual(req.header().range_epoch(), err)) {
+            ds_resp.clear_resp();
+            RANGE_LOG_WARN("epoch change Select error: %s", err->message().c_str());
+        }
+    } while (false);
+
+    if (err != nullptr) {
+        RANGE_LOG_WARN("TxnScan error: %s", err->message().c_str());
+    } else {
+        RANGE_LOG_DEBUG("TxnSelect result: code=%d, size=%d",
+                        (ds_resp.has_resp() ? ds_resp.resp().code() : 0),
+                        (ds_resp.has_resp() ? ds_resp.resp().kvs_size() : 0));
     }
 
     SendResponse(rpc, ds_resp, req.header(), err);

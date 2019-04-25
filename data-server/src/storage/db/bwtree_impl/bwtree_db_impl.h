@@ -12,6 +12,8 @@ public:
     BwTreeDBImpl();
     ~BwTreeDBImpl();
 
+    bool IsInMemory() override { return true; }
+
     Status Open() override { return Status::OK(); }
 
     Status Get(const std::string& key, std::string* value) override;
@@ -37,7 +39,7 @@ public:
     void GetProperty(const std::string& k, std::string* v) override;
     Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
-    void PrintMetric() override;
+    std::string GetMetrics() override;
 
 private:
     struct ValueEqualityChecker {

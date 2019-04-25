@@ -1743,7 +1743,7 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::InitProtobufDefaults();
   ::metapb::protobuf_metapb_2eproto::InitDefaults();
   ::errorpb::protobuf_errorpb_2eproto::InitDefaults();
-  ::timestamp::protobuf_timestamp_2eproto::InitDefaults();
+  ::tspb::protobuf_timestamp_2eproto::InitDefaults();
   _KvPair_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_KvPair_default_instance_);_RequestHeader_default_instance_._instance.DefaultConstruct();
@@ -1960,14 +1960,14 @@ void TableStruct::InitDefaultsImpl() {
   ::google::protobuf::internal::OnShutdownDestroyMessage(
       &_DsLockGetRequest_default_instance_);_DsLockGetResponse_default_instance_._instance.DefaultConstruct();
   ::google::protobuf::internal::OnShutdownDestroyMessage(
-      &_DsLockGetResponse_default_instance_);_RequestHeader_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+      &_DsLockGetResponse_default_instance_);_RequestHeader_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _RequestHeader_default_instance_._instance.get_mutable()->range_epoch_ = const_cast< ::metapb::RangeEpoch*>(
       ::metapb::RangeEpoch::internal_default_instance());
-  _ResponseHeader_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
-  _ResponseHeader_default_instance_._instance.get_mutable()->now_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+  _ResponseHeader_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
+  _ResponseHeader_default_instance_._instance.get_mutable()->now_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _ResponseHeader_default_instance_._instance.get_mutable()->error_ = const_cast< ::errorpb::Error*>(
       ::errorpb::Error::internal_default_instance());
   _DsKvRawGetRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
@@ -2020,8 +2020,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::Scope::internal_default_instance());
   _SelectRequest_default_instance_._instance.get_mutable()->limit_ = const_cast< ::kvrpcpb::Limit*>(
       ::kvrpcpb::Limit::internal_default_instance());
-  _SelectRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+  _SelectRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _SelectRequest_default_instance_._instance.get_mutable()->ext_filter_ = const_cast< ::kvrpcpb::MatchExt*>(
       ::kvrpcpb::MatchExt::internal_default_instance());
   _DsSelectResponse_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::ResponseHeader*>(
@@ -2036,8 +2036,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::ResponseHeader::internal_default_instance());
   _DsInsertResponse_default_instance_._instance.get_mutable()->resp_ = const_cast< ::kvrpcpb::InsertResponse*>(
       ::kvrpcpb::InsertResponse::internal_default_instance());
-  _InsertRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+  _InsertRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _DsDeleteRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
       ::kvrpcpb::RequestHeader::internal_default_instance());
   _DsDeleteRequest_default_instance_._instance.get_mutable()->req_ = const_cast< ::kvrpcpb::DeleteRequest*>(
@@ -2048,8 +2048,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::DeleteResponse::internal_default_instance());
   _DeleteRequest_default_instance_._instance.get_mutable()->scope_ = const_cast< ::kvrpcpb::Scope*>(
       ::kvrpcpb::Scope::internal_default_instance());
-  _DeleteRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+  _DeleteRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _Field_default_instance_._instance.get_mutable()->column_ = const_cast< ::metapb::Column*>(
       ::metapb::Column::internal_default_instance());
   _UpdateRequest_default_instance_._instance.get_mutable()->scope_ = const_cast< ::kvrpcpb::Scope*>(
@@ -2144,8 +2144,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::KvRangeDeleteResponse::internal_default_instance());
   _LockRequest_default_instance_._instance.get_mutable()->value_ = const_cast< ::kvrpcpb::LockValue*>(
       ::kvrpcpb::LockValue::internal_default_instance());
-  _LockRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+  _LockRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _DsLockRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
       ::kvrpcpb::RequestHeader::internal_default_instance());
   _DsLockRequest_default_instance_._instance.get_mutable()->req_ = const_cast< ::kvrpcpb::LockRequest*>(
@@ -2156,8 +2156,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::ResponseHeader::internal_default_instance());
   _DsLockResponse_default_instance_._instance.get_mutable()->resp_ = const_cast< ::kvrpcpb::LockResponse*>(
       ::kvrpcpb::LockResponse::internal_default_instance());
-  _LockUpdateRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+  _LockUpdateRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _DsLockUpdateRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
       ::kvrpcpb::RequestHeader::internal_default_instance());
   _DsLockUpdateRequest_default_instance_._instance.get_mutable()->req_ = const_cast< ::kvrpcpb::LockUpdateRequest*>(
@@ -2166,8 +2166,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::ResponseHeader::internal_default_instance());
   _DsLockUpdateResponse_default_instance_._instance.get_mutable()->resp_ = const_cast< ::kvrpcpb::LockResponse*>(
       ::kvrpcpb::LockResponse::internal_default_instance());
-  _UnlockRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+  _UnlockRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _DsUnlockRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
       ::kvrpcpb::RequestHeader::internal_default_instance());
   _DsUnlockRequest_default_instance_._instance.get_mutable()->req_ = const_cast< ::kvrpcpb::UnlockRequest*>(
@@ -2176,8 +2176,8 @@ void TableStruct::InitDefaultsImpl() {
       ::kvrpcpb::ResponseHeader::internal_default_instance());
   _DsUnlockResponse_default_instance_._instance.get_mutable()->resp_ = const_cast< ::kvrpcpb::LockResponse*>(
       ::kvrpcpb::LockResponse::internal_default_instance());
-  _UnlockForceRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::timestamp::Timestamp*>(
-      ::timestamp::Timestamp::internal_default_instance());
+  _UnlockForceRequest_default_instance_._instance.get_mutable()->timestamp_ = const_cast< ::tspb::Timestamp*>(
+      ::tspb::Timestamp::internal_default_instance());
   _DsUnlockForceRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::kvrpcpb::RequestHeader*>(
       ::kvrpcpb::RequestHeader::internal_default_instance());
   _DsUnlockForceRequest_default_instance_._instance.get_mutable()->req_ = const_cast< ::kvrpcpb::UnlockForceRequest*>(
@@ -2216,274 +2216,273 @@ void AddDescriptorsImpl() {
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\rkvrpcpb.proto\022\007kvrpcpb\032\014metapb.proto\032\r"
       "errorpb.proto\032\017timestamp.proto\"$\n\006KvPair"
-      "\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\"\255\001\n\rRequest"
-      "Header\022\022\n\ncluster_id\030\001 \001(\004\022\'\n\ttimestamp\030"
-      "\002 \001(\0132\024.timestamp.Timestamp\022\020\n\010trace_id\030"
-      "\003 \001(\004\022\020\n\010range_id\030\004 \001(\004\022\'\n\013range_epoch\030\005"
-      " \001(\0132\022.metapb.RangeEpoch\022\022\n\nread_index\030\006"
-      " \001(\004\"\266\001\n\016ResponseHeader\022\022\n\ncluster_id\030\001 "
-      "\001(\004\022\'\n\ttimestamp\030\002 \001(\0132\024.timestamp.Times"
-      "tamp\022\020\n\010trace_id\030\003 \001(\004\022!\n\003now\030\004 \001(\0132\024.ti"
-      "mestamp.Timestamp\022\035\n\005error\030\005 \001(\0132\016.error"
-      "pb.Error\022\023\n\013apply_index\030\006 \001(\004\"b\n\021DsKvRaw"
-      "GetRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Req"
-      "uestHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.KvRawG"
-      "etRequest\"f\n\022DsKvRawGetResponse\022\'\n\006heade"
-      "r\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n\004resp"
-      "\030\002 \001(\0132\031.kvrpcpb.KvRawGetResponse\"\036\n\017KvR"
-      "awGetRequest\022\013\n\003key\030\001 \001(\014\"/\n\020KvRawGetRes"
-      "ponse\022\014\n\004code\030\001 \001(\005\022\r\n\005value\030\002 \001(\014\"b\n\021Ds"
-      "KvRawPutRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcp"
-      "b.RequestHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.K"
-      "vRawPutRequest\"f\n\022DsKvRawPutResponse\022\'\n\006"
-      "header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n"
-      "\004resp\030\002 \001(\0132\031.kvrpcpb.KvRawPutResponse\"-"
-      "\n\017KvRawPutRequest\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030"
-      "\002 \001(\014\" \n\020KvRawPutResponse\022\014\n\004code\030\001 \001(\005\""
-      "h\n\024DsKvRawDeleteRequest\022&\n\006header\030\001 \001(\0132"
-      "\026.kvrpcpb.RequestHeader\022(\n\003req\030\002 \001(\0132\033.k"
-      "vrpcpb.KvRawDeleteRequest\"l\n\025DsKvRawDele"
-      "teResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Res"
-      "ponseHeader\022*\n\004resp\030\002 \001(\0132\034.kvrpcpb.KvRa"
-      "wDeleteResponse\"!\n\022KvRawDeleteRequest\022\013\n"
-      "\003key\030\001 \001(\014\"#\n\023KvRawDeleteResponse\022\014\n\004cod"
-      "e\030\001 \001(\005\"V\n\020KvPairRawExecute\022 \n\002do\030\001 \001(\0162"
-      "\024.kvrpcpb.ExecuteType\022 \n\007kv_pair\030\002 \001(\0132\017"
-      ".kvrpcpb.KvPair\"j\n\025DsKvRawExecuteRequest"
+      "\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\"\250\001\n\rRequest"
+      "Header\022\022\n\ncluster_id\030\001 \001(\004\022\"\n\ttimestamp\030"
+      "\002 \001(\0132\017.tspb.Timestamp\022\020\n\010trace_id\030\003 \001(\004"
+      "\022\020\n\010range_id\030\004 \001(\004\022\'\n\013range_epoch\030\005 \001(\0132"
+      "\022.metapb.RangeEpoch\022\022\n\nread_index\030\006 \001(\004\""
+      "\254\001\n\016ResponseHeader\022\022\n\ncluster_id\030\001 \001(\004\022\""
+      "\n\ttimestamp\030\002 \001(\0132\017.tspb.Timestamp\022\020\n\010tr"
+      "ace_id\030\003 \001(\004\022\034\n\003now\030\004 \001(\0132\017.tspb.Timesta"
+      "mp\022\035\n\005error\030\005 \001(\0132\016.errorpb.Error\022\023\n\013app"
+      "ly_index\030\006 \001(\004\"b\n\021DsKvRawGetRequest\022&\n\006h"
+      "eader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022%\n\003r"
+      "eq\030\002 \001(\0132\030.kvrpcpb.KvRawGetRequest\"f\n\022Ds"
+      "KvRawGetResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpc"
+      "pb.ResponseHeader\022\'\n\004resp\030\002 \001(\0132\031.kvrpcp"
+      "b.KvRawGetResponse\"\036\n\017KvRawGetRequest\022\013\n"
+      "\003key\030\001 \001(\014\"/\n\020KvRawGetResponse\022\014\n\004code\030\001"
+      " \001(\005\022\r\n\005value\030\002 \001(\014\"b\n\021DsKvRawPutRequest"
       "\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader"
-      "\022)\n\003req\030\002 \001(\0132\034.kvrpcpb.KvRawExecuteRequ"
-      "est\"n\n\026DsKvRawExecuteResponse\022\'\n\006header\030"
-      "\001 \001(\0132\027.kvrpcpb.ResponseHeader\022+\n\004resp\030\002"
-      " \001(\0132\035.kvrpcpb.KvRawExecuteResponse\"\?\n\023K"
-      "vRawExecuteRequest\022(\n\005execs\030\001 \003(\0132\031.kvrp"
-      "cpb.KvPairRawExecute\"$\n\024KvRawExecuteResp"
-      "onse\022\014\n\004code\030\001 \001(\005\"%\n\005Scope\022\r\n\005start\030\001 \001"
-      "(\014\022\r\n\005limit\030\002 \001(\014\"\220\001\n\013SelectField\022&\n\003typ"
-      "\030\001 \001(\0162\031.kvrpcpb.SelectField.Type\022\022\n\nagg"
-      "re_func\030\002 \001(\t\022\036\n\006column\030\003 \001(\0132\016.metapb.C"
-      "olumn\"%\n\004Type\022\n\n\006Column\020\000\022\021\n\rAggreFuncti"
-      "on\020\001\"b\n\005Match\022\036\n\006column\030\001 \001(\0132\016.metapb.C"
-      "olumn\022\021\n\tthreshold\030\002 \001(\014\022&\n\nmatch_type\030\003"
-      " \001(\0162\022.kvrpcpb.MatchType\"\'\n\010MatchExt\022\033\n\004"
-      "expr\030\001 \001(\0132\r.kvrpcpb.Expr\"\214\001\n\004Expr\022$\n\tex"
-      "pr_type\030\001 \001(\0162\021.kvrpcpb.ExprType\022\021\n\texpr"
-      "_func\030\002 \001(\r\022\036\n\006column\030\003 \001(\0132\016.metapb.Col"
-      "umn\022\r\n\005value\030\004 \001(\014\022\034\n\005child\030\005 \003(\0132\r.kvrp"
-      "cpb.Expr\"&\n\005Limit\022\016\n\006offset\030\001 \001(\004\022\r\n\005cou"
-      "nt\030\002 \001(\004\"^\n\017DsSelectRequest\022&\n\006header\030\001 "
-      "\001(\0132\026.kvrpcpb.RequestHeader\022#\n\003req\030\002 \001(\013"
-      "2\026.kvrpcpb.SelectRequest\"\236\002\n\rSelectReque"
-      "st\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb"
-      ".Scope\022(\n\nfield_list\030\003 \003(\0132\024.kvrpcpb.Sel"
-      "ectField\022%\n\rwhere_filters\030\004 \003(\0132\016.kvrpcp"
-      "b.Match\022!\n\tgroup_bys\030\005 \003(\0132\016.metapb.Colu"
-      "mn\022\035\n\005limit\030\006 \001(\0132\016.kvrpcpb.Limit\022\'\n\ttim"
-      "estamp\030\007 \001(\0132\024.timestamp.Timestamp\022%\n\nex"
-      "t_filter\030\n \001(\0132\021.kvrpcpb.MatchExt\"9\n\003Row"
-      "\022\013\n\003key\030\001 \001(\014\022\016\n\006fields\030\002 \001(\014\022\025\n\raggred_"
-      "counts\030\003 \003(\003\"b\n\020DsSelectResponse\022\'\n\006head"
-      "er\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022%\n\004res"
-      "p\030\002 \001(\0132\027.kvrpcpb.SelectResponse\"J\n\016Sele"
-      "ctResponse\022\014\n\004code\030\001 \001(\005\022\032\n\004rows\030\002 \003(\0132\014"
-      ".kvrpcpb.Row\022\016\n\006offset\030\003 \001(\004\"3\n\010KeyValue"
-      "\022\013\n\003Key\030\001 \001(\014\022\r\n\005Value\030\002 \001(\014\022\013\n\003TTL\030\003 \001("
-      "\004\"^\n\017DsInsertRequest\022&\n\006header\030\001 \001(\0132\026.k"
-      "vrpcpb.RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrp"
-      "cpb.InsertRequest\"b\n\020DsInsertResponse\022\'\n"
-      "\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022%"
-      "\n\004resp\030\002 \001(\0132\027.kvrpcpb.InsertResponse\"r\n"
-      "\rInsertRequest\022\037\n\004rows\030\001 \003(\0132\021.kvrpcpb.K"
-      "eyValue\022\027\n\017check_duplicate\030\002 \001(\010\022\'\n\ttime"
-      "stamp\030\003 \001(\0132\024.timestamp.Timestamp\"L\n\016Ins"
-      "ertResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_ke"
-      "ys\030\002 \001(\004\022\025\n\rduplicate_key\030\003 \001(\014\":\n\022Batch"
-      "InsertRequest\022$\n\004reqs\030\001 \003(\0132\026.kvrpcpb.In"
-      "sertRequest\"=\n\023BatchInsertResponse\022&\n\005re"
-      "sps\030\002 \003(\0132\027.kvrpcpb.InsertResponse\"^\n\017Ds"
-      "DeleteRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb."
-      "RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.Del"
-      "eteRequest\"b\n\020DsDeleteResponse\022\'\n\006header"
-      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022%\n\004resp\030"
-      "\002 \001(\0132\027.kvrpcpb.DeleteResponse\"\233\001\n\rDelet"
-      "eRequest\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132\016.k"
-      "vrpcpb.Scope\022%\n\rwhere_filters\030\003 \003(\0132\016.kv"
-      "rpcpb.Match\022\016\n\006indexs\030\004 \003(\004\022\'\n\ttimestamp"
-      "\030\n \001(\0132\024.timestamp.Timestamp\"5\n\016DeleteRe"
-      "sponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 "
-      "\001(\004\"^\n\005Field\022\036\n\006column\030\001 \001(\0132\016.metapb.Co"
-      "lumn\022\r\n\005value\030\002 \001(\014\022&\n\nfield_type\030\003 \001(\0162"
-      "\022.kvrpcpb.FieldType\"\241\001\n\rUpdateRequest\022\013\n"
-      "\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb.Scop"
-      "e\022\036\n\006fields\030\003 \003(\0132\016.kvrpcpb.Field\022%\n\rwhe"
-      "re_filters\030\004 \003(\0132\016.kvrpcpb.Match\022\035\n\005limi"
-      "t\030\005 \001(\0132\016.kvrpcpb.Limit\"^\n\017DsUpdateReque"
-      "st\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHead"
-      "er\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.UpdateRequest\""
-      "5\n\016UpdateResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffec"
-      "ted_keys\030\002 \001(\004\"b\n\020DsUpdateResponse\022\'\n\006he"
-      "ader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022%\n\004r"
-      "esp\030\002 \001(\0132\027.kvrpcpb.UpdateResponse\"]\n\020In"
-      "dexScanRequest\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001"
-      "(\0132\016.kvrpcpb.Scope\022\035\n\005limit\030\003 \001(\0132\016.kvrp"
-      "cpb.Limit\"d\n\022DsIndexScanRequest\022&\n\006heade"
-      "r\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022&\n\003req\030\002"
-      " \001(\0132\031.kvrpcpb.IndexScanRequest\"&\n\021Index"
-      "ScanResponse\022\021\n\tpk_values\030\001 \003(\014\"h\n\023DsInd"
-      "exScanResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb"
-      ".ResponseHeader\022(\n\004resp\030\002 \001(\0132\032.kvrpcpb."
-      "IndexScanResponse\"+\n\rRedisKeyValue\022\013\n\003ke"
-      "y\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\"g\n\007RedisDo\022\013\n\003key"
-      "\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\022\036\n\002op\030\003 \001(\0162\022.kvrp"
-      "cpb.Operation\022 \n\004case\030\004 \001(\0162\022.kvrpcpb.Ex"
-      "istCase\"T\n\014KvSetRequest\022\"\n\002kv\030\001 \001(\0132\026.kv"
-      "rpcpb.RedisKeyValue\022 \n\004case\030\002 \001(\0162\022.kvrp"
-      "cpb.ExistCase\"4\n\rKvSetResponse\022\014\n\004code\030\001"
-      " \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"\\\n\016DsKvSetRe"
-      "quest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestH"
-      "eader\022\"\n\003req\030\002 \001(\0132\025.kvrpcpb.KvSetReques"
-      "t\"`\n\017DsKvSetResponse\022\'\n\006header\030\001 \001(\0132\027.k"
-      "vrpcpb.ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.kv"
-      "rpcpb.KvSetResponse\"\033\n\014KvGetRequest\022\013\n\003k"
-      "ey\030\001 \001(\014\",\n\rKvGetResponse\022\014\n\004code\030\001 \001(\005\022"
-      "\r\n\005value\030\002 \001(\014\"\\\n\016DsKvGetRequest\022&\n\006head"
-      "er\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\"\n\003req\030"
-      "\002 \001(\0132\025.kvrpcpb.KvGetRequest\"`\n\017DsKvGetR"
-      "esponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respon"
-      "seHeader\022$\n\004resp\030\002 \001(\0132\026.kvrpcpb.KvGetRe"
-      "sponse\"Z\n\021KvBatchSetRequest\022#\n\003kvs\030\001 \003(\013"
-      "2\026.kvrpcpb.RedisKeyValue\022 \n\004case\030\002 \001(\0162\022"
-      ".kvrpcpb.ExistCase\"9\n\022KvBatchSetResponse"
-      "\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"f\n"
-      "\023DsKvBatchSetRequest\022&\n\006header\030\001 \001(\0132\026.k"
-      "vrpcpb.RequestHeader\022\'\n\003req\030\002 \001(\0132\032.kvrp"
-      "cpb.KvBatchSetRequest\"j\n\024DsKvBatchSetRes"
+      "\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.KvRawPutRequest\""
+      "f\n\022DsKvRawPutResponse\022\'\n\006header\030\001 \001(\0132\027."
+      "kvrpcpb.ResponseHeader\022\'\n\004resp\030\002 \001(\0132\031.k"
+      "vrpcpb.KvRawPutResponse\"-\n\017KvRawPutReque"
+      "st\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\" \n\020KvRawP"
+      "utResponse\022\014\n\004code\030\001 \001(\005\"h\n\024DsKvRawDelet"
+      "eRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reque"
+      "stHeader\022(\n\003req\030\002 \001(\0132\033.kvrpcpb.KvRawDel"
+      "eteRequest\"l\n\025DsKvRawDeleteResponse\022\'\n\006h"
+      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022*\n\004"
+      "resp\030\002 \001(\0132\034.kvrpcpb.KvRawDeleteResponse"
+      "\"!\n\022KvRawDeleteRequest\022\013\n\003key\030\001 \001(\014\"#\n\023K"
+      "vRawDeleteResponse\022\014\n\004code\030\001 \001(\005\"V\n\020KvPa"
+      "irRawExecute\022 \n\002do\030\001 \001(\0162\024.kvrpcpb.Execu"
+      "teType\022 \n\007kv_pair\030\002 \001(\0132\017.kvrpcpb.KvPair"
+      "\"j\n\025DsKvRawExecuteRequest\022&\n\006header\030\001 \001("
+      "\0132\026.kvrpcpb.RequestHeader\022)\n\003req\030\002 \001(\0132\034"
+      ".kvrpcpb.KvRawExecuteRequest\"n\n\026DsKvRawE"
+      "xecuteResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb"
+      ".ResponseHeader\022+\n\004resp\030\002 \001(\0132\035.kvrpcpb."
+      "KvRawExecuteResponse\"\?\n\023KvRawExecuteRequ"
+      "est\022(\n\005execs\030\001 \003(\0132\031.kvrpcpb.KvPairRawEx"
+      "ecute\"$\n\024KvRawExecuteResponse\022\014\n\004code\030\001 "
+      "\001(\005\"%\n\005Scope\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001"
+      "(\014\"\220\001\n\013SelectField\022&\n\003typ\030\001 \001(\0162\031.kvrpcp"
+      "b.SelectField.Type\022\022\n\naggre_func\030\002 \001(\t\022\036"
+      "\n\006column\030\003 \001(\0132\016.metapb.Column\"%\n\004Type\022\n"
+      "\n\006Column\020\000\022\021\n\rAggreFunction\020\001\"b\n\005Match\022\036"
+      "\n\006column\030\001 \001(\0132\016.metapb.Column\022\021\n\tthresh"
+      "old\030\002 \001(\014\022&\n\nmatch_type\030\003 \001(\0162\022.kvrpcpb."
+      "MatchType\"\'\n\010MatchExt\022\033\n\004expr\030\001 \001(\0132\r.kv"
+      "rpcpb.Expr\"\214\001\n\004Expr\022$\n\texpr_type\030\001 \001(\0162\021"
+      ".kvrpcpb.ExprType\022\021\n\texpr_func\030\002 \001(\r\022\036\n\006"
+      "column\030\003 \001(\0132\016.metapb.Column\022\r\n\005value\030\004 "
+      "\001(\014\022\034\n\005child\030\005 \003(\0132\r.kvrpcpb.Expr\"&\n\005Lim"
+      "it\022\016\n\006offset\030\001 \001(\004\022\r\n\005count\030\002 \001(\004\"^\n\017DsS"
+      "electRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.R"
+      "equestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.Sele"
+      "ctRequest\"\231\002\n\rSelectRequest\022\013\n\003key\030\001 \001(\014"
+      "\022\035\n\005scope\030\002 \001(\0132\016.kvrpcpb.Scope\022(\n\nfield"
+      "_list\030\003 \003(\0132\024.kvrpcpb.SelectField\022%\n\rwhe"
+      "re_filters\030\004 \003(\0132\016.kvrpcpb.Match\022!\n\tgrou"
+      "p_bys\030\005 \003(\0132\016.metapb.Column\022\035\n\005limit\030\006 \001"
+      "(\0132\016.kvrpcpb.Limit\022\"\n\ttimestamp\030\007 \001(\0132\017."
+      "tspb.Timestamp\022%\n\next_filter\030\n \001(\0132\021.kvr"
+      "pcpb.MatchExt\"9\n\003Row\022\013\n\003key\030\001 \001(\014\022\016\n\006fie"
+      "lds\030\002 \001(\014\022\025\n\raggred_counts\030\003 \003(\003\"b\n\020DsSe"
+      "lectResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.R"
+      "esponseHeader\022%\n\004resp\030\002 \001(\0132\027.kvrpcpb.Se"
+      "lectResponse\"J\n\016SelectResponse\022\014\n\004code\030\001"
+      " \001(\005\022\032\n\004rows\030\002 \003(\0132\014.kvrpcpb.Row\022\016\n\006offs"
+      "et\030\003 \001(\004\"3\n\010KeyValue\022\013\n\003Key\030\001 \001(\014\022\r\n\005Val"
+      "ue\030\002 \001(\014\022\013\n\003TTL\030\003 \001(\004\"^\n\017DsInsertRequest"
+      "\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeader"
+      "\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.InsertRequest\"b\n"
+      "\020DsInsertResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
+      "cpb.ResponseHeader\022%\n\004resp\030\002 \001(\0132\027.kvrpc"
+      "pb.InsertResponse\"m\n\rInsertRequest\022\037\n\004ro"
+      "ws\030\001 \003(\0132\021.kvrpcpb.KeyValue\022\027\n\017check_dup"
+      "licate\030\002 \001(\010\022\"\n\ttimestamp\030\003 \001(\0132\017.tspb.T"
+      "imestamp\"L\n\016InsertResponse\022\014\n\004code\030\001 \001(\005"
+      "\022\025\n\raffected_keys\030\002 \001(\004\022\025\n\rduplicate_key"
+      "\030\003 \001(\014\":\n\022BatchInsertRequest\022$\n\004reqs\030\001 \003"
+      "(\0132\026.kvrpcpb.InsertRequest\"=\n\023BatchInser"
+      "tResponse\022&\n\005resps\030\002 \003(\0132\027.kvrpcpb.Inser"
+      "tResponse\"^\n\017DsDeleteRequest\022&\n\006header\030\001"
+      " \001(\0132\026.kvrpcpb.RequestHeader\022#\n\003req\030\002 \001("
+      "\0132\026.kvrpcpb.DeleteRequest\"b\n\020DsDeleteRes"
       "ponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Response"
-      "Header\022)\n\004resp\030\002 \001(\0132\033.kvrpcpb.KvBatchSe"
-      "tResponse\"/\n\021KvBatchGetRequest\022\014\n\004code\030\001"
-      " \001(\005\022\014\n\004keys\030\002 \003(\014\"G\n\022KvBatchGetResponse"
-      "\022\014\n\004code\030\001 \001(\005\022#\n\003kvs\030\002 \003(\0132\026.kvrpcpb.Re"
-      "disKeyValue\"f\n\023DsKvBatchGetRequest\022&\n\006he"
-      "ader\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n\003re"
-      "q\030\002 \001(\0132\032.kvrpcpb.KvBatchGetRequest\"j\n\024D"
-      "sKvBatchGetResponse\022\'\n\006header\030\001 \001(\0132\027.kv"
-      "rpcpb.ResponseHeader\022)\n\004resp\030\002 \001(\0132\033.kvr"
-      "pcpb.KvBatchGetResponse\"f\n\rKvScanRequest"
-      "\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\022\n\ncount_"
-      "only\030\003 \001(\010\022\020\n\010key_only\030\004 \001(\010\022\021\n\tmax_coun"
-      "t\030\005 \001(\003\"d\n\016KvScanResponse\022\014\n\004code\030\001 \001(\005\022"
-      "\r\n\005count\030\002 \001(\003\022#\n\003kvs\030\003 \003(\0132\026.kvrpcpb.Re"
-      "disKeyValue\022\020\n\010last_key\030\004 \001(\014\"^\n\017DsKvSca"
-      "nRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Reque"
-      "stHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.KvScanRe"
-      "quest\"b\n\020DsKvScanResponse\022\'\n\006header\030\001 \001("
-      "\0132\027.kvrpcpb.ResponseHeader\022%\n\004resp\030\002 \001(\013"
-      "2\027.kvrpcpb.KvScanResponse\"@\n\017KvDeleteReq"
-      "uest\022\013\n\003key\030\001 \001(\014\022 \n\004case\030\002 \001(\0162\022.kvrpcp"
-      "b.ExistCase\"7\n\020KvDeleteResponse\022\014\n\004code\030"
-      "\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"b\n\021DsKvDele"
-      "teRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Requ"
-      "estHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.KvDelet"
-      "eRequest\"f\n\022DsKvDeleteResponse\022\'\n\006header"
-      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n\004resp\030"
-      "\002 \001(\0132\031.kvrpcpb.KvDeleteResponse\"F\n\024KvBa"
-      "tchDeleteRequest\022\014\n\004keys\030\001 \003(\014\022 \n\004case\030\002"
-      " \001(\0162\022.kvrpcpb.ExistCase\"<\n\025KvBatchDelet"
-      "eResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys"
-      "\030\002 \001(\004\"l\n\026DsKvBatchDeleteRequest\022&\n\006head"
-      "er\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022*\n\003req\030"
-      "\002 \001(\0132\035.kvrpcpb.KvBatchDeleteRequest\"p\n\027"
-      "DsKvBatchDeleteResponse\022\'\n\006header\030\001 \001(\0132"
-      "\027.kvrpcpb.ResponseHeader\022,\n\004resp\030\002 \001(\0132\036"
-      ".kvrpcpb.KvBatchDeleteResponse\"i\n\024KvRang"
-      "eDeleteRequest\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002"
-      " \001(\014\022\021\n\tmax_count\030\003 \001(\003\022 \n\004case\030\004 \001(\0162\022."
-      "kvrpcpb.ExistCase\"N\n\025KvRangeDeleteRespon"
-      "se\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\022"
-      "\020\n\010last_key\030\003 \001(\014\"l\n\026DsKvRangeDeleteRequ"
-      "est\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHea"
-      "der\022*\n\003req\030\002 \001(\0132\035.kvrpcpb.KvRangeDelete"
-      "Request\"p\n\027DsKvRangeDeleteResponse\022\'\n\006he"
-      "ader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022,\n\004r"
-      "esp\030\002 \001(\0132\036.kvrpcpb.KvRangeDeleteRespons"
-      "e\"\\\n\tLockValue\022\r\n\005value\030\002 \001(\014\022\n\n\002id\030\003 \001("
-      "\t\022\023\n\013delete_time\030\004 \001(\003\022\023\n\013update_time\030\005 "
-      "\001(\003\022\n\n\002by\030\007 \001(\t\"f\n\013LockRequest\022\013\n\003key\030\001 "
-      "\001(\014\022!\n\005value\030\002 \001(\0132\022.kvrpcpb.LockValue\022\'"
-      "\n\ttimestamp\030\n \001(\0132\024.timestamp.Timestamp\""
-      "Z\n\rDsLockRequest\022&\n\006header\030\001 \001(\0132\026.kvrpc"
-      "pb.RequestHeader\022!\n\003req\030\002 \001(\0132\024.kvrpcpb."
-      "LockRequest\"O\n\014LockResponse\022\014\n\004code\030\001 \001("
-      "\003\022\r\n\005error\030\002 \001(\t\022\r\n\005value\030\003 \001(\014\022\023\n\013updat"
-      "e_time\030\004 \001(\003\":\n\010LockInfo\022\013\n\003key\030\001 \001(\014\022!\n"
-      "\005value\030\002 \001(\0132\022.kvrpcpb.LockValue\"E\n\020Lock"
-      "ScanResponse\022\037\n\004info\030\001 \003(\0132\021.kvrpcpb.Loc"
-      "kInfo\022\020\n\010last_key\030\002 \001(\014\"^\n\016DsLockRespons"
-      "e\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHead"
-      "er\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockResponse\""
-      "\214\001\n\021LockUpdateRequest\022\013\n\003key\030\001 \001(\014\022\n\n\002id"
-      "\030\003 \001(\t\022\023\n\013delete_time\030\005 \001(\003\022\024\n\014update_va"
-      "lue\030\006 \001(\014\022\'\n\ttimestamp\030\n \001(\0132\024.timestamp"
+      "Header\022%\n\004resp\030\002 \001(\0132\027.kvrpcpb.DeleteRes"
+      "ponse\"\226\001\n\rDeleteRequest\022\013\n\003key\030\001 \001(\014\022\035\n\005"
+      "scope\030\002 \001(\0132\016.kvrpcpb.Scope\022%\n\rwhere_fil"
+      "ters\030\003 \003(\0132\016.kvrpcpb.Match\022\016\n\006indexs\030\004 \003"
+      "(\004\022\"\n\ttimestamp\030\n \001(\0132\017.tspb.Timestamp\"5"
+      "\n\016DeleteResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffect"
+      "ed_keys\030\002 \001(\004\"^\n\005Field\022\036\n\006column\030\001 \001(\0132\016"
+      ".metapb.Column\022\r\n\005value\030\002 \001(\014\022&\n\nfield_t"
+      "ype\030\003 \001(\0162\022.kvrpcpb.FieldType\"\241\001\n\rUpdate"
+      "Request\022\013\n\003key\030\001 \001(\014\022\035\n\005scope\030\002 \001(\0132\016.kv"
+      "rpcpb.Scope\022\036\n\006fields\030\003 \003(\0132\016.kvrpcpb.Fi"
+      "eld\022%\n\rwhere_filters\030\004 \003(\0132\016.kvrpcpb.Mat"
+      "ch\022\035\n\005limit\030\005 \001(\0132\016.kvrpcpb.Limit\"^\n\017DsU"
+      "pdateRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.R"
+      "equestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb.Upda"
+      "teRequest\"5\n\016UpdateResponse\022\014\n\004code\030\001 \001("
+      "\005\022\025\n\raffected_keys\030\002 \001(\004\"b\n\020DsUpdateResp"
+      "onse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseH"
+      "eader\022%\n\004resp\030\002 \001(\0132\027.kvrpcpb.UpdateResp"
+      "onse\"]\n\020IndexScanRequest\022\013\n\003key\030\001 \001(\014\022\035\n"
+      "\005scope\030\002 \001(\0132\016.kvrpcpb.Scope\022\035\n\005limit\030\003 "
+      "\001(\0132\016.kvrpcpb.Limit\"d\n\022DsIndexScanReques"
+      "t\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHeade"
+      "r\022&\n\003req\030\002 \001(\0132\031.kvrpcpb.IndexScanReques"
+      "t\"&\n\021IndexScanResponse\022\021\n\tpk_values\030\001 \003("
+      "\014\"h\n\023DsIndexScanResponse\022\'\n\006header\030\001 \001(\013"
+      "2\027.kvrpcpb.ResponseHeader\022(\n\004resp\030\002 \001(\0132"
+      "\032.kvrpcpb.IndexScanResponse\"+\n\rRedisKeyV"
+      "alue\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\"g\n\007Redi"
+      "sDo\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\022\036\n\002op\030\003 "
+      "\001(\0162\022.kvrpcpb.Operation\022 \n\004case\030\004 \001(\0162\022."
+      "kvrpcpb.ExistCase\"T\n\014KvSetRequest\022\"\n\002kv\030"
+      "\001 \001(\0132\026.kvrpcpb.RedisKeyValue\022 \n\004case\030\002 "
+      "\001(\0162\022.kvrpcpb.ExistCase\"4\n\rKvSetResponse"
+      "\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"\\\n"
+      "\016DsKvSetRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcp"
+      "b.RequestHeader\022\"\n\003req\030\002 \001(\0132\025.kvrpcpb.K"
+      "vSetRequest\"`\n\017DsKvSetResponse\022\'\n\006header"
+      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022$\n\004resp\030"
+      "\002 \001(\0132\026.kvrpcpb.KvSetResponse\"\033\n\014KvGetRe"
+      "quest\022\013\n\003key\030\001 \001(\014\",\n\rKvGetResponse\022\014\n\004c"
+      "ode\030\001 \001(\005\022\r\n\005value\030\002 \001(\014\"\\\n\016DsKvGetReque"
+      "st\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHead"
+      "er\022\"\n\003req\030\002 \001(\0132\025.kvrpcpb.KvGetRequest\"`"
+      "\n\017DsKvGetResponse\022\'\n\006header\030\001 \001(\0132\027.kvrp"
+      "cpb.ResponseHeader\022$\n\004resp\030\002 \001(\0132\026.kvrpc"
+      "pb.KvGetResponse\"Z\n\021KvBatchSetRequest\022#\n"
+      "\003kvs\030\001 \003(\0132\026.kvrpcpb.RedisKeyValue\022 \n\004ca"
+      "se\030\002 \001(\0162\022.kvrpcpb.ExistCase\"9\n\022KvBatchS"
+      "etResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_key"
+      "s\030\002 \001(\004\"f\n\023DsKvBatchSetRequest\022&\n\006header"
+      "\030\001 \001(\0132\026.kvrpcpb.RequestHeader\022\'\n\003req\030\002 "
+      "\001(\0132\032.kvrpcpb.KvBatchSetRequest\"j\n\024DsKvB"
+      "atchSetResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcp"
+      "b.ResponseHeader\022)\n\004resp\030\002 \001(\0132\033.kvrpcpb"
+      ".KvBatchSetResponse\"/\n\021KvBatchGetRequest"
+      "\022\014\n\004code\030\001 \001(\005\022\014\n\004keys\030\002 \003(\014\"G\n\022KvBatchG"
+      "etResponse\022\014\n\004code\030\001 \001(\005\022#\n\003kvs\030\002 \003(\0132\026."
+      "kvrpcpb.RedisKeyValue\"f\n\023DsKvBatchGetReq"
+      "uest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHe"
+      "ader\022\'\n\003req\030\002 \001(\0132\032.kvrpcpb.KvBatchGetRe"
+      "quest\"j\n\024DsKvBatchGetResponse\022\'\n\006header\030"
+      "\001 \001(\0132\027.kvrpcpb.ResponseHeader\022)\n\004resp\030\002"
+      " \001(\0132\033.kvrpcpb.KvBatchGetResponse\"f\n\rKvS"
+      "canRequest\022\r\n\005start\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014"
+      "\022\022\n\ncount_only\030\003 \001(\010\022\020\n\010key_only\030\004 \001(\010\022\021"
+      "\n\tmax_count\030\005 \001(\003\"d\n\016KvScanResponse\022\014\n\004c"
+      "ode\030\001 \001(\005\022\r\n\005count\030\002 \001(\003\022#\n\003kvs\030\003 \003(\0132\026."
+      "kvrpcpb.RedisKeyValue\022\020\n\010last_key\030\004 \001(\014\""
+      "^\n\017DsKvScanRequest\022&\n\006header\030\001 \001(\0132\026.kvr"
+      "pcpb.RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcp"
+      "b.KvScanRequest\"b\n\020DsKvScanResponse\022\'\n\006h"
+      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022%\n\004"
+      "resp\030\002 \001(\0132\027.kvrpcpb.KvScanResponse\"@\n\017K"
+      "vDeleteRequest\022\013\n\003key\030\001 \001(\014\022 \n\004case\030\002 \001("
+      "\0162\022.kvrpcpb.ExistCase\"7\n\020KvDeleteRespons"
+      "e\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_keys\030\002 \001(\004\"b"
+      "\n\021DsKvDeleteRequest\022&\n\006header\030\001 \001(\0132\026.kv"
+      "rpcpb.RequestHeader\022%\n\003req\030\002 \001(\0132\030.kvrpc"
+      "pb.KvDeleteRequest\"f\n\022DsKvDeleteResponse"
+      "\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeade"
+      "r\022\'\n\004resp\030\002 \001(\0132\031.kvrpcpb.KvDeleteRespon"
+      "se\"F\n\024KvBatchDeleteRequest\022\014\n\004keys\030\001 \003(\014"
+      "\022 \n\004case\030\002 \001(\0162\022.kvrpcpb.ExistCase\"<\n\025Kv"
+      "BatchDeleteResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raff"
+      "ected_keys\030\002 \001(\004\"l\n\026DsKvBatchDeleteReque"
+      "st\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestHead"
+      "er\022*\n\003req\030\002 \001(\0132\035.kvrpcpb.KvBatchDeleteR"
+      "equest\"p\n\027DsKvBatchDeleteResponse\022\'\n\006hea"
+      "der\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022,\n\004re"
+      "sp\030\002 \001(\0132\036.kvrpcpb.KvBatchDeleteResponse"
+      "\"i\n\024KvRangeDeleteRequest\022\r\n\005start\030\001 \001(\014\022"
+      "\r\n\005limit\030\002 \001(\014\022\021\n\tmax_count\030\003 \001(\003\022 \n\004cas"
+      "e\030\004 \001(\0162\022.kvrpcpb.ExistCase\"N\n\025KvRangeDe"
+      "leteResponse\022\014\n\004code\030\001 \001(\005\022\025\n\raffected_k"
+      "eys\030\002 \001(\004\022\020\n\010last_key\030\003 \001(\014\"l\n\026DsKvRange"
+      "DeleteRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb."
+      "RequestHeader\022*\n\003req\030\002 \001(\0132\035.kvrpcpb.KvR"
+      "angeDeleteRequest\"p\n\027DsKvRangeDeleteResp"
+      "onse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseH"
+      "eader\022,\n\004resp\030\002 \001(\0132\036.kvrpcpb.KvRangeDel"
+      "eteResponse\"\\\n\tLockValue\022\r\n\005value\030\002 \001(\014\022"
+      "\n\n\002id\030\003 \001(\t\022\023\n\013delete_time\030\004 \001(\003\022\023\n\013upda"
+      "te_time\030\005 \001(\003\022\n\n\002by\030\007 \001(\t\"a\n\013LockRequest"
+      "\022\013\n\003key\030\001 \001(\014\022!\n\005value\030\002 \001(\0132\022.kvrpcpb.L"
+      "ockValue\022\"\n\ttimestamp\030\n \001(\0132\017.tspb.Times"
+      "tamp\"Z\n\rDsLockRequest\022&\n\006header\030\001 \001(\0132\026."
+      "kvrpcpb.RequestHeader\022!\n\003req\030\002 \001(\0132\024.kvr"
+      "pcpb.LockRequest\"O\n\014LockResponse\022\014\n\004code"
+      "\030\001 \001(\003\022\r\n\005error\030\002 \001(\t\022\r\n\005value\030\003 \001(\014\022\023\n\013"
+      "update_time\030\004 \001(\003\":\n\010LockInfo\022\013\n\003key\030\001 \001"
+      "(\014\022!\n\005value\030\002 \001(\0132\022.kvrpcpb.LockValue\"E\n"
+      "\020LockScanResponse\022\037\n\004info\030\001 \003(\0132\021.kvrpcp"
+      "b.LockInfo\022\020\n\010last_key\030\002 \001(\014\"^\n\016DsLockRe"
+      "sponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respons"
+      "eHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockResp"
+      "onse\"\207\001\n\021LockUpdateRequest\022\013\n\003key\030\001 \001(\014\022"
+      "\n\n\002id\030\003 \001(\t\022\023\n\013delete_time\030\005 \001(\003\022\024\n\014upda"
+      "te_value\030\006 \001(\014\022\"\n\ttimestamp\030\n \001(\0132\017.tspb"
       ".Timestamp\022\n\n\002by\030\013 \001(\t\"f\n\023DsLockUpdateRe"
       "quest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.RequestH"
       "eader\022\'\n\003req\030\002 \001(\0132\032.kvrpcpb.LockUpdateR"
       "equest\"d\n\024DsLockUpdateResponse\022\'\n\006header"
       "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004resp\030"
-      "\002 \001(\0132\025.kvrpcpb.LockResponse\"]\n\rUnlockRe"
-      "quest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\'\n\ttimest"
-      "amp\030\n \001(\0132\024.timestamp.Timestamp\022\n\n\002by\030\013 "
-      "\001(\t\"^\n\017DsUnlockRequest\022&\n\006header\030\001 \001(\0132\026"
-      ".kvrpcpb.RequestHeader\022#\n\003req\030\002 \001(\0132\026.kv"
-      "rpcpb.UnlockRequest\"`\n\020DsUnlockResponse\022"
-      "\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeader"
-      "\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockResponse\"V\n"
-      "\022UnlockForceRequest\022\013\n\003key\030\001 \001(\014\022\'\n\ttime"
-      "stamp\030\n \001(\0132\024.timestamp.Timestamp\022\n\n\002by\030"
-      "\013 \001(\t\"h\n\024DsUnlockForceRequest\022&\n\006header\030"
-      "\001 \001(\0132\026.kvrpcpb.RequestHeader\022(\n\003req\030\002 \001"
-      "(\0132\033.kvrpcpb.UnlockForceRequest\"e\n\025DsUnl"
-      "ockForceResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpc"
-      "pb.ResponseHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcp"
-      "b.LockResponse\">\n\017LockScanRequest\022\r\n\005sta"
-      "rt\030\001 \001(\014\022\r\n\005limit\030\002 \001(\014\022\r\n\005count\030\003 \001(\r\"b"
-      "\n\021DsLockScanRequest\022&\n\006header\030\001 \001(\0132\026.kv"
-      "rpcpb.RequestHeader\022%\n\003req\030\002 \001(\0132\030.kvrpc"
-      "pb.LockScanRequest\"f\n\022DsLockScanResponse"
-      "\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.ResponseHeade"
-      "r\022\'\n\004resp\030\002 \001(\0132\031.kvrpcpb.LockScanRespon"
-      "se\"\035\n\016LockGetRequest\022\013\n\003key\030\001 \001(\014\"Q\n\017Loc"
-      "kGetResponse\022\014\n\004code\030\001 \001(\003\022\r\n\005error\030\002 \001("
-      "\t\022!\n\005value\030\003 \001(\0132\022.kvrpcpb.LockValue\"`\n\020"
-      "DsLockGetRequest\022&\n\006header\030\001 \001(\0132\026.kvrpc"
-      "pb.RequestHeader\022$\n\003req\030\002 \001(\0132\027.kvrpcpb."
-      "LockGetRequest\"d\n\021DsLockGetResponse\022\'\n\006h"
-      "eader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022&\n\004"
-      "resp\030\002 \001(\0132\030.kvrpcpb.LockGetResponse*;\n\013"
-      "ExecuteType\022\017\n\013ExecInvalid\020\000\022\013\n\007ExecPut\020"
-      "\001\022\016\n\nExecDelete\020\002*\224\001\n\tMatchType\022\013\n\007Inval"
-      "id\020\000\022\t\n\005Equal\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022"
-      "\017\n\013LessOrEqual\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOr"
-      "Equal\020\006\022\014\n\010LogicAnd\020\013\022\013\n\007LogicOr\020\014\022\014\n\010Lo"
-      "gicNot\020\r*\367\001\n\010ExprType\022\r\n\tE_Invalid\020\000\022\016\n\n"
-      "E_LogicAnd\020\001\022\r\n\tE_LogicOr\020\002\022\016\n\nE_LogicNo"
-      "t\020\003\022\013\n\007E_Equal\020\013\022\016\n\nE_NotEqual\020\014\022\n\n\006E_Le"
-      "ss\020\r\022\021\n\rE_LessOrEqual\020\016\022\014\n\010E_Larger\020\017\022\023\n"
-      "\017E_LargerOrEqual\020\020\022\n\n\006E_Plus\020\025\022\013\n\007E_Minu"
-      "s\020\026\022\n\n\006E_Mult\020\027\022\t\n\005E_Div\020\030\022\r\n\tE_ExprCol\020"
-      "\037\022\017\n\013E_ExprConst\020 *\?\n\tFieldType\022\n\n\006Assig"
-      "n\020\000\022\010\n\004Plus\020\001\022\t\n\005Minus\020\002\022\010\n\004Mult\020\003\022\007\n\003Di"
-      "v\020\004*Z\n\tExistCase\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_N"
-      "otExists\020\001\022\r\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020"
-      "\003\022\014\n\010EC_Force\020\004*B\n\tOperation\022\016\n\nOP_Inval"
-      "id\020\000\022\n\n\006OP_Set\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Ge"
-      "t\020\003b\006proto3"
+      "\002 \001(\0132\025.kvrpcpb.LockResponse\"X\n\rUnlockRe"
+      "quest\022\013\n\003key\030\001 \001(\014\022\n\n\002id\030\003 \001(\t\022\"\n\ttimest"
+      "amp\030\n \001(\0132\017.tspb.Timestamp\022\n\n\002by\030\013 \001(\t\"^"
+      "\n\017DsUnlockRequest\022&\n\006header\030\001 \001(\0132\026.kvrp"
+      "cpb.RequestHeader\022#\n\003req\030\002 \001(\0132\026.kvrpcpb"
+      ".UnlockRequest\"`\n\020DsUnlockResponse\022\'\n\006he"
+      "ader\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022#\n\004r"
+      "esp\030\002 \001(\0132\025.kvrpcpb.LockResponse\"Q\n\022Unlo"
+      "ckForceRequest\022\013\n\003key\030\001 \001(\014\022\"\n\ttimestamp"
+      "\030\n \001(\0132\017.tspb.Timestamp\022\n\n\002by\030\013 \001(\t\"h\n\024D"
+      "sUnlockForceRequest\022&\n\006header\030\001 \001(\0132\026.kv"
+      "rpcpb.RequestHeader\022(\n\003req\030\002 \001(\0132\033.kvrpc"
+      "pb.UnlockForceRequest\"e\n\025DsUnlockForceRe"
+      "sponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.Respons"
+      "eHeader\022#\n\004resp\030\002 \001(\0132\025.kvrpcpb.LockResp"
+      "onse\">\n\017LockScanRequest\022\r\n\005start\030\001 \001(\014\022\r"
+      "\n\005limit\030\002 \001(\014\022\r\n\005count\030\003 \001(\r\"b\n\021DsLockSc"
+      "anRequest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Requ"
+      "estHeader\022%\n\003req\030\002 \001(\0132\030.kvrpcpb.LockSca"
+      "nRequest\"f\n\022DsLockScanResponse\022\'\n\006header"
+      "\030\001 \001(\0132\027.kvrpcpb.ResponseHeader\022\'\n\004resp\030"
+      "\002 \001(\0132\031.kvrpcpb.LockScanResponse\"\035\n\016Lock"
+      "GetRequest\022\013\n\003key\030\001 \001(\014\"Q\n\017LockGetRespon"
+      "se\022\014\n\004code\030\001 \001(\003\022\r\n\005error\030\002 \001(\t\022!\n\005value"
+      "\030\003 \001(\0132\022.kvrpcpb.LockValue\"`\n\020DsLockGetR"
+      "equest\022&\n\006header\030\001 \001(\0132\026.kvrpcpb.Request"
+      "Header\022$\n\003req\030\002 \001(\0132\027.kvrpcpb.LockGetReq"
+      "uest\"d\n\021DsLockGetResponse\022\'\n\006header\030\001 \001("
+      "\0132\027.kvrpcpb.ResponseHeader\022&\n\004resp\030\002 \001(\013"
+      "2\030.kvrpcpb.LockGetResponse*;\n\013ExecuteTyp"
+      "e\022\017\n\013ExecInvalid\020\000\022\013\n\007ExecPut\020\001\022\016\n\nExecD"
+      "elete\020\002*\224\001\n\tMatchType\022\013\n\007Invalid\020\000\022\t\n\005Eq"
+      "ual\020\001\022\014\n\010NotEqual\020\002\022\010\n\004Less\020\003\022\017\n\013LessOrE"
+      "qual\020\004\022\n\n\006Larger\020\005\022\021\n\rLargerOrEqual\020\006\022\014\n"
+      "\010LogicAnd\020\013\022\013\n\007LogicOr\020\014\022\014\n\010LogicNot\020\r*\367"
+      "\001\n\010ExprType\022\r\n\tE_Invalid\020\000\022\016\n\nE_LogicAnd"
+      "\020\001\022\r\n\tE_LogicOr\020\002\022\016\n\nE_LogicNot\020\003\022\013\n\007E_E"
+      "qual\020\013\022\016\n\nE_NotEqual\020\014\022\n\n\006E_Less\020\r\022\021\n\rE_"
+      "LessOrEqual\020\016\022\014\n\010E_Larger\020\017\022\023\n\017E_LargerO"
+      "rEqual\020\020\022\n\n\006E_Plus\020\025\022\013\n\007E_Minus\020\026\022\n\n\006E_M"
+      "ult\020\027\022\t\n\005E_Div\020\030\022\r\n\tE_ExprCol\020\037\022\017\n\013E_Exp"
+      "rConst\020 *\?\n\tFieldType\022\n\n\006Assign\020\000\022\010\n\004Plu"
+      "s\020\001\022\t\n\005Minus\020\002\022\010\n\004Mult\020\003\022\007\n\003Div\020\004*Z\n\tExi"
+      "stCase\022\016\n\nEC_Invalid\020\000\022\020\n\014EC_NotExists\020\001"
+      "\022\r\n\tEC_Exists\020\002\022\016\n\nEC_AnyCase\020\003\022\014\n\010EC_Fo"
+      "rce\020\004*B\n\tOperation\022\016\n\nOP_Invalid\020\000\022\n\n\006OP"
+      "_Set\020\001\022\r\n\tOP_Delete\020\002\022\n\n\006OP_Get\020\003b\006proto"
+      "3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 10451);
+      descriptor, 10401);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "kvrpcpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
   ::errorpb::protobuf_errorpb_2eproto::AddDescriptors();
-  ::timestamp::protobuf_timestamp_2eproto::AddDescriptors();
+  ::tspb::protobuf_timestamp_2eproto::AddDescriptors();
 }
 } // anonymous namespace
 
@@ -3059,7 +3058,7 @@ RequestHeader::RequestHeader(const RequestHeader& from)
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
@@ -3158,7 +3157,7 @@ bool RequestHeader::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 2;
+      // .tspb.Timestamp timestamp = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
@@ -3255,7 +3254,7 @@ void RequestHeader::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->cluster_id(), output);
   }
 
-  // .timestamp.Timestamp timestamp = 2;
+  // .tspb.Timestamp timestamp = 2;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       2, *this->timestamp_, output);
@@ -3301,7 +3300,7 @@ void RequestHeader::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->cluster_id(), target);
   }
 
-  // .timestamp.Timestamp timestamp = 2;
+  // .tspb.Timestamp timestamp = 2;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -3347,7 +3346,7 @@ size_t RequestHeader::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .timestamp.Timestamp timestamp = 2;
+  // .tspb.Timestamp timestamp = 2;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -3419,7 +3418,7 @@ void RequestHeader::MergeFrom(const RequestHeader& from) {
   (void) cached_has_bits;
 
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
   if (from.has_range_epoch()) {
     mutable_range_epoch()->::metapb::RangeEpoch::MergeFrom(from.range_epoch());
@@ -3494,7 +3493,7 @@ void RequestHeader::set_cluster_id(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.RequestHeader.cluster_id)
 }
 
-// .timestamp.Timestamp timestamp = 2;
+// .tspb.Timestamp timestamp = 2;
 bool RequestHeader::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -3502,28 +3501,28 @@ void RequestHeader::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& RequestHeader::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& RequestHeader::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.RequestHeader.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* RequestHeader::mutable_timestamp() {
+::tspb::Timestamp* RequestHeader::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.RequestHeader.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* RequestHeader::release_timestamp() {
+::tspb::Timestamp* RequestHeader::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.RequestHeader.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void RequestHeader::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void RequestHeader::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -3643,12 +3642,12 @@ ResponseHeader::ResponseHeader(const ResponseHeader& from)
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
   if (from.has_now()) {
-    now_ = new ::timestamp::Timestamp(*from.now_);
+    now_ = new ::tspb::Timestamp(*from.now_);
   } else {
     now_ = NULL;
   }
@@ -3752,7 +3751,7 @@ bool ResponseHeader::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 2;
+      // .tspb.Timestamp timestamp = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
@@ -3778,7 +3777,7 @@ bool ResponseHeader::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp now = 4;
+      // .tspb.Timestamp now = 4;
       case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
@@ -3847,7 +3846,7 @@ void ResponseHeader::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->cluster_id(), output);
   }
 
-  // .timestamp.Timestamp timestamp = 2;
+  // .tspb.Timestamp timestamp = 2;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       2, *this->timestamp_, output);
@@ -3858,7 +3857,7 @@ void ResponseHeader::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->trace_id(), output);
   }
 
-  // .timestamp.Timestamp now = 4;
+  // .tspb.Timestamp now = 4;
   if (this->has_now()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       4, *this->now_, output);
@@ -3894,7 +3893,7 @@ void ResponseHeader::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->cluster_id(), target);
   }
 
-  // .timestamp.Timestamp timestamp = 2;
+  // .tspb.Timestamp timestamp = 2;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -3906,7 +3905,7 @@ void ResponseHeader::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->trace_id(), target);
   }
 
-  // .timestamp.Timestamp now = 4;
+  // .tspb.Timestamp now = 4;
   if (this->has_now()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -3942,14 +3941,14 @@ size_t ResponseHeader::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // .timestamp.Timestamp timestamp = 2;
+  // .tspb.Timestamp timestamp = 2;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->timestamp_);
   }
 
-  // .timestamp.Timestamp now = 4;
+  // .tspb.Timestamp now = 4;
   if (this->has_now()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -4014,10 +4013,10 @@ void ResponseHeader::MergeFrom(const ResponseHeader& from) {
   (void) cached_has_bits;
 
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
   if (from.has_now()) {
-    mutable_now()->::timestamp::Timestamp::MergeFrom(from.now());
+    mutable_now()->::tspb::Timestamp::MergeFrom(from.now());
   }
   if (from.has_error()) {
     mutable_error()->::errorpb::Error::MergeFrom(from.error());
@@ -4089,7 +4088,7 @@ void ResponseHeader::set_cluster_id(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.ResponseHeader.cluster_id)
 }
 
-// .timestamp.Timestamp timestamp = 2;
+// .tspb.Timestamp timestamp = 2;
 bool ResponseHeader::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -4097,28 +4096,28 @@ void ResponseHeader::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& ResponseHeader::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& ResponseHeader::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.ResponseHeader.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* ResponseHeader::mutable_timestamp() {
+::tspb::Timestamp* ResponseHeader::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.ResponseHeader.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* ResponseHeader::release_timestamp() {
+::tspb::Timestamp* ResponseHeader::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.ResponseHeader.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void ResponseHeader::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void ResponseHeader::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -4143,7 +4142,7 @@ void ResponseHeader::set_trace_id(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.ResponseHeader.trace_id)
 }
 
-// .timestamp.Timestamp now = 4;
+// .tspb.Timestamp now = 4;
 bool ResponseHeader::has_now() const {
   return this != internal_default_instance() && now_ != NULL;
 }
@@ -4151,28 +4150,28 @@ void ResponseHeader::clear_now() {
   if (GetArenaNoVirtual() == NULL && now_ != NULL) delete now_;
   now_ = NULL;
 }
-const ::timestamp::Timestamp& ResponseHeader::now() const {
-  const ::timestamp::Timestamp* p = now_;
+const ::tspb::Timestamp& ResponseHeader::now() const {
+  const ::tspb::Timestamp* p = now_;
   // @@protoc_insertion_point(field_get:kvrpcpb.ResponseHeader.now)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* ResponseHeader::mutable_now() {
+::tspb::Timestamp* ResponseHeader::mutable_now() {
   
   if (now_ == NULL) {
-    now_ = new ::timestamp::Timestamp;
+    now_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.ResponseHeader.now)
   return now_;
 }
-::timestamp::Timestamp* ResponseHeader::release_now() {
+::tspb::Timestamp* ResponseHeader::release_now() {
   // @@protoc_insertion_point(field_release:kvrpcpb.ResponseHeader.now)
   
-  ::timestamp::Timestamp* temp = now_;
+  ::tspb::Timestamp* temp = now_;
   now_ = NULL;
   return temp;
 }
-void ResponseHeader::set_allocated_now(::timestamp::Timestamp* now) {
+void ResponseHeader::set_allocated_now(::tspb::Timestamp* now) {
   delete now_;
   now_ = now;
   if (now) {
@@ -12877,7 +12876,7 @@ SelectRequest::SelectRequest(const SelectRequest& from)
     limit_ = NULL;
   }
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
@@ -13044,7 +13043,7 @@ bool SelectRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 7;
+      // .tspb.Timestamp timestamp = 7;
       case 7: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(58u /* 58 & 0xFF */)) {
@@ -13133,7 +13132,7 @@ void SelectRequest::SerializeWithCachedSizes(
       6, *this->limit_, output);
   }
 
-  // .timestamp.Timestamp timestamp = 7;
+  // .tspb.Timestamp timestamp = 7;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       7, *this->timestamp_, output);
@@ -13204,7 +13203,7 @@ void SelectRequest::SerializeWithCachedSizes(
         6, *this->limit_, deterministic, target);
   }
 
-  // .timestamp.Timestamp timestamp = 7;
+  // .tspb.Timestamp timestamp = 7;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -13289,7 +13288,7 @@ size_t SelectRequest::ByteSizeLong() const {
         *this->limit_);
   }
 
-  // .timestamp.Timestamp timestamp = 7;
+  // .tspb.Timestamp timestamp = 7;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -13346,7 +13345,7 @@ void SelectRequest::MergeFrom(const SelectRequest& from) {
     mutable_limit()->::kvrpcpb::Limit::MergeFrom(from.limit());
   }
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
   if (from.has_ext_filter()) {
     mutable_ext_filter()->::kvrpcpb::MatchExt::MergeFrom(from.ext_filter());
@@ -13620,7 +13619,7 @@ void SelectRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.SelectRequest.limit)
 }
 
-// .timestamp.Timestamp timestamp = 7;
+// .tspb.Timestamp timestamp = 7;
 bool SelectRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -13628,28 +13627,28 @@ void SelectRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& SelectRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& SelectRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.SelectRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* SelectRequest::mutable_timestamp() {
+::tspb::Timestamp* SelectRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.SelectRequest.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* SelectRequest::release_timestamp() {
+::tspb::Timestamp* SelectRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.SelectRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void SelectRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void SelectRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -16183,7 +16182,7 @@ InsertRequest::InsertRequest(const InsertRequest& from)
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
@@ -16281,7 +16280,7 @@ bool InsertRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 3;
+      // .tspb.Timestamp timestamp = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
@@ -16331,7 +16330,7 @@ void InsertRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(2, this->check_duplicate(), output);
   }
 
-  // .timestamp.Timestamp timestamp = 3;
+  // .tspb.Timestamp timestamp = 3;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       3, *this->timestamp_, output);
@@ -16364,7 +16363,7 @@ void InsertRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(2, this->check_duplicate(), target);
   }
 
-  // .timestamp.Timestamp timestamp = 3;
+  // .tspb.Timestamp timestamp = 3;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -16399,7 +16398,7 @@ size_t InsertRequest::ByteSizeLong() const {
     }
   }
 
-  // .timestamp.Timestamp timestamp = 3;
+  // .tspb.Timestamp timestamp = 3;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -16442,7 +16441,7 @@ void InsertRequest::MergeFrom(const InsertRequest& from) {
 
   rows_.MergeFrom(from.rows_);
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
   if (from.check_duplicate() != 0) {
     set_check_duplicate(from.check_duplicate());
@@ -16532,7 +16531,7 @@ void InsertRequest::set_check_duplicate(bool value) {
   // @@protoc_insertion_point(field_set:kvrpcpb.InsertRequest.check_duplicate)
 }
 
-// .timestamp.Timestamp timestamp = 3;
+// .tspb.Timestamp timestamp = 3;
 bool InsertRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -16540,28 +16539,28 @@ void InsertRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& InsertRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& InsertRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.InsertRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* InsertRequest::mutable_timestamp() {
+::tspb::Timestamp* InsertRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.InsertRequest.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* InsertRequest::release_timestamp() {
+::tspb::Timestamp* InsertRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.InsertRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void InsertRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void InsertRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -18321,7 +18320,7 @@ DeleteRequest::DeleteRequest(const DeleteRequest& from)
     scope_ = NULL;
   }
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
@@ -18455,7 +18454,7 @@ bool DeleteRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 10;
+      // .tspb.Timestamp timestamp = 10;
       case 10: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
@@ -18523,7 +18522,7 @@ void DeleteRequest::SerializeWithCachedSizes(
       this->indexs(i), output);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       10, *this->timestamp_, output);
@@ -18578,7 +18577,7 @@ void DeleteRequest::SerializeWithCachedSizes(
       WriteUInt64NoTagToArray(this->indexs_, target);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -18643,7 +18642,7 @@ size_t DeleteRequest::ByteSizeLong() const {
         *this->scope_);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -18689,7 +18688,7 @@ void DeleteRequest::MergeFrom(const DeleteRequest& from) {
     mutable_scope()->::kvrpcpb::Scope::MergeFrom(from.scope());
   }
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
 }
 
@@ -18887,7 +18886,7 @@ DeleteRequest::mutable_indexs() {
   return &indexs_;
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 bool DeleteRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -18895,28 +18894,28 @@ void DeleteRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& DeleteRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& DeleteRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.DeleteRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* DeleteRequest::mutable_timestamp() {
+::tspb::Timestamp* DeleteRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.DeleteRequest.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* DeleteRequest::release_timestamp() {
+::tspb::Timestamp* DeleteRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.DeleteRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void DeleteRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void DeleteRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -36440,7 +36439,7 @@ LockRequest::LockRequest(const LockRequest& from)
     value_ = NULL;
   }
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
@@ -36541,7 +36540,7 @@ bool LockRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 10;
+      // .tspb.Timestamp timestamp = 10;
       case 10: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
@@ -36591,7 +36590,7 @@ void LockRequest::SerializeWithCachedSizes(
       2, *this->value_, output);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       10, *this->timestamp_, output);
@@ -36625,7 +36624,7 @@ void LockRequest::SerializeWithCachedSizes(
         2, *this->value_, deterministic, target);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -36663,7 +36662,7 @@ size_t LockRequest::ByteSizeLong() const {
         *this->value_);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -36707,7 +36706,7 @@ void LockRequest::MergeFrom(const LockRequest& from) {
     mutable_value()->::kvrpcpb::LockValue::MergeFrom(from.value());
   }
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
 }
 
@@ -36843,7 +36842,7 @@ void LockRequest::set_allocated_value(::kvrpcpb::LockValue* value) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockRequest.value)
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 bool LockRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -36851,28 +36850,28 @@ void LockRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& LockRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& LockRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.LockRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* LockRequest::mutable_timestamp() {
+::tspb::Timestamp* LockRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.LockRequest.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* LockRequest::release_timestamp() {
+::tspb::Timestamp* LockRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.LockRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void LockRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void LockRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -38959,7 +38958,7 @@ LockUpdateRequest::LockUpdateRequest(const LockUpdateRequest& from)
     by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
   }
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
@@ -39096,7 +39095,7 @@ bool LockUpdateRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 10;
+      // .tspb.Timestamp timestamp = 10;
       case 10: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
@@ -39177,7 +39176,7 @@ void LockUpdateRequest::SerializeWithCachedSizes(
       6, this->update_value(), output);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       10, *this->timestamp_, output);
@@ -39237,7 +39236,7 @@ void LockUpdateRequest::SerializeWithCachedSizes(
         6, this->update_value(), target);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -39300,7 +39299,7 @@ size_t LockUpdateRequest::ByteSizeLong() const {
         this->by());
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -39360,7 +39359,7 @@ void LockUpdateRequest::MergeFrom(const LockUpdateRequest& from) {
     by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
   }
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
   if (from.delete_time() != 0) {
     set_delete_time(from.delete_time());
@@ -39582,7 +39581,7 @@ void LockUpdateRequest::set_allocated_update_value(::std::string* update_value) 
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.LockUpdateRequest.update_value)
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 bool LockUpdateRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -39590,28 +39589,28 @@ void LockUpdateRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& LockUpdateRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& LockUpdateRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.LockUpdateRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* LockUpdateRequest::mutable_timestamp() {
+::tspb::Timestamp* LockUpdateRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.LockUpdateRequest.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* LockUpdateRequest::release_timestamp() {
+::tspb::Timestamp* LockUpdateRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.LockUpdateRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void LockUpdateRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void LockUpdateRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -40468,7 +40467,7 @@ UnlockRequest::UnlockRequest(const UnlockRequest& from)
     by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
   }
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
@@ -40572,7 +40571,7 @@ bool UnlockRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 10;
+      // .tspb.Timestamp timestamp = 10;
       case 10: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
@@ -40642,7 +40641,7 @@ void UnlockRequest::SerializeWithCachedSizes(
       3, this->id(), output);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       10, *this->timestamp_, output);
@@ -40690,7 +40689,7 @@ void UnlockRequest::SerializeWithCachedSizes(
         3, this->id(), target);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -40746,7 +40745,7 @@ size_t UnlockRequest::ByteSizeLong() const {
         this->by());
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -40795,7 +40794,7 @@ void UnlockRequest::MergeFrom(const UnlockRequest& from) {
     by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
   }
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
 }
 
@@ -40945,7 +40944,7 @@ void UnlockRequest::set_allocated_id(::std::string* id) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UnlockRequest.id)
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 bool UnlockRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -40953,28 +40952,28 @@ void UnlockRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& UnlockRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& UnlockRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.UnlockRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* UnlockRequest::mutable_timestamp() {
+::tspb::Timestamp* UnlockRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.UnlockRequest.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* UnlockRequest::release_timestamp() {
+::tspb::Timestamp* UnlockRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.UnlockRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void UnlockRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void UnlockRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {
@@ -41826,7 +41825,7 @@ UnlockForceRequest::UnlockForceRequest(const UnlockForceRequest& from)
     by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
   }
   if (from.has_timestamp()) {
-    timestamp_ = new ::timestamp::Timestamp(*from.timestamp_);
+    timestamp_ = new ::tspb::Timestamp(*from.timestamp_);
   } else {
     timestamp_ = NULL;
   }
@@ -41911,7 +41910,7 @@ bool UnlockForceRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .timestamp.Timestamp timestamp = 10;
+      // .tspb.Timestamp timestamp = 10;
       case 10: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
@@ -41971,7 +41970,7 @@ void UnlockForceRequest::SerializeWithCachedSizes(
       1, this->key(), output);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       10, *this->timestamp_, output);
@@ -42008,7 +42007,7 @@ void UnlockForceRequest::SerializeWithCachedSizes(
         1, this->key(), target);
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -42057,7 +42056,7 @@ size_t UnlockForceRequest::ByteSizeLong() const {
         this->by());
   }
 
-  // .timestamp.Timestamp timestamp = 10;
+  // .tspb.Timestamp timestamp = 10;
   if (this->has_timestamp()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -42102,7 +42101,7 @@ void UnlockForceRequest::MergeFrom(const UnlockForceRequest& from) {
     by_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.by_);
   }
   if (from.has_timestamp()) {
-    mutable_timestamp()->::timestamp::Timestamp::MergeFrom(from.timestamp());
+    mutable_timestamp()->::tspb::Timestamp::MergeFrom(from.timestamp());
   }
 }
 
@@ -42198,7 +42197,7 @@ void UnlockForceRequest::set_allocated_key(::std::string* key) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.UnlockForceRequest.key)
 }
 
-// .timestamp.Timestamp timestamp = 10;
+// .tspb.Timestamp timestamp = 10;
 bool UnlockForceRequest::has_timestamp() const {
   return this != internal_default_instance() && timestamp_ != NULL;
 }
@@ -42206,28 +42205,28 @@ void UnlockForceRequest::clear_timestamp() {
   if (GetArenaNoVirtual() == NULL && timestamp_ != NULL) delete timestamp_;
   timestamp_ = NULL;
 }
-const ::timestamp::Timestamp& UnlockForceRequest::timestamp() const {
-  const ::timestamp::Timestamp* p = timestamp_;
+const ::tspb::Timestamp& UnlockForceRequest::timestamp() const {
+  const ::tspb::Timestamp* p = timestamp_;
   // @@protoc_insertion_point(field_get:kvrpcpb.UnlockForceRequest.timestamp)
-  return p != NULL ? *p : *reinterpret_cast<const ::timestamp::Timestamp*>(
-      &::timestamp::_Timestamp_default_instance_);
+  return p != NULL ? *p : *reinterpret_cast<const ::tspb::Timestamp*>(
+      &::tspb::_Timestamp_default_instance_);
 }
-::timestamp::Timestamp* UnlockForceRequest::mutable_timestamp() {
+::tspb::Timestamp* UnlockForceRequest::mutable_timestamp() {
   
   if (timestamp_ == NULL) {
-    timestamp_ = new ::timestamp::Timestamp;
+    timestamp_ = new ::tspb::Timestamp;
   }
   // @@protoc_insertion_point(field_mutable:kvrpcpb.UnlockForceRequest.timestamp)
   return timestamp_;
 }
-::timestamp::Timestamp* UnlockForceRequest::release_timestamp() {
+::tspb::Timestamp* UnlockForceRequest::release_timestamp() {
   // @@protoc_insertion_point(field_release:kvrpcpb.UnlockForceRequest.timestamp)
   
-  ::timestamp::Timestamp* temp = timestamp_;
+  ::tspb::Timestamp* temp = timestamp_;
   timestamp_ = NULL;
   return temp;
 }
-void UnlockForceRequest::set_allocated_timestamp(::timestamp::Timestamp* timestamp) {
+void UnlockForceRequest::set_allocated_timestamp(::tspb::Timestamp* timestamp) {
   delete timestamp_;
   timestamp_ = timestamp;
   if (timestamp) {

@@ -385,6 +385,72 @@ void EncodeUvarintAscending(std::string *buf, uint64_t value) {
     }
 }
 
+void EncodeUvarintDescending(std::string* buf, uint64_t value) {
+    if (value == 0) {
+        return buf->push_back(static_cast<char>(kIntMin + 8));
+    } else if (value <= 0xff) {
+        value = ~value;
+        buf->append({static_cast<char>(kIntMin+7),
+                     static_cast<char>(value)});
+    } else if (value <= 0xffff) {
+        value = ~value;
+        buf->append({static_cast<char>(kIntMin+6),
+                     static_cast<char>(value >> 8),
+                     static_cast<char>(value)});
+    } else if (value <= 0xffffff) {
+        value = ~value;
+        buf->append({static_cast<char>(kIntMin+5),
+                     static_cast<char>(value >> 16),
+                     static_cast<char>(value >> 8),
+                     static_cast<char>(value)});
+    } else if (value <= 0xffffffff) {
+        value = ~value;
+        buf->append({static_cast<char>(kIntMin+4),
+                     static_cast<char>(value >> 24),
+                     static_cast<char>(value >> 16),
+                     static_cast<char>(value >> 8),
+                     static_cast<char>(value)});
+    } else if (value <= 0xffffffffff) {
+        value = ~value;
+        buf->append({static_cast<char>(kIntMin+3),
+                     static_cast<char>(value >> 32),
+                     static_cast<char>(value >> 24),
+                     static_cast<char>(value >> 16),
+                     static_cast<char>(value >> 8),
+                     static_cast<char>(value)});
+    } else if (value <= 0xffffffffffff) {
+        value = ~value;
+        buf->append({static_cast<char>(kIntMin+2),
+                     static_cast<char>(value >> 40),
+                     static_cast<char>(value >> 32),
+                     static_cast<char>(value >> 24),
+                     static_cast<char>(value >> 16),
+                     static_cast<char>(value >> 8),
+                     static_cast<char>(value)});
+    } else if (value <= 0xffffffffffffff) {
+        value = ~value;
+        buf->append({static_cast<char>(kIntMin+1),
+                     static_cast<char>(value >> 48),
+                     static_cast<char>(value >> 40),
+                     static_cast<char>(value >> 32),
+                     static_cast<char>(value >> 24),
+                     static_cast<char>(value >> 16),
+                     static_cast<char>(value >> 8),
+                     static_cast<char>(value)});
+    } else {
+        value = ~value;
+        buf->append({static_cast<char>(kIntMin),
+                     static_cast<char>(value >> 56),
+                     static_cast<char>(value >> 48),
+                     static_cast<char>(value >> 40),
+                     static_cast<char>(value >> 32),
+                     static_cast<char>(value >> 24),
+                     static_cast<char>(value >> 16),
+                     static_cast<char>(value >> 8),
+                     static_cast<char>(value)});
+    }
+}
+
 void EncodeVarintAscending(std::string *buf, int64_t value) {
     if (value >= 0) {
         return EncodeUvarintAscending(buf, static_cast<uint64_t>(value));
@@ -504,6 +570,22 @@ bool DecodeUvarintAscending(const std::string& buf, size_t& pos, uint64_t* out) 
     return true;
 }
 
+bool DecodeUvarintDescending(const std::string& buf, size_t& pos, uint64_t* out) {
+    if (pos >= buf.size()) return false;
+    int len = kIntZero - static_cast<uint8_t>(buf[pos]);
+    if (len < 0 || len > 8 || buf.size() - pos < static_cast<size_t>(len + 1)) {
+        return false;
+    }
+    ++pos;
+    uint64_t x = 0;
+    for (int i = 0; i < len; ++i) {
+        auto t = static_cast<uint8_t>(buf[pos++]);
+        x = (x << 8) | static_cast<uint8_t>(~t);
+    }
+    *out = x;
+    return true;
+}
+
 bool DecodeVarintAscending(const std::string& buf, size_t& pos, int64_t* out) {
     if (pos >= buf.size()) return false;
     int len = (int)(unsigned char)buf[pos] - kIntZero;
@@ -528,8 +610,8 @@ bool DecodeFloatAscending(const std::string& buf, size_t& pos, double* out) {
 }
 
 bool DecodeBytesAscending(const std::string& buf, size_t& pos, std::string* out) {
-    if (pos >= buf.size() || buf[pos] != kBytesMarker)
-        return false;
+    if (pos >= buf.size() || buf[pos] != kBytesMarker) return false;
+    if (out) out->clear();
     for (++pos; pos < buf.size();) {
         auto escapePos = buf.find((char) kEscape, pos);
         if (escapePos == std::string::npos || escapePos + 1 >= buf.size()) return false;

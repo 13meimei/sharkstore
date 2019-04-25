@@ -9,6 +9,8 @@ set(test_helper_SRCS
     helper/mock/range_context_mock.cpp
     helper/mock/rpc_request_mock.cpp
     helper/mock/rpc_request_wait_mock.cpp
+    helper/mock/mass_tree_mvcc_mock.cpp
+    helper/mock/mass_tree_iterator_mock.cpp
     helper/helper_util.cpp
     helper/request_builder.cpp
     helper/query_parser.cpp
@@ -34,6 +36,7 @@ set (test_DEPEND_LIBS
 set(test_SRCS
     unittest/encoding_unittest.cpp
     unittest/field_value_unittest.cpp
+    unittest/mass_tree_unittest.cpp
     unittest/meta_store_unittest.cpp
     unittest/monitor_unittest.cpp
     unittest/range_ddl_unittest.cpp
@@ -41,6 +44,7 @@ set(test_SRCS
     unittest/range_raw_unittest.cpp
     unittest/range_sql_unittest.cpp
     unittest/row_decoder_unittest.cpp
+    unittest/scaner_unittest.cpp
     unittest/status_unittest.cpp
     unittest/store_unittest.cpp
     unittest/store_txn_unittest.cpp
@@ -48,6 +52,7 @@ set(test_SRCS
     unittest/util_unittest.cpp
     unittest/common_thread_unittest.cpp
     unittest/range_unittest.cpp
+    unittest/mass_mvcc_unittest.cpp
 )
 
 if(ENABLE_TBB)
@@ -68,4 +73,3 @@ foreach(testfile ${test_SRCS})
     endif()
 endforeach(testfile ${TESTS})
 
-#add_subdirectory(watch)

@@ -497,9 +497,20 @@ static int load_raft_config(IniContext *ini_context) {
     char *temp_str;
     char *section = "raft";
 
+    ds_config.raft_config.disabled = (bool)iniGetIntValue(section, "disabled", ini_context, 0);
+    if (ds_config.raft_config.disabled) {
+        FLOG_WARN("raft is disabled");
+    }
+
     ds_config.raft_config.port = iniGetIntValue(section, "port", ini_context, 6182);
     if (ds_config.raft_config.port <= 0) {
         ds_config.raft_config.port = kDefaultPort;
+    }
+
+    ds_config.raft_config.in_memory_log =
+            (bool)iniGetIntValue(section, "in_memory_log", ini_context, 0);
+    if (ds_config.raft_config.in_memory_log) {
+        FLOG_WARN("raft use in memory log");
     }
 
     temp_str = iniGetStrValue(section, "log_path", ini_context);
@@ -533,6 +544,8 @@ static int load_raft_config(IniContext *ini_context) {
             ini_context, section, "transport_send_threads", 4, 1);
     ds_config.raft_config.transport_recv_threads = (size_t)load_integer_value_atleast(
             ini_context, section, "transport_recv_threads", 4, 1);
+    ds_config.raft_config.connection_pool_size = (size_t)load_integer_value_atleast(
+            ini_context, section, "connection_pool_size", 4, 1);
 
     ds_config.raft_config.tick_interval_ms = (size_t)load_integer_value_atleast(
            ini_context, section, "tick_interval", 500, 100);
@@ -556,6 +569,7 @@ void print_raft_config() {
               "\n\tapply_queue: %lu"
               "\n\tsend_threads: %lu"
               "\n\trecv_threads: %lu"
+              "\n\tconnection_pool_size: %lu"
               "\n\ttick_interval_ms: %lu"
               "\n\tmax_msg_size: %lu"
               ,
@@ -570,6 +584,7 @@ void print_raft_config() {
               ds_config.raft_config.apply_queue,
               ds_config.raft_config.transport_send_threads,
               ds_config.raft_config.transport_recv_threads,
+              ds_config.raft_config.connection_pool_size,
               ds_config.raft_config.tick_interval_ms,
               ds_config.raft_config.max_msg_size
     );
