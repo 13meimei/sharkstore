@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -53,6 +54,7 @@ func bytesPrefix(prefix []byte) ([]byte, []byte) {
 }
 
 var (
+	once = &sync.Once{}
 	node0 *metapb.Node
 	node1 *metapb.Node
 	ms *mock_ms.Cluster
@@ -60,26 +62,29 @@ var (
 	ds1 *mock_ds.DsRpcServer
 )
 
-func init() {
-	ms = mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
-	node0 = &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
-	node1 = &metapb.Node{Id: 2, ServerAddr: "127.0.0.1:6061"}
-	ms.SetNode(node0)
-	ms.SetNode(node1)
-	go ms.Start()
-	time.Sleep(time.Second)
+func doMockInit(once *sync.Once) {
+	once.Do(func() {
+		ms = mock_ms.NewCluster("127.0.0.1:8887", "127.0.0.1:18887")
+		node0 = &metapb.Node{Id: 1, ServerAddr: "127.0.0.1:6060"}
+		node1 = &metapb.Node{Id: 2, ServerAddr: "127.0.0.1:6061"}
+		ms.SetNode(node0)
+		ms.SetNode(node1)
+		go ms.Start()
+		time.Sleep(time.Second)
 
-	ds0 = mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
-	go ds0.Start()
-	time.Sleep(time.Second)
+		ds0 = mock_ds.NewDsRpcServer("127.0.0.1:6060", dsPath)
+		go ds0.Start()
+		time.Sleep(time.Second)
 
-	ds1 = mock_ds.NewDsRpcServer("127.0.0.1:6061", dsPath1)
-	go ds1.Start()
-	time.Sleep(time.Second)
+		ds1 = mock_ds.NewDsRpcServer("127.0.0.1:6061", dsPath1)
+		go ds1.Start()
+		time.Sleep(time.Second)
+	})
 }
 
 // 创建一个只处理一个表的Proxy
 func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) *Proxy {
+	doMockInit(once)
 	rng := deepcopy.Iface(rng_).(*metapb.Range)
 	ms.SetDb(db)
 	ms.SetTable(table)
@@ -128,6 +133,7 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 }
 
 func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ... *metapb.Range) *Proxy {
+	doMockInit(once)
 	ms.SetDb(db)
 	ms.SetTable(table)
 	//ms.SetNode(node)
