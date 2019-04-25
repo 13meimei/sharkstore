@@ -127,22 +127,22 @@ class CWhereExpr {
                 FieldValue* r = nullptr;
                 ::kvrpcpb::Expr tmp;
 
-                bool bl, br;
+                bool bResult{false};
                 switch (et) {
                     case ::kvrpcpb::E_LogicAnd:
-                        bl = FilterExpr(result, expr.child(0));
-                        if (!bl) {
-                            return false;
+                        for (auto i = 0; i < expr.child_size(); i++) {
+                            if (!FilterExpr(result, expr.child(i))) {
+                                return false;
+                            }
                         }
-                        br = FilterExpr(result, expr.child(1));
-                        return br;
+                        return true;
                     case ::kvrpcpb::E_LogicOr:
-                        bl = FilterExpr(result, expr.child(0));
-                        if (bl) {
-                            return bl;
+                        for (auto i = 0; i < expr.child_size(); i++) {
+                            if (FilterExpr(result, expr.child(i))) {
+                                return true;
+                            }
                         }
-                        br = FilterExpr(result, expr.child(1));
-                        return br;
+                        return false;
                     case ::kvrpcpb::E_LogicNot:
                         return (!FilterExpr(result, expr.child(0)));
                     case ::kvrpcpb::E_Equal:
@@ -164,11 +164,11 @@ class CWhereExpr {
                         FLOG_DEBUG(">>>parent expr_type: %d get right value expr_type: %d addr: %p value: %s",
                                 et, expr.child(1).expr_type(), &expr.child(1), r->ToString().c_str());
 
-                        bl = CWhereExpr::CmpExpr(l, r, et);
+                        bResult = CWhereExpr::CmpExpr(l, r, et);
                         if (expr.child(0).expr_type() != ::kvrpcpb::E_ExprCol) delete l;
                         if (expr.child(1).expr_type() != ::kvrpcpb::E_ExprCol) delete r;
 
-                        return bl;
+                        return bResult;
                     default:
                         FLOG_ERROR("FilterExpr() error, invalid expr type: %d", et);
                         return false;
@@ -199,6 +199,12 @@ class CWhereExpr {
             switch (e.expr_type()) {
                 case ::kvrpcpb::E_LogicAnd:
                 case ::kvrpcpb::E_LogicOr:
+                    if (e.child_size() < 2) {
+                        FLOG_WARN("check() expr_type: %d child_size: %d",
+                                e.expr_type(), e.child_size());
+                            return false;
+                    }
+                    return true;
                 case ::kvrpcpb::E_Equal:
                 case ::kvrpcpb::E_NotEqual:
                 case ::kvrpcpb::E_Less:
