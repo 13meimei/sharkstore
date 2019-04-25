@@ -34,6 +34,8 @@ public:
                         const uint64_t start_index,
                         std::shared_ptr<raft::RaftLogReader>* reader);
 
+    // add delete reader
+
 private:
     
     int OpenDB();

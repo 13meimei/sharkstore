@@ -59,20 +59,32 @@ Status StorageReader::getCurrLogFile(const uint64_t idx) {
         }
         curr_log_file_.reset();
 
-        auto raft = std::static_pointer_cast<RaftImpl>( server_->FindRaft(id_) );
-        assert(raft != nullptr);
-        auto s =  std::static_pointer_cast<DiskStorage>( raft->GetStorage() );
-        assert(s != nullptr);
+//        auto raft = std::static_pointer_cast<RaftImpl>( server_->FindRaft(id_) );
+//        assert(raft != nullptr);
+//        auto s =  std::static_pointer_cast<DiskStorage>( raft->GetStorage() );
+//       assert(s != nullptr);
 
-        auto r = s->LoadCommitFiles(idx);
-        if (!r.ok()) {
-            //RAFT_LOG_ERROR("LoadCommitFiles error: %s", r.ToString().c_str());
-            return r;
-        }
+        auto raft = server_->FindRaft(id_);
+        if ( raft != nullptr ) {
+            auto s = std::static_pointer_cast<DiskStorage>(raft->GetStorage());
+            if (s != nullptr )  {
+                auto r = s->LoadCommitFiles(idx);
+                if (!r.ok()) {
+                    RAFT_LOG_ERROR("LoadCommitFiles error: %s, reader appley_id:%" PRIu64 , r.ToString().c_str(), idx);
+                    return r;
+                } 
+                for (auto &f : s->GetCommitFiles()) {
+                    log_files_.emplace(f);
+                }
 
-        for (auto &f : s->GetCommitFiles()) {
-            log_files_.emplace(f);
-        }
+            } else { 
+                RAFT_LOG_ERROR("getCurrLogFile Cant't GetStoree from raft idx:%" PRIu64, idx);
+                return Status(Status::kNotFound, "Can't Found raft id:", std::to_string(id_));
+            } 
+        } else { 
+            RAFT_LOG_ERROR("getCurrLogFile Cant't Found raft id:%" PRIu64, idx);
+            return Status(Status::kNotFound, "Can't Found raft id:", std::to_string(id_));
+        } 
     }
 
     if (log_files_.empty() && curr_log_file_ == nullptr) {
@@ -82,16 +94,18 @@ Status StorageReader::getCurrLogFile(const uint64_t idx) {
 }
 
 Status StorageReader::GetData(const uint64_t idx, std::shared_ptr<raft_cmdpb::Command>& cmd) {
+
+    RAFT_LOG_INFO("GetData , start_index:%" PRIu64  "applied_:%" PRIu64 "read Idx:%" PRIu64, start_index_, applied_, idx);
     if ((start_index_ > 0 && idx < start_index_) || 
             (applied_ > 0 && idx > applied_ + 1)) 
     {
         return Status(Status::kOutOfBound, "StorageReader::GetData error", "passin invalid index");
-    }
+    } 
 
     Status r;
     r = getCurrLogFile(idx);
     if (!r.ok()) {
-        RAFT_LOG_ERROR("getCurrLogFile error, %s", r.ToString().c_str());
+        RAFT_LOG_ERROR("getCurrLogFile error, %s, reader apply log index:%" PRIu64 , r.ToString().c_str(), idx);
         return r;
     }
     listLogs();
@@ -144,9 +158,9 @@ Status StorageReader::decodeEntry(EntryPtr entry, std::shared_ptr<raft_cmdpb::Co
     auto data =  entry->data().data();
     auto len = static_cast<int>(entry->data().size());
     
-//    if (len > 0 && entry->type() == pb::ENTRY_NORMAL ) { 
-    raft_cmd->ParseFromArray(data, len);
-//    }
+    if (len > 0 && entry->type() == pb::ENTRY_NORMAL ) { 
+        raft_cmd->ParseFromArray(data, len);
+    }
     
     return Status::OK(); 
 }

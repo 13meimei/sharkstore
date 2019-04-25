@@ -18,7 +18,7 @@ void RPCFutureWait::Set(const google::protobuf::Message& resp) {
 Status RPCFutureWait::Get(google::protobuf::Message& resp) {
 
     std::unique_lock<std::mutex> lk(mu_);
-    cv_.wait_for(lk, std::chrono::seconds(3)); 
+    cv_.wait_for(lk, std::chrono::seconds(60)); 
 
     if (!replied_) {
         return Status(Status::kNotFound, "not reply yet", "");

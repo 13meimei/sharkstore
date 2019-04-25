@@ -88,11 +88,6 @@ protected:
 
         auto sp = server::CreatePersistServer(opt);
         context_->persist_server = sp.release(); 
-
-        ASSERT_EQ(context_->persist_server->Init(context_), 0) << "PersistServer Init error";
-        ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer Init error."; 
-
-        context_->persist_server->Start();
     }
 
     void TearDown() override {
@@ -284,6 +279,7 @@ protected:
 protected:
     server::ContextServer *context_;
     server::RangeServer *range_server_;
+    const int test_request_num  = 1;
 };
 
 metapb::Range *genRange1() {
@@ -334,7 +330,13 @@ metapb::Range *genRange2() {
     return meta;
 }
 
-TEST_F(RangeTest, Range_Raw) {
+TEST_F(RangeTest, Range_Raw_PUT_GET_DELETE_RECOVER_1) {
+
+    ASSERT_EQ(context_->persist_server->Init(context_), 0) << "PersistServer Init error";
+    ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer Init error."; 
+
+    context_->persist_server->Start();
+    // create range 1 2
     {
         // begin test create range
         schpb::CreateRangeRequest req;
@@ -383,9 +385,9 @@ TEST_F(RangeTest, Range_Raw) {
         } 
     }
 
-    const auto len = 10000;
+    // add data ro range 
     const auto range1_start = 10030000000;
-    for (auto i = 0; i < len; i++ )
+    for (auto i = 0; i < test_request_num ; i++ )
     {
         std::string str_key = std::to_string(range1_start + i);
         std::string str_val = str_key + ":range1 value data.";
@@ -404,7 +406,7 @@ TEST_F(RangeTest, Range_Raw) {
     }
 
     const auto range2_start = 10040000000; 
-    for (auto i = 0; i < len; i++ )
+    for (auto i = 0; i < test_request_num; i++ )
     {
         std::string str_key = std::to_string(range2_start + i);
         std::string str_val = str_key + ":range2 value data.";
@@ -422,12 +424,9 @@ TEST_F(RangeTest, Range_Raw) {
         ASSERT_FALSE(resp.header().has_error()) << resp.header().error().message(); 
     }
 
-    // stop range server
-    context_->range_server->Stop();
-    // start range server
-    ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer reInit error."; 
-
-    for (auto i = 0; i < len; i++ )
+    sleep(1);
+    //  reader data  check 
+    for (auto i = 0; i < test_request_num; i++ )
     {
         std::string str_key = std::to_string(range1_start + i);
         std::string str_val = str_key + ":range1 value data.";
@@ -446,7 +445,7 @@ TEST_F(RangeTest, Range_Raw) {
         
     }
 
-    for (auto i = 0; i < len; i++ )
+    for (auto i = 0; i < test_request_num; i++ )
     {
         std::string str_key = std::to_string(range2_start + i);
         std::string str_val = str_key + ":range2 value data.";
@@ -463,204 +462,167 @@ TEST_F(RangeTest, Range_Raw) {
         ASSERT_TRUE(s.ok()) << s.ToString(); 
         ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
         ASSERT_EQ(std::string(resp.mutable_resp()->value()), str_val) << "resp vlaue error";
-    }
+    } 
 
-
-/*
+    sleep(1);
+    //delete data
+    for (auto i = 0; i < test_request_num; i++ )
     {
-        // begin test raw_put (not leader)
-
-        // set leader
-        range_server_->ranges_[1]->raft_->SetLeaderTerm(2, 1);
-        range_server_->ranges_[1]->is_leader_ = false;
-
-        kvrpcpb::DsKvRawPutRequest req;
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
-        req.mutable_req()->set_value("01003001:value");
-
-        kvrpcpb::DsKvRawPutResponse resp;
-        auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_not_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().has_leader());
-        ASSERT_TRUE(resp.header().error().not_leader().leader().node_id() == 2);
-
-        // end test raw_put
-    }
-
-
-    {
-        // begin test raw_put (key empty)
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
-
-        kvrpcpb::DsKvRawPutRequest req;
-
-        req.mutable_header()->set_range_id(1);
-        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("");
-        req.mutable_req()->set_value("01003001:value");
-
-        kvrpcpb::DsKvRawPutResponse resp;
-        auto s = testRawPut(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_TRUE(resp.header().has_error());
-        ASSERT_TRUE(resp.header().error().has_key_not_in_range());
-
-        // end test raw_put
-    }
-
-
-
-    {
-        // begin test raw_delete( ok )
-
-        // set leader
-        auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-        raft->SetLeaderTerm(1, 1);
-        range_server_->ranges_[1]->is_leader_ = true;
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
 
         kvrpcpb::DsKvRawDeleteRequest req;
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
+        req.mutable_req()->set_key(str_key);
 
         kvrpcpb::DsKvRawDeleteResponse resp;
         auto s = testRawDelete(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // end test raw_delete
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error"; 
     }
 
+    for (auto i = 0; i < test_request_num; i++ )
     {
-        // begin test raw_delete (ok, retry split range)
-
-        // set leader
-        range_server_->ranges_[1]->split_range_id_ = 2;
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[1]->raft_.get());
-            raft->SetLeaderTerm(1, 1);
-            range_server_->ranges_[1]->is_leader_ = true;
-        }
-
-        {
-            auto raft = static_cast<RaftMock *>(range_server_->ranges_[2]->raft_.get());
-            raft->SetLeaderTerm(1, 1);
-            range_server_->ranges_[2]->is_leader_ = true;
-        }
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
 
         kvrpcpb::DsKvRawDeleteRequest req;
-        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->set_range_id(2);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
-        req.mutable_header()->mutable_range_epoch()->set_version(2);
-        req.mutable_req()->set_key("01004001");
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
 
         kvrpcpb::DsKvRawDeleteResponse resp;
         auto s = testRawDelete(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
 
-        ASSERT_FALSE(resp.header().has_error());
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
+    } 
 
-        // end test raw_delete
-    }
-
+    sleep(1);
+    // reader data  check 
+    for (auto i = 0; i < test_request_num; i++ )
     {
-        // begin test raw_get(ensure raw delete)
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
+
         kvrpcpb::DsKvRawGetRequest req;
         req.mutable_header()->set_range_id(1);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01003001");
+        req.mutable_req()->set_key(str_key);
 
         kvrpcpb::DsKvRawGetResponse resp;
         auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value().empty());
-
-        // end test raw_get
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+//        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+        ASSERT_EQ(resp.mutable_resp()->code(), Status::kNotFound) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), "") << "resp vlaue error";
+        
     }
 
+    for (auto i = 0; i < test_request_num; i++ )
     {
-        // begin test raw_get (ensure raw delete)
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
+
         kvrpcpb::DsKvRawGetRequest req;
         req.mutable_header()->set_range_id(2);
         req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
         req.mutable_header()->mutable_range_epoch()->set_version(1);
-        req.mutable_req()->set_key("01004001");
+        req.mutable_req()->set_key(str_key);
 
         kvrpcpb::DsKvRawGetResponse resp;
         auto s = testRawGet(req, resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
 
-        ASSERT_FALSE(resp.header().has_error());
-        ASSERT_TRUE(resp.resp().value().empty());
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+//        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+        ASSERT_EQ(resp.mutable_resp()->code(), Status::kNotFound) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), "") << "resp vlaue error";
+    } 
 
-        // end test raw_get
+
+    // stop 
+    context_->persist_server->Stop();
+    // stop range server
+    context_->range_server->Stop();
+
+
+    //start
+    ASSERT_EQ(context_->persist_server->Init(context_), 0) << "PersistServer Init error";
+    context_->persist_server->Start();
+    // start range server
+    ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer reInit error."; 
+
+    r_ptr1 = context_->range_server->ranges_[1]->raft_;
+    r_ptr2 = context_->range_server->ranges_[2]->raft_; 
+
+    while (1) {
+        usleep(1000*100);
+        if (r_ptr1->IsLeader() && r_ptr2->IsLeader()) {
+            break;
+        } else {
+            usleep(1000*100);
+        } 
     }
-
+    
+    sleep(1);
+    // reader data  check 
+    for (auto i = 0; i < test_request_num; i++ )
     {
-        // begin test delete range (range 1)
-        schpb::DeleteRangeRequest req;
-        req.set_range_id(1);
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
 
-        auto rpc = NewMockRPCRequestWait(req);
-        range_server_->DeleteRange(*rpc.first);
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
 
-        ASSERT_TRUE(range_server_->Find(1) == nullptr);
-
-        schpb::DeleteRangeResponse resp;
-        auto s = rpc.second->Get(resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
-
-        ASSERT_FALSE(resp.header().has_error());
-
-        // test meta_store
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-
-        ASSERT_TRUE(metas.size() == 1) << metas.size();
-        // end test delete range
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+//        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+        ASSERT_EQ(resp.mutable_resp()->code(), Status::kNotFound) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), "") << "resp vlaue error";
+        
     }
 
+    for (auto i = 0; i < test_request_num; i++ )
     {
-        // begin test delete range (range 2)
-        schpb::DeleteRangeRequest req;
-        req.set_range_id(2);
-        auto rpc = NewMockRPCRequestWait(req);
-        range_server_->DeleteRange(*rpc.first);
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
 
-        ASSERT_TRUE(range_server_->Find(2) == nullptr);
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(2);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
 
-        schpb::DeleteRangeResponse resp;
-        auto s = rpc.second->Get(resp);
-        ASSERT_TRUE(s.ok()) << s.ToString();
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
 
-        // test meta_store
-        std::vector<metapb::Range> metas;
-        auto ret = range_server_->meta_store_->GetAllRange(&metas);
-        ASSERT_TRUE(metas.size() == 0) << metas.size();
-        // end test delete range
-    }
-    */
-
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+//        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+        ASSERT_EQ(resp.mutable_resp()->code(), Status::kNotFound) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), "") << "resp vlaue error";
+    } 
+    
+    context_->persist_server->Stop();
+    context_->range_server->Stop();
+    context_->range_server->Clear(); 
 }
-/*
-TEST_F(RawTest, TestRangeSlave) {
+
+
+TEST_F(RangeTest, Range_Raw_PUT_GET_DELETE_RECOVER_2) {
+
+    ASSERT_EQ(context_->persist_server->Init(context_), 0) << "PersistServer Init error";
+    ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer Init error."; 
+    context_->persist_server->Start();
+
+    // create range 1 2
     {
         // begin test create range
         schpb::CreateRangeRequest req;
@@ -697,6 +659,238 @@ TEST_F(RawTest, TestRangeSlave) {
         // end test create range
     }
 
+    auto r_ptr1 = context_->range_server->ranges_[1]->raft_;
+    auto r_ptr2 = context_->range_server->ranges_[2]->raft_; 
+
+    while (1) {
+        usleep(1000*100);
+        if (r_ptr1->IsLeader() && r_ptr2->IsLeader()) {
+            break;
+        } else {
+            usleep(1000*100);
+        } 
+    }
+
+    // add data ro range 
+    const auto range1_start = 10030000000;
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
+
+        kvrpcpb::DsKvRawPutRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+        req.mutable_req()->set_value(str_val);
+
+        kvrpcpb::DsKvRawPutResponse resp;
+        auto s = testRawPut(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().message(); 
+    }
+
+    const auto range2_start = 10040000000; 
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
+
+        kvrpcpb::DsKvRawPutRequest req;
+        req.mutable_header()->set_range_id(2);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+        req.mutable_req()->set_value(str_val);
+
+        kvrpcpb::DsKvRawPutResponse resp;
+        auto s = testRawPut(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_FALSE(resp.header().has_error()) << resp.header().error().message(); 
+    } 
+
+    // reader data  check 
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
+
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), str_val) << "resp vlaue error";
+        
+    }
+
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
+
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(2);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), str_val) << "resp vlaue error";
+    } 
+
+    context_->persist_server->Stop();
+    //
+    // stop range server
+    context_->range_server->Stop();
+
+    ASSERT_EQ(context_->persist_server->Init(context_), 0) << "PersistServer Init error";
+    context_->persist_server->Start();
+
+    ASSERT_EQ(range_server_->Init(context_), 0) << "RangeServer Init error."; 
+
+    r_ptr1 = context_->range_server->ranges_[1]->raft_;
+    r_ptr2 = context_->range_server->ranges_[2]->raft_; 
+
+    while (1) {
+        usleep(1000*100);
+        if (r_ptr1->IsLeader() && r_ptr2->IsLeader()) {
+            break;
+        } else {
+            usleep(1000*100);
+        } 
+    }
+
+
+    sleep(1);
+    // reader data  check
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
+
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), str_val) << "resp vlaue error";
+        
+    }
+
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
+
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(2);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), str_val) << "resp vlaue error";
+    } 
+
+    sleep(1);
+    // delete data
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
+
+        kvrpcpb::DsKvRawDeleteRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawDeleteResponse resp;
+        auto s = testRawDelete(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error"; 
+    }
+
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
+
+        kvrpcpb::DsKvRawDeleteRequest req;
+        req.mutable_header()->set_range_id(2);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawDeleteResponse resp;
+        auto s = testRawDelete(req, resp);
+
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), 0) << "resp.code() error";
+    } 
+
+    sleep(1);
+    // reader data  check 
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range1_start + i);
+        std::string str_val = str_key + ":range1 value data.";
+
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(1);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), "") << "resp vlaue error";
+        
+    }
+
+    for (auto i = 0; i < test_request_num; i++ )
+    {
+        std::string str_key = std::to_string(range2_start + i);
+        std::string str_val = str_key + ":range2 value data.";
+
+        kvrpcpb::DsKvRawGetRequest req;
+        req.mutable_header()->set_range_id(2);
+        req.mutable_header()->mutable_range_epoch()->set_conf_ver(1);
+        req.mutable_header()->mutable_range_epoch()->set_version(1);
+        req.mutable_req()->set_key(str_key);
+
+        kvrpcpb::DsKvRawGetResponse resp;
+        auto s = testRawGet(req, resp);
+
+        ASSERT_TRUE(s.ok()) << s.ToString(); 
+        ASSERT_EQ(resp.mutable_resp()->code(), Status::kIOError) << "resp.code() error";
+        ASSERT_EQ(std::string(resp.mutable_resp()->value()), "") << "resp vlaue error";
+    } 
+
+    context_->persist_server->Stop();
+    context_->range_server->Stop();
 }
-*/
+
 

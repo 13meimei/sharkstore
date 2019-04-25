@@ -6,6 +6,10 @@ namespace mock {
 
 Status RaftLogReaderMock::GetData( const uint64_t idx, std::shared_ptr<raft_cmdpb::Command> &cmd)
 {
+    
+    
+    
+
     return Status::OK();
 }
 

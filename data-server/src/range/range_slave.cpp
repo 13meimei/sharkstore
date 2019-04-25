@@ -1,9 +1,11 @@
 #include "range_slave.h"
 
+// #include <thread>
 #include <cinttypes>
 #include "range_logger.h"
 #include "server/persist_server.h"
 #include "storage/meta_store.h"
+
 
 namespace sharkstore {
 namespace dataserver {
@@ -104,6 +106,7 @@ Status RangeSlave::dealTask() {
             break;
         }
         persist_index_ = idx;
+//        std::this_thread::yield(); 
 
     } while (true);
 
