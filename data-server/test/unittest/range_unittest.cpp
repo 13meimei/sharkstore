@@ -280,7 +280,7 @@ protected:
 protected:
     server::ContextServer *context_;
     server::RangeServer *range_server_;
-    const int test_request_num  = 1;
+    const int test_request_num  = 2;
 };
 
 metapb::Range *genRange1() {

@@ -40,7 +40,7 @@ protected:
         InitLog();
 
         //strcpy(ds_config.engine_config.name, "rocksdb");
-        strcpy(ds_config.engine_config.name, "memory");
+        strcpy(ds_config.engine_config.name, "mass-tree");
         strcpy(ds_config.rocksdb_config.path, "/tmp/sharkstore_ds_store_test_");
         strcat(ds_config.rocksdb_config.path, std::to_string(NowMilliSeconds()).c_str());
         ds_config.range_config.recover_concurrency = 1;
@@ -914,8 +914,11 @@ TEST_F(RawTest, TestRangeSlave) {
                 FLOG_INFO("Submit...%d, size: %d", b,
                         std::static_pointer_cast<RangeSlave>(rng1->slave_range_)->trd_->size());
             }
-        } while(true);
-
+        } while(true); 
+    
+        while( std::static_pointer_cast<RangeSlave>(rng1->slave_range_)->trd_->size() ) {
+            sleep(1);
+        }
 
         // end test raw_put
     }
