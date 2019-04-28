@@ -731,8 +731,15 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
         s = storage_reader_->GetData(tmp_idx, cmd);
         if (!s.ok()) break;
 
-        ASSERT_TRUE(s.ok()) << s.ToString();
-        ASSERT_EQ(cmd->cmd_type(), raft_cmdpb::RawPut);
+        if (tmp_idx < 100) {
+            // max id is 100, the index 100 entry is null
+
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            ASSERT_EQ(cmd->cmd_type(), raft_cmdpb::RawPut);
+        } else {
+            ASSERT_TRUE(s.ok()) << s.ToString();
+            ASSERT_EQ(cmd->cmd_type(), 0); 
+        }
 
         tmp_idx++;
     } while(true);
