@@ -31,6 +31,10 @@ MassTreeDB::MassTreeDB() : tree_(new TreeType) {
 }
 
 Status MassTreeDB::Put(const std::string& key, const std::string& value) {
+    if (key.size() > MASSTREE_MAXKEYLEN) {
+        return Status(Status::kInvalidArgument, "key size too large", std::to_string(key.size()));
+    }
+
     Masstree::Str tree_key(key);
     thread_info_->rcu_start();
     TreeType::cursor_type lp(*tree_, tree_key);

@@ -5,7 +5,7 @@ if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/config.h")
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
     execute_process(
-            COMMAND env CXXFLAGS=-std=c++11 ./configure --disable-superpage
+            COMMAND env CXXFLAGS=-std=c++11 ./configure --disable-superpage --enable-max-key-len=4096
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 endif()
