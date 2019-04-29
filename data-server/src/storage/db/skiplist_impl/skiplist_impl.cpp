@@ -96,7 +96,7 @@ Status SkipListDBImpl::SetDBOptions(const std::unordered_map<std::string, std::s
     return Status(Status::kOk);
 }
 
-std::string SkipListDBImpl::GetMetrics() { return ""; }
+std::string SkipListDBImpl::GetMetrics(bool) { return ""; }
 
 }
 }

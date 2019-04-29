@@ -201,8 +201,8 @@ class CWhereExpr {
                 case ::kvrpcpb::E_LogicOr:
                     if (e.child_size() < 2) {
                         FLOG_WARN("check() expr_type: %d child_size: %d",
-                                  e.expr_type(), e.child_size());
-                        return false;
+                                e.expr_type(), e.child_size());
+                            return false;
                     }
                     return true;
                 case ::kvrpcpb::E_Equal:

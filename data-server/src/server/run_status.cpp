@@ -118,9 +118,9 @@ void RunStatus::printStatistics() {
 
 void RunStatus::printDBMetric() {
     if (1 == seq_) {
-        FLOG_INFO("DB Metric: %s", context_->pdb->GetMetrics().c_str());
+        FLOG_INFO("DB Metric: %s", context_->pdb->GetMetrics(false).c_str());
     } else {
-        FLOG_INFO("DB Metric: %s", context_->db->GetMetrics().c_str());
+        FLOG_INFO("DB Metric: %s", context_->db->GetMetrics(false).c_str());
     }
 }
 
