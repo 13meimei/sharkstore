@@ -361,7 +361,7 @@ Status RocksDBImpl::Flush(const rocksdb::FlushOptions& ops) {
     }
 }
 
-std::string RocksDBImpl::GetMetrics() {
+std::string RocksDBImpl::GetMetrics(bool) {
     std::ostringstream ss;
 
     std::string tr_mem_usage;

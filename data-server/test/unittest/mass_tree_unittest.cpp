@@ -114,14 +114,23 @@ TEST(MvccMassTree, DISABLED_GC) {
         keys.insert(key);
     }
     std::cout << "Put over. " << std::endl;
-    std::cout << tree.GetMetrics() << std::endl;
+    std::cout << "======================================================= " << std::endl;
+    std::cout << tree.GetMetrics(true) << std::endl;
+    std::cout << "======================================================= " << std::endl;
+
+    for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
+        std::string value;
+        auto s = tree.Get(*it, &value);
+        ASSERT_TRUE(s.ok()) << s.ToString();
+        ASSERT_TRUE(value.empty());
+    }
 
     for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
         auto s = tree.Delete(*it);
         ASSERT_TRUE(s.ok()) << s.ToString();
     }
     std::cout << "Delete over. " << std::endl;
-    std::cout << tree.GetMetrics() << std::endl;
+    std::cout << tree.GetMetrics(true) << std::endl;
 
     for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
         std::string value;
@@ -129,11 +138,11 @@ TEST(MvccMassTree, DISABLED_GC) {
         ASSERT_EQ(s.code(), Status::kNotFound);
     }
     std::cout << "Get over. " << std::endl;
-    std::cout << tree.GetMetrics() << std::endl;
+    std::cout << tree.GetMetrics(true) << std::endl;
 
     for (int i = 0; i < 100; ++i) {
         sleep(10);
-        std::cout << tree.GetMetrics() << std::endl;
+        std::cout << tree.GetMetrics(true) << std::endl;
     }
 }
 

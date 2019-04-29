@@ -220,7 +220,7 @@ void MvccMassTree::scrub(MvccTree *family) {
     }
 }
 
-std::string MvccMassTree::GetMetrics() {
+std::string MvccMassTree::GetMetrics(bool verbose) {
     std::ostringstream ss;
     ss << "MassTree counters: alloc=" << MassTreeDB::GetCounter(tc_alloc);
     ss << ", alloc_other=" << MassTreeDB::GetCounter(tc_alloc_other);
@@ -228,8 +228,10 @@ std::string MvccMassTree::GetMetrics() {
     ss << ", leaf_split=" << MassTreeDB::GetCounter(tc_stable_leaf_split);
     ss << std::endl;
 
-    ss << "MassTree default tree stat: " << default_tree_.tree.Stat() << std::endl;
-    ss << "MassTree txn tree stat: " << txn_tree_.tree.Stat() << std::endl;
+    if (verbose) {
+        ss << "MassTree default tree stat: " << default_tree_.tree.Stat() << std::endl;
+        ss << "MassTree txn tree stat: " << txn_tree_.tree.Stat() << std::endl;
+    }
 
     return ss.str();
 }

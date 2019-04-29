@@ -58,7 +58,7 @@ public:
 
     Status SetDBOptions(const std::unordered_map<std::string, std::string> &new_options) override;
 
-    std::string GetMetrics();
+    std::string GetMetrics(bool verbose);
 
 private:
     Status get(MvccTree *family, const std::string &key, std::string *value);

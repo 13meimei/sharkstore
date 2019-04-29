@@ -44,7 +44,7 @@ public:
 
     Status SetOptions(void* column_family, const std::unordered_map<std::string, std::string>& new_options) override;
     Status SetDBOptions(const std::unordered_map<std::string, std::string>& new_options) override;
-    std::string GetMetrics() override;
+    std::string GetMetrics(bool) override;
 
 private:
     memstore::Store<std::string> db_;

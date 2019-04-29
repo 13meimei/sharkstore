@@ -116,7 +116,7 @@ Status BwTreeDBImpl::SetDBOptions(const std::unordered_map<std::string, std::str
     return Status::OK();
 }
 
-std::string BwTreeDBImpl::GetMetrics() {}
+std::string BwTreeDBImpl::GetMetrics(bool) {}
 
 
 } /* namespace storage */
