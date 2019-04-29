@@ -30,8 +30,8 @@ TEST(MassTree, MVCCKey) {
 
 TEST(MassTree, PutGet) {
     MassTreeDB db;
-    for (int i = 0; i < 100; ++i) {
-        std::string key = sharkstore::randomString(32);
+    for (int i = 0; i < 1000; ++i) {
+        std::string key = sharkstore::randomString(32, 1024);
         std::string value = sharkstore::randomString(64);
         db.Put(key, value);
 
@@ -55,7 +55,7 @@ TEST(MassTree, Iter) {
     std::set<KeyValue> key_values;
     MassTreeDB tree;
     for (int i = 0; i < 500; ++i) {
-        std::string key = sharkstore::randomString(32);
+        std::string key = sharkstore::randomString(32, 1024);
         std::string value = sharkstore::randomString(64);
         tree.Put(key, value);
         key_values.insert(KeyValue{key, value});
@@ -108,7 +108,7 @@ TEST(MvccMassTree, DISABLED_GC) {
     tree.Open();
     std::set<std::string> keys;
     for (int i = 0; i < 100000; ++i) {
-        auto key = randomString(10, 230);
+        auto key = randomString(10, 1024);
         auto s = tree.Put(key, "");
         ASSERT_TRUE(s.ok()) << s.ToString();
         keys.insert(key);
