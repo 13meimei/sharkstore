@@ -54,7 +54,7 @@ void Range::deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool red
                     break;
                 } else {
                     // 重定向, 只重定向一次
-                    std::static_pointer_cast<Range>(rng)->deleteRow(std::move(rpc), req, false);
+                    rng->deleteRow(std::move(rpc), req, false);
                     return;
                 }
             }

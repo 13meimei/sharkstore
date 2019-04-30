@@ -10,6 +10,19 @@ namespace dataserver {
 namespace range {
 namespace lock {
 
+static const int DEFAULT_LOCK_DELETE_TIME_MILLSEC = 3000;
+enum {
+    LOCK_OK = 0,
+    LOCK_NOT_EXIST = Status::kNotFound,
+    LOCK_EXISTED,
+    LOCK_ID_MISMATCHED,
+    LOCK_IS_FORCE_UNLOCKED,
+    LOCK_STORE_FAILED,
+    LOCK_EPOCH_ERROR,
+    LOCK_TIME_OUT = Status::kTimedOut,  //value 7 same with defined in status.h
+    LOCK_PARAMETER_ERROR
+};
+
 void EncodeKey(std::string* buf, uint64_t tableId, const std::string& key) {
     assert(buf != nullptr && buf->length() == 0);
 

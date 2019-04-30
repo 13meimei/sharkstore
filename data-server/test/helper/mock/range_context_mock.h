@@ -50,7 +50,7 @@ public:
 
     Status CreateRange(const metapb::Range& meta, uint64_t leader = 0,
             uint64_t index = 0, std::shared_ptr<Range> *result = nullptr);
-    std::shared_ptr<RangeBase> FindRange(uint64_t range_id) override;
+    std::shared_ptr<Range> FindRange(uint64_t range_id) override;
     Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req, uint64_t raft_index) override;
 
 private:

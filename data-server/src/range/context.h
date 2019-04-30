@@ -23,8 +23,7 @@ namespace server { class PersistServer; }
 
 namespace range {
 
-class RangeBase;
-//class Range;
+class Range;
 
 class RangeContext {
 public:
@@ -51,7 +50,7 @@ public:
     virtual void ScheduleCheckSize(uint64_t range_id) = 0;
 
     // range manage
-    virtual std::shared_ptr<RangeBase> FindRange(uint64_t range_id) = 0;
+    virtual std::shared_ptr<Range> FindRange(uint64_t range_id) = 0;
 
     // split
     virtual Status SplitRange(uint64_t range_id,

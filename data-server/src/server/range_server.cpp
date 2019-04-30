@@ -326,32 +326,6 @@ void RangeServer::DealTask(RPCRequestPtr rpc) {
             ForwardToRange<kvrpcpb::DsLockGetRequest, kvrpcpb::DsLockGetResponse>(rpc, &Range::LockGet);
             break;
 
-        // redis method
-        case funcpb::kFuncKvSet:
-            ForwardToRange<kvrpcpb::DsKvSetRequest, kvrpcpb::DsKvSetResponse>(rpc, &Range::KVSet);
-            break;
-        case funcpb::kFuncKvGet:
-            ForwardToRange<kvrpcpb::DsKvGetRequest, kvrpcpb::DsKvGetResponse>(rpc, &Range::KVGet);
-            break;
-        case funcpb::kFuncKvBatchSet:
-            ForwardToRange<kvrpcpb::DsKvBatchSetRequest, kvrpcpb::DsKvBatchSetResponse>(rpc, &Range::KVBatchSet);
-            break;
-        case funcpb::kFuncKvBatchGet:
-            ForwardToRange<kvrpcpb::DsKvBatchGetRequest, kvrpcpb::DsKvBatchGetResponse>(rpc, &Range::KVBatchGet);
-            break;
-        case funcpb::kFuncKvDel:
-            ForwardToRange<kvrpcpb::DsKvDeleteRequest, kvrpcpb::DsKvDeleteResponse>(rpc, &Range::KVDelete);
-            break;
-        case funcpb::kFuncKvBatchDel:
-            ForwardToRange<kvrpcpb::DsKvBatchDeleteRequest, kvrpcpb::DsKvBatchDeleteResponse>(rpc, &Range::KVBatchDelete);
-            break;
-        case funcpb::kFuncKvRangeDel:
-            ForwardToRange<kvrpcpb::DsKvRangeDeleteRequest, kvrpcpb::DsKvRangeDeleteResponse>(rpc, &Range::KVRangeDelete);
-            break;
-        case funcpb::kFuncKvScan:
-            ForwardToRange<kvrpcpb::DsKvScanRequest, kvrpcpb::DsKvScanResponse>(rpc, &Range::KVScan);
-            break;
-
         // TXN methods
         case funcpb::kFuncTxnPrepare:
             ForwardToRange<txnpb::DsPrepareRequest, txnpb::DsPrepareResponse>(rpc, &Range::TxnPrepare);

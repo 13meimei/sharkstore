@@ -35,7 +35,7 @@ public:
     void ScheduleCheckSize(uint64_t range_id) override;
 
     // range manage
-    std::shared_ptr<range::RangeBase> FindRange(uint64_t range_id) override;
+    std::shared_ptr<range::Range> FindRange(uint64_t range_id) override;
 
     // split
     Status SplitRange(uint64_t range_id, const raft_cmdpb::SplitRequest &req,
