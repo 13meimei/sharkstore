@@ -2,7 +2,7 @@
 #include "persist_server_impl.h"
 
 #include "frame/sf_logger.h"
-#include "common/ds_config.h" 
+#include "common/ds_config.h"
 #include "storage/db/rocksdb_impl/rocksdb_impl.h"
 
 namespace sharkstore {
@@ -11,21 +11,21 @@ namespace server {
 
 
 PersistServerImpl::PersistServerImpl(const PersistOptions& ops) :
-    ops_(ops) 
+    ops_(ops)
 {
 }
 
-PersistServerImpl::~PersistServerImpl() 
+PersistServerImpl::~PersistServerImpl()
 {
     Stop();
 }
 
-int PersistServerImpl::Init(ContextServer *context) 
+int PersistServerImpl::Init(ContextServer *context)
 {
     FLOG_INFO("PersistServerImpl Init begin ...");
 
     context_ = context;
-    if (!context_) { 
+    if (!context_) {
         FLOG_ERROR("PersistServerImpl Init context is null.");
         return -1;
     }
@@ -35,14 +35,9 @@ int PersistServerImpl::Init(ContextServer *context)
         FLOG_ERROR("PersistServerImpl Init OpenDB error ...");
         return -1;
     }
-    
+
     context_->pdb = pdb_;
 
-    return 0;
-}
-
-Status PersistServerImpl::Start() 
-{
     for (uint64_t i = 0; i < ops_.thread_num; ++i) {
         FLOG_DEBUG("Create WorkThread %" PRIu64 "...", i);
         threads_.emplace_back(new WorkThread( ops_.queue_capacity,
@@ -52,10 +47,16 @@ Status PersistServerImpl::Start()
                   ops_.thread_num, ops_.queue_capacity);
 
     running_ = true;
+
+    return 0;
+}
+
+Status PersistServerImpl::Start()
+{
     return Status::OK();
 }
 
-Status PersistServerImpl::Stop() 
+Status PersistServerImpl::Stop()
 {
     if (!running_) return Status::OK();
 
@@ -85,7 +86,7 @@ bool PersistServerImpl::IndexInDistance(const uint64_t range_id, const uint64_t 
     return false;
 }
 
-int PersistServerImpl::OpenDB() 
+int PersistServerImpl::OpenDB()
 {
     print_async_rocksdb_config();
     pdb_ = new storage::RocksDBImpl(ds_config.async_rocksdb_config);
@@ -100,7 +101,7 @@ int PersistServerImpl::OpenDB()
     return 0;
 }
 
-void PersistServerImpl::CloseDB() 
+void PersistServerImpl::CloseDB()
 {
     if (pdb_ != nullptr) {
         delete pdb_;
@@ -108,7 +109,7 @@ void PersistServerImpl::CloseDB()
     }
 }
 
-storage::IteratorInterface* PersistServerImpl::GetIterator(const std::string& start, const std::string& limit) 
+storage::IteratorInterface* PersistServerImpl::GetIterator(const std::string& start, const std::string& limit)
 {
     if (!pdb_) {
         return nullptr;
@@ -117,7 +118,7 @@ storage::IteratorInterface* PersistServerImpl::GetIterator(const std::string& st
     return pdb_->NewIterator(start, limit);
 }
 
-Status PersistServerImpl::GetWorkThread(const uint64_t range_id, WorkThread*& trd) 
+Status PersistServerImpl::GetWorkThread(const uint64_t range_id, WorkThread*& trd)
 {
     auto idx = (range_id % threads_.size());
     trd = threads_[idx];

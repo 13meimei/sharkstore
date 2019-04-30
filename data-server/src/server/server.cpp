@@ -34,12 +34,6 @@ DataServer::DataServer() {
     context_->run_status = new RunStatus;
     context_->persist_run_status = new RunStatus;
 
-    context_->range_server = new RangeServer;
-
-    net::ServerOptions sopt;
-    buildRPCOptions(sopt);
-    context_->rpc_server = new RPCServer(sopt);
-
     PersistOptions pops;
     pops.thread_num = ds_config.persist_config.persist_threads;
     pops.delay_count = ds_config.persist_config.persist_delay_size;
@@ -47,6 +41,12 @@ DataServer::DataServer() {
 
     auto ps = CreatePersistServer(pops);
     context_->persist_server = ps.release();
+
+    context_->range_server = new RangeServer;
+
+    net::ServerOptions sopt;
+    buildRPCOptions(sopt);
+    context_->rpc_server = new RPCServer(sopt);
 
     // create master worker
     std::vector<std::string> ms_addrs;
@@ -136,6 +136,10 @@ int DataServer::Init() {
         return -1;
     }
 
+    if (context_->persist_server->Init(context_) != 0) {
+        return -1;
+    }
+
     if (context_->range_server->Init(context_) != 0) {
         return -1;
     }
@@ -146,10 +150,6 @@ int DataServer::Init() {
 
     const uint64_t slave_range_flag = 1;
     if (context_->persist_run_status->Init(context_, slave_range_flag) != 0) {
-        return -1;
-    }
-
-    if (context_->persist_server->Init(context_) != 0) {
         return -1;
     }
 
@@ -183,6 +183,12 @@ int DataServer::Start() {
         return -1;
     }
 
+    ret = context_->persist_server->Start();
+    if (!ret.ok()) {
+        FLOG_ERROR("start persist server failed. %s", ret.ToString().c_str());
+        return -1;
+    }
+
     if (context_->range_server->Start() != 0) {
         return -1;
     }
@@ -190,12 +196,6 @@ int DataServer::Start() {
     auto s = context_->master_worker->Start(context_->range_server);
     if (!s.ok()) {
         FLOG_ERROR("start master worker failed. %s", s.ToString().c_str());
-        return -1;
-    }
-
-    ret = context_->persist_server->Start();
-    if (!ret.ok()) {
-        FLOG_ERROR("start persist server failed. %s", ret.ToString().c_str());
         return -1;
     }
 
