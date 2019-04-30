@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#define private public
+
 #include "base/util.h"
 #include "proto/gen/raft_cmdpb.pb.h"
 #include "proto/gen/kvrpcpb.pb.h"
@@ -91,7 +93,7 @@ protected:
     bool SwitchLogFile(const uint64_t idx) {
         auto between = [this](const uint64_t idx) {
             if (storage_reader_->curr_log_file_ != nullptr) {
-               return idx >= storage_reader_->curr_log_file_->Index() && 
+               return idx >= storage_reader_->curr_log_file_->Index() &&
                       idx <= storage_reader_->curr_log_file_->LastIndex();
             }
             return false;
@@ -706,10 +708,10 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
     //加载commit文件（确认文件commit)
     s = storage_->LoadCommitFiles(apply_index);
     ASSERT_TRUE(s.ok() && storage_->CommitFileCount() > 0);
-   
+
     s = GetIndexScope(start_index, last_index);
     std::cout << "start_index:" << start_index << "  last_index:" << last_index << std::endl;
-    
+
     //显示已经commit的完整文件（确保文件指针单独使用）
     std::cout << "------------commit files---------------------------\n";
     for (const auto& f : storage_->GetCommitFiles()) {
@@ -738,7 +740,7 @@ TEST_F(StorageTest, GetFromRaftLogFile) {
             ASSERT_EQ(cmd->cmd_type(), raft_cmdpb::RawPut);
         } else {
             ASSERT_TRUE(s.ok()) << s.ToString();
-            ASSERT_EQ(cmd->cmd_type(), 0); 
+            ASSERT_EQ(cmd->cmd_type(), 0);
         }
 
         tmp_idx++;
