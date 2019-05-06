@@ -13,7 +13,7 @@ void Range::Update(RPCRequestPtr rpc, kvrpcpb::DsUpdateRequest &req) {
 
     RANGE_LOG_DEBUG("Update begin");
 
-    if (!VerifyLeader(err) || !VerifyWriteable(&err)) {
+    if (!VerifyLeader(err) || !hasSpaceLeft(&err)) {
         RANGE_LOG_WARN("Update error: %s", err->message().c_str());
 
         kvrpcpb::DsUpdateResponse resp;

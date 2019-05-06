@@ -20,7 +20,7 @@ void Range::deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool red
     RANGE_LOG_DEBUG("Delete begin");
 
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
 

@@ -350,7 +350,7 @@ void Range::WatchPut(RPCRequestPtr rpc, watchpb::DsKvWatchPutRequest &req) {
     RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " from: %s", rpc->msg->head.msg_id, rpc->ctx.remote_addr.c_str());
 
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
         if (!VerifyLeader(err)) {
@@ -439,7 +439,7 @@ void Range::WatchDel(RPCRequestPtr rpc, watchpb::DsKvWatchDeleteRequest &req) {
     RANGE_LOG_DEBUG("WatchPut begin msgid: %" PRId64 " from: %s", rpc->msg->head.msg_id, rpc->ctx.remote_addr.c_str());
 
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
 

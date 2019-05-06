@@ -95,7 +95,7 @@ void Range::Lock(RPCRequestPtr rpc, kvrpcpb::DsLockRequest &req) {
     errorpb::Error *err = nullptr;
 
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
 
@@ -319,7 +319,7 @@ void Range::Unlock(RPCRequestPtr rpc, kvrpcpb::DsUnlockRequest &req) {
     lock::EncodeKey(&encode_key, meta_.GetTableID(), req.req().key());
     errorpb::Error *err = nullptr;
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
 

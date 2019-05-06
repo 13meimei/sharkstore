@@ -190,7 +190,7 @@ bool Range::PushHeartBeatMessage() {
 }
 
 Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
-    if (!VerifyWriteable()) {
+    if (!hasSpaceLeft()) {
         return Status(Status::kIOError, "no left space", "apply");
     }
 
@@ -374,6 +374,11 @@ Status Range::ApplySnapshotData(const std::vector<std::string> &datas) {
         return Status(Status::kInvalid, "range is invalid", "");
     }
 
+    if (!hasSpaceLeft()) {
+        RANGE_LOG_ERROR("apply snapshot failed: no left space");
+        return Status(Status::kNoLeftSpace);
+    }
+
     return store_->ApplySnapshot(datas);
 }
 
@@ -491,7 +496,7 @@ bool Range::VerifyReadable(uint64_t read_index, errorpb::Error *&err) {
     }
 }
 
-bool Range::VerifyWriteable(errorpb::Error **err) {
+bool Range::hasSpaceLeft(errorpb::Error **err) {
     auto percent = context_->GetDBUsagePercent();
     if (percent < kStopWriteDBUsagePercent) {
         return true;

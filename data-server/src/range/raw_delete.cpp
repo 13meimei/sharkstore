@@ -19,7 +19,7 @@ void Range::rawDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRawDeleteRequest &req, boo
 
     errorpb::Error *err = nullptr;
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
 

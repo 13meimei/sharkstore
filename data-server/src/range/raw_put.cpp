@@ -18,7 +18,7 @@ void Range::rawPut(RPCRequestPtr rpc, kvrpcpb::DsKvRawPutRequest &req, bool redi
 
     errorpb::Error *err = nullptr;
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
 

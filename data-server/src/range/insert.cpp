@@ -13,7 +13,7 @@ void Range::Insert(RPCRequestPtr rpc, kvrpcpb::DsInsertRequest &req) {
 
     RANGE_LOG_DEBUG("Insert begin");
 
-    if (!VerifyLeader(err) || !VerifyWriteable(&err)) {
+    if (!VerifyLeader(err) || !hasSpaceLeft(&err)) {
         RANGE_LOG_WARN("Insert error: %s", err->message().c_str());
         kvrpcpb::DsInsertResponse resp;
         return SendResponse(rpc, resp, req.header(), err);

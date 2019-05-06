@@ -55,7 +55,7 @@ void Range::TxnPrepare(RPCRequestPtr rpc, DsPrepareRequest& req) {
 
     errorpb::Error *err = nullptr;
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
         if (!VerifyLeader(err)) {
@@ -116,7 +116,7 @@ void Range::TxnDecide(RPCRequestPtr rpc, DsDecideRequest& req) {
 
     errorpb::Error *err = nullptr;
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
         if (!VerifyLeader(err)) {
@@ -177,7 +177,7 @@ void Range::TxnClearup(RPCRequestPtr rpc, txnpb::DsClearupRequest& req) {
 
     errorpb::Error *err = nullptr;
     do {
-        if (!VerifyWriteable(&err)) {
+        if (!hasSpaceLeft(&err)) {
             break;
         }
         if (!VerifyLeader(err)) {
