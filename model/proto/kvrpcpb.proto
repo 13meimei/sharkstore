@@ -194,11 +194,16 @@ message MatchExt {
     Expr expr      = 1;
 }
 
+message ConstValue {
+    bytes    value        = 1;
+    DataType data_type    = 2;
+}
+
 message Expr {
     ExprType expr_type      = 1;    // uint32
     uint32 expr_func        = 2;    // reserve
     metapb.Column column    = 3;    // left in optimization
-    bytes value             = 4;    // maybe left or right, but right in optimization
+    ConstValue    value     = 4;    // maybe left or right, but right in optimization
     repeated Expr  child    = 5;    // alwayse 2 expr left and right, but LogicNot
 }
 
