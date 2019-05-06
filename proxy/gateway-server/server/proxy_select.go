@@ -1,16 +1,16 @@
 package server
 
 import (
-	"fmt"
 	"bytes"
 	"errors"
-	"util/log"
+	"fmt"
 	"model/pkg/kvrpcpb"
 	"model/pkg/txn"
 	"pkg-go/ds_client"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
 	"proxy/store/dskv"
+	"util/log"
 )
 
 func (p *Proxy) HandleSelect(db string, stmt *sqlparser.Select, args []interface{}) (*mysql.Result, error) {
@@ -206,7 +206,7 @@ func (p *Proxy) selectSingleKey(ctx *dskv.ReqContext, t *Table, req *txnpb.Selec
 	)
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	resp, _, err = proxy.SqlQuery(ctx, req, key)
 	if err != nil {
 		return nil, err
@@ -310,7 +310,7 @@ func (p *Proxy) rangeSelectRemote(context *dskv.ReqContext, t *Table, sreq *txnp
 	)
 	kvProxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(kvProxy)
-	kvProxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	kvProxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	for {
 		if key == nil {
 			key = start

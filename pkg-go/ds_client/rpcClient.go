@@ -14,8 +14,8 @@ import (
 	"model/pkg/funcpb"
 	"model/pkg/kvrpcpb"
 	"model/pkg/schpb"
-	"model/pkg/watchpb"
 	"model/pkg/txn"
+	"model/pkg/watchpb"
 	"pkg-go/util"
 	"util/log"
 
@@ -116,7 +116,7 @@ func getMsgType(funcId uint16) *MsgTypeGroup {
 
 // 链路状态
 const (
-	LINK_INIT     = iota
+	LINK_INIT = iota
 	LINK_CONN
 	LINK_CLOSED
 	LINK_BAN_CONN
@@ -151,16 +151,6 @@ type RpcClient interface {
 	LockUpdate(ctx context.Context, in *kvrpcpb.DsLockUpdateRequest) (*kvrpcpb.DsLockUpdateResponse, error)
 	Unlock(ctx context.Context, in *kvrpcpb.DsUnlockRequest) (*kvrpcpb.DsUnlockResponse, error)
 	UnlockForce(ctx context.Context, in *kvrpcpb.DsUnlockForceRequest) (*kvrpcpb.DsUnlockForceResponse, error)
-
-	// kv
-	KvSet(ctx context.Context, in *kvrpcpb.DsKvSetRequest) (*kvrpcpb.DsKvSetResponse, error)
-	KvGet(ctx context.Context, in *kvrpcpb.DsKvGetRequest) (*kvrpcpb.DsKvGetResponse, error)
-	KvBatchSet(ctx context.Context, in *kvrpcpb.DsKvBatchSetRequest) (*kvrpcpb.DsKvBatchSetResponse, error)
-	KvBatchGet(ctx context.Context, in *kvrpcpb.DsKvBatchGetRequest) (*kvrpcpb.DsKvBatchGetResponse, error)
-	KvScan(ctx context.Context, in *kvrpcpb.DsKvScanRequest) (*kvrpcpb.DsKvScanResponse, error)
-	KvDel(ctx context.Context, in *kvrpcpb.DsKvDeleteRequest) (*kvrpcpb.DsKvDeleteResponse, error)
-	KvBatchDel(ctx context.Context, in *kvrpcpb.DsKvBatchDeleteRequest) (*kvrpcpb.DsKvBatchDeleteResponse, error)
-	KvRangeDel(ctx context.Context, in *kvrpcpb.DsKvRangeDeleteRequest) (*kvrpcpb.DsKvRangeDeleteResponse, error)
 
 	// watch
 	Watch(ctx context.Context, in *watchpb.DsWatchRequest) (*watchpb.DsWatchResponse, error)
@@ -594,87 +584,6 @@ func (c *DSRpcClient) Unlock(ctx context.Context, in *kvrpcpb.DsUnlockRequest) (
 func (c *DSRpcClient) UnlockForce(ctx context.Context, in *kvrpcpb.DsUnlockForceRequest) (*kvrpcpb.DsUnlockForceResponse, error) {
 	out := new(kvrpcpb.DsUnlockForceResponse)
 	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncUnlockForce), ctx, in, out)
-	in.GetHeader().TraceId = msgId
-	if err != nil {
-		return nil, err
-	} else {
-		return out, nil
-	}
-}
-
-func (c *DSRpcClient) KvSet(ctx context.Context, in *kvrpcpb.DsKvSetRequest) (*kvrpcpb.DsKvSetResponse, error) {
-	out := new(kvrpcpb.DsKvSetResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncKvSet), ctx, in, out)
-	in.GetHeader().TraceId = msgId
-	if err != nil {
-		return nil, err
-	} else {
-		return out, nil
-	}
-}
-func (c *DSRpcClient) KvGet(ctx context.Context, in *kvrpcpb.DsKvGetRequest) (*kvrpcpb.DsKvGetResponse, error) {
-	out := new(kvrpcpb.DsKvGetResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncKvGet), ctx, in, out)
-	in.GetHeader().TraceId = msgId
-	if err != nil {
-		return nil, err
-	} else {
-		return out, nil
-	}
-}
-func (c *DSRpcClient) KvBatchSet(ctx context.Context, in *kvrpcpb.DsKvBatchSetRequest) (*kvrpcpb.DsKvBatchSetResponse, error) {
-	out := new(kvrpcpb.DsKvBatchSetResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncKvBatchSet), ctx, in, out)
-	in.GetHeader().TraceId = msgId
-	if err != nil {
-		return nil, err
-	} else {
-		return out, nil
-	}
-}
-func (c *DSRpcClient) KvBatchGet(ctx context.Context, in *kvrpcpb.DsKvBatchGetRequest) (*kvrpcpb.DsKvBatchGetResponse, error) {
-	out := new(kvrpcpb.DsKvBatchGetResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncKvBatchGet), ctx, in, out)
-	in.GetHeader().TraceId = msgId
-	if err != nil {
-		return nil, err
-	} else {
-		return out, nil
-	}
-}
-func (c *DSRpcClient) KvScan(ctx context.Context, in *kvrpcpb.DsKvScanRequest) (*kvrpcpb.DsKvScanResponse, error) {
-	out := new(kvrpcpb.DsKvScanResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncKvScan), ctx, in, out)
-	in.GetHeader().TraceId = msgId
-	if err != nil {
-		return nil, err
-	} else {
-		return out, nil
-	}
-}
-func (c *DSRpcClient) KvDel(ctx context.Context, in *kvrpcpb.DsKvDeleteRequest) (*kvrpcpb.DsKvDeleteResponse, error) {
-	out := new(kvrpcpb.DsKvDeleteResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncKvDel), ctx, in, out)
-	in.GetHeader().TraceId = msgId
-	if err != nil {
-		return nil, err
-	} else {
-		return out, nil
-	}
-}
-func (c *DSRpcClient) KvBatchDel(ctx context.Context, in *kvrpcpb.DsKvBatchDeleteRequest) (*kvrpcpb.DsKvBatchDeleteResponse, error) {
-	out := new(kvrpcpb.DsKvBatchDeleteResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncKvBatchDel), ctx, in, out)
-	in.GetHeader().TraceId = msgId
-	if err != nil {
-		return nil, err
-	} else {
-		return out, nil
-	}
-}
-func (c *DSRpcClient) KvRangeDel(ctx context.Context, in *kvrpcpb.DsKvRangeDeleteRequest) (*kvrpcpb.DsKvRangeDeleteResponse, error) {
-	out := new(kvrpcpb.DsKvRangeDeleteResponse)
-	msgId, err := c.execute(uint16(funcpb.FunctionID_kFuncKvRangeDel), ctx, in, out)
 	in.GetHeader().TraceId = msgId
 	if err != nil {
 		return nil, err

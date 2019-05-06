@@ -43,7 +43,7 @@ func (p *Proxy) Lock(dbName, tableName string, lockName string, userCondition []
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	resp, err := proxy.Lock(req)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (p *Proxy) LockUpdate(dbName, tableName string, lockName string, uuid strin
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	resp, err := proxy.LockUpdate(req)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (p *Proxy) Unlock(dbName, tableName string, lockName, uuid, userName string
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	resp, err := proxy.Unlock(req)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (p *Proxy) UnlockForce(dbName, tableName string, lockName, userName string)
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	resp, err := proxy.UnlockForce(req)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (p *Proxy) LockScan(dbName, tableName string, startKey, endKey string, numb
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutLong)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutLong)
 	resp, err := proxy.LockScan(req)
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func (p *Proxy) UpdateCondition(dbName, tableName string, lockName string, userC
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	resp, err := proxy.ConditionUpdate(req)
 	if err != nil {
 		return nil, err

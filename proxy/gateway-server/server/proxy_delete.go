@@ -2,15 +2,15 @@ package server
 
 import (
 	"fmt"
-	"util"
-	"util/log"
-	"pkg-go/ds_client"
-	"proxy/store/dskv"
-	"proxy/gateway-server/mysql"
-	"proxy/gateway-server/sqlparser"
 	"model/pkg/kvrpcpb"
 	"model/pkg/metapb"
 	"model/pkg/txn"
+	"pkg-go/ds_client"
+	"proxy/gateway-server/mysql"
+	"proxy/gateway-server/sqlparser"
+	"proxy/store/dskv"
+	"util"
+	"util/log"
 )
 
 // HandleDelete handle delete
@@ -204,7 +204,7 @@ func (p *Proxy) deleteRemote(db, table string, req *kvrpcpb.DeleteRequest) (uint
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 
 	// single delete
 	if len(req.Key) > 0 {

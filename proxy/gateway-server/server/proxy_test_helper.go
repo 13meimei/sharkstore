@@ -16,7 +16,6 @@ import (
 	"proxy/store/dskv/mock_ds"
 	"proxy/store/dskv/mock_ms"
 	"util/assert"
-	"util/hlc"
 
 	"model/pkg/txn"
 	"os"
@@ -54,12 +53,12 @@ func bytesPrefix(prefix []byte) ([]byte, []byte) {
 }
 
 var (
-	once = &sync.Once{}
+	once  = &sync.Once{}
 	node0 *metapb.Node
 	node1 *metapb.Node
-	ms *mock_ms.Cluster
-	ds0 *mock_ds.DsRpcServer
-	ds1 *mock_ds.DsRpcServer
+	ms    *mock_ms.Cluster
+	ds0   *mock_ds.DsRpcServer
+	ds1   *mock_ds.DsRpcServer
 )
 
 func doMockInit(once *sync.Once) {
@@ -113,7 +112,6 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 				GrpcPoolSize:    1,
 			},
 		},
-		clock:  hlc.NewClock(hlc.UnixNano, 0),
 		ctx:    ctx,
 		cancel: cancel,
 
@@ -132,7 +130,7 @@ func newTestProxy(db *metapb.DataBase, table *metapb.Table, rng_ *metapb.Range) 
 	return p
 }
 
-func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ... *metapb.Range) *Proxy {
+func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ...*metapb.Range) *Proxy {
 	doMockInit(once)
 	ms.SetDb(db)
 	ms.SetTable(table)
@@ -169,7 +167,6 @@ func newTestProxy2(db *metapb.DataBase, table *metapb.Table, rngs ... *metapb.Ra
 				GrpcPoolSize:    1,
 			},
 		},
-		clock:  hlc.NewClock(hlc.UnixNano, 0),
 		ctx:    ctx,
 		cancel: cancel,
 

@@ -3,11 +3,11 @@ package client
 import (
 	"errors"
 
-	"util/log"
-	"model/pkg/kvrpcpb"
-	"model/pkg/watchpb"
-	"model/pkg/txn"
 	"golang.org/x/net/context"
+	"model/pkg/kvrpcpb"
+	"model/pkg/txn"
+	"model/pkg/watchpb"
+	"util/log"
 )
 
 // Client is a client that sends RPC.
@@ -28,15 +28,6 @@ type KvClient interface {
 	LockUpdate(ctx context.Context, addr string, req *kvrpcpb.DsLockUpdateRequest) (*kvrpcpb.DsLockUpdateResponse, error)
 	Unlock(ctx context.Context, addr string, req *kvrpcpb.DsUnlockRequest) (*kvrpcpb.DsUnlockResponse, error)
 	UnlockForce(ctx context.Context, addr string, req *kvrpcpb.DsUnlockForceRequest) (*kvrpcpb.DsUnlockForceResponse, error)
-
-	KvSet(ctx context.Context, addr string, req *kvrpcpb.DsKvSetRequest) (*kvrpcpb.DsKvSetResponse, error)
-	KvGet(ctx context.Context, addr string, req *kvrpcpb.DsKvGetRequest) (*kvrpcpb.DsKvGetResponse, error)
-	KvBatchSet(ctx context.Context, addr string, req *kvrpcpb.DsKvBatchSetRequest) (*kvrpcpb.DsKvBatchSetResponse, error)
-	KvBatchGet(ctx context.Context, addr string, req *kvrpcpb.DsKvBatchGetRequest) (*kvrpcpb.DsKvBatchGetResponse, error)
-	KvScan(ctx context.Context, addr string, req *kvrpcpb.DsKvScanRequest) (*kvrpcpb.DsKvScanResponse, error)
-	KvDelete(ctx context.Context, addr string, req *kvrpcpb.DsKvDeleteRequest) (*kvrpcpb.DsKvDeleteResponse, error)
-	KvBatchDelete(ctx context.Context, addr string, req *kvrpcpb.DsKvBatchDeleteRequest) (*kvrpcpb.DsKvBatchDeleteResponse, error)
-	KvRangeDelete(ctx context.Context, addr string, req *kvrpcpb.DsKvRangeDeleteRequest) (*kvrpcpb.DsKvRangeDeleteResponse, error)
 
 	Watch(ctx context.Context, addr string, req *watchpb.DsWatchRequest) (*watchpb.DsWatchResponse, error)
 	WatchPut(ctx context.Context, addr string, req *watchpb.DsKvWatchPutRequest) (*watchpb.DsKvWatchPutResponse, error)
@@ -170,72 +161,6 @@ func (c *KvRpcClient) UnlockForce(ctx context.Context, addr string, req *kvrpcpb
 		return nil, err
 	}
 	resp, err := conn.UnlockForce(ctx, req)
-	return resp, err
-}
-
-func (c *KvRpcClient) KvSet(ctx context.Context, addr string, req *kvrpcpb.DsKvSetRequest) (*kvrpcpb.DsKvSetResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := conn.KvSet(ctx, req)
-	return resp, err
-}
-func (c *KvRpcClient) KvGet(ctx context.Context, addr string, req *kvrpcpb.DsKvGetRequest) (*kvrpcpb.DsKvGetResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := conn.KvGet(ctx, req)
-	return resp, err
-}
-func (c *KvRpcClient) KvBatchSet(ctx context.Context, addr string, req *kvrpcpb.DsKvBatchSetRequest) (*kvrpcpb.DsKvBatchSetResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := conn.KvBatchSet(ctx, req)
-	return resp, err
-}
-func (c *KvRpcClient) KvBatchGet(ctx context.Context, addr string, req *kvrpcpb.DsKvBatchGetRequest) (*kvrpcpb.DsKvBatchGetResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := conn.KvBatchGet(ctx, req)
-	return resp, err
-}
-func (c *KvRpcClient) KvScan(ctx context.Context, addr string, req *kvrpcpb.DsKvScanRequest) (*kvrpcpb.DsKvScanResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := conn.KvScan(ctx, req)
-	return resp, err
-}
-func (c *KvRpcClient) KvDelete(ctx context.Context, addr string, req *kvrpcpb.DsKvDeleteRequest) (*kvrpcpb.DsKvDeleteResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := conn.KvDel(ctx, req)
-	return resp, err
-}
-func (c *KvRpcClient) KvBatchDelete(ctx context.Context, addr string, req *kvrpcpb.DsKvBatchDeleteRequest) (*kvrpcpb.DsKvBatchDeleteResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := conn.KvBatchDel(ctx, req)
-	return resp, err
-}
-func (c *KvRpcClient) KvRangeDelete(ctx context.Context, addr string, req *kvrpcpb.DsKvRangeDeleteRequest) (*kvrpcpb.DsKvRangeDeleteResponse, error) {
-	conn, err := c.getConn(addr)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := conn.KvRangeDel(ctx, req)
 	return resp, err
 }
 

@@ -1,26 +1,26 @@
 package mock_ds
 
 import (
+	"bufio"
 	"fmt"
 	"net"
-	"sync"
-	"bufio"
-	"time"
 	"os"
+	"sync"
+	"time"
 
-	commonUtil "util"
-	"util/log"
-	"util/encoding"
-	dsClient "pkg-go/ds_client"
-	"pkg-go/util"
+	"model/pkg/errorpb"
+	"model/pkg/funcpb"
 	"model/pkg/kvrpcpb"
 	"model/pkg/metapb"
 	"model/pkg/schpb"
-	"model/pkg/errorpb"
-	"model/pkg/funcpb"
 	"model/pkg/txn"
+	dsClient "pkg-go/ds_client"
+	"pkg-go/util"
 	"proxy/store/localstore/engine"
 	"proxy/store/localstore/goleveldb"
+	commonUtil "util"
+	"util/encoding"
+	"util/log"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -78,7 +78,7 @@ func NewDsRpcServer(addr string, path string) *DsRpcServer {
 
 	return &DsRpcServer{rpcAddr: addr, conns: make(map[uint64]net.Conn), rngs: make(map[uint64]*metapb.Range),
 		childRngs: make(map[uint64]*metapb.Range),
-		store: store}
+		store:     store}
 }
 
 func (svr *DsRpcServer) SetRange(r *metapb.Range) {
@@ -91,7 +91,7 @@ func (svr *DsRpcServer) SetRange(r *metapb.Range) {
 	}
 }
 
-func (svr *DsRpcServer) GetRange(id uint64) (*metapb.Range) {
+func (svr *DsRpcServer) GetRange(id uint64) *metapb.Range {
 	svr.rLock.Lock()
 	defer svr.rLock.Unlock()
 	if r, find := svr.rngs[id]; find {
@@ -291,7 +291,7 @@ func (svr *DsRpcServer) insert(msg *dsClient.Message) {
 
 /**
 select all
- */
+*/
 func (svr *DsRpcServer) query(msg *dsClient.Message) {
 	var resp *kvrpcpb.DsSelectResponse
 	req := new(kvrpcpb.DsSelectRequest)
@@ -362,7 +362,7 @@ func (svr *DsRpcServer) query(msg *dsClient.Message) {
 			resp.Resp.Rows = rows
 			resp.Resp.Offset = uint64(len(rows))
 		} else {
-			resp = &kvrpcpb.DsSelectResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.SelectResponse{Code: 1,}}
+			resp = &kvrpcpb.DsSelectResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.SelectResponse{Code: 1}}
 
 			staleErr := &errorpb.Error{
 				StaleEpoch: &errorpb.StaleEpoch{OldRange: rng, NewRange: svr.childRngs[rangeId]},
@@ -419,7 +419,7 @@ func (svr *DsRpcServer) update(msg *dsClient.Message) {
 
 /**
 delete one key or delete all
- */
+*/
 func (svr *DsRpcServer) delete(msg *dsClient.Message) {
 	var resp *kvrpcpb.DsDeleteResponse
 	req := new(kvrpcpb.DsDeleteRequest)
@@ -428,7 +428,7 @@ func (svr *DsRpcServer) delete(msg *dsClient.Message) {
 	if err != nil {
 		resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "decode delete failed"}}}
 	} else {
-		rngEpoch := req.Header.GetRangeEpoch();
+		rngEpoch := req.Header.GetRangeEpoch()
 		rangeId := req.Header.GetRangeId()
 		rng := svr.GetRange(rangeId)
 		if rng.RangeEpoch.Version == rngEpoch.Version && rng.RangeEpoch.ConfVer == rngEpoch.ConfVer {
@@ -460,7 +460,7 @@ func (svr *DsRpcServer) delete(msg *dsClient.Message) {
 			}
 
 		} else {
-			resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.DeleteResponse{Code: 1,}}
+			resp = &kvrpcpb.DsDeleteResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.DeleteResponse{Code: 1}}
 
 			staleErr := &errorpb.Error{
 				StaleEpoch: &errorpb.StaleEpoch{OldRange: rng, NewRange: svr.childRngs[rangeId]},
@@ -474,314 +474,6 @@ func (svr *DsRpcServer) delete(msg *dsClient.Message) {
 	msg.SetMsgType(0x12)
 	msg.SetData(data)
 
-}
-
-func (svr *DsRpcServer) kvSet(msg *dsClient.Message) {
-	var resp *kvrpcpb.DsKvSetResponse
-	req := new(kvrpcpb.DsKvSetRequest)
-	err := proto.Unmarshal(msg.GetData(), req)
-	if err != nil {
-		resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
-	} else {
-		// TODO set
-		switch req.GetReq().GetCase() {
-		case kvrpcpb.ExistCase_EC_NotExists:
-			kv := req.GetReq().GetKv()
-			value, err := svr.store.Get(kv.GetKey())
-			if err != nil || value == nil {
-				err = svr.store.Put(kv.GetKey(), kv.GetValue())
-				if err != nil {
-					resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-					goto end
-				}
-				resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvSetResponse{Code: 0, AffectedKeys: 0}}
-			} else {
-				// 已经存在
-				resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvSetResponse{Code: -1, AffectedKeys: 0}}
-			}
-		case kvrpcpb.ExistCase_EC_AnyCase:
-			var affectedKeys uint64
-			kv := req.GetReq().GetKv()
-			value, err := svr.store.Get(kv.GetKey())
-			if err != nil || value == nil {
-				affectedKeys = 0
-			} else {
-				// 已经存在
-				affectedKeys = 1
-			}
-			err = svr.store.Put(kv.GetKey(), kv.GetValue())
-			if err != nil {
-				resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-				goto end
-			}
-			resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvSetResponse{Code: 0, AffectedKeys: affectedKeys}}
-		case kvrpcpb.ExistCase_EC_Force:
-			kv := req.GetReq().GetKv()
-			err = svr.store.Put(kv.GetKey(), kv.GetValue())
-			if err != nil {
-				resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-				goto end
-			}
-			resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvSetResponse{Code: 0, AffectedKeys: 0}}
-		default:
-			resp = &kvrpcpb.DsKvSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert case"}}}
-		}
-	}
-
-end:
-	data, _ := proto.Marshal(resp)
-	msg.SetMsgType(0x12)
-	msg.SetData(data)
-}
-
-func (svr *DsRpcServer) kvGet(msg *dsClient.Message) {
-	var resp *kvrpcpb.DsKvGetResponse
-	req := new(kvrpcpb.DsKvGetRequest)
-	err := proto.Unmarshal(msg.GetData(), req)
-	if err != nil {
-		resp = &kvrpcpb.DsKvGetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
-	} else {
-		value, _ := svr.store.Get(req.GetReq().GetKey())
-		//if err != nil {
-		//	resp = &kvrpcpb.DsKvGetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvGetResponse{Code: -1}}
-		//} else {
-		//	resp = &kvrpcpb.DsKvGetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvGetResponse{Value: value}}
-		//}
-		resp = &kvrpcpb.DsKvGetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvGetResponse{Value: value}}
-	}
-	data, _ := proto.Marshal(resp)
-	msg.SetMsgType(0x12)
-	msg.SetData(data)
-}
-
-func (svr *DsRpcServer) kvBatchSet(msg *dsClient.Message) {
-	var resp *kvrpcpb.DsKvBatchSetResponse
-	req := new(kvrpcpb.DsKvBatchSetRequest)
-	err := proto.Unmarshal(msg.GetData(), req)
-	if err != nil {
-		resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
-	} else {
-		// TODO set
-		switch req.GetReq().GetCase() {
-		case kvrpcpb.ExistCase_EC_NotExists:
-			var flag bool
-			batch := svr.store.NewBatch()
-			for _, kv := range req.GetReq().GetKvs() {
-				value, err := svr.store.Get(kv.GetKey())
-				if err != nil || value == nil {
-					batch.Put(kv.GetKey(), kv.GetValue())
-				} else {
-					// 已经存在
-					flag = true
-				}
-			}
-			if flag {
-				resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvBatchSetResponse{Code: -1, AffectedKeys: 0}}
-			} else {
-				err = batch.Commit()
-				if err != nil {
-					resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-					goto end
-				}
-				resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvBatchSetResponse{Code: 0, AffectedKeys: 0}}
-			}
-		case kvrpcpb.ExistCase_EC_AnyCase:
-			var affectedKeys uint64
-			batch := svr.store.NewBatch()
-			for _, kv := range req.GetReq().GetKvs() {
-				value, _ := svr.store.Get(kv.GetKey())
-				if value != nil {
-					// 已经存在
-					affectedKeys++
-				}
-				batch.Put(kv.GetKey(), kv.GetValue())
-			}
-			err = batch.Commit()
-			if err != nil {
-				resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-				goto end
-			}
-
-			resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvBatchSetResponse{Code: 0, AffectedKeys: affectedKeys}}
-		case kvrpcpb.ExistCase_EC_Force:
-			batch := svr.store.NewBatch()
-			for _, kv := range req.GetReq().GetKvs() {
-				batch.Put(kv.GetKey(), kv.GetValue())
-			}
-			err = batch.Commit()
-			if err != nil {
-				resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-				goto end
-			}
-
-			resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvBatchSetResponse{Code: 0, AffectedKeys: 0}}
-		default:
-			resp = &kvrpcpb.DsKvBatchSetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert case"}}}
-		}
-	}
-
-end:
-	data, _ := proto.Marshal(resp)
-	msg.SetMsgType(0x12)
-	msg.SetData(data)
-}
-
-func (svr *DsRpcServer) kvBatchGet(msg *dsClient.Message) {
-	var resp *kvrpcpb.DsKvBatchGetResponse
-	req := new(kvrpcpb.DsKvBatchGetRequest)
-	err := proto.Unmarshal(msg.GetData(), req)
-	if err != nil {
-		resp = &kvrpcpb.DsKvBatchGetResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
-	} else {
-		var kvs []*kvrpcpb.RedisKeyValue
-		for _, key := range req.GetReq().GetKeys() {
-			value, _ := svr.store.Get(key)
-			kvs = append(kvs, &kvrpcpb.RedisKeyValue{Key: key, Value: value})
-		}
-		resp = &kvrpcpb.DsKvBatchGetResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvBatchGetResponse{Kvs: kvs}}
-	}
-	data, _ := proto.Marshal(resp)
-	msg.SetMsgType(0x12)
-	msg.SetData(data)
-}
-
-func (svr *DsRpcServer) kvScan(msg *dsClient.Message) {
-	var resp *kvrpcpb.DsKvScanResponse
-	req := new(kvrpcpb.DsKvScanRequest)
-	err := proto.Unmarshal(msg.GetData(), req)
-	if err != nil {
-		resp = &kvrpcpb.DsKvScanResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
-	} else {
-		var count int64
-		var kvs []*kvrpcpb.RedisKeyValue
-		var lastKey []byte
-		maxCount := req.GetReq().GetMaxCount()
-		iter := svr.store.NewIterator(req.GetReq().GetStart(), req.GetReq().GetLimit())
-		defer iter.Release()
-		for iter.Next() {
-			count++
-			if req.GetReq().GetKeyOnly() {
-				key := make([]byte, len(iter.Key()))
-				copy(key, iter.Key())
-				kvs = append(kvs, &kvrpcpb.RedisKeyValue{Key: key})
-			} else if req.GetReq().GetCountOnly() {
-				// do nothing
-			} else {
-				key := make([]byte, len(iter.Key()))
-				copy(key, iter.Key())
-				value := make([]byte, len(iter.Value()))
-				copy(value, iter.Value())
-				kvs = append(kvs, &kvrpcpb.RedisKeyValue{Key: key, Value: value})
-			}
-			if maxCount > 0 && count == maxCount {
-				lastKey = make([]byte, len(iter.Key()))
-				copy(lastKey, iter.Key())
-				break
-			}
-		}
-		if maxCount > 0 && kvs != nil {
-			if int64(len(kvs)) < maxCount {
-				lastKey = kvs[len(kvs)-1].GetKey()
-			}
-		}
-		resp = &kvrpcpb.DsKvScanResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvScanResponse{Count: count, Kvs: kvs, LastKey: lastKey}}
-	}
-	data, _ := proto.Marshal(resp)
-	msg.SetMsgType(0x12)
-	msg.SetData(data)
-}
-
-func (svr *DsRpcServer) kvDel(msg *dsClient.Message) {
-	var resp *kvrpcpb.DsKvDeleteResponse
-	req := new(kvrpcpb.DsKvDeleteRequest)
-	err := proto.Unmarshal(msg.GetData(), req)
-	if err != nil {
-		resp = &kvrpcpb.DsKvDeleteResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
-	} else {
-		key := req.GetReq().GetKey()
-		value, err := svr.store.Get(key)
-		if err != nil || value == nil {
-			resp = &kvrpcpb.DsKvDeleteResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvDeleteResponse{Code: -1, AffectedKeys: 0}}
-		} else {
-			// 已经存在
-			err = svr.store.Delete(key)
-			if err != nil {
-				resp = &kvrpcpb.DsKvDeleteResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-				goto end
-			}
-			resp = &kvrpcpb.DsKvDeleteResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvDeleteResponse{Code: 0, AffectedKeys: 1}}
-		}
-	}
-
-end:
-	data, _ := proto.Marshal(resp)
-	msg.SetMsgType(0x12)
-	msg.SetData(data)
-}
-
-func (svr *DsRpcServer) kvBatchDel(msg *dsClient.Message) {
-	var resp *kvrpcpb.DsKvBatchDeleteResponse
-	req := new(kvrpcpb.DsKvBatchDeleteRequest)
-	err := proto.Unmarshal(msg.GetData(), req)
-	if err != nil {
-		resp = &kvrpcpb.DsKvBatchDeleteResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
-	} else {
-		batch := svr.store.NewBatch()
-		var affectedKeys uint64
-		for _, key := range req.GetReq().GetKeys() {
-			value, _ := svr.store.Get(key)
-			if value != nil {
-				// 已经存在
-				affectedKeys++
-				batch.Delete(key)
-			}
-		}
-		err = batch.Commit()
-		if err != nil {
-			resp = &kvrpcpb.DsKvBatchDeleteResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-			goto end
-		}
-		resp = &kvrpcpb.DsKvBatchDeleteResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvBatchDeleteResponse{Code: 0, AffectedKeys: affectedKeys}}
-	}
-
-end:
-	data, _ := proto.Marshal(resp)
-	msg.SetMsgType(0x12)
-	msg.SetData(data)
-}
-
-func (svr *DsRpcServer) kvRangeDel(msg *dsClient.Message) {
-	var resp *kvrpcpb.DsKvRangeDeleteResponse
-	req := new(kvrpcpb.DsKvRangeDeleteRequest)
-	err := proto.Unmarshal(msg.GetData(), req)
-	if err != nil {
-		resp = &kvrpcpb.DsKvRangeDeleteResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: "insert failed"}}}
-	} else {
-		var count int64
-		var lastKey []byte
-		maxCount := req.GetReq().GetMaxCount()
-		batch := svr.store.NewBatch()
-		iter := svr.store.NewIterator(req.GetReq().GetStart(), req.GetReq().GetLimit())
-		defer iter.Release()
-		for iter.Next() {
-			batch.Delete(iter.Key())
-			count++
-			lastKey = make([]byte, len(iter.Key()))
-			copy(lastKey, iter.Key())
-			if maxCount > 0 && count == maxCount {
-				break
-			}
-		}
-		err = batch.Commit()
-		if err != nil {
-			resp = &kvrpcpb.DsKvRangeDeleteResponse{Header: &kvrpcpb.ResponseHeader{Error: &errorpb.Error{Message: err.Error()}}}
-		} else {
-			resp = &kvrpcpb.DsKvRangeDeleteResponse{Header: &kvrpcpb.ResponseHeader{}, Resp: &kvrpcpb.KvRangeDeleteResponse{Code: 0, AffectedKeys: uint64(count), LastKey: lastKey}}
-		}
-	}
-	data, _ := proto.Marshal(resp)
-	msg.SetMsgType(0x12)
-	msg.SetData(data)
 }
 
 func (svr *DsRpcServer) txPrepare(msg *dsClient.Message) {
@@ -902,22 +594,6 @@ func (svr *DsRpcServer) do(msg *dsClient.Message) {
 		svr.delete(msg)
 	case funcpb.FunctionID_kFuncUpdate:
 		svr.update(msg)
-	case funcpb.FunctionID_kFuncKvSet:
-		svr.kvSet(msg)
-	case funcpb.FunctionID_kFuncKvGet:
-		svr.kvGet(msg)
-	case funcpb.FunctionID_kFuncKvBatchSet:
-		svr.kvBatchSet(msg)
-	case funcpb.FunctionID_kFuncKvBatchGet:
-		svr.kvBatchGet(msg)
-	case funcpb.FunctionID_kFuncKvDel:
-		svr.kvDel(msg)
-	case funcpb.FunctionID_kFuncKvBatchDel:
-		svr.kvBatchDel(msg)
-	case funcpb.FunctionID_kFuncKvRangeDel:
-		svr.kvRangeDel(msg)
-	case funcpb.FunctionID_kFuncKvScan:
-		svr.kvScan(msg)
 	case funcpb.FunctionID_kFuncTxnPrepare:
 		svr.txPrepare(msg)
 	case funcpb.FunctionID_kFuncTxnDecide:

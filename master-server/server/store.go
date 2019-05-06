@@ -18,7 +18,6 @@ import (
 	"master-server/raft/storage/wal"
 	"master-server/raftgroup"
 	"model/pkg/ms_raftcmdpb"
-	ts "model/pkg/timestamp"
 	"util/log"
 )
 
@@ -270,7 +269,7 @@ func (s *RaftStore) Delete(key []byte) error {
 
 func (s *RaftStore) Get(key []byte) ([]byte, error) {
 	if s.localRead {
-		return s.store.Get(key, ts.MaxTimestamp)
+		return s.store.Get(key)
 	}
 	req := &ms_raftcmdpb.Request{
 		CmdType: ms_raftcmdpb.CmdType_Get,
@@ -289,7 +288,7 @@ func (s *RaftStore) Get(key []byte) ([]byte, error) {
 }
 
 func (s *RaftStore) Scan(startKey, limitKey []byte) Iterator {
-	return s.store.NewIterator(startKey, limitKey, ts.MaxTimestamp)
+	return s.store.NewIterator(startKey, limitKey)
 }
 
 func (s *RaftStore) NewBatch() Batch {
@@ -307,7 +306,7 @@ func (s *RaftStore) raftKvRawGet(req *ms_raftcmdpb.GetRequest, raftIndex uint64)
 	resp := new(ms_raftcmdpb.GetResponse)
 	//log.Info("raft put")
 	// TODO write in one batch
-	value, err := s.store.Get(req.GetKey(), ts.MaxTimestamp)
+	value, err := s.store.Get(req.GetKey())
 	if err != nil {
 		if err == sErr.ErrNotFound {
 			resp.Code = SUCCESS
@@ -324,7 +323,7 @@ func (s *RaftStore) raftKvRawGet(req *ms_raftcmdpb.GetRequest, raftIndex uint64)
 func (s *RaftStore) raftKvRawPut(req *ms_raftcmdpb.PutRequest, raftIndex uint64) (*ms_raftcmdpb.PutResponse, error) {
 	resp := new(ms_raftcmdpb.PutResponse)
 	// TODO write in one batch
-	err := s.store.Put(req.GetKey(), req.GetValue(), 0, ts.Timestamp{WallTime: int64(raftIndex)}, raftIndex)
+	err := s.store.Put(req.GetKey(), req.GetValue(), 0, raftIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +333,7 @@ func (s *RaftStore) raftKvRawPut(req *ms_raftcmdpb.PutRequest, raftIndex uint64)
 
 func (s *RaftStore) raftKvRawDelete(req *ms_raftcmdpb.DeleteRequest, raftIndex uint64) (*ms_raftcmdpb.DeleteResponse, error) {
 	resp := new(ms_raftcmdpb.DeleteResponse)
-	err := s.store.Delete(req.GetKey(), ts.Timestamp{WallTime: int64(raftIndex)}, raftIndex)
+	err := s.store.Delete(req.GetKey(), raftIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -348,9 +347,9 @@ func (s *RaftStore) raftKvRawExecute(req *ms_raftcmdpb.ExecuteRequest, raftIndex
 	for _, e := range req.GetExecs() {
 		switch e.Do {
 		case ms_raftcmdpb.ExecuteType_ExecPut:
-			batch.Put(e.KvPair.Key, e.KvPair.Value, 0, ts.Timestamp{WallTime: int64(raftIndex)}, raftIndex)
+			batch.Put(e.KvPair.Key, e.KvPair.Value, 0, raftIndex)
 		case ms_raftcmdpb.ExecuteType_ExecDelete:
-			batch.Delete(e.KvPair.Key, ts.Timestamp{WallTime: int64(raftIndex)}, raftIndex)
+			batch.Delete(e.KvPair.Key, raftIndex)
 		}
 	}
 	err := batch.Commit()
@@ -419,7 +418,7 @@ func (s *RaftStore) ApplySnapshot(iter *raftgroup.SnapshotKVIterator) error {
 			log.Info("apply snapshot finished.")
 			break
 		} else if err == nil { // 取数据没出错，应用到store
-			err = newStore.Put(pair.Key, pair.Value, 0, ts.Timestamp{}, pair.ApplyIndex)
+			err = newStore.Put(pair.Key, pair.Value, 0, pair.ApplyIndex)
 		}
 
 		// 同时处理Next和Put的错误

@@ -18,7 +18,7 @@ func (p *Proxy) RawPut(dbName, tableName string, key, value []byte) error {
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	_, err := proxy.RawPut(req)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (p *Proxy) RawGet(dbName, tableName string, key []byte) ([]byte, error) {
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	resp, err := proxy.RawGet(req)
 	if err != nil {
 		return nil, err
@@ -60,11 +60,10 @@ func (p *Proxy) RawDelete(dbName, tableName string, key []byte) error {
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	_, err := proxy.RawDelete(req)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-

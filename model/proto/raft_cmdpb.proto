@@ -98,14 +98,7 @@ message Command {
     kvrpcpb.DeleteRequest           delete_req               = 10;
     kvrpcpb.BatchInsertRequest      batch_insert_req         = 11;
 
-    kvrpcpb.KvSetRequest            kv_set_req               = 12;
-    kvrpcpb.KvGetRequest            kv_get_req               = 13;
-    kvrpcpb.KvBatchSetRequest       kv_batch_set_req         = 14;
-    kvrpcpb.KvBatchGetRequest       kv_batch_get_req         = 15;
-    kvrpcpb.KvScanRequest           kv_scan_req              = 16;
-    kvrpcpb.KvDeleteRequest         kv_delete_req            = 17;
-    kvrpcpb.KvBatchDeleteRequest    kv_batch_del_req         = 18;
-    kvrpcpb.KvRangeDeleteRequest    kv_range_del_req         = 19;
+    // 12-19 is reserved for backward compatiable
 	  
 	watchpb.KvWatchPutRequest       kv_watch_put_req         = 20;
 	watchpb.KvWatchDeleteRequest    kv_watch_del_req         = 21;

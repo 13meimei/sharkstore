@@ -3,24 +3,23 @@ package server
 import (
 	"bytes"
 	"fmt"
+	"model/pkg/kvrpcpb"
+	"model/pkg/txn"
+	"pkg-go/ds_client"
+	"proxy/gateway-server/mysql"
+	"proxy/gateway-server/sqlparser"
+	"proxy/store/dskv"
 	"sort"
 	"strconv"
 	"time"
 	"util"
 	"util/hack"
 	"util/log"
-	"model/pkg/kvrpcpb"
-	"model/pkg/timestamp"
-	"model/pkg/txn"
-	"pkg-go/ds_client"
-	"proxy/store/dskv"
-	"proxy/gateway-server/mysql"
-	"proxy/gateway-server/sqlparser"
 )
 
 /**
-	return: table, txIntents, mysql.Result(affectedRows, lastInsertId), error
- */
+return: table, txIntents, mysql.Result(affectedRows, lastInsertId), error
+*/
 func (p *Proxy) HandleInsert(db string, stmt *sqlparser.Insert, args []interface{}) (
 	t *Table, intents []*txnpb.TxnIntent, res *mysql.Result, err error) {
 
@@ -520,15 +519,13 @@ func (p *Proxy) insert(context *dskv.ReqContext, t *Table, rows []*kvrpcpb.KeyVa
 		err = ErrEmptyRow
 		return
 	}
-	now := p.clock.Now()
 	req := &kvrpcpb.InsertRequest{
 		Rows:           rows,
 		CheckDuplicate: t.PkDupCheck(),
-		Timestamp:      &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical},
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	//单range写入，包括单行数据，同range多行数据
 	var resp *kvrpcpb.InsertResponse
 	resp, _, err = proxy.Insert(context, req, rows[0].GetKey())

@@ -8,9 +8,7 @@ import (
 	"model/pkg/errorpb"
 	"model/pkg/kvrpcpb"
 	"model/pkg/metapb"
-	"model/pkg/timestamp"
 	"pkg-go/ds_client"
-	"util/hlc"
 	"util/log"
 
 	"golang.org/x/net/context"
@@ -18,15 +16,13 @@ import (
 
 type KvProxy struct {
 	Cli          client.KvClient
-	Clock        *hlc.Clock
 	RangeCache   *RangeCache
 	WriteTimeout time.Duration
 	ReadTimeout  time.Duration
 }
 
-func (p *KvProxy) Init(cli client.KvClient, clock *hlc.Clock, cache *RangeCache, wTimeout, rTimeout time.Duration) {
+func (p *KvProxy) Init(cli client.KvClient, cache *RangeCache, wTimeout, rTimeout time.Duration) {
 	p.Cli = cli
-	p.Clock = clock
 	p.RangeCache = cache
 	p.WriteTimeout = wTimeout
 	p.ReadTimeout = rTimeout
@@ -119,63 +115,6 @@ func (p *KvProxy) send(bo *Backoffer, _ctx *Context, req *Request) (resp *Respon
 			goto Err
 		}
 		resp.UpdateResp = _resp
-	case Type_KvSet:
-		_resp, _err := p.Cli.KvSet(ctx, addr, req.GetKvSetReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.KvSetResp = _resp
-	case Type_KvBatchSet:
-		_resp, _err := p.Cli.KvBatchSet(ctx, addr, req.GetKvBatchSetReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.KvBatchSetResp = _resp
-	case Type_KvGet:
-		_resp, _err := p.Cli.KvGet(ctx, addr, req.GetKvGetReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.KvGetResp = _resp
-	case Type_KvBatchGet:
-		_resp, _err := p.Cli.KvBatchGet(ctx, addr, req.GetKvBatchGetReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.KvBatchGetResp = _resp
-	case Type_KvScan:
-		_resp, _err := p.Cli.KvScan(ctx, addr, req.GetKvScanReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.KvScanResp = _resp
-	case Type_KvDelete:
-		_resp, _err := p.Cli.KvDelete(ctx, addr, req.GetKvDeleteReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.KvDeleteResp = _resp
-	case Type_KvBatchDel:
-		_resp, _err := p.Cli.KvBatchDelete(ctx, addr, req.GetKvBatchDelReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.KvBatchDelResp = _resp
-	case Type_KvRangeDel:
-		_resp, _err := p.Cli.KvRangeDelete(ctx, addr, req.GetKvRangeDelReq())
-		if _err != nil {
-			err = _err
-			goto Err
-		}
-		resp.KvRangeDelResp = _resp
-
 	case Type_TxPrepare:
 		_resp, _err := p.Cli.TxPrepare(ctx, addr, req.GetTxPrepareReq())
 		if _err != nil {
@@ -231,7 +170,6 @@ Err:
 func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *kvrpcpb.RequestHeader, error) {
 	var header *kvrpcpb.RequestHeader
 	var timeout time.Duration
-	now := p.Clock.Now()
 	switch req.Type {
 	case Type_RawPut:
 		header = req.RawPutReq.GetHeader()
@@ -272,31 +210,6 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 		header = req.LockScanReq.GetHeader()
 		timeout = client.ReadTimeoutShort
 
-	case Type_KvSet:
-		header = req.KvSetReq.GetHeader()
-		timeout = client.ReadTimeoutShort
-	case Type_KvBatchSet:
-		header = req.KvBatchSetReq.GetHeader()
-		timeout = client.ReadTimeoutShort
-	case Type_KvGet:
-		header = req.KvGetReq.GetHeader()
-		timeout = client.ReadTimeoutShort
-	case Type_KvBatchGet:
-		header = req.KvBatchGetReq.GetHeader()
-		timeout = client.ReadTimeoutMedium
-	case Type_KvScan:
-		header = req.KvScanReq.GetHeader()
-		timeout = client.ReadTimeoutMedium
-	case Type_KvDelete:
-		header = req.KvDeleteReq.GetHeader()
-		timeout = client.ReadTimeoutShort
-	case Type_KvBatchDel:
-		header = req.KvBatchDelReq.GetHeader()
-		timeout = client.ReadTimeoutShort
-	case Type_KvRangeDel:
-		header = req.KvRangeDelReq.GetHeader()
-		timeout = client.ReadTimeoutShort
-
 	case Type_TxPrepare:
 		header = req.TxPrepareReq.GetHeader()
 		timeout = client.ReadTimeoutMedium
@@ -317,7 +230,6 @@ func (p *KvProxy) prepare(location *KeyLocation, req *Request) (time.Duration, *
 	}
 	header.RangeId = location.Region.Id
 	header.RangeEpoch = &metapb.RangeEpoch{ConfVer: location.Region.ConfVer, Version: location.Region.Cer}
-	header.Timestamp = &timestamp.Timestamp{WallTime: now.WallTime, Logical: now.Logical}
 	return timeout, header, nil
 }
 

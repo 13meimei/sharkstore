@@ -1,11 +1,11 @@
 package server
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
+	"model/pkg/txn"
 	"pkg-go/ds_client"
 	"proxy/store/dskv"
-	"model/pkg/txn"
 	"util/log"
 )
 
@@ -24,10 +24,10 @@ func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t
 	)
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	/**
-		retry and wait for exist lock to expire
-	 */
+	retry and wait for exist lock to expire
+	*/
 	for {
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
@@ -70,8 +70,8 @@ func (p *Proxy) handlePrepare(ctx *dskv.ReqContext, req *txnpb.PrepareRequest, t
 }
 
 /**
-	recover(commit or rollback) previous expired transaction
- */
+recover(commit or rollback) previous expired transaction
+*/
 func (p *Proxy) handleRecoverTxs(expiredTxs []*txnpb.LockError, t *Table) (err error) {
 	if len(expiredTxs) == 0 {
 		return
@@ -332,7 +332,7 @@ func (p *Proxy) tryRollbackTxnForSecondary(ctx *dskv.ReqContext, txId string, pr
 func (p *Proxy) handleDecide(ctx *dskv.ReqContext, req *txnpb.DecideRequest, t *Table) (*txnpb.DecideResponse, error) {
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	resp, err := proxy.TxDecide(ctx, req, req.GetKeys()[0])
 	if err != nil {
 		return nil, err
@@ -349,13 +349,13 @@ func (p *Proxy) handleDecidePrimary(ctx *dskv.ReqContext, req *txnpb.DecideReque
 
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 
 	//todo refactor and abstract to func call about error: ErrRouteChange
 
 	/**
-		loop solve: occur ErrRouteChange when decide primary row
-	 */
+	loop solve: occur ErrRouteChange when decide primary row
+	*/
 	for {
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)
@@ -383,7 +383,7 @@ func (p *Proxy) handleCleanup(ctx *dskv.ReqContext, txId string, primaryKey []by
 	}
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 
 	var (
 		resp        *txnpb.ClearupResponse
@@ -428,7 +428,7 @@ func (p *Proxy) handleGetLockInfo(ctx *dskv.ReqContext, txId string, primaryKey 
 
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 
 	for {
 		if errForRetry != nil {
@@ -603,7 +603,7 @@ func (p *Proxy) handleTxnScan(ctx *dskv.ReqContext, t *Table, req *txnpb.ScanReq
 	var errForRetry error
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 	for {
 		if errForRetry != nil {
 			errForRetry = ctx.GetBackOff().Backoff(dskv.BoMSRPC, errForRetry)

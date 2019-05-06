@@ -1,20 +1,20 @@
 package server
 
 import (
-	"fmt"
 	"bytes"
-	"strconv"
-	"util"
-	"util/log"
-	"util/hack"
+	"errors"
+	"fmt"
+	"model/pkg/kvrpcpb"
+	"model/pkg/metapb"
+	"model/pkg/txn"
+	"pkg-go/ds_client"
 	"proxy/gateway-server/mysql"
 	"proxy/gateway-server/sqlparser"
 	"proxy/store/dskv"
-	"pkg-go/ds_client"
-	"model/pkg/kvrpcpb"
-	"model/pkg/txn"
-	"model/pkg/metapb"
-	"errors"
+	"strconv"
+	"util"
+	"util/hack"
+	"util/log"
 )
 
 // HandleUpdate handle update
@@ -567,7 +567,7 @@ func (p *Proxy) updateRemote(t *Table, req *kvrpcpb.UpdateRequest) (affected uin
 func (p *Proxy) singleUpdateRemote(context *dskv.ReqContext, t *Table, req *kvrpcpb.UpdateRequest, key []byte) (affected uint64, err error) {
 	proxy := dskv.GetKvProxy()
 	defer dskv.PutKvProxy(proxy)
-	proxy.Init(p.dsCli, p.clock, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
+	proxy.Init(p.dsCli, t.ranges, client.WriteTimeout, client.ReadTimeoutShort)
 
 	var resp *kvrpcpb.UpdateResponse
 	resp, err = proxy.Update(context, req, key)

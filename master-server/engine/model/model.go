@@ -1,15 +1,13 @@
 package model
 
-import ts "model/pkg/timestamp"
-
 // Store store
 type Store interface {
-	Get(key []byte, timestamp ts.Timestamp) (value []byte, err error)
-	Put(key []byte, value []byte, expireAt int64, timestamp ts.Timestamp, raftIndex uint64) error
-	Delete(key []byte, timestamp ts.Timestamp, raftIndex uint64) error
+	Get(key []byte) (value []byte, err error)
+	Put(key []byte, value []byte, expireAt int64, raftIndex uint64) error
+	Delete(key []byte, raftIndex uint64) error
 	Close() error
 
-	NewIterator(startKey, endKey []byte, timestamp ts.Timestamp) Iterator
+	NewIterator(startKey, endKey []byte) Iterator
 
 	// 批量写入，提交时保证batch里的修改同时对外可见
 	NewWriteBatch() WriteBatch
@@ -47,8 +45,8 @@ type Snapshot interface {
 
 // WriteBatch write batch
 type WriteBatch interface {
-	Put(key []byte, value []byte, expireAt int64, timestamp ts.Timestamp, raftIndex uint64)
-	Delete(key []byte, timestamp ts.Timestamp, raftIndex uint64)
+	Put(key []byte, value []byte, expireAt int64, raftIndex uint64)
+	Delete(key []byte, raftIndex uint64)
 
 	Commit() error
 }

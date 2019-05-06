@@ -3,7 +3,6 @@ package kvrpcpb;
 
 import "metapb.proto";
 import "errorpb.proto";
-import "timestamp.proto";
 
 import "gogoproto/gogo.proto";
 
@@ -18,10 +17,6 @@ message KvPair {
 
 message RequestHeader {
     uint64 cluster_id              = 1;
-    // timestamp specifies time at which read or writes should be
-    // performed. If the timestamp is set to zero value, its value
-    // is initialized to the wall time of the receiving node.
-    tspb.Timestamp timestamp       = 2;
     uint64 trace_id                = 3;
     uint64 range_id                = 4;
     metapb.RangeEpoch range_epoch  = 5;
@@ -30,14 +25,7 @@ message RequestHeader {
 
 message ResponseHeader {
     uint64 cluster_id              = 1;
-    // timestamp is set only for non-transactional responses and denotes the
-    // highest timestamp at which a command from the batch executed. At the
-    // time of writing, it is used solely for informational purposes and tests.
-    tspb.Timestamp timestamp       = 2;
     uint64 trace_id                = 3;
-    // now is the current time at the node sending the response,
-    // which can be used by the receiver to update its local HLC.
-    tspb.Timestamp now             = 4;
     errorpb.Error     error        = 5;
     uint64 apply_index             = 6;
 }
@@ -229,7 +217,6 @@ message SelectRequest {
     repeated metapb.Column group_bys    = 5;       // group by column ids
     Limit limit                         = 6;       // max range query num, 0 means no limit
 
-    tspb.Timestamp timestamp            = 7;       // timestamp
     MatchExt ext_filter                 = 10;      // extend where condition
 }
 
@@ -273,7 +260,6 @@ message DsInsertResponse {
 message InsertRequest {
     repeated KeyValue rows  = 1; // 多行
     bool  check_duplicate   = 2; // 是否检查对应的主键已经存在
-    tspb.Timestamp timestamp  = 3;
 }
 
 message InsertResponse {
@@ -307,7 +293,6 @@ message DeleteRequest {
     Scope scope                     = 2; // 删除某个范围
     repeated Match where_filters    = 3;
     repeated uint64 indexs          = 4; // 删除操作同时需要删除索引记录，因此提供对应的索引列
-    tspb.Timestamp timestamp   = 10;
 }
 
 message DeleteResponse {
@@ -365,225 +350,6 @@ message DsIndexScanResponse {
     IndexScanResponse resp   = 2;
 }
 
-//
-//++++++++++++++++++++++++for jimdb-proxy protocol begin+++++++++++++++++++++++++++++++++++++
-//
-enum ExistCase {
-    EC_Invalid           = 0;
-    // 当且仅当key不存在
-    EC_NotExists          = 1;
-    // 当且仅当key存在
-    EC_Exists             = 2;
-    // 需要检查key是否存在,无论key是否存在都写入, 并返回affected count
-    EC_AnyCase            = 3;
-    // 不检查key是否存在,直接写入,不返回affected count
-    EC_Force              = 4;
-}
-
-message RedisKeyValue {
-    bytes key             = 1;
-    bytes value           = 2;
-}
-
-enum Operation {
-    OP_Invalid          = 0;
-    OP_Set              = 1;
-    OP_Delete           = 2;
-    OP_Get              = 3;
-}
-
-message RedisDo {
-    bytes key             = 1;
-    bytes value           = 2;
-    Operation op          = 3;
-    ExistCase case        = 4;
-}
-
-message KvSetRequest {
-    RedisKeyValue   kv    = 1;
-    ExistCase case        = 2;
-}
-
-message KvSetResponse {
-    // 0: 成功; other: 失败
-    int32  code             = 1;
-    //受影响的KV
-    uint64 affected_keys    = 2;
-}
-
-message DsKvSetRequest {
-    RequestHeader header     = 1;
-    KvSetRequest req         = 2;
-}
-
-message DsKvSetResponse {
-    ResponseHeader header         = 1;
-    KvSetResponse resp            = 2;
-}
-
-message KvGetRequest {
-    bytes key           = 1;
-}
-
-message KvGetResponse {
-    int32  code           = 1;
-    bytes  value          = 2;
-}
-
-message DsKvGetRequest {
-    RequestHeader header     = 1;
-    KvGetRequest req         = 2;
-}
-
-message DsKvGetResponse {
-    ResponseHeader header         = 1;
-    KvGetResponse resp            = 2;
-}
-
-message KvBatchSetRequest {
-    repeated RedisKeyValue   kvs       = 1;
-    // 如果case 是EC_NotExists
-    // 首先需要检查读,一旦发现有key,则终止执行,并且返回存在重复的key的数量
-    ExistCase case                     = 2;
-}
-
-message KvBatchSetResponse {
-    int32  code                    = 1;
-    //受影响的KV
-    uint64 affected_keys           = 2;
-}
-
-message DsKvBatchSetRequest {
-    RequestHeader header     = 1;
-    KvBatchSetRequest req    = 2;
-}
-
-message DsKvBatchSetResponse {
-    ResponseHeader header         = 1;
-    KvBatchSetResponse resp       = 2;
-}
-
-message KvBatchGetRequest {
-    int32  code                = 1;
-    repeated bytes  keys       = 2;
-}
-
-message KvBatchGetResponse {
-    int32  code                   = 1;
-    repeated RedisKeyValue   kvs  = 2;
-}
-
-message DsKvBatchGetRequest {
-    RequestHeader header     = 1;
-    KvBatchGetRequest req    = 2;
-}
-
-message DsKvBatchGetResponse {
-    ResponseHeader header         = 1;
-    KvBatchGetResponse resp       = 2;
-}
-
-// 迭代一个较大的范围，可以设置一个比较合适的max_count,
-// 根据上次的last key作为下一次请求的start　key即可.
-message KvScanRequest {
-    bytes start              = 1;
-    bytes limit              = 2;
-    bool  count_only         = 3;
-    // count_only与key_only冲突，二选一
-    bool key_only            = 4;
-    // -1 表示不限制
-    int64 max_count         = 5;
-}
-
-message KvScanResponse {
-    int32  code                  = 1;
-    // when count_only  == true
-    int64 count                  = 2;
-    repeated RedisKeyValue   kvs = 3;
-    // 可能扫描返回的数据量很大，需要迭代
-    bytes last_key               = 4;
-}
-
-message DsKvScanRequest {
-    RequestHeader header       = 1;
-    KvScanRequest req          = 2;
-}
-
-message DsKvScanResponse {
-    ResponseHeader header           = 1;
-    KvScanResponse resp             = 2;
-}
-
-message KvDeleteRequest {
-    bytes key           = 1;
-    // 暂时忽略,按照any case处理
-    ExistCase case      = 2;
-}
-
-message KvDeleteResponse {
-    int32  code             = 1;
-    //受影响的KV
-    uint64 affected_keys    = 2;
-}
-
-message DsKvDeleteRequest {
-    RequestHeader header       = 1;
-    KvDeleteRequest req        = 2;
-}
-
-message DsKvDeleteResponse {
-    ResponseHeader header           = 1;
-    KvDeleteResponse resp           = 2;
-}
-
-message KvBatchDeleteRequest {
-    repeated bytes   keys   = 1;
-    // 暂时忽略,按照any case处理
-    ExistCase case          = 2;
-}
-
-message KvBatchDeleteResponse {
-    int32  code            = 1;
-    // 删除key的个数，不包括被忽略的key
-    uint64 affected_keys   = 2;
-}
-
-message DsKvBatchDeleteRequest {
-    RequestHeader header       = 1;
-    KvBatchDeleteRequest req   = 2;
-}
-
-message DsKvBatchDeleteResponse {
-    ResponseHeader header           = 1;
-    KvBatchDeleteResponse resp      = 2;
-}
-
-message KvRangeDeleteRequest {
-    bytes start              = 1;
-    bytes limit              = 2;
-    int64 max_count          = 3;
-    ExistCase case           = 4;
-}
-
-message KvRangeDeleteResponse {
-    int32  code            = 1;
-    // 删除key的个数
-    uint64 affected_keys   = 2;
-    //　最后一个被删除的key
-    bytes last_key         = 3;
-}
-
-message DsKvRangeDeleteRequest {
-    RequestHeader header       = 1;
-    KvRangeDeleteRequest req   = 2;
-}
-
-message DsKvRangeDeleteResponse {
-    ResponseHeader header           = 1;
-    KvRangeDeleteResponse resp      = 2;
-}
-// for jimdb-proxy protocol end
-
 message LockValue {
     bytes value             = 2;
     string id               = 3;
@@ -596,7 +362,6 @@ message LockValue {
 message LockRequest {
     bytes key               = 1;
     LockValue value         = 2;
-    tspb.Timestamp timestamp  = 10;
 }
 
 message DsLockRequest {
@@ -631,7 +396,6 @@ message LockUpdateRequest {
     string id               = 3;
     int64 delete_time       = 5;
     bytes update_value      = 6;
-    tspb.Timestamp timestamp  = 10;
     string by               = 11;
 }
 
@@ -648,7 +412,6 @@ message DsLockUpdateResponse {
 message UnlockRequest {
     bytes key               = 1;
     string id               = 3;
-    tspb.Timestamp timestamp  = 10;
     string by               = 11;
 }
 
@@ -664,7 +427,6 @@ message DsUnlockResponse {
 
 message UnlockForceRequest {
     bytes key               = 1;
-    tspb.Timestamp timestamp  = 10;
     string by               = 11;
 }
 

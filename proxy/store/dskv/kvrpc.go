@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"model/pkg/kvrpcpb"
 	"model/pkg/errorpb"
+	"model/pkg/kvrpcpb"
 	"model/pkg/txn"
 )
 
@@ -103,15 +103,6 @@ type Request struct {
 	UnlockReq      *kvrpcpb.DsUnlockRequest
 	UnlockForceReq *kvrpcpb.DsUnlockForceRequest
 	LockScanReq    *kvrpcpb.DsLockScanRequest
-
-	KvSetReq      *kvrpcpb.DsKvSetRequest
-	KvBatchSetReq *kvrpcpb.DsKvBatchSetRequest
-	KvGetReq      *kvrpcpb.DsKvGetRequest
-	KvBatchGetReq *kvrpcpb.DsKvBatchGetRequest
-	KvScanReq     *kvrpcpb.DsKvScanRequest
-	KvDeleteReq   *kvrpcpb.DsKvDeleteRequest
-	KvBatchDelReq *kvrpcpb.DsKvBatchDeleteRequest
-	KvRangeDelReq *kvrpcpb.DsKvRangeDeleteRequest
 
 	TxPrepareReq *txnpb.DsPrepareRequest
 	TxDecideReq  *txnpb.DsDecideRequest
@@ -219,62 +210,6 @@ func (m *Request) GetUpdateReq() *kvrpcpb.DsUpdateRequest {
 	return nil
 }
 
-func (m *Request) GetKvSetReq() *kvrpcpb.DsKvSetRequest {
-	if m != nil {
-		return m.KvSetReq
-	}
-	return nil
-}
-
-func (m *Request) GetKvBatchSetReq() *kvrpcpb.DsKvBatchSetRequest {
-	if m != nil {
-		return m.KvBatchSetReq
-	}
-	return nil
-}
-
-func (m *Request) GetKvGetReq() *kvrpcpb.DsKvGetRequest {
-	if m != nil {
-		return m.KvGetReq
-	}
-	return nil
-}
-
-func (m *Request) GetKvBatchGetReq() *kvrpcpb.DsKvBatchGetRequest {
-	if m != nil {
-		return m.KvBatchGetReq
-	}
-	return nil
-}
-
-func (m *Request) GetKvScanReq() *kvrpcpb.DsKvScanRequest {
-	if m != nil {
-		return m.KvScanReq
-	}
-	return nil
-}
-
-func (m *Request) GetKvDeleteReq() *kvrpcpb.DsKvDeleteRequest {
-	if m != nil {
-		return m.KvDeleteReq
-	}
-	return nil
-}
-
-func (m *Request) GetKvBatchDelReq() *kvrpcpb.DsKvBatchDeleteRequest {
-	if m != nil {
-		return m.KvBatchDelReq
-	}
-	return nil
-}
-
-func (m *Request) GetKvRangeDelReq() *kvrpcpb.DsKvRangeDeleteRequest {
-	if m != nil {
-		return m.KvRangeDelReq
-	}
-	return nil
-}
-
 func (m *Request) GetTxPrepareReq() *txnpb.DsPrepareRequest {
 	if m != nil {
 		return m.TxPrepareReq
@@ -334,15 +269,6 @@ type Response struct {
 	UnlockResp      *kvrpcpb.DsUnlockResponse
 	UnlockForceResp *kvrpcpb.DsUnlockForceResponse
 	LockScanResp    *kvrpcpb.DsLockScanResponse
-
-	KvSetResp      *kvrpcpb.DsKvSetResponse
-	KvBatchSetResp *kvrpcpb.DsKvBatchSetResponse
-	KvGetResp      *kvrpcpb.DsKvGetResponse
-	KvBatchGetResp *kvrpcpb.DsKvBatchGetResponse
-	KvScanResp     *kvrpcpb.DsKvScanResponse
-	KvDeleteResp   *kvrpcpb.DsKvDeleteResponse
-	KvBatchDelResp *kvrpcpb.DsKvBatchDeleteResponse
-	KvRangeDelResp *kvrpcpb.DsKvRangeDeleteResponse
 
 	TxPrepareResp *txnpb.DsPrepareResponse
 	TxDecideResp  *txnpb.DsDecideResponse
@@ -445,61 +371,6 @@ func (m *Response) GetLockScanResp() *kvrpcpb.DsLockScanResponse {
 	}
 	return nil
 }
-func (m *Response) GetKvSetResp() *kvrpcpb.DsKvSetResponse {
-	if m != nil {
-		return m.KvSetResp
-	}
-	return nil
-}
-
-func (m *Response) GetKvBatchSetResp() *kvrpcpb.DsKvBatchSetResponse {
-	if m != nil {
-		return m.KvBatchSetResp
-	}
-	return nil
-}
-
-func (m *Response) GetKvGetResp() *kvrpcpb.DsKvGetResponse {
-	if m != nil {
-		return m.KvGetResp
-	}
-	return nil
-}
-
-func (m *Response) GetKvBatchGetResp() *kvrpcpb.DsKvBatchGetResponse {
-	if m != nil {
-		return m.KvBatchGetResp
-	}
-	return nil
-}
-
-func (m *Response) GetKvScanResp() *kvrpcpb.DsKvScanResponse {
-	if m != nil {
-		return m.KvScanResp
-	}
-	return nil
-}
-
-func (m *Response) GetKvDeleteResp() *kvrpcpb.DsKvDeleteResponse {
-	if m != nil {
-		return m.KvDeleteResp
-	}
-	return nil
-}
-
-func (m *Response) GetKvBatchDelResp() *kvrpcpb.DsKvBatchDeleteResponse {
-	if m != nil {
-		return m.KvBatchDelResp
-	}
-	return nil
-}
-
-func (m *Response) GetKvRangeDelResp() *kvrpcpb.DsKvRangeDeleteResponse {
-	if m != nil {
-		return m.KvRangeDelResp
-	}
-	return nil
-}
 
 func (m *Response) GetTxPrepareResp() *txnpb.DsPrepareResponse {
 	if m != nil {
@@ -569,22 +440,6 @@ func (resp *Response) GetErr() (pErr *errorpb.Error, err error) {
 		pErr = resp.UnlockForceResp.GetHeader().GetError()
 	case Type_LockScan:
 		pErr = resp.LockScanResp.GetHeader().GetError()
-	case Type_KvSet:
-		pErr = resp.KvSetResp.GetHeader().GetError()
-	case Type_KvBatchSet:
-		pErr = resp.KvBatchSetResp.GetHeader().GetError()
-	case Type_KvGet:
-		pErr = resp.KvGetResp.GetHeader().GetError()
-	case Type_KvBatchGet:
-		pErr = resp.KvBatchGetResp.GetHeader().GetError()
-	case Type_KvScan:
-		pErr = resp.KvScanResp.GetHeader().GetError()
-	case Type_KvDelete:
-		pErr = resp.KvDeleteResp.GetHeader().GetError()
-	case Type_KvBatchDel:
-		pErr = resp.KvBatchDelResp.GetHeader().GetError()
-	case Type_KvRangeDel:
-		pErr = resp.KvRangeDelResp.GetHeader().GetError()
 	case Type_TxPrepare:
 		pErr = resp.TxPrepareResp.GetHeader().GetError()
 	case Type_TxDecide:

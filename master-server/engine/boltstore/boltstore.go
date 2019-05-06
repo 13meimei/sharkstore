@@ -1,15 +1,14 @@
 package boltstore
 
 import (
-	"time"
-	"fmt"
-	"encoding/binary"
 	"bytes"
+	"encoding/binary"
+	"fmt"
+	"time"
 	"util"
 
 	"github.com/boltdb/bolt"
 	"master-server/engine/model"
-	ts "model/pkg/timestamp"
 )
 
 var RAFT_APPLY_ID []byte = []byte("#raft_apply_id")
@@ -19,11 +18,11 @@ var DB_BUCKET []byte = []byte("DbBucket")
 
 // Store store
 type BoltStore struct {
-	db     *bolt.DB
+	db *bolt.DB
 }
 
 func NewBoltStore(path string) (model.Store, uint64, error) {
-	db, err := bolt.Open(path, 0664, &bolt.Options{Timeout: 1 * time.Second, InitialMmapSize: 2*util.GB})
+	db, err := bolt.Open(path, 0664, &bolt.Options{Timeout: 1 * time.Second, InitialMmapSize: 2 * util.GB})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -60,7 +59,7 @@ func NewBoltStore(path string) (model.Store, uint64, error) {
 	return store, applyId, nil
 }
 
-func (bs *BoltStore)Get(key []byte, timestamp ts.Timestamp) (value []byte, err error) {
+func (bs *BoltStore) Get(key []byte) (value []byte, err error) {
 	if bs == nil {
 		return nil, nil
 	}
@@ -78,7 +77,7 @@ func (bs *BoltStore)Get(key []byte, timestamp ts.Timestamp) (value []byte, err e
 	return
 }
 
-func (bs *BoltStore)Put(key []byte, value []byte, expireAt int64, timestamp ts.Timestamp, raftIndex uint64) error {
+func (bs *BoltStore) Put(key []byte, value []byte, expireAt int64, raftIndex uint64) error {
 	if bs == nil {
 		return nil
 	}
@@ -100,7 +99,7 @@ func (bs *BoltStore)Put(key []byte, value []byte, expireAt int64, timestamp ts.T
 	})
 }
 
-func (bs *BoltStore)Delete(key []byte, timestamp ts.Timestamp, raftIndex uint64) error {
+func (bs *BoltStore) Delete(key []byte, raftIndex uint64) error {
 	if bs == nil {
 		return nil
 	}
@@ -122,7 +121,7 @@ func (bs *BoltStore)Delete(key []byte, timestamp ts.Timestamp, raftIndex uint64)
 	})
 }
 
-func (bs *BoltStore)Close() error {
+func (bs *BoltStore) Close() error {
 	if bs == nil {
 		return nil
 	}
@@ -130,7 +129,7 @@ func (bs *BoltStore)Close() error {
 	return bs.db.Close()
 }
 
-func (bs *BoltStore)NewIterator(startKey, endKey []byte, timestamp ts.Timestamp) model.Iterator {
+func (bs *BoltStore) NewIterator(startKey, endKey []byte) model.Iterator {
 	iter, err := NewBoltIterator(bs.db, startKey, endKey)
 	if err != nil {
 		return nil
@@ -139,7 +138,7 @@ func (bs *BoltStore)NewIterator(startKey, endKey []byte, timestamp ts.Timestamp)
 }
 
 // 批量写入，提交时保证batch里的修改同时对外可见
-func (bs *BoltStore)NewWriteBatch() model.WriteBatch {
+func (bs *BoltStore) NewWriteBatch() model.WriteBatch {
 	batch, err := NewBoltWriteBatch(bs.db)
 	if err != nil {
 		return nil
@@ -147,12 +146,12 @@ func (bs *BoltStore)NewWriteBatch() model.WriteBatch {
 	return batch
 }
 
-func (bs *BoltStore)GetSnapshot() (model.Snapshot, error) {
+func (bs *BoltStore) GetSnapshot() (model.Snapshot, error) {
 	return NewBoltSnapshot(bs.db)
 }
 
 // Applied return current applied raft index(已持久化的)
-func (bs *BoltStore)Applied() uint64 {
+func (bs *BoltStore) Applied() uint64 {
 	var value []byte
 	var applyId uint64
 	err := bs.db.View(func(tx *bolt.Tx) error {
@@ -172,8 +171,8 @@ func (bs *BoltStore)Applied() uint64 {
 }
 
 type KvPair struct {
-	Key     []byte
-	Value   []byte
+	Key   []byte
+	Value []byte
 }
 
 type Tx interface {
@@ -193,7 +192,7 @@ type BoltIterator struct {
 	iter    *bolt.Cursor
 }
 
-func NewBoltIterator(db *bolt.DB, startKey, endKey []byte) (*BoltIterator, error){
+func NewBoltIterator(db *bolt.DB, startKey, endKey []byte) (*BoltIterator, error) {
 	tx, err := db.Begin(false)
 	if err != nil {
 		return nil, err
@@ -209,24 +208,24 @@ func NewBoltIterator(db *bolt.DB, startKey, endKey []byte) (*BoltIterator, error
 }
 
 // return false if over or error
-func (iter *BoltIterator)Next() bool {
+func (iter *BoltIterator) Next() bool {
 	if iter == nil {
 		return false
 	}
 	var k, v []byte
-    if iter.first {
-	    k, v = iter.iter.Seek(iter.start)
-	    iter.first = false
-    } else {
-	    k, v = iter.iter.Next()
-    }
+	if iter.first {
+		k, v = iter.iter.Seek(iter.start)
+		iter.first = false
+	} else {
+		k, v = iter.iter.Next()
+	}
 	if k != nil && bytes.Compare(k, iter.limit) < 0 {
 		// Please note that values returned from Get() are only valid while the transaction is open.
 		// If you need to use a value outside of the transaction then you must use copy() to copy it
 		// to another byte slice.
 		if iter.kvPair == nil {
 			iter.kvPair = &KvPair{
-				Key: k,
+				Key:   k,
 				Value: v,
 			}
 		} else {
@@ -240,18 +239,18 @@ func (iter *BoltIterator)Next() bool {
 	}
 }
 
-func (iter *BoltIterator)Key() []byte {
+func (iter *BoltIterator) Key() []byte {
 	if iter == nil {
 		return nil
 	}
 
-    if iter.kvPair != nil {
-	    return iter.kvPair.Key
-    }
+	if iter.kvPair != nil {
+		return iter.kvPair.Key
+	}
 	return nil
 }
 
-func (iter *BoltIterator)Value() []byte {
+func (iter *BoltIterator) Value() []byte {
 	if iter == nil {
 		return nil
 	}
@@ -262,7 +261,7 @@ func (iter *BoltIterator)Value() []byte {
 	return nil
 }
 
-func (iter *BoltIterator)Error() error {
+func (iter *BoltIterator) Error() error {
 	if iter == nil {
 		return nil
 	}
@@ -270,19 +269,19 @@ func (iter *BoltIterator)Error() error {
 }
 
 // Release iterator使用完需要释放
-func (iter *BoltIterator)Release() {
+func (iter *BoltIterator) Release() {
 	if iter == nil {
 		return
 	}
-    iter.tx.Rollback()
+	iter.tx.Rollback()
 }
 
 // Snapshot snapshot
 type BoltSnapshot struct {
 	applyID uint64
-	db     *bolt.DB
-	tx     *bolt.Tx
-	b      *bolt.Bucket
+	db      *bolt.DB
+	tx      *bolt.Tx
+	b       *bolt.Bucket
 }
 
 func NewBoltSnapshot(db *bolt.DB) (*BoltSnapshot, error) {
@@ -304,18 +303,18 @@ func NewBoltSnapshot(db *bolt.DB) (*BoltSnapshot, error) {
 }
 
 type SnapIterTx struct {
-	tx  *bolt.Tx
+	tx *bolt.Tx
 }
 
-func (st *SnapIterTx)Bucket(name []byte) *bolt.Bucket {
+func (st *SnapIterTx) Bucket(name []byte) *bolt.Bucket {
 	return st.tx.Bucket(name)
 }
 
-func (st *SnapIterTx)Rollback() error {
+func (st *SnapIterTx) Rollback() error {
 	return nil
 }
 
-func (bs *BoltSnapshot)NewIterator(startKey, endKey []byte) model.Iterator {
+func (bs *BoltSnapshot) NewIterator(startKey, endKey []byte) model.Iterator {
 	c := bs.b.Cursor()
 	_start := make([]byte, len(startKey))
 	_limit := make([]byte, len(endKey))
@@ -324,7 +323,7 @@ func (bs *BoltSnapshot)NewIterator(startKey, endKey []byte) model.Iterator {
 	return &BoltIterator{start: _start, limit: _limit, db: bs.db, tx: &SnapIterTx{bs.tx}, iter: c, first: true}
 }
 
-func (bs *BoltSnapshot)Get(key []byte) ([]byte, error) {
+func (bs *BoltSnapshot) Get(key []byte) ([]byte, error) {
 	if bs == nil {
 		return nil, nil
 	}
@@ -337,18 +336,18 @@ func (bs *BoltSnapshot)Get(key []byte) ([]byte, error) {
 }
 
 // apply index
-func (bs *BoltSnapshot)ApplyIndex() uint64 {
+func (bs *BoltSnapshot) ApplyIndex() uint64 {
 	if bs == nil {
 		return 0
 	}
-    return bs.applyID
+	return bs.applyID
 }
 
 // Release snapshot使用完需要释放
-func (bs *BoltSnapshot)Release() {
-    if bs == nil {
-	    return
-    }
+func (bs *BoltSnapshot) Release() {
+	if bs == nil {
+		return
+	}
 	bs.tx.Rollback()
 }
 
@@ -360,18 +359,18 @@ type write struct {
 
 // WriteBatch write batch
 type BoltWriteBatch struct {
-    db     *bolt.DB
+	db *bolt.DB
 
-    writes []write
-    raftIndex uint64
-	err    error
+	writes    []write
+	raftIndex uint64
+	err       error
 }
 
-func NewBoltWriteBatch(db *bolt.DB) (*BoltWriteBatch, error){
+func NewBoltWriteBatch(db *bolt.DB) (*BoltWriteBatch, error) {
 	return &BoltWriteBatch{db: db}, nil
 }
 
-func (bb *BoltWriteBatch)Put(key []byte, value []byte, expireAt int64, timestamp ts.Timestamp, raftIndex uint64) {
+func (bb *BoltWriteBatch) Put(key []byte, value []byte, expireAt int64, raftIndex uint64) {
 	w := write{
 		key:   append([]byte(nil), key...),
 		value: append([]byte(nil), value...),
@@ -380,44 +379,44 @@ func (bb *BoltWriteBatch)Put(key []byte, value []byte, expireAt int64, timestamp
 	bb.raftIndex = raftIndex
 }
 
-func (bb *BoltWriteBatch)Delete(key []byte, timestamp ts.Timestamp, raftIndex uint64) {
+func (bb *BoltWriteBatch) Delete(key []byte, raftIndex uint64) {
 	if bb == nil {
 		return
 	}
 	w := write{
-		key:   append([]byte(nil), key...),
+		key:      append([]byte(nil), key...),
 		isDelete: true,
 	}
 	bb.writes = append(bb.writes, w)
 	bb.raftIndex = raftIndex
 }
 
-func (bb *BoltWriteBatch)Commit() error {
+func (bb *BoltWriteBatch) Commit() error {
 	if bb == nil {
 		return nil
 	}
-    return bb.db.Update(func(tx *bolt.Tx) error {
-	    var buff [8]byte
-	    r := tx.Bucket(RAFT_BUCKET)
-	    binary.BigEndian.PutUint64(buff[:], bb.raftIndex)
-	    err := r.Put(RAFT_APPLY_ID, buff[:])
-	    if err != nil {
-		    return err
-	    }
-	    b := tx.Bucket(DB_BUCKET)
-	    for _, w := range bb.writes {
-		    if !w.isDelete {
-			    err = b.Put(w.key, w.value)
-		    } else {
-			    err = b.Delete(w.key)
-		    }
+	return bb.db.Update(func(tx *bolt.Tx) error {
+		var buff [8]byte
+		r := tx.Bucket(RAFT_BUCKET)
+		binary.BigEndian.PutUint64(buff[:], bb.raftIndex)
+		err := r.Put(RAFT_APPLY_ID, buff[:])
+		if err != nil {
+			return err
+		}
+		b := tx.Bucket(DB_BUCKET)
+		for _, w := range bb.writes {
+			if !w.isDelete {
+				err = b.Put(w.key, w.value)
+			} else {
+				err = b.Delete(w.key)
+			}
 
-		    if err != nil {
-			    return err
-		    }
-	    }
-	    return nil
-    })
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func cloneBytes(b []byte) []byte {

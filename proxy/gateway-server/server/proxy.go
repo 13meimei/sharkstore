@@ -4,7 +4,6 @@ import (
 	dsClient "pkg-go/ds_client"
 	msClient "pkg-go/ms_client"
 	"sync"
-	"util/hlc"
 
 	"golang.org/x/net/context"
 )
@@ -21,7 +20,6 @@ type Proxy struct {
 	msCli  msClient.Client
 	dsCli  dsClient.KvClient
 	router *Router
-	clock  *hlc.Clock
 
 	maxWorkNum  uint64
 	taskQueues  []chan Task
@@ -50,7 +48,6 @@ func NewProxy(msAddrs []string, config *ProxyConfig) *Proxy {
 		router:      router,
 		msCli:       msCli,
 		dsCli:       dsClient.NewRPCClient(config.Performance.GrpcPoolSize),
-		clock:       hlc.NewClock(hlc.UnixNano, 0),
 		config:      config,
 		ctx:         ctx,
 		cancel:      cancel,
