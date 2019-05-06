@@ -314,7 +314,8 @@ func (m *KvPair) GetValue() []byte {
 }
 
 type RequestHeader struct {
-	ClusterId  uint64             `protobuf:"varint,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	ClusterId uint64 `protobuf:"varint,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	// 2 is reserved for backward-compatible
 	TraceId    uint64             `protobuf:"varint,3,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
 	RangeId    uint64             `protobuf:"varint,4,opt,name=range_id,json=rangeId,proto3" json:"range_id,omitempty"`
 	RangeEpoch *metapb.RangeEpoch `protobuf:"bytes,5,opt,name=range_epoch,json=rangeEpoch" json:"range_epoch,omitempty"`
@@ -362,8 +363,10 @@ func (m *RequestHeader) GetReadIndex() uint64 {
 }
 
 type ResponseHeader struct {
-	ClusterId  uint64         `protobuf:"varint,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
-	TraceId    uint64         `protobuf:"varint,3,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	ClusterId uint64 `protobuf:"varint,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	// 2 is reserved for backward-compatible
+	TraceId uint64 `protobuf:"varint,3,opt,name=trace_id,json=traceId,proto3" json:"trace_id,omitempty"`
+	// 4 is reserved for backward-compatible
 	Error      *errorpb.Error `protobuf:"bytes,5,opt,name=error" json:"error,omitempty"`
 	ApplyIndex uint64         `protobuf:"varint,6,opt,name=apply_index,json=applyIndex,proto3" json:"apply_index,omitempty"`
 }
@@ -972,7 +975,8 @@ type SelectRequest struct {
 	WhereFilters []*Match         `protobuf:"bytes,4,rep,name=where_filters,json=whereFilters" json:"where_filters,omitempty"`
 	GroupBys     []*metapb.Column `protobuf:"bytes,5,rep,name=group_bys,json=groupBys" json:"group_bys,omitempty"`
 	Limit        *Limit           `protobuf:"bytes,6,opt,name=limit" json:"limit,omitempty"`
-	ExtFilter    *MatchExt        `protobuf:"bytes,10,opt,name=ext_filter,json=extFilter" json:"ext_filter,omitempty"`
+	// 7 is reserved for backward-compatible
+	ExtFilter *MatchExt `protobuf:"bytes,10,opt,name=ext_filter,json=extFilter" json:"ext_filter,omitempty"`
 }
 
 func (m *SelectRequest) Reset()                    { *m = SelectRequest{} }
