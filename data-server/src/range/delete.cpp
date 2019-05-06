@@ -60,7 +60,7 @@ void Range::deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool red
             }
         }
 
-        SubmitCmd<kvrpcpb::DsKvDeleteResponse>(std::move(rpc), req.header(),
+        SubmitCmd<kvrpcpb::DsDeleteResponse>(std::move(rpc), req.header(),
              [&req](raft_cmdpb::Command &cmd) {
                 cmd.set_cmd_type(raft_cmdpb::CmdType::Delete);
                 cmd.set_allocated_delete_req(req.release_req());
@@ -71,7 +71,7 @@ void Range::deleteRow(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req, bool red
     if (err != nullptr) {
         RANGE_LOG_WARN("Delete error: %s", err->message().c_str());
 
-        kvrpcpb::DsKvDeleteResponse resp;
+        kvrpcpb::DsDeleteResponse resp;
         SendResponse(rpc, resp, req.header(), err);
     }
 }
@@ -113,14 +113,13 @@ Status Range::ApplyDelete(const raft_cmdpb::Command &cmd) {
     } while (false);
 
     if (cmd.cmd_id().node_id() == node_id_) {
-        kvrpcpb::DsKvDeleteResponse resp;
+        kvrpcpb::DsDeleteResponse resp;
         resp.mutable_resp()->set_affected_keys(affected_keys);
         resp.mutable_resp()->set_code(ret.code());
         ReplySubmit(cmd, resp, err, btime);
     } else if (err != nullptr) {
         delete err;
     }
-
     return ret;
 }
 

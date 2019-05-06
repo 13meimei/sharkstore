@@ -101,15 +101,6 @@ public:
     void Select(RPCRequestPtr rpc, kvrpcpb::DsSelectRequest &req);
     void Delete(RPCRequestPtr rpc, kvrpcpb::DsDeleteRequest &req);
 
-    void KVSet(RPCRequestPtr rpc, kvrpcpb::DsKvSetRequest &req);
-    void KVGet(RPCRequestPtr rpc, kvrpcpb::DsKvGetRequest &req);
-    void KVBatchSet(RPCRequestPtr rpc, kvrpcpb::DsKvBatchSetRequest &req);
-    void KVBatchGet(RPCRequestPtr rpc, kvrpcpb::DsKvBatchGetRequest &req);
-    void KVDelete(RPCRequestPtr rpc, kvrpcpb::DsKvDeleteRequest &req);
-    void KVBatchDelete(RPCRequestPtr rpc, kvrpcpb::DsKvBatchDeleteRequest &req);
-    void KVRangeDelete(RPCRequestPtr rpc, kvrpcpb::DsKvRangeDeleteRequest &req);
-    void KVScan(RPCRequestPtr rpc, kvrpcpb::DsKvScanRequest &req);
-
     // TXN
     void TxnPrepare(RPCRequestPtr rpc, txnpb::DsPrepareRequest& req);
     void TxnDecide(RPCRequestPtr rpc, txnpb::DsDecideRequest& req);
@@ -152,12 +143,6 @@ private:
     Status ApplyAddPeer(const raft::ConfChange &cc, bool *updated);
     Status ApplyDelPeer(const raft::ConfChange &cc, bool *updated);
     Status ApplyPromotePeer(const raft::ConfChange &cc, bool *updated);
-
-    Status ApplyKVSet(const raft_cmdpb::Command &cmd);
-    Status ApplyKVBatchSet(const raft_cmdpb::Command &cmd);
-    Status ApplyKVDelete(const raft_cmdpb::Command &cmd);
-    Status ApplyKVBatchDelete(const raft_cmdpb::Command &cmd);
-    Status ApplyKVRangeDelete(const raft_cmdpb::Command &cmd);
 
     Status ApplyLock(const raft_cmdpb::Command &cmd, uint64_t raft_index);
     Status ApplyLockUpdate(const raft_cmdpb::Command &cmd);

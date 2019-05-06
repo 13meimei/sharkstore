@@ -218,16 +218,7 @@ Status Range::Apply(const raft_cmdpb::Command &cmd, uint64_t index) {
             return ApplyUpdate(cmd);
         case raft_cmdpb::CmdType::Delete:
             return ApplyDelete(cmd);
-        case raft_cmdpb::CmdType::KvSet:
-            return ApplyKVSet(cmd);
-        case raft_cmdpb::CmdType::KvBatchSet:
-            return ApplyKVBatchSet(cmd);
-        case raft_cmdpb::CmdType::KvDelete:
-            return ApplyKVDelete(cmd);
-        case raft_cmdpb::CmdType::KvBatchDel:
-            return ApplyKVBatchDelete(cmd);
-        case raft_cmdpb::CmdType::KvRangeDel:
-            return ApplyKVRangeDelete(cmd);
+
         case raft_cmdpb::CmdType::TxnPrepare:
             return ApplyTxnPrepare(cmd, index);
         case raft_cmdpb::CmdType::TxnDecide:

@@ -218,7 +218,6 @@ set(SOURCES
     src/range/split.cpp
     src/range/split_policy.cpp
     src/range/peer.cpp
-    src/range/kv_funcs.cpp
 	src/range/watch.cpp
 	src/range/watch_funcs.cpp
     src/range/submit.cpp
