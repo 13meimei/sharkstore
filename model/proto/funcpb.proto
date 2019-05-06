@@ -25,14 +25,7 @@ enum FunctionID {
   kFuncWatchPut         = 52; //put and trigger watch response  
   kFuncWatchDel         = 53; //delete and trigger watch response
     
-  kFuncKvSet              = 100;
-  kFuncKvGet              = 101;
-  kFuncKvBatchSet         = 102;
-  kFuncKvBatchGet         = 103;
-  kFuncKvDel              = 104;
-  kFuncKvBatchDel         = 105;
-  kFuncKvRangeDel         = 106;
-  kFuncKvScan             = 107;
+  // 100-107 is reserved for backward-compatible
 
   kFuncLock               = 200;
   kFuncLockUpdate         = 201;

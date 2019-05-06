@@ -68,14 +68,6 @@ func init() {
 	msgType[uint16(funcpb.FunctionID_kFuncDelete)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncUpdate)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_KFuncReplace)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvSet)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvGet)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvBatchSet)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvBatchGet)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvBatchDel)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvDel)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvScan)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvRangeDel)] = &MsgTypeGroup{0x02, 0x12}
 
 	msgType[uint16(funcpb.FunctionID_kFuncWatchGet)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncPureGet)] = &MsgTypeGroup{0x02, 0x12}
@@ -86,7 +78,6 @@ func init() {
 	msgType[uint16(funcpb.FunctionID_kFuncLockUpdate)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncUnlock)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncUnlockForce)] = &MsgTypeGroup{0x02, 0x12}
-	msgType[uint16(funcpb.FunctionID_kFuncKvSet)] = &MsgTypeGroup{0x02, 0x12}
 
 	msgType[uint16(funcpb.FunctionID_kFuncTxnPrepare)] = &MsgTypeGroup{0x02, 0x12}
 	msgType[uint16(funcpb.FunctionID_kFuncTxnDecide)] = &MsgTypeGroup{0x02, 0x12}

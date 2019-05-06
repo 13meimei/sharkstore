@@ -80,32 +80,29 @@ namespace {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\014funcpb.proto\022\006funcpb*\362\006\n\nFunctionID\022\022\n"
+      "\n\014funcpb.proto\022\006funcpb*\335\005\n\nFunctionID\022\022\n"
       "\016kFuncHeartbeat\020\000\022\017\n\013kFuncRawGet\020\001\022\017\n\013kF"
       "uncRawPut\020\002\022\022\n\016kFuncRawDelete\020\003\022\023\n\017kFunc"
       "RawExecute\020\004\022\017\n\013kFuncSelect\020\n\022\017\n\013kFuncIn"
       "sert\020\013\022\017\n\013kFuncDelete\020\014\022\017\n\013kFuncUpdate\020\r"
       "\022\020\n\014KFuncReplace\020\016\022\021\n\rkFuncWatchGet\0202\022\020\n"
       "\014kFuncPureGet\0203\022\021\n\rkFuncWatchPut\0204\022\021\n\rkF"
-      "uncWatchDel\0205\022\016\n\nkFuncKvSet\020d\022\016\n\nkFuncKv"
-      "Get\020e\022\023\n\017kFuncKvBatchSet\020f\022\023\n\017kFuncKvBat"
-      "chGet\020g\022\016\n\nkFuncKvDel\020h\022\023\n\017kFuncKvBatchD"
-      "el\020i\022\023\n\017kFuncKvRangeDel\020j\022\017\n\013kFuncKvScan"
-      "\020k\022\016\n\tkFuncLock\020\310\001\022\024\n\017kFuncLockUpdate\020\311\001"
-      "\022\020\n\013kFuncUnlock\020\312\001\022\025\n\020kFuncUnlockForce\020\313"
-      "\001\022\023\n\016kFuncLockWatch\020\314\001\022\021\n\014kFuncLockGet\020\315"
-      "\001\022\024\n\017kFuncTxnPrepare\020\255\002\022\023\n\016kFuncTxnDecid"
-      "e\020\256\002\022\024\n\017kFuncTxnClearup\020\257\002\022\030\n\023kFuncTxnGe"
-      "tLockInfo\020\260\002\022\023\n\016kFuncTxnSelect\020\261\002\022\021\n\014kFu"
-      "ncTxnScan\020\262\002\022\025\n\020kFuncCreateRange\020\351\007\022\025\n\020k"
-      "FuncDeleteRange\020\352\007\022\035\n\030kFuncRangeTransfer"
-      "Leader\020\353\007\022\025\n\020kFuncUpdateRange\020\354\007\022\025\n\020kFun"
-      "cGetPeerInfo\020\355\007\022\031\n\024kFuncSetNodeLogLevel\020"
-      "\356\007\022\026\n\021kFuncOfflineRange\020\357\007\022\026\n\021kFuncRepla"
-      "ceRange\020\360\007\022\017\n\nkFuncAdmin\020\321\017b\006proto3"
+      "uncWatchDel\0205\022\016\n\tkFuncLock\020\310\001\022\024\n\017kFuncLo"
+      "ckUpdate\020\311\001\022\020\n\013kFuncUnlock\020\312\001\022\025\n\020kFuncUn"
+      "lockForce\020\313\001\022\023\n\016kFuncLockWatch\020\314\001\022\021\n\014kFu"
+      "ncLockGet\020\315\001\022\024\n\017kFuncTxnPrepare\020\255\002\022\023\n\016kF"
+      "uncTxnDecide\020\256\002\022\024\n\017kFuncTxnClearup\020\257\002\022\030\n"
+      "\023kFuncTxnGetLockInfo\020\260\002\022\023\n\016kFuncTxnSelec"
+      "t\020\261\002\022\021\n\014kFuncTxnScan\020\262\002\022\025\n\020kFuncCreateRa"
+      "nge\020\351\007\022\025\n\020kFuncDeleteRange\020\352\007\022\035\n\030kFuncRa"
+      "ngeTransferLeader\020\353\007\022\025\n\020kFuncUpdateRange"
+      "\020\354\007\022\025\n\020kFuncGetPeerInfo\020\355\007\022\031\n\024kFuncSetNo"
+      "deLogLevel\020\356\007\022\026\n\021kFuncOfflineRange\020\357\007\022\026\n"
+      "\021kFuncReplaceRange\020\360\007\022\017\n\nkFuncAdmin\020\321\017b\006"
+      "proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 915);
+      descriptor, 766);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "funcpb.proto", &protobuf_RegisterTypes);
 }
@@ -144,14 +141,6 @@ bool FunctionID_IsValid(int value) {
     case 51:
     case 52:
     case 53:
-    case 100:
-    case 101:
-    case 102:
-    case 103:
-    case 104:
-    case 105:
-    case 106:
-    case 107:
     case 200:
     case 201:
     case 202:
