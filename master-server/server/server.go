@@ -2,22 +2,23 @@ package server
 
 import (
 	"fmt"
-	"strings"
-	"strconv"
 	"net"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 
-	"util/ping"
+	"master-server/alarm2"
+	"master-server/metric"
+	"master-server/raft"
+	"model/pkg/mspb"
 	"util/log"
+	"util/ping"
 	"util/server"
+
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"model/pkg/mspb"
-	"master-server/raft"
-	"golang.org/x/net/context"
-	"master-server/metric"
-	"master-server/alarm2"
 )
 
 type Server struct {
@@ -59,17 +60,18 @@ func (service *Server) ParseClusterInfo() []*Peer {
 	return peers
 }
 
-func (service *Server) initHttpHandler() () {
+func (service *Server) initHttpHandler() {
 	s := service.server
 	s.Handle("/manage/database/create", NewHandler(service.validRequest, service.handleDatabaseCreate))
 	s.Handle("/manage/database/delete", NewHandler(service.validRequest, service.handleDatabaseDelete))
-	s.Handle("/manage/table/create", NewHandler(service.validRequest, service.handleTableCreate))
-	s.Handle("/manage/sql/table/create", NewHandler(service.validRequest, service.handleSqlTableCreate))
 
+	s.Handle("/manage/table/create", NewHandler(service.validRequest, service.handleTableCreate))
+	s.Handle("/manage/table/sql-create", NewHandler(service.validRequest, service.handleSqlTableCreate))
 	s.Handle("/manage/table/cancel", NewHandler(service.validRequest, service.handleTableCancel))
 	s.Handle("/manage/table/edit", NewHandler(service.validRequest, service.handleTableEdit))
 	s.Handle("/manage/table/delete", NewHandler(service.validRequest, service.handleTableDelete))
 	s.Handle("/manage/table/delete/fast", NewHandler(service.validRequest, service.handleTableFastDelete))
+
 	s.Handle("/manage/node/login", NewHandler(service.validRequest, service.handleHttpNodeLogin))
 	s.Handle("/manage/node/logout", NewHandler(service.validRequest, service.handleHttpNodeLogout))
 	s.Handle("/manage/node/delete", NewHandler(service.validRequest, service.handleHttpNodeDelete))
@@ -191,7 +193,7 @@ func (service *Server) InitMasterServer(conf *Config) {
 		s.Init("master", &server.ServerConfig{
 			Sock:    service.conf.webManageAddr,
 			Version: "v1",
-		}, )
+		})
 		service.server = s
 	}
 	service.initHttpHandler()
