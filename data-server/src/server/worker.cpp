@@ -1,8 +1,8 @@
 #include "worker.h"
 
 #include <assert.h>
-#include <chrono>
 #include <stdio.h>
+#include <chrono>
 
 #include "base/util.h"
 #include "common/ds_config.h"
@@ -10,8 +10,8 @@
 #include "frame/sf_logger.h"
 #include "proto/gen/funcpb.pb.h"
 
-#include "run_status.h"
 #include "range_server.h"
+#include "run_status.h"
 
 namespace sharkstore {
 namespace dataserver {
@@ -19,9 +19,8 @@ namespace server {
 
 static const size_t kWorkThreadCapacity = 100000;
 
-Worker::WorkThread::WorkThread(WorkThreadGroup* group, const std::string& name, size_t max_capacity) :
-    parent_group_(group),
-    capacity_(max_capacity) {
+Worker::WorkThread::WorkThread(WorkThreadGroup* group, const std::string& name, size_t max_capacity)
+    : parent_group_(group), capacity_(max_capacity) {
     thr_ = std::thread([this] { this->runLoop(); });
     AnnotateThread(thr_.native_handle(), name.c_str());
 }
@@ -37,9 +36,7 @@ bool Worker::WorkThread::Push(RPCRequest* msg) {
     return true;
 }
 
-uint64_t Worker::WorkThread::PendingSize() const {
-    return que_.unsafe_size();
-}
+uint64_t Worker::WorkThread::PendingSize() const { return que_.unsafe_size(); }
 
 uint64_t Worker::WorkThread::Clear() {
     uint64_t count = 0;
@@ -56,7 +53,7 @@ uint64_t Worker::WorkThread::Clear() {
 }
 
 void Worker::WorkThread::runLoop() {
-    RPCRequest *task = nullptr;
+    RPCRequest* task = nullptr;
     while (g_continue_flag) {
         if (que_.try_pop(task)) {
             parent_group_->DealTask(task);
@@ -67,17 +64,12 @@ void Worker::WorkThread::runLoop() {
     }
 }
 
-
-Worker::WorkThreadGroup::WorkThreadGroup(RangeServer* rs, int num,
-        size_t capacity_per_thread, const std::string& name) :
-    rs_(rs),
-    thread_num_(num),
-    capacity_(capacity_per_thread),
-    name_(name) {
-}
+Worker::WorkThreadGroup::WorkThreadGroup(RangeServer* rs, int num, size_t capacity_per_thread,
+                                         const std::string& name)
+    : rs_(rs), thread_num_(num), capacity_(capacity_per_thread), name_(name) {}
 
 Worker::WorkThreadGroup::~WorkThreadGroup() {
-    for (const auto& thr: threads_) {
+    for (const auto& thr : threads_) {
         delete thr;
     }
     threads_.clear();
@@ -105,7 +97,7 @@ void Worker::WorkThreadGroup::DealTask(RPCRequest* req_ptr) {
 
 uint64_t Worker::WorkThreadGroup::PendingSize() const {
     uint64_t size = 0;
-    for (auto thr: threads_) {
+    for (auto thr : threads_) {
         size += thr->PendingSize();
     }
     return size;
@@ -113,25 +105,24 @@ uint64_t Worker::WorkThreadGroup::PendingSize() const {
 
 uint64_t Worker::WorkThreadGroup::Clear() {
     uint64_t size = 0;
-    for (auto thr: threads_) {
+    for (auto thr : threads_) {
         size += thr->Clear();
     }
     return size;
 }
 
-
 Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* range_server) {
-    FLOG_INFO("Worker Start begin, fast_worker_size: %d, slow_worker_size: %d",
-            fast_worker_size, slow_worker_size);
+    FLOG_INFO("Worker Start begin, fast_worker_size: %d, slow_worker_size: %d", fast_worker_size,
+              slow_worker_size);
 
     range_server_ = range_server;
 
     fast_workers_.reset(
-            new WorkThreadGroup(range_server, fast_worker_size, kWorkThreadCapacity, "fast_worker"));
+        new WorkThreadGroup(range_server, fast_worker_size, kWorkThreadCapacity, "fast_worker"));
     fast_workers_->Start();
 
     slow_workers_.reset(
-            new WorkThreadGroup(range_server, slow_worker_size, kWorkThreadCapacity, "slow_worker"));
+        new WorkThreadGroup(range_server, slow_worker_size, kWorkThreadCapacity, "slow_worker"));
     slow_workers_->Start();
 
     FLOG_INFO("Worker Start end ...");
@@ -139,8 +130,7 @@ Status Worker::Start(int fast_worker_size, int slow_worker_size, RangeServer* ra
     return Status::OK();
 }
 
-void Worker::Stop() {
-}
+void Worker::Stop() {}
 
 void Worker::Push(RPCRequest* task) {
     if (!isSlowTask(task)) {
@@ -166,7 +156,7 @@ size_t Worker::ClearQueue(bool fast, bool slow) {
     return count;
 }
 
-bool Worker::isSlowTask(RPCRequest *task) {
+bool Worker::isSlowTask(RPCRequest* task) {
     const auto& head = task->msg->head;
     if (head.ForceFastFlag()) {
         return false;
@@ -175,8 +165,6 @@ bool Worker::isSlowTask(RPCRequest *task) {
         case funcpb::FunctionID::kFuncSelect:
         case funcpb::FunctionID::kFuncUpdate:
         case funcpb::FunctionID::kFuncWatchGet:
-        case funcpb::FunctionID::kFuncKvRangeDel:
-        case funcpb::FunctionID::kFuncKvScan :
             return true;
         default:
             return false;

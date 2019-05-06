@@ -1,7 +1,6 @@
 set (proto_SOURCES
     gen/ds_admin.pb.cc
     gen/errorpb.pb.cc
-    gen/eventpb.pb.cc
     gen/funcpb.pb.cc
     gen/kvrpcpb.pb.cc
     gen/metapb.pb.cc
@@ -11,7 +10,6 @@ set (proto_SOURCES
     gen/schpb.pb.cc
     gen/statspb.pb.cc
     gen/taskpb.pb.cc
-    gen/timestamp.pb.cc
     gen/watchpb.pb.cc
     gen/txn.pb.cc
 )

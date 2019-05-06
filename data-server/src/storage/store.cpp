@@ -1,14 +1,13 @@
 #include "store.h"
-#include <common/ds_config.h>
 
-#include "aggregate_calc.h"
 #include "base/util.h"
 #include "common/ds_config.h"
 #include "common/ds_encoding.h"
-#include "field_value.h"
-#include "proto/gen/raft_cmdpb.pb.h"
-#include "proto/gen/redispb.pb.h"
 #include "db/db_interface.h"
+#include "proto/gen/raft_cmdpb.pb.h"
+
+#include "aggregate_calc.h"
+#include "field_value.h"
 #include "row_fetcher.h"
 #include "snapshot.h"
 
@@ -17,15 +16,14 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-
 static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r);
 
-Store::Store(const metapb::Range& meta, storage::DbInterface* db) :
-    table_id_(meta.table_id()) ,
-    range_id_(meta.id()),
-    start_key_(meta.start_key()),
-    end_key_(meta.end_key()),
-    db_(db) {
+Store::Store(const metapb::Range& meta, storage::DbInterface* db)
+    : table_id_(meta.table_id()),
+      range_id_(meta.id()),
+      start_key_(meta.start_key()),
+      end_key_(meta.end_key()),
+      db_(db) {
     assert(!start_key_.empty());
     assert(!end_key_.empty());
     assert(meta.primary_keys_size() > 0);
@@ -79,7 +77,7 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
     Status s;
     bool check_dup = req.check_duplicate();
     for (int i = 0; i < req.rows_size(); ++i) {
-        const kvrpcpb::KeyValue &kv = req.rows(i);
+        const kvrpcpb::KeyValue& kv = req.rows(i);
         if (check_dup) {
             s = db_->Get(kv.key(), &value);
             if (s.ok()) {
@@ -152,8 +150,7 @@ Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint
     return s;
 }
 
-static void addRow(const kvrpcpb::SelectRequest& req,
-                   kvrpcpb::SelectResponse* resp, const RowResult& r) {
+static void addRow(const kvrpcpb::SelectRequest& req, kvrpcpb::SelectResponse* resp, const RowResult& r) {
     std::string buf;
     for (int i = 0; i < req.field_list_size(); i++) {
         const auto& f = req.field_list(i);
@@ -267,13 +264,19 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
             case kvrpcpb::Div:
                 switch (value_delta->Type()) {
                     case FieldType::kInt:
-                        if (value_delta->Int() != 0) { value_orig->AssignInt(value_orig->Int() / value_delta->Int()); }
+                        if (value_delta->Int() != 0) {
+                            value_orig->AssignInt(value_orig->Int() / value_delta->Int());
+                        }
                         break;
                     case FieldType::kUInt:
-                        if (value_delta->UInt() != 0) { value_orig->AssignUint(value_orig->UInt() / value_delta->UInt()); }
+                        if (value_delta->UInt() != 0) {
+                            value_orig->AssignUint(value_orig->UInt() / value_delta->UInt());
+                        }
                         break;
                     case FieldType::kFloat:
-                        if (value_delta->Float() != 0) { value_orig->AssignFloat(value_orig->Float() / value_delta->Float()); }
+                        if (value_delta->Float() != 0) {
+                            value_orig->AssignFloat(value_orig->Float() / value_delta->Float());
+                        }
                         break;
                     case FieldType::kBytes:
                         value_orig->AssignBytes(new std::string(value_delta->Bytes()));
@@ -295,8 +298,7 @@ static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
     return Status::OK();
 }
 
-Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
-                           kvrpcpb::SelectResponse* resp) {
+Status Store::selectSimple(const kvrpcpb::SelectRequest& req, kvrpcpb::SelectResponse* resp) {
     RowFetcher f(*this, req);
     Status s;
     std::unique_ptr<RowResult> r(new RowResult);
@@ -320,12 +322,10 @@ Status Store::selectSimple(const kvrpcpb::SelectRequest& req,
     return s;
 }
 
-Status Store::selectAggre(const kvrpcpb::SelectRequest& req,
-                          kvrpcpb::SelectResponse* resp) {
+Status Store::selectAggre(const kvrpcpb::SelectRequest& req, kvrpcpb::SelectResponse* resp) {
     // 暂时不支持带group by的聚合函数
     if (req.group_bys_size() > 0) {
-        return Status(Status::kNotSupported, "select",
-                      "aggregateion with group by clause");
+        return Status(Status::kNotSupported, "select", "aggregateion with group by clause");
     }
 
     std::vector<std::unique_ptr<AggreCalculator>> aggre_cals;
@@ -334,12 +334,10 @@ Status Store::selectAggre(const kvrpcpb::SelectRequest& req,
         const auto& field = req.field_list(i);
         assert(field.typ() == kvrpcpb::SelectField_Type_AggreFunction);
         // TODO:
-        auto cal = AggreCalculator::New(
-            field.aggre_func(), field.has_column() ? &field.column() : nullptr);
+        auto cal = AggreCalculator::New(field.aggre_func(), field.has_column() ? &field.column() : nullptr);
         if (cal == nullptr) {
-            return Status(
-                Status::kNotSupported, "select",
-                std::string("aggregate funtion: ") + field.aggre_func());
+            return Status(Status::kNotSupported, "select",
+                          std::string("aggregate funtion: ") + field.aggre_func());
         } else {
             aggre_cals.push_back(std::move(cal));
         }
@@ -376,11 +374,9 @@ Status Store::selectAggre(const kvrpcpb::SelectRequest& req,
     return s;
 }
 
-Status Store::Select(const kvrpcpb::SelectRequest& req,
-                     kvrpcpb::SelectResponse* resp) {
+Status Store::Select(const kvrpcpb::SelectRequest& req, kvrpcpb::SelectResponse* resp) {
     if (req.field_list_size() == 0) {
-        return Status(Status::kNotSupported, "select",
-                      "invalid select field list size");
+        return Status(Status::kNotSupported, "select", "invalid select field list size");
     }
 
     bool has_aggre = false, has_column = false;
@@ -400,8 +396,7 @@ Status Store::Select(const kvrpcpb::SelectRequest& req,
     }
     // 既有聚合函数又有普通的列，暂时不支持
     if (has_aggre && has_column) {
-        return Status(Status::kNotSupported, "select",
-                      "mixture of aggregate and column select field");
+        return Status(Status::kNotSupported, "select", "mixture of aggregate and column select field");
     } else if (has_column) {
         return selectSimple(req, resp);
     } else {
@@ -409,8 +404,7 @@ Status Store::Select(const kvrpcpb::SelectRequest& req,
     }
 }
 
-Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req,
-                         uint64_t* affected) {
+Status Store::DeleteRows(const kvrpcpb::DeleteRequest& req, uint64_t* affected) {
     RowFetcher f(*this, req);
     Status s;
     std::unique_ptr<RowResult> r(new RowResult);
@@ -530,8 +524,7 @@ bool Store::KeyExists(const std::string& key) {
     return ret.ok();
 }
 
-Status Store::BatchSet(
-    const std::vector<std::pair<std::string, std::string>>& keyValues) {
+Status Store::BatchSet(const std::vector<std::pair<std::string, std::string>>& keyValues) {
     if (keyValues.empty()) return Status::OK();
 
     uint64_t keys_written = 0;
@@ -553,13 +546,13 @@ Status Store::BatchSet(
 }
 
 Status Store::RangeDelete(const std::string& start, const std::string& limit) {
-    auto ret = db_->DeleteRange(db_->DefaultColumnFamily(),
-                                start, limit);
+    auto ret = db_->DeleteRange(db_->DefaultColumnFamily(), start, limit);
     return Status(ret.ok() ? Status::OK() : Status(Status::kUnknown));
 }
 
-Status Store::NewIterators(std::unique_ptr<IteratorInterface>& data_iter, std::unique_ptr<IteratorInterface>& txn_iter,
-                    const std::string& start, const std::string& limit) {
+Status Store::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
+                           std::unique_ptr<IteratorInterface>& txn_iter, const std::string& start,
+                           const std::string& limit) {
     std::string final_start = start, final_end = limit;
     if (final_start.empty() || final_start < start_key_) {
         final_start = start_key_;
@@ -575,7 +568,7 @@ Status Store::NewIterators(std::unique_ptr<IteratorInterface>& data_iter, std::u
 }
 
 Status Store::GetSnapshot(uint64_t apply_index, std::string&& context,
-        std::shared_ptr<raft::Snapshot>* snapshot) {
+                          std::shared_ptr<raft::Snapshot>* snapshot) {
     assert(snapshot != nullptr);
 
     std::unique_ptr<IteratorInterface> data_iter, txn_iter;
@@ -595,15 +588,15 @@ Status Store::ApplySnapshot(const std::vector<std::string>& datas) {
             return Status(Status::kCorruption, "apply snapshot data", "deserilize return false");
         }
         switch (p.cf_type()) {
-        case raft_cmdpb::CF_DEFAULT:
-            batch->Put(p.key(), p.value());
-            break;
-        case raft_cmdpb::CF_TXN:
-            batch->Put(db_->TxnCFHandle(), p.key(), p.value());
-            break;
-        default:
-            return Status(Status::kInvalidArgument, "apply snapshot data: invalid cf type: ",
-                    std::to_string(p.cf_type()));
+            case raft_cmdpb::CF_DEFAULT:
+                batch->Put(p.key(), p.value());
+                break;
+            case raft_cmdpb::CF_TXN:
+                batch->Put(db_->TxnCFHandle(), p.key(), p.value());
+                break;
+            default:
+                return Status(Status::kInvalidArgument,
+                              "apply snapshot data: invalid cf type: ", std::to_string(p.cf_type()));
         }
     }
     auto ret = db_->Write(batch.get());
@@ -624,7 +617,7 @@ void Store::addMetricWrite(uint64_t keys, uint64_t bytes) {
     g_metric.AddWrite(keys, bytes);
 }
 
-Status Store::parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string *split_key) {
+Status Store::parseSplitKey(const std::string& key, range::SplitKeyMode mode, std::string* split_key) {
     if (key.size() <= kRowPrefixLength) {
         return Status(Status::kCorruption, "insufficient key size", EncodeToHex(key));
     }
@@ -648,7 +641,7 @@ Status Store::parseSplitKey(const std::string& key, range::SplitKeyMode mode, st
             split_key->assign(key.c_str(), offset);
             return Status::OK();
         }
-        case range::SplitKeyMode::kLockWatch:{
+        case range::SplitKeyMode::kLockWatch: {
             size_t offset = kRowPrefixLength;
             std::string watch_key;
             if (!DecodeBytesAscending(key, offset, &watch_key)) {
@@ -659,13 +652,12 @@ Status Store::parseSplitKey(const std::string& key, range::SplitKeyMode mode, st
             return Status::OK();
         }
         default:
-            return Status(Status::kNotSupported, "split key mode",
-                    std::to_string(static_cast<int>(mode)));
+            return Status(Status::kNotSupported, "split key mode", std::to_string(static_cast<int>(mode)));
     }
 }
 
-Status Store::StatSize(uint64_t split_size, range::SplitKeyMode mode,
-                  uint64_t *real_size, std::string *split_key) {
+Status Store::StatSize(uint64_t split_size, range::SplitKeyMode mode, uint64_t* real_size,
+                       std::string* split_key) {
     uint64_t total_size = 0;
 
     // The number of the same characters is greater than
@@ -729,7 +721,7 @@ Status Store::StatSize(uint64_t split_size, range::SplitKeyMode mode,
             assert(mode != range::SplitKeyMode::kNormal);
             auto s = parseSplitKey(it->key(), mode, split_key);
             if (!s.ok()) return s;
-            if (*split_key != first_key) { // 遇到不一样的key
+            if (*split_key != first_key) {  // 遇到不一样的key
                 find_next = false;
             }
         }
