@@ -4,35 +4,35 @@ package exprpb;
 import "metapb.proto";
 
 enum ExprType {
-    E_Invalid    = 0;
+    Invalid    = 0;
 
     // 列表达式
-    E_Column = 1;
+    Column = 1;
 
     // 常量值
-    E_Const_Int = 2;
-    E_Const_UInt = 3;
-    E_Const_Double = 4;  // float or double
-    E_Const_Bytes = 5;
+    Const_Int = 2;
+    Const_UInt = 3;
+    Const_Double = 4;  // float or double
+    Const_Bytes = 5;
 
     // 逻辑表达式
-    E_LogicAnd    = 10;
-    E_LogicOr     = 11;
-    E_LogicNot    = 12;
+    LogicAnd    = 10;
+    LogicOr     = 11;
+    LogicNot    = 12;
 
     // 比较表达式
-    E_Equal       = 20; 
-    E_NotEqual    = 21;
-    E_Less        = 22;
-    E_LessOrEqual      = 23;
-    E_Larger           = 24;
-    E_LargerOrEqual    = 25;
+    Equal       = 20; 
+    NotEqual    = 21;
+    Less        = 22;
+    LessOrEqual      = 23;
+    Larger           = 24;
+    LargerOrEqual    = 25;
 
     // 算数表达式
-    E_Plus             = 31;
-    E_Minus            = 32;
-    E_Mult             = 33;
-    E_Div              = 34;
+    Plus             = 31;
+    Minus            = 32;
+    Mult             = 33;
+    Div              = 34;
 }
 
 message ColumnInfo {
