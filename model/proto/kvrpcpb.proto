@@ -2,6 +2,7 @@ syntax = "proto3";
 package kvrpcpb;
 
 import "metapb.proto";
+import "exprpb.proto";
 import "errorpb.proto";
 
 import "gogoproto/gogo.proto";
@@ -152,35 +153,6 @@ enum MatchType {
     LogicNot      = 13;
 }
 
-enum ExprType {
-    E_Invalid    = 0;
-
-    // 列表达式
-    E_Column = 1;
-
-    // 常量值
-    E_Const_Int = 2;
-    E_Const_UInt = 3;
-    E_Const_Double = 4;  // float or double
-    E_Const_Bytes = 5;
-
-    E_LogicAnd    = 10;
-    E_LogicOr     = 11;
-    E_LogicNot    = 12;
-
-    E_Equal       = 20; 
-    E_NotEqual    = 21;
-    E_Less        = 22;
-    E_LessOrEqual      = 23;
-    E_Larger           = 24;
-    E_LargerOrEqual    = 25;
-
-    E_Plus             = 31;
-    E_Minus            = 32;
-    E_Mult             = 33;
-    E_Div              = 34;
-}
-
 enum FieldType {
     Assign           = 0;
     Plus             = 1;
@@ -194,20 +166,6 @@ message Match {
     // 匹配对象
     bytes threshold        = 2;
     MatchType match_type   = 3;
-}
-
-message ColumnInfo {
-    uint32 id = 1;
-    metapb.DataType typ = 2;
-    bool unsigned = 3;
-}
-
-message Expr {
-    ExprType expr_type      = 1;    // uint32
-    uint32 expr_func        = 2;    // reserve
-    ColumnInfo column       = 3;    // left in optimization
-    bytes value             = 4;    // maybe left or right, but right in optimization
-    repeated Expr  child    = 5;    // alwayse 2 expr left and right, but LogicNot
 }
 
 message Limit {
@@ -229,7 +187,7 @@ message SelectRequest {
     Limit limit                         = 6;       // max range query num, 0 means no limit
 
     // 7 is reserved for backward-compatible
-    Expr where_expr = 10;      // extend where condition
+    exprpb.Expr where_expr = 10;      // extend where condition
 }
 
 message Row {
