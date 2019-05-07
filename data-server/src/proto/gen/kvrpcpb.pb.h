@@ -31,6 +31,7 @@
 #include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 #include "metapb.pb.h"
+#include "exprpb.pb.h"
 #include "errorpb.pb.h"
 // @@protoc_insertion_point(includes)
 namespace kvrpcpb {
@@ -136,9 +137,6 @@ extern DsUpdateRequestDefaultTypeInternal _DsUpdateRequest_default_instance_;
 class DsUpdateResponse;
 class DsUpdateResponseDefaultTypeInternal;
 extern DsUpdateResponseDefaultTypeInternal _DsUpdateResponse_default_instance_;
-class Expr;
-class ExprDefaultTypeInternal;
-extern ExprDefaultTypeInternal _Expr_default_instance_;
 class Field;
 class FieldDefaultTypeInternal;
 extern FieldDefaultTypeInternal _Field_default_instance_;
@@ -220,9 +218,6 @@ extern LockValueDefaultTypeInternal _LockValue_default_instance_;
 class Match;
 class MatchDefaultTypeInternal;
 extern MatchDefaultTypeInternal _Match_default_instance_;
-class MatchExt;
-class MatchExtDefaultTypeInternal;
-extern MatchExtDefaultTypeInternal _MatchExt_default_instance_;
 class RequestHeader;
 class RequestHeaderDefaultTypeInternal;
 extern RequestHeaderDefaultTypeInternal _RequestHeader_default_instance_;
@@ -346,41 +341,6 @@ inline bool MatchType_Parse(
     const ::std::string& name, MatchType* value) {
   return ::google::protobuf::internal::ParseNamedEnum<MatchType>(
     MatchType_descriptor(), name, value);
-}
-enum ExprType {
-  E_Invalid = 0,
-  E_LogicAnd = 1,
-  E_LogicOr = 2,
-  E_LogicNot = 3,
-  E_Equal = 11,
-  E_NotEqual = 12,
-  E_Less = 13,
-  E_LessOrEqual = 14,
-  E_Larger = 15,
-  E_LargerOrEqual = 16,
-  E_Plus = 21,
-  E_Minus = 22,
-  E_Mult = 23,
-  E_Div = 24,
-  E_ExprCol = 31,
-  E_ExprConst = 32,
-  ExprType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
-  ExprType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
-};
-bool ExprType_IsValid(int value);
-const ExprType ExprType_MIN = E_Invalid;
-const ExprType ExprType_MAX = E_ExprConst;
-const int ExprType_ARRAYSIZE = ExprType_MAX + 1;
-
-const ::google::protobuf::EnumDescriptor* ExprType_descriptor();
-inline const ::std::string& ExprType_Name(ExprType value) {
-  return ::google::protobuf::internal::NameOfEnum(
-    ExprType_descriptor(), value);
-}
-inline bool ExprType_Parse(
-    const ::std::string& name, ExprType* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<ExprType>(
-    ExprType_descriptor(), name, value);
 }
 enum FieldType {
   Assign = 0,
@@ -2990,248 +2950,6 @@ class Match : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
 };
 // -------------------------------------------------------------------
 
-class MatchExt : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.MatchExt) */ {
- public:
-  MatchExt();
-  virtual ~MatchExt();
-
-  MatchExt(const MatchExt& from);
-
-  inline MatchExt& operator=(const MatchExt& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  MatchExt(MatchExt&& from) noexcept
-    : MatchExt() {
-    *this = ::std::move(from);
-  }
-
-  inline MatchExt& operator=(MatchExt&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const MatchExt& default_instance();
-
-  static inline const MatchExt* internal_default_instance() {
-    return reinterpret_cast<const MatchExt*>(
-               &_MatchExt_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    23;
-
-  void Swap(MatchExt* other);
-  friend void swap(MatchExt& a, MatchExt& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline MatchExt* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  MatchExt* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const MatchExt& from);
-  void MergeFrom(const MatchExt& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(MatchExt* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // .kvrpcpb.Expr expr = 1;
-  bool has_expr() const;
-  void clear_expr();
-  static const int kExprFieldNumber = 1;
-  const ::kvrpcpb::Expr& expr() const;
-  ::kvrpcpb::Expr* mutable_expr();
-  ::kvrpcpb::Expr* release_expr();
-  void set_allocated_expr(::kvrpcpb::Expr* expr);
-
-  // @@protoc_insertion_point(class_scope:kvrpcpb.MatchExt)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::kvrpcpb::Expr* expr_;
-  mutable int _cached_size_;
-  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class Expr : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.Expr) */ {
- public:
-  Expr();
-  virtual ~Expr();
-
-  Expr(const Expr& from);
-
-  inline Expr& operator=(const Expr& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  Expr(Expr&& from) noexcept
-    : Expr() {
-    *this = ::std::move(from);
-  }
-
-  inline Expr& operator=(Expr&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const Expr& default_instance();
-
-  static inline const Expr* internal_default_instance() {
-    return reinterpret_cast<const Expr*>(
-               &_Expr_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    24;
-
-  void Swap(Expr* other);
-  friend void swap(Expr& a, Expr& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline Expr* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  Expr* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const Expr& from);
-  void MergeFrom(const Expr& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(Expr* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // repeated .kvrpcpb.Expr child = 5;
-  int child_size() const;
-  void clear_child();
-  static const int kChildFieldNumber = 5;
-  const ::kvrpcpb::Expr& child(int index) const;
-  ::kvrpcpb::Expr* mutable_child(int index);
-  ::kvrpcpb::Expr* add_child();
-  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >*
-      mutable_child();
-  const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >&
-      child() const;
-
-  // bytes value = 4;
-  void clear_value();
-  static const int kValueFieldNumber = 4;
-  const ::std::string& value() const;
-  void set_value(const ::std::string& value);
-  #if LANG_CXX11
-  void set_value(::std::string&& value);
-  #endif
-  void set_value(const char* value);
-  void set_value(const void* value, size_t size);
-  ::std::string* mutable_value();
-  ::std::string* release_value();
-  void set_allocated_value(::std::string* value);
-
-  // .metapb.Column column = 3;
-  bool has_column() const;
-  void clear_column();
-  static const int kColumnFieldNumber = 3;
-  const ::metapb::Column& column() const;
-  ::metapb::Column* mutable_column();
-  ::metapb::Column* release_column();
-  void set_allocated_column(::metapb::Column* column);
-
-  // .kvrpcpb.ExprType expr_type = 1;
-  void clear_expr_type();
-  static const int kExprTypeFieldNumber = 1;
-  ::kvrpcpb::ExprType expr_type() const;
-  void set_expr_type(::kvrpcpb::ExprType value);
-
-  // uint32 expr_func = 2;
-  void clear_expr_func();
-  static const int kExprFuncFieldNumber = 2;
-  ::google::protobuf::uint32 expr_func() const;
-  void set_expr_func(::google::protobuf::uint32 value);
-
-  // @@protoc_insertion_point(class_scope:kvrpcpb.Expr)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr > child_;
-  ::google::protobuf::internal::ArenaStringPtr value_;
-  ::metapb::Column* column_;
-  int expr_type_;
-  ::google::protobuf::uint32 expr_func_;
-  mutable int _cached_size_;
-  friend struct protobuf_kvrpcpb_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
 class Limit : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:kvrpcpb.Limit) */ {
  public:
   Limit();
@@ -3266,7 +2984,7 @@ class Limit : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Limit_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    25;
+    23;
 
   void Swap(Limit* other);
   friend void swap(Limit& a, Limit& b) {
@@ -3370,7 +3088,7 @@ class DsSelectRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsSelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    26;
+    24;
 
   void Swap(DsSelectRequest* other);
   friend void swap(DsSelectRequest& a, DsSelectRequest& b) {
@@ -3480,7 +3198,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_SelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    27;
+    25;
 
   void Swap(SelectRequest* other);
   friend void swap(SelectRequest& a, SelectRequest& b) {
@@ -3595,14 +3313,14 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::kvrpcpb::Limit* release_limit();
   void set_allocated_limit(::kvrpcpb::Limit* limit);
 
-  // .kvrpcpb.MatchExt ext_filter = 10;
-  bool has_ext_filter() const;
-  void clear_ext_filter();
-  static const int kExtFilterFieldNumber = 10;
-  const ::kvrpcpb::MatchExt& ext_filter() const;
-  ::kvrpcpb::MatchExt* mutable_ext_filter();
-  ::kvrpcpb::MatchExt* release_ext_filter();
-  void set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter);
+  // .exprpb.Expr where_expr = 10;
+  bool has_where_expr() const;
+  void clear_where_expr();
+  static const int kWhereExprFieldNumber = 10;
+  const ::exprpb::Expr& where_expr() const;
+  ::exprpb::Expr* mutable_where_expr();
+  ::exprpb::Expr* release_where_expr();
+  void set_allocated_where_expr(::exprpb::Expr* where_expr);
 
   // @@protoc_insertion_point(class_scope:kvrpcpb.SelectRequest)
  private:
@@ -3614,7 +3332,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::kvrpcpb::Scope* scope_;
   ::kvrpcpb::Limit* limit_;
-  ::kvrpcpb::MatchExt* ext_filter_;
+  ::exprpb::Expr* where_expr_;
   mutable int _cached_size_;
   friend struct protobuf_kvrpcpb_2eproto::TableStruct;
 };
@@ -3654,7 +3372,7 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
                &_Row_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    28;
+    26;
 
   void Swap(Row* other);
   friend void swap(Row& a, Row& b) {
@@ -3788,7 +3506,7 @@ class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsSelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    29;
+    27;
 
   void Swap(DsSelectResponse* other);
   friend void swap(DsSelectResponse& a, DsSelectResponse& b) {
@@ -3898,7 +3616,7 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_SelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    30;
+    28;
 
   void Swap(SelectResponse* other);
   friend void swap(SelectResponse& a, SelectResponse& b) {
@@ -4015,7 +3733,7 @@ class KeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_KeyValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    31;
+    29;
 
   void Swap(KeyValue* other);
   friend void swap(KeyValue& a, KeyValue& b) {
@@ -4142,7 +3860,7 @@ class DsInsertRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsInsertRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    32;
+    30;
 
   void Swap(DsInsertRequest* other);
   friend void swap(DsInsertRequest& a, DsInsertRequest& b) {
@@ -4252,7 +3970,7 @@ class DsInsertResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsInsertResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    33;
+    31;
 
   void Swap(DsInsertResponse* other);
   friend void swap(DsInsertResponse& a, DsInsertResponse& b) {
@@ -4362,7 +4080,7 @@ class InsertRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_InsertRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    34;
+    32;
 
   void Swap(InsertRequest* other);
   friend void swap(InsertRequest& a, InsertRequest& b) {
@@ -4472,7 +4190,7 @@ class InsertResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_InsertResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    35;
+    33;
 
   void Swap(InsertResponse* other);
   friend void swap(InsertResponse& a, InsertResponse& b) {
@@ -4591,7 +4309,7 @@ class BatchInsertRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_BatchInsertRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    36;
+    34;
 
   void Swap(BatchInsertRequest* other);
   friend void swap(BatchInsertRequest& a, BatchInsertRequest& b) {
@@ -4694,7 +4412,7 @@ class BatchInsertResponse : public ::google::protobuf::Message /* @@protoc_inser
                &_BatchInsertResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    37;
+    35;
 
   void Swap(BatchInsertResponse* other);
   friend void swap(BatchInsertResponse& a, BatchInsertResponse& b) {
@@ -4797,7 +4515,7 @@ class DsDeleteRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsDeleteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    38;
+    36;
 
   void Swap(DsDeleteRequest* other);
   friend void swap(DsDeleteRequest& a, DsDeleteRequest& b) {
@@ -4907,7 +4625,7 @@ class DsDeleteResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsDeleteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    39;
+    37;
 
   void Swap(DsDeleteResponse* other);
   friend void swap(DsDeleteResponse& a, DsDeleteResponse& b) {
@@ -5017,7 +4735,7 @@ class DeleteRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_DeleteRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    40;
+    38;
 
   void Swap(DeleteRequest* other);
   friend void swap(DeleteRequest& a, DeleteRequest& b) {
@@ -5159,7 +4877,7 @@ class DeleteResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_DeleteResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    41;
+    39;
 
   void Swap(DeleteResponse* other);
   friend void swap(DeleteResponse& a, DeleteResponse& b) {
@@ -5263,7 +4981,7 @@ class Field : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Field_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    42;
+    40;
 
   void Swap(Field* other);
   friend void swap(Field& a, Field& b) {
@@ -5385,7 +5103,7 @@ class UpdateRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_UpdateRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    43;
+    41;
 
   void Swap(UpdateRequest* other);
   friend void swap(UpdateRequest& a, UpdateRequest& b) {
@@ -5536,7 +5254,7 @@ class DsUpdateRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsUpdateRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    44;
+    42;
 
   void Swap(DsUpdateRequest* other);
   friend void swap(DsUpdateRequest& a, DsUpdateRequest& b) {
@@ -5646,7 +5364,7 @@ class UpdateResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_UpdateResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    45;
+    43;
 
   void Swap(UpdateResponse* other);
   friend void swap(UpdateResponse& a, UpdateResponse& b) {
@@ -5750,7 +5468,7 @@ class DsUpdateResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsUpdateResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    46;
+    44;
 
   void Swap(DsUpdateResponse* other);
   friend void swap(DsUpdateResponse& a, DsUpdateResponse& b) {
@@ -5860,7 +5578,7 @@ class IndexScanRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_IndexScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    47;
+    45;
 
   void Swap(IndexScanRequest* other);
   friend void swap(IndexScanRequest& a, IndexScanRequest& b) {
@@ -5985,7 +5703,7 @@ class DsIndexScanRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_DsIndexScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    48;
+    46;
 
   void Swap(DsIndexScanRequest* other);
   friend void swap(DsIndexScanRequest& a, DsIndexScanRequest& b) {
@@ -6095,7 +5813,7 @@ class IndexScanResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_IndexScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    49;
+    47;
 
   void Swap(IndexScanResponse* other);
   friend void swap(IndexScanResponse& a, IndexScanResponse& b) {
@@ -6208,7 +5926,7 @@ class DsIndexScanResponse : public ::google::protobuf::Message /* @@protoc_inser
                &_DsIndexScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    50;
+    48;
 
   void Swap(DsIndexScanResponse* other);
   friend void swap(DsIndexScanResponse& a, DsIndexScanResponse& b) {
@@ -6318,7 +6036,7 @@ class LockValue : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_LockValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    51;
+    49;
 
   void Swap(LockValue* other);
   friend void swap(LockValue& a, LockValue& b) {
@@ -6467,7 +6185,7 @@ class LockRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_LockRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    52;
+    50;
 
   void Swap(LockRequest* other);
   friend void swap(LockRequest& a, LockRequest& b) {
@@ -6582,7 +6300,7 @@ class DsLockRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_DsLockRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    53;
+    51;
 
   void Swap(DsLockRequest* other);
   friend void swap(DsLockRequest& a, DsLockRequest& b) {
@@ -6692,7 +6410,7 @@ class LockResponse : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_LockResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    54;
+    52;
 
   void Swap(LockResponse* other);
   friend void swap(LockResponse& a, LockResponse& b) {
@@ -6826,7 +6544,7 @@ class LockInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_LockInfo_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    55;
+    53;
 
   void Swap(LockInfo* other);
   friend void swap(LockInfo& a, LockInfo& b) {
@@ -6941,7 +6659,7 @@ class LockScanResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_LockScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    56;
+    54;
 
   void Swap(LockScanResponse* other);
   friend void swap(LockScanResponse& a, LockScanResponse& b) {
@@ -7059,7 +6777,7 @@ class DsLockResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_DsLockResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    57;
+    55;
 
   void Swap(DsLockResponse* other);
   friend void swap(DsLockResponse& a, DsLockResponse& b) {
@@ -7169,7 +6887,7 @@ class LockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_LockUpdateRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    58;
+    56;
 
   void Swap(LockUpdateRequest* other);
   friend void swap(LockUpdateRequest& a, LockUpdateRequest& b) {
@@ -7326,7 +7044,7 @@ class DsLockUpdateRequest : public ::google::protobuf::Message /* @@protoc_inser
                &_DsLockUpdateRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    59;
+    57;
 
   void Swap(DsLockUpdateRequest* other);
   friend void swap(DsLockUpdateRequest& a, DsLockUpdateRequest& b) {
@@ -7436,7 +7154,7 @@ class DsLockUpdateResponse : public ::google::protobuf::Message /* @@protoc_inse
                &_DsLockUpdateResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    60;
+    58;
 
   void Swap(DsLockUpdateResponse* other);
   friend void swap(DsLockUpdateResponse& a, DsLockUpdateResponse& b) {
@@ -7546,7 +7264,7 @@ class UnlockRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_UnlockRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    61;
+    59;
 
   void Swap(UnlockRequest* other);
   friend void swap(UnlockRequest& a, UnlockRequest& b) {
@@ -7681,7 +7399,7 @@ class DsUnlockRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsUnlockRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    62;
+    60;
 
   void Swap(DsUnlockRequest* other);
   friend void swap(DsUnlockRequest& a, DsUnlockRequest& b) {
@@ -7791,7 +7509,7 @@ class DsUnlockResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsUnlockResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    63;
+    61;
 
   void Swap(DsUnlockResponse* other);
   friend void swap(DsUnlockResponse& a, DsUnlockResponse& b) {
@@ -7901,7 +7619,7 @@ class UnlockForceRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_UnlockForceRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    64;
+    62;
 
   void Swap(UnlockForceRequest* other);
   friend void swap(UnlockForceRequest& a, UnlockForceRequest& b) {
@@ -8021,7 +7739,7 @@ class DsUnlockForceRequest : public ::google::protobuf::Message /* @@protoc_inse
                &_DsUnlockForceRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    65;
+    63;
 
   void Swap(DsUnlockForceRequest* other);
   friend void swap(DsUnlockForceRequest& a, DsUnlockForceRequest& b) {
@@ -8131,7 +7849,7 @@ class DsUnlockForceResponse : public ::google::protobuf::Message /* @@protoc_ins
                &_DsUnlockForceResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    66;
+    64;
 
   void Swap(DsUnlockForceResponse* other);
   friend void swap(DsUnlockForceResponse& a, DsUnlockForceResponse& b) {
@@ -8241,7 +7959,7 @@ class LockScanRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_LockScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    67;
+    65;
 
   void Swap(LockScanRequest* other);
   friend void swap(LockScanRequest& a, LockScanRequest& b) {
@@ -8368,7 +8086,7 @@ class DsLockScanRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsLockScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    68;
+    66;
 
   void Swap(DsLockScanRequest* other);
   friend void swap(DsLockScanRequest& a, DsLockScanRequest& b) {
@@ -8478,7 +8196,7 @@ class DsLockScanResponse : public ::google::protobuf::Message /* @@protoc_insert
                &_DsLockScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    69;
+    67;
 
   void Swap(DsLockScanResponse* other);
   friend void swap(DsLockScanResponse& a, DsLockScanResponse& b) {
@@ -8588,7 +8306,7 @@ class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_
                &_LockGetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    70;
+    68;
 
   void Swap(LockGetRequest* other);
   friend void swap(LockGetRequest& a, LockGetRequest& b) {
@@ -8693,7 +8411,7 @@ class LockGetResponse : public ::google::protobuf::Message /* @@protoc_insertion
                &_LockGetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    71;
+    69;
 
   void Swap(LockGetResponse* other);
   friend void swap(LockGetResponse& a, LockGetResponse& b) {
@@ -8815,7 +8533,7 @@ class DsLockGetRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsLockGetRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    72;
+    70;
 
   void Swap(DsLockGetRequest* other);
   friend void swap(DsLockGetRequest& a, DsLockGetRequest& b) {
@@ -8925,7 +8643,7 @@ class DsLockGetResponse : public ::google::protobuf::Message /* @@protoc_inserti
                &_DsLockGetResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    73;
+    71;
 
   void Swap(DsLockGetResponse* other);
   friend void swap(DsLockGetResponse& a, DsLockGetResponse& b) {
@@ -10750,205 +10468,6 @@ inline void Match::set_match_type(::kvrpcpb::MatchType value) {
 
 // -------------------------------------------------------------------
 
-// MatchExt
-
-// .kvrpcpb.Expr expr = 1;
-inline bool MatchExt::has_expr() const {
-  return this != internal_default_instance() && expr_ != NULL;
-}
-inline void MatchExt::clear_expr() {
-  if (GetArenaNoVirtual() == NULL && expr_ != NULL) delete expr_;
-  expr_ = NULL;
-}
-inline const ::kvrpcpb::Expr& MatchExt::expr() const {
-  const ::kvrpcpb::Expr* p = expr_;
-  // @@protoc_insertion_point(field_get:kvrpcpb.MatchExt.expr)
-  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::Expr*>(
-      &::kvrpcpb::_Expr_default_instance_);
-}
-inline ::kvrpcpb::Expr* MatchExt::mutable_expr() {
-  
-  if (expr_ == NULL) {
-    expr_ = new ::kvrpcpb::Expr;
-  }
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.MatchExt.expr)
-  return expr_;
-}
-inline ::kvrpcpb::Expr* MatchExt::release_expr() {
-  // @@protoc_insertion_point(field_release:kvrpcpb.MatchExt.expr)
-  
-  ::kvrpcpb::Expr* temp = expr_;
-  expr_ = NULL;
-  return temp;
-}
-inline void MatchExt::set_allocated_expr(::kvrpcpb::Expr* expr) {
-  delete expr_;
-  expr_ = expr;
-  if (expr) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.MatchExt.expr)
-}
-
-// -------------------------------------------------------------------
-
-// Expr
-
-// .kvrpcpb.ExprType expr_type = 1;
-inline void Expr::clear_expr_type() {
-  expr_type_ = 0;
-}
-inline ::kvrpcpb::ExprType Expr::expr_type() const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.Expr.expr_type)
-  return static_cast< ::kvrpcpb::ExprType >(expr_type_);
-}
-inline void Expr::set_expr_type(::kvrpcpb::ExprType value) {
-  
-  expr_type_ = value;
-  // @@protoc_insertion_point(field_set:kvrpcpb.Expr.expr_type)
-}
-
-// uint32 expr_func = 2;
-inline void Expr::clear_expr_func() {
-  expr_func_ = 0u;
-}
-inline ::google::protobuf::uint32 Expr::expr_func() const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.Expr.expr_func)
-  return expr_func_;
-}
-inline void Expr::set_expr_func(::google::protobuf::uint32 value) {
-  
-  expr_func_ = value;
-  // @@protoc_insertion_point(field_set:kvrpcpb.Expr.expr_func)
-}
-
-// .metapb.Column column = 3;
-inline bool Expr::has_column() const {
-  return this != internal_default_instance() && column_ != NULL;
-}
-inline void Expr::clear_column() {
-  if (GetArenaNoVirtual() == NULL && column_ != NULL) delete column_;
-  column_ = NULL;
-}
-inline const ::metapb::Column& Expr::column() const {
-  const ::metapb::Column* p = column_;
-  // @@protoc_insertion_point(field_get:kvrpcpb.Expr.column)
-  return p != NULL ? *p : *reinterpret_cast<const ::metapb::Column*>(
-      &::metapb::_Column_default_instance_);
-}
-inline ::metapb::Column* Expr::mutable_column() {
-  
-  if (column_ == NULL) {
-    column_ = new ::metapb::Column;
-  }
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.Expr.column)
-  return column_;
-}
-inline ::metapb::Column* Expr::release_column() {
-  // @@protoc_insertion_point(field_release:kvrpcpb.Expr.column)
-  
-  ::metapb::Column* temp = column_;
-  column_ = NULL;
-  return temp;
-}
-inline void Expr::set_allocated_column(::metapb::Column* column) {
-  delete column_;
-  column_ = column;
-  if (column) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.Expr.column)
-}
-
-// bytes value = 4;
-inline void Expr::clear_value() {
-  value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& Expr::value() const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.Expr.value)
-  return value_.GetNoArena();
-}
-inline void Expr::set_value(const ::std::string& value) {
-  
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:kvrpcpb.Expr.value)
-}
-#if LANG_CXX11
-inline void Expr::set_value(::std::string&& value) {
-  
-  value_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:kvrpcpb.Expr.value)
-}
-#endif
-inline void Expr::set_value(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:kvrpcpb.Expr.value)
-}
-inline void Expr::set_value(const void* value, size_t size) {
-  
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:kvrpcpb.Expr.value)
-}
-inline ::std::string* Expr::mutable_value() {
-  
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.Expr.value)
-  return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* Expr::release_value() {
-  // @@protoc_insertion_point(field_release:kvrpcpb.Expr.value)
-  
-  return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Expr::set_allocated_value(::std::string* value) {
-  if (value != NULL) {
-    
-  } else {
-    
-  }
-  value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.Expr.value)
-}
-
-// repeated .kvrpcpb.Expr child = 5;
-inline int Expr::child_size() const {
-  return child_.size();
-}
-inline void Expr::clear_child() {
-  child_.Clear();
-}
-inline const ::kvrpcpb::Expr& Expr::child(int index) const {
-  // @@protoc_insertion_point(field_get:kvrpcpb.Expr.child)
-  return child_.Get(index);
-}
-inline ::kvrpcpb::Expr* Expr::mutable_child(int index) {
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.Expr.child)
-  return child_.Mutable(index);
-}
-inline ::kvrpcpb::Expr* Expr::add_child() {
-  // @@protoc_insertion_point(field_add:kvrpcpb.Expr.child)
-  return child_.Add();
-}
-inline ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >*
-Expr::mutable_child() {
-  // @@protoc_insertion_point(field_mutable_list:kvrpcpb.Expr.child)
-  return &child_;
-}
-inline const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Expr >&
-Expr::child() const {
-  // @@protoc_insertion_point(field_list:kvrpcpb.Expr.child)
-  return child_;
-}
-
-// -------------------------------------------------------------------
-
 // Limit
 
 // uint64 offset = 1;
@@ -11290,44 +10809,44 @@ inline void SelectRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
   // @@protoc_insertion_point(field_set_allocated:kvrpcpb.SelectRequest.limit)
 }
 
-// .kvrpcpb.MatchExt ext_filter = 10;
-inline bool SelectRequest::has_ext_filter() const {
-  return this != internal_default_instance() && ext_filter_ != NULL;
+// .exprpb.Expr where_expr = 10;
+inline bool SelectRequest::has_where_expr() const {
+  return this != internal_default_instance() && where_expr_ != NULL;
 }
-inline void SelectRequest::clear_ext_filter() {
-  if (GetArenaNoVirtual() == NULL && ext_filter_ != NULL) delete ext_filter_;
-  ext_filter_ = NULL;
+inline void SelectRequest::clear_where_expr() {
+  if (GetArenaNoVirtual() == NULL && where_expr_ != NULL) delete where_expr_;
+  where_expr_ = NULL;
 }
-inline const ::kvrpcpb::MatchExt& SelectRequest::ext_filter() const {
-  const ::kvrpcpb::MatchExt* p = ext_filter_;
-  // @@protoc_insertion_point(field_get:kvrpcpb.SelectRequest.ext_filter)
-  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::MatchExt*>(
-      &::kvrpcpb::_MatchExt_default_instance_);
+inline const ::exprpb::Expr& SelectRequest::where_expr() const {
+  const ::exprpb::Expr* p = where_expr_;
+  // @@protoc_insertion_point(field_get:kvrpcpb.SelectRequest.where_expr)
+  return p != NULL ? *p : *reinterpret_cast<const ::exprpb::Expr*>(
+      &::exprpb::_Expr_default_instance_);
 }
-inline ::kvrpcpb::MatchExt* SelectRequest::mutable_ext_filter() {
+inline ::exprpb::Expr* SelectRequest::mutable_where_expr() {
   
-  if (ext_filter_ == NULL) {
-    ext_filter_ = new ::kvrpcpb::MatchExt;
+  if (where_expr_ == NULL) {
+    where_expr_ = new ::exprpb::Expr;
   }
-  // @@protoc_insertion_point(field_mutable:kvrpcpb.SelectRequest.ext_filter)
-  return ext_filter_;
+  // @@protoc_insertion_point(field_mutable:kvrpcpb.SelectRequest.where_expr)
+  return where_expr_;
 }
-inline ::kvrpcpb::MatchExt* SelectRequest::release_ext_filter() {
-  // @@protoc_insertion_point(field_release:kvrpcpb.SelectRequest.ext_filter)
+inline ::exprpb::Expr* SelectRequest::release_where_expr() {
+  // @@protoc_insertion_point(field_release:kvrpcpb.SelectRequest.where_expr)
   
-  ::kvrpcpb::MatchExt* temp = ext_filter_;
-  ext_filter_ = NULL;
+  ::exprpb::Expr* temp = where_expr_;
+  where_expr_ = NULL;
   return temp;
 }
-inline void SelectRequest::set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter) {
-  delete ext_filter_;
-  ext_filter_ = ext_filter;
-  if (ext_filter) {
+inline void SelectRequest::set_allocated_where_expr(::exprpb::Expr* where_expr) {
+  delete where_expr_;
+  where_expr_ = where_expr;
+  if (where_expr) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.SelectRequest.ext_filter)
+  // @@protoc_insertion_point(field_set_allocated:kvrpcpb.SelectRequest.where_expr)
 }
 
 // -------------------------------------------------------------------
@@ -15911,10 +15430,6 @@ inline void DsLockGetResponse::set_allocated_resp(::kvrpcpb::LockGetResponse* re
 
 // -------------------------------------------------------------------
 
-// -------------------------------------------------------------------
-
-// -------------------------------------------------------------------
-
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -15938,11 +15453,6 @@ template <> struct is_proto_enum< ::kvrpcpb::MatchType> : ::google::protobuf::in
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::kvrpcpb::MatchType>() {
   return ::kvrpcpb::MatchType_descriptor();
-}
-template <> struct is_proto_enum< ::kvrpcpb::ExprType> : ::google::protobuf::internal::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::kvrpcpb::ExprType>() {
-  return ::kvrpcpb::ExprType_descriptor();
 }
 template <> struct is_proto_enum< ::kvrpcpb::FieldType> : ::google::protobuf::internal::true_type {};
 template <>

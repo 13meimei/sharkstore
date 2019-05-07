@@ -31,7 +31,7 @@
 #include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 #include "kvrpcpb.pb.h"
-#include "metapb.pb.h"
+#include "exprpb.pb.h"
 // @@protoc_insertion_point(includes)
 namespace txnpb {
 class ClearupRequest;
@@ -124,6 +124,9 @@ extern ScanRequestDefaultTypeInternal _ScanRequest_default_instance_;
 class ScanResponse;
 class ScanResponseDefaultTypeInternal;
 extern ScanResponseDefaultTypeInternal _ScanResponse_default_instance_;
+class SelectField;
+class SelectFieldDefaultTypeInternal;
+extern SelectFieldDefaultTypeInternal _SelectField_default_instance_;
 class SelectRequest;
 class SelectRequestDefaultTypeInternal;
 extern SelectRequestDefaultTypeInternal _SelectRequest_default_instance_;
@@ -199,6 +202,27 @@ inline bool TxnError_ErrType_Parse(
     const ::std::string& name, TxnError_ErrType* value) {
   return ::google::protobuf::internal::ParseNamedEnum<TxnError_ErrType>(
     TxnError_ErrType_descriptor(), name, value);
+}
+enum SelectField_Type {
+  SelectField_Type_Column = 0,
+  SelectField_Type_AggreFunction = 1,
+  SelectField_Type_SelectField_Type_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  SelectField_Type_SelectField_Type_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool SelectField_Type_IsValid(int value);
+const SelectField_Type SelectField_Type_Type_MIN = SelectField_Type_Column;
+const SelectField_Type SelectField_Type_Type_MAX = SelectField_Type_AggreFunction;
+const int SelectField_Type_Type_ARRAYSIZE = SelectField_Type_Type_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* SelectField_Type_descriptor();
+inline const ::std::string& SelectField_Type_Name(SelectField_Type value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    SelectField_Type_descriptor(), value);
+}
+inline bool SelectField_Type_Parse(
+    const ::std::string& name, SelectField_Type* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<SelectField_Type>(
+    SelectField_Type_descriptor(), name, value);
 }
 enum OpType {
   INSERT = 0,
@@ -3591,6 +3615,154 @@ class DsGetLockInfoResponse : public ::google::protobuf::Message /* @@protoc_ins
 };
 // -------------------------------------------------------------------
 
+class SelectField : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.SelectField) */ {
+ public:
+  SelectField();
+  virtual ~SelectField();
+
+  SelectField(const SelectField& from);
+
+  inline SelectField& operator=(const SelectField& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  SelectField(SelectField&& from) noexcept
+    : SelectField() {
+    *this = ::std::move(from);
+  }
+
+  inline SelectField& operator=(SelectField&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const SelectField& default_instance();
+
+  static inline const SelectField* internal_default_instance() {
+    return reinterpret_cast<const SelectField*>(
+               &_SelectField_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    27;
+
+  void Swap(SelectField* other);
+  friend void swap(SelectField& a, SelectField& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline SelectField* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  SelectField* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const SelectField& from);
+  void MergeFrom(const SelectField& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(SelectField* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  typedef SelectField_Type Type;
+  static const Type Column =
+    SelectField_Type_Column;
+  static const Type AggreFunction =
+    SelectField_Type_AggreFunction;
+  static inline bool Type_IsValid(int value) {
+    return SelectField_Type_IsValid(value);
+  }
+  static const Type Type_MIN =
+    SelectField_Type_Type_MIN;
+  static const Type Type_MAX =
+    SelectField_Type_Type_MAX;
+  static const int Type_ARRAYSIZE =
+    SelectField_Type_Type_ARRAYSIZE;
+  static inline const ::google::protobuf::EnumDescriptor*
+  Type_descriptor() {
+    return SelectField_Type_descriptor();
+  }
+  static inline const ::std::string& Type_Name(Type value) {
+    return SelectField_Type_Name(value);
+  }
+  static inline bool Type_Parse(const ::std::string& name,
+      Type* value) {
+    return SelectField_Type_Parse(name, value);
+  }
+
+  // accessors -------------------------------------------------------
+
+  // string aggre_func = 2;
+  void clear_aggre_func();
+  static const int kAggreFuncFieldNumber = 2;
+  const ::std::string& aggre_func() const;
+  void set_aggre_func(const ::std::string& value);
+  #if LANG_CXX11
+  void set_aggre_func(::std::string&& value);
+  #endif
+  void set_aggre_func(const char* value);
+  void set_aggre_func(const char* value, size_t size);
+  ::std::string* mutable_aggre_func();
+  ::std::string* release_aggre_func();
+  void set_allocated_aggre_func(::std::string* aggre_func);
+
+  // .exprpb.ColumnInfo column = 3;
+  bool has_column() const;
+  void clear_column();
+  static const int kColumnFieldNumber = 3;
+  const ::exprpb::ColumnInfo& column() const;
+  ::exprpb::ColumnInfo* mutable_column();
+  ::exprpb::ColumnInfo* release_column();
+  void set_allocated_column(::exprpb::ColumnInfo* column);
+
+  // .txnpb.SelectField.Type typ = 1;
+  void clear_typ();
+  static const int kTypFieldNumber = 1;
+  ::txnpb::SelectField_Type typ() const;
+  void set_typ(::txnpb::SelectField_Type value);
+
+  // @@protoc_insertion_point(class_scope:txnpb.SelectField)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr aggre_func_;
+  ::exprpb::ColumnInfo* column_;
+  int typ_;
+  mutable int _cached_size_;
+  friend struct protobuf_txn_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:txnpb.SelectRequest) */ {
  public:
   SelectRequest();
@@ -3625,7 +3797,7 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_SelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    27;
+    28;
 
   void Swap(SelectRequest* other);
   friend void swap(SelectRequest& a, SelectRequest& b) {
@@ -3696,18 +3868,6 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match >&
       where_filters() const;
 
-  // repeated .metapb.Column group_bys = 5;
-  int group_bys_size() const;
-  void clear_group_bys();
-  static const int kGroupBysFieldNumber = 5;
-  const ::metapb::Column& group_bys(int index) const;
-  ::metapb::Column* mutable_group_bys(int index);
-  ::metapb::Column* add_group_bys();
-  ::google::protobuf::RepeatedPtrField< ::metapb::Column >*
-      mutable_group_bys();
-  const ::google::protobuf::RepeatedPtrField< ::metapb::Column >&
-      group_bys() const;
-
   // bytes key = 1;
   void clear_key();
   static const int kKeyFieldNumber = 1;
@@ -3740,14 +3900,14 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::kvrpcpb::Limit* release_limit();
   void set_allocated_limit(::kvrpcpb::Limit* limit);
 
-  // .kvrpcpb.MatchExt ext_filter = 10;
-  bool has_ext_filter() const;
-  void clear_ext_filter();
-  static const int kExtFilterFieldNumber = 10;
-  const ::kvrpcpb::MatchExt& ext_filter() const;
-  ::kvrpcpb::MatchExt* mutable_ext_filter();
-  ::kvrpcpb::MatchExt* release_ext_filter();
-  void set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter);
+  // .exprpb.Expr where_expr = 10;
+  bool has_where_expr() const;
+  void clear_where_expr();
+  static const int kWhereExprFieldNumber = 10;
+  const ::exprpb::Expr& where_expr() const;
+  ::exprpb::Expr* mutable_where_expr();
+  ::exprpb::Expr* release_where_expr();
+  void set_allocated_where_expr(::exprpb::Expr* where_expr);
 
   // @@protoc_insertion_point(class_scope:txnpb.SelectRequest)
  private:
@@ -3755,11 +3915,10 @@ class SelectRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField > field_list_;
   ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match > where_filters_;
-  ::google::protobuf::RepeatedPtrField< ::metapb::Column > group_bys_;
   ::google::protobuf::internal::ArenaStringPtr key_;
   ::kvrpcpb::Scope* scope_;
   ::kvrpcpb::Limit* limit_;
-  ::kvrpcpb::MatchExt* ext_filter_;
+  ::exprpb::Expr* where_expr_;
   mutable int _cached_size_;
   friend struct protobuf_txn_2eproto::TableStruct;
 };
@@ -3799,7 +3958,7 @@ class RowValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_RowValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    28;
+    29;
 
   void Swap(RowValue* other);
   friend void swap(RowValue& a, RowValue& b) {
@@ -3925,7 +4084,7 @@ class RowIntent : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_RowIntent_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    29;
+    30;
 
   void Swap(RowIntent* other);
   friend void swap(RowIntent& a, RowIntent& b) {
@@ -4069,7 +4228,7 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
                &_Row_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    30;
+    31;
 
   void Swap(Row* other);
   friend void swap(Row& a, Row& b) {
@@ -4194,7 +4353,7 @@ class SelectResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_SelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    31;
+    32;
 
   void Swap(SelectResponse* other);
   friend void swap(SelectResponse& a, SelectResponse& b) {
@@ -4311,7 +4470,7 @@ class DsSelectRequest : public ::google::protobuf::Message /* @@protoc_insertion
                &_DsSelectRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    32;
+    33;
 
   void Swap(DsSelectRequest* other);
   friend void swap(DsSelectRequest& a, DsSelectRequest& b) {
@@ -4421,7 +4580,7 @@ class DsSelectResponse : public ::google::protobuf::Message /* @@protoc_insertio
                &_DsSelectResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    33;
+    34;
 
   void Swap(DsSelectResponse* other);
   friend void swap(DsSelectResponse& a, DsSelectResponse& b) {
@@ -4531,7 +4690,7 @@ class ValueIntent : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_ValueIntent_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    34;
+    35;
 
   void Swap(ValueIntent* other);
   friend void swap(ValueIntent& a, ValueIntent& b) {
@@ -4680,7 +4839,7 @@ class KeyValue : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_KeyValue_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    35;
+    36;
 
   void Swap(KeyValue* other);
   friend void swap(KeyValue& a, KeyValue& b) {
@@ -4810,7 +4969,7 @@ class ScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_ScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    36;
+    37;
 
   void Swap(ScanRequest* other);
   friend void swap(ScanRequest& a, ScanRequest& b) {
@@ -4937,7 +5096,7 @@ class ScanResponse : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_ScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    37;
+    38;
 
   void Swap(ScanResponse* other);
   friend void swap(ScanResponse& a, ScanResponse& b) {
@@ -5047,7 +5206,7 @@ class DsScanRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_DsScanRequest_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    38;
+    39;
 
   void Swap(DsScanRequest* other);
   friend void swap(DsScanRequest& a, DsScanRequest& b) {
@@ -5157,7 +5316,7 @@ class DsScanResponse : public ::google::protobuf::Message /* @@protoc_insertion_
                &_DsScanResponse_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    39;
+    40;
 
   void Swap(DsScanResponse* other);
   friend void swap(DsScanResponse& a, DsScanResponse& b) {
@@ -8268,6 +8427,117 @@ inline void DsGetLockInfoResponse::set_allocated_resp(::txnpb::GetLockInfoRespon
 
 // -------------------------------------------------------------------
 
+// SelectField
+
+// .txnpb.SelectField.Type typ = 1;
+inline void SelectField::clear_typ() {
+  typ_ = 0;
+}
+inline ::txnpb::SelectField_Type SelectField::typ() const {
+  // @@protoc_insertion_point(field_get:txnpb.SelectField.typ)
+  return static_cast< ::txnpb::SelectField_Type >(typ_);
+}
+inline void SelectField::set_typ(::txnpb::SelectField_Type value) {
+  
+  typ_ = value;
+  // @@protoc_insertion_point(field_set:txnpb.SelectField.typ)
+}
+
+// string aggre_func = 2;
+inline void SelectField::clear_aggre_func() {
+  aggre_func_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& SelectField::aggre_func() const {
+  // @@protoc_insertion_point(field_get:txnpb.SelectField.aggre_func)
+  return aggre_func_.GetNoArena();
+}
+inline void SelectField::set_aggre_func(const ::std::string& value) {
+  
+  aggre_func_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:txnpb.SelectField.aggre_func)
+}
+#if LANG_CXX11
+inline void SelectField::set_aggre_func(::std::string&& value) {
+  
+  aggre_func_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:txnpb.SelectField.aggre_func)
+}
+#endif
+inline void SelectField::set_aggre_func(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  aggre_func_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:txnpb.SelectField.aggre_func)
+}
+inline void SelectField::set_aggre_func(const char* value, size_t size) {
+  
+  aggre_func_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:txnpb.SelectField.aggre_func)
+}
+inline ::std::string* SelectField::mutable_aggre_func() {
+  
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectField.aggre_func)
+  return aggre_func_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* SelectField::release_aggre_func() {
+  // @@protoc_insertion_point(field_release:txnpb.SelectField.aggre_func)
+  
+  return aggre_func_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void SelectField::set_allocated_aggre_func(::std::string* aggre_func) {
+  if (aggre_func != NULL) {
+    
+  } else {
+    
+  }
+  aggre_func_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), aggre_func);
+  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectField.aggre_func)
+}
+
+// .exprpb.ColumnInfo column = 3;
+inline bool SelectField::has_column() const {
+  return this != internal_default_instance() && column_ != NULL;
+}
+inline void SelectField::clear_column() {
+  if (GetArenaNoVirtual() == NULL && column_ != NULL) delete column_;
+  column_ = NULL;
+}
+inline const ::exprpb::ColumnInfo& SelectField::column() const {
+  const ::exprpb::ColumnInfo* p = column_;
+  // @@protoc_insertion_point(field_get:txnpb.SelectField.column)
+  return p != NULL ? *p : *reinterpret_cast<const ::exprpb::ColumnInfo*>(
+      &::exprpb::_ColumnInfo_default_instance_);
+}
+inline ::exprpb::ColumnInfo* SelectField::mutable_column() {
+  
+  if (column_ == NULL) {
+    column_ = new ::exprpb::ColumnInfo;
+  }
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectField.column)
+  return column_;
+}
+inline ::exprpb::ColumnInfo* SelectField::release_column() {
+  // @@protoc_insertion_point(field_release:txnpb.SelectField.column)
+  
+  ::exprpb::ColumnInfo* temp = column_;
+  column_ = NULL;
+  return temp;
+}
+inline void SelectField::set_allocated_column(::exprpb::ColumnInfo* column) {
+  delete column_;
+  column_ = column;
+  if (column) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectField.column)
+}
+
+// -------------------------------------------------------------------
+
 // SelectRequest
 
 // bytes key = 1;
@@ -8423,36 +8693,6 @@ SelectRequest::where_filters() const {
   return where_filters_;
 }
 
-// repeated .metapb.Column group_bys = 5;
-inline int SelectRequest::group_bys_size() const {
-  return group_bys_.size();
-}
-inline void SelectRequest::clear_group_bys() {
-  group_bys_.Clear();
-}
-inline const ::metapb::Column& SelectRequest::group_bys(int index) const {
-  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.group_bys)
-  return group_bys_.Get(index);
-}
-inline ::metapb::Column* SelectRequest::mutable_group_bys(int index) {
-  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.group_bys)
-  return group_bys_.Mutable(index);
-}
-inline ::metapb::Column* SelectRequest::add_group_bys() {
-  // @@protoc_insertion_point(field_add:txnpb.SelectRequest.group_bys)
-  return group_bys_.Add();
-}
-inline ::google::protobuf::RepeatedPtrField< ::metapb::Column >*
-SelectRequest::mutable_group_bys() {
-  // @@protoc_insertion_point(field_mutable_list:txnpb.SelectRequest.group_bys)
-  return &group_bys_;
-}
-inline const ::google::protobuf::RepeatedPtrField< ::metapb::Column >&
-SelectRequest::group_bys() const {
-  // @@protoc_insertion_point(field_list:txnpb.SelectRequest.group_bys)
-  return group_bys_;
-}
-
 // .kvrpcpb.Limit limit = 6;
 inline bool SelectRequest::has_limit() const {
   return this != internal_default_instance() && limit_ != NULL;
@@ -8493,44 +8733,44 @@ inline void SelectRequest::set_allocated_limit(::kvrpcpb::Limit* limit) {
   // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.limit)
 }
 
-// .kvrpcpb.MatchExt ext_filter = 10;
-inline bool SelectRequest::has_ext_filter() const {
-  return this != internal_default_instance() && ext_filter_ != NULL;
+// .exprpb.Expr where_expr = 10;
+inline bool SelectRequest::has_where_expr() const {
+  return this != internal_default_instance() && where_expr_ != NULL;
 }
-inline void SelectRequest::clear_ext_filter() {
-  if (GetArenaNoVirtual() == NULL && ext_filter_ != NULL) delete ext_filter_;
-  ext_filter_ = NULL;
+inline void SelectRequest::clear_where_expr() {
+  if (GetArenaNoVirtual() == NULL && where_expr_ != NULL) delete where_expr_;
+  where_expr_ = NULL;
 }
-inline const ::kvrpcpb::MatchExt& SelectRequest::ext_filter() const {
-  const ::kvrpcpb::MatchExt* p = ext_filter_;
-  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.ext_filter)
-  return p != NULL ? *p : *reinterpret_cast<const ::kvrpcpb::MatchExt*>(
-      &::kvrpcpb::_MatchExt_default_instance_);
+inline const ::exprpb::Expr& SelectRequest::where_expr() const {
+  const ::exprpb::Expr* p = where_expr_;
+  // @@protoc_insertion_point(field_get:txnpb.SelectRequest.where_expr)
+  return p != NULL ? *p : *reinterpret_cast<const ::exprpb::Expr*>(
+      &::exprpb::_Expr_default_instance_);
 }
-inline ::kvrpcpb::MatchExt* SelectRequest::mutable_ext_filter() {
+inline ::exprpb::Expr* SelectRequest::mutable_where_expr() {
   
-  if (ext_filter_ == NULL) {
-    ext_filter_ = new ::kvrpcpb::MatchExt;
+  if (where_expr_ == NULL) {
+    where_expr_ = new ::exprpb::Expr;
   }
-  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.ext_filter)
-  return ext_filter_;
+  // @@protoc_insertion_point(field_mutable:txnpb.SelectRequest.where_expr)
+  return where_expr_;
 }
-inline ::kvrpcpb::MatchExt* SelectRequest::release_ext_filter() {
-  // @@protoc_insertion_point(field_release:txnpb.SelectRequest.ext_filter)
+inline ::exprpb::Expr* SelectRequest::release_where_expr() {
+  // @@protoc_insertion_point(field_release:txnpb.SelectRequest.where_expr)
   
-  ::kvrpcpb::MatchExt* temp = ext_filter_;
-  ext_filter_ = NULL;
+  ::exprpb::Expr* temp = where_expr_;
+  where_expr_ = NULL;
   return temp;
 }
-inline void SelectRequest::set_allocated_ext_filter(::kvrpcpb::MatchExt* ext_filter) {
-  delete ext_filter_;
-  ext_filter_ = ext_filter;
-  if (ext_filter) {
+inline void SelectRequest::set_allocated_where_expr(::exprpb::Expr* where_expr) {
+  delete where_expr_;
+  where_expr_ = where_expr;
+  if (where_expr) {
     
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.ext_filter)
+  // @@protoc_insertion_point(field_set_allocated:txnpb.SelectRequest.where_expr)
 }
 
 // -------------------------------------------------------------------
@@ -9942,6 +10182,8 @@ inline void DsScanResponse::set_allocated_resp(::txnpb::ScanResponse* resp) {
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -9955,6 +10197,11 @@ template <> struct is_proto_enum< ::txnpb::TxnError_ErrType> : ::google::protobu
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::txnpb::TxnError_ErrType>() {
   return ::txnpb::TxnError_ErrType_descriptor();
+}
+template <> struct is_proto_enum< ::txnpb::SelectField_Type> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::txnpb::SelectField_Type>() {
+  return ::txnpb::SelectField_Type_descriptor();
 }
 template <> struct is_proto_enum< ::txnpb::OpType> : ::google::protobuf::internal::true_type {};
 template <>
