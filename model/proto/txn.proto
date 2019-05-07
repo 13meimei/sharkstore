@@ -3,7 +3,6 @@ package txnpb;
 
 import "gogoproto/gogo.proto";
 import "kvrpcpb.proto";
-import "metapb.proto";
 
 option (gogoproto.marshaler_all) = true;
 option (gogoproto.sizer_all) = true;
@@ -210,17 +209,26 @@ message DsGetLockInfoResponse {
     GetLockInfoResponse resp      = 2;
 }
 
+message SelectField {
+    enum Type {
+        Column = 0;
+        AggreFunction = 1;
+    }
+
+    Type typ                  = 1;
+    string aggre_func         = 2;
+    kvrpcpb.ColumnInfo column = 3; // select column(if typ is Column) or aggregate function parameter(is typ is AggreFunction)
+}
 
 
 // Select
 message SelectRequest {
-    bytes key                                   = 1;       // 只查询单行
-    kvrpcpb.Scope scope                         = 2;       // 查询主键在某个范围的行
+    bytes key                                   = 1;      // 只查询单行
+    kvrpcpb.Scope scope                         = 2;      // 查询主键在某个范围的行
     repeated kvrpcpb.SelectField field_list     = 3;      // select filed list
-    repeated kvrpcpb.Match where_filters        = 4;       // where matches
-    repeated metapb.Column group_bys            = 5;       // group by column ids
-    kvrpcpb.Limit limit                         = 6;       // max range query num, 0 means no limit
-    kvrpcpb.MatchExt ext_filter                = 10;      // extend where condition
+    repeated kvrpcpb.Match where_filters        = 4;      // where matches
+    kvrpcpb.Limit limit                         = 6;      // max range query num, 0 means no limit
+    kvrpcpb.Expr where_expr                     = 10;      // extend where condition
 }
 
 message RowValue {
