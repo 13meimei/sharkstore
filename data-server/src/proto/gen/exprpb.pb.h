@@ -59,31 +59,31 @@ void InitDefaults();
 }  // namespace protobuf_exprpb_2eproto
 
 enum ExprType {
-  E_Invalid = 0,
-  E_Column = 1,
-  E_Const_Int = 2,
-  E_Const_UInt = 3,
-  E_Const_Double = 4,
-  E_Const_Bytes = 5,
-  E_LogicAnd = 10,
-  E_LogicOr = 11,
-  E_LogicNot = 12,
-  E_Equal = 20,
-  E_NotEqual = 21,
-  E_Less = 22,
-  E_LessOrEqual = 23,
-  E_Larger = 24,
-  E_LargerOrEqual = 25,
-  E_Plus = 31,
-  E_Minus = 32,
-  E_Mult = 33,
-  E_Div = 34,
+  Invalid = 0,
+  Column = 1,
+  Const_Int = 2,
+  Const_UInt = 3,
+  Const_Double = 4,
+  Const_Bytes = 5,
+  LogicAnd = 10,
+  LogicOr = 11,
+  LogicNot = 12,
+  Equal = 20,
+  NotEqual = 21,
+  Less = 22,
+  LessOrEqual = 23,
+  Larger = 24,
+  LargerOrEqual = 25,
+  Plus = 31,
+  Minus = 32,
+  Mult = 33,
+  Div = 34,
   ExprType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   ExprType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ExprType_IsValid(int value);
-const ExprType ExprType_MIN = E_Invalid;
-const ExprType ExprType_MAX = E_Div;
+const ExprType ExprType_MIN = Invalid;
+const ExprType ExprType_MAX = Div;
 const int ExprType_ARRAYSIZE = ExprType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ExprType_descriptor();

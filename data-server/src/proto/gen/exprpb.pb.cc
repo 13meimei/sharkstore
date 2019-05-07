@@ -131,18 +131,17 @@ void AddDescriptorsImpl() {
       "tapb.DataType\022\020\n\010unsigned\030\003 \001(\010\"{\n\004Expr\022"
       "#\n\texpr_type\030\001 \001(\0162\020.exprpb.ExprType\022\"\n\006"
       "column\030\002 \001(\0132\022.exprpb.ColumnInfo\022\r\n\005valu"
-      "e\030\003 \001(\014\022\033\n\005child\030\004 \003(\0132\014.exprpb.Expr*\257\002\n"
-      "\010ExprType\022\r\n\tE_Invalid\020\000\022\014\n\010E_Column\020\001\022\017"
-      "\n\013E_Const_Int\020\002\022\020\n\014E_Const_UInt\020\003\022\022\n\016E_C"
-      "onst_Double\020\004\022\021\n\rE_Const_Bytes\020\005\022\016\n\nE_Lo"
-      "gicAnd\020\n\022\r\n\tE_LogicOr\020\013\022\016\n\nE_LogicNot\020\014\022"
-      "\013\n\007E_Equal\020\024\022\016\n\nE_NotEqual\020\025\022\n\n\006E_Less\020\026"
-      "\022\021\n\rE_LessOrEqual\020\027\022\014\n\010E_Larger\020\030\022\023\n\017E_L"
-      "argerOrEqual\020\031\022\n\n\006E_Plus\020\037\022\013\n\007E_Minus\020 \022"
-      "\n\n\006E_Mult\020!\022\t\n\005E_Div\020\"b\006proto3"
+      "e\030\003 \001(\014\022\033\n\005child\030\004 \003(\0132\014.exprpb.Expr*\211\002\n"
+      "\010ExprType\022\013\n\007Invalid\020\000\022\n\n\006Column\020\001\022\r\n\tCo"
+      "nst_Int\020\002\022\016\n\nConst_UInt\020\003\022\020\n\014Const_Doubl"
+      "e\020\004\022\017\n\013Const_Bytes\020\005\022\014\n\010LogicAnd\020\n\022\013\n\007Lo"
+      "gicOr\020\013\022\014\n\010LogicNot\020\014\022\t\n\005Equal\020\024\022\014\n\010NotE"
+      "qual\020\025\022\010\n\004Less\020\026\022\017\n\013LessOrEqual\020\027\022\n\n\006Lar"
+      "ger\020\030\022\021\n\rLargerOrEqual\020\031\022\010\n\004Plus\020\037\022\t\n\005Mi"
+      "nus\020 \022\010\n\004Mult\020!\022\007\n\003Div\020\"b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 550);
+      descriptor, 512);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "exprpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
