@@ -43,8 +43,7 @@ message ColumnInfo {
 
 message Expr {
     ExprType expr_type      = 1;    // uint32
-    uint32 expr_func        = 2;    // reserve
-    ColumnInfo column       = 3;    // left in optimization
-    bytes value             = 4;    // maybe left or right, but right in optimization
-    repeated Expr  child    = 5;    // alwayse 2 expr left and right, but LogicNot
+    ColumnInfo column       = 2;    // left in optimization
+    bytes value             = 3;    // maybe left or right, but right in optimization
+    repeated Expr  child    = 4;    // alwayse 2 expr left and right, but LogicNot
 }
