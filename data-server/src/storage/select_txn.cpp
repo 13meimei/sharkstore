@@ -246,6 +246,7 @@ Status TxnRowFetcher::addIntent(const txnpb::TxnValue &txn_value, txnpb::Row &ro
         if (!matched) {
             return Status::OK();
         }
+        // TODO: 如果不match，则应该把intent视作为delete
         value.Encode(req_, row.mutable_intent()->mutable_value());
     }
 

@@ -25,19 +25,18 @@ using TxnErrorPtr = std::unique_ptr<txnpb::TxnError>;
 // 行前缀长度: 1字节特殊标记+8字节table id
 static const size_t kRowPrefixLength = 9;
 static const unsigned char kStoreKVPrefixByte = '\x01';
-
-static const size_t kDefaultMaxSelectLimit = 10000;
-
+static const size_t kDefaultMaxSelectLimit = 1000;
 static const uint32_t kVersionColumnID = std::numeric_limits<uint32_t>::max();
 
 class DbInterface;
+
 class Store {
 public:
     Store(const metapb::Range& meta, DbInterface* db);
     ~Store();
 
     Store(const Store&) = delete;
-//    Store& operator=(const Store&) = delete;
+    Store& operator=(const Store&) = delete;
 
     void SetEndKey(std::string end_key);
     std::string GetEndKey() const;
@@ -50,6 +49,7 @@ public:
     // 统计存储实际大小，并且根据split_size返回中间key
     Status StatSize(uint64_t split_size, range::SplitKeyMode mode,
                     uint64_t *real_size, std::string *split_key);
+
     // 从rocksdb中删除当前range的数据
     Status Truncate();
 
@@ -70,7 +70,6 @@ public:
 
     Status GetTxnValue(const std::string& key, std::string& db_value);
     Status GetTxnValue(const std::string& key, txnpb::TxnValue* value);
-    std::unique_ptr<TxnIterator> NewTxnIterator(const std::string& start = "", const std::string& limit = "");
 
     uint64_t TxnPrepare(const txnpb::PrepareRequest& req, uint64_t version, txnpb::PrepareResponse* resp);
     uint64_t TxnDecide(const txnpb::DecideRequest& req, txnpb::DecideResponse* resp);
@@ -80,29 +79,27 @@ public:
     Status TxnScan(const txnpb::ScanRequest& req, txnpb::ScanResponse* resp);
 
 public:
-    IteratorInterface* NewIterator(const ::kvrpcpb::Scope& scope);
-    IteratorInterface* NewIterator(std::string start = std::string(),
-                          std::string limit = std::string());
-    Status BatchDelete(const std::vector<std::string>& keys);
-    bool KeyExists(const std::string& key);
-    Status BatchSet(
-        const std::vector<std::pair<std::string, std::string>>& keyValues);
-    Status RangeDelete(const std::string& start, const std::string& limit);
+    std::unique_ptr<IteratorInterface> NewIterator(const std::string& start = "",
+            const std::string& limit = "");
 
-    Status NewIterators(std::unique_ptr<IteratorInterface>& data_iter, std::unique_ptr<IteratorInterface>& txn_iter,
+    Status NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
+            std::unique_ptr<IteratorInterface>& txn_iter,
             const std::string& start = "", const std::string& limit = "");
 
     Status GetSnapshot(uint64_t apply_index, std::string&& context,
             std::shared_ptr<raft::Snapshot>* snapshot);
     Status ApplySnapshot(const std::vector<std::string>& datas);
 
-public:
     void addMetricRead(uint64_t keys, uint64_t bytes);
     void addMetricWrite(uint64_t keys, uint64_t bytes);
 
 private:
     friend class RowFetcher;
     friend class ::sharkstore::test::helper::StoreTestFixture;
+
+    using KeyScope = std::pair<std::string, std::string>;
+
+    KeyScope fixKeyScope(const std::string& start_key, const std::string& end_key) const;
 
     Status selectSimple(const kvrpcpb::SelectRequest& req,
                         kvrpcpb::SelectResponse* resp);

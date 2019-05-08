@@ -49,13 +49,11 @@ public:
 private:
     std::string value_;
     std::vector<FieldUpdate> field_value_;
-    std::map<uint64_t, kvrpcpb::Field*> update_field_;
-    std::map<uint64_t, FieldValue*> update_field_delta_;
 
 private:
     std::string key_;
+    uint64_t version_ = 0;
     std::map<uint64_t, FieldValue*> fields_;
-
 };
 
 class RowDecoder {
@@ -78,7 +76,7 @@ public:
             const std::vector<metapb::Column>& primary_keys,
             const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField>& field_list,
             const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches,
-            const ::kvrpcpb::MatchExt& match_ext);
+            const ::exprpb::Expr& where_expr);
 
     ~RowDecoder();
 
@@ -98,6 +96,7 @@ public:
     bool isExprValid() const {
         return (where_expr_ != nullptr);
     }
+
 private:
     Status decodePrimaryKeys(const std::string& key, RowResult* result);
 

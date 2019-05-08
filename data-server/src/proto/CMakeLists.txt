@@ -1,6 +1,7 @@
 set (proto_SOURCES
     gen/ds_admin.pb.cc
     gen/errorpb.pb.cc
+    gen/exprpb.pb.cc
     gen/funcpb.pb.cc
     gen/kvrpcpb.pb.cc
     gen/metapb.pb.cc

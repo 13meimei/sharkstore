@@ -1,6 +1,7 @@
 _Pragma("once");
 
 #include "proto/gen/kvrpcpb.pb.h"
+#include "proto/gen/exprpb.pb.h"
 
 #include "table.h"
 
@@ -28,14 +29,14 @@ public:
     // select where filter
     void AddMatch(const std::string& col, kvrpcpb::MatchType type, const std::string& val);
     //expand where condition
-    void AppendMatchExt(const std::string& col, const std::string& val,
-        ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix=::kvrpcpb::E_LogicAnd);
+    void AppendWhereExpr(const std::string& col, const std::string& val,
+        exprpb::ExprType et, exprpb::ExprType logic_suffix=exprpb::LogicAnd);
 
     void AppendCompCond(const std::string& col, const std::string& val,
-        ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix);
+        exprpb::ExprType et, exprpb::ExprType logic_suffix);
 
-    void ClearMatchExt() {
-        req_.mutable_ext_filter()->Clear();
+    void ClearWhereExpr() {
+        req_.clear_where_expr();
     }
     // select limit
     void AddLimit(uint64_t count, uint64_t offset = 0);

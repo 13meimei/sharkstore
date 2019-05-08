@@ -16,8 +16,6 @@ namespace sharkstore {
 namespace dataserver {
 namespace storage {
 
-static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r);
-
 Store::Store(const metapb::Range& meta, storage::DbInterface* db)
     : table_id_(meta.table_id()),
       range_id_(meta.id()),
@@ -32,7 +30,7 @@ Store::Store(const metapb::Range& meta, storage::DbInterface* db)
     }
 }
 
-Store::~Store() {}
+Store::~Store() = default;
 
 Status Store::Get(const std::string& key, std::string* value) {
     auto s = db_->Get(key, value);
@@ -104,50 +102,8 @@ Status Store::Insert(const kvrpcpb::InsertRequest& req, uint64_t* affected) {
 }
 
 Status Store::Update(const kvrpcpb::UpdateRequest& req, uint64_t* affected, uint64_t* update_bytes) {
-    RowFetcher f(*this, req);
-    Status s;
-    std::unique_ptr<RowResult> r(new RowResult);
-    bool over = false;
-    uint64_t count = 0;
-    uint64_t all = 0;
-    uint64_t limit = req.has_limit() ? req.limit().count() : kDefaultMaxSelectLimit;
-    uint64_t offset = req.has_limit() ? req.limit().offset() : 0;
-
-    auto batch = db_->NewBatch();
-    uint64_t bytes_written = 0;
-
-    while (!over && s.ok()) {
-        over = false;
-        s = f.Next(r.get(), &over);
-        if (s.ok() && !over) {
-            ++all;
-            if (all > offset) {
-                kvrpcpb::KvPair kv;
-                Status s;
-
-                s = updateRow(&kv, *r);
-                if (!s.ok()) {
-                    return s;
-                }
-
-                batch->Put(kv.key(), kv.value());
-                ++(*affected);
-                bytes_written += kv.key().size() + kv.value().size();
-
-                if (++count >= limit) break;
-            }
-        }
-    }
-
-    if (s.ok()) {
-        auto rs = db_->Write(batch.get());
-        if (!rs.ok()) {
-            s = Status(Status::kIOError, "update batch write", rs.ToString());
-        }
-    }
-
-    *update_bytes = bytes_written;
-    return s;
+    // TOOD: support update
+    return Status(Status::kNotSupported);
 }
 
 static void addRow(const kvrpcpb::SelectRequest& req, kvrpcpb::SelectResponse* resp, const RowResult& r) {
@@ -162,140 +118,6 @@ static void addRow(const kvrpcpb::SelectRequest& req, kvrpcpb::SelectResponse* r
     auto row = resp->add_rows();
     row->set_key(r.Key());
     row->set_fields(buf);
-}
-
-static Status updateRow(kvrpcpb::KvPair* row, const RowResult& r) {
-    std::string final_encode_value;
-    const auto& origin_encode_value = r.Value();
-
-    for (auto it = r.FieldValueList().begin(); it != r.FieldValueList().end(); it++) {
-        auto& field = *it;
-
-        std::string value;
-        auto it_field_update = r.UpdateFieldMap().find(field.column_id_);
-        if (it_field_update == r.UpdateFieldMap().end()) {
-            value.assign(origin_encode_value, field.offset_, field.length_);
-            final_encode_value.append(value);
-            continue;
-        }
-
-        // 更新列值
-        // delta field value
-        auto it_value_delta = r.UpdateFieldDeltaMap().find(field.column_id_);
-        if (it_value_delta == r.UpdateFieldDeltaMap().end()) {
-            return Status(Status::kUnknown, std::string("no such update column id: " + field.column_id_), "");
-        }
-        FieldValue* value_delta = it_value_delta->second;
-
-        // orig field value
-        FieldValue* value_orig = r.GetField(field.column_id_);
-        if (value_orig == nullptr) {
-            return Status(Status::kUnknown, std::string("no such column id " + field.column_id_), "");
-        }
-
-        // kv rpc field
-        kvrpcpb::Field* field_delta = it_field_update->second;
-
-        switch (field_delta->field_type()) {
-            case kvrpcpb::Assign:
-                switch (value_delta->Type()) {
-                    case FieldType::kInt:
-                        value_orig->AssignInt(value_delta->Int());
-                        break;
-                    case FieldType::kUInt:
-                        value_orig->AssignUint(value_delta->UInt());
-                        break;
-                    case FieldType::kFloat:
-                        value_orig->AssignFloat(value_delta->Float());
-                        break;
-                    case FieldType::kBytes:
-                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
-                        break;
-                }
-                break;
-            case kvrpcpb::Plus:
-                switch (value_delta->Type()) {
-                    case FieldType::kInt:
-                        value_orig->AssignInt(value_orig->Int() + value_delta->Int());
-                        break;
-                    case FieldType::kUInt:
-                        value_orig->AssignUint(value_orig->UInt() + value_delta->UInt());
-                        break;
-                    case FieldType::kFloat:
-                        value_orig->AssignFloat(value_orig->Float() + value_delta->Float());
-                        break;
-                    case FieldType::kBytes:
-                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
-                        break;
-                }
-                break;
-            case kvrpcpb::Minus:
-                switch (value_delta->Type()) {
-                    case FieldType::kInt:
-                        value_orig->AssignInt(value_orig->Int() - value_delta->Int());
-                        break;
-                    case FieldType::kUInt:
-                        value_orig->AssignUint(value_orig->UInt() - value_delta->UInt());
-                        break;
-                    case FieldType::kFloat:
-                        value_orig->AssignFloat(value_orig->Float() - value_delta->Float());
-                        break;
-                    case FieldType::kBytes:
-                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
-                        break;
-                }
-                break;
-            case kvrpcpb::Mult:
-                switch (value_delta->Type()) {
-                    case FieldType::kInt:
-                        value_orig->AssignInt(value_orig->Int() * value_delta->Int());
-                        break;
-                    case FieldType::kUInt:
-                        value_orig->AssignUint(value_orig->UInt() * value_delta->UInt());
-                        break;
-                    case FieldType::kFloat:
-                        value_orig->AssignFloat(value_orig->Float() * value_delta->Float());
-                        break;
-                    case FieldType::kBytes:
-                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
-                        break;
-                }
-                break;
-            case kvrpcpb::Div:
-                switch (value_delta->Type()) {
-                    case FieldType::kInt:
-                        if (value_delta->Int() != 0) {
-                            value_orig->AssignInt(value_orig->Int() / value_delta->Int());
-                        }
-                        break;
-                    case FieldType::kUInt:
-                        if (value_delta->UInt() != 0) {
-                            value_orig->AssignUint(value_orig->UInt() / value_delta->UInt());
-                        }
-                        break;
-                    case FieldType::kFloat:
-                        if (value_delta->Float() != 0) {
-                            value_orig->AssignFloat(value_orig->Float() / value_delta->Float());
-                        }
-                        break;
-                    case FieldType::kBytes:
-                        value_orig->AssignBytes(new std::string(value_delta->Bytes()));
-                        break;
-                }
-                break;
-            default:
-                return Status(Status::kUnknown, "unknown field operator type", "");
-        }
-
-        // 重新编码修改后的field value
-        EncodeFieldValue(&value, value_orig, field.column_id_);
-        final_encode_value.append(value);
-    }
-
-    row->set_key(r.Key());
-    row->set_value(final_encode_value);
-
-    return Status::OK();
 }
 
 Status Store::selectSimple(const kvrpcpb::SelectRequest& req, kvrpcpb::SelectResponse* resp) {
@@ -466,105 +288,38 @@ std::string Store::GetEndKey() const {
     return end_key_;
 }
 
-IteratorInterface* Store::NewIterator(const kvrpcpb::Scope& scope) {
-    std::string start = scope.start();
-    std::string limit = scope.limit();
-    if (start.empty() || start < start_key_) {
-        start = start_key_;
-    }
-
-    {
-        std::unique_lock<std::mutex> lock(key_lock_);
-        if (limit.empty() || limit > end_key_) {
-            limit = end_key_;
-        }
-    }
-    return db_->NewIterator(start, limit);
-}
-
-IteratorInterface* Store::NewIterator(std::string start, std::string limit) {
-    if (start.empty() || start < start_key_) {
-        start = start_key_;
-    }
-
-    {
-        std::unique_lock<std::mutex> lock(key_lock_);
-        if (limit.empty() || limit > end_key_) {
-            limit = end_key_;
-        }
-    }
-    return db_->NewIterator(start, limit);
-}
-
-Status Store::BatchDelete(const std::vector<std::string>& keys) {
-    if (keys.empty()) return Status::OK();
-
-    uint64_t keys_written = 0;
-    uint64_t bytes_written = 0;
-
-    auto batch = db_->NewBatch();
-    for (auto& key : keys) {
-        batch->Delete(key);
-        ++keys_written;
-        bytes_written += key.size();
-    }
-    auto ret = db_->Write(batch.get());
-    if (ret.ok()) {
-        addMetricWrite(keys_written, bytes_written);
-        return Status::OK();
+Store::KeyScope Store::fixKeyScope(const std::string& start_key, const std::string& end_key) const {
+    KeyScope result;
+    if (start_key.empty() || start_key < start_key_) {
+        result.first = start_key_;
     } else {
-        return Status(Status::kIOError, "BatchDelete", ret.ToString());
+        result.first = start_key;
     }
-}
 
-bool Store::KeyExists(const std::string& key) {
-    std::string value;
-    auto ret = db_->Get(db_->DefaultColumnFamily(), key, &value);
-    addMetricRead(1, key.size() + value.size());
-    return ret.ok();
-}
-
-Status Store::BatchSet(const std::vector<std::pair<std::string, std::string>>& keyValues) {
-    if (keyValues.empty()) return Status::OK();
-
-    uint64_t keys_written = 0;
-    uint64_t bytes_written = 0;
-
-    auto batch = db_->NewBatch();
-    for (auto& kv : keyValues) {
-        batch->Put(kv.first, kv.second);
-        ++keys_written;
-        bytes_written += (kv.first.size() + kv.second.size());
-    }
-    auto ret = db_->Write(batch.get());
-    if (ret.ok()) {
-        addMetricWrite(keys_written, bytes_written);
-        return Status::OK();
+    auto store_end_key = GetEndKey();
+    if (end_key.empty() || end_key > store_end_key) {
+        result.second = std::move(store_end_key);
     } else {
-        return Status(Status::kIOError, "BatchSet", ret.ToString());
+        result.second = end_key;
     }
+
+    assert(result.first <= result.second);
+    assert(result.first <= start_key_);
+
+    return result;
 }
 
-Status Store::RangeDelete(const std::string& start, const std::string& limit) {
-    auto ret = db_->DeleteRange(db_->DefaultColumnFamily(), start, limit);
-    return Status(ret.ok() ? Status::OK() : Status(Status::kUnknown));
+std::unique_ptr<IteratorInterface> Store::NewIterator(const std::string& start, const std::string& limit) {
+    auto scope = fixKeyScope(start, limit);
+    return std::unique_ptr<IteratorInterface>(db_->NewIterator(scope.first, scope.second));
 }
 
 Status Store::NewIterators(std::unique_ptr<IteratorInterface>& data_iter,
-                           std::unique_ptr<IteratorInterface>& txn_iter, const std::string& start,
+                           std::unique_ptr<IteratorInterface>& txn_iter,
+                           const std::string& start,
                            const std::string& limit) {
-    std::string final_start = start, final_end = limit;
-    if (final_start.empty() || final_start < start_key_) {
-        final_start = start_key_;
-    }
-    auto end_key = GetEndKey();
-    if (final_end.empty() || final_end > end_key) {
-        final_end = end_key;
-    }
-    assert(final_start >= start_key_);
-    assert(final_end <= end_key);
-
-    return db_->NewIterators(data_iter, txn_iter, final_start, final_end);
+    auto scope = fixKeyScope(start, limit);
+    return db_->NewIterators(data_iter, txn_iter, scope.first, scope.second);
 }
 
 Status Store::GetSnapshot(uint64_t apply_index, std::string&& context,
@@ -666,7 +421,7 @@ Status Store::StatSize(uint64_t split_size, range::SplitKeyMode mode, uint64_t* 
     // start_key_.length() + 5
     auto max_len = start_key_.length() + 5;
 
-    std::unique_ptr<IteratorInterface> it(NewIterator());
+    auto it = NewIterator();
     std::string middle_key;
     std::string first_key;
 

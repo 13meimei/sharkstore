@@ -395,23 +395,20 @@ void AddDescriptorsImpl() {
       "er\030\002 \001(\0132\014.metapb.Peer\"Q\n\016SnapshotKVPair"
       "\022\013\n\003key\030\001 \001(\014\022\r\n\005value\030\002 \001(\014\022#\n\007cf_type\030"
       "\003 \001(\0162\022.raft_cmdpb.CFType\".\n\017SnapshotCon"
-      "text\022\033\n\004meta\030\001 \001(\0132\r.metapb.Range*\310\003\n\007Cm"
+      "text\022\033\n\004meta\030\001 \001(\0132\r.metapb.Range*\330\002\n\007Cm"
       "dType\022\013\n\007Invalid\020\000\022\n\n\006RawGet\020\001\022\n\n\006RawPut"
       "\020\002\022\r\n\tRawDelete\020\003\022\016\n\nRawExecute\020\004\022\n\n\006Sel"
       "ect\020\007\022\n\n\006Insert\020\010\022\n\n\006Delete\020\t\022\n\n\006Update\020"
-      "\n\022\013\n\007Replace\020\013\022\017\n\013BatchInsert\020\014\022\t\n\005KvSet"
-      "\020\r\022\t\n\005KvGet\020\016\022\016\n\nKvBatchSet\020\017\022\016\n\nKvBatch"
-      "Get\020\020\022\n\n\006KvScan\020\021\022\014\n\010KvDelete\020\022\022\016\n\nKvBat"
-      "chDel\020\023\022\016\n\nKvRangeDel\020\024\022\016\n\nKvWatchPut\020\025\022"
-      "\016\n\nKvWatchDel\020\026\022\016\n\nAdminSplit\020\036\022\016\n\nAdmin"
-      "Merge\020\037\022\025\n\021AdminLeaderChange\020 \022\010\n\004Lock\020("
-      "\022\016\n\nLockUpdate\020)\022\n\n\006Unlock\020*\022\017\n\013UnlockFo"
-      "rce\020+\022\016\n\nTxnPrepare\0202\022\r\n\tTxnDecide\0203\022\016\n\n"
-      "TxnClearup\0204*$\n\006CFType\022\016\n\nCF_DEFAULT\020\000\022\n"
-      "\n\006CF_TXN\020\001b\006proto3"
+      "\n\022\013\n\007Replace\020\013\022\017\n\013BatchInsert\020\014\022\016\n\nKvWat"
+      "chPut\020\025\022\016\n\nKvWatchDel\020\026\022\016\n\nAdminSplit\020\036\022"
+      "\016\n\nAdminMerge\020\037\022\025\n\021AdminLeaderChange\020 \022\010"
+      "\n\004Lock\020(\022\016\n\nLockUpdate\020)\022\n\n\006Unlock\020*\022\017\n\013"
+      "UnlockForce\020+\022\016\n\nTxnPrepare\0202\022\r\n\tTxnDeci"
+      "de\0203\022\016\n\nTxnClearup\0204*$\n\006CFType\022\016\n\nCF_DEF"
+      "AULT\020\000\022\n\n\006CF_TXN\020\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 2298);
+      descriptor, 2186);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "raft_cmdpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -451,14 +448,6 @@ bool CmdType_IsValid(int value) {
     case 10:
     case 11:
     case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 16:
-    case 17:
-    case 18:
-    case 19:
-    case 20:
     case 21:
     case 22:
     case 30:

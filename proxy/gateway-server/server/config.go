@@ -34,7 +34,7 @@ const (
 	DefaultGrpcInitWinSize = 64 * 1024
 	DefaultMaxSlowLogLen   = 10
 
-	DefaultMaxRawCount = 10000
+	DefaultMaxRawCount = 1000
 )
 
 type Config struct {

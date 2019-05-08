@@ -122,16 +122,6 @@ Status Store::GetTxnValue(const std::string &key, TxnValue *value) {
     return Status::OK();
 }
 
-std::unique_ptr<TxnIterator> Store::NewTxnIterator(const std::string& start, const std::string& limit) {
-    std::unique_ptr<IteratorInterface> data_iter, txn_iter;
-    auto s = NewIterators(data_iter, txn_iter, start, limit);
-    if (!s.ok()) {
-        return nullptr;
-    }
-    std::unique_ptr<TxnIterator> iter(new TxnIterator(std::move(data_iter), std::move(txn_iter)));
-    return iter;
-}
-
 Status Store::writeTxnValue(const txnpb::TxnValue& value, WriteBatchInterface* batch) {
     std::string db_value;
     if (!value.SerializeToString(&db_value)) {

@@ -113,43 +113,54 @@ void SelectRequestBuilder::AddMatch(const std::string& col, kvrpcpb::MatchType t
     w->mutable_threshold()->assign(val);
 }
 
-static ::kvrpcpb::Expr *CreateExprCol(const metapb::Column &col, const std::string &name, ::kvrpcpb::Expr* e) {
-
-//    printf(">>>>>>>>>leaf expr_type: %d\n", kvrpcpb::E_ExprCol);
-    e->mutable_column()->CopyFrom(col);
-    e->set_expr_type(kvrpcpb::E_ExprCol);
-    e->mutable_column()->set_name(name);
-
-    return e;
+static void CreateColumnExpr(const metapb::Column &col, ::exprpb::Expr* e) {
+    e->set_expr_type(exprpb::Column);
+    e->mutable_column()->set_id(col.id());
+    e->mutable_column()->set_typ(col.data_type());
+    e->mutable_column()->set_unsigned_(col.unsigned_());
 }
 
-static ::kvrpcpb::Expr *CreateExprVal(const metapb::Column& col, const std::string &val, ::kvrpcpb::Expr* e) {
-
-//    printf(">>>>>>>>>leaf expr_type: %d\n", kvrpcpb::E_ExprConst);
-    e->set_expr_type(kvrpcpb::E_ExprConst);
+static void CreateConstantExpr(const metapb::Column& col, const std::string &val, ::exprpb::Expr* e) {
+    switch (col.data_type()) {
+        case metapb::Tinyint:
+        case metapb::Smallint:
+        case metapb::Int:
+        case metapb::BigInt:
+            e->set_expr_type(col.unsigned_() ? exprpb::Const_UInt : exprpb::Const_Int);
+            break;
+        case metapb::Float:
+        case metapb::Double:
+            e->set_expr_type(exprpb::Const_Double);
+            break;
+        case metapb::Varchar:
+        case metapb::Binary:
+        case metapb::Date:
+        case metapb::TimeStamp:
+            e->set_expr_type(exprpb::Const_Bytes);
+            break;
+        default:
+            e->set_expr_type(exprpb::Invalid);
+    }
     e->set_value(val);
-    e->mutable_column()->CopyFrom(col);
-
-    return e;
 }
 
-static ::kvrpcpb::Expr *CreateExpr(::kvrpcpb::Expr *e, const metapb::Column &col, const std::string& name,
-        const std::string& val, ::kvrpcpb::ExprType et)
+static ::exprpb::Expr *CreateExpr(::exprpb::Expr *e, const metapb::Column &col, const std::string& name,
+        const std::string& val, ::exprpb::ExprType et)
 {
     //printf(">>>>>>child expr_type: %d\n", et);
     e->set_expr_type(et);
 
     auto l = e->add_child();
-    CreateExprCol(col, name, l);
+    CreateColumnExpr(col, l);
 
     auto r = e->add_child();
-    CreateExprVal(col, val, r);
+    CreateConstantExpr(col, val, r);
     return e;
 }
 
-static int  buildMathExpr(const metapb::Column& col, const std::string &flag, kvrpcpb::Expr *e) {
-    kvrpcpb::Expr *l = nullptr;
-    kvrpcpb::Expr *r = nullptr;
+static int  buildMathExpr(const metapb::Column& col, const std::string &flag, exprpb::Expr *e) {
+    exprpb::Expr *l = nullptr;
+    exprpb::Expr *r = nullptr;
     std::string value;
     std::string el;
     std::string er;
@@ -161,16 +172,16 @@ static int  buildMathExpr(const metapb::Column& col, const std::string &flag, kv
     char ff = *(flag.data());
     switch (ff) {
         case '+':
-            e->set_expr_type(kvrpcpb::E_Plus);
+            e->set_expr_type(exprpb::Plus);
             break;
         case '-':
-            e->set_expr_type(kvrpcpb::E_Minus);
+            e->set_expr_type(exprpb::Minus);
             break;
         case '*':
-            e->set_expr_type(kvrpcpb::E_Mult);
+            e->set_expr_type(exprpb::Mult);
             break;
         case '/':
-            e->set_expr_type(kvrpcpb::E_Div);
+            e->set_expr_type(exprpb::Div);
             break;
         default:
             return -1;
@@ -187,26 +198,18 @@ static int  buildMathExpr(const metapb::Column& col, const std::string &flag, kv
     er = value.substr(pos+1);
     if (el == col.name()) {
         l = e->add_child();
-        auto tmp = new metapb::Column(col);
-        l->set_allocated_column(tmp);
-        l->set_expr_type(kvrpcpb::E_ExprCol);
+        CreateColumnExpr(col, l);
     } else {
         l = e->add_child();
-        l->mutable_column()->CopyFrom(col);
-        l->set_value(el);
-        l->set_expr_type(kvrpcpb::E_ExprConst);
+        CreateConstantExpr(col, el, l);
     }
 
     if (er == col.name()) {
         r = e->add_child();
-        auto column = new metapb::Column(col);
-        r->set_allocated_column(column);
-        r->set_expr_type(kvrpcpb::E_ExprCol);
+        CreateColumnExpr(col, l);
     } else {
         r = e->add_child();
-        r->mutable_column()->CopyFrom(col);
-        r->set_value(er);
-        r->set_expr_type(kvrpcpb::E_ExprConst);
+        CreateConstantExpr(col, el, l);
     }
 
     return 0;
@@ -216,46 +219,45 @@ static int  buildMathExpr(const metapb::Column& col, const std::string &flag, kv
 //val = 1 + 1
 //decode val into Expr
 void SelectRequestBuilder::AppendCompCond(const std::string& col, const std::string& val,
-        ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix)
-{
-    AppendMatchExt(col, val, et, logic_suffix);
+                    exprpb::ExprType et, exprpb::ExprType logic_suffix) {
+    AppendWhereExpr(col, val, et, logic_suffix);
     //printf("AppendCompCond...\n");
 
-    auto root = req_.mutable_ext_filter()->mutable_expr();
+    auto root = req_.mutable_where_expr();
     decltype(root) l = nullptr, r = nullptr;
 
     const metapb::Column& column = table_->GetColumn(col);
     auto tmp = root;
 
     //change const Expr id+1 to 3 Expr,like + and id and 1
-    auto fn = [&](kvrpcpb::Expr *l) ->void {
+    auto fn = [&](exprpb::Expr *l) ->void {
         //printf("in lambda....%s\n", l->value().c_str());
 
-        if (l->expr_type() == kvrpcpb::E_ExprConst &&
-            l->column().data_type() >= metapb::Tinyint &&
-            l->column().data_type() <= metapb::Double)
-        {
-                if (l->value().find("+") != std::string::npos) {
-                    //to do decode +
-                    buildMathExpr(column, "+", l);
-                    return;
-                }
-                if (l->value().find("-") != std::string::npos) {
-                    //to do decode -
-                    buildMathExpr(column, "-", l);
-                    return;
-                }
-                if (l->value().find("*") != std::string::npos) {
-                    //to do decode *
-                    buildMathExpr(column, "*", l);
-                    return;
-                }
-                if (l->value().find("/") != std::string::npos) {
-                    //to do decode /
-                    buildMathExpr(column, "/", l);
-                    return;
-                }
-        } //end if
+//        if (l->expr_type() == exprpb::E_ExprConst &&
+//            l->column().data_type() >= metapb::Tinyint &&
+//            l->column().data_type() <= metapb::Double)
+//        {
+//                if (l->value().find("+") != std::string::npos) {
+//                    //to do decode +
+//                    buildMathExpr(column, "+", l);
+//                    return;
+//                }
+//                if (l->value().find("-") != std::string::npos) {
+//                    //to do decode -
+//                    buildMathExpr(column, "-", l);
+//                    return;
+//                }
+//                if (l->value().find("*") != std::string::npos) {
+//                    //to do decode *
+//                    buildMathExpr(column, "*", l);
+//                    return;
+//                }
+//                if (l->value().find("/") != std::string::npos) {
+//                    //to do decode /
+//                    buildMathExpr(column, "/", l);
+//                    return;
+//                }
+//        } //end if
     };
 
     bool lend{false};
@@ -283,8 +285,8 @@ void SelectRequestBuilder::AppendCompCond(const std::string& col, const std::str
             idx = 0;
         }
         //Not releation expr
-        if (tmp->expr_type() < ::kvrpcpb::E_Equal ||
-                tmp->expr_type() > ::kvrpcpb::E_LargerOrEqual)
+        if (tmp->expr_type() < ::exprpb::Equal ||
+                tmp->expr_type() > ::exprpb::LargerOrEqual)
         {
             //printf("AppendCompCond...continue\n");
             if (tmp->child_size() == 0) {
@@ -310,13 +312,12 @@ void SelectRequestBuilder::AppendCompCond(const std::string& col, const std::str
 //Not support where id = 1 + 1 and this series condition will support in other func
 //logic_suffix: logic relation with previous expression
 //              first append represent for root
-void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::string& val,
-        ::kvrpcpb::ExprType et, ::kvrpcpb::ExprType logic_suffix)
-{
-    auto root = req_.mutable_ext_filter()->mutable_expr();
+void SelectRequestBuilder::AppendWhereExpr(const std::string& col, const std::string& val,
+                     exprpb::ExprType et, exprpb::ExprType logic_suffix) {
+    auto root = req_.mutable_where_expr();
 
     //parent expr
-    ::kvrpcpb::Expr *pe = nullptr;
+    ::exprpb::Expr *pe = nullptr;
     auto first = false;
 
     if (logic_suffix == 0 && (et < 11 || et > 16)) {
@@ -386,8 +387,8 @@ void SelectRequestBuilder::AppendMatchExt(const std::string& col, const std::str
             }
             //printf("%d)child_size: %d ts: %d logic suffix: %d\n", i, tr->child_size(), ts, logic_suffix);
 
-            if (tr->expr_type() == kvrpcpb::E_LogicOr ||
-                    tr->expr_type() == kvrpcpb::E_LogicAnd)
+            if (tr->expr_type() == exprpb::LogicOr ||
+                    tr->expr_type() == exprpb::LogicAnd)
             {
             //    printf("encourter logic child: %d ts: %d\n", i, ts);
                 idx = i;

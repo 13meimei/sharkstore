@@ -57,7 +57,7 @@ Status CWhereExpr::ComputeExpr(const ::kvrpcpb::Expr& expr, const FieldValue *l,
 {
     std::string* str{nullptr};
     switch (expr.expr_type()) {
-        case kvrpcpb::E_Plus:
+        case kvrpcpb::Plus:
             switch (l->Type()) {
                 case FieldType::kInt:
                     *fv = new FieldValue(l->Int() + r->Int());
@@ -75,7 +75,7 @@ Status CWhereExpr::ComputeExpr(const ::kvrpcpb::Expr& expr, const FieldValue *l,
                     break;
             }
             break;
-        case kvrpcpb::E_Minus:
+        case kvrpcpb::Minus:
             switch (l->Type()) {
                 case FieldType::kInt:
                     *fv = new FieldValue(l->Int() - r->Int());
@@ -93,7 +93,7 @@ Status CWhereExpr::ComputeExpr(const ::kvrpcpb::Expr& expr, const FieldValue *l,
                     break;
             }
             break;
-        case kvrpcpb::E_Mult:
+        case kvrpcpb::Mult:
             switch (l->Type()) {
                 case FieldType::kInt:
                     *fv = new FieldValue(l->Int() * r->Int());
@@ -111,7 +111,7 @@ Status CWhereExpr::ComputeExpr(const ::kvrpcpb::Expr& expr, const FieldValue *l,
                     break;
             }
             break;
-        case kvrpcpb::E_Div:
+        case kvrpcpb::Div:
             switch (l->Type()) {
                 case FieldType::kInt:
                     if (r->Int() != 0) {
@@ -147,34 +147,34 @@ bool CWhereExpr::CmpExpr(const FieldValue* l,
                          const FieldValue* r,
                          ::kvrpcpb::ExprType et) {
     switch (et) {
-        case kvrpcpb::E_Equal:
+        case kvrpcpb::Equal:
             if (!fcompare(*l, *r, CompareOp::kEqual)) {
                 return false;
             }
             break;
-        case kvrpcpb::E_NotEqual: {
+        case kvrpcpb::NotEqual: {
             bool ne = fcompare(*l, *r, CompareOp::kGreater) ||
                       fcompare(*l, *r, CompareOp::kLess);
             if (!ne) return false;
             break;
         }
-        case kvrpcpb::E_Less:
+        case kvrpcpb::Less:
             if (!fcompare(*l, *r, CompareOp::kLess)) {
                 return false;
             }
             break;
-        case kvrpcpb::E_LessOrEqual: {
+        case kvrpcpb::LessOrEqual: {
             bool le = fcompare(*l, *r, CompareOp::kLess) ||
                       fcompare(*l, *r, CompareOp::kEqual);
             if (!le) return false;
             break;
         }
-        case kvrpcpb::E_Larger:
+        case kvrpcpb::Larger:
             if (!fcompare(*l, *r, CompareOp::kGreater)) {
                 return false;
             }
             break;
-        case kvrpcpb::E_LargerOrEqual: {
+        case kvrpcpb::LargerOrEqual: {
             bool ge = fcompare(*l, *r, CompareOp::kGreater) ||
                       fcompare(*l, *r, CompareOp::kEqual);
             if (!ge) return false;

@@ -224,7 +224,7 @@ set(SOURCES
     src/range/txn.cpp
     src/storage/aggregate_calc.cpp
     src/storage/field_value.cpp
-    #src/storage/iterator.cpp
+    src/storage/kv_fetcher.cpp
     src/storage/meta_store.cpp
     src/storage/metric.cpp
     src/storage/row_decoder.cpp
@@ -246,7 +246,6 @@ set(SOURCES
     src/storage/where_expr.cpp
     src/storage/store_txn.cpp
     src/storage/select_txn.cpp
-    src/storage/txn_iterator.cpp
     src/storage/util.cpp
     src/master/client.cpp
     src/master/connection.cpp
