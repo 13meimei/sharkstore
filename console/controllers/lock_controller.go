@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/sessions"
-
 	"console/common"
 	"console/service"
 	"util/log"
@@ -37,7 +35,8 @@ func NewLockGetAllNspAction() *LockGetAllNspAction {
 	}
 }
 func (ctrl *LockGetAllNspAction) Execute(c *gin.Context) (interface{}, error) {
-	userName := sessions.Default(c).Get("user_name").(string)
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	isAdmin, _ := service.NewService().IsAdmin(userName)
 	log.Debug("user [%v] get lock namespace apply list, isAdmin: %v", userName, isAdmin)
 	pageInfo, err := common.GetPagerInfo(c)
@@ -67,10 +66,8 @@ func NewLockNspApplyAction() *LockNspApplyAction {
 	}
 }
 func (ctrl *LockNspApplyAction) Execute(c *gin.Context) (interface{}, error) {
-	userName := sessions.Default(c).Get("user_name").(string)
-	if len(userName) == 0 {
-		return nil, common.NO_USER
-	}
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	cIdStr := c.PostForm("clusterId")
 	dbName := c.PostForm("dbName")
 	tableName := c.PostForm("tableName")
@@ -118,7 +115,8 @@ func (ctrl *LockNspAuditAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
 
-	userName := sessions.Default(c).Get("user_name").(string)
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	isAdmin, err := service.NewService().IsAdmin(userName)
 	if err != nil {
 		return nil, common.NO_USER

@@ -756,11 +756,7 @@ func (r *Router) StartRouter() *gin.Engine {
 		})
 		// TODO：不要与页面绑定，精简掉
 		router.GET(controllers.REQURL_META_GETALLDBVIEW, func(c *gin.Context) {
-			if data, err := controllers.NewGetAllDbViewAction().Execute(c); err != nil {
-				log.Error("getalldbview action error. err:[%v]", err)
-			} else {
-				c.JSON(http.StatusOK, data)
-			}
+			handleAction(c, controllers.NewGetAllDbViewAction())
 		})
 		router.POST(controllers.REQURL_META_CREATETABLE, func(c *gin.Context) {
 			handleAction(c, controllers.NewCreateTableAction())
@@ -1054,6 +1050,15 @@ func html500(c *gin.Context) {
 }
 
 func handleAction(c *gin.Context, act controllers.Action) {
+	userName, err := common.GetUserName(c)
+	if err != nil {
+		c.JSON(http.StatusOK, &controllers.Response{
+			Code: common.NO_USER.Code,
+			Msg:  common.NO_USER.Msg,
+		})
+		return
+	}
+	c.Set("userName", userName)
 	if data, err := act.Execute(c); err != nil {
 		if fErr, ok := err.(*common.FbaseError); ok == true {
 			c.JSON(http.StatusOK, &controllers.Response{
@@ -1085,8 +1090,8 @@ func handleAction(c *gin.Context, act controllers.Action) {
 }
 
 func handleRightAndAction(r *Router, c *gin.Context, act controllers.Action) {
-	userName := sessions.Default(c).Get("user_name").(string)
-	if len(userName) == 0 {
+	userName, err := common.GetUserName(c)
+	if err != nil {
 		c.Redirect(http.StatusMovedPermanently, "/logout")
 	}
 

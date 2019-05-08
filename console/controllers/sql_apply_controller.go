@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/sessions"
-
 	"console/common"
 	"console/service"
 	"util/log"
@@ -33,7 +31,8 @@ func NewSqlGetAllAction() *SqlGetAllAction {
 	}
 }
 func (ctrl *SqlGetAllAction) Execute(c *gin.Context) (interface{}, error) {
-	userName := sessions.Default(c).Get("user_name").(string)
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	isAdmin, _ := service.NewService().IsAdmin(userName)
 	log.Debug("user [%v] get sql apply list, isAdmin: %v", userName, isAdmin)
 	pageInfo, err := common.GetPagerInfo(c)
@@ -64,10 +63,8 @@ func NewSqlApplyAction() *SqlApplyAction {
 	}
 }
 func (ctrl *SqlApplyAction) Execute(c *gin.Context) (interface{}, error) {
-	userName := sessions.Default(c).Get("user_name").(string)
-	if len(userName) == 0 {
-		return nil, common.NO_USER
-	}
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	dbName := c.PostForm("dbName")
 	tableName := c.PostForm("tableName")
 	sentence := c.PostForm("sentence")
@@ -133,7 +130,8 @@ func (ctrl *SqlAuditAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
 
-	userName := sessions.Default(c).Get("user_name").(string)
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	isAdmin, err := service.NewService().IsAdmin(userName)
 	if err != nil {
 		return nil, fmt.Errorf("query user right failed %v", userName)
