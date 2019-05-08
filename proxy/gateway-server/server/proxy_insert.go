@@ -197,7 +197,7 @@ func (p *Proxy) checkPKMissing(t *Table, colMap map[string]int) (string, error) 
 //  | Store_Prefix_KV + tableId + PKValue | columnValue   |
 //  +-----------------------------------------------------+
 
-// EncodeDataRow: encode business data
+// EncodeRecordRow: encode business data
 func (p *Proxy) encodeRecordRow(t *Table, colMap map[string]int, rowValue InsertRowValue) (*kvrpcpb.KeyValue, error) {
 	var (
 		key, value []byte
