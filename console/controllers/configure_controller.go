@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/sessions"
-
 	"console/service"
 	"console/common"
 	"util/log"
@@ -35,7 +33,8 @@ func NewConfigureGetAllNspAction() *ConfigureGetAllNspAction {
 	}
 }
 func (ctrl *ConfigureGetAllNspAction) Execute(c *gin.Context) (interface{}, error) {
-	userName := sessions.Default(c).Get("user_name").(string)
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	isAdmin, _ := service.NewService().IsAdmin(userName)
 	log.Debug("user [%v] get configure namespace apply list, isAdmin: %v", userName, isAdmin)
 	pageInfo, err := common.GetPagerInfo(c)
@@ -65,10 +64,8 @@ func NewConfigureNspApplyAction() *ConfigureNspApplyAction {
 	}
 }
 func (ctrl *ConfigureNspApplyAction) Execute(c *gin.Context) (interface{}, error) {
-	userName := sessions.Default(c).Get("user_name").(string)
-	if len(userName) == 0 {
-		return nil, common.NO_USER
-	}
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	cIdStr := c.PostForm("clusterId")
 	dbName := c.PostForm("dbName")
 	tableName := c.PostForm("tableName")
@@ -80,7 +77,7 @@ func (ctrl *ConfigureNspApplyAction) Execute(c *gin.Context) (interface{}, error
 		return nil, common.PARAM_FORMAT_ERROR
 	}
 
-	log.Debug("apply configure dbName:%v, tableName: %v, applyer:%v, cluserId:%v.", dbName, tableName, userName, cId)
+	log.Debug("apply configure dbName:%v, tableName: %v, applyer:%v, clusterId:%v.", dbName, tableName, userName, cId)
 	err = service.NewService().ApplyConfigureNsp(cId, dbName, tableName, userName, time.Now().Unix())
 	if err != nil {
 		return nil, err
@@ -116,7 +113,8 @@ func (ctrl *ConfigureNspAuditAction) Execute(c *gin.Context) (interface{}, error
 		return nil, common.PARAM_FORMAT_ERROR
 	}
 
-	userName := sessions.Default(c).Get("user_name").(string)
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	isAdmin, err := service.NewService().IsAdmin(userName)
 	if err != nil {
 		return nil, common.NO_USER

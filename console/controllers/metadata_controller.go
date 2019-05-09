@@ -7,7 +7,6 @@ import (
 	"console/common"
 	"console/service"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/sessions"
 )
 
 const (
@@ -72,7 +71,8 @@ func (dtrl *DeleteDbAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.PARAM_FORMAT_ERROR
 	}
 
-	userName := sessions.Default(c).Get("user_name").(string)
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	isClusterOwner, _ := service.NewService().IsClusterOwner(userName, int64(cId))
 	if !isClusterOwner {
 		return nil, common.NO_RIGHT
@@ -279,7 +279,8 @@ func (ctrl *DeleteTableAction) Execute(c *gin.Context) (interface{}, error) {
 		return nil, common.PARSE_PARAM_ERROR
 	}
 
-	userName := sessions.Default(c).Get("user_name").(string)
+	userNameO, _ := c.Get("userName")
+	userName := userNameO.(string)
 	isClusterOwner, _ := service.NewService().IsClusterOwner(userName, int64(cId))
 	if !isClusterOwner {
 		return nil, common.NO_RIGHT
