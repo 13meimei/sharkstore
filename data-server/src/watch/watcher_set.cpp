@@ -485,7 +485,7 @@ std::pair<int32_t, bool> WatcherSet::loadFromDb(storage::Store* store, const wat
                    watchpb::DsWatchResponse *dsResp) {
 
     //need to encode and decode
-    std::shared_ptr<storage::IteratorInterface> iterator(store->NewIterator(fromKey, endKey));
+    auto iterator = store->NewIterator(fromKey, endKey);
     int32_t count{0};
     int64_t minVersion{0};
     int64_t maxVersion{0};

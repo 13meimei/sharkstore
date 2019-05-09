@@ -576,11 +576,12 @@ void Range::LockScan(RPCRequestPtr rpc, kvrpcpb::DsLockScanRequest &req) {
     FLOG_DEBUG("lock scan: %s", req.DebugString().c_str());
     errorpb::Error *err = nullptr;
     kvrpcpb::DsLockScanResponse ds_resp;
-    auto start = std::max(req.req().start(), start_key_);
-    auto limit = std::min(req.req().limit(), meta_.GetEndKey());
-    std::unique_ptr<storage::IteratorInterface> iterator(store_->NewIterator(start, limit));
+    auto iterator = store_->NewIterator(req.req().start(), req.req().limit());
 
-    int max_count = checkMaxCount(static_cast<int64_t >(req.req().count()));
+    int max_count = req.req().count();
+    if (max_count == 0 || max_count > 1000) {
+        max_count = 1000;
+    }
     auto resp = ds_resp.mutable_resp();
 
     uint64_t count = 0;
@@ -589,7 +590,7 @@ void Range::LockScan(RPCRequestPtr rpc, kvrpcpb::DsLockScanRequest &req) {
     for (int i = 0; iterator->Valid() && i < max_count; ++i) {
         auto kv = resp->add_info();
         FLOG_DEBUG("scan key: %s", iterator->key().c_str());
-        kv->set_key(std::move(iterator->key()));
+        kv->set_key(iterator->key());
         kv->mutable_value()->ParseFromString(iterator->value());
 
         count++;

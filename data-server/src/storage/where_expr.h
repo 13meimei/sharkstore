@@ -80,10 +80,10 @@ public:
                 return nullptr;
         }
 
-        if (expr.child_size() > 0 && expr.child(0).expr_type() != ::exprpb::ExprCol) {
+        if (expr.child_size() > 0 && expr.child(0).expr_type() != ::exprpb::Column) {
             free(l);
         }
-        if (expr.child_size() == 2 && expr.child(1).expr_type() != ::exprpb::ExprCol) {
+        if (expr.child_size() == 2 && expr.child(1).expr_type() != ::exprpb::Column) {
             free(r);
         }
         return fv;
@@ -147,8 +147,8 @@ public:
                         et, expr.child(1).expr_type(), &expr.child(1), r->ToString().c_str());
 
                 bResult = CWhereExpr::CmpExpr(l, r, et);
-                if (expr.child(0).expr_type() != ::exprpb::ExprCol) delete l;
-                if (expr.child(1).expr_type() != ::exprpb::ExprCol) delete r;
+                if (expr.child(0).expr_type() != ::exprpb::Column) delete l;
+                if (expr.child(1).expr_type() != ::exprpb::Column) delete r;
 
                 return bResult;
             default:
@@ -208,8 +208,8 @@ public:
                     return false;
                 }
                 return true;
-            case ::exprpb::ExprCol: //leaf node
-            case ::exprpb::ExprConst:
+            case ::exprpb::Column: //leaf node
+            case ::exprpb::Const:
                 if (e.child_size() != 0) {
                     return false;
                 }

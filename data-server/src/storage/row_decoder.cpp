@@ -16,7 +16,8 @@ namespace storage {
 RowResult::RowResult() {}
 
 RowResult::~RowResult() {
-    Reset();
+    std::for_each(fields_.begin(), fields_.end(),
+                  [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
 }
 
 bool RowResult::AddField(uint64_t col, std::unique_ptr<FieldValue>& field) {
@@ -37,20 +38,16 @@ FieldValue* RowResult::GetField(uint64_t col) const {
     }
 }
 
-void RowResult::Reset() {
-    key_.clear();
-    std::for_each(fields_.begin(), fields_.end(),
-                  [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
-    fields_.clear();
-
-    value_.clear();
-    field_value_.clear();
-
-    update_field_.clear();
-    std::for_each(update_field_delta_.begin(), update_field_delta_.end(),
-                  [](std::map<uint64_t, FieldValue*>::value_type& p) { delete p.second; });
-    update_field_delta_.clear();
-
+void RowResult::Encode(const txnpb::SelectRequest& req, txnpb::RowValue* to) {
+    std::string buf;
+    for (const auto& field: req.field_list()) {
+        if (field.has_column()) {
+            auto fv = GetField(field.column().id());
+            EncodeFieldValue(&buf, fv);
+        }
+    }
+    to->set_fields(buf);
+    to->set_version(version_);
 }
 
 RowDecoder::RowDecoder(
@@ -132,101 +129,6 @@ Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) 
     return Status::OK();
 }
 
-
-Status RowDecoder::Decode4Update(const std::string& key, const std::string& buf, RowResult* result) {
-    result->Reset();
-    result->SetKey(key);
-    result->SetValue(buf);
-
-    // 解析主键列
-    auto s = decodePrimaryKeys(key, result);
-    if (!s.ok()) return s;
-
-    // 解析非主键列
-    uint32_t col_id = 0;
-    EncodeType enc_type;
-    bool ret = false;
-    size_t tag_offset;
-    for (size_t offset = 0; offset < buf.size();) {
-        auto offset_bk = offset;
-
-        // 解析列ID
-        tag_offset = offset;
-        ret = DecodeValueTag(buf, tag_offset, &col_id, &enc_type);
-        if (!ret) {
-            return Status(
-                    Status::kCorruption,
-                    std::string("decode row value tag failed at offset ") + std::to_string(offset),
-                    EncodeToHexString(buf));
-        }
-
-        // 检查该列ID对应的列是否需要Decode
-        auto it = cols_.find(col_id);
-        if (it == cols_.end()) {
-            ret = SkipValue(buf, offset);
-            if (!ret) {
-                return Status(
-                        Status::kCorruption,
-                        std::string("decode skip value tag failed at offset ") + std::to_string(offset),
-                        EncodeToHexString(buf));
-            }
-
-            // 记录所有非主键列的值在value中的偏移和长度
-            FieldUpdate fu(col_id, offset_bk, offset - offset_bk);
-            result->AppendFieldValue(fu);
-            // 记录需要update列
-            auto it_u = update_fields_.find(col_id);
-            if (it_u != update_fields_.end()) {
-                auto& f = it_u->second;
-
-                result->AddUpdateField(col_id, &f);
-
-                // 解析kvrpcfield为fieldvalue
-                std::unique_ptr<FieldValue> cf;
-                s = parseThreshold(f.value(), f.column(), cf);
-                if (!s.ok()) {
-                    FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
-                    return Status(Status::kUnknown, std::string("parse update field value failed:1 " + s.ToString()), "");
-                }
-                // TODO: fix release
-                result->AddUpdateFieldDelta(col_id, cf.release());
-            }
-
-            continue;
-        }
-
-        // 解码列值
-        std::unique_ptr<FieldValue> value;
-        auto status = decodeField(buf, offset, it->second, value);
-        if (!status.ok()) {
-            return status;
-        }
-        if (!result->AddField(it->first, value)) {
-            return Status(Status::kDuplicate, "repeated field on column", it->second.name());
-        }
-
-        // 记录所有非主键列的值在value中的偏移和长度
-        FieldUpdate fu(col_id, offset_bk, offset - offset_bk);
-        result->AppendFieldValue(fu);
-        // 记录需要update列
-        auto it_u = update_fields_.find(col_id);
-        if (it_u != update_fields_.end()) {
-            auto& f = it_u->second;
-
-            result->AddUpdateField(col_id, &f);
-
-            // 解析kvrpcfield为fieldvalue
-            std::unique_ptr<FieldValue> cf;
-            s = parseThreshold(f.value(), f.column(), cf);
-            if (!s.ok()) {
-                FLOG_ERROR("parse update field value failed: %s", s.ToString().c_str());
-                return Status(Status::kUnknown, std::string("parse update field value failed:2 " + s.ToString()), "");
-            }
-            result->AddUpdateFieldDelta(col_id, cf.release());
-        }
-    }
-    return Status::OK();
-}
 
 Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowResult* result) {
     assert(result != nullptr);

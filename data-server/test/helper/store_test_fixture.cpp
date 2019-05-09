@@ -202,7 +202,7 @@ Status StoreTestFixture::testParseWatchSplitKey(const std::vector<std::string>& 
 
 uint64_t StoreTestFixture::statSizeUntil(const std::string& end) {
     uint64_t size = 0;
-    std::unique_ptr<dataserver::storage::IteratorInterface> it(store_->NewIterator("", end));
+    auto it = store_->NewIterator("", end);
     while (it->Valid()) {
         size += it->key_size();
         size += it->value_size();

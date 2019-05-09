@@ -158,17 +158,6 @@ private:
     void AskSplit(std::string &&key, metapb::Range&& meta, bool force = false);
     void ReportSplit(const metapb::Range &new_range);
 
-
-    int64_t checkMaxCount(int64_t maxCount) { 
-        static const int64_t kDefaultKVMaxCount = 1000;
-        if (maxCount <= 0)
-            maxCount = std::numeric_limits<int64_t>::max();
-        if (maxCount > kDefaultKVMaxCount) {
-            maxCount = kDefaultKVMaxCount ;
-        }
-        return maxCount;
-    }
-
     // 根据request的header设定response的header，然后发送response
     template <class ResponseT>
     void SendResponse(const RPCRequestPtr& rpc, ResponseT& resp,

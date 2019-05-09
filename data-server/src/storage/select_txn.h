@@ -23,7 +23,6 @@ public:
     FieldValue* GetField(uint64_t col) const;
     bool AddField(uint64_t col, std::unique_ptr<FieldValue>& field);
 
-    void Encode(const txnpb::SelectRequest& req, txnpb::RowValue* to);
 
 private:
     uint64_t version_ = 0;
