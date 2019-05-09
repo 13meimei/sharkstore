@@ -209,7 +209,6 @@ func (t *TxObj) Commit() (err error) {
 	)
 	sort.Sort(TxnIntentSlice(t.intents))
 
-	//todo local txn optimize: 1 phase commit
 	priIntents, secIntentsGroup, err = regroupIntentsByRange(ctx, t.GetTable(), t.getTxIntents())
 	if err != nil {
 		return
@@ -219,7 +218,7 @@ func (t *TxObj) Commit() (err error) {
 	if err == nil {
 		return
 	}
-	if err == dskv.ErrRouteChange || err == dskv.ErrMultiRange {
+	if err == dskv.ErrMultiRange {
 		log.Warn("txn[%v] run 1ph error[%v], try 2ph", t.GetTxId(), err)
 		goto TOW_PHASE_COMMIT
 	} else {
@@ -340,9 +339,12 @@ func (t *TxObj) prepareAndDecidePrimaryKey(ctx *dskv.ReqContext, priIntents []*t
 		req.Intents = priIntents
 		err = t.proxy.handlePrepare(ctx, req, t.GetTable())
 		if err != nil {
-			errForRetry = err
-			// todo if range leader switch, can do continue
-			return
+			if err == dskv.ErrRouteChange {
+				log.Warn("tx %v 1PL router change, retry")
+				errForRetry = err
+				continue
+			}
+			return err
 		}
 		log.Debug("txn[%v] run 1ph done success", t.GetTxId())
 		return
