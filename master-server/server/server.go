@@ -200,7 +200,7 @@ func (service *Server) InitMasterServer(conf *Config) {
 	if len(conf.AlarmClient.ServerAddress) != 0 {
 		service.alarmClient, err = alarm2.NewAlarmClient2(conf.AlarmClient.ServerAddress)
 		if err != nil {
-			log.Fatal("create alarm client failed, err[%v]", err)
+			log.Error("create alarm client failed, err[%v]", err)
 		}
 		service.cluster.alarmCli = service.alarmClient
 	}
@@ -241,7 +241,7 @@ func (service *Server) InitMetricServer(conf *Config) {
 		var err error
 		service.alarmClient, err = alarm2.NewAlarmClient2(conf.AlarmClient.ServerAddress)
 		if err != nil {
-			log.Fatal("create alarm client failed, err[%v]", err)
+			log.Error("create alarm client failed, err[%v]", err)
 		}
 		service.metricServer.AlarmCli = service.alarmClient
 	}
