@@ -147,10 +147,6 @@ enum MatchType {
     LessOrEqual   = 4;
     Larger        = 5;
     LargerOrEqual = 6;
-
-    LogicAnd      = 11;
-    LogicOr       = 12;
-    LogicNot      = 13;
 }
 
 enum FieldType {

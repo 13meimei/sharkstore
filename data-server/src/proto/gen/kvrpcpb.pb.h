@@ -321,15 +321,12 @@ enum MatchType {
   LessOrEqual = 4,
   Larger = 5,
   LargerOrEqual = 6,
-  LogicAnd = 11,
-  LogicOr = 12,
-  LogicNot = 13,
   MatchType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   MatchType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool MatchType_IsValid(int value);
 const MatchType MatchType_MIN = Invalid;
-const MatchType MatchType_MAX = LogicNot;
+const MatchType MatchType_MAX = LargerOrEqual;
 const int MatchType_ARRAYSIZE = MatchType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MatchType_descriptor();
