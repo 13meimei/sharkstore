@@ -50,57 +50,65 @@ void RowResult::Encode(const txnpb::SelectRequest& req, txnpb::RowValue* to) {
     to->set_version(version_);
 }
 
-RowDecoder::RowDecoder(
-    const std::vector<metapb::Column>& primary_keys,
-    const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches)
-    : primary_keys_(primary_keys) {
-    for (int i = 0; i < matches.size(); i++) {
-        const auto& m = matches.Get(i);
-        cols_.emplace(m.column().id(), m.column());
-        filters_.push_back(m);
-    }
+RowDecoder::RowDecoder(const std::vector<metapb::Column>& primary_keys,
+        const kvrpcpb::SelectRequest& req) : primary_keys_(primary_keys) {
+    setup(req);
 }
 
-RowDecoder::RowDecoder(
-        const std::vector<metapb::Column>& primary_keys,
-        const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Field>& update_fields,
-        const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches)
-        : RowDecoder{primary_keys, matches} {
-    for (int i = 0; i < update_fields.size(); i++) {
-        const auto& u = update_fields.Get(i);
-        cols_.emplace(u.column().id(), u.column());
-        update_fields_.emplace(u.column().id(), u);
-    }
+RowDecoder::RowDecoder(const std::vector<metapb::Column>& primary_keys,
+        const kvrpcpb::DeleteRequest& req) : primary_keys_(primary_keys) {
+    setup(req);
 }
 
-RowDecoder::RowDecoder(
-    const std::vector<metapb::Column>& primary_keys,
-    const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField>& field_list,
-    const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches)
-    : RowDecoder{primary_keys, matches} {
+RowDecoder::RowDecoder(const std::vector<metapb::Column>& primary_keys,
+        const txnpb::SelectRequest& req) : primary_keys_(primary_keys) {
+    setup(req);
+}
+
+void RowDecoder::setup(const kvrpcpb::SelectRequest& req) {
+    if (req.has_where_expr()) {
+        where_expr_.reset(new exprpb::Expr(req.where_expr()));
+    } else if (req.where_filters_size() > 0) {
+        where_expr_ = convertToExpr(req.where_filters());
+    }
+
     for (int i = 0; i < field_list.size(); i++) {
         const auto& field = field_list.Get(i);
         if (field.has_column()) {
-            cols_.emplace(field.column().id(), field.column());
+            exprpb::ColumnInfo info;
+            fillColumnInfo(field.column(), &info);
+            cols_.emplace(field.column().id(), info);
         }
     }
-}
 
-RowDecoder::RowDecoder(
-    const std::vector<metapb::Column>& primary_keys,
-    const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::SelectField>& field_list,
-    const ::google::protobuf::RepeatedPtrField< ::kvrpcpb::Match>& matches,
-    const ::kvrpcpb::MatchExt& match_ext)
-        :RowDecoder(primary_keys, field_list, matches)
-{
-    where_expr_ = nullptr;
-    if (match_ext.expr().child_size() > 0) {
-        where_expr_ = std::make_shared<CWhereExpr>(match_ext);
+    if (where_epxr_) {
+        addExprColumn(*where_epxr_);
     }
 }
 
-RowDecoder::~RowDecoder() {}
+void RowDecoder::setup(const kvrpcpb::DeleteRequest& req) {
+    where_expr_ = convertToExpr(req.where_filters());
+    if (where_epxr_) {
+        addExprColumn(where_epxr_);
+    }
+}
 
+void RowDecoder::setup(const txnpb::SelectRequest& req) {
+    if (where_epxr_) {
+        addExprColumn(where_epxr_);
+    }
+}
+
+void RowDecoder::addExprColumn(const exprpb::Expr& expr) {
+    if (expr.expr_type() == exprpb::Column) {
+        cols_.emplace(expr.column().id(), expr.column());
+    }
+    for (const auto& child: expr.child()) {
+        addExprColumn(child);
+    }
+}
+
+RowDecoder::~RowDecoder() = default;
 
 Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) {
     if (key.size() <= kRowPrefixLength) {

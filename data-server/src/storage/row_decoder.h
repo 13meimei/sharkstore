@@ -21,7 +21,7 @@ public:
     ~RowResult();
 
     RowResult(const RowResult&) = delete;
-    RowResult& operator=(const RowResulRowResult = delete;
+    RowResult& operator=(const RowResult&) = delete;
 
     const std::string& GetKey() const { return key_; }
     void SetKey(const std::string& key) { key_ = key; }
@@ -40,15 +40,19 @@ private:
 
 class RowDecoder {
 public:
-    explicit RowDecoder(const std::vector<metapb::Column>& primary_keys);
+    RowDecoder(const std::vector<metapb::Column>& primary_keys,
+        const kvrpcpb::SelectRequest& req);
+
+    RowDecoder(const std::vector<metapb::Column>& primary_keys,
+        const kvrpcpb::DeleteRequest& req);
+
+    RowDecoder(const std::vector<metapb::Column>& primary_keys,
+        const txnpb::SelectRequest& req);
+
     ~RowDecoder();
 
     RowDecoder(const RowDecoder&) = delete;
     RowDecoder& operator=(const RowDecoder&) = delete;
-
-    void Setup(const kvrpcpb::SelectRequest& req);
-    void Setup(const kvrpcpb::DeleteRequest& req);
-    void Setup(const txnpb::SelectRequest& req);
 
     Status Decode(const std::string& key, const std::string& buf, RowResult& result);
     Status DecodeAndFilter(const std::string& key, const std::string& buf, RowResult& result, bool& match);
@@ -56,12 +60,17 @@ public:
     std::string DebugString() const;
 
 private:
+    void setup(const kvrpcpb::SelectRequest& req);
+    void setup(const kvrpcpb::DeleteRequest& req);
+    void setup(const txnpb::SelectRequest& req);
+    void addExprColumn(const exprpb::Expr& expr);
+
     Status decodePrimaryKeys(const std::string& key, RowResult& result);
 
 private:
     const std::vector<metapb::Column>& primary_keys_;
-    std::map<uint64_t, exprpb::ColumnInfo> cols_;
-    std::unique_ptr<exprpb::Expr> where_filter_;
+    std::map<uint64_t, exprpb::ColumnInfo> cols_; // 需要反解哪些列 （select的field list 和 where表达式中的）
+    std::unique_ptr<exprpb::Expr> where_expr_;
 };
 
 } /* namespace storage */

@@ -251,6 +251,79 @@ Status matchRow(const TxnRowValue& row, const std::shared_ptr<CWhereExpr> filter
     return Status::OK();
 }
 
+void fillColumnInfo(const metapb::Column& col, exprpb::ColumnInfo* info) {
+    info->set_id(col.id());
+    info->set_typ(col.data_type());
+    info->set_unsigned_(col.unsigned_());
+}
+
+void makeColumnExpr(const metapb::Column& col, exprpb::Expr* expr) {
+    ASSERT(expr != nullptr);
+    expr->set_expr_type(exprpb::Column);
+    auto column_info = expr->mutable_column();
+    fillColumnInfo(col, column_info);
+}
+
+void makeConstValExpr(const metapb::Column& col, const std::string& value, exprpb::Expr* expr) {
+    ASSERT(expr != nullptr);
+    expr->set_value(value);
+    switch (col.data_type()) {
+        case metapb::Tinyint:
+        case metapb::Smallint:
+        case metapb::Int:
+        case metapb::BigInt: 
+            expr->set_expr_type(col.unsigned_() ? exprpb::Const_UInt : exprpb::Const_Int);
+            break;
+        case metapb::Float:
+        case metapb::Double: {
+            expr->set_expr_type(exprpb::Const_Double);
+            break;
+        case metapb::Varchar:
+        case metapb::Binary:
+        case metapb::Date:
+        case metapb::TimeStamp:
+            expr->set_expr_type(exprpb::Const_Bytes);
+            break;
+        default:
+            expr->set_expr_type(exprpb::Invalid);
+    }
+}
+
+exprpb::ExprType toExprType(kvrpcpb::MatchType match_type) {
+    switch (match_type) {
+    case kvrpcpb::Equal:
+        return exprpb::Equal;
+    case kvrpcpb::NotEqual:
+        return exprpb::Not_Equal;
+    case kvrpcpb::Less:
+        return exprpb::Less;
+    case kvrpcpb::LessOrEqual:
+        return exprpb::LessOrEqual;
+    case kvrpcpb::Larger:
+        return exprpb::Larger;
+    case kvrpcpb::LargerOrEqual:
+        return exprpb::LargerOrEqual;
+    default:
+        return exprpb::INVALID;
+    }
+}
+
+std::unique_ptr<exprpb::Expr> convertToExpr(const MatchVector& matches) {
+    if (matches.empty()) {
+        return nullptr;
+    }
+
+    std::unique_ptr<exprpb::Expr> root(new expb::Expr);
+    root->set_expr_type(exprpb::LogicAnd);
+    for (const auto& m: matches) {
+        auto cmp_expr = root->add_child();
+        cmp_expr->set_expr_type(toExprType(m.match_type()));
+        makeColumnExpr(m.column(), cmp_expr->add_child());
+        makeConstValExpr(m.column(), m.threshold(), cmp_expr->add_child());
+    }
+    return root;
+}
+
 
 } /* namespace storage */
 } /* namespace dataserver */
