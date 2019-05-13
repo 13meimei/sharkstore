@@ -1647,16 +1647,15 @@ void AddDescriptorsImpl() {
       "kGetResponse\022\'\n\006header\030\001 \001(\0132\027.kvrpcpb.R"
       "esponseHeader\022&\n\004resp\030\002 \001(\0132\030.kvrpcpb.Lo"
       "ckGetResponse*;\n\013ExecuteType\022\017\n\013ExecInva"
-      "lid\020\000\022\013\n\007ExecPut\020\001\022\016\n\nExecDelete\020\002*\224\001\n\tM"
-      "atchType\022\013\n\007Invalid\020\000\022\t\n\005Equal\020\001\022\014\n\010NotE"
-      "qual\020\002\022\010\n\004Less\020\003\022\017\n\013LessOrEqual\020\004\022\n\n\006Lar"
-      "ger\020\005\022\021\n\rLargerOrEqual\020\006\022\014\n\010LogicAnd\020\013\022\013"
-      "\n\007LogicOr\020\014\022\014\n\010LogicNot\020\r*\?\n\tFieldType\022\n"
-      "\n\006Assign\020\000\022\010\n\004Plus\020\001\022\t\n\005Minus\020\002\022\010\n\004Mult\020"
-      "\003\022\007\n\003Div\020\004b\006proto3"
+      "lid\020\000\022\013\n\007ExecPut\020\001\022\016\n\nExecDelete\020\002*k\n\tMa"
+      "tchType\022\013\n\007Invalid\020\000\022\t\n\005Equal\020\001\022\014\n\010NotEq"
+      "ual\020\002\022\010\n\004Less\020\003\022\017\n\013LessOrEqual\020\004\022\n\n\006Larg"
+      "er\020\005\022\021\n\rLargerOrEqual\020\006*\?\n\tFieldType\022\n\n\006"
+      "Assign\020\000\022\010\n\004Plus\020\001\022\t\n\005Minus\020\002\022\010\n\004Mult\020\003\022"
+      "\007\n\003Div\020\004b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 6498);
+      descriptor, 6456);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "kvrpcpb.proto", &protobuf_RegisterTypes);
   ::metapb::protobuf_metapb_2eproto::AddDescriptors();
@@ -1727,9 +1726,6 @@ bool MatchType_IsValid(int value) {
     case 4:
     case 5:
     case 6:
-    case 11:
-    case 12:
-    case 13:
       return true;
     default:
       return false;
