@@ -52,48 +52,54 @@ void RowResult::Encode(const txnpb::SelectRequest& req, txnpb::RowValue* to) {
 
 RowDecoder::RowDecoder(const std::vector<metapb::Column>& primary_keys,
         const kvrpcpb::SelectRequest& req) : primary_keys_(primary_keys) {
-    setup(req);
-}
-
-RowDecoder::RowDecoder(const std::vector<metapb::Column>& primary_keys,
-        const kvrpcpb::DeleteRequest& req) : primary_keys_(primary_keys) {
-    setup(req);
-}
-
-RowDecoder::RowDecoder(const std::vector<metapb::Column>& primary_keys,
-        const txnpb::SelectRequest& req) : primary_keys_(primary_keys) {
-    setup(req);
-}
-
-void RowDecoder::setup(const kvrpcpb::SelectRequest& req) {
+    // where过滤条件
     if (req.has_where_expr()) {
         where_expr_.reset(new exprpb::Expr(req.where_expr()));
     } else if (req.where_filters_size() > 0) {
         where_expr_ = convertToExpr(req.where_filters());
     }
 
+    // 根据select field list选择需要解码的列
     for (int i = 0; i < field_list.size(); i++) {
         const auto& field = field_list.Get(i);
         if (field.has_column()) {
             exprpb::ColumnInfo info;
             fillColumnInfo(field.column(), &info);
-            cols_.emplace(field.column().id(), info);
+            cols_.emplace(field.column().id(), std::move(info));
         }
     }
 
+    // where条件如果有列表达式，也需要解码
     if (where_epxr_) {
         addExprColumn(*where_epxr_);
     }
 }
 
-void RowDecoder::setup(const kvrpcpb::DeleteRequest& req) {
+RowDecoder::RowDecoder(const std::vector<metapb::Column>& primary_keys,
+        const kvrpcpb::DeleteRequest& req) : primary_keys_(primary_keys) {
     where_expr_ = convertToExpr(req.where_filters());
     if (where_epxr_) {
         addExprColumn(where_epxr_);
     }
 }
 
-void RowDecoder::setup(const txnpb::SelectRequest& req) {
+RowDecoder::RowDecoder(const std::vector<metapb::Column>& primary_keys,
+        const txnpb::SelectRequest& req) : primary_keys_(primary_keys) {
+    // where过滤条件
+    if (req.has_where_expr()) {
+        where_expr_.reset(new exprpb::Expr(req.where_expr()));
+    } else if (req.where_filters_size() > 0) {
+        where_expr_ = convertToExpr(req.where_filters());
+    }
+    // 根据select field list选择需要解码的列
+    for (int i = 0; i < field_list.size(); i++) {
+        const auto& field = field_list.Get(i);
+        if (field.has_column()) {
+            exprpb::ColumnInfo info;
+            fillColumnInfo(field.column(), &info);
+            cols_.emplace(field.column().id(), std::move(info));
+        }
+    }
     if (where_epxr_) {
         addExprColumn(where_epxr_);
     }
@@ -110,7 +116,7 @@ void RowDecoder::addExprColumn(const exprpb::Expr& expr) {
 
 RowDecoder::~RowDecoder() = default;
 
-Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) {
+Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult& result) {
     if (key.size() <= kRowPrefixLength) {
         return Status(Status::kCorruption, "insufficient row key length", EncodeToHexString(key));
     }
@@ -129,7 +135,7 @@ Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) 
             return status;
         }
         if (value != nullptr) {
-            if (!result->AddField(column.id(), value)) {
+            if (!result.AddField(column.id(), value)) {
                 return Status(Status::kDuplicate, "repeated field on column", column.name());
             }
         }
@@ -137,82 +143,78 @@ Status RowDecoder::decodePrimaryKeys(const std::string& key, RowResult *result) 
     return Status::OK();
 }
 
-
-Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowResult* result) {
-    assert(result != nullptr);
-    if (update_fields_.size() != 0) {
-        return Decode4Update(key, buf, result);
-    }
-
-    result->Reset();
-    result->SetKey(key);
-
-    // 解析主键列
-    auto s = decodePrimaryKeys(key, result);
-    if (!s.ok()) return s;
-
-    // 解析非主键列
+Status RowDecoder::decodeFields(const std::string& buf, RowResult& result) {
     uint32_t col_id = 0;
     EncodeType enc_type;
-    bool ret = false;
-    size_t tag_offset;
+    size_t tag_offset = 0;
     for (size_t offset = 0; offset < buf.size();) {
         // 解析列ID
         tag_offset = offset;
-        ret = DecodeValueTag(buf, tag_offset, &col_id, &enc_type);
-        if (!ret) {
-            return Status(
-                Status::kCorruption,
-                std::string("decode row value tag failed at offset ") + std::to_string(offset),
-                EncodeToHexString(buf));
+        if (!DecodeValueTag(buf, tag_offset, &col_id, &enc_type)) {
+            return Status(Status::kCorruption,
+                          std::string("decode row value tag failed at offset ") + std::to_string(offset),
+                          EncodeToHexString(buf));
         }
-
-        // 检查该列ID对应的列是否需要Decode
-        auto it = cols_.find(col_id);
-        if (it == cols_.end()) {
-            ret = SkipValue(buf, offset);
-            if (!ret) {
-                return Status(
-                    Status::kCorruption,
-                    std::string("decode skip value tag failed at offset ") + std::to_string(offset),
-                    EncodeToHexString(buf));
+        // 解码version列
+        if (col_id == kVersionColumnID) {
+            int64_t version = 0;
+            if (DecodeIntValue(buf, offset, &version)) {
+                result.SetVersion(static_cast<uint64_t>(version));
+            } else {
+                return Status(Status::kCorruption,
+                              std::string("decode version value failed at offset ") + std::to_string(offset),
+                              EncodeToHexString(buf));
             }
             continue;
         }
-
+        // 检查该列ID对应的列是否需要Decode
+        auto it = cols_.find(col_id);
+        if (it == cols_.end()) {
+            if (!SkipValue(buf, offset)) {
+                return Status(Status::kCorruption,
+                              std::string("decode skip value tag failed at offset ") + std::to_string(offset),
+                              EncodeToHexString(buf));
+            }
+            continue;
+        }
         // 解码列值
         std::unique_ptr<FieldValue> value;
-        auto status = decodeField(buf, offset, it->second, value);
-        if (!status.ok()) {
-            return status;
+        auto s = decodeField(buf, offset, it->second, value);
+        if (!s.ok()) {
+            return s;
         }
-        if (!result->AddField(it->first, value)) {
+        if (!result.AddField(it->first, value)) {
             return Status(Status::kDuplicate, "repeated field on column", it->second.name());
         }
     }
     return Status::OK();
 }
 
-
-static bool filter_ext(const RowResult& result, const std::shared_ptr<CWhereExpr> where) {
-    return where->Filter(result);
+Status RowDecoder::Decode(const std::string& key, const std::string& buf, RowResult& result) {
+    // 解析key中的主键列
+    auto s = decodePrimaryKeys(key, result);
+    if (!s.ok()) {
+        return s;
+    }
+    // 解析value中的非主键列
+    s = decodeFields(buf, row);
+    if (!s.ok()) {
+        return s;
+    }
+    result->SetKey(key);
+    return Status::OK();
 }
 
 Status RowDecoder::DecodeAndFilter(const std::string& key, const std::string& buf,
-                                   RowResult* result, bool* matched) {
-    assert(result != nullptr);
-
+                                   RowResult& result, bool& matched) {
     auto s = Decode(key, buf, result);
     if (!s.ok()) {
         return s;
     }
 
-    *matched = true;
-    if (isExprValid()) {
-        *matched = filter_ext(*result, where_expr_);
-        return Status::OK();
-    } else if (!filters_.empty()) {
-        return matchRow(*result, filters_, *matched);
+    matched = true;
+    if (where_expr_) {
+        return filterExpr(result, *where_expr_, matched);
     } else {
         return Status::OK();
     }

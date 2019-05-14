@@ -11,33 +11,25 @@ namespace storage {
 
 static const size_t kIteratorTooManyKeys = 1000;
 
-/*RowFetcher::RowFetcher(Store& s, const kvrpcpb::SelectRequest& req)
-    : store_(s),
-      decoder_(s.GetPrimaryKeys(), req.field_list(), req.where_filters()) {
-    init(req.key(), req.scope());
-}*/
-
-RowFetcher::RowFetcher(Store& s, const kvrpcpb::SelectRequest& req)
-        : store_(s),
-          decoder_(s.GetPrimaryKeys(), req.field_list(), req.where_filters(),
-                   req.ext_filter())
-{
-    init(req.key(), req.scope());
+RowFetcher::RowFetcher(Store& s, const kvrpcpb::SelectRequest& req) : 
+    store_(s),
+    decoder_(s.GetPrimaryKeys(), req),
+    kv_fetcher_(KvFetcher::Create(s, req)) {
 }
 
-RowFetcher::RowFetcher(Store& s, const kvrpcpb::UpdateRequest& req)
-    : store_(s),
-      decoder_(s.GetPrimaryKeys(), req.fields(), req.where_filters()) {
-    init(req.key(), req.scope());
+RowFetcher::RowFetcher(Store& s, const kvrpcpb::UpdateRequest& req) : 
+    store_(s),
+    decoder_(s.GetPrimaryKeys(), req),
+    kv_fetcher_(s, req) {
 }
 
-RowFetcher::RowFetcher(Store& s, const kvrpcpb::DeleteRequest& req)
-    : store_(s),
-      decoder_(s.GetPrimaryKeys(), req.where_filters()) {
-    init(req.key(), req.scope());
+RowFetcher::RowFetcher(Store& s, const kvrpcpb::DeleteRequest& req) : 
+    store_(s),
+    decoder_(s.GetPrimaryKeys(), req),
+    kv_fetcher_(s, req) {
 }
 
-RowFetcher::~RowFetcher() { delete iter_; }
+RowFetcher::~RowFetcher() = default;
 
 Status RowFetcher::Next(RowResult* result, bool* over) {
     if (!last_status_.ok()) {
@@ -51,13 +43,6 @@ Status RowFetcher::Next(RowResult* result, bool* over) {
     }
 }
 
-void RowFetcher::init(const std::string& key, const ::kvrpcpb::Scope& scope) {
-    if (!key.empty()) {
-        key_ = key;
-        return;
-    }
-    iter_ = store_.NewIterator(scope);
-}
 
 Status RowFetcher::nextOneKey(RowResult* result, bool* over) {
     assert(!key_.empty());

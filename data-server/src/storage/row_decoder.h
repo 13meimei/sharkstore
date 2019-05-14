@@ -5,15 +5,12 @@ _Pragma("once");
 
 #include "base/status.h"
 #include "proto/gen/kvrpcpb.pb.h"
+#include "proto/gen/exprpb.pb.h"
 #include "proto/gen/metapb.pb.h"
-#include "where_expr.h"
-#include "kv_fetcher.h"
 
 namespace sharkstore {
 namespace dataserver {
 namespace storage {
-
-class CWhereExpr;
 
 class RowResult {
 public:
@@ -60,12 +57,9 @@ public:
     std::string DebugString() const;
 
 private:
-    void setup(const kvrpcpb::SelectRequest& req);
-    void setup(const kvrpcpb::DeleteRequest& req);
-    void setup(const txnpb::SelectRequest& req);
     void addExprColumn(const exprpb::Expr& expr);
-
     Status decodePrimaryKeys(const std::string& key, RowResult& result);
+    Status decodeFields(const std::string& buf, RowResult& result);
 
 private:
     const std::vector<metapb::Column>& primary_keys_;
@@ -76,4 +70,3 @@ private:
 } /* namespace storage */
 } /* namespace dataserver */
 } /* namespace sharkstore */
-std::

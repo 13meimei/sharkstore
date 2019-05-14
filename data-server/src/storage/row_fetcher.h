@@ -26,10 +26,10 @@ public:
 
 private:
     Store& store_;
-    RowDecoder decoder_;
 
+    RowDecoder decoder_;
     std::unique_ptr<KvFetcher> kv_fetcher_;
-    std::unique_ptr<exprpb::Expr> where_filter_;
+
     bool matched_ = false;
     size_t iter_count_ = 0;
 };

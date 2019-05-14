@@ -30,12 +30,15 @@ Status matchRow(const RowResult& row, const std::vector<kvrpcpb::Match>& filters
 Status matchRow(const TxnRowValue& row, const std::vector<kvrpcpb::Match>& filters, bool& matched);
 Status matchRow(const TxnRowValue& row, const std::shared_ptr<CWhereExpr> filter, bool& matched);
 
+void fillColumnInfo(const metapb::Column& col, exprpb::ColumnInfo* info);
 void makeColumnExpr(const metapb::Column& col, exprpb::Expr* expr);
 void makeConstValExpr(const metapb::Column& col, const std::string& value, exprpb::Expr* expr);
 
 exprpb::ExprType toExprType(kvrpcpb::MatchType match_type);
 // 把旧版本的match转换为新的表达式，统一处理
 std::unique_ptr<exprpb::Expr> convertToExpr(const MatchVector& matches);
+
+Status filterExpr(const RowResult& row, const exprpb::Expr& expr, bool& matched);
 
 } /* namespace storage */
 } /* namespace dataserver */

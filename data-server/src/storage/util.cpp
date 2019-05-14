@@ -324,6 +324,9 @@ std::unique_ptr<exprpb::Expr> convertToExpr(const MatchVector& matches) {
     return root;
 }
 
+Status filterExpr(const exprpb::Expr& expr, const RowResult& row, bool& matched) {
+}
+
 
 } /* namespace storage */
 } /* namespace dataserver */
